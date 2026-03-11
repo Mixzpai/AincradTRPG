@@ -1,0 +1,14 @@
+C:\Users\mikka\source\repos\SAOTRPG\bin\Debug\net8.0\SAOTRPG.exe
+C:\Users\mikka\source\repos\SAOTRPG\bin\Debug\net8.0\SAOTRPG.deps.json
+C:\Users\mikka\source\repos\SAOTRPG\bin\Debug\net8.0\SAOTRPG.runtimeconfig.json
+C:\Users\mikka\source\repos\SAOTRPG\bin\Debug\net8.0\SAOTRPG.dll
+C:\Users\mikka\source\repos\SAOTRPG\bin\Debug\net8.0\SAOTRPG.pdb
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\SAOTRPG.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\SAOTRPG.AssemblyInfoInputs.cache
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\SAOTRPG.AssemblyInfo.cs
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\SAOTRPG.csproj.CoreCompileInputs.cache
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\SAOTRPG.dll
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\refint\SAOTRPG.dll
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\SAOTRPG.pdb
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\SAOTRPG.genruntimeconfig.cache
+C:\Users\mikka\source\repos\SAOTRPG\obj\Debug\net8.0\ref\SAOTRPG.dll
