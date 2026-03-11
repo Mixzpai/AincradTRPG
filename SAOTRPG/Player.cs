@@ -1,6 +1,7 @@
-﻿using System;
-using System.Security.Cryptography.X509Certificates;
+ /****************************************************************************************/
+using System;
 
+ /****************************************************************************************/
 public class Player
 {
     /****************************************************************************************/
@@ -21,14 +22,18 @@ public class Player
     public int SkillPoints { get; set; }
 
     /****************************************************************************************/
-    // True Stats
+    // Inventory and Equipment
+    public Inventory Inventory { get; private set; } = new();
+
+    /****************************************************************************************/
+    // True Stats (now include equipment bonuses)
     public int MaxHealth => Vitality * 10;
-    public int Attack => BaseAttack + (Strength * 2);
-    public int Defense => BaseDefense + (Endurance * 2);
-    public int CriticalRate => BaseCriticalRate + (Dexterity * 2);
-    public int CriticalHitDamage => BaseCriticalHitDamage + (Attack * 2);
-    public int Speed => BaseSpeed + (Agility * 2);
-    public int SkillDamage => BaseSkillDamage + (Intelligence * 2);
+    public int Attack => BaseAttack + (Strength * 2) + Inventory.GetTotalEquipmentBonus(StatType.Attack);
+    public int Defense => BaseDefense + (Endurance * 2) + Inventory.GetTotalEquipmentBonus(StatType.Defense);
+    public double CriticalRate => BaseCriticalRate + (Dexterity * 2);
+    public double CriticalHitDamage => BaseCriticalHitDamage + (Attack * 2);
+    public int Speed => BaseSpeed + (Agility * 2) + Inventory.GetTotalEquipmentBonus(StatType.Speed);
+    public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
 
     /****************************************************************************************/
     // Base Stats
@@ -80,6 +85,10 @@ public class Player
         player.ColOnHand = 1000;
         player.SkillPoints = 10;
 
+        // Give starter items
+        player.Inventory.AddItem(ItemDefinitions.IronSword);
+        player.Inventory.AddItem(ItemDefinitions.HealthPotion);
+
         return player;
     }
 
@@ -88,6 +97,23 @@ public class Player
     private static int GeneratePlayerId()
     {
         return Random.Shared.Next(10000, 99999);
+    }
+
+    /****************************************************************************************/
+    // Equipment Methods
+    public bool EquipItem(Equipment equipment)
+    {
+        return Inventory.Equip(equipment, this);
+    }
+
+    public bool UnequipItem(EquipmentSlot slot)
+    {
+        return Inventory.Unequip(slot, this);
+    }
+
+    public void UseItem(Consumable consumable)
+    {
+        Inventory.UseConsumable(consumable, this);
     }
 
     /****************************************************************************************/
@@ -255,7 +281,5 @@ public class Player
         Console.WriteLine($"Agility: {Agility}");
         Console.WriteLine($"Intelligence: {Intelligence}");
     }
-
-    /****************************************************************************************/
-    //
 }
+ /****************************************************************************************/
