@@ -151,5 +151,4 @@ public abstract class Consumable : StackableItem
         Quantity--;
     }
 }
-
 /****************************************************************************************/
