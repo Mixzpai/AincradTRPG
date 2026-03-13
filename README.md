@@ -17,6 +17,7 @@ A text-based RPG game inspired by the world of Sword Art Online's Aincrad. Built
 
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or later
+- Terminal GUIv2 installed
 
 ### Running the Game
 - In development...
