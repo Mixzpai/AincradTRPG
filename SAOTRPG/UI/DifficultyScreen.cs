@@ -83,10 +83,29 @@ public static class DifficultyScreen
             }
         };
 
-        // Navigation buttons
+        // Navigation buttons — yellow highlight + diamond glyphs follow focus
+        var menuButtonScheme = new ColorScheme
+        {
+            Normal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
+            Focus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
+            HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
+            HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
+            Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
+        };
+
         int btnY = hardcoreY + 3;
-        var continueBtn = new Button { Text = "  Continue  ", X = Pos.Center(), Y = btnY, IsDefault = false, ColorScheme = NavigationHelper.ButtonScheme };
-        var backBtn = new Button { Text = "   Back   ", X = Pos.Center(), Y = Pos.Bottom(continueBtn) + 1, ColorScheme = NavigationHelper.ButtonScheme };
+        var continueBtn = new Button { Text = "  Continue  ", X = Pos.Center(), Y = btnY, IsDefault = false, ColorScheme = menuButtonScheme };
+        var backBtn = new Button { Text = "    Back    ", X = Pos.Center(), Y = Pos.Bottom(continueBtn) + 1, ColorScheme = menuButtonScheme };
+
+        // Diamond glyphs follow focus on the two buttons
+        foreach (var btn in new[] { continueBtn, backBtn })
+        {
+            btn.HasFocusChanged += (s, e) =>
+            {
+                if (s is Button b)
+                    b.IsDefault = e.NewValue;
+            };
+        }
 
         // Continue — passes difficulty/hardcore to character creation (values wired when gameplay uses them)
         continueBtn.Accepting += (s, e) =>
@@ -103,38 +122,84 @@ public static class DifficultyScreen
         mainWindow.Add(header, difficultyRadio, descLabel, divider,
             hardcoreCheck, hardcoreDesc, continueBtn, backBtn);
 
-        // Custom navigation — WASD/arrows change radio selection when focused,
-        // otherwise navigate between controls (checkbox, buttons)
-        mainWindow.KeyDown += (s, e) =>
-        {
-            var focused = mainWindow.MostFocused;
-            bool onRadio = focused == difficultyRadio || focused?.SuperView == difficultyRadio;
+        // Per-control key handlers — fires BEFORE each control's built-in processing,
+        // giving us full control over navigation order and wrapping.
+        // Flow: Radio items → Hardcore checkbox → Continue → Back (wraps both ways)
 
-            if (onRadio)
+        difficultyRadio.KeyDown += (s, e) =>
+        {
+            switch (e.KeyCode)
             {
-                switch (e.KeyCode)
-                {
-                    case KeyCode.W: case KeyCode.CursorUp:
-                        if (difficultyRadio.SelectedItem > 0) difficultyRadio.SelectedItem--;
-                        e.Handled = true; return;
-                    case KeyCode.S: case KeyCode.CursorDown:
-                        if (difficultyRadio.SelectedItem < difficulties.Length - 1) difficultyRadio.SelectedItem++;
-                        e.Handled = true; return;
-                    case KeyCode.Enter:
-                        hardcoreCheck.SetFocus(); e.Handled = true; return;
-                }
+                case KeyCode.W: case KeyCode.CursorUp:
+                    if (difficultyRadio.SelectedItem > 0)
+                        difficultyRadio.SelectedItem--;
+                    else
+                        backBtn.SetFocus();
+                    e.Handled = true;
+                    break;
+                case KeyCode.S: case KeyCode.CursorDown:
+                    if (difficultyRadio.SelectedItem < difficulties.Length - 1)
+                        difficultyRadio.SelectedItem++;
+                    else
+                        hardcoreCheck.SetFocus();
+                    e.Handled = true;
+                    break;
+                case KeyCode.Enter:
+                    hardcoreCheck.SetFocus();
+                    e.Handled = true;
+                    break;
             }
-            else
+        };
+
+        hardcoreCheck.KeyDown += (s, e) =>
+        {
+            switch (e.KeyCode)
             {
-                switch (e.KeyCode)
-                {
-                    case KeyCode.W: case KeyCode.CursorUp:
-                        mainWindow.AdvanceFocus(NavigationDirection.Backward, TabBehavior.TabStop);
-                        e.Handled = true; break;
-                    case KeyCode.S: case KeyCode.CursorDown:
-                        mainWindow.AdvanceFocus(NavigationDirection.Forward, TabBehavior.TabStop);
-                        e.Handled = true; break;
-                }
+                case KeyCode.W: case KeyCode.CursorUp:
+                    difficultyRadio.SetFocus();
+                    difficultyRadio.SelectedItem = difficulties.Length - 1;
+                    e.Handled = true;
+                    break;
+                case KeyCode.S: case KeyCode.CursorDown:
+                    continueBtn.SetFocus();
+                    e.Handled = true;
+                    break;
+                case KeyCode.Enter:
+                    hardcoreCheck.CheckedState = hardcoreCheck.CheckedState == CheckState.Checked
+                        ? CheckState.UnChecked : CheckState.Checked;
+                    e.Handled = true;
+                    break;
+            }
+        };
+
+        continueBtn.KeyDown += (s, e) =>
+        {
+            switch (e.KeyCode)
+            {
+                case KeyCode.W: case KeyCode.CursorUp:
+                    hardcoreCheck.SetFocus();
+                    e.Handled = true;
+                    break;
+                case KeyCode.S: case KeyCode.CursorDown:
+                    backBtn.SetFocus();
+                    e.Handled = true;
+                    break;
+            }
+        };
+
+        backBtn.KeyDown += (s, e) =>
+        {
+            switch (e.KeyCode)
+            {
+                case KeyCode.W: case KeyCode.CursorUp:
+                    continueBtn.SetFocus();
+                    e.Handled = true;
+                    break;
+                case KeyCode.S: case KeyCode.CursorDown:
+                    difficultyRadio.SetFocus();
+                    difficultyRadio.SelectedItem = 0;
+                    e.Handled = true;
+                    break;
             }
         };
 
