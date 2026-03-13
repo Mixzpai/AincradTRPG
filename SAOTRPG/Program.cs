@@ -69,6 +69,8 @@ namespace SAOTRPG
                 ColorScheme = blackScheme
             };
 
+            if (args.Contains("--debug")) DebugMode.Enable();
+
             TitleScreen.Show(mainWindow);
             Application.Run(mainWindow);
             mainWindow.Dispose();

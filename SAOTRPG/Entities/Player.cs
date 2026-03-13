@@ -2,6 +2,7 @@ using SAOTRPG.UI;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Definitions;
+using SAOTRPG.Items.Definitions.Weapons;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Inventory.Logging;
 using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;

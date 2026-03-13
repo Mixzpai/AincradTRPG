@@ -13,31 +13,79 @@ public static class DifficultyScreen
         var header = new Label { Text = "=== Select Difficulty ===", X = Pos.Center(), Y = 2, Width = Dim.Auto(), Height = 1 };
 
         // Difficulty tiers — index-matched with descriptions below
-        var difficulties = new string[] { "Easy", "Normal", "Hard", "Very Hard", "Masochist" };
-        var descriptions = new string[]
+        var difficultyList = new List<string> { "Story", "Very Easy", "Easy", "Normal", "Hard", "Very Hard", "Masochist", "Unwinnable" };
+        var descriptionList = new List<string>
         {
+            "Sit back and enjoy the tale of Aincrad. Combat is an afterthought.",
+            "A carefree stroll through Aincrad. Enemies are weak, danger is minimal.",
             "A relaxed adventure. Reduced enemy stats, forgiving combat.",
             "The intended experience. Balanced risk and reward.",
             "Tougher enemies, less room for error.",
             "Punishing combat. Every mistake costs you.",
-            "You asked for this. No mercy. No regrets."
+            "You asked for this. No mercy. No regrets.",
+            "You will not make it past Floor 1. Don't kid yourself."
         };
 
+        // Debug difficulty — only visible when launched with --debug
+        if (DebugMode.IsEnabled)
+        {
+            difficultyList.Add("Debug");
+            descriptionList.Add("Developer mode. All restrictions lifted.");
+        }
+
+        var difficulties = difficultyList.ToArray();
+        var descriptions = descriptionList.ToArray();
+        int count = difficulties.Length;
+
         // Radio selector — defaults to Normal
-        var difficultyRadio = new RadioGroup { X = Pos.Center(), Y = 5, RadioLabels = difficulties, Width = 20, Height = 5, SelectedItem = 1 };
+        var difficultyRadio = new RadioGroup { X = Pos.Center(), Y = 5, RadioLabels = difficulties, Width = 20, Height = count, SelectedItem = 3 };
 
         // Dynamic description — updates when radio selection changes
-        var descLabel = new Label { Text = descriptions[1], X = Pos.Center(), Y = 11, Width = 55, Height = 2 };
+        int descY = 5 + count + 1;
+        var descLabel = new Label { Text = descriptions[3], X = Pos.Center(), Y = descY, Width = 55, Height = 2 };
         difficultyRadio.SelectedItemChanged += (s, e) => { descLabel.Text = descriptions[e.SelectedItem]; };
 
-        var divider = new Label { Text = "─────────────────────────────────", X = Pos.Center(), Y = 14, Width = Dim.Auto(), Height = 1 };
+        int dividerY = descY + 3;
+        var divider = new Label { Text = "─────────────────────────────────", X = Pos.Center(), Y = dividerY, Width = Dim.Auto(), Height = 1 };
 
         // Hardcore toggle — permadeath modifier, applies on top of any difficulty
-        var hardcoreCheck = new CheckBox { Text = " Hardcore Mode  (one life only)", X = Pos.Center(), Y = 16, Width = Dim.Auto(), Height = 1 };
-        var hardcoreDesc = new Label { Text = "  Death is permanent. There are no second chances.", X = Pos.Center(), Y = 17, Width = Dim.Auto(), Height = 1 };
+        int hardcoreY = dividerY + 2;
+        var hardcoreCheck = new CheckBox { Text = " Hardcore Mode  (one life only)", X = Pos.Center(), Y = hardcoreY, Width = Dim.Auto(), Height = 1 };
+        var hardcoreDesc = new Label { Text = "  Death is permanent. There are no second chances.", X = Pos.Center(), Y = hardcoreY + 1, Width = Dim.Auto(), Height = 1 };
+
+        // Popup when Unwinnable + Hardcore are both active
+        // Find the index of Unwinnable (always second-to-last when debug is on, last otherwise)
+        int unwinnableIndex = difficultyList.IndexOf("Unwinnable");
+        hardcoreCheck.CheckedStateChanging += (s, e) =>
+        {
+            bool togglingOn = e.NewValue == CheckState.Checked;
+            if (togglingOn && difficultyRadio.SelectedItem == 0)
+            {
+                MessageBox.Query("Really?", "Really? Hardcore and Story mode?", "Yes, really");
+            }
+            else if (togglingOn && difficultyRadio.SelectedItem == unwinnableIndex)
+            {
+                MessageBox.Query("Good Luck", "There's no way you can do this, but good luck.", "Bring it on");
+            }
+        };
+
+        difficultyRadio.SelectedItemChanged += (s, e) =>
+        {
+            if (hardcoreCheck.CheckedState != CheckState.Checked) return;
+
+            if (e.SelectedItem == 0)
+            {
+                MessageBox.Query("Really?", "Really? Hardcore and Story mode?", "Yes, really");
+            }
+            else if (e.SelectedItem == unwinnableIndex)
+            {
+                MessageBox.Query("Good Luck", "There's no way you can do this, but good luck.", "Bring it on");
+            }
+        };
 
         // Navigation buttons
-        var continueBtn = new Button { Text = "  Continue  ", X = Pos.Center(), Y = 20, IsDefault = false, ColorScheme = NavigationHelper.ButtonScheme };
+        int btnY = hardcoreY + 3;
+        var continueBtn = new Button { Text = "  Continue  ", X = Pos.Center(), Y = btnY, IsDefault = false, ColorScheme = NavigationHelper.ButtonScheme };
         var backBtn = new Button { Text = "   Back   ", X = Pos.Center(), Y = Pos.Bottom(continueBtn) + 1, ColorScheme = NavigationHelper.ButtonScheme };
 
         // Continue — passes difficulty/hardcore to character creation (values wired when gameplay uses them)
