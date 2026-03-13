@@ -1,4 +1,9 @@
-public class Mob : Monster
+using SAOTRP.Entities;
+
+namespace SAOTRPG.Entities
 {
-    // Standard enemy - inherits all Monster functionality
+    public class Mob : Monster
+    {
+        // Standard enemy - inherits all Monster functionality
+    }
 }

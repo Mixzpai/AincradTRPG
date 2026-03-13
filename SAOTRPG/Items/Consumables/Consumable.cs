@@ -1,6 +1,6 @@
-using YourGame.Items;
+using SAOTRPG.Entities;
 
-namespace YourGame.Items.Consumables;
+namespace SAOTRPG.Items.Consumables;
 
 /// <summary>
 /// Base class for consumable items that apply effects when used.

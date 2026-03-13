@@ -1,5 +1,10 @@
-public class WorldSpawn : NPC
+using SAOTRPG.Entities;
+
+namespace SAOTRPG.Entities
 {
-    /****************************************************************************************/
-    // Basic world character - background NPCs
+    public class WorldSpawn : NPC
+    {
+        /****************************************************************************************/
+        // Basic world character - background NPCs
+    }
 }

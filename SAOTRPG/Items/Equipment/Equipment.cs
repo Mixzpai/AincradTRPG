@@ -1,6 +1,6 @@
-using YourGame.Items;
+using SAOTRPG.Entities;
 
-namespace YourGame.Items.Equipment;
+namespace SAOTRPG.Items.Equipment;
 
 /// <summary>
 /// Base class for equipment items that provide stat bonuses when equipped.

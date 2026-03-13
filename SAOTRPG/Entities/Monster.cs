@@ -1,57 +1,61 @@
 using SAOTRPG.UI;
+using SAOTRPG.Entities;
 
-public abstract class Monster : Entity
+namespace SAOTRPG.Entities
 {
-    /****************************************************************************************/
-    // Monster-Specific Stats
-    public int ExperienceYield { get; protected set; }
-    public int ColYield { get; protected set; }
-
-    /****************************************************************************************/
-    // Result structure for when monster is defeated
-    public class DefeatReward
+    public abstract class Monster : Entity
     {
-        public int Experience { get; set; }
-        public int Col { get; set; }
-        public bool WasOverkill { get; set; }
-        public int OverkillDamage { get; set; }
-    }
+        /****************************************************************************************/
+        // Monster-Specific Stats
+        public int ExperienceYield { get; protected set; }
+        public int ColYield { get; protected set; }
 
-    /****************************************************************************************/
-    // Method to apply damage to the monster
-    public DefeatReward TakeDamage(int damage)
-    {
-        if (IsDefeated)
+        /****************************************************************************************/
+        // Result structure for when monster is defeated
+        public class DefeatReward
         {
-            _log?.LogCombat($"{Name} is already defeated. No further damage can be applied.");
-            return null;
+            public int Experience { get; set; }
+            public int Col { get; set; }
+            public bool WasOverkill { get; set; }
+            public int OverkillDamage { get; set; }
         }
 
-        CurrentHealth -= damage;
-
-        if (CurrentHealth <= 0)
+        /****************************************************************************************/
+        // Method to apply damage to the monster
+        public DefeatReward TakeDamage(int damage)
         {
-            int overkillDamage = -CurrentHealth;
-            CurrentHealth = 0;
-            IsDefeated = true;
-
-            int experienceReward = ExperienceYield;
-            if (overkillDamage > 0)
+            if (IsDefeated)
             {
-                experienceReward += overkillDamage * 2;
+                _log?.LogCombat($"{Name} is already defeated. No further damage can be applied.");
+                return null;
             }
 
-            var reward = new DefeatReward
+            CurrentHealth -= damage;
+
+            if (CurrentHealth <= 0)
             {
-                Experience = experienceReward,
-                Col = ColYield,
-                WasOverkill = overkillDamage > 0,
-                OverkillDamage = overkillDamage
-            };
+                int overkillDamage = -CurrentHealth;
+                CurrentHealth = 0;
+                IsDefeated = true;
 
-            return reward;
+                int experienceReward = ExperienceYield;
+                if (overkillDamage > 0)
+                {
+                    experienceReward += overkillDamage * 2;
+                }
+
+                var reward = new DefeatReward
+                {
+                    Experience = experienceReward,
+                    Col = ColYield,
+                    WasOverkill = overkillDamage > 0,
+                    OverkillDamage = overkillDamage
+                };
+
+                return reward;
+            }
+
+            return null;
         }
-
-        return null;
     }
 }

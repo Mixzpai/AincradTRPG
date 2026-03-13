@@ -1,7 +1,12 @@
-public abstract class NPC : Entity
+using SAOTRPG.Entities;
+
+namespace SAOTRPG.Entities
 {
-    /****************************************************************************************/
-    // NPC-Specific Properties
-    public string Dialogue { get; protected set; }
-    public bool CanInteract { get; protected set; } = true;
+    public abstract class NPC : Entity
+    {
+        /****************************************************************************************/
+        // NPC-Specific Properties
+        public string Dialogue { get; protected set; }
+        public bool CanInteract { get; protected set; } = true;
+    }
 }
