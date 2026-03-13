@@ -1,13 +1,13 @@
-using YourGame.Items.Equipment;
+using SAOTRPG.Items.Equipment;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all weapons.
 /// </summary>
 public static class WeaponDefinitions
 {
-    public static Weapon IronSword => new()
+    public static Weapon CreateIronSword() => new()
     {
         Name = "Iron Sword",
         Value = 100,
@@ -23,7 +23,7 @@ public static class WeaponDefinitions
             .Add(StatType.Attack, 8)
     };
 
-    public static Weapon SteelSword => new()
+    public static Weapon CreateSteelSword() => new()
     {
         Name = "Steel Sword",
         Value = 250,

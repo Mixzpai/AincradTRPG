@@ -1,13 +1,13 @@
-using YourGame.Items.Consumables;
+using SAOTRPG.Items.Consumables;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all potions.
 /// </summary>
 public static class PotionDefinitions
 {
-    public static Potion HealthPotion => new()
+    public static Potion CreateHealthPotion() => new()
     {
         Name = "Health Potion",
         Value = 25,
@@ -22,7 +22,7 @@ public static class PotionDefinitions
             .Add(StatType.Health, 50)
     };
 
-    public static Potion GreaterHealthPotion => new()
+    public static Potion CreateGreaterHealthPotion() => new()
     {
         Name = "Greater Health Potion",
         Value = 75,
@@ -37,7 +37,7 @@ public static class PotionDefinitions
             .Add(StatType.Health, 150)
     };
 
-    public static Potion BattleElixir => new()
+    public static Potion CreateBattleElixir() => new()
     {
         Name = "Battle Elixir",
         Value = 150,

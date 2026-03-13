@@ -1,4 +1,4 @@
-namespace YourGame.Items;
+namespace SAOTRPG.Items;
 
 /// <summary>
 /// Stackable items like potions or crafting materials.

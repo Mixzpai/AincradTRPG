@@ -1,5 +1,3 @@
-using SAOTRPG.Entities;
-
 namespace SAOTRPG.Entities
 {
     public class PC : NPC

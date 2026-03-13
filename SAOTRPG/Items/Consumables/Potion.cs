@@ -1,4 +1,4 @@
-namespace YourGame.Items.Consumables;
+namespace SAOTRPG.Items.Consumables;
 
 /// <summary>
 /// Healing and buff consumables.

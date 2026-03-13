@@ -3,10 +3,22 @@ using Terminal.Gui;
 namespace SAOTRPG.UI;
 
 /// <summary>
-/// Adds WASD and arrow key navigation between focusable views.
+/// Shared UI helpers: navigation and color schemes.
 /// </summary>
 public static class NavigationHelper
 {
+    /// <summary>
+    /// Color scheme for interactive buttons — gives a visible highlight on focus.
+    /// </summary>
+    public static readonly ColorScheme ButtonScheme = new()
+    {
+        Normal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
+        Focus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
+        HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
+        HotFocus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
+        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
+    };
+
     public static void EnableGameNavigation(View container)
     {
         container.KeyDown += (s, e) =>

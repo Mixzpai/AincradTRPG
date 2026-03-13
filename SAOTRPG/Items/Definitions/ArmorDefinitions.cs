@@ -1,13 +1,13 @@
-using YourGame.Items.Equipment;
+using SAOTRPG.Items.Equipment;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all armor.
 /// </summary>
 public static class ArmorDefinitions
 {
-    public static Armor LeatherChest => new()
+    public static Armor CreateLeatherChest() => new()
     {
         Name = "Leather Chestplate",
         Value = 80,
@@ -23,7 +23,7 @@ public static class ArmorDefinitions
             .Add(StatType.Vitality, 2)
     };
 
-    public static Armor IronHelmet => new()
+    public static Armor CreateIronHelmet() => new()
     {
         Name = "Iron Helmet",
         Value = 120,

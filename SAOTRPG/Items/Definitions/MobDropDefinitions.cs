@@ -1,13 +1,13 @@
-using YourGame.Items.Materials;
+using SAOTRPG.Items.Materials;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all mob drop materials.
 /// </summary>
 public static class MobDropDefinitions
 {
-    public static MobDrop SlimeGel => new()
+    public static MobDrop CreateSlimeGel() => new()
     {
         Name = "Slime Gel",
         Value = 5,
@@ -21,7 +21,7 @@ public static class MobDropDefinitions
         IsBossDrop = false
     };
 
-    public static MobDrop WolfPelt => new()
+    public static MobDrop CreateWolfPelt() => new()
     {
         Name = "Wolf Pelt",
         Value = 15,
@@ -35,7 +35,7 @@ public static class MobDropDefinitions
         IsBossDrop = false
     };
 
-    public static MobDrop DragonScale => new()
+    public static MobDrop CreateDragonScale() => new()
     {
         Name = "Dragon Scale",
         Value = 1000,

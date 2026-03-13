@@ -1,6 +1,4 @@
-using YourGame.Items;
-
-namespace YourGame.Items.Materials;
+namespace SAOTRPG.Items.Materials;
 
 /// <summary>
 /// Base class for items used in crafting and upgrading.

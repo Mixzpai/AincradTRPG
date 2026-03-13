@@ -1,5 +1,3 @@
-using SAOTRP.Entities;
-
 namespace SAOTRPG.Entities
 {
     public class Boss : Monster

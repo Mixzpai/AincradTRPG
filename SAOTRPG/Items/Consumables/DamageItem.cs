@@ -1,4 +1,4 @@
-namespace YourGame.Items.Consumables;
+namespace SAOTRPG.Items.Consumables;
 
 /// <summary>
 /// Throwable or usable items that deal damage.

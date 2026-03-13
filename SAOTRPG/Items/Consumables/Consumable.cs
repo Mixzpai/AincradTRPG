@@ -11,11 +11,11 @@ public abstract class Consumable : StackableItem
     public string? EffectDescription { get; set; }
     public StatModifierCollection Effects { get; set; } = new();
 
-    public virtual void Use(Player player)
+    public virtual void Use(IStatModifiable target)
     {
         if (Quantity <= 0) return;
 
-        Effects.ApplyTo(player);
+        Effects.ApplyTo(target);
         Quantity--;
     }
 }

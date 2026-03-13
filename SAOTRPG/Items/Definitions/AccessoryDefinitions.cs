@@ -1,13 +1,13 @@
-using YourGame.Items.Equipment;
+using SAOTRPG.Items.Equipment;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all accessories.
 /// </summary>
 public static class AccessoryDefinitions
 {
-    public static Accessory RingOfStrength => new()
+    public static Accessory CreateRingOfStrength() => new()
     {
         Name = "Ring of Strength",
         Value = 500,
@@ -22,7 +22,7 @@ public static class AccessoryDefinitions
             .Add(StatType.Attack, 5)
     };
 
-    public static Accessory AgilityNecklace => new()
+    public static Accessory CreateAgilityNecklace() => new()
     {
         Name = "Amulet of Agility",
         Value = 450,

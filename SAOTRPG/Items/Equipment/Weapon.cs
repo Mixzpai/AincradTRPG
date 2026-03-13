@@ -1,9 +1,9 @@
-namespace YourGame.Items.Equipment;
+namespace SAOTRPG.Items.Equipment;
 
 /// <summary>
 /// Equipment that increases attack power.
 /// </summary>
-public class Weapon : Equipment
+public class Weapon : EquipmentBase
 {
     public int BaseDamage { get; set; }
     public string? WeaponType { get; set; }

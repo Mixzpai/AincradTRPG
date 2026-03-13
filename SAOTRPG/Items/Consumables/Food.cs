@@ -1,4 +1,4 @@
-namespace YourGame.Items.Consumables;
+namespace SAOTRPG.Items.Consumables;
 
 /// <summary>
 /// Consumables that provide regeneration or temporary buffs.

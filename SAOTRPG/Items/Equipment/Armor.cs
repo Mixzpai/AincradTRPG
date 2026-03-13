@@ -1,9 +1,9 @@
-namespace YourGame.Items.Equipment;
+namespace SAOTRPG.Items.Equipment;
 
 /// <summary>
 /// Equipment that provides defense.
 /// </summary>
-public class Armor : Equipment
+public class Armor : EquipmentBase
 {
     public int BaseDefense { get; set; }
     public string? ArmorSlot { get; set; }

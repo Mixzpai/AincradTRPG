@@ -1,4 +1,4 @@
-namespace YourGame.Items;
+namespace SAOTRPG.Items;
 
 /// <summary>
 /// Individual stat effect with potency and duration.

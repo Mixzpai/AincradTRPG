@@ -1,13 +1,13 @@
-using YourGame.Items.Consumables;
+using SAOTRPG.Items.Consumables;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all throwable damage items.
 /// </summary>
 public static class DamageItemDefinitions
 {
-    public static DamageItem FireBomb => new()
+    public static DamageItem CreateFireBomb() => new()
     {
         Name = "Fire Bomb",
         Value = 50,
@@ -21,7 +21,7 @@ public static class DamageItemDefinitions
         EffectDescription = "Deals 30 fire damage in a 3-unit radius."
     };
 
-    public static DamageItem PoisonVial => new()
+    public static DamageItem CreatePoisonVial() => new()
     {
         Name = "Poison Vial",
         Value = 40,

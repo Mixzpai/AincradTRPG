@@ -1,4 +1,4 @@
-namespace YourGame.Items;
+namespace SAOTRPG.Items;
 
 /// <summary>
 /// Enumeration of all possible stats that can be modified.

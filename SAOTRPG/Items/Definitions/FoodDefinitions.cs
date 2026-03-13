@@ -1,13 +1,13 @@
-using YourGame.Items.Consumables;
+using SAOTRPG.Items.Consumables;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all food items.
 /// </summary>
 public static class FoodDefinitions
 {
-    public static Food Bread => new()
+    public static Food CreateBread() => new()
     {
         Name = "Bread",
         Value = 10,
@@ -21,7 +21,7 @@ public static class FoodDefinitions
         EffectDescription = "Regenerates 2 HP per second for 10 seconds."
     };
 
-    public static Food GrilledMeat => new()
+    public static Food CreateGrilledMeat() => new()
     {
         Name = "Grilled Meat",
         Value = 30,

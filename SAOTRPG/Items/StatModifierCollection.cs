@@ -1,4 +1,6 @@
-namespace YourGame.Items;
+using SAOTRPG.Entities;
+
+namespace SAOTRPG.Items;
 
 /// <summary>
 /// Collection of effects that can be applied/removed.
@@ -19,41 +21,41 @@ public class StatModifierCollection
     /// <summary>
     /// Apply all effects to the player.
     /// </summary>
-    public void ApplyTo(Player player)
+    public void ApplyTo(IStatModifiable target)
     {
         foreach (var effect in Effects)
         {
-            ApplyStat(player, effect, add: true);
+            ApplyStat(target, effect, add: true);
         }
     }
 
     /// <summary>
-    /// Remove all effects from the player.
+    /// Remove all effects from the target.
     /// </summary>
-    public void RemoveFrom(Player player)
+    public void RemoveFrom(IStatModifiable target)
     {
         foreach (var effect in Effects)
         {
-            ApplyStat(player, effect, add: false);
+            ApplyStat(target, effect, add: false);
         }
     }
 
-    private static void ApplyStat(Player player, StatEffect effect, bool add)
+    private static void ApplyStat(IStatModifiable target, StatEffect effect, bool add)
     {
         int value = add ? effect.Potency : -effect.Potency;
 
         switch (effect.Type)
         {
-            case StatType.Health: player.CurrentHealth += value; break;
-            case StatType.Attack: player.BaseAttack += value; break;
-            case StatType.Defense: player.BaseDefense += value; break;
-            case StatType.Speed: player.BaseSpeed += value; break;
-            case StatType.Strength: player.Strength += value; break;
-            case StatType.Vitality: player.Vitality += value; break;
-            case StatType.Endurance: player.Endurance += value; break;
-            case StatType.Dexterity: player.Dexterity += value; break;
-            case StatType.Agility: player.Agility += value; break;
-            case StatType.Intelligence: player.Intelligence += value; break;
+            case StatType.Health: target.CurrentHealth += value; break;
+            case StatType.Attack: target.BaseAttack += value; break;
+            case StatType.Defense: target.BaseDefense += value; break;
+            case StatType.Speed: target.BaseSpeed += value; break;
+            case StatType.Strength: target.Strength += value; break;
+            case StatType.Vitality: target.Vitality += value; break;
+            case StatType.Endurance: target.Endurance += value; break;
+            case StatType.Dexterity: target.Dexterity += value; break;
+            case StatType.Agility: target.Agility += value; break;
+            case StatType.Intelligence: target.Intelligence += value; break;
         }
     }
 }

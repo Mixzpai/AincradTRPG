@@ -1,4 +1,4 @@
-namespace YourGame.Items.Materials;
+namespace SAOTRPG.Items.Materials;
 
 /// <summary>
 /// Materials obtained from gathering in the world.

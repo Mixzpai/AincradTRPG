@@ -1,13 +1,13 @@
-using YourGame.Items.Materials;
+using SAOTRPG.Items.Materials;
 
-namespace YourGame.Items.Definitions;
+namespace SAOTRPG.Items.Definitions;
 
 /// <summary>
 /// Static registry of all gathered materials.
 /// </summary>
 public static class GatheredDefinitions
 {
-    public static Gathered IronOre => new()
+    public static Gathered CreateIronOre() => new()
     {
         Name = "Iron Ore",
         Value = 15,
@@ -21,7 +21,7 @@ public static class GatheredDefinitions
         GatheringLocation = "Mines"
     };
 
-    public static Gathered GoldOre => new()
+    public static Gathered CreateGoldOre() => new()
     {
         Name = "Gold Ore",
         Value = 50,
@@ -35,7 +35,7 @@ public static class GatheredDefinitions
         GatheringLocation = "Deep Mines"
     };
 
-    public static Gathered HealingHerb => new()
+    public static Gathered CreateHealingHerb() => new()
     {
         Name = "Healing Herb",
         Value = 8,
@@ -49,7 +49,7 @@ public static class GatheredDefinitions
         GatheringLocation = "Forest"
     };
 
-    public static Gathered RiverFish => new()
+    public static Gathered CreateRiverFish() => new()
     {
         Name = "River Fish",
         Value = 12,

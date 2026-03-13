@@ -1,5 +1,4 @@
 using SAOTRPG.UI;
-using SAOTRPG.Entities;
 
 namespace SAOTRPG.Entities
 {
@@ -22,7 +21,7 @@ namespace SAOTRPG.Entities
 
         /****************************************************************************************/
         // Method to apply damage to the monster
-        public DefeatReward TakeDamage(int damage)
+        public DefeatReward? TakeDamage(int damage)
         {
             if (IsDefeated)
             {
@@ -56,6 +55,22 @@ namespace SAOTRPG.Entities
             }
 
             return null;
+        }
+
+        /****************************************************************************************/
+        // Get a formatted string of the monster's status (for UI display)
+        public string GetStatusDisplay()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine(Name);
+            sb.AppendLine($"Level: {Level}");
+            sb.AppendLine($"HP: {CurrentHealth}/{MaxHealth}");
+            sb.AppendLine();
+            sb.AppendLine($"ATK: {BaseAttack}  DEF: {BaseDefense}");
+            sb.AppendLine($"SPD: {BaseSpeed}");
+            if (IsDefeated)
+                sb.AppendLine("\n** DEFEATED **");
+            return sb.ToString();
         }
     }
 }

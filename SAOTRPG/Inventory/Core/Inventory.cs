@@ -1,11 +1,12 @@
-using Inventory.Equipment;
-using Inventory.Events;
-using Inventory.Logging;
-using YourGame.Items;
-using YourGame.Items.Consumables;
-using EquipmentItem = YourGame.Items.Equipment.Equipment;
+using SAOTRPG.Entities;
+using SAOTRPG.Inventory.Equipment;
+using SAOTRPG.Inventory.Events;
+using SAOTRPG.Inventory.Logging;
+using SAOTRPG.Items;
+using SAOTRPG.Items.Consumables;
+using SAOTRPG.Items.Equipment;
 
-namespace Inventory.Core;
+namespace SAOTRPG.Inventory.Core;
 
 /// <summary>
 /// Manages the player's inventory and equipped items.
@@ -14,12 +15,14 @@ public class Inventory
 {
     private readonly int _maxSlots;
     private readonly List<BaseItem> _items = [];
-    private readonly Dictionary<EquipmentSlot, EquipmentItem?> _equippedItems = [];
+    private readonly Dictionary<EquipmentSlot, EquipmentBase?> _equippedItems = [];
 
-    private readonly IInventoryLogger _logger;
+    private IInventoryLogger _logger;
     private readonly IEquipmentSlotResolver _slotResolver;
 
     public InventoryEvents Events { get; } = new();
+
+    public void SetLogger(IInventoryLogger logger) => _logger = logger;
 
     public IReadOnlyList<BaseItem> Items => _items.AsReadOnly();
     public int ItemCount => _items.Count;
@@ -91,9 +94,9 @@ public class Inventory
         return false;
     }
 
-    public bool Equip(EquipmentItem equipment, Player player)
+    public bool Equip(EquipmentBase equipment, IStatModifiable target)
     {
-        if (player.Level < equipment.RequiredLevel)
+        if (target.Level < equipment.RequiredLevel)
         {
             _logger.LogError($"Cannot equip {equipment.Name}. Required level: {equipment.RequiredLevel}");
             return false;
@@ -108,19 +111,19 @@ public class Inventory
 
         if (_equippedItems[slot.Value] != null)
         {
-            Unequip(slot.Value, player);
+            Unequip(slot.Value, target);
         }
 
         _items.Remove(equipment);
         _equippedItems[slot.Value] = equipment;
-        equipment.Equip(player);
+        equipment.Equip(target);
 
         _logger.LogItemEquipped(equipment, slot.Value);
         Events.RaiseItemEquipped(equipment, slot.Value);
         return true;
     }
 
-    public bool Unequip(EquipmentSlot slot, Player player)
+    public bool Unequip(EquipmentSlot slot, IStatModifiable target)
     {
         var equipment = _equippedItems[slot];
         if (equipment == null)
@@ -136,7 +139,7 @@ public class Inventory
             return false;
         }
 
-        equipment.Unequip(player);
+        equipment.Unequip(target);
         _equippedItems[slot] = null;
         _items.Add(equipment);
 
@@ -145,9 +148,9 @@ public class Inventory
         return true;
     }
 
-    public EquipmentItem? GetEquipped(EquipmentSlot slot) => _equippedItems[slot];
+    public EquipmentBase? GetEquipped(EquipmentSlot slot) => _equippedItems[slot];
 
-    public bool UseConsumable(Consumable consumable, Player player)
+    public bool UseConsumable(Consumable consumable, IStatModifiable target)
     {
         if (!_items.Contains(consumable))
         {
@@ -161,7 +164,7 @@ public class Inventory
             return false;
         }
 
-        consumable.Use(player);
+        consumable.Use(target);
         _logger.LogItemUsed(consumable, consumable.EffectDescription ?? "");
         Events.RaiseConsumableUsed(consumable);
 

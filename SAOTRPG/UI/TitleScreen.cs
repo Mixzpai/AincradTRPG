@@ -21,108 +21,34 @@ public static class TitleScreen
     public static void Show(Window mainWindow)
     {
         mainWindow.RemoveAll();
+        var sw = DebugLogger.StartTimer("TitleScreen.Show");
+        DebugLogger.LogScreen("TitleScreen");
 
-        var titleLabel = new Label
-        {
-            Text = AsciiTitle,
-            X = Pos.Center(),
-            Y = 1,
-            Width = Dim.Auto(),
-            Height = Dim.Auto()
-        };
+        // ASCII art title and divider
+        var titleLabel = new Label { Text = AsciiTitle, X = Pos.Center(), Y = 1, Width = Dim.Auto(), Height = Dim.Auto() };
+        var divider = new Label { Text = "─────────────────────────────────────────", X = Pos.Center(), Y = Pos.Bottom(titleLabel), Width = Dim.Auto(), Height = 1 };
 
-        var divider = new Label
-        {
-            Text = "─────────────────────────────────────────",
-            X = Pos.Center(),
-            Y = Pos.Bottom(titleLabel),
-            Width = Dim.Auto(),
-            Height = 1
-        };
+        // Main menu buttons — vertically stacked below divider
+        var newGameBtn = new Button { Text = "  New Game  ", X = Pos.Center(), Y = Pos.Bottom(divider) + 2, IsDefault = true, ColorScheme = NavigationHelper.ButtonScheme };
+        var loadGameBtn = new Button { Text = " Load Game  ", X = Pos.Center(), Y = Pos.Bottom(newGameBtn) + 1, ColorScheme = NavigationHelper.ButtonScheme };
+        var optionsBtn = new Button { Text = "  Options   ", X = Pos.Center(), Y = Pos.Bottom(loadGameBtn) + 1, ColorScheme = NavigationHelper.ButtonScheme };
+        var exitBtn = new Button { Text = "    Exit    ", X = Pos.Center(), Y = Pos.Bottom(optionsBtn) + 1, ColorScheme = NavigationHelper.ButtonScheme };
 
-        var newGameBtn = new Button
-        {
-            Text = "  New Game  ",
-            X = Pos.Center(),
-            Y = Pos.Bottom(divider) + 2,
-            IsDefault = true
-        };
+        // Button handlers — each navigates to a screen or exits
+        newGameBtn.Accepting += (s, e) => { DifficultyScreen.Show(mainWindow); e.Cancel = true; };
+        loadGameBtn.Accepting += (s, e) => { MessageBox.Query("Load Game", "No save data found.", "OK"); e.Cancel = true; };
+        optionsBtn.Accepting += (s, e) => { OptionsScreen.Show(mainWindow); e.Cancel = true; };
+        exitBtn.Accepting += (s, e) => { Application.RequestStop(); e.Cancel = true; };
 
-        var loadGameBtn = new Button
-        {
-            Text = " Load Game  ",
-            X = Pos.Center(),
-            Y = Pos.Bottom(newGameBtn) + 1
-        };
-
-        var optionsBtn = new Button
-        {
-            Text = "  Options   ",
-            X = Pos.Center(),
-            Y = Pos.Bottom(loadGameBtn) + 1
-        };
-
-        var exitBtn = new Button
-        {
-            Text = "    Exit    ",
-            X = Pos.Center(),
-            Y = Pos.Bottom(optionsBtn) + 1
-        };
-
-        newGameBtn.Accepting += (s, e) =>
-        {
-            DifficultyScreen.Show(mainWindow);
-            e.Cancel = true;
-        };
-
-        loadGameBtn.Accepting += (s, e) =>
-        {
-            MessageBox.Query("Load Game", "No save data found.", "OK");
-            e.Cancel = true;
-        };
-
-        optionsBtn.Accepting += (s, e) =>
-        {
-            OptionsScreen.Show(mainWindow);
-            e.Cancel = true;
-        };
-
-        exitBtn.Accepting += (s, e) =>
-        {
-            Application.RequestStop();
-            e.Cancel = true;
-        };
-
-        var creditsDivider = new Label
-        {
-            Text = "· · · · · · · · · · · · · · · · · · · ·",
-            X = Pos.Center(),
-            Y = Pos.AnchorEnd(4),
-            Width = Dim.Auto(),
-            Height = 1
-        };
-
-        var creditsLabel = new Label
-        {
-            Text = "~ crafted by NoDice99 & Mixzpai ~",
-            X = Pos.Center(),
-            Y = Pos.AnchorEnd(3),
-            Width = Dim.Auto(),
-            Height = 1
-        };
-
-        var creditsTagline = new Label
-        {
-            Text = "« a fan-made tribute to Sword Art Online »",
-            X = Pos.Center(),
-            Y = Pos.AnchorEnd(2),
-            Width = Dim.Auto(),
-            Height = 1
-        };
+        // Credits — pinned to bottom of screen
+        var creditsDivider = new Label { Text = "· · · · · · · · · · · · · · · · · · · ·", X = Pos.Center(), Y = Pos.AnchorEnd(4), Width = Dim.Auto(), Height = 1 };
+        var creditsLabel = new Label { Text = "~ crafted by NoDice99 & Mixzpai ~", X = Pos.Center(), Y = Pos.AnchorEnd(3), Width = Dim.Auto(), Height = 1 };
+        var creditsTagline = new Label { Text = "« a fan-made tribute to Sword Art Online »", X = Pos.Center(), Y = Pos.AnchorEnd(2), Width = Dim.Auto(), Height = 1 };
 
         mainWindow.Add(titleLabel, divider, newGameBtn, loadGameBtn, optionsBtn, exitBtn,
             creditsDivider, creditsLabel, creditsTagline);
         NavigationHelper.EnableGameNavigation(mainWindow);
         newGameBtn.SetFocus();
+        DebugLogger.EndTimer("TitleScreen.Show", sw);
     }
 }
