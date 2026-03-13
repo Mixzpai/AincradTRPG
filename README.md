@@ -20,7 +20,8 @@ A text-based RPG game inspired by the world of Sword Art Online's Aincrad. Built
 - Terminal GUIv2 installed
 
 ### Running the Game
-- In development...
+- Clone the repository and unzip contents.
+- execute **dotnet run** on the SAOTRPG folder to build the application.
 
 ### Future Plans
 - Reconstruct class heirarchy for entities within the game (player, monster, npc, etc...).
