@@ -1,3 +1,8 @@
+using Inventory.Core;
+using YourGame.Items;
+using YourGame.Items.Consumables;
+using EquipmentItem = YourGame.Items.Equipment.Equipment;
+
 namespace Inventory.Events;
 
 public class InventoryEvents
@@ -15,10 +20,10 @@ public class InventoryEvents
     internal void RaiseItemRemoved(BaseItem item)
         => ItemRemoved?.Invoke(this, new ItemEventArgs(item));
 
-    internal void RaiseItemEquipped(Equipment equipment, EquipmentSlot slot)
+    internal void RaiseItemEquipped(EquipmentItem equipment, EquipmentSlot slot)
         => ItemEquipped?.Invoke(this, new EquipmentEventArgs(equipment, slot));
 
-    internal void RaiseItemUnequipped(Equipment equipment, EquipmentSlot slot)
+    internal void RaiseItemUnequipped(EquipmentItem equipment, EquipmentSlot slot)
         => ItemUnequipped?.Invoke(this, new EquipmentEventArgs(equipment, slot));
 
     internal void RaiseConsumableUsed(Consumable consumable)

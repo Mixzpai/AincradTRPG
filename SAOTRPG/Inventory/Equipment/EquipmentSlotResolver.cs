@@ -1,4 +1,5 @@
 using Inventory.Core;
+using EquipmentItem = YourGame.Items.Equipment.Equipment;
 
 namespace Inventory.Equipment;
 
@@ -11,7 +12,7 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterDefaultMappings();
     }
 
-    public EquipmentSlot? ResolveSlot(global::Equipment equipment)
+    public EquipmentSlot? ResolveSlot(EquipmentItem equipment)
     {
         if (string.IsNullOrWhiteSpace(equipment.EquipmentType))
             return null;

@@ -1,0 +1,5 @@
+public class WorldSpawn : NPC
+{
+    /****************************************************************************************/
+    // Basic world character - background NPCs
+}

@@ -1,52 +1,38 @@
-﻿using System;
+using Terminal.Gui;
+using SAOTRPG.UI;
 
-
-namespace REDACTED_PROJECT_NAME
+namespace SAOTRPG
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            //Test Player Creation
-            Player PlayerInstance = new Player();
-            PlayerInstance = Player.CreateNewPlayer();
+            Application.Init();
 
-            Console.WriteLine();
-            PlayerInstance.DisplayPlayerStats();
-
-            Console.WriteLine();
-            PlayerInstance.SpendSkillPoints();
-
-            Console.WriteLine();
-            PlayerInstance.DisplayPlayerStats();
-
-            Console.WriteLine();
-
-
-            // Test monster
-            Console.WriteLine();
-            BossMonster illfang = new BossMonster();
-
-            Console.WriteLine($"<<{illfang.Name}>> Encountered!");
-            Console.WriteLine($"| LVL:{illfang.Level} | HP:({illfang.MaxHealth}/{illfang.CurrentHealth}) | " +
-                $"STR:{illfang.Strength} | END:{illfang.Endurance} | DEX:{illfang.Dexterity} | AGI:{illfang.Agility} | INT:{illfang.Intelligence} |");
-            Console.WriteLine();
-
-            while (!illfang.IsDefeated)
+            var blackScheme = new ColorScheme
             {
-                int damage = PlayerInstance.AttackMonster(illfang);
-                Console.WriteLine($"{PlayerInstance.FirstName} attacked {illfang.Name} with {damage} damage...");
-                Console.WriteLine();
+                Normal = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black),
+                Focus = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
+                HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
+                HotFocus = new Terminal.Gui.Attribute(Color.White, Color.Black),
+                Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
+            };
 
-                var reward = illfang.TakeDamage(damage);
-                Console.WriteLine();
-                
-                if (illfang.IsDefeated && reward != null)
-                {
-                    PlayerInstance.GainExperience(reward.Experience);
-                    break;
-                }
-            }
+            var mainWindow = new Window
+            {
+                Title = "Aincrad TRPG",
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill(),
+                Height = Dim.Fill(),
+                ColorScheme = blackScheme
+            };
+
+            TitleScreen.Show(mainWindow);
+
+            Application.Run(mainWindow);
+            mainWindow.Dispose();
+            Application.Shutdown();
         }
     }
 }

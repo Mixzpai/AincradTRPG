@@ -1,6 +1,9 @@
 using Inventory.Equipment;
 using Inventory.Events;
 using Inventory.Logging;
+using YourGame.Items;
+using YourGame.Items.Consumables;
+using EquipmentItem = YourGame.Items.Equipment.Equipment;
 
 namespace Inventory.Core;
 
@@ -11,7 +14,7 @@ public class Inventory
 {
     private readonly int _maxSlots;
     private readonly List<BaseItem> _items = [];
-    private readonly Dictionary<EquipmentSlot, global::Equipment?> _equippedItems = [];
+    private readonly Dictionary<EquipmentSlot, EquipmentItem?> _equippedItems = [];
 
     private readonly IInventoryLogger _logger;
     private readonly IEquipmentSlotResolver _slotResolver;
@@ -88,7 +91,7 @@ public class Inventory
         return false;
     }
 
-    public bool Equip(global::Equipment equipment, Player player)
+    public bool Equip(EquipmentItem equipment, Player player)
     {
         if (player.Level < equipment.RequiredLevel)
         {
@@ -142,7 +145,7 @@ public class Inventory
         return true;
     }
 
-    public global::Equipment? GetEquipped(EquipmentSlot slot) => _equippedItems[slot];
+    public EquipmentItem? GetEquipped(EquipmentSlot slot) => _equippedItems[slot];
 
     public bool UseConsumable(Consumable consumable, Player player)
     {

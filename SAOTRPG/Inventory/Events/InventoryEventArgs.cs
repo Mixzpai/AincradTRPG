@@ -1,4 +1,7 @@
 using Inventory.Core;
+using YourGame.Items;
+using YourGame.Items.Consumables;
+using EquipmentItem = YourGame.Items.Equipment.Equipment;
 
 namespace Inventory.Events;
 
@@ -10,9 +13,9 @@ public class ItemEventArgs : EventArgs
 
 public class EquipmentEventArgs : EventArgs
 {
-    public Equipment Equipment { get; }
+    public EquipmentItem Equipment { get; }
     public EquipmentSlot Slot { get; }
-    public EquipmentEventArgs(Equipment equipment, EquipmentSlot slot)
+    public EquipmentEventArgs(EquipmentItem equipment, EquipmentSlot slot)
     {
         Equipment = equipment;
         Slot = slot;

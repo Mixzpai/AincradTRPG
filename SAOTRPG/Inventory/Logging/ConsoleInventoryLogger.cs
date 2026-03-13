@@ -1,4 +1,7 @@
 using Inventory.Core;
+using YourGame.Items;
+using YourGame.Items.Consumables;
+using EquipmentItem = YourGame.Items.Equipment.Equipment;
 
 namespace Inventory.Logging;
 
@@ -10,10 +13,10 @@ public class ConsoleInventoryLogger : IInventoryLogger
     public void LogItemRemoved(BaseItem item)
         => Console.WriteLine($"Removed {item.Name} from inventory.");
 
-    public void LogItemEquipped(Equipment equipment, EquipmentSlot slot)
+    public void LogItemEquipped(EquipmentItem equipment, EquipmentSlot slot)
         => Console.WriteLine($"Equipped {equipment.Name} to {slot} slot.");
 
-    public void LogItemUnequipped(Equipment equipment, EquipmentSlot slot)
+    public void LogItemUnequipped(EquipmentItem equipment, EquipmentSlot slot)
         => Console.WriteLine($"Unequipped {equipment.Name} from {slot} slot.");
 
     public void LogItemUsed(Consumable consumable, string effectDescription)
