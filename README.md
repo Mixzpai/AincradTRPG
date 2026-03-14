@@ -1,11 +1,6 @@
   AINCRAD TRPG — Project Documentation
   SAO-Themed Turn-Based ASCII Roguelike
 
-  Engine:     C# / .NET 8.0 Console Application
-  UI:         Terminal.Gui v2.0.0 (TUI framework)
-  Platform:   Windows (with Win32 window sizing)
-  Dependency: Terminal.Gui 2.0.0 (sole NuGet package)
-
   1. CORE SYSTEMS BREAKDOWN
 
   TURN LOOP
