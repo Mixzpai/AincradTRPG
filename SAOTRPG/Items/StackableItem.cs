@@ -9,6 +9,15 @@ public abstract class StackableItem : BaseItem
     public int MaxStacks { get; set; }
 
     /// <summary>
+    /// Sets the quantity and returns this item for fluent chaining.
+    /// </summary>
+    public T WithQuantity<T>(int quantity) where T : StackableItem
+    {
+        Quantity = quantity;
+        return (T)this;
+    }
+
+    /// <summary>
     /// Stacks another item of the same type onto this one.
     /// </summary>
     /// <returns>Remaining quantity that couldn't be stacked.</returns>

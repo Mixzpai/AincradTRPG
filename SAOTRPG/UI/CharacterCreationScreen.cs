@@ -59,48 +59,108 @@ public static class CharacterCreationScreen
 
         var header = new Label { Text = "=== Allocate Skill Points ===", X = Pos.Center(), Y = 1, Width = Dim.Auto(), Height = 1 };
 
-        // Left panel — live stats preview
-        var statsView = new TextView { X = 1, Y = 3, Width = 35, Height = 20, ReadOnly = true, Text = player.GetStatsDisplay() };
+        // Left panel — live stats preview (tall enough for full GetStatsDisplay output)
+        var statsView = new TextView { X = 1, Y = 3, Width = 40, Height = 18, ReadOnly = true, Text = player.GetStatsDisplay() };
 
-        // Right panel — stat selector, points input, action buttons
-        var statLabel = new Label { Text = "Stat:", X = 38, Y = 4, Width = 8, Height = 1 };
+        // Right panel — per-stat +/- buttons with pending point counts
         var stats = new string[] { "Vitality", "Strength", "Endurance", "Dexterity", "Agility", "Intelligence" };
-        var statRadio = new RadioGroup { X = 38, Y = 5, RadioLabels = stats, Width = 20, Height = 6 };
+        var pending = new int[stats.Length]; // pending points queued per stat
+        var pendingLabels = new Label[stats.Length];
 
-        var pointsLabel = new Label { Text = "Points:", X = 38, Y = 12, Width = 10, Height = 1 };
-        var pointsField = new TextField { Text = "1", X = 49, Y = 12, Width = 8, Height = 1 };
+        int startY = 3;
+        int colX = 44;
 
-        var allocateBtn = new Button { Text = "  Allocate  ", X = 38, Y = 14, ColorScheme = NavigationHelper.ButtonScheme };
-        var doneBtn = new Button { Text = "  Start Game  ", X = 38, Y = 16, IsDefault = true, ColorScheme = NavigationHelper.ButtonScheme };
+        // Track total pending so we can't exceed available points
+        int TotalPending() { int sum = 0; foreach (var p in pending) sum += p; return sum; }
+
+        void RefreshPendingDisplay()
+        {
+            for (int i = 0; i < stats.Length; i++)
+                pendingLabels[i].Text = pending[i] > 0 ? $"+{pending[i]}" : " 0";
+        }
+
+        for (int i = 0; i < stats.Length; i++)
+        {
+            int row = startY + i * 2;
+            int idx = i; // capture for closures
+
+            var nameLabel = new Label { Text = $"{stats[i]}:", X = colX, Y = row, Width = 14, Height = 1 };
+
+            var minusBtn = new Button { Text = " - ", X = colX + 14, Y = row, ColorScheme = NavigationHelper.ButtonScheme };
+            pendingLabels[i] = new Label { Text = " 0", X = Pos.Right(minusBtn) + 1, Y = row, Width = 4, Height = 1 };
+            var plusBtn = new Button { Text = " + ", X = Pos.Right(pendingLabels[i]) + 1, Y = row, ColorScheme = NavigationHelper.ButtonScheme };
+
+            minusBtn.Accepting += (s, e) =>
+            {
+                e.Cancel = true;
+                if (pending[idx] > 0)
+                {
+                    pending[idx]--;
+                    RefreshPendingDisplay();
+                }
+            };
+
+            plusBtn.Accepting += (s, e) =>
+            {
+                e.Cancel = true;
+                if (TotalPending() < player.SkillPoints)
+                {
+                    pending[idx]++;
+                    RefreshPendingDisplay();
+                }
+            };
+
+            mainWindow.Add(nameLabel, minusBtn, pendingLabels[i], plusBtn);
+        }
+
+        int controlsY = startY + stats.Length * 2 + 1;
+
+        var allocateBtn = new Button { Text = "  Allocate  ", X = colX, Y = controlsY, ColorScheme = NavigationHelper.ButtonScheme };
+        var resetBtn = new Button { Text = "  Reset  ", X = Pos.Right(allocateBtn) + 2, Y = controlsY, ColorScheme = NavigationHelper.ButtonScheme };
+        var doneBtn = new Button { Text = "  Start Game  ", X = colX, Y = controlsY + 2, IsDefault = true, ColorScheme = NavigationHelper.ButtonScheme };
 
         // Feedback label for allocation results
-        var messageLabel = new Label { Text = "", X = 38, Y = 18, Width = 35, Height = 2 };
+        var messageLabel = new Label { Text = "", X = colX, Y = controlsY + 4, Width = 35, Height = 2 };
 
-        // Spend points on selected stat, refresh stats preview
+        // Commit all pending points at once
         allocateBtn.Accepting += (s, e) =>
         {
             e.Cancel = true;
-            var pointsText = pointsField.Text?.Trim() ?? "";
+            if (TotalPending() == 0)
+            { messageLabel.Text = "No points queued."; return; }
 
-            if (!int.TryParse(pointsText, out int points) || points <= 0)
-            { messageLabel.Text = "Enter a valid number."; return; }
-
-            var selectedStat = stats[statRadio.SelectedItem];
-            if (player.SpendSkillPoints(selectedStat, points))
+            var results = new System.Text.StringBuilder();
+            for (int i = 0; i < stats.Length; i++)
             {
-                statsView.Text = player.GetStatsDisplay();
-                messageLabel.Text = $"+{points} {selectedStat}!";
+                if (pending[i] <= 0) continue;
+                if (player.SpendSkillPoints(stats[i], pending[i]))
+                    results.Append($"+{pending[i]} {stats[i]}  ");
+                else
+                    results.Append($"{stats[i]}: not enough pts  ");
+                pending[i] = 0;
             }
-            else
-                messageLabel.Text = "Not enough points!";
+
+            RefreshPendingDisplay();
+            statsView.Text = player.GetStatsDisplay();
+            messageLabel.Text = results.ToString();
+        };
+
+        // Reset — restore the same player's stats to base and refund all skill points
+        resetBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            player.ResetStatAllocation();
+            for (int i = 0; i < pending.Length; i++)
+                pending[i] = 0;
+            RefreshPendingDisplay();
+            statsView.Text = player.GetStatsDisplay();
+            messageLabel.Text = "Stats reset! Points refunded.";
         };
 
         // Transition to game screen with the configured player
         doneBtn.Accepting += (s, e) => { GameScreen.Show(mainWindow, player); e.Cancel = true; };
 
-        mainWindow.Add(header, statsView, statLabel, statRadio, pointsLabel,
-            pointsField, allocateBtn, doneBtn, messageLabel);
-        statRadio.SetFocus();
+        mainWindow.Add(header, statsView, allocateBtn, resetBtn, doneBtn, messageLabel);
         DebugLogger.EndTimer("SkillAllocation.Show", sw);
     }
 }

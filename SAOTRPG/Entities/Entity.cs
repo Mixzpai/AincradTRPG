@@ -1,4 +1,5 @@
 using SAOTRPG.UI;
+using SAOTRPG.Items;
 
 namespace SAOTRPG.Entities
 {
@@ -11,7 +12,7 @@ namespace SAOTRPG.Entities
 
         public int Level { get; set; } = 1;
         public int CurrentHealth { get; set; }
-        public int MaxHealth { get; set; }
+        public virtual int MaxHealth { get; set; }
 
         /****************************************************************************************/
         // Base Stats
@@ -24,17 +25,17 @@ namespace SAOTRPG.Entities
 
         /****************************************************************************************/
         // Derived Combat Stats
-        public int CriticalRate => BaseCriticalRate + (Dexterity / 2);
-        public int CriticalHitDamage => BaseCriticalHitDamage + Dexterity;
+        public virtual int CriticalRate => BaseCriticalRate + (Dexterity / 2);
+        public virtual int CriticalHitDamage => BaseCriticalHitDamage + Dexterity;
 
         /****************************************************************************************/
         // Entity Stats
-        public int Strength { get; set; }
-        public int Vitality { get; set; }
-        public int Endurance { get; set; }
-        public int Dexterity { get; set; }
-        public int Agility { get; set; }
-        public int Intelligence { get; set; }
+        public virtual int Strength { get; set; }
+        public virtual int Vitality { get; set; }
+        public virtual int Endurance { get; set; }
+        public virtual int Dexterity { get; set; }
+        public virtual int Agility { get; set; }
+        public virtual int Intelligence { get; set; }
 
         /****************************************************************************************/
         // State

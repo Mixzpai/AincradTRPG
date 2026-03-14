@@ -210,4 +210,10 @@ public class Inventory
             .Where(effect => effect.Type == statType)
             .Sum(effect => effect.Potency);
     }
+
+    public int GetEquippedWeaponDamage()
+    {
+        var weapon = _equippedItems[EquipmentSlot.Weapon] as Weapon;
+        return weapon?.BaseDamage ?? 0;
+    }
 }

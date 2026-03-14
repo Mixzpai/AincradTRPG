@@ -31,7 +31,8 @@ public static class GameScreen
         var actionBar = new FrameView { Title = "Actions", X = 0, Y = Pos.AnchorEnd(3), Width = Dim.Fill(), Height = 3 };
         var attackBtn = new Button { Text = " Attack ", X = 1, Y = 0, IsDefault = true, ColorScheme = NavigationHelper.ButtonScheme };
         var inventoryBtn = new Button { Text = " Inventory ", X = Pos.Right(attackBtn) + 2, Y = 0, ColorScheme = NavigationHelper.ButtonScheme };
-        actionBar.Add(attackBtn, inventoryBtn);
+        var skillsBtn = new Button { Text = " Skills ", X = Pos.Right(inventoryBtn) + 2, Y = 0, ColorScheme = NavigationHelper.ButtonScheme };
+        actionBar.Add(attackBtn, inventoryBtn, skillsBtn);
 
         // Spawn encounter — currently hardcoded to Illfang
         var currentMonster = new IllfangTheKobaldLord();
@@ -69,6 +70,9 @@ public static class GameScreen
 
         // Inventory handler — opens modal dialog
         inventoryBtn.Accepting += (s, e) => { ShowInventoryDialog(player); e.Cancel = true; };
+
+        // Skills handler — opens modal dialog, refreshes stats on close
+        skillsBtn.Accepting += (s, e) => { ShowSkillPointDialog(player); Refresh(); e.Cancel = true; };
 
         mainWindow.Add(combatLogFrame, playerStatsFrame, enemyStatsFrame, actionBar);
         NavigationHelper.EnableGameNavigation(actionBar);
@@ -113,6 +117,118 @@ public static class GameScreen
         closeBtn.Accepting += (s, e) => { Application.RequestStop(); e.Cancel = true; };
 
         dialog.Add(inventoryText);
+        dialog.AddButton(closeBtn);
+        Application.Run(dialog);
+        dialog.Dispose();
+    }
+
+    // Modal skill point allocation dialog — +/- buttons per stat with allocate and reset
+    private static void ShowSkillPointDialog(Player player)
+    {
+        var dialog = new Dialog { Title = "Allocate Skill Points", Width = 80, Height = 30 };
+
+        var pointsAvailableLabel = new Label { Text = $"Skill Points Available: {player.SkillPoints}", X = 1, Y = 1, Width = Dim.Auto(), Height = 1 };
+
+        // Live stats preview — wide and tall enough for full GetStatsDisplay output
+        var statsView = new TextView { X = 1, Y = 3, Width = 38, Height = 18, ReadOnly = true, Text = player.GetStatsDisplay() };
+
+        // Per-stat +/- buttons with pending point counts
+        var stats = new string[] { "Vitality", "Strength", "Endurance", "Dexterity", "Agility", "Intelligence" };
+        var pending = new int[stats.Length];
+        var pendingLabels = new Label[stats.Length];
+
+        int startY = 3;
+        int colX = 42;
+
+        int TotalPending() { int sum = 0; foreach (var p in pending) sum += p; return sum; }
+
+        void RefreshPendingDisplay()
+        {
+            for (int i = 0; i < stats.Length; i++)
+                pendingLabels[i].Text = pending[i] > 0 ? $"+{pending[i]}" : " 0";
+            pointsAvailableLabel.Text = $"Skill Points Available: {player.SkillPoints} (Queued: {TotalPending()})";
+        }
+
+        for (int i = 0; i < stats.Length; i++)
+        {
+            int row = startY + i * 2;
+            int idx = i;
+
+            var nameLabel = new Label { Text = $"{stats[i]}:", X = colX, Y = row, Width = 14, Height = 1 };
+
+            var minusBtn = new Button { Text = " - ", X = colX + 14, Y = row, ColorScheme = NavigationHelper.ButtonScheme };
+            pendingLabels[i] = new Label { Text = " 0", X = Pos.Right(minusBtn) + 1, Y = row, Width = 4, Height = 1 };
+            var plusBtn = new Button { Text = " + ", X = Pos.Right(pendingLabels[i]) + 1, Y = row, ColorScheme = NavigationHelper.ButtonScheme };
+
+            minusBtn.Accepting += (s, e) =>
+            {
+                e.Cancel = true;
+                if (pending[idx] > 0)
+                {
+                    pending[idx]--;
+                    RefreshPendingDisplay();
+                }
+            };
+
+            plusBtn.Accepting += (s, e) =>
+            {
+                e.Cancel = true;
+                if (TotalPending() < player.SkillPoints)
+                {
+                    pending[idx]++;
+                    RefreshPendingDisplay();
+                }
+            };
+
+            dialog.Add(nameLabel, minusBtn, pendingLabels[i], plusBtn);
+        }
+
+        int controlsY = startY + stats.Length * 2 + 1;
+
+        var allocateBtn = new Button { Text = " Allocate ", X = colX, Y = controlsY, ColorScheme = NavigationHelper.ButtonScheme };
+        var resetBtn = new Button { Text = " Reset ", X = Pos.Right(allocateBtn) + 2, Y = controlsY, ColorScheme = NavigationHelper.ButtonScheme };
+
+        var messageLabel = new Label { Text = "", X = colX, Y = controlsY + 2, Width = 35, Height = 2 };
+
+        // Commit all pending points at once
+        allocateBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            if (TotalPending() == 0)
+            { messageLabel.Text = "No points queued."; return; }
+
+            var results = new System.Text.StringBuilder();
+            for (int i = 0; i < stats.Length; i++)
+            {
+                if (pending[i] <= 0) continue;
+                if (player.SpendSkillPoints(stats[i], pending[i]))
+                    results.Append($"+{pending[i]} {stats[i]}  ");
+                else
+                    results.Append($"{stats[i]}: not enough pts  ");
+                pending[i] = 0;
+            }
+
+            RefreshPendingDisplay();
+            statsView.Text = player.GetStatsDisplay();
+            messageLabel.Text = results.ToString();
+        };
+
+        // Reset — reclaim all allocated stat points back to available pool
+        resetBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            player.ResetStatAllocation();
+            for (int i = 0; i < pending.Length; i++)
+                pending[i] = 0;
+            RefreshPendingDisplay();
+            statsView.Text = player.GetStatsDisplay();
+            messageLabel.Text = "Stats reset! Points refunded.";
+        };
+
+        var closeBtn = new Button { Text = " Close ", IsDefault = true, ColorScheme = NavigationHelper.ButtonScheme };
+        closeBtn.Accepting += (s, e) => { Application.RequestStop(); e.Cancel = true; };
+
+        dialog.Add(pointsAvailableLabel, statsView, allocateBtn, resetBtn, messageLabel);
         dialog.AddButton(closeBtn);
         Application.Run(dialog);
         dialog.Dispose();

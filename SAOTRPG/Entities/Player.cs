@@ -27,7 +27,7 @@ namespace SAOTRPG.Entities
 
         /****************************************************************************************/
         // Health — computed from Vitality, overrides Entity's flat MaxHealth
-        public new int MaxHealth => 100 + (Vitality * 10);
+        public override int MaxHealth => 100 + (Vitality * 10);
 
         /****************************************************************************************/
         // Currency & Points
@@ -39,11 +39,55 @@ namespace SAOTRPG.Entities
         public PlayerInventory Inventory { get; private set; }
 
         /****************************************************************************************/
+        // Base Attribute Allocations (skill-point invested values)
+        private int _baseVitality;
+        private int _baseStrength;
+        private int _baseEndurance;
+        private int _baseDexterity;
+        private int _baseAgility;
+        private int _baseIntelligence;
+
+        /****************************************************************************************/
+        // Attributes — base allocation + equipment bonuses (overrides Entity members)
+        public override int Vitality
+        {
+            get => _baseVitality + Inventory.GetTotalEquipmentBonus(StatType.Vitality);
+            set => _baseVitality = value;
+        }
+        public override int Strength
+        {
+            get => _baseStrength + Inventory.GetTotalEquipmentBonus(StatType.Strength);
+            set => _baseStrength = value;
+        }
+        public override int Endurance
+        {
+            get => _baseEndurance + Inventory.GetTotalEquipmentBonus(StatType.Endurance);
+            set => _baseEndurance = value;
+        }
+        public override int Dexterity
+        {
+            get => _baseDexterity + Inventory.GetTotalEquipmentBonus(StatType.Dexterity);
+            set => _baseDexterity = value;
+        }
+        public override int Agility
+        {
+            get => _baseAgility + Inventory.GetTotalEquipmentBonus(StatType.Agility);
+            set => _baseAgility = value;
+        }
+        public override int Intelligence
+        {
+            get => _baseIntelligence + Inventory.GetTotalEquipmentBonus(StatType.Intelligence);
+            set => _baseIntelligence = value;
+        }
+
+        /****************************************************************************************/
         // Combat Stats — base + scaling + equipment
-        public int Attack => BaseAttack + (Strength * 2) + Inventory.GetTotalEquipmentBonus(StatType.Attack);
+        public int Attack => BaseAttack + (Strength * 2) + Inventory.GetEquippedWeaponDamage() + Inventory.GetTotalEquipmentBonus(StatType.Attack);
         public int Defense => BaseDefense + (Endurance * 2) + Inventory.GetTotalEquipmentBonus(StatType.Defense);
         public int Speed => BaseSpeed + (Agility * 2) + Inventory.GetTotalEquipmentBonus(StatType.Speed);
         public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
+        public override int CriticalRate => BaseCriticalRate + Dexterity;
+        public override int CriticalHitDamage => BaseCriticalHitDamage + (Dexterity * 2);
 
         /****************************************************************************************/
         // Factory
@@ -61,12 +105,17 @@ namespace SAOTRPG.Entities
                 ColOnHand = 1000,
                 SkillPoints = 10
             };
+
+            //
             player._log = log;
             player.Inventory = new PlayerInventory(logger: inventoryLogger);
             player.CurrentHealth = player.MaxHealth;
 
-            player.Inventory.AddItem(WeaponDefinitions.CreateIronSword());
-            player.Inventory.AddItem(PotionDefinitions.CreateHealthPotion());
+            // Equip starting gear
+            player.EquipItem(WeaponDefinitions.CreateIronSword());
+
+            // Initial items (Gift to player)
+            player.Inventory.AddItem(PotionDefinitions.CreateHealthPotion().WithQuantity<Potion>(5));
 
             return player;
         }
@@ -100,7 +149,7 @@ namespace SAOTRPG.Entities
             bool isCrit = Random.Shared.Next(0, 100) < CriticalRate;
             if (isCrit)
             {
-                damage += (int)CriticalHitDamage;
+                damage += CriticalHitDamage;
                 _log?.LogCombat("Critical Hit!");
             }
             _log?.LogCombat($"{FirstName} attacks {monster.Name} for {damage} damage.");
@@ -136,12 +185,12 @@ namespace SAOTRPG.Entities
 
             switch (statName.ToLower())
             {
-                case "vitality": Vitality += points; break;
-                case "strength": Strength += points; break;
-                case "endurance": Endurance += points; break;
-                case "dexterity": Dexterity += points; break;
-                case "agility": Agility += points; break;
-                case "intelligence": Intelligence += points; break;
+                case "vitality": _baseVitality += points; break;
+                case "strength": _baseStrength += points; break;
+                case "endurance": _baseEndurance += points; break;
+                case "dexterity": _baseDexterity += points; break;
+                case "agility": _baseAgility += points; break;
+                case "intelligence": _baseIntelligence += points; break;
                 default: return false;
             }
 
@@ -149,25 +198,49 @@ namespace SAOTRPG.Entities
             return true;
         }
 
+        /// <summary>
+        /// Resets all stat allocations — reclaims spent points from current base stats
+        /// back into SkillPoints. Works at any point in the game regardless of level.
+        /// </summary>
+        public void ResetStatAllocation()
+        {
+            // Sum all points currently invested in base stats
+            int spent = _baseVitality + _baseStrength + _baseEndurance + _baseDexterity + _baseAgility + _baseIntelligence;
+
+            // Refund spent points
+            SkillPoints += spent;
+
+            // Zero out all base stats
+            _baseVitality = 0;
+            _baseStrength = 0;
+            _baseEndurance = 0;
+            _baseDexterity = 0;
+            _baseAgility = 0;
+            _baseIntelligence = 0;
+
+            // Recalculate health with new MaxHealth (Vitality is now 0 + equipment)
+            CurrentHealth = MaxHealth;
+        }
+
         /****************************************************************************************/
         // Display
         public string GetStatsDisplay() =>
-$@"{FirstName} {LastName}
-Title: {Title}
-Level: {Level}
-EXP: {CurrentExperience}/{ExperienceRequired}
-HP: {CurrentHealth}/{MaxHealth}
-Col: {ColOnHand}
-Skill Points: {SkillPoints}
+                    $@"{FirstName} {LastName}
+                    Title: {Title}
+                    Level: {Level}
+                    EXP: {CurrentExperience}/{ExperienceRequired}
+                    HP: {CurrentHealth}/{MaxHealth}
+                    Col: {ColOnHand}
+                    Skill Points: {SkillPoints}
 
-── Combat ──
-ATK: {Attack}  DEF: {Defense}
-SPD: {Speed}  SDMG: {SkillDamage}
-CRIT: {CriticalRate}%  CDMG: +{CriticalHitDamage}
+                    ── Combat ──
+                    ATK: {Attack}  DEF: {Defense}
+                    SPD: {Speed}  SDMG: {SkillDamage}
+                    CRIT: {CriticalRate}%  CDMG: +{CriticalHitDamage}
 
-── Attributes ──
-VIT: {Vitality}  STR: {Strength}
-END: {Endurance}  DEX: {Dexterity}
-AGI: {Agility}  INT: {Intelligence}";
+                    ── Attributes ──
+                    VIT: {Vitality}  STR: {Strength}
+                    END: {Endurance}  DEX: {Dexterity}
+                    AGI: {Agility}  INT: {Intelligence}";
     }
 }
