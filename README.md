@@ -1,3 +1,6 @@
+  **SUPER EXPERIMENTAL PLAY AT OWN RISK**
+  
+  
   AINCRAD TRPG — Project Documentation
   SAO-Themed Turn-Based ASCII Roguelike
 
