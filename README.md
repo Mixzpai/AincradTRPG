@@ -1,16 +1,12 @@
-================================================================================
   AINCRAD TRPG — Project Documentation
   SAO-Themed Turn-Based ASCII Roguelike
-================================================================================
 
   Engine:     C# / .NET 8.0 Console Application
   UI:         Terminal.Gui v2.0.0 (TUI framework)
   Platform:   Windows (with Win32 window sizing)
   Dependency: Terminal.Gui 2.0.0 (sole NuGet package)
 
-================================================================================
   TABLE OF CONTENTS
-================================================================================
 
   1. Overview
   2. Folder Structure
@@ -22,9 +18,7 @@
   8. Expandability Guide
   9. Build & Run
 
-================================================================================
   1. OVERVIEW
-================================================================================
 
   AincradTRPG is a Sword Art Online-themed turn-based ASCII roguelike.
   The player creates a character, allocates stats, and ascends through
@@ -156,9 +150,7 @@ Core Gameplay:
     - Boss defeat fanfare with decorated log banner and stairs-open announcement
     - Player death message variety (5 dramatic lines)
 
-================================================================================
   2. FOLDER STRUCTURE
-================================================================================
 
   SAOTRPG/
   |
@@ -294,9 +286,8 @@ Core Gameplay:
           |-- MapEffects.cs              Static map rendering post-effects
           |-- StatusTagBuilder.cs         Compact status effect tag builder
 
-================================================================================
+
   3. ARCHITECTURE & DESIGN PATTERNS
-================================================================================
 
   EVENT-DRIVEN ARCHITECTURE
   -------------------------
@@ -353,9 +344,7 @@ Core Gameplay:
   CreateField()             Factory in CharacterCreationScreen for form fields.
   StatRow()                 Factory in DeathScreen for summary card rows.
 
-================================================================================
   4. FILE REFERENCE
-================================================================================
 
   74 source files organized into 6 top-level modules:
 
@@ -606,9 +595,7 @@ Core Gameplay:
                           GetExploredRoomGlow() — warm tint on explored rooms
                           GetAmbientSoundText() — flavor text near terrain
 
-================================================================================
   5. CORE SYSTEMS BREAKDOWN
-================================================================================
 
   TURN LOOP
   ---------
@@ -666,9 +653,7 @@ Core Gameplay:
   4. If HP < 20% of max: flee (move away from player)
   5. Otherwise: wander randomly
 
-================================================================================
   6. UI FRAMEWORK NOTES (Terminal.Gui v2)
-================================================================================
 
   Terminal.Gui v2 key concepts used in this project:
 
@@ -711,9 +696,7 @@ Core Gameplay:
   - ObservableCollection<T> with ListWrapper<T> for ListView
   - Manual refresh pattern: update data, call SetNeedsDraw()
 
-================================================================================
   7. DATA FLOW & EVENT WIRING
-================================================================================
 
   GAME STARTUP FLOW
   -----------------
@@ -763,9 +746,7 @@ Core Gameplay:
     ItemEquipped/Unequipped   -> TerminalGuiInventoryLogger -> GameLogView
     ConsumableUsed            -> TerminalGuiInventoryLogger -> GameLogView
 
-================================================================================
   8. EXPANDABILITY GUIDE
-================================================================================
 
   This section describes how to add common new features.
 
@@ -1102,9 +1083,7 @@ Core Gameplay:
   1. Add a ShopStock.Add(...) line in GenerateStock()
   2. Optionally gate behind a floor check (e.g. if (floor >= 3))
 
-================================================================================
   9. BUILD & RUN
-================================================================================
 
   REQUIREMENTS
   - .NET 8.0 SDK
