@@ -112,8 +112,11 @@ namespace SAOTRPG.Entities
             player.CurrentHealth = player.MaxHealth;
 
             // Equip starting gear
-            player.EquipItem(WeaponDefinitions.CreateIronSword());
-
+            player.EquipItem(WeaponDefinitions.CreateBronzeSword());
+            player.EquipItem(ArmorDefinitions.CreateLeatherChest());
+            player.EquipItem(ArmorDefinitions.CreateIronHelmet());
+            player.EquipItem(AccessoryDefinitions.CreateRingOfStrength());
+            
             // Initial items (Gift to player)
             player.Inventory.AddItem(PotionDefinitions.CreateHealthPotion().WithQuantity<Potion>(5));
 

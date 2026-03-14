@@ -8,6 +8,6 @@ namespace SAOTRPG.Items.Definitions.Weapons;
 /// </summary>
 public static class WeaponDefinitions
 {
-    public static Weapon CreateIronSword() => OneHandedSwordDefinitions.CreateBronzeSword();
+    public static Weapon CreateBronzeSword() => OneHandedSwordDefinitions.CreateBronzeSword();
     public static Weapon CreateSteelSword() => OneHandedSwordDefinitions.CreateSteelSword();
 }
