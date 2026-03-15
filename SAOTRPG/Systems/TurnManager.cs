@@ -169,6 +169,14 @@ public class TurnManager
     private int _lastSoundCueTurn = -99;
     private const int SoundCueCooldown = 5;
 
+    // ── Play time tracking ──────────────────────────────────────
+    private DateTime _sessionStart = DateTime.Now;
+    private TimeSpan _priorPlayTime;
+    public TimeSpan TotalPlayTime => _priorPlayTime + (DateTime.Now - _sessionStart);
+
+    // ── Active save slot (for auto-save in AscendFloor) ──────────
+    public int ActiveSaveSlot { get; set; } = 1;
+
     // ── Floor recap tracking ─────────────────────────────────────
     private int _floorDamageTaken;
     private int _floorItemsFound;
@@ -239,6 +247,8 @@ public class TurnManager
 
         foreach (var kvp in save.WeaponKills)
             tm._weaponKills[kvp.Key] = kvp.Value;
+
+        tm._priorPlayTime = TimeSpan.FromSeconds(save.PlayTimeSeconds);
 
         return tm;
     }
@@ -862,7 +872,7 @@ public class TurnManager
         CurrentFloor++;
 
         // Auto-save checkpoint on floor transition
-        if (SaveManager.SaveGame(_player, this))
+        if (SaveManager.SaveGame(_player, this, ActiveSaveSlot))
             _log.LogSystem("  [Game saved]");
 
         // ── Victory — cleared all 100 floors of Aincrad ──

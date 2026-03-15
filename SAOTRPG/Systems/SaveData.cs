@@ -7,6 +7,7 @@ public class SaveData
 {
     public int SaveVersion { get; set; } = 1;
     public DateTime Timestamp { get; set; }
+    public long PlayTimeSeconds { get; set; }
 
     // ── Player identity ────────────────────────────────────────────
     public string FirstName { get; set; } = "";
@@ -69,4 +70,18 @@ public class ItemSaveData
     public int Durability { get; set; }
     public int? Quantity { get; set; }
     public string? FullItemJson { get; set; }
+}
+
+/// <summary>
+/// Lightweight summary for the save slot selection UI.
+/// </summary>
+public class SaveSlotSummary
+{
+    public string Name { get; set; } = "";
+    public int Level { get; set; }
+    public int Floor { get; set; }
+    public string Difficulty { get; set; } = "";
+    public bool IsHardcore { get; set; }
+    public DateTime Timestamp { get; set; }
+    public TimeSpan PlayTime { get; set; }
 }

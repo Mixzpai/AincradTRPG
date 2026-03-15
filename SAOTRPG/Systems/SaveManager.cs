@@ -12,14 +12,15 @@ namespace SAOTRPG.Systems;
 
 /// <summary>
 /// Handles saving/loading game state to JSON files.
-/// Save location: %LocalAppData%/AincradTRPG/save.json
+/// Supports 3 save slots: save_1.json, save_2.json, save_3.json
+/// Save location: %LocalAppData%/AincradTRPG/
 /// </summary>
 public static class SaveManager
 {
+    public const int MaxSlots = 3;
+
     private static readonly string SaveDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AincradTRPG");
-
-    private static readonly string SavePath = Path.Combine(SaveDir, "save.json");
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -27,11 +28,35 @@ public static class SaveManager
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    private static string SlotPath(int slot) => Path.Combine(SaveDir, $"save_{slot}.json");
+
+    // ── v1 migration — move old save.json → save_1.json ────────
+    static SaveManager()
+    {
+        try
+        {
+            string oldPath = Path.Combine(SaveDir, "save.json");
+            if (File.Exists(oldPath) && !File.Exists(SlotPath(1)))
+            {
+                Directory.CreateDirectory(SaveDir);
+                File.Move(oldPath, SlotPath(1));
+            }
+        }
+        catch { /* best-effort migration */ }
+    }
+
     // ── Public API ─────────────────────────────────────────────────
 
-    public static bool SaveExists() => File.Exists(SavePath);
+    public static bool SaveExists(int slot) => File.Exists(SlotPath(slot));
 
-    public static bool SaveGame(Player player, TurnManager turnManager)
+    public static bool AnySaveExists()
+    {
+        for (int i = 1; i <= MaxSlots; i++)
+            if (SaveExists(i)) return true;
+        return false;
+    }
+
+    public static bool SaveGame(Player player, TurnManager turnManager, int slot)
     {
         try
         {
@@ -41,9 +66,10 @@ public static class SaveManager
             string json = JsonSerializer.Serialize(data, JsonOpts);
 
             // Atomic write: write to .tmp then rename
-            string tmpPath = SavePath + ".tmp";
+            string path = SlotPath(slot);
+            string tmpPath = path + ".tmp";
             File.WriteAllText(tmpPath, json);
-            File.Move(tmpPath, SavePath, overwrite: true);
+            File.Move(tmpPath, path, overwrite: true);
 
             return true;
         }
@@ -54,12 +80,13 @@ public static class SaveManager
         }
     }
 
-    public static SaveData? LoadGame()
+    public static SaveData? LoadGame(int slot)
     {
         try
         {
-            if (!File.Exists(SavePath)) return null;
-            string json = File.ReadAllText(SavePath);
+            string path = SlotPath(slot);
+            if (!File.Exists(path)) return null;
+            string json = File.ReadAllText(path);
             return JsonSerializer.Deserialize<SaveData>(json, JsonOpts);
         }
         catch (Exception ex)
@@ -69,16 +96,53 @@ public static class SaveManager
         }
     }
 
-    public static void DeleteSave()
+    public static void DeleteSave(int slot)
     {
         try
         {
-            if (File.Exists(SavePath)) File.Delete(SavePath);
+            string path = SlotPath(slot);
+            if (File.Exists(path)) File.Delete(path);
         }
         catch (Exception ex)
         {
             DebugLogger.LogError("SaveManager.Delete", ex);
         }
+    }
+
+    /// <summary>
+    /// Returns lightweight summaries for all 3 slots. Null entries = empty slots.
+    /// </summary>
+    public static SaveSlotSummary?[] GetSlotSummaries()
+    {
+        var summaries = new SaveSlotSummary?[MaxSlots];
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            int slot = i + 1;
+            if (!SaveExists(slot)) continue;
+            try
+            {
+                string json = File.ReadAllText(SlotPath(slot));
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                string[] diffNames = { "Story", "Very Easy", "Easy", "Normal", "Hard", "Very Hard", "Masochist", "Unwinnable", "Debug" };
+                int diff = root.TryGetProperty("Difficulty", out var d) ? d.GetInt32() : 3;
+                string diffName = diff >= 0 && diff < diffNames.Length ? diffNames[diff] : "Normal";
+
+                summaries[i] = new SaveSlotSummary
+                {
+                    Name = (root.TryGetProperty("FirstName", out var fn) ? fn.GetString() : "???") ?? "???",
+                    Level = root.TryGetProperty("Level", out var lv) ? lv.GetInt32() : 1,
+                    Floor = root.TryGetProperty("CurrentFloor", out var fl) ? fl.GetInt32() : 1,
+                    Difficulty = diffName,
+                    IsHardcore = root.TryGetProperty("IsHardcore", out var hc) && hc.GetBoolean(),
+                    Timestamp = root.TryGetProperty("Timestamp", out var ts) ? ts.GetDateTime() : DateTime.MinValue,
+                    PlayTime = TimeSpan.FromSeconds(root.TryGetProperty("PlayTimeSeconds", out var pt) ? pt.GetInt64() : 0),
+                };
+            }
+            catch { /* corrupted save — skip */ }
+        }
+        return summaries;
     }
 
     // ── Build save data from live game state ───────────────────────
@@ -88,6 +152,7 @@ public static class SaveManager
         var data = new SaveData
         {
             Timestamp = DateTime.Now,
+            PlayTimeSeconds = (long)tm.TotalPlayTime.TotalSeconds,
 
             // Player identity
             FirstName = player.FirstName,
