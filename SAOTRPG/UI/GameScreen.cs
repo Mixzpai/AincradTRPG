@@ -35,7 +35,7 @@ public static class GameScreen
     private const int XpBarWidth = 10;
 
     public static void Show(Window mainWindow, Player player, int difficulty = 3, bool hardcore = false,
-        SaveData? saveData = null)
+        SaveData? saveData = null, int saveSlot = 1)
     {
         mainWindow.RemoveAll();
         var sw = DebugLogger.StartTimer("GameScreen.Show");
@@ -147,6 +147,7 @@ public static class GameScreen
         var turnManager = saveData != null
             ? TurnManager.LoadFromSave(saveData, map, player, gameLog)
             : new TurnManager(map, player, gameLog, startFloor, difficulty, hardcore);
+        turnManager.ActiveSaveSlot = saveSlot;
 
         // ── Auto-save indicator — flash "[Saved]" for a few turns after floor change ──
         int saveFlashTurns = 0;
@@ -295,7 +296,7 @@ public static class GameScreen
         {
             // Hardcore permadeath — delete save on death
             if (turnManager.IsHardcore)
-                SaveManager.DeleteSave();
+                SaveManager.DeleteSave(saveSlot);
 
             Application.Invoke(() => DeathScreen.Show(
                 mainWindow, player, turnManager.CurrentFloor,
@@ -425,7 +426,7 @@ public static class GameScreen
         // Quick save (F5)
         mapView.SaveRequested += () =>
         {
-            if (SaveManager.SaveGame(player, turnManager))
+            if (SaveManager.SaveGame(player, turnManager, saveSlot))
             {
                 gameLog.LogSystem("[Game saved]");
                 saveFlashTurns = 5;
@@ -562,12 +563,12 @@ public static class GameScreen
     /// Launches the game screen from a loaded save file.
     /// Rebuilds player from save data, then delegates to Show with save context.
     /// </summary>
-    public static void ShowFromSave(Window mainWindow, SaveData save)
+    public static void ShowFromSave(Window mainWindow, SaveData save, int slot)
     {
         // Temporary log for loading phase — replaced by Show's GameLogView
         var tempLog = new StringGameLog(new System.Text.StringBuilder());
         var player = Player.LoadFromSave(save, tempLog);
-        Show(mainWindow, player, save.Difficulty, save.IsHardcore, saveData: save);
+        Show(mainWindow, player, save.Difficulty, save.IsHardcore, saveData: save, saveSlot: slot);
     }
 
     // ══════════════════════════════════════════════════════════════════

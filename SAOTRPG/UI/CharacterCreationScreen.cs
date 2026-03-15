@@ -218,11 +218,13 @@ public static class CharacterCreationScreen
             }
         };
 
-        // ── Start game ──────────────────────────────────────────────
+        // ── Start game — pick save slot first ──────────────────────
         doneBtn.Accepting += (s, e) =>
         {
-            GameScreen.Show(mainWindow, player, difficulty, hardcore);
             e.Cancel = true;
+            int slot = Dialogs.SaveSlotDialog.ShowNewGameSlotPicker();
+            if (slot < 1) return; // cancelled
+            GameScreen.Show(mainWindow, player, difficulty, hardcore, saveSlot: slot);
         };
 
         // ── Assemble ────────────────────────────────────────────────

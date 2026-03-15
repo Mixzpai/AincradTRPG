@@ -157,7 +157,7 @@ public static class TitleScreen
 
         // Menu buttons — evenly spaced with separators between
         var newGameBtn  = CreateMenuButton("    New Game     ", 0, isDefault: true);
-        var loadGameBtn = CreateMenuButton(SaveManager.SaveExists() ? "   Continue Game  " : "    Load Game    ", 2);
+        var loadGameBtn = CreateMenuButton("    Load Game    ", 2);
         var optionsBtn  = CreateMenuButton("     Options     ", 4);
         var exitBtn     = CreateMenuButton("      Exit       ", 6);
 
@@ -181,19 +181,15 @@ public static class TitleScreen
         newGameBtn.Accepting  += (s, e) => { DifficultyScreen.Show(mainWindow); e.Cancel = true; };
         loadGameBtn.Accepting += (s, e) =>
         {
-            if (SaveManager.SaveExists())
-            {
-                var save = SaveManager.LoadGame();
-                if (save != null)
-                    GameScreen.ShowFromSave(mainWindow, save);
-                else
-                    MessageBox.Query("Load Game", "Save file is corrupted.", "OK");
-            }
-            else
+            e.Cancel = true;
+            if (!SaveManager.AnySaveExists())
             {
                 MessageBox.Query("Load Game", "No save data found.", "OK");
+                return;
             }
-            e.Cancel = true;
+            var result = Dialogs.SaveSlotDialog.ShowLoad();
+            if (result.HasValue)
+                GameScreen.ShowFromSave(mainWindow, result.Value.Data, result.Value.Slot);
         };
         optionsBtn.Accepting  += (s, e) => { OptionsScreen.Show(mainWindow); e.Cancel = true; };
         exitBtn.Accepting     += (s, e) => { Application.RequestStop(); e.Cancel = true; };
