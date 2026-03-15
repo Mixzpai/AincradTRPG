@@ -6,8 +6,8 @@ namespace SAOTRPG.Entities
     {
         /****************************************************************************************/
         // Monster-Specific Stats
-        public int ExperienceYield { get; protected set; }
-        public int ColYield { get; protected set; }
+        public int ExperienceYield { get; set; }
+        public int ColYield { get; set; }
 
         /****************************************************************************************/
         // Result structure for when monster is defeated

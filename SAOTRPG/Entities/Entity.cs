@@ -1,3 +1,4 @@
+using Terminal.Gui;
 using SAOTRPG.UI;
 
 namespace SAOTRPG.Entities
@@ -8,6 +9,13 @@ namespace SAOTRPG.Entities
         // General Entity Details
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
+
+        /****************************************************************************************/
+        // Map Position & Rendering
+        public int X { get; set; }
+        public int Y { get; set; }
+        public virtual char Symbol { get; protected set; } = '?';
+        public virtual Color SymbolColor { get; protected set; } = Color.White;
 
         public int Level { get; set; } = 1;
         public int CurrentHealth { get; set; }

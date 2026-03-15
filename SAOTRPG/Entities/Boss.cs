@@ -1,7 +1,11 @@
+using Terminal.Gui;
+
 namespace SAOTRPG.Entities
 {
     public class Boss : Monster
     {
+        public override char Symbol { get; protected set; } = 'B';
+        public override Color SymbolColor { get; protected set; } = Color.BrightRed;
         /****************************************************************************************/
         // Boss-Specific Properties
         public string BossTitle { get; protected set; }

@@ -1,3 +1,4 @@
+using Terminal.Gui;
 using SAOTRPG.UI;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
@@ -12,6 +13,9 @@ namespace SAOTRPG.Entities
 {
     public class Player : Entity
     {
+        public override char Symbol { get; protected set; } = '@';
+        public override Color SymbolColor { get; protected set; } = Color.BrightYellow;
+
         /****************************************************************************************/
         // Player Details
         public string FirstName { get; set; }
@@ -71,6 +75,63 @@ namespace SAOTRPG.Entities
             return player;
         }
 
+        public static Player LoadFromSave(Systems.SaveData save, IGameLog log, IInventoryLogger? inventoryLogger = null)
+        {
+            var player = new Player
+            {
+                FirstName = save.FirstName,
+                LastName = save.LastName,
+                Gender = save.Gender,
+                Title = save.Title,
+                Id = save.PlayerId,
+                Level = save.Level,
+                CurrentExperience = save.CurrentExperience,
+                CurrentHealth = save.CurrentHealth,
+                ColOnHand = save.ColOnHand,
+                SkillPoints = save.SkillPoints,
+
+                // Attributes
+                Strength = save.Strength,
+                Vitality = save.Vitality,
+                Endurance = save.Endurance,
+                Dexterity = save.Dexterity,
+                Agility = save.Agility,
+                Intelligence = save.Intelligence,
+
+                // Base combat stats (includes baked-in equipment bonuses)
+                BaseAttack = save.BaseAttack,
+                BaseDefense = save.BaseDefense,
+                BaseSpeed = save.BaseSpeed,
+                BaseSkillDamage = save.BaseSkillDamage,
+                BaseCriticalRate = save.BaseCriticalRate,
+                BaseCriticalHitDamage = save.BaseCriticalHitDamage,
+            };
+            player._log = log;
+            player.Inventory = new PlayerInventory(logger: inventoryLogger);
+
+            // Restore backpack items
+            foreach (var itemData in save.InventoryItems)
+            {
+                var item = Systems.SaveManager.DeserializeItem(itemData);
+                if (item != null) player.Inventory.AddItem(item);
+            }
+
+            // Restore equipped items (bypass stat application — stats already baked into base)
+            foreach (var kvp in save.EquippedItems)
+            {
+                if (Enum.TryParse<EquipmentSlot>(kvp.Key, out var slot))
+                {
+                    var item = Systems.SaveManager.DeserializeItem(kvp.Value);
+                    if (item is Items.Equipment.EquipmentBase equipment)
+                    {
+                        player.Inventory.ForceEquipForLoad(slot, equipment);
+                    }
+                }
+            }
+
+            return player;
+        }
+
         /****************************************************************************************/
         // Equipment
         public bool EquipItem(EquipmentBase equipment) => Inventory.Equip(equipment, this);
@@ -94,6 +155,39 @@ namespace SAOTRPG.Entities
             }
         }
 
+        // ── Level-up flavor text ──────────────────────────────────────
+        // Add new lines by adding a string to this array
+        private static readonly string[] LevelUpFlavors =
+        {
+            "  You feel power surge through your veins!",
+            "  The world sharpens. You're getting stronger.",
+            "  Aincrad's challenges forge you into something greater.",
+            "  New strength flows into your limbs. Press onward!",
+            "  A warm glow envelops you. You've grown.",
+        };
+
+        // ── Normal attack flavor text ──────────────────────────────────
+        // Add new lines by adding a string (use {0}=player, {1}=monster, {2}=damage)
+        private static readonly string[] AttackFlavors =
+        {
+            "{0} attacks {1} for {2} damage.",
+            "{0} slashes at {1} — {2} damage!",
+            "{0} swings at {1}, dealing {2} damage.",
+            "{0} strikes {1} squarely for {2} damage.",
+            "{0} lands a hit on {1} — {2} damage.",
+        };
+
+        // ── Critical hit flavor text ────────────────────────────────────
+        // Add new crit lines by adding a string (use {0}=player, {1}=monster, {2}=damage)
+        private static readonly string[] CritFlavors =
+        {
+            "*** CRITICAL HIT! *** {0} strikes {1} for {2} damage!",
+            "*** DEVASTATING BLOW! *** {0} cleaves {1} for {2} damage!",
+            "*** PERFECT STRIKE! *** {0} finds {1}'s weak point — {2} damage!",
+            "*** BRUTAL HIT! *** {0} smashes into {1} for {2} damage!",
+            "*** PRECISION STRIKE! *** {0} pierces {1}'s guard — {2} damage!",
+        };
+
         public int AttackMonster(Monster monster)
         {
             int damage = Attack;
@@ -101,9 +195,18 @@ namespace SAOTRPG.Entities
             if (isCrit)
             {
                 damage += (int)CriticalHitDamage;
-                _log?.LogCombat("Critical Hit!");
+                string critMsg = string.Format(
+                    CritFlavors[Random.Shared.Next(CritFlavors.Length)],
+                    FirstName, monster.Name, damage);
+                _log?.LogCombat(critMsg);
             }
-            _log?.LogCombat($"{FirstName} attacks {monster.Name} for {damage} damage.");
+            else
+            {
+                string atkMsg = string.Format(
+                    AttackFlavors[Random.Shared.Next(AttackFlavors.Length)],
+                    FirstName, monster.Name, damage);
+                _log?.LogCombat(atkMsg);
+            }
             return damage;
         }
 
@@ -113,7 +216,16 @@ namespace SAOTRPG.Entities
         {
             Level++;
             SkillPoints += 5;
-            _log?.LogSystem($"LEVEL UP! {FirstName} has Acquired LVL:{Level}! Skill points available: {SkillPoints}");
+
+            // Full HP restore on level up
+            CurrentHealth = MaxHealth;
+
+            // Fanfare log
+            _log?.LogSystem("════════════════════════════════════");
+            _log?.LogSystem($"  ★ LEVEL UP! ★  {FirstName} is now Level {Level}!");
+            _log?.LogSystem($"  +5 Skill Points | HP fully restored");
+            _log?.LogSystem(LevelUpFlavors[Random.Shared.Next(LevelUpFlavors.Length)]);
+            _log?.LogSystem("════════════════════════════════════");
             DebugLogger.LogState($"Player \"{FirstName}\" leveled up", $"LVL:{Level} HP:{CurrentHealth}/{MaxHealth} ATK:{Attack} DEF:{Defense} SP:{SkillPoints}");
         }
 
