@@ -1,3 +1,4 @@
+using System.Linq;
 using Terminal.Gui;
 using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
@@ -67,10 +68,10 @@ public static class SaveSlotDialog
 
             slotButtons[i] = new Button
             {
-                Text = hasData ? " Load " : "      ",
+                Text = " Load ",
                 X = Pos.AnchorEnd(10), Y = rowY,
-                ColorScheme = hasData ? ColorSchemes.Button : ColorSchemes.Dim,
-                Enabled = hasData
+                ColorScheme = ColorSchemes.Button,
+                Visible = hasData
             };
 
             int capturedSlot = slot;
@@ -94,7 +95,7 @@ public static class SaveSlotDialog
             {
                 dialog.Add(new Label
                 {
-                    Text = new string('─', DialogWidth - 6),
+                    Text = new string('─', 60),
                     X = 2, Y = rowY + 2,
                     Width = Dim.Fill(2), Height = 1,
                     ColorScheme = ColorSchemes.Dim
@@ -113,7 +114,7 @@ public static class SaveSlotDialog
         deleteBtn.Accepting += (s, e) =>
         {
             e.Cancel = true;
-            ShowDeletePicker(summaries, dialog, slotLabels, slotDetails, slotButtons);
+            ShowDeletePicker(summaries, slotLabels, slotDetails, slotButtons);
         };
 
         var closeBtn = new Button
@@ -134,7 +135,7 @@ public static class SaveSlotDialog
         // Focus the first available load button
         for (int i = 0; i < SaveManager.MaxSlots; i++)
         {
-            if (slotButtons[i].Enabled)
+            if (slotButtons[i].Visible)
             {
                 slotButtons[i].SetFocus();
                 break;
@@ -225,7 +226,7 @@ public static class SaveSlotDialog
             {
                 dialog.Add(new Label
                 {
-                    Text = new string('─', DialogWidth - 6),
+                    Text = new string('─', 60),
                     X = 2, Y = rowY + 2,
                     Width = Dim.Fill(2), Height = 1,
                     ColorScheme = ColorSchemes.Dim
@@ -270,7 +271,7 @@ public static class SaveSlotDialog
         string playTime = FormatPlayTime(summary.PlayTime);
         string timeAgo = FormatTimeAgo(summary.Timestamp);
 
-        return $"          Floor {summary.Floor}  {summary.Difficulty}{hcTag}  {playTime}  ({timeAgo})";
+        return $"           Floor {summary.Floor}  {summary.Difficulty}{hcTag}  {playTime}  ({timeAgo})";
     }
 
     private static string FormatPlayTime(TimeSpan time)
@@ -292,15 +293,10 @@ public static class SaveSlotDialog
         return timestamp.ToString("MMM d");
     }
 
-    private static void ShowDeletePicker(SaveSlotSummary?[] summaries, Dialog parent,
+    private static void ShowDeletePicker(SaveSlotSummary?[] summaries,
         Label[] slotLabels, Label[] slotDetails, Button[] slotButtons)
     {
-        // Find which slots have data
-        bool anyData = false;
-        for (int i = 0; i < SaveManager.MaxSlots; i++)
-            if (summaries[i] != null) anyData = true;
-
-        if (!anyData)
+        if (!summaries.Any(s => s != null))
         {
             MessageBox.Query("Delete", "No saves to delete.", "OK");
             return;
@@ -335,8 +331,6 @@ public static class SaveSlotDialog
         slotLabels[choice].Text = FormatSlotLine(deletedSlot, null);
         slotLabels[choice].ColorScheme = ColorSchemes.Dim;
         slotDetails[choice].Text = "";
-        slotButtons[choice].Text = "      ";
-        slotButtons[choice].Enabled = false;
-        slotButtons[choice].ColorScheme = ColorSchemes.Dim;
+        slotButtons[choice].Visible = false;
     }
 }
