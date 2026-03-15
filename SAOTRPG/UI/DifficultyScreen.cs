@@ -1,20 +1,176 @@
 using Terminal.Gui;
+using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
+/// <summary>
+/// Difficulty selection screen — lets the player choose combat difficulty
+/// and toggle hardcore (permadeath) mode before character creation.
+///
+/// Layout:
+///   === Select Difficulty ===
+///   ( ) Story / Very Easy / Easy / Normal / Hard / Very Hard / Masochist / Unwinnable
+///   [description updates on selection]
+///   ─────────────────────
+///   [ ] Hardcore Mode
+///   [Continue]  [Back]
+///
+/// Special combos (Story+Hardcore, Unwinnable+Hardcore) trigger flavor popups.
+/// Debug difficulty appears only when launched with --debug.
+/// </summary>
 public static class DifficultyScreen
 {
+    // ── Layout constants ────────────────────────────────────────────
+    private const int HeaderY         = 2;
+    private const int RadioY          = 5;
+    private const int DescriptionGap  = 1;      // Lines between radio bottom and description
+    private const int DividerGap      = 3;      // Lines between description and divider
+    private const int HardcoreGap     = 2;      // Lines between divider and hardcore toggle
+    private const int ButtonGap       = 3;      // Lines between hardcore and buttons
+
+    // ── Default selection ───────────────────────────────────────────
+    private const int DefaultDifficulty = 3;    // "Normal"
+
     public static void Show(Window mainWindow)
     {
         mainWindow.RemoveAll();
         var sw = DebugLogger.StartTimer("DifficultyScreen.Show");
         DebugLogger.LogScreen("DifficultyScreen");
 
-        var header = new Label { Text = "=== Select Difficulty ===", X = Pos.Center(), Y = 2, Width = Dim.Auto(), Height = 1 };
+        // ── Header ──────────────────────────────────────────────────
+        var header = new Label
+        {
+            Text = "=== Select Difficulty ===",
+            X = Pos.Center(), Y = HeaderY,
+            Width = Dim.Auto(), Height = 1,
+            ColorScheme = ColorSchemes.Title
+        };
 
-        // Difficulty tiers — index-matched with descriptions below
-        var difficultyList = new List<string> { "Story", "Very Easy", "Easy", "Normal", "Hard", "Very Hard", "Masochist", "Unwinnable" };
-        var descriptionList = new List<string>
+        // ── Difficulty tiers (index-matched with descriptions) ──────
+        var (difficulties, descriptions) = BuildDifficultyData();
+        int count = difficulties.Length;
+
+        // ── Radio selector (defaults to Normal) ─────────────────────
+        var difficultyRadio = new RadioGroup
+        {
+            X = Pos.Center(), Y = RadioY,
+            RadioLabels = difficulties,
+            Width = 20, Height = count,
+            SelectedItem = DefaultDifficulty
+        };
+
+        // ── Dynamic description label ───────────────────────────────
+        int descY = RadioY + count + DescriptionGap;
+        var descLabel = new Label
+        {
+            Text = descriptions[DefaultDifficulty],
+            X = Pos.Center(), Y = descY,
+            Width = 55, Height = 2,
+            ColorScheme = ColorSchemes.Body
+        };
+
+        difficultyRadio.SelectedItemChanged += (s, e) =>
+            descLabel.Text = descriptions[e.SelectedItem];
+
+        // ── Section divider ─────────────────────────────────────────
+        int dividerY = descY + DividerGap;
+        var divider = new Label
+        {
+            Text = "─────────────────────────────────",
+            X = Pos.Center(), Y = dividerY,
+            Width = Dim.Auto(), Height = 1,
+            ColorScheme = ColorSchemes.Dim
+        };
+
+        // ── Hardcore toggle ─────────────────────────────────────────
+        int hardcoreY = dividerY + HardcoreGap;
+        var hardcoreCheck = new CheckBox
+        {
+            Text = " Hardcore Mode  (one life only)",
+            X = Pos.Center(), Y = hardcoreY,
+            Width = Dim.Auto(), Height = 1
+        };
+        var hardcoreDesc = new Label
+        {
+            Text = "  Death is permanent. There are no second chances.",
+            X = Pos.Center(), Y = hardcoreY + 1,
+            Width = Dim.Auto(), Height = 1,
+            ColorScheme = ColorSchemes.Dim
+        };
+
+        // ── Flavor popups for wild combos ───────────────────────────
+        int unwinnableIndex = Array.IndexOf(difficulties, "Unwinnable");
+        WireHardcorePopups(hardcoreCheck, difficultyRadio, unwinnableIndex);
+
+        // ── Navigation buttons ──────────────────────────────────────
+        int btnY = hardcoreY + ButtonGap;
+        var continueBtn = new Button
+        {
+            Text = "  Continue  ",
+            X = Pos.Center(), Y = btnY,
+            IsDefault = false,
+            ColorScheme = ColorSchemes.MenuButton
+        };
+        var backBtn = new Button
+        {
+            Text = "    Back    ",
+            X = Pos.Center(), Y = Pos.Bottom(continueBtn) + 1,
+            ColorScheme = ColorSchemes.MenuButton
+        };
+
+        // Diamond glyph follows focus
+        foreach (var btn in new[] { continueBtn, backBtn })
+        {
+            btn.HasFocusChanged += (s, e) =>
+            {
+                if (s is Button b)
+                    b.IsDefault = e.NewValue;
+            };
+        }
+
+        // ── Button actions ──────────────────────────────────────────
+        continueBtn.Accepting += (s, e) =>
+        {
+            int selectedDifficulty = difficultyRadio.SelectedItem;
+            bool isHardcore = hardcoreCheck.CheckedState == CheckState.Checked;
+            CharacterCreationScreen.Show(mainWindow, selectedDifficulty, isHardcore);
+            e.Cancel = true;
+        };
+
+        backBtn.Accepting += (s, e) =>
+        {
+            TitleScreen.Show(mainWindow);
+            e.Cancel = true;
+        };
+
+        // ── Assemble ────────────────────────────────────────────────
+        mainWindow.Add(header, difficultyRadio, descLabel, divider,
+            hardcoreCheck, hardcoreDesc, continueBtn, backBtn);
+
+        // ── Per-control navigation ──────────────────────────────────
+        // Flow: Radio ↔ Hardcore ↔ Continue ↔ Back (wraps both ways)
+        WireNavigation(difficultyRadio, hardcoreCheck, continueBtn, backBtn, difficulties.Length);
+
+        difficultyRadio.SetFocus();
+        DebugLogger.EndTimer("DifficultyScreen.Show", sw);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  DATA
+    // ══════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Builds the difficulty tier names and matching descriptions.
+    /// Debug tier is appended when --debug flag is active.
+    /// </summary>
+    private static (string[] names, string[] descriptions) BuildDifficultyData()
+    {
+        var names = new List<string>
+        {
+            "Story", "Very Easy", "Easy", "Normal",
+            "Hard", "Very Hard", "Masochist", "Unwinnable"
+        };
+        var descs = new List<string>
         {
             "Sit back and enjoy the tale of Aincrad. Combat is an afterthought.",
             "A carefree stroll through Aincrad. Enemies are weak, danger is minimal.",
@@ -26,146 +182,104 @@ public static class DifficultyScreen
             "You will not make it past Floor 1. Don't kid yourself."
         };
 
-        // Debug difficulty — only visible when launched with --debug
+        // Debug tier — only visible with --debug
         if (DebugMode.IsEnabled)
         {
-            difficultyList.Add("Debug");
-            descriptionList.Add("Developer mode. All restrictions lifted.");
+            names.Add("Debug");
+            descs.Add("Developer mode. All restrictions lifted.");
         }
 
-        var difficulties = difficultyList.ToArray();
-        var descriptions = descriptionList.ToArray();
-        int count = difficulties.Length;
+        return (names.ToArray(), descs.ToArray());
+    }
 
-        // Radio selector — defaults to Normal
-        var difficultyRadio = new RadioGroup { X = Pos.Center(), Y = 5, RadioLabels = difficulties, Width = 20, Height = count, SelectedItem = 3 };
+    // ══════════════════════════════════════════════════════════════════
+    //  HARDCORE POPUPS
+    // ══════════════════════════════════════════════════════════════════
 
-        // Dynamic description — updates when radio selection changes
-        int descY = 5 + count + 1;
-        var descLabel = new Label { Text = descriptions[3], X = Pos.Center(), Y = descY, Width = 55, Height = 2 };
-        difficultyRadio.SelectedItemChanged += (s, e) => { descLabel.Text = descriptions[e.SelectedItem]; };
-
-        int dividerY = descY + 3;
-        var divider = new Label { Text = "─────────────────────────────────", X = Pos.Center(), Y = dividerY, Width = Dim.Auto(), Height = 1 };
-
-        // Hardcore toggle — permadeath modifier, applies on top of any difficulty
-        int hardcoreY = dividerY + 2;
-        var hardcoreCheck = new CheckBox { Text = " Hardcore Mode  (one life only)", X = Pos.Center(), Y = hardcoreY, Width = Dim.Auto(), Height = 1 };
-        var hardcoreDesc = new Label { Text = "  Death is permanent. There are no second chances.", X = Pos.Center(), Y = hardcoreY + 1, Width = Dim.Auto(), Height = 1 };
-
-        // Popup when Unwinnable + Hardcore are both active
-        // Find the index of Unwinnable (always second-to-last when debug is on, last otherwise)
-        int unwinnableIndex = difficultyList.IndexOf("Unwinnable");
+    /// <summary>
+    /// Shows flavor popups when the player enables especially wild combos:
+    /// Story + Hardcore or Unwinnable + Hardcore.
+    /// </summary>
+    private static void WireHardcorePopups(CheckBox hardcoreCheck, RadioGroup radio, int unwinnableIndex)
+    {
+        // Popup when toggling hardcore on while on Story/Unwinnable
         hardcoreCheck.CheckedStateChanging += (s, e) =>
         {
-            bool togglingOn = e.NewValue == CheckState.Checked;
-            if (togglingOn && difficultyRadio.SelectedItem == 0)
-            {
+            if (e.NewValue != CheckState.Checked) return;
+
+            if (radio.SelectedItem == 0)
                 MessageBox.Query("Really?", "Really? Hardcore and Story mode?", "Yes, really");
-            }
-            else if (togglingOn && difficultyRadio.SelectedItem == unwinnableIndex)
-            {
+            else if (radio.SelectedItem == unwinnableIndex)
                 MessageBox.Query("Good Luck", "There's no way you can do this, but good luck.", "Bring it on");
-            }
         };
 
-        difficultyRadio.SelectedItemChanged += (s, e) =>
+        // Popup when switching to Story/Unwinnable while hardcore is on
+        radio.SelectedItemChanged += (s, e) =>
         {
             if (hardcoreCheck.CheckedState != CheckState.Checked) return;
 
             if (e.SelectedItem == 0)
-            {
                 MessageBox.Query("Really?", "Really? Hardcore and Story mode?", "Yes, really");
-            }
             else if (e.SelectedItem == unwinnableIndex)
-            {
                 MessageBox.Query("Good Luck", "There's no way you can do this, but good luck.", "Bring it on");
-            }
         };
+    }
 
-        // Navigation buttons — yellow highlight + diamond glyphs follow focus
-        var menuButtonScheme = new ColorScheme
-        {
-            Normal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-            Focus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-            HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-            HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-            Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-        };
+    // ══════════════════════════════════════════════════════════════════
+    //  NAVIGATION WIRING
+    // ══════════════════════════════════════════════════════════════════
 
-        int btnY = hardcoreY + 3;
-        var continueBtn = new Button { Text = "  Continue  ", X = Pos.Center(), Y = btnY, IsDefault = false, ColorScheme = menuButtonScheme };
-        var backBtn = new Button { Text = "    Back    ", X = Pos.Center(), Y = Pos.Bottom(continueBtn) + 1, ColorScheme = menuButtonScheme };
-
-        // Diamond glyphs follow focus on the two buttons
-        foreach (var btn in new[] { continueBtn, backBtn })
-        {
-            btn.HasFocusChanged += (s, e) =>
-            {
-                if (s is Button b)
-                    b.IsDefault = e.NewValue;
-            };
-        }
-
-        // Continue — passes difficulty/hardcore to character creation (values wired when gameplay uses them)
-        continueBtn.Accepting += (s, e) =>
-        {
-            // TODO: pass selectedDifficulty and isHardcore through to GameScreen
-            // var selectedDifficulty = difficulties[difficultyRadio.SelectedItem];
-            // var isHardcore = hardcoreCheck.CheckedState == CheckState.Checked;
-            CharacterCreationScreen.Show(mainWindow);
-            e.Cancel = true;
-        };
-
-        backBtn.Accepting += (s, e) => { TitleScreen.Show(mainWindow); e.Cancel = true; };
-
-        mainWindow.Add(header, difficultyRadio, descLabel, divider,
-            hardcoreCheck, hardcoreDesc, continueBtn, backBtn);
-
-        // Per-control key handlers — fires BEFORE each control's built-in processing,
-        // giving us full control over navigation order and wrapping.
-        // Flow: Radio items → Hardcore checkbox → Continue → Back (wraps both ways)
-
-        difficultyRadio.KeyDown += (s, e) =>
+    /// <summary>
+    /// Wires W/S and arrow key navigation across all controls.
+    /// Flow: Radio items → Hardcore checkbox → Continue → Back (wraps).
+    /// </summary>
+    private static void WireNavigation(RadioGroup radio, CheckBox hardcore,
+        Button continueBtn, Button backBtn, int radioCount)
+    {
+        radio.KeyDown += (s, e) =>
         {
             switch (e.KeyCode)
             {
                 case KeyCode.W: case KeyCode.CursorUp:
-                    if (difficultyRadio.SelectedItem > 0)
-                        difficultyRadio.SelectedItem--;
+                    if (radio.SelectedItem > 0)
+                        radio.SelectedItem--;
                     else
-                        backBtn.SetFocus();
+                        backBtn.SetFocus();     // Wrap to bottom
                     e.Handled = true;
                     break;
+
                 case KeyCode.S: case KeyCode.CursorDown:
-                    if (difficultyRadio.SelectedItem < difficulties.Length - 1)
-                        difficultyRadio.SelectedItem++;
+                    if (radio.SelectedItem < radioCount - 1)
+                        radio.SelectedItem++;
                     else
-                        hardcoreCheck.SetFocus();
+                        hardcore.SetFocus();    // Flow to hardcore
                     e.Handled = true;
                     break;
+
                 case KeyCode.Enter:
-                    hardcoreCheck.SetFocus();
+                    hardcore.SetFocus();
                     e.Handled = true;
                     break;
             }
         };
 
-        hardcoreCheck.KeyDown += (s, e) =>
+        hardcore.KeyDown += (s, e) =>
         {
             switch (e.KeyCode)
             {
                 case KeyCode.W: case KeyCode.CursorUp:
-                    difficultyRadio.SetFocus();
-                    difficultyRadio.SelectedItem = difficulties.Length - 1;
+                    radio.SetFocus();
+                    radio.SelectedItem = radioCount - 1;
                     e.Handled = true;
                     break;
+
                 case KeyCode.S: case KeyCode.CursorDown:
                     continueBtn.SetFocus();
                     e.Handled = true;
                     break;
+
                 case KeyCode.Enter:
-                    hardcoreCheck.CheckedState = hardcoreCheck.CheckedState == CheckState.Checked
+                    hardcore.CheckedState = hardcore.CheckedState == CheckState.Checked
                         ? CheckState.UnChecked : CheckState.Checked;
                     e.Handled = true;
                     break;
@@ -177,7 +291,7 @@ public static class DifficultyScreen
             switch (e.KeyCode)
             {
                 case KeyCode.W: case KeyCode.CursorUp:
-                    hardcoreCheck.SetFocus();
+                    hardcore.SetFocus();
                     e.Handled = true;
                     break;
                 case KeyCode.S: case KeyCode.CursorDown:
@@ -196,14 +310,11 @@ public static class DifficultyScreen
                     e.Handled = true;
                     break;
                 case KeyCode.S: case KeyCode.CursorDown:
-                    difficultyRadio.SetFocus();
-                    difficultyRadio.SelectedItem = 0;
+                    radio.SetFocus();
+                    radio.SelectedItem = 0;     // Wrap to top
                     e.Handled = true;
                     break;
             }
         };
-
-        difficultyRadio.SetFocus();
-        DebugLogger.EndTimer("DifficultyScreen.Show", sw);
     }
 }

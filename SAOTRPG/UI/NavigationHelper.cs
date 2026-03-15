@@ -1,24 +1,24 @@
 using Terminal.Gui;
+using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
 /// <summary>
-/// Shared UI helpers: navigation and color schemes.
+/// Shared UI helpers: W/S navigation for menu screens and legacy ButtonScheme reference.
 /// </summary>
 public static class NavigationHelper
 {
     /// <summary>
-    /// Color scheme for interactive buttons — gives a visible highlight on focus.
+    /// Color scheme for interactive buttons — delegates to centralized ColorSchemes.
+    /// Kept for backward compatibility with screens that reference it directly.
     /// </summary>
-    public static readonly ColorScheme ButtonScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
-        HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
+    public static ColorScheme ButtonScheme => ColorSchemes.Button;
 
+    /// <summary>
+    /// Enables W/S and arrow key focus navigation on a container view.
+    /// Used by TitleScreen, DifficultyScreen, and other menu screens.
+    /// Respects RadioGroup — lets arrow keys control selection inside radio groups.
+    /// </summary>
     public static void EnableGameNavigation(View container)
     {
         container.KeyDown += (s, e) =>
