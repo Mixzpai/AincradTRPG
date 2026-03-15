@@ -59,17 +59,26 @@ namespace SAOTRPG.Entities
 
         /****************************************************************************************/
         // Get a formatted string of the monster's status (for UI display)
+        // Formatted for embedding inside a FrameView (title shows name)
         public string GetStatusDisplay()
         {
+            string hpBar = UI.Theme.BuildBar(CurrentHealth, MaxHealth, 16);
+
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine(Name);
-            sb.AppendLine($"Level: {Level}");
-            sb.AppendLine($"HP: {CurrentHealth}/{MaxHealth}");
+            sb.AppendLine($" Level: {Level}");
+            sb.AppendLine($" HP:   {hpBar}");
             sb.AppendLine();
-            sb.AppendLine($"ATK: {BaseAttack}  DEF: {BaseDefense}");
-            sb.AppendLine($"SPD: {BaseSpeed}");
+            sb.AppendLine($"━━ Combat ━━━━━━━━━━━━━━━━━━━━");
+            sb.AppendLine($" ⚔ ATK: {BaseAttack,-5} ⛊ DEF: {BaseDefense}");
+            sb.AppendLine($" ▶ SPD: {BaseSpeed,-5} ★ CRIT: {BaseCriticalRate}%");
+
             if (IsDefeated)
-                sb.AppendLine("\n** DEFEATED **");
+            {
+                sb.AppendLine();
+                sb.AppendLine($"┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄");
+                sb.AppendLine($"      ☆ DEFEATED ☆");
+            }
+
             return sb.ToString();
         }
     }

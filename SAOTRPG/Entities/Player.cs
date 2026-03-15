@@ -226,24 +226,31 @@ namespace SAOTRPG.Entities
         }
 
         /****************************************************************************************/
-        // Display
-        public string GetStatsDisplay() =>
-                    $@"{FirstName} {LastName}
-                    Title: {Title}
-                    Level: {Level}
-                    EXP: {CurrentExperience}/{ExperienceRequired}
-                    HP: {CurrentHealth}/{MaxHealth}
-                    Col: {ColOnHand}
-                    Skill Points: {SkillPoints}
+        // Display — formatted for embedding inside a FrameView (no outer box needed)
+        public string GetStatsDisplay()
+        {
+            string hpBar = UI.Theme.BuildBar(CurrentHealth, MaxHealth, 16);
+            string xpBar = UI.Theme.BuildBar(CurrentExperience, ExperienceRequired, 16);
 
-                    ── Combat ──
-                    ATK: {Attack}  DEF: {Defense}
-                    SPD: {Speed}  SDMG: {SkillDamage}
-                    CRIT: {CriticalRate}%  CDMG: +{CriticalHitDamage}
+            return
+$@" {FirstName} {LastName}
+ « {Title} »
 
-                    ── Attributes ──
-                    VIT: {Vitality}  STR: {Strength}
-                    END: {Endurance}  DEX: {Dexterity}
-                    AGI: {Agility}  INT: {Intelligence}";
+ Level: {Level}
+ EXP:  {xpBar}
+ HP:   {hpBar}
+ Col:  {ColOnHand:N0}
+ SP:   {SkillPoints}
+
+━━ Combat ━━━━━━━━━━━━━━━━━━━━
+ ⚔ ATK: {Attack,-5} ⛊ DEF: {Defense}
+ ▶ SPD: {Speed,-5} ✦ SDMG: {SkillDamage}
+ ★ CRIT: {CriticalRate}%   +{CriticalHitDamage} dmg
+
+━━ Attributes ━━━━━━━━━━━━━━━━
+ VIT: {Vitality,-4} STR: {Strength,-4}
+ END: {Endurance,-4} DEX: {Dexterity,-4}
+ AGI: {Agility,-4} INT: {Intelligence,-4}";
+        }
     }
 }

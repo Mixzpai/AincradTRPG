@@ -7,4 +7,5 @@ public interface IGameLog
     void Log(string message);        // General messages
     void LogCombat(string message);  // Combat-specific (damage, kills, XP)
     void LogSystem(string message);  // System events (level ups, equips)
+    void LogLoot(string message);   // Loot drops, rewards, currency
 }

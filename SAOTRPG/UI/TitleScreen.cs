@@ -4,62 +4,6 @@ namespace SAOTRPG.UI;
 
 public static class TitleScreen
 {
-    // ── Color Palettes ────────────────────────────────────────────────
-
-    private static readonly ColorScheme TitleScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.White, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.White, Color.Black),
-        HotNormal = new Terminal.Gui.Attribute(Color.White, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.White, Color.Black),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
-
-    private static readonly ColorScheme GoldScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-        HotNormal = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
-
-    private static readonly ColorScheme DimScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black),
-        HotNormal = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
-
-    private static readonly ColorScheme SubtitleScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
-
-    private static readonly ColorScheme MenuFrameScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.Yellow, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.Yellow, Color.Black),
-        HotNormal = new Terminal.Gui.Attribute(Color.Yellow, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.Yellow, Color.Black),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
-
-    private static readonly ColorScheme MenuButtonScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-        HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
-
     // ── ASCII Art (no leading newlines — every line counts) ────────────
 
     //                          80 chars wide (widest line)
@@ -106,7 +50,7 @@ public static class TitleScreen
             Text = StarsArt,
             X = Pos.Center(), Y = row,
             Width = Dim.Auto(), Height = Dim.Auto(),
-            ColorScheme = DimScheme
+            ColorScheme = Theme.Dim
         };
         row += 6;
 
@@ -116,7 +60,7 @@ public static class TitleScreen
             Text = DividerTop,
             X = Pos.Center(), Y = row,
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = GoldScheme
+            ColorScheme = Theme.Gold
         };
         row += 1;
 
@@ -126,7 +70,7 @@ public static class TitleScreen
             Text = AincradTitle,
             X = Pos.Center(), Y = row,
             Width = Dim.Auto(), Height = Dim.Auto(),
-            ColorScheme = TitleScheme
+            ColorScheme = Theme.Title
         };
         row += 6;
 
@@ -136,7 +80,7 @@ public static class TitleScreen
             Text = TrpgTitle,
             X = Pos.Center(), Y = row,
             Width = Dim.Auto(), Height = Dim.Auto(),
-            ColorScheme = GoldScheme
+            ColorScheme = Theme.Gold
         };
         row += 6;
 
@@ -146,17 +90,17 @@ public static class TitleScreen
             Text = DividerBottom,
             X = Pos.Center(), Y = row,
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = GoldScheme
+            ColorScheme = Theme.Gold
         };
         row += 2;
 
         // ── Tagline ──────────────────────────────────────────────────
         var tagline = new Label
         {
-            Text = "\"Link Start — Your Story Awaits\"",
+            Text = $"{Theme.SparkleOpen} Link Start — Your Story Awaits {Theme.SparkleOpen}",
             X = Pos.Center(), Y = row,
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = SubtitleScheme
+            ColorScheme = Theme.Subtitle
         };
         row += 2;
 
@@ -169,71 +113,47 @@ public static class TitleScreen
             Title = "",
             X = Pos.Center(), Y = row,
             Width = menuWidth, Height = menuHeight,
-            ColorScheme = MenuFrameScheme,
+            ColorScheme = Theme.FrameSubtle,
             BorderStyle = LineStyle.Double
         };
 
+        string pad = "      ";
         var newGameBtn = new Button
         {
-            Text = "    New Game     ",
+            Text = $"{pad}New Game{pad} ",
             X = Pos.Center(), Y = 0,
             IsDefault = true,
-            ColorScheme = MenuButtonScheme
+            ColorScheme = Theme.MenuButton
         };
         var loadGameBtn = new Button
         {
-            Text = "    Load Game    ",
+            Text = $"{pad}Load Game{pad}",
             X = Pos.Center(), Y = 2,
-            ColorScheme = MenuButtonScheme
+            ColorScheme = Theme.MenuButton
         };
         var optionsBtn = new Button
         {
-            Text = "     Options     ",
+            Text = $"{pad} Options {pad}",
             X = Pos.Center(), Y = 4,
-            ColorScheme = MenuButtonScheme
+            ColorScheme = Theme.MenuButton
         };
         var exitBtn = new Button
         {
-            Text = "      Exit       ",
+            Text = $"{pad}  Exit  {pad} ",
             X = Pos.Center(), Y = 6,
-            ColorScheme = MenuButtonScheme
+            ColorScheme = Theme.MenuButton
         };
 
         // Separators inside the menu frame
-        var sep1 = new Label
-        {
-            Text = "──────────────────────────────────────",
-            X = Pos.Center(), Y = 1,
-            Width = Dim.Auto(), Height = 1,
-            ColorScheme = MenuFrameScheme
-        };
-        var sep2 = new Label
-        {
-            Text = "──────────────────────────────────────",
-            X = Pos.Center(), Y = 3,
-            Width = Dim.Auto(), Height = 1,
-            ColorScheme = MenuFrameScheme
-        };
-        var sep3 = new Label
-        {
-            Text = "──────────────────────────────────────",
-            X = Pos.Center(), Y = 5,
-            Width = Dim.Auto(), Height = 1,
-            ColorScheme = MenuFrameScheme
-        };
+        string sepText = Theme.LightRule(38);
+        var sep1 = new Label { Text = sepText, X = Pos.Center(), Y = 1, Width = Dim.Auto(), Height = 1, ColorScheme = Theme.FrameSubtle };
+        var sep2 = new Label { Text = sepText, X = Pos.Center(), Y = 3, Width = Dim.Auto(), Height = 1, ColorScheme = Theme.FrameSubtle };
+        var sep3 = new Label { Text = sepText, X = Pos.Center(), Y = 5, Width = Dim.Auto(), Height = 1, ColorScheme = Theme.FrameSubtle };
 
         menuFrame.Add(newGameBtn, sep1, loadGameBtn, sep2, optionsBtn, sep3, exitBtn);
 
         // ── Diamond glyphs follow focus ──────────────────────────────
-        var menuButtons = new[] { newGameBtn, loadGameBtn, optionsBtn, exitBtn };
-        foreach (var btn in menuButtons)
-        {
-            btn.HasFocusChanged += (s, e) =>
-            {
-                if (s is Button b)
-                    b.IsDefault = e.NewValue;
-            };
-        }
+        Theme.AttachDiamondFocus(newGameBtn, loadGameBtn, optionsBtn, exitBtn);
 
         // ── Button event handlers ─────────────────────────────────────
         newGameBtn.Accepting += (s, e) => { DifficultyScreen.Show(mainWindow); e.Cancel = true; };
@@ -244,31 +164,31 @@ public static class TitleScreen
         // ── Footer (anchored to bottom) ───────────────────────────────
         var footerRule = new Label
         {
-            Text = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            Text = Theme.HeavyRule(60),
             X = Pos.Center(), Y = Pos.AnchorEnd(5),
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = DimScheme
+            ColorScheme = Theme.Dim
         };
         var credits = new Label
         {
-            Text = "Crafted by NoDice99 & Mixzpai",
+            Text = $"{Theme.Sparkle} Crafted by NoDice99 & Mixzpai {Theme.Sparkle}",
             X = Pos.Center(), Y = Pos.AnchorEnd(4),
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = SubtitleScheme
+            ColorScheme = Theme.Subtitle
         };
         var tribute = new Label
         {
             Text = "A Fan-Made Tribute to Sword Art Online",
             X = Pos.Center(), Y = Pos.AnchorEnd(3),
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = DimScheme
+            ColorScheme = Theme.Dim
         };
         var controls = new Label
         {
-            Text = "[W/S or Arrow Keys] Navigate    [Enter] Select",
+            Text = $"[{Theme.ArrowUp}/{Theme.ArrowDown} or W/S] Navigate    [Enter] Select",
             X = Pos.Center(), Y = Pos.AnchorEnd(2),
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = DimScheme
+            ColorScheme = Theme.Dim
         };
 
         // ── Assemble ─────────────────────────────────────────────────

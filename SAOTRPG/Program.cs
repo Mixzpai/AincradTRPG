@@ -51,22 +51,13 @@ namespace SAOTRPG
             // Attach keystroke logger to capture all input
             DebugLogger.AttachKeyLogger();
 
-            var blackScheme = new ColorScheme
-            {
-                Normal = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black),
-                Focus = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-                HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-                HotFocus = new Terminal.Gui.Attribute(Color.White, Color.Black),
-                Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-            };
-
             // Main window fills entire terminal — all screens render inside this
             var mainWindow = new Window
             {
-                Title = "Aincrad TRPG",
+                Title = $" {Theme.Sparkle} Aincrad TRPG {Theme.Sparkle} ",
                 X = 0, Y = 0,
                 Width = Dim.Fill(), Height = Dim.Fill(),
-                ColorScheme = blackScheme
+                ColorScheme = Theme.WindowBase
             };
 
             if (args.Contains("--debug")) DebugMode.Enable();

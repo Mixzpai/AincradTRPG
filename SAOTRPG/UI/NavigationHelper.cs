@@ -3,21 +3,16 @@ using Terminal.Gui;
 namespace SAOTRPG.UI;
 
 /// <summary>
-/// Shared UI helpers: navigation and color schemes.
+/// Shared UI helpers: navigation, keyboard handling, and focus management.
+/// Color schemes now live in Theme.cs — this file handles behavior only.
 /// </summary>
 public static class NavigationHelper
 {
     /// <summary>
-    /// Color scheme for interactive buttons — gives a visible highlight on focus.
+    /// Legacy accessor — points to Theme.MenuButton for any code still referencing this.
+    /// Prefer Theme.MenuButton or Theme.SmallButton directly.
     /// </summary>
-    public static readonly ColorScheme ButtonScheme = new()
-    {
-        Normal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        Focus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
-        HotNormal = new Terminal.Gui.Attribute(Color.Gray, Color.Black),
-        HotFocus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
-        Disabled = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black)
-    };
+    public static ColorScheme ButtonScheme => Theme.MenuButton;
 
     public static void EnableGameNavigation(View container)
     {

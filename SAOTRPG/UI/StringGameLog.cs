@@ -8,4 +8,5 @@ internal class StringGameLog : IGameLog
     public void Log(string message) => _sb.AppendLine(message);
     public void LogCombat(string message) => _sb.AppendLine(message);
     public void LogSystem(string message) => _sb.AppendLine(message);
+    public void LogLoot(string message) => _sb.AppendLine(message);
 }
