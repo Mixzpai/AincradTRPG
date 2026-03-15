@@ -9,6 +9,7 @@ public static class AccessoryDefinitions
 {
     public static Accessory CreateRingOfStrength() => new()
     {
+        DefinitionId = "ring_of_strength",
         Name = "Ring of Strength",
         Value = 500,
         Rarity = "Uncommon",
@@ -24,6 +25,7 @@ public static class AccessoryDefinitions
 
     public static Accessory CreateAgilityNecklace() => new()
     {
+        DefinitionId = "agility_necklace",
         Name = "Amulet of Agility",
         Value = 450,
         Rarity = "Uncommon",

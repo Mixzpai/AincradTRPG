@@ -9,6 +9,7 @@ public static class FoodDefinitions
 {
     public static Food CreateBread() => new()
     {
+        DefinitionId = "bread",
         Name = "Bread",
         Value = 10,
         Rarity = "Common",
@@ -23,6 +24,7 @@ public static class FoodDefinitions
 
     public static Food CreateGrilledMeat() => new()
     {
+        DefinitionId = "grilled_meat",
         Name = "Grilled Meat",
         Value = 30,
         Rarity = "Common",

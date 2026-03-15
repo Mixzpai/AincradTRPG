@@ -8,6 +8,7 @@ public static class OneHandedSwordDefinitions
 {
     public static Weapon CreateIronSword() => new()
     {
+        DefinitionId = "iron_sword",
         Name = "Iron Sword",
         Value = 100,
         Rarity = "Common",
@@ -24,6 +25,7 @@ public static class OneHandedSwordDefinitions
 
     public static Weapon CreateSteelSword() => new()
     {
+        DefinitionId = "steel_sword",
         Name = "Steel Sword",
         Value = 250,
         Rarity = "Uncommon",

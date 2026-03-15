@@ -9,6 +9,7 @@ public static class MobDropDefinitions
 {
     public static MobDrop CreateSlimeGel() => new()
     {
+        DefinitionId = "slime_gel",
         Name = "Slime Gel",
         Value = 5,
         Rarity = "Common",
@@ -23,6 +24,7 @@ public static class MobDropDefinitions
 
     public static MobDrop CreateWolfPelt() => new()
     {
+        DefinitionId = "wolf_pelt",
         Name = "Wolf Pelt",
         Value = 15,
         Rarity = "Common",
@@ -37,6 +39,7 @@ public static class MobDropDefinitions
 
     public static MobDrop CreateDragonScale() => new()
     {
+        DefinitionId = "dragon_scale",
         Name = "Dragon Scale",
         Value = 1000,
         Rarity = "Legendary",

@@ -9,6 +9,7 @@ public static class DamageItemDefinitions
 {
     public static DamageItem CreateFireBomb() => new()
     {
+        DefinitionId = "fire_bomb",
         Name = "Fire Bomb",
         Value = 50,
         Rarity = "Uncommon",
@@ -23,6 +24,7 @@ public static class DamageItemDefinitions
 
     public static DamageItem CreatePoisonVial() => new()
     {
+        DefinitionId = "poison_vial",
         Name = "Poison Vial",
         Value = 40,
         Rarity = "Uncommon",

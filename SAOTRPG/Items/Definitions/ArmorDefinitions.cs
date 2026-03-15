@@ -9,6 +9,7 @@ public static class ArmorDefinitions
 {
     public static Armor CreateLeatherChest() => new()
     {
+        DefinitionId = "leather_chestplate",
         Name = "Leather Chestplate",
         Value = 80,
         Rarity = "Common",
@@ -25,6 +26,7 @@ public static class ArmorDefinitions
 
     public static Armor CreateIronHelmet() => new()
     {
+        DefinitionId = "iron_helmet",
         Name = "Iron Helmet",
         Value = 120,
         Rarity = "Common",

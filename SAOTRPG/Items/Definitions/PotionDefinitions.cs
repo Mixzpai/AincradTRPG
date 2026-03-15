@@ -9,6 +9,7 @@ public static class PotionDefinitions
 {
     public static Potion CreateHealthPotion() => new()
     {
+        DefinitionId = "health_potion",
         Name = "Health Potion",
         Value = 25,
         Rarity = "Common",
@@ -24,6 +25,7 @@ public static class PotionDefinitions
 
     public static Potion CreateGreaterHealthPotion() => new()
     {
+        DefinitionId = "greater_health_potion",
         Name = "Greater Health Potion",
         Value = 75,
         Rarity = "Uncommon",
@@ -37,8 +39,23 @@ public static class PotionDefinitions
             .Add(StatType.Health, 150)
     };
 
+    public static Potion CreateAntidote() => new()
+    {
+        DefinitionId = "antidote",
+        Name = "Antidote",
+        Value = 30,
+        Rarity = "Common",
+        Quantity = 1,
+        MaxStacks = 99,
+        ConsumableType = "Potion",
+        PotionType = "Antidote",
+        Cooldown = 0,
+        EffectDescription = "Cures poison and bleed."
+    };
+
     public static Potion CreateBattleElixir() => new()
     {
+        DefinitionId = "battle_elixir",
         Name = "Battle Elixir",
         Value = 150,
         Rarity = "Rare",
