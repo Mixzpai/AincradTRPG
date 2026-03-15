@@ -11,5 +11,6 @@ public enum EquipmentSlot
     RightRing,  // Ring slot 1
     LeftRing,   // Ring slot 2
     Bracelet,   // Wrist accessory
-    Necklace    // Neck accessory
+    Necklace,   // Neck accessory
+    OffHand     // Shield slot
 }

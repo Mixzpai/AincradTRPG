@@ -150,6 +150,23 @@ public class Inventory
 
     public EquipmentBase? GetEquipped(EquipmentSlot slot) => _equippedItems[slot];
 
+    /// <summary>
+    /// Place equipment directly into a slot WITHOUT applying stat bonuses.
+    /// Used by save/load — saved base stats already include equipment bonuses.
+    /// </summary>
+    public void ForceEquipForLoad(EquipmentSlot slot, EquipmentBase equipment)
+    {
+        _equippedItems[slot] = equipment;
+    }
+
+    /// <summary>
+    /// Force-remove an equipped item without returning it to inventory (e.g. item broke).
+    /// </summary>
+    public void DestroyEquipped(EquipmentSlot slot)
+    {
+        _equippedItems[slot] = null;
+    }
+
     public bool UseConsumable(Consumable consumable, IStatModifiable target)
     {
         if (!_items.Contains(consumable))

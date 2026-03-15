@@ -84,6 +84,7 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterMapping("ring-left", EquipmentSlot.LeftRing);
         RegisterMany(EquipmentSlot.Bracelet, "bracelet", "bangle", "armlet");
         RegisterMany(EquipmentSlot.Necklace, "necklace", "pendant", "amulet", "chain");
+        RegisterMany(EquipmentSlot.OffHand, "shield", "buckler", "kite shield", "tower shield");
     }
 
     private void RegisterMany(EquipmentSlot slot, params string[] types)
