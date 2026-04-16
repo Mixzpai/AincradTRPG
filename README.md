@@ -1,4 +1,4 @@
-# AincradTRPG
+# AincradTRPG ASCII VERSION
 
 A Sword Art Online–themed ASCII roguelike built in C# / .NET 8 with [Terminal.Gui](https://github.com/gui-cs/Terminal.Gui).
 
