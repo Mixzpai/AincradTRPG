@@ -1,0 +1,160 @@
+﻿================================================================================
+                        ITEMS SYSTEM DESIGN DOCUMENT
+================================================================================
+
+OVERVIEW
+--------
+The Items system follows a class hierarchy pattern to represent different types
+of game items. This document explains the design choices and architecture.
+
+
+================================================================================
+                           CLASS HIERARCHY
+================================================================================
+
+                            BaseItem (abstract)
+                                  |
+              +-------------------+-------------------+
+              |                                       |
+        StackableItem (abstract)              Equipment (abstract)
+              |                                       |
+              |                               +-------+-------+
+              |                               |               |
+         Consumable (abstract)             Weapon          Armor
+
+
+================================================================================
+                         DESIGN DECISIONS
+================================================================================
+
+1. ABSTRACT BASE CLASS PATTERN
+------------------------------
+   - BaseItem is the root abstract class containing common properties:
+     * Name: Item display name
+     * Value: Monetary worth of the item
+     * Rarity: Item rarity tier (e.g., Common, Rare, Legendary)
+     * ItemDurability: Item condition/durability
+   
+   Rationale: Provides a unified type for inventory systems and ensures all
+   items share essential properties.
+
+
+2. TWO MAIN ITEM BRANCHES
+-------------------------
+   The hierarchy splits into two main branches:
+   
+   a) StackableItem: Items that can be stacked in inventory slots
+      - Quantity: Current stack count
+      - MaxStacks: Maximum items per stack
+      - Stack() method: Handles combining stacks
+   
+   b) Equipment: Items that provide stat bonuses when equipped
+      - RequiredLevel: Level requirement to equip
+      - EquipmentType: Slot category
+      - Bonuses: StatModifierCollection for stat modifications
+      - Equip()/Unequip() methods: Apply/remove stat bonuses
+
+   Rationale: These represent fundamentally different item behaviors -
+   stackable consumables vs. unique equippable gear.
+
+
+3. STAT MODIFIER SYSTEM
+-----------------------
+   Uses a composition pattern with StatModifierCollection:
+   
+   - StatEffect: Individual effect with Type, Potency, Duration, IsPercentage
+   - StatModifierCollection: Collection with fluent API for adding effects
+   - StatType enum: Defines all modifiable stats (Health, Attack, Defense, etc.)
+
+   Rationale: 
+   - Separates effect logic from item classes (Single Responsibility)
+   - Fluent API enables readable effect chains:
+     collection.Add(StatType.Attack, 10).Add(StatType.Defense, 5);
+   - Same system works for both equipment bonuses and consumable effects
+
+
+4. EQUIPMENT SPECIALIZATION
+---------------------------
+   Equipment has two concrete implementations:
+
+   a) Weapon:
+      - BaseDamage: Offensive power
+      - WeaponType: Category (Sword, Bow, Staff, etc.)
+      - AttackSpeed: Attack rate modifier
+      - Range: Effective range
+
+   b) Armor:
+      - BaseDefense: Defensive power
+      - ArmorSlot: Equipment slot (Head, Chest, Legs, etc.)
+      - Weight: Encumbrance value
+
+   Rationale: Each equipment type has distinct combat-relevant properties
+   that don't overlap, justifying separate classes.
+
+
+5. CONSUMABLE DESIGN
+--------------------
+   Consumables inherit from StackableItem and add:
+   - ConsumableType: Category (Potion, Food, Scroll, etc.)
+   - EffectDescription: Human-readable effect text
+   - Effects: StatModifierCollection for applied effects
+   - Use() method: Applies effects and decrements quantity
+
+   Rationale: Consumables are typically stackable and share the effect
+   system with equipment for consistency.
+
+
+================================================================================
+                        KEY DESIGN PATTERNS
+================================================================================
+
+1. TEMPLATE METHOD PATTERN
+   - Equip()/Unequip() and Use() methods can be overridden by subclasses
+   - Base implementation handles common behavior (applying effects)
+
+2. COMPOSITION OVER INHERITANCE
+   - StatModifierCollection is composed into Equipment and Consumable
+   - Effects are data-driven rather than hardcoded in subclasses
+
+3. FLUENT INTERFACE
+   - StatModifierCollection.Add() returns 'this' for method chaining
+
+4. SINGLE RESPONSIBILITY
+   - Each class has a focused purpose
+   - Effect application logic is centralized in StatModifierCollection
+
+
+================================================================================
+                        FOLDER STRUCTURE
+================================================================================
+
+Items/
+├── abstract_BaseItem.cs      # Root abstract class
+├── StackableItem.cs          # Stackable item base
+├── StatType.cs               # Stat enumeration
+├── StatEffect.cs             # Individual effect definition
+├── StatModifierCollection.cs # Effect collection with fluent API
+├── Equipment/
+│   ├── Equipment.cs          # Equipment base class
+│   ├── Weapon.cs             # Weapon implementation
+│   └── Armor.cs              # Armor implementation
+└── Consumables/
+    └── Consumable.cs         # Consumable base class
+
+
+================================================================================
+                        EXTENSIBILITY NOTES
+================================================================================
+
+To add new item types:
+1. For new equipment: Inherit from Equipment (e.g., Accessory, Shield)
+2. For new consumables: Inherit from Consumable (e.g., Potion, Food)
+3. For new stackables: Inherit from StackableItem (e.g., CraftingMaterial)
+4. For entirely new categories: Inherit from BaseItem
+
+To add new stats:
+1. Add entry to StatType enum
+2. Update StatModifierCollection.ApplyStat() switch statement
+3. Ensure Player class has corresponding property
+
+================================================================================

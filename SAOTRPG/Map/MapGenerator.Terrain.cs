@@ -1,0 +1,168 @@
+namespace SAOTRPG.Map;
+
+// Terrain generation helpers: organic lakes (cellular automata), winding
+// rivers (drunk-walk with drift), and biome blending (neighbor-counting
+// smoothing pass). All methods operate on an existing GameMap
+// and stamp terrain tiles without disturbing structures or features.
+public static partial class MapGenerator
+{
+    // ── River generation ─────────────────────────────────────────────
+    // A "drunk walk with drift" from one map edge to the opposite.
+    // The river meanders laterally but always progresses toward the far
+    // edge, producing a natural winding path 1-2 tiles wide.
+
+    // Carve a winding river across the map.
+    // = true flows left→right, false flows top→bottom.
+    internal static void GenerateRiver(GameMap map, bool horizontal)
+    {
+        int w = map.Width, h = map.Height;
+
+        // Start on a random point along the source edge.
+        int pos, cross;
+        if (horizontal)
+        {
+            pos = 3;                                       // x starts left
+            cross = Random.Shared.Next(15, h - 15);       // y random
+        }
+        else
+        {
+            pos = 3;                                       // y starts top
+            cross = Random.Shared.Next(15, w - 15);       // x random
+        }
+
+        int limit = horizontal ? w - 3 : h - 3;
+
+        while (pos < limit)
+        {
+            // Stamp river tiles (1-2 wide depending on hash).
+            int rx = horizontal ? pos : cross;
+            int ry = horizontal ? cross : pos;
+            StampRiverTile(map, rx, ry);
+            StampRiverTile(map, rx + (horizontal ? 0 : 1), ry + (horizontal ? 1 : 0));
+
+            // Advance along the primary axis.
+            pos++;
+
+            // Drift along the cross axis with a slight bias.
+            int drift = Random.Shared.Next(5);
+            if (drift == 0)      cross = Math.Max(5, cross - 1);
+            else if (drift == 1) cross = Math.Min((horizontal ? h : w) - 5, cross + 1);
+        }
+    }
+
+    // Returns true for any tile type that water (rivers, lakes) should
+    // never overwrite — structures, features, paths, mountains.
+    private static bool IsProtectedFromWater(TileType t) =>
+        t is TileType.Wall or TileType.Floor or TileType.Door
+        or TileType.StairsUp or TileType.StairsDown or TileType.LabyrinthEntrance
+        or TileType.Campfire or TileType.Anvil or TileType.BountyBoard
+        or TileType.Shrine or TileType.EnchantShrine or TileType.Fountain
+        or TileType.Pillar or TileType.Chest or TileType.LoreStone
+        or TileType.Path or TileType.Mountain or TileType.Journal
+        or TileType.Lever or TileType.PressurePlate;
+
+    private static void StampRiverTile(GameMap map, int x, int y)
+    {
+        if (!map.InBounds(x, y)) return;
+        if (IsProtectedFromWater(map.Tiles[x, y].Type)) return;
+        map.Tiles[x, y].Type = TileType.Water;
+    }
+
+    // ── Lake generation ──────────────────────────────────────────────
+    // Cellular automata: start with random noise in a circular region,
+    // smooth 4 iterations with the 5-neighbor rule → organic contiguous
+    // lake shapes with natural irregular shores.
+
+    // Generate an organic lake centered at (cx, cy) with approximate
+    // . Interior tiles become WaterDeep.
+    internal static void GenerateLake(GameMap map, int cx, int cy, int radius)
+    {
+        int d = radius * 2 + 1;
+        bool[,] grid = new bool[d, d];
+
+        // Seed: random fill inside a circle at 45% density.
+        for (int dx = 0; dx < d; dx++)
+        for (int dy = 0; dy < d; dy++)
+        {
+            int distSq = (dx - radius) * (dx - radius) + (dy - radius) * (dy - radius);
+            grid[dx, dy] = distSq <= radius * radius && Random.Shared.Next(100) < 45;
+        }
+
+        // Smooth: 4 iterations of the 5-neighbor rule.
+        for (int iter = 0; iter < 4; iter++)
+        {
+            var next = new bool[d, d];
+            for (int dx = 1; dx < d - 1; dx++)
+            for (int dy = 1; dy < d - 1; dy++)
+            {
+                int neighbors = 0;
+                for (int nx = -1; nx <= 1; nx++)
+                for (int ny = -1; ny <= 1; ny++)
+                    if (grid[dx + nx, dy + ny]) neighbors++;
+                next[dx, dy] = neighbors >= 5;
+            }
+            grid = next;
+        }
+
+        // Stamp onto the map.
+        for (int dx = 0; dx < d; dx++)
+        for (int dy = 0; dy < d; dy++)
+        {
+            if (!grid[dx, dy]) continue;
+            int mx = cx - radius + dx, my = cy - radius + dy;
+            if (!map.InBounds(mx, my)) continue;
+            if (IsProtectedFromWater(map.Tiles[mx, my].Type)) continue;
+
+            // Interior (all 4 cardinal neighbors are also water in the grid) → deep.
+            bool interior = dx > 0 && dx < d - 1 && dy > 0 && dy < d - 1
+                && grid[dx - 1, dy] && grid[dx + 1, dy] && grid[dx, dy - 1] && grid[dx, dy + 1];
+            map.Tiles[mx, my].Type = interior ? TileType.WaterDeep : TileType.Water;
+        }
+    }
+
+    // ── Biome blending ───────────────────────────────────────────────
+    // A single post-pass that softens hard edges between terrain types
+    // by inserting transitional tiles (GrassTall near forests, GrassSparse
+    // near rocks/water). Run after all clusters, rivers, and lakes.
+
+    // Smooth terrain transitions so biomes fade into each other instead
+    // of having sharp 1-tile edges.
+    internal static void BlendBiomes(GameMap map)
+    {
+        int w = map.Width, h = map.Height;
+
+        // Work on a snapshot so we don't feed back mid-pass.
+        var snapshot = new TileType[w, h];
+        for (int x = 0; x < w; x++)
+        for (int y = 0; y < h; y++)
+            snapshot[x, y] = map.Tiles[x, y].Type;
+
+        for (int x = 1; x < w - 1; x++)
+        for (int y = 1; y < h - 1; y++)
+        {
+            var t = snapshot[x, y];
+            if (t != TileType.Grass) continue;
+
+            int trees = 0, rocks = 0, water = 0;
+            for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+                var n = snapshot[x + dx, y + dy];
+                if (n is TileType.Tree or TileType.TreePine or TileType.Bush) trees++;
+                if (n is TileType.Rock or TileType.Mountain) rocks++;
+                if (n is TileType.Water or TileType.WaterDeep) water++;
+            }
+
+            // Forest fringe → tall grass.
+            if (trees >= 3 && Random.Shared.Next(2) == 0)
+                map.Tiles[x, y].Type = TileType.GrassTall;
+            // Rocky fringe → sparse grass.
+            else if (rocks >= 2 && Random.Shared.Next(2) == 0)
+                map.Tiles[x, y].Type = TileType.GrassSparse;
+            // Shoreline fringe → sparse grass (beach feel).
+            else if (water >= 2 && Random.Shared.Next(2) == 0)
+                map.Tiles[x, y].Type = TileType.GrassSparse;
+        }
+    }
+}
