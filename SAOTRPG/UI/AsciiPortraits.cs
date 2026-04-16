@@ -1,0 +1,93 @@
+namespace SAOTRPG.UI;
+
+// Small ASCII portraits keyed by a short identifier. Each is 8 wide × 5 tall.
+// Used by CutsceneDialog to anchor recurring SAO characters to a face.
+public static class AsciiPortraits
+{
+    public static readonly Dictionary<string, string[]> All = new()
+    {
+        ["kirito"] = new[]
+        {
+            "┌──────┐",
+            "│ /\\/\\ │",
+            "│ o  o │",
+            "│  ──  │",
+            "└──────┘",
+        },
+        ["asuna"] = new[]
+        {
+            "┌──────┐",
+            "│ │═║│ │",
+            "│ o  o │",
+            "│  ⌣⌣  │",
+            "└──────┘",
+        },
+        ["heathcliff"] = new[]
+        {
+            "┌──────┐",
+            "│ ╒══╕ │",
+            "│ │▲│  │",
+            "│  ──  │",
+            "└──────┘",
+        },
+        ["kayaba"] = new[]
+        {
+            "┌──────┐",
+            "│ ▓▓▓▓ │",
+            "│ ·  · │",
+            "│  ▔▔  │",
+            "└──────┘",
+        },
+        ["argo"] = new[]
+        {
+            "┌──────┐",
+            "│ ^··^ │",
+            "│ o  o │",
+            "│ ──── │",
+            "└──────┘",
+        },
+        ["klein"] = new[]
+        {
+            "┌──────┐",
+            "│ ≈≈≈≈ │",
+            "│ o  o │",
+            "│  ▽▽  │",
+            "└──────┘",
+        },
+        ["agil"] = new[]
+        {
+            "┌──────┐",
+            "│ ____ │",
+            "│ o  o │",
+            "│ )VV( │",
+            "└──────┘",
+        },
+        ["kizmel"] = new[]
+        {
+            "┌──────┐",
+            "│ ▲  ▲ │",
+            "│ *  * │",
+            "│  ──  │",
+            "└──────┘",
+        },
+        ["sachi"] = new[]
+        {
+            "┌──────┐",
+            "│ ∩∩∩∩ │",
+            "│ ·  · │",
+            "│  ‿‿  │",
+            "└──────┘",
+        },
+        ["kibaou"] = new[]
+        {
+            "┌──────┐",
+            "│ ╱╲╱╲ │",
+            "│ >  < │",
+            "│ ══── │",
+            "└──────┘",
+        },
+    };
+
+    public static string[] Get(string key)
+        => All.TryGetValue(key, out var p) ? p : Array.Empty<string>();
+}
