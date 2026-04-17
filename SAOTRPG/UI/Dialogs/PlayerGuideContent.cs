@@ -203,7 +203,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Look Mode & Counter Stance] · [Sprint & Stealth Move] · [Floor Boss Roster — Canon Highlights]")
         {
-            Tags = new[] { "combat" }
+            Tags = new[] { "combat", "bosses" }
         },
 
         new("Combat & Rarity", "Status: Bleed & Poison",
@@ -232,7 +232,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Status: Stun & Slow] · [Quick-Use Slots (1-5)] · [Potions, Crystals & Throwables]")
         {
-            Tags = new[] { "combat" }
+            Tags = new[] { "combat", "status" }
         },
 
         new("Combat & Rarity", "Status: Stun & Slow",
@@ -290,7 +290,7 @@ public static class PlayerGuideContent
             "sources. For raw stats per Col spent, Epic drops from early\n" +
             "floors out-scale baseline Rare gear on later floors.\n\n" +
             "SEE ALSO\n" +
-            "[Rarity Colors & Glyphs] · [Divine Objects] · [Named Legendary Highlights]")
+            "[Rarity Colors & Glyphs] · [Divine Objects] · [Named Legendary Highlights] · [Hollow Area Uniques]")
         {
             Tags = new[] { "rarity", "weapons" }
         },
@@ -323,7 +323,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Rarity Tiers & Drop Rates] · [Divine Objects] · [Divine Object Set — Integrity Knights]")
         {
-            Tags = new[] { "rarity" }
+            Tags = new[] { "rarity", "weapons" }
         },
 
         new("Combat & Rarity", "Divine Objects",
@@ -553,7 +553,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Heavy Attacks (Winding Up)] · [Unique Skill: Extra Skill — Search] · [Traps & Hazards]")
         {
-            Tags = new[] { "combat" }
+            Tags = new[] { "combat", "movement" }
         },
 
         new("Combat & Rarity", "Quick-Use Slots (1-5)",
@@ -617,7 +617,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Look Mode & Counter Stance] · [Traps & Hazards] · [Biomes]")
         {
-            Tags = new[] { "combat" }
+            Tags = new[] { "combat", "vision" }
         },
 
         new("Combat & Rarity", "Look Mode & Counter Stance",
@@ -649,7 +649,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV]")
         {
-            Tags = new[] { "combat" }
+            Tags = new[] { "combat", "vision" }
         },
 
         new("Combat & Rarity", "Death Penalty & Hardcore",
@@ -680,7 +680,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Save System] · [Potions, Crystals & Throwables] · [Achievements]")
         {
-            Tags = new[] { "combat" }
+            Tags = new[] { "combat", "hardcore" }
         },
 
         // ═══════════════════════════════════════════════════════════════
@@ -867,9 +867,11 @@ public static class PlayerGuideContent
             "TIPS\n" +
             "Since off-hand scales on BaseDamage + prof, pick the same\n" +
             "weapon class in both hands to share proficiency grinding\n" +
-            "across both swings.\n\n" +
+            "across both swings. Paired canon items (Elucidator/Dark\n" +
+            "Repulser, Elucidator Rouge/Flare Pulsar, Black Iron A/B)\n" +
+            "bypass the unlock entirely — see Paired Dual-Wield Weapons.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Holy Sword] · [Equipment Slots & Dual Wield] · [Sword Skill Cooldown & Post-Motion]")
+            "[Paired Dual-Wield Weapons] · [Unique Skill: Holy Sword] · [Equipment Slots & Dual Wield]")
         {
             Tags = new[] { "combat", "unique-skills", "dual-blades" }
         },
@@ -954,11 +956,12 @@ public static class PlayerGuideContent
             "COSTS\n" +
             "None beyond the 100-kill grind gate.\n\n" +
             "TIPS\n" +
-            "Stack this with a Bleed+N Katana weapon for constant\n" +
-            "bleed-tick pressure — the weapon proc adds a separate 3-turn\n" +
-            "bleed on top of the 15% passive.\n\n" +
+            "Stack this with a Bleed+N Katana (Karakurenai, Muramasa, or an\n" +
+            "Elemental Dark variant) for constant bleed-tick pressure — the\n" +
+            "weapon proc adds a separate 3-turn bleed on top of the 15%\n" +
+            "passive, which chains into Hemorrhage if Poison is also active.\n\n" +
             "SEE ALSO\n" +
-            "[Status: Bleed & Poison] · [Sword Skills — Unlock & Use] · [Named Legendary Highlights]")
+            "[Status: Bleed & Poison] · [Sword Skills — Unlock & Use] · [Named Legendary Highlights] · [Infinity Moment Shop Weapons] · [Elemental Weapon Variants]")
         {
             Tags = new[] { "combat", "unique-skills", "katana" }
         },
@@ -1293,7 +1296,7 @@ public static class PlayerGuideContent
             "only exist outside. Enter the labyrinth fully rested, at 100%\n" +
             "durability, with escape consumables in quick slots.\n\n" +
             "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Ascending a Floor] · [Secret Shrines (T1 Chain Weapons)]")
+            "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Ascending a Floor] · [Mechanical Tiles]")
         {
             Tags = new[] { "world", "floors", "bosses" }
         },
@@ -1526,14 +1529,15 @@ public static class PlayerGuideContent
         new("World", "Field Bosses — Guaranteed Drops",
             "┌─ World\n" +
             "│ Topic: Field Bosses\n" +
-            "│ Floors: 2, 14, 22, 25, 35, 40, 48, 49, 61, 77+, 80, 83, 85, 86, 87, 90, 93, 95\n" +
+            "│ Floors: 2, 14, 22, 25, 35, 40, 48, 49, 60, 61, 70, 77+, 80, 83, 85, 86, 87, 90, 93, 95, 97, 98\n" +
             "│ Landmark: Roaming overworld elites\n" +
             "│ Unlock: Floor entry; never spawn in labyrinths\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Field bosses are roaming elites on overworld floors. Each\n" +
             "100%-drops a named item — some Divine, some craft catalysts,\n" +
-            "some Hollow-Fragment implements. Once defeated, a field boss\n" +
+            "some Hollow-Fragment implements, and (post-FD pass) seven\n" +
+            "canonical FD character weapons. Once defeated, a field boss\n" +
             "never respawns on that save.\n\n" +
             "USAGE\n" +
             "Engage in the open world — they appear on the overworld only,\n" +
@@ -1550,31 +1554,40 @@ public static class PlayerGuideContent
             "  F40  Phoenix of Smolder Pk  -> Flame Bow (Divine)\n" +
             "  F48  Frost Dragon           -> Crystallite Ingot\n" +
             "  F49  Nicholas Renegade      -> Returning Soul (Christmas only)\n" +
+            "  F60  Kagutsuchi Fire Samurai-> Spirit Sword Kagutsuchi (FD)\n" +
             "  F61  Crimson Forneus        -> Rosso Forneus (IF Legendary)\n" +
+            "  F70  Susanoo the Storm Blade-> Spirit Sword Susanoo (FD)\n" +
             "  F80  Soul Binder            -> Arcaneblade: Soul Binder (HF)\n" +
+            "  F80  Pyre Lord of Heathcliff-> Flame Lord (FD Legendary)\n" +
             "  F83  Ruinous Herald         -> Fellblade: Ruinous Doom (HF)\n" +
             "  F85  Silent Edge            -> Black Lily Sword (Divine)\n" +
             "  F85  Abased Beast           -> canon HNM (Avatar 10% rate)\n" +
+            "  F85  Yuuki's Echo           -> Macafitel (FD Legendary)\n" +
             "  F86  Fellaxe Revenant       -> Fellaxe: Demon's Scythe (HF)\n" +
             "  F87  Yasha the Night Demon  -> Yasha Astaroth (IF Legendary)\n" +
             "  F90  Gaou the Ox-King       -> Gaou Reginleifr (IF Legendary)\n" +
             "  F93  Banishing Ray          -> Glimmerblade: Banishing Ray (HF)\n" +
             "  F94  Ark Knight             -> canon HNM (Avatar 10% rate)\n" +
             "  F95  Warden of Stopped Hrs  -> Time Piercing (Divine)\n" +
+            "  F95  Warden of Blooming Rose-> Red Rose Sword (FD Legendary)\n" +
             "  F95  Gaia Breaker           -> canon HNM (Avatar 10% rate)\n" +
-            "  F96  Eternal Dragon         -> canon HNM (Avatar 10% rate)\n\n" +
+            "  F96  Eternal Dragon         -> canon HNM (Avatar 10% rate)\n" +
+            "  F97  Administrator's Regent -> Silvery Ruler (FD Legendary)\n" +
+            "  F98  Ashen Kirito Simulacrum-> Elucidator Rouge (FD Legendary)\n\n" +
             "COSTS\n" +
             "No time limit, but field bosses scale 1.5x normal HP and deal\n" +
-            "heavier telegraphed attacks.\n\n" +
+            "heavier telegraphed attacks. FD canon bosses scale harder\n" +
+            "(up to 4.5x HP, 1.85x ATK) — see FD Field Bosses topic.\n\n" +
             "TIPS\n" +
             "Clear the overworld fully before stepping on the Labyrinth\n" +
-            "entrance — missing a Divine or HF drop is painful. Christmas-\n" +
-            "only Nicholas on F49 is one of only two Divine Stone of\n" +
-            "Returning Soul sources.\n\n" +
+            "entrance — missing a Divine, HF, or FD character drop is\n" +
+            "painful. Christmas-only Nicholas on F49 is one of only two\n" +
+            "Divine Stone of Returning Soul sources. F98 Ashen Kirito\n" +
+            "coexists with Blaze Armor, so budget durability.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Divine Object Set — Integrity Knights] · [Seasonal Events]")
+            "[Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Divine Object Set — Integrity Knights]")
         {
-            Tags = new[] { "world", "bosses", "integral-factor" }
+            Tags = new[] { "world", "bosses", "fractured-daydream" }
         },
 
         new("World", "Integral Factor Field Bosses",
@@ -1612,9 +1625,58 @@ public static class PlayerGuideContent
             "upgrades. Yasha/Gaou field bosses hit in the 80-90 range\n" +
             "where an unrefined Celestial weapon is already underpowered.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Weapon Series] · [Field Bosses — Guaranteed Drops] · [Named Legendary Highlights]")
+            "[Integral Factor Weapon Series] · [Field Bosses — Guaranteed Drops] · [Fractured Daydream Field Bosses] · [Named Legendary Highlights]")
         {
             Tags = new[] { "world", "bosses", "integral-factor" }
+        },
+
+        new("World", "Fractured Daydream Field Bosses",
+            "┌─ World\n" +
+            "│ Topic: Fractured Daydream Field Bosses\n" +
+            "│ Floors: F60, F70, F80, F85, F95, F97, F98\n" +
+            "│ Landmark: Overworld, canon FD arc bosses\n" +
+            "│ Unlock: Floor entry; never respawn\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Seven canonical field bosses gate Fractured Daydream (FD)\n" +
+            "character weapons. Each 100%-drops one FD Legendary on kill,\n" +
+            "moving those weapons out of the random banded loot pool into\n" +
+            "fixed canon placements.\n\n" +
+            "USAGE\n" +
+            "Clear the overworld on the listed floors. FD bosses scale\n" +
+            "harder than standard field bosses (2.8x-4.5x HP, 1.5x-1.85x\n" +
+            "ATK) and deal heavier telegraphed attacks — budget crystals.\n\n" +
+            "EFFECTS\n" +
+            "  F60 Kagutsuchi the Fire Samurai    (2.8x HP, 1.5x ATK)\n" +
+            "                                      -> Spirit Sword Kagutsuchi\n" +
+            "  F70 Susanoo the Storm Blade        (3.2x HP, 1.6x ATK)\n" +
+            "                                      -> Spirit Sword Susanoo\n" +
+            "  F80 Pyre Lord of Heathcliff        (3.8x HP, 1.7x ATK)\n" +
+            "                                      -> Flame Lord\n" +
+            "  F85 Yuuki's Echo                   (4.0x HP, 1.75x ATK)\n" +
+            "                                      -> Macafitel\n" +
+            "  F95 Warden of the Blooming Rose    (4.3x HP, 1.8x ATK)\n" +
+            "                                      -> Red Rose Sword\n" +
+            "  F97 Administrator's Regent         (4.2x HP, 1.8x ATK)\n" +
+            "                                      -> Silvery Ruler\n" +
+            "  F98 Ashen Kirito Simulacrum        (4.5x HP, 1.85x ATK)\n" +
+            "                                      -> Elucidator Rouge\n" +
+            "Also canon: F55 Agil's Apprentice (quest NPC, 15 kills) hands\n" +
+            "out Ground Gorge — see Fractured Daydream Character Weapons.\n\n" +
+            "COSTS\n" +
+            "No time limit. Each boss never respawns on that save, so\n" +
+            "missing a clear means the weapon never drops on this run.\n" +
+            "F97 bumped from canon F95 to space out with Warden of Stopped\n" +
+            "Hours and Red Rose Warden. F98 coexists with Blaze Armor.\n\n" +
+            "TIPS\n" +
+            "Kagutsuchi (F60) and Susanoo (F70) are the easiest pair — Klein\n" +
+            "canon kit lands here. Chain F95 → F97 → F98 on a single push\n" +
+            "for three Legendary drops in two floors. Ashen Kirito drops\n" +
+            "the Elucidator Rouge half of the Rouge/Flare Pulsar pair.\n\n" +
+            "SEE ALSO\n" +
+            "[Field Bosses — Guaranteed Drops] · [Fractured Daydream Character Weapons] · [Agil's Apprentice (F55)] · [Paired Dual-Wield Weapons]")
+        {
+            Tags = new[] { "world", "bosses", "fractured-daydream" }
         },
 
         new("World", "Run Modifiers (12 Optional Challenges)",
@@ -1755,9 +1817,10 @@ public static class PlayerGuideContent
             "TIPS\n" +
             "Chase the 90% exploration flag on every floor — the +XP/+Col is\n" +
             "large and compounds. Speed Clear par doubles the reward window;\n" +
-            "aggressive runs are rewarded.\n\n" +
+            "aggressive runs are rewarded. Watch the ascend banner for Floor\n" +
+            "Title promotions — they fire at F2/5/10/15/25/35/50/75/100.\n\n" +
             "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Achievements] · [Save System] · [Col Economy — How You Earn]")
+            "[Floor Boss Roster — Canon Highlights] · [Floor Titles] · [Save System] · [Col Economy — How You Earn]")
         {
             Tags = new[] { "world", "progression", "xp" }
         },
@@ -1778,10 +1841,12 @@ public static class PlayerGuideContent
             "claw flurries to slow scythe reach. Each lists speed, range,\n" +
             "and the attributes it scales with. Integral Factor adds named\n" +
             "series weapons (Integral/Nox/Rosso/Yasha/Gaou) across most of\n" +
-            "these classes, and Infinity Moment adds 20 further canon\n" +
-            "weapons — 8 LAB floor-boss drops (F85-F99) and 12 enhanceable\n" +
-            "shop weapons (F76-F99) — spanning Bow, 2H Sword, Scimitar,\n" +
-            "Katana, Dagger, 2H Axe, Spear, and Rapier.\n\n" +
+            "these classes, Infinity Moment adds 20 further canon weapons\n" +
+            "— 8 LAB floor-boss drops (F85-F99) and 12 enhanceable shop\n" +
+            "weapons (F76-F99) — and the Memory Defrag (MD, SAO mobile\n" +
+            "game) and Fractured Daydream (FD, Bandai 2024 co-op action\n" +
+            "game) imports add another 65 canon weapons across 1H Sword,\n" +
+            "2H Sword, Katana, Rapier, Dagger, Mace, Axe, Bow, and Spear.\n\n" +
             "USAGE\n" +
             "Equip any class in the main-hand slot. The OffHand Shield is\n" +
             "the only dedicated offhand until Dual Blades unlocks.\n\n" +
@@ -1807,7 +1872,7 @@ public static class PlayerGuideContent
             "Rapier or Dagger proficiency. Every weapon and shield gets 3\n" +
             "Refinement slots — see the Refinement System topic.\n\n" +
             "SEE ALSO\n" +
-            "[Material Tiers (Baseline)] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Weapon Refinement System]")
+            "[Material Tiers (Baseline)] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Memory Defrag Originals] · [Fractured Daydream Character Weapons] · [Weapon Refinement System]")
         {
             Tags = new[] { "weapons", "equipment", "integral-factor" }
         },
@@ -1895,21 +1960,42 @@ public static class PlayerGuideContent
             "  Artemis           Bow (F99), PiercingShot\n" +
             "IM Shop highlights (enhanceable via Anvil + ores):\n" +
             "  Muramasa          Katana (F86-99), Bleed — Legendary\n" +
-            "  Noctis Strasse    Rapier (F86-99), Bleed — Legendary\n\n" +
+            "  Noctis Strasse    Rapier (F86-99), Bleed — Legendary\n" +
+            "MD Originals (Memory Defrag mobile canon, see MD Originals topic):\n" +
+            "  Sword of Diva     1H Sword, AoE signature         MD exclusive\n" +
+            "  Sword of Causality 2H Sword, ArmorPierce          MD exclusive\n" +
+            "  Shining Nemesisz  Katana, HolyDamage              MD exclusive\n" +
+            "  Espada of Sword Dance Rapier, multi-thrust         MD exclusive\n" +
+            "MD Alicization extras (fills canon Underworld gaps):\n" +
+            "  Unfolding Truth Fragrant Olive Sword  Alice MD-awakened\n" +
+            "  Red Rose Sword    1H Sword, pairs with Night Sky  Kirito\n" +
+            "  Black Iron Dual Swords A & B          Underworld Kirito pair\n" +
+            "FD Character Core (Fractured Daydream signature drops):\n" +
+            "  Elucidator Rouge  1H Sword                        Kirito FD\n" +
+            "  Murasama G4       Katana                          Kirito FD\n" +
+            "  Spirit Sword Susanoo  Katana                      Klein FD\n" +
+            "  Golden Osmanthus Sword 1H Sword                   Alice FD\n" +
+            "  Flame Lord        2H Sword                        Heathcliff FD\n" +
+            "  Grida Replicant   Mace                            Lisbeth FD\n" +
+            "  Excalibur Oberon  1H Sword                        Oberon FD\n" +
+            "  Silvery Ruler     1H Sword                        Administrator FD\n" +
+            "  Macafitel         Rapier                          Yuuki FD\n\n" +
             "COSTS\n" +
             "None — the encounter itself is the cost. Lisbeth R6 crafts\n" +
             "cost 3M Col + rare mats each (see Lisbeth craft topic).\n" +
             "IM LAB weapons carry the IsEnhanceable=false flag — high base\n" +
-            "stats, no scaling. IM Shop weapons enhance normally.\n\n" +
+            "stats, no scaling. IM Shop weapons enhance normally. MD/FD\n" +
+            "originals drop from floor-banded loot pools.\n\n" +
             "TIPS\n" +
             "Mjolnir is flagged as Divine apex; pair it with stun-heavy\n" +
             "skills for lockdown. Dual Blades users should chase both\n" +
-            "Elucidator and Dark Repulser. The three IF Legendary series\n" +
-            "(Rosso/Yasha/Gaou) cover F61-F100. Lisbeth's 18-recipe R6\n" +
-            "line, Avatar Weapons, and the 20 Infinity Moment additions\n" +
-            "round out the F70+ arsenal.\n\n" +
+            "Elucidator and Dark Repulser (or the FD Elucidator Rouge +\n" +
+            "Chaos Raider Dual pair). The three IF Legendary series (Rosso/\n" +
+            "Yasha/Gaou) cover F61-F100. With Lisbeth's 18-recipe R6 line,\n" +
+            "Avatar Weapons, the 20 Infinity Moment additions, and the new\n" +
+            "MD/FD canon drops, the F50+ arsenal spans every SAO game.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Lisbeth — Rarity 6 Craft Line] · [Avatar Weapons & Last-Attack Bonus]")
+            "[Memory Defrag Originals] · [MD Alicization Canonical Extras] · [Fractured Daydream Character Weapons] · [Elemental Weapon Variants] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Lisbeth — Rarity 6 Craft Line] · [Avatar Weapons & Last-Attack Bonus]")
         {
             Tags = new[] { "weapons", "rarity", "integral-factor" }
         },
@@ -2465,8 +2551,10 @@ public static class PlayerGuideContent
             "Bracelet, Necklace, OffHand.\n" +
             "SHIELDS (OffHand): Wooden 10% block, Iron 18% block.\n" +
             "Successful block fully negates the hit and degrades the shield.\n" +
-            "DUAL WIELD: 1H Swords become legal in OffHand ONLY after\n" +
-            "unlocking Dual Blades. Otherwise OffHand accepts shields only.\n" +
+            "DUAL WIELD: 1H Swords become legal in OffHand after unlocking\n" +
+            "Dual Blades. EXCEPTION: weapons with IsDualWieldPaired=true\n" +
+            "(3 canonical pairs + 3 solo \"Dual\" weapons) equip to OffHand\n" +
+            "without the unlock. Otherwise OffHand accepts shields only.\n" +
             "2H Swords/Bows/Scythes block OffHand entirely.\n" +
             "REFINEMENT: weapon, off-hand sword, AND shield each carry\n" +
             "their own 3 Refinement slots. Dual-wielding two IF swords\n" +
@@ -2477,11 +2565,60 @@ public static class PlayerGuideContent
             "Before Dual Blades, an Iron Shield's 18% block pairs well\n" +
             "with Holy Sword's +15% — stacked you reach 33% flat block\n" +
             "against every incoming hit. Socket Guardian Ingots into the\n" +
-            "shield for another +15 DEF on top.\n\n" +
+            "shield for another +15 DEF on top. If you find a paired\n" +
+            "canon weapon early, you can start dual-wielding before the\n" +
+            "Dual Blades grind completes.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Dual Blades] · [Weapon Refinement System] · [Accessories]")
+            "[Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System]")
         {
             Tags = new[] { "equipment", "weapons", "refinement" }
+        },
+
+        new("Items", "Paired Dual-Wield Weapons",
+            "┌─ Items\n" +
+            "│ Topic: Paired Dual-Wield Weapons\n" +
+            "│ Tier: Legendary / Divine (9 flagged weapons)\n" +
+            "│ Flag: IsDualWieldPaired=true\n" +
+            "│ Source: Canon placements — bosses, quests, drops\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Nine weapons carry the IsDualWieldPaired flag. They equip to\n" +
+            "OffHand without the Dual Blades unlock, and three canonical\n" +
+            "pairs trigger Pair Resonance when both slots are filled.\n\n" +
+            "USAGE\n" +
+            "Equip any paired weapon to OffHand at any level — the unlock\n" +
+            "gate is bypassed. For Pair Resonance, fill BOTH main and off\n" +
+            "with the matched partners; the bonus activates automatically\n" +
+            "and logs '◆ Pair Resonance! ... sing together' once on first\n" +
+            "swing of each encounter.\n\n" +
+            "EFFECTS\n" +
+            "CANONICAL PAIRS (auto-offhand + Pair Resonance synergy):\n" +
+            "  Elucidator        ↔ Dark Repulser     Kirito SAO canon (F76)\n" +
+            "  Elucidator Rouge  ↔ Flare Pulsar      FD fire variant pair\n" +
+            "  Black Iron Dual A ↔ Black Iron Dual B Alicization Kirito\n" +
+            "SOLO \"DUAL\" FLAVORED (auto-offhand bypass only, no synergy):\n" +
+            "  Chaos Raider Dual    Kirito FD\n" +
+            "  Lightning Divider Dual Kirito\n" +
+            "  Murasama G4 Dual     Kirito\n" +
+            "PAIR RESONANCE BONUSES (both slots canonical pair):\n" +
+            "  +10% damage on both main-hand and offhand swings\n" +
+            "  +5% effective CritRate via 5% re-roll on failed crits\n" +
+            "Non-paired 1H Swords still require the Dual Blades unlock\n" +
+            "(F74 Gleam Eyes or 50 1H kills).\n\n" +
+            "COSTS\n" +
+            "None beyond acquiring both halves. Pair Resonance needs an\n" +
+            "exact match — mixing Elucidator with Flare Pulsar does not\n" +
+            "trigger the synergy.\n\n" +
+            "TIPS\n" +
+            "Black Iron A/B is the fastest pair to assemble pre-F76 — both\n" +
+            "drop through the Alicization-era banded pool. Elucidator/Dark\n" +
+            "Repulser is the highest-ceiling canon pair but gates on F76\n" +
+            "Gleam Eyes drops. Elucidator Rouge (F98 Ashen Kirito) + Flare\n" +
+            "Pulsar is the late-game FD option.\n\n" +
+            "SEE ALSO\n" +
+            "[Unique Skill: Dual Blades] · [Equipment Slots & Dual Wield] · [Fractured Daydream Character Weapons] · [MD Alicization Canonical Extras]")
+        {
+            Tags = new[] { "dual-wield", "pair-resonance", "weapons" }
         },
 
         new("Items", "Food & Cooking",
@@ -2501,7 +2638,7 @@ public static class PlayerGuideContent
             "  Bread               2 HP/turn x 10     bakery\n" +
             "  Grilled Meat        5 x 15              common\n" +
             "  Fish Stew           8 x 8               F3+\n" +
-            "  Honey Bread         mid\n" +
+            "  Honey Bread         4 x 12              F2+ bakery mid-tier\n" +
             "  Elven Waybread      3 x 30              F4+\n" +
             "  Cream-Filled Bread  3 x 10              Tolbana 5 Col staple\n" +
             "  Asuna's Sandwich    5 x 15              F74 field lunch canon\n" +
@@ -2677,7 +2814,7 @@ public static class PlayerGuideContent
             "pairs with stun-skill builds. Enhance with Crimson Flame for\n" +
             "raw ATK or Sharp Blade for crit-focused DPS.\n\n" +
             "SEE ALSO\n" +
-            "[Dynamic Shop Tiering (F50+)] · [Enhancement Ores System] · [Anvil — Repair, Enhance, Evolve, Refine] · [Vendors — Rotating Stock]")
+            "[Dynamic Shop Tiering (F50+)] · [Enhancement Ores System] · [Anvil — Repair, Enhance, Evolve, Refine] · [Unique Skill: Katana Mastery] · [Vendors — Rotating Stock]")
         {
             Tags = new[] { "infinity-moment", "shop-tiering", "weapons" }
         },
@@ -2793,6 +2930,186 @@ public static class PlayerGuideContent
             "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Ascending a Floor] · [Floor Boss Roster — Canon Highlights]")
         {
             Tags = new[] { "shop-tiering", "infinity-moment", "economy" }
+        },
+
+        new("Items", "Memory Defrag Originals",
+            "┌─ Items\n" +
+            "│ Topic: Memory Defrag Originals\n" +
+            "│ Tier: Rare / Epic / Legendary (16 total)\n" +
+            "│ Weapon type: 1H Sword, 2H Sword, Katana, Rapier, Dagger, Spear, Bow\n" +
+            "│ Source: Floor-banded loot pool (MD canon)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Sixteen MD-exclusive weapons imported from SAO: Memory Defrag\n" +
+            "(MD, the canonical SAO mobile game). They are NOT tied to any\n" +
+            "named character — MD's event weapons were one-off drops, and\n" +
+            "they roll here through the floor-banded loot pool at canon-\n" +
+            "appropriate bands.\n\n" +
+            "USAGE\n" +
+            "Farm mobs and chests within each weapon's listed floor band.\n" +
+            "Drops echo through LootGenerator.FloorBandedRegisteredLoot —\n" +
+            "you may see them from any kill, chest, or pool roll on the\n" +
+            "band.\n\n" +
+            "EFFECTS\n" +
+            "LEGENDARY (5): Sword of Diva (1H), Espada of Sword Dance\n" +
+            "(Rapier), Sword of Causality (2H), Shining Nemesisz (Katana).\n" +
+            "EPIC (5): Purple Star Baselard (Dagger), Neo Atlantis (Spear),\n" +
+            "Eternal Promise (1H), Aqua Spread (Bow), Chivalrous Rapier.\n" +
+            "RARE (7): Cobalt Tristan (1H), Venus Heart (Rapier), Atlantis\n" +
+            "Sword (1H), Bloody Rapier, Holy Flower Rapier, Mithril Rapier,\n" +
+            "Cheer of Love Bow.\n\n" +
+            "COSTS\n" +
+            "None guaranteed — the loot pool is probabilistic. MD drops\n" +
+            "compete for pool slots with IF/HF/IM/FD entries on each band.\n\n" +
+            "TIPS\n" +
+            "MD weapons lean flavor-canon (no unique SpecialEffects beyond\n" +
+            "their rarity-tier stats) — if you're building for a specific\n" +
+            "effect, prefer IM Shop or IF Series weapons. Rare MD rapiers\n" +
+            "are a cheap stopgap for Rapier proficiency grinds F10-F30.\n\n" +
+            "SEE ALSO\n" +
+            "[MD Alicization Canonical Extras] · [Fractured Daydream Character Weapons] · [Elemental Weapon Variants] · [Named Legendary Highlights] · [Weapon Types Overview]")
+        {
+            Tags = new[] { "memory-defrag", "weapons", "rarity" }
+        },
+
+        new("Items", "MD Alicization Canonical Extras",
+            "┌─ Items\n" +
+            "│ Topic: MD Alicization Canonical Extras\n" +
+            "│ Tier: Legendary (4 weapons)\n" +
+            "│ Weapon type: 1H Sword (all four)\n" +
+            "│ Source: Floor-banded pool, Alicization era bands\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Four Memory Defrag (MD) Alicization canon blades that fill\n" +
+            "Underworld-arc gaps alongside the Divine Object Set. They\n" +
+            "cover two Kirito pairs and MD's awakened-form variant of\n" +
+            "Alice's Fragrant Olive Sword.\n\n" +
+            "USAGE\n" +
+            "Three farm through the floor-banded loot pool on Alicization-\n" +
+            "era floors (F65+). Unfolding Truth Fragrant Olive Sword is\n" +
+            "quest-gated via Selka's chained Quest 2 (The Sword's Awakening).\n" +
+            "Red Rose Sword also has a canon field-boss source on F95.\n\n" +
+            "EFFECTS\n" +
+            "  Unfolding Truth Fragrant Olive Sword  Selka Q2 reward\n" +
+            "                                         (Alice's awakened form)\n" +
+            "  Red Rose Sword                         F95 boss drop + pool\n" +
+            "                                         (pairs with Night Sky)\n" +
+            "  Black Iron Dual Sword A               Underworld Kirito pair\n" +
+            "  Black Iron Dual Sword B               offhand of the pair\n" +
+            "Black Iron A/B are IsDualWieldPaired — either slot bypasses\n" +
+            "the Dual Blades unlock, and equipping both triggers Pair\n" +
+            "Resonance (+10% dmg both swings, +5% crit re-roll).\n\n" +
+            "COSTS\n" +
+            "None beyond the pool roll or quest. Pair A/B don't auto-drop\n" +
+            "together — expect separate rolls for the dual-wield setup.\n\n" +
+            "TIPS\n" +
+            "Dual Blades users building a canon Underworld Kirito run should\n" +
+            "chase Black Iron A/B as the matched Pair Resonance pair.\n" +
+            "Unfolding Truth is the MD-canon complement to the Divine\n" +
+            "Fragrant Olive from Selka Q1 — both canon, different flavor.\n\n" +
+            "SEE ALSO\n" +
+            "[The Sword's Awakening (Selka F65)] · [Paired Dual-Wield Weapons] · [Divine Object Set — Integrity Knights] · [Memory Defrag Originals] · [Named Legendary Highlights]")
+        {
+            Tags = new[] { "memory-defrag", "weapons", "divine" }
+        },
+
+        new("Items", "Fractured Daydream Character Weapons",
+            "┌─ Items\n" +
+            "│ Topic: Fractured Daydream Character Weapons\n" +
+            "│ Tier: Legendary (17) + Rare (1)\n" +
+            "│ Weapon type: Across 1H, 2H, Katana, Mace, Dagger, Rapier, Axe\n" +
+            "│ Source: Floor-banded loot pool (FD canon)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Eighteen character-signature weapons imported from SAO:\n" +
+            "Fractured Daydream (FD, the 2024 co-op action game). Each is\n" +
+            "canonically wielded by a specific SAO cast member in FD; the\n" +
+            "class-lock is flavor only — any player can equip any FD weapon\n" +
+            "that fits their loadout.\n\n" +
+            "USAGE\n" +
+            "Eight are now canon-placed on field bosses or quest NPCs\n" +
+            "(see Fractured Daydream Field Bosses). The remainder farm\n" +
+            "through the floor-banded loot pool on F50+, competing for\n" +
+            "slots alongside IF, HF, IM, and MD entries at their band.\n\n" +
+            "EFFECTS\n" +
+            "By wielder (★ = canon-placed boss/quest drop):\n" +
+            "  Kirito        Elucidator Rouge★ (F98), Chaos Raider Dual,\n" +
+            "                Murasama G4 (Katana)\n" +
+            "  Klein         Spirit Sword Kagutsuchi★ (F60),\n" +
+            "                Spirit Sword Susanoo★ (F70)\n" +
+            "  Agil          Ground Gorge★ (F55 quest), Naz (2H Axe)\n" +
+            "  Alice         Golden Osmanthus Sword (1H)\n" +
+            "  Heathcliff    Flame Lord★ (F80, 2H Sword)\n" +
+            "  Lisbeth       Plain Mace (Mace, Rare), Grida Replicant (Mace)\n" +
+            "  Leafa         Sweep Saber (Katana)\n" +
+            "  Yui           Obsidian Dagger\n" +
+            "  Argo          Virt Katze (Dagger), Thunder God's Rift Blade\n" +
+            "                (Dagger)\n" +
+            "  Oberon        Tanquiem (1H), Excalibur Oberon (1H)\n" +
+            "  Administrator Silvery Ruler★ (F97, 1H)\n" +
+            "  Yuuki         Macafitel★ (F85, Rapier)\n" +
+            "  (also canon★) Red Rose Sword (F95)\n\n" +
+            "COSTS\n" +
+            "None beyond the pool roll or boss kill. Drops are not gated\n" +
+            "on recruiting the matching ally — you can loot Klein's\n" +
+            "Spirit Sword Susanoo with or without Klein in your party.\n\n" +
+            "TIPS\n" +
+            "Pair matching weapons with matching allies for canon flavor\n" +
+            "runs (Klein wielding Spirit Sword, Agil with Ground Gorge).\n" +
+            "Kirito's FD pair (Elucidator Rouge + Flare Pulsar) forms a\n" +
+            "Pair Resonance dual-wield combo; add Murasama G4 as a Katana\n" +
+            "sidearm for Katana Mastery's bleed pressure when swapping.\n\n" +
+            "SEE ALSO\n" +
+            "[Fractured Daydream Field Bosses] · [Agil's Apprentice (F55)] · [Paired Dual-Wield Weapons] · [Elemental Weapon Variants] · [Named Legendary Highlights]")
+        {
+            Tags = new[] { "fractured-daydream", "weapons", "rarity" }
+        },
+
+        new("Items", "Elemental Weapon Variants",
+            "┌─ Items\n" +
+            "│ Topic: Elemental Weapon Variants\n" +
+            "│ Tier: Rare / Epic (27 variants)\n" +
+            "│ Weapon type: Character-base flavor drops\n" +
+            "│ Source: Floor-banded pool F50+, 80% stats of base\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Twenty-seven elemental variants of FD and legacy character-\n" +
+            "signature weapons. Each variant shifts its base's statline to\n" +
+            "80% of the character-base version and adds one element-tied\n" +
+            "SpecialEffect, trading raw power for utility.\n\n" +
+            "USAGE\n" +
+            "Farm the floor-banded loot pool on F50+. Variants spawn in the\n" +
+            "same bands as their character-base entries, so a farm pass\n" +
+            "hunting Alice's Golden Osmanthus Sword may yield Alice's\n" +
+            "Thunderclap variant instead.\n\n" +
+            "EFFECTS\n" +
+            "Element → SpecialEffect mapping:\n" +
+            "  Fire      Burn +15 / +20\n" +
+            "  Water     Freeze +15\n" +
+            "  Wind      Slow +15\n" +
+            "  Thunder   Stun +10\n" +
+            "  Light     HolyDamage +15\n" +
+            "  Dark      Bleed +15\n\n" +
+            "Variants exist across (non-exhaustive): Asuna (Ray Grace, Volt\n" +
+            "Rapier, Dazzling Blink, Shadow Grace), Klein (White Plum,\n" +
+            "Futari Shizuka), Agil (Ignite Bardiche, Tyrant Fall, Sturm\n" +
+            "Welt), Alice (Red Peony, Gentle Breeze, Thunderclap, Purple\n" +
+            "Bellflower), Heathcliff (Arc Order, Topaz Edge, Saint Guarder,\n" +
+            "Abyss Keeper), Lisbeth (Blazing Torch, Elemental Hammer), Leafa\n" +
+            "(Icicle Blade, Eradicate Saber), Silica (Defeza), Argo (Hermit\n" +
+            "Fang), Oberon (Excalibur Bloodthirst).\n\n" +
+            "COSTS\n" +
+            "None beyond the pool roll. The 80%-of-base stat tradeoff is\n" +
+            "fixed — variants never match the character-base's raw damage.\n\n" +
+            "TIPS\n" +
+            "Pick the variant whose SpecialEffect matches your build gap:\n" +
+            "Thunder/Stun for crowd control, Dark/Bleed to feed Hemorrhage,\n" +
+            "Fire/Burn for tick pressure. On Katana builds, Dark variants\n" +
+            "double-dip with Katana Mastery's 15% bleed passive.\n\n" +
+            "SEE ALSO\n" +
+            "[Fractured Daydream Character Weapons] · [Memory Defrag Originals] · [Status: Bleed & Poison] · [Status: Stun & Slow] · [Unique Skill: Katana Mastery]")
+        {
+            Tags = new[] { "elemental-variants", "weapons", "fractured-daydream" }
         },
 
         // ═══════════════════════════════════════════════════════════════
@@ -2942,33 +3259,109 @@ public static class PlayerGuideContent
             "┌─ Quests & NPCs\n" +
             "│ NPC: Selka the Novice (white 'S')\n" +
             "│ Floor: 65\n" +
-            "│ Quest: The Last Knight's Bequest\n" +
-            "│ Reward: Fragrant Olive Sword (Divine) + 500 Col + 400 XP\n" +
+            "│ Quest 1: The Last Knight's Bequest (25 kills)\n" +
+            "│ Quest 2: The Sword's Awakening (30 kills, post-turn-in)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "A Floor 65 Divine Object giver. Selka (Alice's younger sister)\n" +
-            "keeps Alice's blade until a worthy wielder proves themselves in\n" +
-            "combat on F65.\n\n" +
+            "A Floor 65 Divine Object giver and chained-quest NPC. Selka\n" +
+            "(Alice's younger sister) keeps Alice's blade for a worthy\n" +
+            "wielder, then returns with a canon MD awakening chain.\n\n" +
             "USAGE\n" +
             "Bump Selka on F65. Accept \"The Last Knight's Bequest\": slay 25\n" +
-            "monsters on Floor 65. Return to her with the quest complete.\n\n" +
+            "monsters on Floor 65, return for the Divine blade. After turn-\n" +
+            "in, bump her again to unlock \"The Sword's Awakening\": slay 30\n" +
+            "monsters on F65+ for the MD-awakened variant.\n\n" +
             "EFFECTS\n" +
-            "On turn-in:\n" +
+            "Quest 1 (The Last Knight's Bequest):\n" +
             "  - Fragrant Olive Sword (Divine, HolyAoE+15, SD+15)\n" +
-            "  - +500 Col\n" +
-            "  - +400 XP\n" +
+            "  - +500 Col, +400 XP\n" +
+            "Quest 2 (The Sword's Awakening, chained):\n" +
+            "  - Unfolding Truth Fragrant Olive Sword (MD-awakened, stronger)\n" +
+            "  - +800 Col, +600 XP\n" +
+            "  - Closes Selka's arc with canon MD \"awakening\" dialogue\n" +
             "Auto-added to inventory; dropped at your feet if full.\n\n" +
             "COSTS\n" +
-            "25 F65 monster kills — F65 mobs scale off the HP/Col curve, so\n" +
-            "budget durability and potions accordingly.\n\n" +
+            "25 + 30 F65+ monster kills. No new save schema — the chain\n" +
+            "uses QuestStatus.TurnedIn as the Quest 2 gate.\n\n" +
             "TIPS\n" +
             "If you're running a Holy-Sword build, Fragrant Olive Sword's\n" +
-            "HolyAoE+15 stacks with Sacred Edge nicely. Save the turn-in\n" +
-            "until after any weapon-gated kill quests on F65.\n\n" +
+            "HolyAoE+15 stacks with Sacred Edge nicely. Push straight into\n" +
+            "Quest 2 for the awakened upgrade — the 30 kills overlap with\n" +
+            "any standing F65+ kill quests, so stack your accept list.\n\n" +
             "SEE ALSO\n" +
-            "[Divine Object Set — Integrity Knights] · [Sister Azariya (F50)] · [Unique Skill: Holy Sword] · [Divine Objects]")
+            "[The Sword's Awakening (Selka F65)] · [Divine Object Set — Integrity Knights] · [MD Alicization Canonical Extras] · [Unique Skill: Holy Sword]")
         {
-            Tags = new[] { "quests", "npcs", "divine" }
+            Tags = new[] { "quests", "npcs", "unfolding-truth" }
+        },
+
+        new("Quests & NPCs", "The Sword's Awakening (Selka F65)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Selka the Novice (F65)\n" +
+            "│ Floor: 65+ (kills count anywhere F65 or above)\n" +
+            "│ Quest: selka_unfolding_truth (chained Quest 2)\n" +
+            "│ Reward: Unfolding Truth Fragrant Olive Sword + 800 Col + 600 XP\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Selka's chained second quest. Becomes available only after the\n" +
+            "base Fragrant Olive Sword quest (The Last Knight's Bequest) is\n" +
+            "turned in — no new save schema; uses QuestStatus.TurnedIn as\n" +
+            "the unlock gate.\n\n" +
+            "USAGE\n" +
+            "Turn in Quest 1 for the Divine Fragrant Olive Sword. Return to\n" +
+            "Selka on F65 and bump her again — the awakening dialogue opens.\n" +
+            "Accept, then slay 30 monsters on F65 or higher and return.\n\n" +
+            "EFFECTS\n" +
+            "On turn-in:\n" +
+            "  - Unfolding Truth Fragrant Olive Sword\n" +
+            "    (MD-awakened variant, stronger stats than Divine base)\n" +
+            "  - +800 Col\n" +
+            "  - +600 XP\n" +
+            "  - Post-turn-in flavor line closes Selka's arc\n" +
+            "Dialogue uses canon MD phrasing (\"awakening\", \"unfolding\n" +
+            "truth\") pulled from the Alicization mobile storyline.\n\n" +
+            "COSTS\n" +
+            "30 F65+ kills. Kills roll up from any floor at or above 65, so\n" +
+            "you can advance the counter while climbing.\n\n" +
+            "TIPS\n" +
+            "Stack the 30 kills with HF HNM questgiver grinds on F79+ —\n" +
+            "those floors count, and you'll pay off two quests at once.\n" +
+            "The awakened blade replaces the Divine base in most builds;\n" +
+            "salvage or vault the Divine for Holy-Sword flavor runs.\n\n" +
+            "SEE ALSO\n" +
+            "[Selka the Novice (F65)] · [MD Alicization Canonical Extras] · [Divine Object Set — Integrity Knights] · [Quest Types & Rewards]")
+        {
+            Tags = new[] { "quests", "unfolding-truth", "npcs" }
+        },
+
+        new("Quests & NPCs", "Agil's Apprentice (F55)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Agil's Apprentice (BrightYellow 'G' glyph)\n" +
+            "│ Floor: 55\n" +
+            "│ Quest: Ground Gorge reclamation (15 kills)\n" +
+            "│ Reward: Ground Gorge (FD 2H Axe, Agil canon)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A quest NPC on F55 who gate-keeps Agil's signature FD weapon\n" +
+            "Ground Gorge. Moves the drop out of the random banded pool\n" +
+            "into a fixed canon placement — no more banded RNG for the axe.\n\n" +
+            "USAGE\n" +
+            "Bump the BrightYellow 'G' on F55. Accept the kill quest: 15\n" +
+            "monsters on Floor 55. Return on completion for Ground Gorge.\n\n" +
+            "EFFECTS\n" +
+            "On turn-in:\n" +
+            "  - Ground Gorge (Fractured Daydream, 2H Axe, Agil signature)\n" +
+            "Auto-added to inventory; dropped at your feet if full.\n\n" +
+            "COSTS\n" +
+            "15 F55 kills. Axe proficiency recommended if you plan to\n" +
+            "wield the reward — otherwise save it for an Agil ally run.\n\n" +
+            "TIPS\n" +
+            "Perfect canon loadout if you're recruiting Agil — hand the\n" +
+            "axe to him via party gear. Double-dip with standing F55\n" +
+            "weapon-gated Kill quests; the same 15 can resolve both.\n\n" +
+            "SEE ALSO\n" +
+            "[Fractured Daydream Character Weapons] · [Fractured Daydream Field Bosses] · [Recruitable Allies & Party System] · [Quest Types & Rewards]")
+        {
+            Tags = new[] { "quests", "npcs", "fractured-daydream" }
         },
 
         new("Quests & NPCs", "Hollow Fragment HNM Questgivers (F79-F99)",
@@ -3051,7 +3444,7 @@ public static class PlayerGuideContent
             "flavor/recruit NPC — the F48 Lindarth Lisbeth is a separate\n" +
             "crafting NPC that gates the Rarity 6 craft line.\n\n" +
             "SEE ALSO\n" +
-            "[Anneal Blade Craft Line] · [Lindarth Town (F48)] · [Vendors — Rotating Stock] · [SAO Switch (Party)]")
+            "[Anneal Blade Craft Line] · [Lindarth Town (F48)] · [Starting Loadout] · [Vendors — Rotating Stock] · [SAO Switch (Party)]")
         {
             Tags = new[] { "quests", "npcs", "shops" }
         },

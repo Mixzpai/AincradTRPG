@@ -132,4 +132,16 @@ public static class TwoHandedSwordDefinitions
         w.IsEnhanceable = false;
         return w;
     }
+
+    // ── Memory Defrag Originals (2H Sword entries) ─────────────────────
+
+    // MD Legendary. Causality-motif greatsword, piercing through luck.
+    public static Weapon CreateSwordOfCausality() => Make("ths_sword_of_causality", "Sword of Causality", 23000, "Legendary", 245, 82, 168,
+        B().Add(StatType.Attack, 84).Add(StatType.Strength, 28).Add(StatType.Dexterity, 16), "TrueStrike+20");
+
+    // ── Fractured Daydream — Character Core Canon (2H Sword) ───────────
+
+    // Heathcliff canon — Flame Lord. F80+ Legendary drop.
+    public static Weapon CreateFlameLord() => Make("ths_flame_lord", "Flame Lord", 23500, "Legendary", 245, 80, 170,
+        B().Add(StatType.Attack, 86).Add(StatType.Strength, 30).Add(StatType.Vitality, 14), "Burn+20");
 }

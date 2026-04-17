@@ -19,6 +19,16 @@ public static class OneHandedSwordDefinitions
 
     private static StatModifierCollection B() => new();
 
+    // FD Paired Dual-Wield marker — sets IsDualWieldPaired=true so the
+    // weapon may occupy the OffHand slot without the DualBlades unlock
+    // and participates in the Pair Resonance synergy lookup
+    // (Systems.DualWieldPairs). Applied to the 3 canonical pair members
+    // (Elucidator/Dark Repulser, Elucidator Rouge/Flare Pulsar, Black Iron
+    // Dual Sword A/B) and the 3 solo "Dual"-flavored canon weapons
+    // (Chaos Raider, Lightning Divider Dual, Murasama G4 Dual — the last
+    // lives in KatanaDefinitions).
+    private static Weapon Paired(Weapon w) { w.IsDualWieldPaired = true; return w; }
+
     public static Weapon CreateIronSword() => Make("iron_sword", "Iron Sword", 100, "Common", 50, 1, 10,
         B().Add(StatType.Attack, 8));
 
@@ -59,11 +69,11 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateAzureSkyBlade() => Make("azure_sky_blade", "Azure Sky Blade", 1800, "Rare", 120, 30, 50,
         B().Add(StatType.Attack, 30).Add(StatType.Agility, 8));
 
-    public static Weapon CreateElucidator() => Make("elucidator", "Elucidator", 10000, "Legendary", 200, 50, 90,
-        B().Add(StatType.Attack, 50).Add(StatType.Strength, 18).Add(StatType.Agility, 10), "SkillCooldown-1");
+    public static Weapon CreateElucidator() => Paired(Make("elucidator", "Elucidator", 10000, "Legendary", 200, 50, 90,
+        B().Add(StatType.Attack, 50).Add(StatType.Strength, 18).Add(StatType.Agility, 10), "SkillCooldown-1"));
 
-    public static Weapon CreateDarkRepulser() => Make("dark_repulser", "Dark Repulser", 10000, "Legendary", 200, 50, 85,
-        B().Add(StatType.Attack, 48).Add(StatType.Dexterity, 12).Add(StatType.Strength, 12), "CritHeal+5");
+    public static Weapon CreateDarkRepulser() => Paired(Make("dark_repulser", "Dark Repulser", 10000, "Legendary", 200, 50, 85,
+        B().Add(StatType.Attack, 48).Add(StatType.Dexterity, 12).Add(StatType.Strength, 12), "CritHeal+5"));
 
     public static Weapon CreateLiberator() => Make("liberator", "Liberator", 15000, "Legendary", 250, 75, 140,
         B().Add(StatType.Attack, 65).Add(StatType.Strength, 25), "BlockChance+15");
@@ -216,4 +226,123 @@ public static class OneHandedSwordDefinitions
 
     public static Weapon CreateMarginlessBlade() => Make("ohs_marginless_blade", "Marginless Blade", 32000, "Legendary", 260, 92, 180,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 28).Add(StatType.Dexterity, 22).Add(StatType.Agility, 16), "ComboBonus+50");
+
+    // ── Memory Defrag — Alicization gap weapons (Legendary) ────────────
+
+    // MD-awakened Fragrant Olive variant. Stronger than the base Divine
+    // Fragrant Olive in raw damage but loses the Divine crit-bypass;
+    // placed as a quest-reward upgrade F65+. (Flavor: Alice canon wielder.)
+    public static Weapon CreateUnfoldingTruthFragrantOlive() => Make("ohs_unfolding_truth_fragrant_olive", "Unfolding Truth Fragrant Olive Sword", 26000, "Legendary", 250, 65, 170,
+        B().Add(StatType.Attack, 85).Add(StatType.Strength, 24).Add(StatType.Dexterity, 16).Add(StatType.Agility, 14), "HolyAoE+20");
+
+    // Red Rose Sword — the canonical pair to Night Sky (Kirito). F95+ rare
+    // field-boss drop; darker sibling to Blue Rose. Kirito flavor.
+    public static Weapon CreateRedRoseSword() => Make("ohs_red_rose_sword", "Red Rose Sword", 28000, "Legendary", 250, 92, 175,
+        B().Add(StatType.Attack, 88).Add(StatType.Strength, 26).Add(StatType.Dexterity, 16), "Burn+20");
+
+    // Black Iron Dual Swords A — Underworld Kirito set (pair A). Late-game
+    // chest/quest drops F80+. Flavor: Kirito canon wielder.
+    public static Weapon CreateBlackIronDualSwordA() => Paired(Make("ohs_black_iron_dual_sword_a", "Black Iron Dual Sword (Paired)", 23000, "Legendary", 240, 80, 158,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 22).Add(StatType.Dexterity, 18), "ComboBonus+30"));
+
+    // Black Iron Dual Swords B — Underworld Kirito set (pair B). Matching
+    // off-hand counterpart. Lower base damage to reflect off-hand role.
+    public static Weapon CreateBlackIronDualSwordB() => Paired(Make("ohs_black_iron_dual_sword_b", "Black Iron Dual Sword (Off-hand)", 22000, "Legendary", 240, 80, 155,
+        B().Add(StatType.Attack, 76).Add(StatType.Strength, 22).Add(StatType.Agility, 18), "CritRate+15"));
+
+    // ── Memory Defrag Originals (1H Sword entries) ─────────────────────
+
+    // MD event weapon. Celestial choir blade wielded by the Diva. Legendary.
+    public static Weapon CreateSwordOfDiva() => Make("ohs_sword_of_diva", "Sword of Diva", 24000, "Legendary", 240, 80, 162,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 24).Add(StatType.Dexterity, 16), "HolyDamage+20");
+
+    // MD Rare. Knight-order saber, sapphire-blue finish.
+    public static Weapon CreateCobaltTristan() => Make("ohs_cobalt_tristan", "Cobalt Tristan", 2800, "Rare", 130, 32, 70,
+        B().Add(StatType.Attack, 36).Add(StatType.Strength, 10).Add(StatType.Dexterity, 8), "CritRate+10");
+
+    // MD Rare. Ocean-forged longsword, brine-blue edge.
+    public static Weapon CreateAtlantisSword() => Make("ohs_atlantis_sword", "Atlantis Sword", 2900, "Rare", 130, 30, 72,
+        B().Add(StatType.Attack, 36).Add(StatType.Strength, 10).Add(StatType.Dexterity, 8), "FrostDamage+10");
+
+    // MD Epic. Keepsake blade that heals its bearer between strikes.
+    public static Weapon CreateEternalPromise() => Make("ohs_eternal_promise", "Eternal Promise", 6200, "Epic", 165, 50, 125,
+        B().Add(StatType.Attack, 55).Add(StatType.Strength, 15).Add(StatType.Vitality, 12), "HPRegen+3");
+
+    // ── Fractured Daydream — Character Core Canon (1H Sword) ───────────
+
+    // Kirito canon — red-edged successor to Elucidator. F98+ rare drop.
+    public static Weapon CreateElucidatorRouge() => Paired(Make("ohs_elucidator_rouge", "Elucidator Rouge", 27000, "Legendary", 250, 90, 172,
+        B().Add(StatType.Attack, 86).Add(StatType.Strength, 26).Add(StatType.Agility, 14), "Burn+15"));
+
+    // Kirito canon — dual-wield chaos blade. F85+ rare drop. (FD class-lock
+    // is flavor only — any player can equip.) Solo "Dual"-flavored: bypasses
+    // DualBlades unlock for offhand routing, but has no canonical partner.
+    public static Weapon CreateChaosRaiderDual() => Paired(Make("ohs_chaos_raider_dual", "Chaos Raider", 19500, "Legendary", 230, 78, 158,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 22).Add(StatType.Dexterity, 18), "ComboBonus+30"));
+
+    // Alice canon — golden-osmanthus variant. F75+ rare drop. Fragrant Olive
+    // lineage (Alice flavor wielder).
+    public static Weapon CreateGoldenOsmanthusSword() => Make("ohs_golden_osmanthus", "Golden Osmanthus Sword", 21000, "Legendary", 235, 75, 162,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 22).Add(StatType.Dexterity, 16).Add(StatType.Agility, 10), "HolyDamage+18");
+
+    // Oberon canon — fairy-king regalia blade. F75+ rare drop.
+    public static Weapon CreateTanquiem() => Make("ohs_tanquiem", "Tanquiem", 20500, "Legendary", 235, 75, 160,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 22).Add(StatType.Agility, 14), "ParryChance+15");
+
+    // Administrator canon — Pontifex's blade. F95+ Legendary.
+    public static Weapon CreateSilveryRuler() => Make("ohs_silvery_ruler", "Silvery Ruler", 29000, "Legendary", 260, 92, 178,
+        B().Add(StatType.Attack, 88).Add(StatType.Strength, 26).Add(StatType.Dexterity, 18), "HolyDamage+20");
+
+    // ── Fractured Daydream — Elemental Variants (1H Sword) ─────────────
+
+    // Kirito fire variant. Flare Pulsar — solar-burst edge.
+    public static Weapon CreateFlarePulsar() => Paired(Make("ohs_flare_pulsar", "Flare Pulsar", 5400, "Epic", 160, 50, 115,
+        B().Add(StatType.Attack, 52).Add(StatType.Strength, 15).Add(StatType.Dexterity, 10), "Burn+20"));
+
+    // Kirito thunder dual variant. Lightning Divider — dual-storm edge.
+    // Solo "Dual"-flavored: bypasses DualBlades unlock, no canonical partner.
+    public static Weapon CreateLightningDividerDual() => Paired(Make("ohs_lightning_divider_dual", "Lightning Divider", 5600, "Epic", 160, 55, 118,
+        B().Add(StatType.Attack, 54).Add(StatType.Strength, 14).Add(StatType.Dexterity, 12), "Stun+10"));
+
+    // Alice fire variant. Red Peony Sword — crimson-petal Fragrant Olive cousin.
+    public static Weapon CreateRedPeonySword() => Make("ohs_red_peony_sword", "Red Peony Sword", 5200, "Epic", 155, 50, 112,
+        B().Add(StatType.Attack, 50).Add(StatType.Strength, 14).Add(StatType.Dexterity, 10), "Burn+20");
+
+    // Alice wind variant. Sword of the Gentle Breeze — feather-light Fragrant Olive variant.
+    public static Weapon CreateSwordOfTheGentleBreeze() => Make("ohs_sword_of_the_gentle_breeze", "Sword of the Gentle Breeze", 3400, "Rare", 130, 45, 78,
+        B().Add(StatType.Attack, 38).Add(StatType.Dexterity, 10).Add(StatType.Agility, 10), "Slow+15");
+
+    // Alice thunder variant. Thunderclap Sword — storm-rung edge.
+    public static Weapon CreateThunderclapSword() => Make("ohs_thunderclap_sword", "Thunderclap Sword", 5400, "Epic", 155, 55, 115,
+        B().Add(StatType.Attack, 52).Add(StatType.Strength, 14).Add(StatType.Dexterity, 10), "Stun+10");
+
+    // Alice dark variant. Purple Bellflower Sword — twilight Fragrant Olive kin.
+    public static Weapon CreatePurpleBellflowerSword() => Make("ohs_purple_bellflower_sword", "Purple Bellflower Sword", 3300, "Rare", 130, 48, 76,
+        B().Add(StatType.Attack, 38).Add(StatType.Dexterity, 10).Add(StatType.Agility, 8), "Bleed+15");
+
+    // Heathcliff water variant. Arc Order — rippling curve-edge.
+    public static Weapon CreateArcOrder() => Make("ohs_arc_order", "Arc Order", 3400, "Rare", 130, 48, 80,
+        B().Add(StatType.Attack, 40).Add(StatType.Strength, 10).Add(StatType.Vitality, 8), "Freeze+15");
+
+    // Heathcliff thunder variant. Topaz Edge — gold-plated storm blade.
+    public static Weapon CreateTopazEdge() => Make("ohs_topaz_edge", "Topaz Edge", 5400, "Epic", 155, 55, 116,
+        B().Add(StatType.Attack, 52).Add(StatType.Strength, 14).Add(StatType.Vitality, 10), "Stun+10");
+
+    // Heathcliff light variant. Saint Guarder — radiant cathedral blade.
+    public static Weapon CreateSaintGuarder() => Make("ohs_saint_guarder", "Saint Guarder", 5300, "Epic", 155, 55, 114,
+        B().Add(StatType.Attack, 52).Add(StatType.Strength, 14).Add(StatType.Vitality, 12), "HolyDamage+15");
+
+    // Heathcliff dark variant. Abyss Keeper — void-black knightblade.
+    public static Weapon CreateAbyssKeeper() => Make("ohs_abyss_keeper", "Abyss Keeper", 3300, "Rare", 130, 48, 78,
+        B().Add(StatType.Attack, 38).Add(StatType.Strength, 10).Add(StatType.Vitality, 10), "Bleed+15");
+
+    // Oberon light variant. Excalibur — fae-king holy blade (FD event reward,
+    // DefId disambiguated from the Arthurian display name via the `ohs_`
+    // prefix + `oberon` subtag).
+    public static Weapon CreateExcaliburOberon() => Make("ohs_excalibur_oberon", "Excalibur", 5800, "Epic", 165, 55, 122,
+        B().Add(StatType.Attack, 54).Add(StatType.Strength, 14).Add(StatType.Dexterity, 12), "HolyDamage+15");
+
+    // Oberon fire variant. Bloodthirst — crimson-kissed Tanquiem cousin.
+    public static Weapon CreateBloodthirst() => Make("ohs_bloodthirst", "Bloodthirst", 5500, "Epic", 160, 55, 118,
+        B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 14).Add(StatType.Agility, 10), "Burn+20");
 }

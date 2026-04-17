@@ -7,6 +7,11 @@ namespace SAOTRPG.Systems;
 
 public partial class TurnManager
 {
+    // Encounter-scoped set of monster IDs for which we've already logged
+    // the Pair Resonance banner. Reset when the combo target flips, so
+    // switching targets shows the banner again on the first strike.
+    private readonly HashSet<int> _pairResonanceLogged = new();
+
     private void HandleCombat(Monster monster, int hpBefore)
     {
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
@@ -14,7 +19,7 @@ public partial class TurnManager
         int profBonus = GetProficiencyBonus(wpnType);
 
         if (_comboTarget == monster.Id) _comboCount++;
-        else { _comboTarget = monster.Id; _comboCount = 1; }
+        else { _comboTarget = monster.Id; _comboCount = 1; _pairResonanceLogged.Clear(); }
         int comboBonus = Math.Max(0, (_comboCount - 1) * 2);
         // SpecialEffect: ComboBonus+N increases combo damage by N%
         int comboMulPct = GetSpecialEffectValue(wpn, "ComboBonus");
@@ -25,8 +30,23 @@ public partial class TurnManager
         _lastCombatTurn = TurnCount;
         bool backstab = !_aggroAlerted.Contains(monster.Id);
         var (baseDmg, playerCrit) = _player.AttackMonster(monster);
+
+        // FD Pair Resonance: if MainHand + OffHand form a canonical pair
+        // (Systems.DualWieldPairs), apply +10% total damage on the combined
+        // swings and a +5% CritRate re-roll bump when the base swing did
+        // not crit. First hit of the encounter logs a banner.
+        var offHandWeapon = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Weapon;
+        bool pairResonance = wpn != null && offHandWeapon != null
+            && DualWieldPairs.IsCanonicalPair(wpn.DefinitionId, offHandWeapon.DefinitionId);
+        if (pairResonance && !playerCrit && Random.Shared.Next(100) < 5)
+        {
+            playerCrit = true;
+        }
+
         int damage = baseDmg + profBonus + comboBonus + _shrineBuff + _levelUpBuff
             + SatietyAtkBonus + FatigueAtkPenalty + BiomeSystem.AttackModifier;
+        if (pairResonance)
+            damage = damage * 110 / 100;
 
         // Unique-skill passive damage modifiers.
         // A Dual-Blades second sword in the OffHand slot is NOT a shield —
@@ -68,6 +88,8 @@ public partial class TurnManager
         var reward = monster.TakeDamage(damage);
         string wpnName = wpn?.Name ?? "Fists";
         string critTag = playerCrit ? " CRITICAL!" : "";
+        if (pairResonance && _pairResonanceLogged.Add(monster.Id))
+            _log.LogCombat($"  ◆ Pair Resonance! {wpn!.Name} and {offHandWeapon!.Name} sing together (+10% damage, +5% crit).");
         _log.LogCombat($"You hit {monster.Name} with {wpnName} for {damage} damage!{critTag}");
         WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(wpn, playerCrit));
         DamageDealt?.Invoke(monster.X, monster.Y, damage, false, playerCrit);
@@ -78,14 +100,18 @@ public partial class TurnManager
         }
         DegradeEquipment(EquipmentSlot.Weapon);
 
-        // Dual Blades offhand swing: if the OffHand holds a weapon (not a shield)
-        // and the player has unlocked Dual Blades, land a bonus strike at 60% damage.
-        // Skipped when the target is already dead — no swinging at corpses.
+        // Dual Blades / FD Paired offhand swing: if the OffHand holds a
+        // weapon (not a shield) AND either Dual Blades is unlocked OR the
+        // offhand weapon is an FD canon Paired weapon, land a bonus strike
+        // at 60% damage. Paired weapons bypass the DualBlades unlock — they
+        // are pre-tuned for dual-wield. Pair Resonance grants +10% on the
+        // offhand swing as well. Skipped when the target is already dead.
         if (!monster.IsDefeated
-            && Skills.UniqueSkillSystem.HasDualBlades()
-            && _player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Weapon offhand)
+            && _player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Weapon offhand
+            && (Skills.UniqueSkillSystem.HasDualBlades() || offhand.IsDualWieldPaired))
         {
             int offhandDmg = Math.Max(1, offhand.BaseDamage * 60 / 100 + profBonus / 2);
+            if (pairResonance) offhandDmg = offhandDmg * 110 / 100;
             monster.TakeDamage(offhandDmg);
             _log.LogCombat($"You strike again with {offhand.Name} for {offhandDmg} damage!");
             WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(offhand, false));

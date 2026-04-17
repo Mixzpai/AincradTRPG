@@ -406,21 +406,50 @@ public partial class TurnManager
             rewardXp:         400);
     }
 
-    // Selka the Novice — F65 Fragrant Olive Sword giver.
+    // Selka the Novice — F65 Fragrant Olive Sword giver, with a chained
+    // "Unfolding Truth" awakening quest offered once the base Fragrant
+    // Olive quest is turned in. Quest order:
+    //   1. First talk → base Fragrant Olive kill quest.
+    //   2. Base complete + turned in → "The Sword's Awakening" (30 kills
+    //      on F65+, rewards ohs_unfolding_truth_fragrant_olive).
+    //   3. Awakening turned in → locked; Selka flavor only.
+    // Legacy saves with the base quest already in TurnedIn state trigger
+    // the Awakening quest on next talk — HandleDivineQuest uses
+    // QuestSystem.GetQuest which reads both active and completed lists.
     private bool HandleSelka(Entities.NPC npc)
     {
         if (npc.Name != "Selka the Novice") return false;
+
+        var baseQuest = QuestSystem.GetQuest("divine_fragrant_olive");
+        // Base quest still pending (not yet turned in) — keep the first-quest
+        // flow. This covers first-talk (null) and in-progress states.
+        if (baseQuest == null || baseQuest.Status != QuestStatus.TurnedIn)
+        {
+            return HandleDivineQuest(npc,
+                questId:          "divine_fragrant_olive",
+                questTitle:       "The Last Knight's Bequest",
+                openingLine:      "Twenty-five monsters on this floor. Prove my sister's memory is safe with you.",
+                killCount:        25,
+                divineDefId:      "fragrant_olive_sword",
+                handOverLine:     "Alice's blade answers to you now. Carry it well — let the petals remember her.",
+                inProgressLine:   "My sister would want to see more resolve from you.",
+                postCompleteLine: "Her blade is yours. Walk in the light she left behind.",
+                rewardCol:        500,
+                rewardXp:         400);
+        }
+
+        // Base quest has been turned in — offer the chained Awakening quest.
         return HandleDivineQuest(npc,
-            questId:          "divine_fragrant_olive",
-            questTitle:       "The Last Knight's Bequest",
-            openingLine:      "Twenty-five monsters on this floor. Prove my sister's memory is safe with you.",
-            killCount:        25,
-            divineDefId:      "fragrant_olive_sword",
-            handOverLine:     "Alice's blade answers to you now. Carry it well — let the petals remember her.",
-            inProgressLine:   "My sister would want to see more resolve from you.",
-            postCompleteLine: "Her blade is yours. Walk in the light she left behind.",
-            rewardCol:        500,
-            rewardXp:         400);
+            questId:          "selka_unfolding_truth",
+            questTitle:       "The Sword's Awakening",
+            openingLine:      "The blade has been restless since you took it. It wants more than a name — it wants the truth of its wielder. Thirty more on this floor, and we will see it unfold.",
+            killCount:        30,
+            divineDefId:      "ohs_unfolding_truth_fragrant_olive",
+            handOverLine:     "There — the petals have opened. The unfolding truth is yours now. Carry it farther than my sister could.",
+            inProgressLine:   "The blade still sleeps. Keep going.",
+            postCompleteLine: "The unfolding is done. Alice's light walks with you now — there is nothing more I can give.",
+            rewardCol:        800,
+            rewardXp:         600);
     }
 
     // ── Hollow Fragment Hollow Mission questgivers (9 HNM weapons) ────
@@ -514,6 +543,17 @@ public partial class TurnManager
             "Epetamu will feed. It asks only that you feed it well.",
             "The pact is not yet written.", "The hollow-blade answers no other now.",
             900, 700),
+
+        // FD Canon Field-Boss Wiring pass — F55 Agil apprentice NPC, the
+        // lone quest-NPC entry added to pull axe_ground_gorge off the
+        // floor-banded pool and onto a dedicated canon source.
+        ["Agil's Apprentice"] = new("fd_agils_apprentice_ground_gorge", "The Apprentice's Ground Gorge",
+            "Fifteen felled on this floor, and Agil says I can let the axe go. Show me fifteen.",
+            15, "axe_ground_gorge",
+            "Fifteen it was. Ground Gorge is yours — treat it like it cleaves the earth, because it does.",
+            "Not yet. Agil was clear — fifteen, no fewer.",
+            "May its bite never dull.",
+            500, 400),
     };
 
     // Generic dispatcher for all Hollow Fragment quest NPCs.

@@ -118,4 +118,34 @@ public static class DaggerDefinitions
         w.IsEnhanceable = false;
         return w;
     }
+
+    // ── Memory Defrag Originals (Dagger entries) ───────────────────────
+
+    // MD Epic. Assassin-flavor baselard, violet hilt.
+    public static Weapon CreatePurpleStarBaselard() => Make("dag_purple_star_baselard", "Purple Star Baselard", 5600, "Epic", 155, 45, 105,
+        B().Add(StatType.Attack, 48).Add(StatType.Agility, 18).Add(StatType.Dexterity, 12), "BackstabDmg+25");
+
+    // ── Fractured Daydream — Character Core Canon (Dagger) ─────────────
+
+    // Yui canon — volcanic-glass dagger. F70+ rare drop.
+    public static Weapon CreateObsidianDagger() => Make("dag_obsidian_dagger", "Obsidian Dagger", 18500, "Legendary", 220, 70, 148,
+        B().Add(StatType.Attack, 72).Add(StatType.Agility, 24).Add(StatType.Dexterity, 18), "CritRate+20");
+
+    // Argo canon — virt(uoso) cat-strike dagger. F45+ quest reward band.
+    public static Weapon CreateVirtKatze() => Make("dag_virt_katze", "Virt Katze", 4800, "Epic", 150, 45, 105,
+        B().Add(StatType.Attack, 46).Add(StatType.Agility, 18).Add(StatType.Dexterity, 14), "BackstabDmg+25");
+
+    // Argo canon — Thunder God's Rift Blade. F80+ Legendary.
+    public static Weapon CreateThunderGodsRiftBlade() => Make("dag_thunder_gods_rift_blade", "Thunder God's Rift Blade", 21500, "Legendary", 235, 80, 158,
+        B().Add(StatType.Attack, 78).Add(StatType.Agility, 26).Add(StatType.Dexterity, 18), "Stun+15");
+
+    // ── Fractured Daydream — Elemental Variants (Dagger) ───────────────
+
+    // Silica water variant. Defeza — aqua-guard tanto.
+    public static Weapon CreateDefeza() => Make("dag_defeza", "Defeza", 3100, "Rare", 120, 45, 70,
+        B().Add(StatType.Attack, 32).Add(StatType.Agility, 14).Add(StatType.Dexterity, 10), "Freeze+15");
+
+    // Argo wind variant. Hermit Fang — recluse's razor.
+    public static Weapon CreateHermitFang() => Make("dag_hermit_fang", "Hermit Fang", 3200, "Rare", 120, 45, 72,
+        B().Add(StatType.Attack, 34).Add(StatType.Agility, 14).Add(StatType.Dexterity, 10), "Slow+15");
 }

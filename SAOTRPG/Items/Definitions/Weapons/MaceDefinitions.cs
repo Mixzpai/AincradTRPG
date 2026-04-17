@@ -91,4 +91,26 @@ public static class MaceDefinitions
 
     public static Weapon CreatePhotonHammerXPSmasher() => Make("mce_photon_hammer_xp_smasher", "Photon Hammer: XP Smasher", 30500, "Legendary", 260, 90, 175,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 28).Add(StatType.Vitality, 18), "XPBonus+20");
+
+    // ── Fractured Daydream — Character Core Canon (Mace) ───────────────
+
+    // Lisbeth canon — Plain Mace. F40+ craft/shop starter mace.
+    // Tier intentionally Rare (not Legendary) per spec — Lisbeth's
+    // entry-tier weapon, not an endgame piece.
+    public static Weapon CreatePlainMace() => Make("mce_plain_mace", "Plain Mace", 1600, "Rare", 140, 25, 55,
+        B().Add(StatType.Attack, 28).Add(StatType.Strength, 12).Add(StatType.Vitality, 6), "DurabilityBonus+30");
+
+    // Lisbeth canon — Grida Replicant. F85+ Legendary.
+    public static Weapon CreateGridaReplicant() => Make("mce_grida_replicant", "Grida Replicant", 24500, "Legendary", 245, 85, 168,
+        B().Add(StatType.Attack, 84).Add(StatType.Strength, 26).Add(StatType.Vitality, 18), "Stun+20");
+
+    // ── Fractured Daydream — Elemental Variants (Mace) ─────────────────
+
+    // Lisbeth fire variant. Blazing Torch — forge-glow mace.
+    public static Weapon CreateBlazingTorch() => Make("mce_blazing_torch", "Blazing Torch", 5400, "Epic", 165, 50, 115,
+        B().Add(StatType.Attack, 52).Add(StatType.Strength, 16).Add(StatType.Vitality, 10), "Burn+20");
+
+    // Lisbeth light variant. Elemental Hammer — consecrated smithing hammer.
+    public static Weapon CreateElementalHammer() => Make("mce_elemental_hammer", "Elemental Hammer", 5500, "Epic", 165, 55, 116,
+        B().Add(StatType.Attack, 54).Add(StatType.Strength, 16).Add(StatType.Vitality, 10), "HolyDamage+15");
 }

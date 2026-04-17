@@ -346,12 +346,25 @@ public static partial class MapGenerator
 
         // Selka the Novice — F65 Divine Object questline. Alice's younger sister
         // (canon), keeps the Fragrant Olive Sword until one proves worthy of its legacy.
+        // Also hosts the chained "Unfolding Truth" awakening quest after the
+        // first Fragrant Olive quest is turned in (see HandleSelka).
         ((f, r) => f == 65 && r.Count > 2,
          (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('S', Color.White)
          {
              Name = "Selka the Novice",
              Dialogue = "My sister's blade waits for a worthy wielder. Show me you can honor her memory.",
+         }),
+
+        // Agil's Apprentice — F55 FD Canon Field-Boss Wiring pass. Gates
+        // axe_ground_gorge behind a 15-kill quest (canon source replaces
+        // the old floor-banded pool drop). G glyph, BrightYellow.
+        ((f, r) => f == 55 && r.Count > 2,
+         (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('G', Color.BrightYellow)
+         {
+             Name = "Agil's Apprentice",
+             Dialogue = "Agil sent me up with a two-hander he swears cleaves the ground. Prove you can swing it.",
          }),
 
         // ── Hollow Fragment Hollow Mission questgivers (9 NPCs) ────────

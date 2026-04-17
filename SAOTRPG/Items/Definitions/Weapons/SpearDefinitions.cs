@@ -118,4 +118,10 @@ public static class SpearDefinitions
         w.IsEnhanceable = false;
         return w;
     }
+
+    // ── Memory Defrag Originals (Spear entries) ────────────────────────
+
+    // MD Epic. Oceanic trident-spear, brine-iron tip.
+    public static Weapon CreateNeoAtlantis() => Make("spr_neo_atlantis", "Neo Atlantis", 5800, "Epic", 165, 50, 120,
+        B().Add(StatType.Attack, 55).Add(StatType.Dexterity, 18).Add(StatType.Strength, 12), "FrostDamage+15");
 }

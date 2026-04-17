@@ -221,6 +221,90 @@ public static class LootGenerator
         (86, 99, "sci_silver_wing"),                // Legendary band
         (76, 85, "dag_flyheight_fang"),             // Epic band
         (86, 99, "dag_rue_feuille"),                // Legendary band
+
+        // ── Memory Defrag + Fractured Daydream expansion ────────────
+        // Placement notes: MD Originals distributed per rarity band.
+        // FD character canon weapons placed at flavor-appropriate floors.
+        // FD elemental variants all go into F50+ rare/epic pool per spec.
+
+        // MD Originals — Rare F25-50, Epic F50-75, Legendary F75-99.
+        (28, 50, "ohs_cobalt_tristan"),             // MD Rare
+        (28, 50, "ohs_atlantis_sword"),             // MD Rare
+        (28, 50, "rap_venus_heart"),                // MD Rare
+        (28, 50, "rap_bloody_rapier"),              // MD Rare
+        (28, 50, "rap_holy_flower_rapier"),         // MD Rare
+        (28, 50, "rap_mithril_rapier"),             // MD Rare
+        (28, 50, "bow_cheer_of_love"),              // MD Rare
+        (50, 75, "dag_purple_star_baselard"),       // MD Epic
+        (50, 75, "spr_neo_atlantis"),               // MD Epic
+        (50, 75, "ohs_eternal_promise"),            // MD Epic
+        (50, 75, "bow_aqua_spread"),                // MD Epic
+        (50, 75, "rap_chivalrous_rapier"),          // MD Epic
+        (75, 99, "ohs_sword_of_diva"),              // MD Legendary
+        (75, 99, "rap_espada_of_sword_dance"),      // MD Legendary
+        (75, 99, "ths_sword_of_causality"),         // MD Legendary
+        (75, 99, "kat_shining_nemesisz"),           // MD Legendary
+
+        // MD Alicization gap weapons — quest-reward-flavored placements.
+        (65, 80, "ohs_unfolding_truth_fragrant_olive"), // MD Alice F65+ upgrade
+        (80, 99, "ohs_black_iron_dual_sword_a"),    // Underworld Kirito pair A F80+
+        (80, 99, "ohs_black_iron_dual_sword_b"),    // Underworld Kirito pair B F80+
+        // ohs_red_rose_sword — relocated to F95 field boss
+        //   (Warden of the Blooming Rose, FieldBossFactory).
+
+        // FD Character Core Canon — Legendary-band rare drops per spec.
+        // Several entries relocated to dedicated field bosses / quest NPCs
+        // per Canon Field Boss Wiring pass:
+        //   ohs_elucidator_rouge → F98 Ashen Kirito Simulacrum
+        //   ths_flame_lord       → F80 Pyre Lord of Heathcliff
+        //   ohs_silvery_ruler    → F97 Administrator's Regent
+        //   rap_macafitel        → F85 Yuuki's Echo
+        (85, 99, "ohs_chaos_raider_dual"),          // Kirito dual F85+
+        (88, 99, "kat_murasama_g4_dual"),           // Kirito F90+
+        (85, 99, "axe_naz"),                        // Agil F85+
+        (75, 90, "ohs_golden_osmanthus"),           // Alice F75+
+        (85, 99, "mce_grida_replicant"),            // Lisbeth F85+
+        (70, 85, "dag_obsidian_dagger"),            // Yui F70+
+        (80, 95, "dag_thunder_gods_rift_blade"),    // Argo F80+
+        (75, 90, "ohs_tanquiem"),                   // Oberon F75+
+
+        // FD Character Canon — quest/lower-band flavor placements.
+        (40, 55, "mce_plain_mace"),                 // Lisbeth Rare craft/shop F40+
+        (45, 60, "dag_virt_katze"),                 // Argo quest-reward band F45+
+        // axe_ground_gorge — relocated to F55 NPC quest (Agil's Apprentice).
+        (50, 65, "kat_sweep_saber"),                // Leafa field-boss band F50+
+        // kat_spirit_kagutsuchi — relocated to F60 Kagutsuchi the Fire Samurai.
+        // kat_spirit_susanoo    — relocated to F70 Susanoo the Storm Blade.
+
+        // FD Elemental Variants — ALL F50+ rare/epic pool per spec.
+        // Rare (no-element-prefix) band: F50-75; Epic band: F60-85.
+        (50, 75, "ohs_sword_of_the_gentle_breeze"), // Alice wind Rare
+        (50, 75, "ohs_purple_bellflower_sword"),    // Alice dark Rare
+        (50, 75, "ohs_arc_order"),                  // Heathcliff water Rare
+        (50, 75, "ohs_abyss_keeper"),               // Heathcliff dark Rare
+        (50, 75, "rap_ray_grace"),                  // Asuna water Rare
+        (50, 75, "rap_shadow_grace"),               // Asuna dark Rare
+        (50, 75, "kat_futari_shizuka"),             // Klein dark Rare
+        (50, 75, "kat_icicle_blade"),               // Leafa water Rare
+        (50, 75, "dag_defeza"),                     // Silica water Rare
+        (50, 75, "dag_hermit_fang"),                // Argo wind Rare
+        (60, 85, "ohs_flare_pulsar"),               // Kirito fire Epic
+        (60, 85, "ohs_lightning_divider_dual"),     // Kirito thunder Epic
+        (60, 85, "ohs_red_peony_sword"),            // Alice fire Epic
+        (60, 85, "ohs_thunderclap_sword"),          // Alice thunder Epic
+        (60, 85, "ohs_topaz_edge"),                 // Heathcliff thunder Epic
+        (60, 85, "ohs_saint_guarder"),              // Heathcliff light Epic
+        (60, 85, "ohs_excalibur_oberon"),           // Oberon light Epic
+        (60, 85, "ohs_bloodthirst"),                // Oberon fire Epic
+        (60, 85, "rap_volt_rapier"),                // Asuna thunder Epic
+        (60, 85, "rap_dazzling_blink"),             // Asuna light Epic
+        (60, 85, "kat_white_plum_blade"),           // Klein light Epic
+        (60, 85, "kat_eradicate_saber"),            // Leafa light Epic
+        (60, 85, "axe_ignite_bardiche"),            // Agil fire Epic
+        (60, 85, "axe_tyrant_fall"),                // Agil water Epic
+        (60, 85, "axe_sturm_welt"),                 // Agil wind Epic
+        (60, 85, "mce_blazing_torch"),              // Lisbeth fire Epic
+        (60, 85, "mce_elemental_hammer"),           // Lisbeth light Epic
     };
 
     // ── IM Enhancement Ore themed drops ──────────────────────────────

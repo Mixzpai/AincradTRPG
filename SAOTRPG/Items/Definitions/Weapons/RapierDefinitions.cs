@@ -135,4 +135,56 @@ public static class RapierDefinitions
     // IM Legendary-band shop weapon. Night-street duelist estoc, hemorrhage edge.
     public static Weapon CreateNoctisStrasse() => Make("rap_noctis_strasse", "Noctis Strasse", 18800, "Legendary", 220, 76, 158,
         B().Add(StatType.Attack, 74).Add(StatType.Dexterity, 24).Add(StatType.Speed, 20), "Bleed+20");
+
+    // ── Memory Defrag Originals (Rapier entries) ───────────────────────
+
+    // MD Legendary. Dance-motif rapier, chained-thrust combo amplifier.
+    public static Weapon CreateEspadaOfSwordDance() => Make("rap_espada_of_sword_dance", "Espada of Sword Dance", 22000, "Legendary", 235, 80, 160,
+        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 26).Add(StatType.Speed, 22), "ComboBonus+40");
+
+    // MD Rare. Heart-bound rapier, crimson lacquer.
+    public static Weapon CreateVenusHeart() => Make("rap_venus_heart", "Venus Heart", 2700, "Rare", 120, 30, 68,
+        B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 12).Add(StatType.Speed, 8), "CritRate+15");
+
+    // MD Rare. Crimson duelling rapier, bloodletting edge.
+    public static Weapon CreateBloodyRapier() => Make("rap_bloody_rapier", "Bloody Rapier", 2600, "Rare", 115, 28, 66,
+        B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 12).Add(StatType.Speed, 6), "Bleed+15");
+
+    // MD Rare. Lily-etched holy-order rapier, consecrated steel.
+    public static Weapon CreateHolyFlowerRapier() => Make("rap_holy_flower_rapier", "Holy Flower Rapier", 2700, "Rare", 120, 30, 67,
+        B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 12).Add(StatType.Speed, 6), "HolyDamage+10");
+
+    // MD Rare. Classic mithril-light duellist's foil. DefId differs from
+    // the existing `mythril_rapier` (Rare Tier 3 generic); display name
+    // preserved per MD canon spelling (Mithril vs Mythril).
+    public static Weapon CreateMithrilRapier() => Make("rap_mithril_rapier", "Mithril Rapier", 2500, "Rare", 115, 28, 65,
+        B().Add(StatType.Attack, 30).Add(StatType.Dexterity, 14).Add(StatType.Speed, 6), "CritRate+8");
+
+    // MD Epic. Knight-order parrying rapier, chivalric steel.
+    public static Weapon CreateChivalrousRapier() => Make("rap_chivalrous_rapier", "Chivalrous Rapier", 5800, "Epic", 160, 50, 122,
+        B().Add(StatType.Attack, 54).Add(StatType.Dexterity, 20).Add(StatType.Speed, 10), "ParryChance+15");
+
+    // ── Fractured Daydream — Character Core Canon (Rapier) ─────────────
+
+    // Yuuki canon — Absolute Sword's signature. F85+ Legendary.
+    public static Weapon CreateMacafitel() => Make("rap_macafitel", "Macafitel", 23000, "Legendary", 240, 85, 165,
+        B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Speed, 22).Add(StatType.Agility, 15), "ComboBonus+35");
+
+    // ── Fractured Daydream — Elemental Variants (Rapier) ───────────────
+
+    // Asuna water variant. Ray Grace — tide-blessed rapier.
+    public static Weapon CreateRayGrace() => Make("rap_ray_grace", "Ray Grace", 3200, "Rare", 125, 45, 75,
+        B().Add(StatType.Attack, 34).Add(StatType.Dexterity, 14).Add(StatType.Speed, 8), "Freeze+15");
+
+    // Asuna thunder variant. Volt Rapier — stormlance estoc.
+    public static Weapon CreateVoltRapier() => Make("rap_volt_rapier", "Volt Rapier", 5300, "Epic", 160, 52, 118,
+        B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 20).Add(StatType.Speed, 12), "Stun+10");
+
+    // Asuna light variant. Dazzling Blink — flash-step rapier.
+    public static Weapon CreateDazzlingBlink() => Make("rap_dazzling_blink", "Dazzling Blink", 5500, "Epic", 160, 55, 120,
+        B().Add(StatType.Attack, 54).Add(StatType.Dexterity, 22).Add(StatType.Speed, 14), "HolyDamage+15");
+
+    // Asuna dark variant. Shadow Grace — nightshade thrust-blade.
+    public static Weapon CreateShadowGrace() => Make("rap_shadow_grace", "Shadow Grace", 3300, "Rare", 125, 48, 78,
+        B().Add(StatType.Attack, 36).Add(StatType.Dexterity, 14).Add(StatType.Speed, 8), "Bleed+15");
 }

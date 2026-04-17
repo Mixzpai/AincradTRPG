@@ -131,20 +131,24 @@ public class Inventory
             return false;
         }
 
-        // Dual Blades: auto-route a second one-handed sword to the OffHand
-        // slot when the main Weapon is occupied, OffHand is empty, and the
-        // player has unlocked the Dual Blades unique skill. The resolver
-        // also accepts 1H swords into OffHand when Dual Blades is unlocked
-        // (see EquipmentSlotResolver.CanGoInOffHand) — this block handles
-        // the auto-routing for the typical "equip second sword" flow.
+        // Dual Blades / FD Paired auto-route: if the main Weapon slot is
+        // occupied and the OffHand is empty, route a second incoming weapon
+        // into the OffHand when either:
+        //  (a) the player has unlocked Dual Blades AND the incoming is a
+        //      1H sword (classic Dual Blades flow), OR
+        //  (b) the incoming weapon is flagged IsDualWieldPaired (FD canon
+        //      "Dual" weapons — pre-tuned for dual-wield, no unlock needed).
+        // The resolver predicate CanGoInOffHand mirrors this logic.
         if (slot == EquipmentSlot.Weapon
             && _equippedItems[EquipmentSlot.Weapon] != null
             && _equippedItems[EquipmentSlot.OffHand] == null
-            && equipment is Weapon incomingWeapon
-            && incomingWeapon.WeaponType == "One-Handed Sword"
-            && SAOTRPG.Systems.Skills.UniqueSkillSystem.HasDualBlades())
+            && equipment is Weapon incomingWeapon)
         {
-            slot = EquipmentSlot.OffHand;
+            bool pairedBypass = incomingWeapon.IsDualWieldPaired;
+            bool dualBladesClassic = incomingWeapon.WeaponType == "One-Handed Sword"
+                && SAOTRPG.Systems.Skills.UniqueSkillSystem.HasDualBlades();
+            if (pairedBypass || dualBladesClassic)
+                slot = EquipmentSlot.OffHand;
         }
 
         if (_equippedItems[slot.Value] != null)

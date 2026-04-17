@@ -26,4 +26,11 @@ public class Weapon : EquipmentBase
     // auto-populates with Crimson Flame (Attack) so existing +N still reads
     // as +N Attack — no retroactive stat change.
     public List<string> EnhancementOreHistory { get; set; } = new();
+
+    // FD Paired Dual-Wield flag. When true, this weapon is pre-tuned for
+    // dual-wield and may occupy the OffHand slot WITHOUT requiring the
+    // Dual Blades unique skill unlock. See Systems.DualWieldPairs for the
+    // canonical partner registry — when both a MainHand and OffHand weapon
+    // form a registered pair, combat applies a Pair Resonance synergy.
+    public bool IsDualWieldPaired { get; set; } = false;
 }

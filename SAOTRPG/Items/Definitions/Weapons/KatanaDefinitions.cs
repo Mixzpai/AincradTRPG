@@ -127,4 +127,57 @@ public static class KatanaDefinitions
         w.IsEnhanceable = false;
         return w;
     }
+
+    // ── Memory Defrag Originals (Katana entries) ───────────────────────
+
+    // MD Legendary. Vengeance-themed katana; arterial bleed edge.
+    public static Weapon CreateShiningNemesisz() => Make("kat_shining_nemesisz", "Shining Nemesisz", 22500, "Legendary", 235, 82, 162, 1,
+        B().Add(StatType.Attack, 80).Add(StatType.Agility, 24).Add(StatType.Dexterity, 18).Add(StatType.Speed, 14), "Bleed+25");
+
+    // ── Fractured Daydream — Character Core Canon (Katana) ─────────────
+
+    // Kirito canon — dual G4 Murasama blades. F90+ rare drop. DefId
+    // disambiguated from the existing `kat_muramasa` (IM shop katana)
+    // via the `murasama_g4` subtag and distinct display spelling.
+    public static Weapon CreateMurasamaG4Dual()
+    {
+        // FD canon "Dual" katana — pre-tuned for dual-wield. Flags
+        // IsDualWieldPaired=true so it can occupy the OffHand slot without
+        // the DualBlades unlock (bypasses the 1H-sword gate). Solo — no
+        // canonical partner, so no Pair Resonance synergy.
+        var w = Make("kat_murasama_g4_dual", "Murasama G4", 24500, "Legendary", 240, 88, 170, 1,
+            B().Add(StatType.Attack, 84).Add(StatType.Agility, 26).Add(StatType.Dexterity, 20).Add(StatType.Strength, 14), "Bleed+25");
+        w.IsDualWieldPaired = true;
+        return w;
+    }
+
+    // Klein canon — Spirit Sword Kagutsuchi. F60+ field-boss drop or quest.
+    public static Weapon CreateSpiritSwordKagutsuchi() => Make("kat_spirit_kagutsuchi", "Spirit Sword Kagutsuchi", 15000, "Legendary", 210, 60, 138, 1,
+        B().Add(StatType.Attack, 66).Add(StatType.Agility, 20).Add(StatType.Dexterity, 14).Add(StatType.Strength, 12), "Burn+20");
+
+    // Klein canon — Spirit Sword Susanoo. F70+ field-boss drop or quest.
+    public static Weapon CreateSpiritSwordSusanoo() => Make("kat_spirit_susanoo", "Spirit Sword Susanoo", 18500, "Legendary", 225, 70, 148, 1,
+        B().Add(StatType.Attack, 74).Add(StatType.Agility, 22).Add(StatType.Dexterity, 16).Add(StatType.Strength, 14), "Stun+15");
+
+    // Leafa canon — sweep-saber. F50+ field-boss drop.
+    public static Weapon CreateSweepSaber() => Make("kat_sweep_saber", "Sweep Saber", 13500, "Legendary", 200, 50, 128,
+        1, B().Add(StatType.Attack, 62).Add(StatType.Agility, 22).Add(StatType.Dexterity, 14).Add(StatType.Speed, 10), "ComboBonus+25");
+
+    // ── Fractured Daydream — Elemental Variants (Katana) ───────────────
+
+    // Klein light variant. White Plum Blade — holy-blossom katana.
+    public static Weapon CreateWhitePlumBlade() => Make("kat_white_plum_blade", "White Plum Blade", 5300, "Epic", 155, 55, 114, 1,
+        B().Add(StatType.Attack, 52).Add(StatType.Agility, 18).Add(StatType.Dexterity, 12), "HolyDamage+15");
+
+    // Klein dark variant. Futari Shizuka — twin-silence night katana.
+    public static Weapon CreateFutariShizuka() => Make("kat_futari_shizuka", "Futari Shizuka", 3200, "Rare", 125, 48, 76, 1,
+        B().Add(StatType.Attack, 34).Add(StatType.Agility, 14).Add(StatType.Dexterity, 10), "Bleed+15");
+
+    // Leafa water variant. Icicle Blade — frozen-thread katana.
+    public static Weapon CreateIcicleBlade() => Make("kat_icicle_blade", "Icicle Blade", 3200, "Rare", 125, 45, 75, 1,
+        B().Add(StatType.Attack, 34).Add(StatType.Agility, 14).Add(StatType.Speed, 8), "Freeze+15");
+
+    // Leafa light variant. Eradicate Saber — purifying sunblade.
+    public static Weapon CreateEradicateSaber() => Make("kat_eradicate_saber", "Eradicate Saber", 5500, "Epic", 160, 55, 118, 1,
+        B().Add(StatType.Attack, 54).Add(StatType.Agility, 20).Add(StatType.Speed, 10), "HolyDamage+15");
 }

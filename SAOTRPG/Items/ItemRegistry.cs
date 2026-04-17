@@ -320,6 +320,86 @@ public static class ItemRegistry
         Register("axe_northern_light",    () => AxeDefinitions.CreateNorthernLight());
         Register("spr_lunatic_roof",      () => SpearDefinitions.CreateLunaticRoof());
 
+        // ── Memory Defrag + Fractured Daydream expansion ───────────────
+        // 65+ weapons: MD Alicization gaps, MD Originals, FD character
+        // canon, FD elemental variants. Placement via FloorBandedRegisteredLoot
+        // (rare pool), FloorBossGuaranteedDrops (guaranteed canon drops),
+        // and FieldBossFactory (named field bosses). FD class-lock is
+        // flavor only; any player can equip these weapons.
+
+        // MD Alicization gap weapons (Legendary, 4 entries — Black Iron is a pair)
+        Register("ohs_unfolding_truth_fragrant_olive", () => OneHandedSwordDefinitions.CreateUnfoldingTruthFragrantOlive());
+        Register("ohs_red_rose_sword",    () => OneHandedSwordDefinitions.CreateRedRoseSword());
+        Register("ohs_black_iron_dual_sword_a", () => OneHandedSwordDefinitions.CreateBlackIronDualSwordA());
+        Register("ohs_black_iron_dual_sword_b", () => OneHandedSwordDefinitions.CreateBlackIronDualSwordB());
+
+        // MD Originals (16 weapons, mixed rarities)
+        Register("ohs_sword_of_diva",     () => OneHandedSwordDefinitions.CreateSwordOfDiva());
+        Register("dag_purple_star_baselard", () => DaggerDefinitions.CreatePurpleStarBaselard());
+        Register("rap_espada_of_sword_dance", () => RapierDefinitions.CreateEspadaOfSwordDance());
+        Register("ohs_cobalt_tristan",    () => OneHandedSwordDefinitions.CreateCobaltTristan());
+        Register("spr_neo_atlantis",      () => SpearDefinitions.CreateNeoAtlantis());
+        Register("ths_sword_of_causality", () => TwoHandedSwordDefinitions.CreateSwordOfCausality());
+        Register("ohs_eternal_promise",   () => OneHandedSwordDefinitions.CreateEternalPromise());
+        Register("kat_shining_nemesisz",  () => KatanaDefinitions.CreateShiningNemesisz());
+        Register("rap_venus_heart",       () => RapierDefinitions.CreateVenusHeart());
+        Register("bow_aqua_spread",       () => BowDefinitions.CreateAquaSpread());
+        Register("ohs_atlantis_sword",    () => OneHandedSwordDefinitions.CreateAtlantisSword());
+        Register("rap_bloody_rapier",     () => RapierDefinitions.CreateBloodyRapier());
+        Register("rap_holy_flower_rapier", () => RapierDefinitions.CreateHolyFlowerRapier());
+        Register("rap_mithril_rapier",    () => RapierDefinitions.CreateMithrilRapier());
+        Register("rap_chivalrous_rapier", () => RapierDefinitions.CreateChivalrousRapier());
+        Register("bow_cheer_of_love",     () => BowDefinitions.CreateCheerOfLoveBow());
+
+        // FD Character Core Canon (~18 weapons, mostly Legendary)
+        Register("ohs_elucidator_rouge",  () => OneHandedSwordDefinitions.CreateElucidatorRouge());
+        Register("ohs_chaos_raider_dual", () => OneHandedSwordDefinitions.CreateChaosRaiderDual());
+        Register("kat_murasama_g4_dual",  () => KatanaDefinitions.CreateMurasamaG4Dual());
+        Register("kat_spirit_kagutsuchi", () => KatanaDefinitions.CreateSpiritSwordKagutsuchi());
+        Register("kat_spirit_susanoo",    () => KatanaDefinitions.CreateSpiritSwordSusanoo());
+        Register("axe_ground_gorge",      () => AxeDefinitions.CreateGroundGorge());
+        Register("axe_naz",               () => AxeDefinitions.CreateNaz());
+        Register("ohs_golden_osmanthus",  () => OneHandedSwordDefinitions.CreateGoldenOsmanthusSword());
+        Register("ths_flame_lord",        () => TwoHandedSwordDefinitions.CreateFlameLord());
+        Register("mce_plain_mace",        () => MaceDefinitions.CreatePlainMace());
+        Register("mce_grida_replicant",   () => MaceDefinitions.CreateGridaReplicant());
+        Register("kat_sweep_saber",       () => KatanaDefinitions.CreateSweepSaber());
+        Register("dag_obsidian_dagger",   () => DaggerDefinitions.CreateObsidianDagger());
+        Register("dag_virt_katze",        () => DaggerDefinitions.CreateVirtKatze());
+        Register("dag_thunder_gods_rift_blade", () => DaggerDefinitions.CreateThunderGodsRiftBlade());
+        Register("ohs_tanquiem",          () => OneHandedSwordDefinitions.CreateTanquiem());
+        Register("ohs_silvery_ruler",     () => OneHandedSwordDefinitions.CreateSilveryRuler());
+        Register("rap_macafitel",         () => RapierDefinitions.CreateMacafitel());
+
+        // FD Elemental Variants (27 weapons, Rare/Epic band)
+        Register("ohs_flare_pulsar",           () => OneHandedSwordDefinitions.CreateFlarePulsar());
+        Register("ohs_lightning_divider_dual", () => OneHandedSwordDefinitions.CreateLightningDividerDual());
+        Register("rap_ray_grace",              () => RapierDefinitions.CreateRayGrace());
+        Register("rap_volt_rapier",            () => RapierDefinitions.CreateVoltRapier());
+        Register("rap_dazzling_blink",         () => RapierDefinitions.CreateDazzlingBlink());
+        Register("rap_shadow_grace",           () => RapierDefinitions.CreateShadowGrace());
+        Register("kat_white_plum_blade",       () => KatanaDefinitions.CreateWhitePlumBlade());
+        Register("kat_futari_shizuka",         () => KatanaDefinitions.CreateFutariShizuka());
+        Register("axe_ignite_bardiche",        () => AxeDefinitions.CreateIgniteBardiche());
+        Register("axe_tyrant_fall",            () => AxeDefinitions.CreateTyrantFall());
+        Register("axe_sturm_welt",             () => AxeDefinitions.CreateSturmWelt());
+        Register("ohs_red_peony_sword",        () => OneHandedSwordDefinitions.CreateRedPeonySword());
+        Register("ohs_sword_of_the_gentle_breeze", () => OneHandedSwordDefinitions.CreateSwordOfTheGentleBreeze());
+        Register("ohs_thunderclap_sword",      () => OneHandedSwordDefinitions.CreateThunderclapSword());
+        Register("ohs_purple_bellflower_sword", () => OneHandedSwordDefinitions.CreatePurpleBellflowerSword());
+        Register("ohs_arc_order",              () => OneHandedSwordDefinitions.CreateArcOrder());
+        Register("ohs_topaz_edge",             () => OneHandedSwordDefinitions.CreateTopazEdge());
+        Register("ohs_saint_guarder",          () => OneHandedSwordDefinitions.CreateSaintGuarder());
+        Register("ohs_abyss_keeper",           () => OneHandedSwordDefinitions.CreateAbyssKeeper());
+        Register("mce_blazing_torch",          () => MaceDefinitions.CreateBlazingTorch());
+        Register("mce_elemental_hammer",       () => MaceDefinitions.CreateElementalHammer());
+        Register("kat_icicle_blade",           () => KatanaDefinitions.CreateIcicleBlade());
+        Register("kat_eradicate_saber",        () => KatanaDefinitions.CreateEradicateSaber());
+        Register("dag_defeza",                 () => DaggerDefinitions.CreateDefeza());
+        Register("dag_hermit_fang",            () => DaggerDefinitions.CreateHermitFang());
+        Register("ohs_excalibur_oberon",       () => OneHandedSwordDefinitions.CreateExcaliburOberon());
+        Register("ohs_bloodthirst",            () => OneHandedSwordDefinitions.CreateBloodthirst());
+
         // IM Shop weapons — rotate into F50+ tier shops + floor-banded drops.
         Register("rap_edelweiss",         () => RapierDefinitions.CreateEdelweiss());
         Register("rap_noctis_strasse",    () => RapierDefinitions.CreateNoctisStrasse());

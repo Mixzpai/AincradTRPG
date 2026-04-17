@@ -116,4 +116,28 @@ public static class AxeDefinitions
         w.IsEnhanceable = false;
         return w;
     }
+
+    // ── Fractured Daydream — Character Core Canon (2H Axe) ─────────────
+
+    // Agil canon — Ground Gorge. F55+ quest NPC reward.
+    public static Weapon CreateGroundGorge() => Make("axe_ground_gorge", "Ground Gorge", 14500, "Legendary", 215, 55, 138,
+        B().Add(StatType.Attack, 72).Add(StatType.Strength, 26).Add(StatType.Vitality, 12), "KnockbackChance+30");
+
+    // Agil canon — Naz. F85+ rare drop. High-impact greataxe.
+    public static Weapon CreateNaz() => Make("axe_naz", "Naz", 24000, "Legendary", 245, 85, 168,
+        B().Add(StatType.Attack, 86).Add(StatType.Strength, 30).Add(StatType.Vitality, 14), "ExecuteThreshold+25");
+
+    // ── Fractured Daydream — Elemental Variants (2H Axe) ───────────────
+
+    // Agil fire variant. Ignite Bardiche — burning cleaver-pole.
+    public static Weapon CreateIgniteBardiche() => Make("axe_ignite_bardiche", "Ignite Bardiche", 5600, "Epic", 165, 55, 118,
+        B().Add(StatType.Attack, 56).Add(StatType.Strength, 18).Add(StatType.Vitality, 8), "Burn+20");
+
+    // Agil water variant. Tyrant Fall — tidal hammer-axe.
+    public static Weapon CreateTyrantFall() => Make("axe_tyrant_fall", "Tyrant Fall", 5500, "Epic", 165, 55, 116,
+        B().Add(StatType.Attack, 54).Add(StatType.Strength, 18).Add(StatType.Vitality, 8), "Freeze+15");
+
+    // Agil wind variant. Sturm Welt — stormfront axe, wide cleave.
+    public static Weapon CreateSturmWelt() => Make("axe_sturm_welt", "Sturm Welt", 5500, "Epic", 165, 55, 116,
+        B().Add(StatType.Attack, 54).Add(StatType.Strength, 18).Add(StatType.Vitality, 8), "Slow+15");
 }

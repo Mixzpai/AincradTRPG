@@ -104,4 +104,14 @@ public static class BowDefinitions
     // HF F55 Hollow Area. Shroudbow — Star Stitcher; stitches constellations into the air as it fires.
     public static Weapon CreateShroudbowStarStitcher() => Make("bow_shroudbow_star_stitcher", "Shroudbow: Star Stitcher", 7400, "Epic", 170, 50, 92, 1, 4,
         B().Add(StatType.Attack, 46).Add(StatType.Dexterity, 22).Add(StatType.Agility, 12), "CritRate+15");
+
+    // ── Memory Defrag Originals (Bow entries) ──────────────────────────
+
+    // MD Epic. Tide-spread longbow, diffused freezing barrage.
+    public static Weapon CreateAquaSpread() => Make("bow_aqua_spread", "Aqua Spread", 5600, "Epic", 160, 50, 118, 1, 4,
+        B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 22).Add(StatType.Agility, 10), "FrostDamage+20");
+
+    // MD Rare. Supportive bow of the heart-crowd; crit-boost on encourage shots.
+    public static Weapon CreateCheerOfLoveBow() => Make("bow_cheer_of_love", "Cheer of Love Bow", 2600, "Rare", 115, 30, 65, 1, 3,
+        B().Add(StatType.Attack, 30).Add(StatType.Dexterity, 14).Add(StatType.Agility, 6), "CritRate+10");
 }

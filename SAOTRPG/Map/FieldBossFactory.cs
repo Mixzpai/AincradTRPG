@@ -145,6 +145,53 @@ public static class FieldBossFactory
         // F90+ — Gaou Series. Japanese ox-king demon theme.
         new("gaou_ox_king_f90",      "Gaou the Ox-King",  "Demon-King of the Horned Vanguard", 90, 4.5f, 1.85f, 'G', Color.BrightYellow, "ohs_gaou_reginleifr",
             "A towering ox-headed king stamps the stone. The ground splits beneath its hooves."),
+
+        // ── Fractured Daydream Character Core canon field bosses (7) ───
+        // Moves FD canon weapons out of FloorBandedRegisteredLoot onto
+        // dedicated boss drops so wielder lore reaches the player through
+        // memorable encounters instead of random chests. Admin's Regent
+        // bumped from F95→F97 because F95 already hosts Warden of Stopped
+        // Hours (Time Piercing) + Gaia Breaker (Arondight) — adding Red
+        // Rose + Admin would make F95 a 4-field-boss floor. F97 was free.
+
+        // F60 — Klein canon. Spirit Sword Kagutsuchi wielder.
+        new("kagutsuchi_samurai_f60", "Kagutsuchi the Fire Samurai", "Ember-Wielder of the Sixtieth Summit",
+            60, 2.8f, 1.5f, 'K', Color.BrightRed, "kat_spirit_kagutsuchi",
+            "A samurai in smouldering armour paces the ridgeline. Embers trail from his blade's edge."),
+
+        // F70 — Klein canon. Spirit Sword Susanoo wielder.
+        new("susanoo_stormblade_f70", "Susanoo the Storm Blade", "Thunder-Wielder of the Seventieth Vault",
+            70, 3.2f, 1.6f, 'S', Color.BrightCyan, "kat_spirit_susanoo",
+            "The air bristles. A storm-cloaked figure levels a katana crackling with gathered thunder."),
+
+        // F80 — Heathcliff canon. Flame Lord greatsword wielder.
+        new("pyre_lord_heathcliff_f80", "Pyre Lord of Heathcliff", "Red-Hand of the Eightieth Flame",
+            80, 3.8f, 1.7f, 'P', Color.BrightRed, "ths_flame_lord",
+            "A red-caped knight strides through the heat-shimmer, greatsword ablaze across his shoulders."),
+
+        // F85 — Yuuki canon. Macafitel rapier wielder.
+        new("yuukis_echo_f85",       "Yuuki's Echo",     "Absolute-Sword Revenant of the Eighty-Fifth",
+            85, 4.0f, 1.75f, 'Y', Color.BrightMagenta, "rap_macafitel",
+            "A violet-haired shade lifts a rapier in salute. The air hums with a thousand remembered strikes."),
+
+        // F95 — Kirito canon (Red Rose Sword — pair to Night Sky). Additive
+        // alongside existing F95 Warden of Stopped Hours + Gaia Breaker.
+        new("warden_blooming_rose_f95", "Warden of the Blooming Rose", "Petal-Wreathed Sentinel of the Ninety-Fifth",
+            95, 4.3f, 1.8f, 'W', Color.BrightMagenta, "ohs_red_rose_sword",
+            "A knight crowned in red petals stands watch at a trellised arch. The roses drip a slow, dark bloom."),
+
+        // F97 — Administrator canon. Silvery Ruler wielder. Bumped from
+        // F95 to F97 per scope rule 4 (F95 crowding). F97 had no prior
+        // field boss; a clean home for Pontifex flavor.
+        new("administrators_regent_f97", "Administrator's Regent", "Pontifex Echo of the Ninety-Seventh Cathedral",
+            97, 4.2f, 1.8f, 'R', Color.White, "ohs_silvery_ruler",
+            "A silver-robed figure descends a broken staircase, longsword flickering with cathedral light."),
+
+        // F98 — Kirito canon. Elucidator Rouge wielder. Co-resides with
+        // existing Blaze Armor HNM on F98 (already canon HF precedent).
+        new("ashen_kirito_simulacrum_f98", "Ashen Kirito Simulacrum", "Red-Edge Echo of the Ninety-Eighth",
+            98, 4.5f, 1.85f, 'K', Color.BrightRed, "ohs_elucidator_rouge",
+            "A black-clad echo of the Black Swordsman steps out of the ash. His off-hand edge burns crimson."),
     };
 
     // Returns all field bosses that should spawn on this floor right now.
