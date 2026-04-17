@@ -95,6 +95,56 @@ public static class FieldBossFactory
         // F98 NM Blaze Armor (Hollow Area relocated to F98) drops Yato: Masamune (HF canon).
         new("blaze_armor_f98",      "Blaze Armor",      "Living Armor of the Hollow Forge",98, 5.2f, 2.0f, 'A', Color.BrightRed,  "yato_masamune",
             "Empty armor glowing with inner flame. The soul inside remembers every sword it has wielded."),
+
+        // ── Hollow Fragment Implement System field bosses (5) ─────────
+        // Canon HF F80-F99 "Implement" slots that drop via roaming HNM bosses.
+
+        // F80 — drops Arcaneblade: Soul Binder.
+        new("soul_binder_f80",      "Soul Binder",      "Wraith of the Gathered Hymns",    80, 3.8f, 1.65f, 'S', Color.BrightMagenta,"sci_arcaneblade_soul_binder",
+            "A figure of layered voices stands in the corridor, scimitar humming with bound soul-tones."),
+
+        // F83 — drops Fellblade: Ruinous Doom (replaces Arboreal Fear slot? No — both F83 possible; arboreal already occupies. Moved to F84 slot for clarity).
+        // Actually F83 is Arboreal Fear for Gae Bolg. Fellblade Ruinous Doom is Legendary-scale — place on F83 alongside.
+        // But placement table says field boss F83 for Fellblade. Add a second F83 boss.
+        new("ruinous_herald_f83",   "Ruinous Herald",   "Doom-Prophet of the Falling Tower",83, 3.9f, 1.7f, 'R', Color.BrightRed,   "sci_fellblade_ruinous_doom",
+            "A scimitar-wielder cloaked in unmaking. Every step erases the one before."),
+
+        // F86 — drops Fellaxe: Demon's Scythe.
+        new("fellaxe_revenant_f86", "Fellaxe Revenant", "Demon-Shade of the Crimson Reap",  86, 4.0f, 1.72f, 'F', Color.BrightRed,  "axe_fellaxe_demons_scythe",
+            "A headsman-shade hauls a scythe-bladed axe. The air around it carries the scent of old harvest."),
+
+        // F93 — drops Glimmerblade: Banishing Ray.
+        new("banishing_ray_f93",    "Banishing Ray",    "Sentinel of the White Horizon",   93, 4.3f, 1.75f, 'B', Color.BrightYellow,"rap_glimmerblade_banishing_ray",
+            "A rapier-duellist in searing white mail. Its thrust seems to erase what it pierces."),
+
+        // ── Integral Factor series field bosses (IF canon) ─────────────
+        // Each boss guarantees one signature series weapon. The matching
+        // series shield drops as a secondary via LootGenerator.FieldBossSecondaryDrops.
+        // The remaining series weapons appear in the floor-banded Epic loot
+        // pool (LootGenerator.FloorBandedRegisteredLoot).
+
+        // F14 — Integral Series (first IF endgame tier). Canon F14 shield
+        // is Fermat; canon F14 weapons include Arc Angel, Radgrid, Gusion,
+        // After Glow.
+        new("starlight_sentinel_f14", "Starlight Sentinel", "Guardian of the Integral Dawn", 14, 3.0f, 1.5f, 'S', Color.BrightYellow, "bow_integral_arc_angel",
+            "A luminous figure paces the ridge, a bow of starlight drawn across its back."),
+
+        // F25 — Nox Series (Underground Labyrinth B5F origin, IF canon).
+        new("labyrinth_warden_f25",  "Labyrinth Warden",  "Keeper of the Underground Vault",  25, 3.2f, 1.55f, 'L', Color.BrightMagenta, "ohs_nox_radgrid",
+            "A hooded warden strides out of the dark, a heavy blade resting across both shoulders."),
+
+        // F61 — Rosso Series. Name borrows from Rosso Forneus weapon.
+        new("crimson_forneus_f61",   "Crimson Forneus",   "Demon of the Scarlet Depths",      61, 4.0f, 1.7f, 'F', Color.BrightRed, "ohs_rosso_forneus",
+            "The air reddens. A demon-knight in crimson plate levels a heavy sword and advances."),
+
+        // F87 — Yasha Series (moved from F85 due to Silent Edge + Abased
+        // Beast collision per scout §9).
+        new("yasha_night_demon_f87", "Yasha the Night Demon", "Demon-Warrior of the Moonless Path", 87, 4.2f, 1.75f, 'Y', Color.BrightMagenta, "ohs_yasha_astaroth",
+            "A horned silhouette waits at the corridor's end. Its blade drinks the moonlight."),
+
+        // F90+ — Gaou Series. Japanese ox-king demon theme.
+        new("gaou_ox_king_f90",      "Gaou the Ox-King",  "Demon-King of the Horned Vanguard", 90, 4.5f, 1.85f, 'G', Color.BrightYellow, "ohs_gaou_reginleifr",
+            "A towering ox-headed king stamps the stone. The ground splits beneath its hooves."),
     };
 
     // Returns all field bosses that should spawn on this floor right now.

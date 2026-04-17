@@ -128,6 +128,16 @@ public partial class TurnManager
     {
         Bestiary.RecordKill(monster.Name);
         QuestSystem.OnMobKilled(monster.Name, _log, wpnType);
+        // Agent 2: Player Guide known/unknown gating — record kill so the
+        // corresponding "Monster: <name>" / "Boss: ..." / "Field Boss: ..."
+        // guide entry unlocks from the "??? (Unknown)" mask.
+        if (monster is FieldBoss fb)
+            Story.PlayerGuideKnowledge.MarkKnown("Field Boss: " + fb.Name);
+        else if (monster is Boss b)
+            Story.PlayerGuideKnowledge.MarkKnown("Boss: " + b.Name);
+        else
+            Story.PlayerGuideKnowledge.MarkKnown(
+                "Monster: " + Story.PlayerGuideKnowledge.StripAffix(monster.Name));
         KillCount++;
         _killStreak++;
         _killsByName[monster.Name] = _killsByName.GetValueOrDefault(monster.Name) + 1;
@@ -149,8 +159,11 @@ public partial class TurnManager
                 _log.Log($"  Bounty progress: {_bountyKillsCurrent}/{_bountyKillsNeeded} {_bountyTarget}");
         }
 
-        _weaponKills[wpnType] = _weaponKills.GetValueOrDefault(wpnType, 0) + 1;
+        int wkBefore = _weaponKills.GetValueOrDefault(wpnType, 0);
+        int profLvlBefore = ComputeLevel(wkBefore);
+        _weaponKills[wpnType] = wkBefore + 1;
         int wk = _weaponKills[wpnType];
+        int profLvlAfter = ComputeLevel(wk);
 
         // Weapon-milestone unique-skill unlocks (Katana Mastery @ 100, Martial Arts @ 30, etc).
         var milestoneUnlock = Skills.UniqueSkillSystem.CheckWeaponKillMilestone(wpnType, wk);
@@ -159,11 +172,20 @@ public partial class TurnManager
         {
             if (wk == rank.Kills)
             {
-                _log.LogSystem($"  {wpnType} proficiency: {rank.Rank}! (+{rank.Bonus} damage)");
+                _log.LogSystem($"  {wpnType} proficiency: {rank.Rank}! (L{profLvlAfter}/{MaxProfLevel})");
                 string flavor = GetRankUpFlavor(rank.Rank);
                 if (flavor.Length > 0) _log.LogSystem($"  \"{flavor}\"");
             }
         }
+        // Log plain numeric level-ups between cosmetic rank thresholds
+        // (only when the level actually ticked and no rank message fired).
+        if (profLvlAfter > profLvlBefore
+            && !ProficiencyRanks.Any(r => r.Kills == wk))
+        {
+            _log.Log($"  {wpnType} proficiency L{profLvlAfter}/{MaxProfLevel}");
+        }
+        // Fork threshold crossing (L25/50/75/100) — fires the picker event.
+        CheckForkThresholdOnKill(wpnType, profLvlBefore, profLvlAfter);
 
         // Check for newly unlocked sword skills at this kill count.
         // FB-564 Hollow Ingress modifier doubles required kills.
@@ -240,6 +262,37 @@ public partial class TurnManager
                 {
                     _map.AddItem(fieldBoss.X, fieldBoss.Y, drop);
                     _log.LogLoot($"  {fieldBoss.Name} drops: {drop.Name}!");
+                }
+            }
+            // Secondary guaranteed drop — IF series bosses drop their
+            // matching series shield alongside the primary weapon.
+            if (!string.IsNullOrEmpty(fieldBoss.FieldBossId)
+                && LootGenerator.FieldBossSecondaryDrops.TryGetValue(fieldBoss.FieldBossId, out var secondaryId))
+            {
+                var secondary = Items.ItemRegistry.Create(secondaryId);
+                if (secondary != null)
+                {
+                    _map.AddItem(fieldBoss.X, fieldBoss.Y, secondary);
+                    _log.LogLoot($"  {fieldBoss.Name} also drops: {secondary.Name}!");
+                }
+            }
+            // HF Last-Attack Bonus — F70+ field bosses have a small chance
+            // to drop the Avatar Weapon matching the killer's weapon type.
+            // 2% base rate, 10% on canon HNM bosses. OHS has no canon Avatar.
+            if (CurrentFloor >= 70
+                && LootGenerator.AvatarWeaponByWeaponType.TryGetValue(wpnType, out var avatarDefId))
+            {
+                bool isHnm = !string.IsNullOrEmpty(fieldBoss.FieldBossId)
+                    && LootGenerator.CanonHnmBosses.Contains(fieldBoss.FieldBossId);
+                int rollThreshold = isHnm ? 10 : 2;
+                if (Random.Shared.Next(100) < rollThreshold)
+                {
+                    var avatar = Items.ItemRegistry.Create(avatarDefId);
+                    if (avatar != null)
+                    {
+                        _map.AddItem(fieldBoss.X, fieldBoss.Y, avatar);
+                        _log.LogLoot($"  ◈ Last-Attack Bonus! {fieldBoss.Name} drops: {avatar.Name}!");
+                    }
                 }
             }
             // Seasonal one-shot marker: Nicholas beaten → mark the year's flag.

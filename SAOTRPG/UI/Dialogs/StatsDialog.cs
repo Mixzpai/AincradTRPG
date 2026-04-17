@@ -34,6 +34,21 @@ public static class StatsDialog
     // Opens the skill allocation dialog with live combat stat preview and weapon proficiency.
     public static void Show(Player player, TurnManager? turnManager = null)
     {
+        // Resolve any pending proficiency forks first — pending means the
+        // player crossed L25/50/75/100 but dismissed (Esc'd) the picker.
+        // Each pending entry opens its own modal here before the Stats sheet
+        // proper so the displayed stats reflect the fresh fork bonuses.
+        if (turnManager != null)
+        {
+            foreach (var (wpnType, forkLevel) in turnManager.EnumeratePendingForks())
+            {
+                var (o1, o2) = TurnManager.GetForkOptions(forkLevel);
+                int pick = ProficiencyForkDialog.Show(wpnType, forkLevel, o1, o2);
+                if (pick == 1 || pick == 2)
+                    turnManager.ApplyProficiencyFork(wpnType, forkLevel, pick);
+            }
+        }
+
         var dialog = DialogHelper.Create("Allocate Skill Points", DialogWidth, DialogHeight);
 
         // ── Available points header ──────────────────────────────────

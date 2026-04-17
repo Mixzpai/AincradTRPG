@@ -17,6 +17,30 @@ public static class ProfileData
     // Set on first F100 clear. Gates Run Modifiers UI (FB-564).
     public static bool HasCompletedGame { get; private set; }
 
+    // ── Player Guide persistence ──────────────────────────────────────
+    // Keys are "{Category}|{Title}" per scout §4. Lists round-trip cleanly
+    // through System.Text.Json; runtime uses the ordered List<string> for
+    // Bookmarks and RecentlyViewed (order matters — newest-first recency,
+    // user-ordered bookmarks) and HashSet<string> for the gating sets.
+
+    // User-pinned topics (unlimited).
+    public static List<string> GuideBookmarks { get; private set; } = new();
+
+    // Most-recently-viewed topics, oldest at index 0, newest at end. Capped
+    // at 10 per scout §10 Q3. Oldest-out eviction.
+    public static List<string> GuideRecentlyViewed { get; private set; } = new();
+
+    // Every topic the player has ever opened. Agent 2 uses this for
+    // first-visit "unread" marker decoration.
+    public static HashSet<string> GuideVisitedTopics { get; private set; } = new();
+
+    // Topics unlocked via gameplay (boss kills, area entry, etc.). Agent 2
+    // populates this at session start + on discovery events, and uses it to
+    // mask unseen entries as "???" via the TreeView AspectGetter.
+    public static HashSet<string> GuideKnownTopics { get; private set; } = new();
+
+    private const int RecentlyViewedCap = 10;
+
     private static bool _loaded;
 
     public static void EnsureLoaded()
@@ -31,8 +55,54 @@ public static class ProfileData
             if (dto?.EverSeenEvents != null)
                 EverSeenEvents = new HashSet<string>(dto.EverSeenEvents);
             HasCompletedGame = dto?.HasCompletedGame ?? false;
+            if (dto?.GuideBookmarks != null)
+                GuideBookmarks = new List<string>(dto.GuideBookmarks);
+            if (dto?.GuideRecentlyViewed != null)
+                GuideRecentlyViewed = new List<string>(dto.GuideRecentlyViewed);
+            if (dto?.GuideVisitedTopics != null)
+                GuideVisitedTopics = new HashSet<string>(dto.GuideVisitedTopics);
+            if (dto?.GuideKnownTopics != null)
+                GuideKnownTopics = new HashSet<string>(dto.GuideKnownTopics);
         }
         catch { /* corrupt profile — start fresh rather than crash the game */ }
+    }
+
+    // ── Guide helpers ─────────────────────────────────────────────────
+
+    // Toggle bookmark state. Returns the new state (true = now bookmarked).
+    public static bool ToggleBookmark(string topicKey)
+    {
+        EnsureLoaded();
+        if (GuideBookmarks.Remove(topicKey)) { Save(); return false; }
+        GuideBookmarks.Add(topicKey);
+        Save();
+        return true;
+    }
+
+    public static bool IsBookmarked(string topicKey)
+    {
+        EnsureLoaded();
+        return GuideBookmarks.Contains(topicKey);
+    }
+
+    // Record a topic view. Moves existing entries to the end (newest) and
+    // evicts oldest when the list exceeds RecentlyViewedCap.
+    public static void MarkRecentlyViewed(string topicKey)
+    {
+        EnsureLoaded();
+        GuideRecentlyViewed.Remove(topicKey);
+        GuideRecentlyViewed.Add(topicKey);
+        while (GuideRecentlyViewed.Count > RecentlyViewedCap)
+            GuideRecentlyViewed.RemoveAt(0);
+        GuideVisitedTopics.Add(topicKey);
+        Save();
+    }
+
+    public static void MarkKnown(string topicKey)
+    {
+        EnsureLoaded();
+        if (!GuideKnownTopics.Add(topicKey)) return;
+        Save();
     }
 
     // Called on F100 clear. Permanently unlocks post-clear features.
@@ -66,6 +136,10 @@ public static class ProfileData
             {
                 EverSeenEvents = EverSeenEvents.ToList(),
                 HasCompletedGame = HasCompletedGame,
+                GuideBookmarks = new List<string>(GuideBookmarks),
+                GuideRecentlyViewed = new List<string>(GuideRecentlyViewed),
+                GuideVisitedTopics = GuideVisitedTopics.ToList(),
+                GuideKnownTopics = GuideKnownTopics.ToList(),
             };
             File.WriteAllText(ProfilePath, JsonSerializer.Serialize(dto));
         }
@@ -76,5 +150,13 @@ public static class ProfileData
     {
         public List<string> EverSeenEvents { get; set; } = new();
         public bool HasCompletedGame { get; set; }
+
+        // Player Guide persistence — see scout §4. Lists (not HashSets) so
+        // System.Text.Json reflection round-trips cleanly without needing a
+        // source-gen context.
+        public List<string> GuideBookmarks { get; set; } = new();
+        public List<string> GuideRecentlyViewed { get; set; } = new();
+        public List<string> GuideVisitedTopics { get; set; } = new();
+        public List<string> GuideKnownTopics { get; set; } = new();
     }
 }

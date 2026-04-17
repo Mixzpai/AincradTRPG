@@ -87,4 +87,42 @@ public static class RapierDefinitions
     // Rainfall rapier. Slows on hit — freezing droplets.
     public static Weapon CreateMidnightRain() => Make("midnight_rain", "Midnight Rain", 14500, "Legendary", 200, 42, 118,
         B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 25).Add(StatType.Speed, 18).Add(StatType.Agility, 10), "Freeze+15");
+
+    // ── Integral Factor Series (Rapier entries) ─────────────────────
+
+    // F14 Integral Series rapier. Gusion, demon-duke thruster of the dawn series.
+    public static Weapon CreateIntegralGusion() => Make("rap_integral_gusion", "Integral Gusion", 4700, "Epic", 155, 14, 75,
+        B().Add(StatType.Attack, 38).Add(StatType.Dexterity, 15).Add(StatType.Speed, 10), "CritRate+10");
+
+    // F25 Nox Series rapier. Nox Gusion — obsidian counterpart, faster snap.
+    public static Weapon CreateNoxGusion() => Make("rap_nox_gusion", "Nox Gusion", 7100, "Epic", 170, 25, 88,
+        B().Add(StatType.Attack, 44).Add(StatType.Dexterity, 18).Add(StatType.Speed, 14), "Bleed+10");
+
+    // F61 Rosso Series rapier. Rhapsody — crimson dueling-rapier, sings on the thrust.
+    public static Weapon CreateRossoRhapsody() => Make("rap_rosso_rhapsody", "Rosso Rhapsody", 13800, "Legendary", 215, 55, 138,
+        B().Add(StatType.Attack, 66).Add(StatType.Dexterity, 26).Add(StatType.Speed, 20), "CritRate+20");
+
+    // ── Hollow Fragment Implement System (Rapier) ─────────────────
+
+    // HF F84 implement. Spiralblade — extra auto-attack chance (flavor).
+    public static Weapon CreateSpiralbladeRenderingFail() => Make("rap_spiralblade_rendering_fail", "Spiralblade: Rendering Fail", 17500, "Legendary", 210, 80, 150,
+        B().Add(StatType.Attack, 75).Add(StatType.Dexterity, 24).Add(StatType.Speed, 20), "ExtraAutoAttack+20");
+
+    // HF F93 implement. Glimmerblade — Banishing Ray; skill charge reduction (flavor).
+    public static Weapon CreateGlimmerbladeBanishingRay() => Make("rap_glimmerblade_banishing_ray", "Glimmerblade: Banishing Ray", 24000, "Legendary", 240, 88, 170,
+        B().Add(StatType.Attack, 85).Add(StatType.Dexterity, 28).Add(StatType.Speed, 22).Add(StatType.Agility, 15), "SkillChargeReduction+20");
+
+    // ── Hollow Fragment Avatar Weapons (Rapier) ───────────────────
+    // Last-Attack Bonus drops from F70+ field bosses. See LootGenerator canon HNM list.
+
+    public static Weapon CreateIshvalcaAvatar() => Make("rap_ishvalca_avatar", "Ishvalca Avatar", 20000, "Legendary", 225, 82, 158,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 26).Add(StatType.Speed, 22).Add(StatType.Agility, 14), "ParryChance+15");
+
+    // ── Lisbeth Rarity 6 Crafted (Rapier) ─────────────────────────
+
+    public static Weapon CreateChampionfoilRadiantChariot() => Make("rap_championfoil_radiant_chariot", "Championfoil: Radiant Chariot", 28500, "Legendary", 250, 86, 170,
+        B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Speed, 24).Add(StatType.Agility, 16), "AttackSpeed+3");
+
+    public static Weapon CreateGlimmerspineSilverBullet() => Make("rap_glimmerspine_silver_bullet", "Glimmerspine: Silver Bullet", 30000, "Legendary", 255, 88, 175,
+        B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 30).Add(StatType.Speed, 24), "TrueStrike+15");
 }

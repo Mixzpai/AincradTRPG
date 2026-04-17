@@ -69,4 +69,33 @@ public static class AxeDefinitions
     // Hollow Fragment F94 implement. Executioner's axe; massive damage vs low-HP foes (flavor).
     public static Weapon CreateRagnaroksBaneHeadsman() => Make("ragnaroks_bane_headsman", "Ragnarok's Bane: Headsman", 27000, "Legendary", 260, 90, 178,
         B().Add(StatType.Attack, 100).Add(StatType.Strength, 40).Add(StatType.Vitality, 15), "ExecuteThreshold+40");
+
+    // ── Integral Factor Series (Axe entries) ────────────────────────
+
+    // F61 Rosso Series 2H axe. Dominion — red-order greataxe, archangel rank.
+    public static Weapon CreateRossoDominion() => Make("axe_rosso_dominion", "Rosso Dominion", 14500, "Legendary", 225, 55, 150,
+        B().Add(StatType.Attack, 74).Add(StatType.Strength, 24).Add(StatType.Vitality, 12), "KnockbackChance+30");
+
+    // ── Hollow Fragment Implement System (2H Axe) ─────────────────
+
+    // HF F85 implement. Crusher — Bond Cyclone; +50 ATK / -50 DEF trade (flavor). Quest NPC reward.
+    public static Weapon CreateCrusherBondCyclone() => Make("axe_crusher_bond_cyclone", "Crusher: Bond Cyclone", 19000, "Legendary", 220, 82, 160,
+        B().Add(StatType.Attack, 90).Add(StatType.Strength, 28).Add(StatType.Vitality, 10), "RagingCyclone+50");
+
+    // HF F86 implement. Fellaxe — demon's scythe; damage scales with lost HP (flavor).
+    public static Weapon CreateFellaxeDemonsScythe() => Make("axe_fellaxe_demons_scythe", "Fellaxe: Demon's Scythe", 20000, "Legendary", 230, 84, 165,
+        B().Add(StatType.Attack, 86).Add(StatType.Strength, 30).Add(StatType.Vitality, 12), "HPScalingDamage+25");
+
+    // ── Hollow Fragment Avatar Weapons (Axe) ─────────────────────
+
+    public static Weapon CreateLordBursterAvatar() => Make("axe_lord_burster_avatar", "Lord Burster Avatar", 22000, "Legendary", 240, 84, 168,
+        B().Add(StatType.Attack, 82).Add(StatType.Strength, 28).Add(StatType.Vitality, 14), "ExecuteThreshold+30");
+
+    // ── Lisbeth Rarity 6 Crafted (2H Axe) ────────────────────────
+
+    public static Weapon CreateHecatombAxeGigaDisaster() => Make("axe_hecatomb_giga_disaster", "Hecatomb Axe: Giga Disaster", 31500, "Legendary", 265, 90, 180,
+        B().Add(StatType.Attack, 88).Add(StatType.Strength, 30).Add(StatType.Vitality, 16), "ExecuteThreshold+25");
+
+    public static Weapon CreateIngurgitatorBelzericht() => Make("axe_ingurgitator_belzericht", "Ingurgitator: Belzericht", 32000, "Legendary", 265, 91, 182,
+        B().Add(StatType.Attack, 90).Add(StatType.Strength, 30).Add(StatType.Vitality, 18), "HPDrain+10");
 }

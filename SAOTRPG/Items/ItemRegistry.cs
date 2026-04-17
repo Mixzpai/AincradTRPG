@@ -17,6 +17,8 @@ public static class ItemRegistry
         Register("adamantite_sword",    () => OneHandedSwordDefinitions.CreateAdamantiteSword());
         Register("celestial_blade",     () => OneHandedSwordDefinitions.CreateCelestialBlade());
         Register("anneal_blade",        () => OneHandedSwordDefinitions.CreateAnnealBlade());
+        Register("tough_anneal_blade",  () => OneHandedSwordDefinitions.CreateToughAnnealBlade());
+        Register("pitch_black_anneal_blade", () => OneHandedSwordDefinitions.CreatePitchBlackAnnealBlade());
         Register("sword_breaker",       () => OneHandedSwordDefinitions.CreateSwordBreaker());
         Register("queens_knightsword",  () => OneHandedSwordDefinitions.CreateQueensKnightsword());
         Register("azure_sky_blade",     () => OneHandedSwordDefinitions.CreateAzureSkyBlade());
@@ -222,9 +224,114 @@ public static class ItemRegistry
         Register("adamantite_scythe",    () => ScytheDefinitions.CreateAdamantiteScythe());
         Register("celestial_scythe",     () => ScytheDefinitions.CreateCelestialScythe());
 
+        // ── Integral Factor weapons ──────────────────────────────────
+        // Canon named-series weapons from SAO: Integral Factor (Bandai Namco).
+        // Series ladder: Integral (F14 Epic) -> Nox (F25 Epic) ->
+        //                Rosso (F61 Legendary) -> Yasha (F87 Legendary) ->
+        //                Gaou (F90+ Legendary).
+        // Agent 2 handles field-boss wiring + guaranteed drops for these.
+        // Anneal Blade line (F1-10) is registered inline in the 1H-sword block above.
+
+        // Integral Series (F14 Epic) — 4 weapons + 1 shield
+        Register("bow_integral_arc_angel",   () => BowDefinitions.CreateIntegralArcAngel());
+        Register("ohs_integral_radgrid",     () => OneHandedSwordDefinitions.CreateIntegralRadgrid());
+        Register("rap_integral_gusion",      () => RapierDefinitions.CreateIntegralGusion());
+        Register("ths_integral_after_glow",  () => TwoHandedSwordDefinitions.CreateIntegralAfterGlow());
+
+        // Nox Series (F25 Epic) — 5 weapons + 1 shield
+        Register("dag_nox_nocturne",         () => DaggerDefinitions.CreateNoxNocturne());
+        Register("ohs_nox_radgrid",          () => OneHandedSwordDefinitions.CreateNoxRadgrid());
+        Register("rap_nox_gusion",           () => RapierDefinitions.CreateNoxGusion());
+        Register("bow_nox_arc_angel",        () => BowDefinitions.CreateNoxArcAngel());
+        Register("ths_nox_after_glow",       () => TwoHandedSwordDefinitions.CreateNoxAfterGlow());
+
+        // Rosso Series (F61 Legendary) — 5 weapons + 1 shield
+        Register("ohs_rosso_forneus",        () => OneHandedSwordDefinitions.CreateRossoForneus());
+        Register("bow_rosso_albatross",      () => BowDefinitions.CreateRossoAlbatross());
+        Register("spr_rosso_sigrun",         () => SpearDefinitions.CreateRossoSigrun());
+        Register("rap_rosso_rhapsody",       () => RapierDefinitions.CreateRossoRhapsody());
+        Register("axe_rosso_dominion",       () => AxeDefinitions.CreateRossoDominion());
+
+        // Yasha Series (F87 Legendary, moved from F85 per collision) — 3 weapons + 1 shield
+        Register("ohs_yasha_astaroth",       () => OneHandedSwordDefinitions.CreateYashaAstaroth());
+        Register("kat_yasha_oratorio",       () => KatanaDefinitions.CreateYashaOratorio());
+        Register("dag_yasha_envy",           () => DaggerDefinitions.CreateYashaEnvy());
+
+        // Gaou Series (F90+ Legendary) — 2 weapons + 1 shield
+        Register("ohs_gaou_reginleifr",      () => OneHandedSwordDefinitions.CreateGaouReginleifr());
+        Register("kat_gaou_oratorio",        () => KatanaDefinitions.CreateGaouOratorio());
+
+        // ── Hollow Fragment Endgame Expansion (39 weapons) ─────────
+        // Implement System gaps (8): F80-F99 canon slots not filled by priority-3 pass.
+        Register("sci_arcaneblade_soul_binder",    () => ScimitarDefinitions.CreateArcanebladeSoulBinder());
+        Register("sci_fellblade_ruinous_doom",     () => ScimitarDefinitions.CreateFellbladeRuinousDoom());
+        Register("sci_deathglutton_epetamu",       () => ScimitarDefinitions.CreateDeathgluttonEpetamu());
+        Register("rap_spiralblade_rendering_fail", () => RapierDefinitions.CreateSpiralbladeRenderingFail());
+        Register("rap_glimmerblade_banishing_ray", () => RapierDefinitions.CreateGlimmerbladeBanishingRay());
+        Register("axe_crusher_bond_cyclone",       () => AxeDefinitions.CreateCrusherBondCyclone());
+        Register("axe_fellaxe_demons_scythe",      () => AxeDefinitions.CreateFellaxeDemonsScythe());
+        Register("ohs_aurumbrand_hauteclaire",     () => OneHandedSwordDefinitions.CreateAurumbrandHauteclaire());
+
+        // Hollow Area Uniques (5): spread across floor bands as rare drops.
+        Register("ohs_traitorblade_argute_brand",  () => OneHandedSwordDefinitions.CreateTraitorbladeArguteBrand());
+        Register("bow_shroudbow_star_stitcher",    () => BowDefinitions.CreateShroudbowStarStitcher());
+        Register("scy_reaper_scythe",              () => ScytheDefinitions.CreateReaperScythe());
+        Register("ohs_velocious_brain",            () => OneHandedSwordDefinitions.CreateFakeSwordVelociousBrain());
+        Register("ths_saintblade_ragnarok",        () => TwoHandedSwordDefinitions.CreateSaintbladeRagnarok());
+
+        // Avatar Weapons (8): Last-Attack Bonus drops from F70+ field bosses.
+        Register("rap_ishvalca_avatar",            () => RapierDefinitions.CreateIshvalcaAvatar());
+        Register("dag_genocide_avatar",            () => DaggerDefinitions.CreateGenocideAvatar());
+        Register("sci_saphir_avatar",              () => ScimitarDefinitions.CreateSaphirAvatar());
+        Register("kat_burning_haze_avatar",        () => KatanaDefinitions.CreateBurningHazeAvatar());
+        Register("axe_lord_burster_avatar",        () => AxeDefinitions.CreateLordBursterAvatar());
+        Register("ths_absoludia_avatar",           () => TwoHandedSwordDefinitions.CreateAbsoludiaAvatar());
+        Register("spr_asleigeon_avatar",           () => SpearDefinitions.CreateAsleigeonAvatar());
+        Register("mce_ijelfur_avatar",             () => MaceDefinitions.CreateIjelfurAvatar());
+
+        // Lisbeth Rarity 6 Crafted (18): Lisbeth-craft-only at Lindarth F48.
+        Register("ohs_variable_v_vice",            () => OneHandedSwordDefinitions.CreateVariableVVice());
+        Register("ohs_liberator_astral_legion",    () => OneHandedSwordDefinitions.CreateLiberatorAstralLegion());
+        Register("ohs_marginless_blade",           () => OneHandedSwordDefinitions.CreateMarginlessBlade());
+        Register("ths_ogreblade_over_the_cross",   () => TwoHandedSwordDefinitions.CreateOgrebladeOverTheCross());
+        Register("ths_deliverer_majestic_lord",    () => TwoHandedSwordDefinitions.CreateDelivererMajesticLord());
+        Register("ths_ambitious_juggernaut",       () => TwoHandedSwordDefinitions.CreateAmbitiousJuggernaut());
+        Register("rap_championfoil_radiant_chariot", () => RapierDefinitions.CreateChampionfoilRadiantChariot());
+        Register("rap_glimmerspine_silver_bullet", () => RapierDefinitions.CreateGlimmerspineSilverBullet());
+        Register("sci_crescentblade_original_sin", () => ScimitarDefinitions.CreateCrescentbladeOriginalSin());
+        Register("dag_notes_end_trinity",          () => DaggerDefinitions.CreateNotesEndTrinity());
+        Register("kat_godslayer_tattered_hope",    () => KatanaDefinitions.CreateGodslayerTatteredHope());
+        Register("kat_avidya_samsara_blade",       () => KatanaDefinitions.CreateAvidyaSamsaraBlade());
+        Register("spr_heavenslance_elpis_order",   () => SpearDefinitions.CreateHeavenslanceElpisOrder());
+        Register("mce_dictators_punisher",         () => MaceDefinitions.CreateDictatorsPunisher());
+        Register("mce_photon_hammer_xp_smasher",   () => MaceDefinitions.CreatePhotonHammerXPSmasher());
+        Register("axe_hecatomb_giga_disaster",     () => AxeDefinitions.CreateHecatombAxeGigaDisaster());
+        Register("axe_ingurgitator_belzericht",    () => AxeDefinitions.CreateIngurgitatorBelzericht());
+        Register("scy_eldark_radius_sigma",        () => ScytheDefinitions.CreateEldarkRadiusSigma());
+
+        // ── Refinement Ingots (Agent 3 partition — see IF_EXPANSION_SCOUT §9) ──
+        Register("sharpening_ingot",  () => IngotDefinitions.CreateSharpeningIngot());
+        Register("warden_ingot",      () => IngotDefinitions.CreateWardenIngot());
+        Register("hunter_ingot",      () => IngotDefinitions.CreateHunterIngot());
+        Register("lunar_ingot",       () => IngotDefinitions.CreateLunarIngot());
+        Register("keen_ingot",        () => IngotDefinitions.CreateKeenIngot());
+        Register("guardian_ingot",    () => IngotDefinitions.CreateGuardianIngot());
+        Register("swiftstrike_ingot", () => IngotDefinitions.CreateSwiftstrikeIngot());
+        Register("spellbind_ingot",   () => IngotDefinitions.CreateSpellbindIngot());
+        Register("chimeric_ingot",    () => IngotDefinitions.CreateChimericIngot());
+        Register("sovereign_ingot",   () => IngotDefinitions.CreateSovereignIngot());
+        Register("vanguard_ingot",    () => IngotDefinitions.CreateVanguardIngot());
+        Register("astral_ingot",      () => IngotDefinitions.CreateAstralIngot());
+
         // ── Shields ──────────────────────────────────────────────────
         Register("wooden_shield", () => ShieldDefinitions.CreateWoodenShield());
         Register("iron_shield",   () => ShieldDefinitions.CreateIronShield());
+        // IF named-series shields
+        Register("shd_fermat",        () => ShieldDefinitions.CreateFermat());
+        Register("shd_nox_fermat",    () => ShieldDefinitions.CreateNoxFermat());
+        Register("shd_rosso_aegis",   () => ShieldDefinitions.CreateRossoAegis());
+        Register("shd_yasha_kavacha", () => ShieldDefinitions.CreateYashaKavacha());
+        Register("shd_gaou_tatari",   () => ShieldDefinitions.CreateGaouTatari());
 
         // ── Armor (5 tiers) ──────────────────────────────────────────
         Register("leather_chestplate",     () => ArmorDefinitions.CreateLeatherChest());

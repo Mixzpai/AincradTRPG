@@ -76,4 +76,24 @@ public static class DaggerDefinitions
     // Illusion-dagger. Tops out crit chance.
     public static Weapon CreatePhantasmagoria() => Make("phantasmagoria", "Phantasmagoria", 10500, "Legendary", 180, 28, 92,
         B().Add(StatType.Attack, 48).Add(StatType.Agility, 20).Add(StatType.Dexterity, 18), "CritRate+25");
+
+    // ── Integral Factor Series (Dagger entries) ─────────────────────
+
+    // F25 Nox Series dagger. Nocturne — midnight-song slip-blade from the Underground Labyrinth.
+    public static Weapon CreateNoxNocturne() => Make("dag_nox_nocturne", "Nox Nocturne", 6800, "Epic", 155, 25, 75,
+        B().Add(StatType.Attack, 38).Add(StatType.Agility, 16).Add(StatType.Dexterity, 14), "BackstabDmg+30");
+
+    // F85→F87 Yasha Series dagger. Envy — demonic whisper-blade, poisons on the draw.
+    public static Weapon CreateYashaEnvy() => Make("dag_yasha_envy", "Yasha Envy", 17500, "Legendary", 225, 78, 140,
+        B().Add(StatType.Attack, 70).Add(StatType.Agility, 24).Add(StatType.Dexterity, 18), "Poison+20");
+
+    // ── Hollow Fragment Avatar Weapons (Dagger) ───────────────────
+
+    public static Weapon CreateGenocideAvatar() => Make("dag_genocide_avatar", "Genocide Avatar", 19000, "Legendary", 215, 80, 152,
+        B().Add(StatType.Attack, 74).Add(StatType.Agility, 25).Add(StatType.Dexterity, 20), "Bleed+30");
+
+    // ── Lisbeth Rarity 6 Crafted (Dagger) ─────────────────────────
+
+    public static Weapon CreateNotesEndTrinity() => Make("dag_notes_end_trinity", "Notes' End Trinity", 28000, "Legendary", 245, 85, 165,
+        B().Add(StatType.Attack, 80).Add(StatType.Agility, 28).Add(StatType.Dexterity, 22), "CritRate+25");
 }

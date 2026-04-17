@@ -80,4 +80,20 @@ public static class SpearDefinitions
     // Hollow Fragment F98 implement. Odin's spear; returns SP with each strike (flavor).
     public static Weapon CreateGodspearGungnir() => Make("godspear_gungnir", "Godspear: Gungnir", 35000, "Legendary", 270, 94, 185,
         B().Add(StatType.Attack, 95).Add(StatType.Strength, 22).Add(StatType.Dexterity, 25).Add(StatType.Agility, 18).Add(StatType.Vitality, 15), "SPRegen+3");
+
+    // ── Integral Factor Series (Spear entries) ──────────────────────
+
+    // F61 Rosso Series spear. Sigrun — valkyrie-spear of the red-victory.
+    public static Weapon CreateRossoSigrun() => Make("spr_rosso_sigrun", "Rosso Sigrun", 14200, "Legendary", 220, 55, 142,
+        B().Add(StatType.Attack, 70).Add(StatType.Dexterity, 22).Add(StatType.Strength, 16), "RushRange+1");
+
+    // ── Hollow Fragment Avatar Weapons (Spear) ────────────────────
+
+    public static Weapon CreateAsleigeonAvatar() => Make("spr_asleigeon_avatar", "Asleigeon Avatar", 21500, "Legendary", 230, 82, 160,
+        B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Strength, 18), "TrueStrike+20");
+
+    // ── Lisbeth Rarity 6 Crafted (Spear) ─────────────────────────
+
+    public static Weapon CreateHeavenslanceElpisOrder() => Make("spr_heavenslance_elpis_order", "Heavenslance: Elpis Order", 30500, "Legendary", 260, 88, 175,
+        B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 26).Add(StatType.Strength, 18).Add(StatType.Vitality, 20), "HPRegen+5");
 }

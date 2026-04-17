@@ -36,8 +36,19 @@ public static class OneHandedSwordDefinitions
 
     // --- Named / SAO Legendary Weapons ---
 
-    public static Weapon CreateAnnealBlade() => Make("anneal_blade", "Anneal Blade", 200, "Rare", 60, 5, 14,
-        B().Add(StatType.Attack, 12).Add(StatType.Strength, 3));
+    // IF canon F1-2 craftable baseline. Lisbeth's first-pass forge for starter players.
+    // Rebalanced to IF's "crafted entry sword" spec (was a mid-tier Rare, now the
+    // canonical starter craft per Phase B IF expansion).
+    public static Weapon CreateAnnealBlade() => Make("anneal_blade", "Anneal Blade", 180, "Uncommon", 80, 1, 25,
+        B().Add(StatType.Attack, 10).Add(StatType.Dexterity, 2));
+
+    // IF canon F4-5 upgrade of Anneal Blade. Re-heated, folded, harder bite.
+    public static Weapon CreateToughAnnealBlade() => Make("tough_anneal_blade", "Tough Anneal Blade", 420, "Rare", 120, 4, 38,
+        B().Add(StatType.Attack, 18).Add(StatType.Strength, 3));
+
+    // IF canon F8-10 rare drop. Black-tempered cousin — longer cooldown forge, razor-fine bleed edge.
+    public static Weapon CreatePitchBlackAnnealBlade() => Make("pitch_black_anneal_blade", "Pitch-black Anneal Blade", 780, "Rare", 140, 8, 48,
+        B().Add(StatType.Attack, 24).Add(StatType.Dexterity, 4), "Bleed+10");
 
     public static Weapon CreateSwordBreaker() => Make("sword_breaker", "Sword Breaker", 400, "Uncommon", 70, 15, 20,
         B().Add(StatType.Attack, 10).Add(StatType.Dexterity, 5), "ParryChance+10");
@@ -153,4 +164,56 @@ public static class OneHandedSwordDefinitions
     // said to cut through any and all things. Severing flavor.
     public static Weapon CreateBlackLilySword() => Make("black_lily_sword", "Black Lily Sword", 50000, "Divine", 999, 90, 190,
         B().Add(StatType.Attack, 100).Add(StatType.Strength, 28).Add(StatType.Dexterity, 22), "SeveringStrike+50");
+
+    // ── Integral Factor Series (1H Sword entries) ───────────────────
+    // Canon named-series swords from IF. Epic F14 / Epic F25 / Legendary F61+.
+
+    // F14 Integral Series 1H sword. Radgrid, a valkyrie-name longsword of the dawn series.
+    public static Weapon CreateIntegralRadgrid() => Make("ohs_integral_radgrid", "Integral Radgrid", 4800, "Epic", 160, 14, 82,
+        B().Add(StatType.Attack, 42).Add(StatType.Strength, 12).Add(StatType.Dexterity, 8), "CritRate+10");
+
+    // F25 Nox Series 1H sword. Nox Radgrid, shadow-forged counterpart from the Underground Labyrinth.
+    public static Weapon CreateNoxRadgrid() => Make("ohs_nox_radgrid", "Nox Radgrid", 7200, "Epic", 175, 25, 95,
+        B().Add(StatType.Attack, 48).Add(StatType.Strength, 14).Add(StatType.Agility, 8), "LifeSteal+8");
+
+    // F61 Rosso Series 1H sword. Forneus, red-demon named after the marquis of the sea.
+    public static Weapon CreateRossoForneus() => Make("ohs_rosso_forneus", "Rosso Forneus", 14000, "Legendary", 220, 55, 148,
+        B().Add(StatType.Attack, 72).Add(StatType.Strength, 22).Add(StatType.Dexterity, 14), "Bleed+20");
+
+    // F85→F87 Yasha Series 1H sword. Astaroth, grand-duke demon; the Yasha prefix leans oni/yaksha.
+    public static Weapon CreateYashaAstaroth() => Make("ohs_yasha_astaroth", "Yasha Astaroth", 18500, "Legendary", 235, 78, 155,
+        B().Add(StatType.Attack, 76).Add(StatType.Strength, 24).Add(StatType.Dexterity, 16), "CritRate+15");
+
+    // F90+ Gaou Series 1H sword. Reginleifr, Norse valkyrie of heir-inheritance.
+    public static Weapon CreateGaouReginleifr() => Make("ohs_gaou_reginleifr", "Gaou Reginleifr", 26000, "Legendary", 255, 88, 170,
+        B().Add(StatType.Attack, 84).Add(StatType.Strength, 26).Add(StatType.Agility, 14).Add(StatType.Dexterity, 14), "SkillCooldown-1");
+
+    // ── Hollow Fragment Implement System (1H Sword) ───────────────
+
+    // HF F92 implement. Aurumbrand — Hauteclaire; -20% incoming damage shroud (flavor). Quest NPC reward.
+    public static Weapon CreateAurumbrandHauteclaire() => Make("ohs_aurumbrand_hauteclaire", "Aurumbrand: Hauteclaire", 23000, "Legendary", 240, 86, 162,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 22).Add(StatType.Vitality, 18).Add(StatType.Dexterity, 16), "DamageReduction+20");
+
+    // ── Hollow Area Uniques (1H Sword) — Rare/Legendary drops ────
+    // Tyler's placement direction: balanced variety, rare chest drops.
+
+    // HF F35 Hollow Area. Traitorblade — cursed duel-edge, pitch-dark finish.
+    public static Weapon CreateTraitorbladeArguteBrand() => Make("ohs_traitorblade_argute_brand", "Traitorblade: Argute Brand", 2400, "Rare", 130, 30, 65,
+        B().Add(StatType.Attack, 34).Add(StatType.Dexterity, 10).Add(StatType.Agility, 6), "Bleed+15");
+
+    // HF F82 Hollow Area. Fake Sword Velocious Brain — artificer's replica, mind-piercing pommel.
+    public static Weapon CreateFakeSwordVelociousBrain() => Make("ohs_velocious_brain", "Fake Sword: Velocious Brain", 16500, "Legendary", 200, 75, 138,
+        B().Add(StatType.Attack, 72).Add(StatType.Strength, 20).Add(StatType.Dexterity, 20), "SkillDamage+20");
+
+    // ── Lisbeth Rarity 6 Crafted (1H Sword) ──────────────────────
+    // Canon HF Lisbeth-craft-only weapons. Cost: 3M Col + rare materials.
+
+    public static Weapon CreateVariableVVice() => Make("ohs_variable_v_vice", "Variable V Vice", 28000, "Legendary", 250, 88, 168,
+        B().Add(StatType.Attack, 82).Add(StatType.Strength, 24).Add(StatType.Dexterity, 20), "CritRate+18");
+
+    public static Weapon CreateLiberatorAstralLegion() => Make("ohs_liberator_astral_legion", "Liberator: Astral Legion", 30000, "Legendary", 260, 90, 175,
+        B().Add(StatType.Attack, 86).Add(StatType.Strength, 26).Add(StatType.Dexterity, 20), "SkillDamage+15");
+
+    public static Weapon CreateMarginlessBlade() => Make("ohs_marginless_blade", "Marginless Blade", 32000, "Legendary", 260, 92, 180,
+        B().Add(StatType.Attack, 90).Add(StatType.Strength, 28).Add(StatType.Dexterity, 22).Add(StatType.Agility, 16), "ComboBonus+50");
 }

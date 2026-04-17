@@ -1,5 +1,6 @@
 using Terminal.Gui;
 using SAOTRPG.Entities;
+using SAOTRPG.Items;
 using SAOTRPG.Systems;
 
 namespace SAOTRPG.Map;
@@ -180,6 +181,14 @@ public static partial class MapGenerator
             ShopName = "Agil's General Store",
         };
         vendor.GenerateStock(floor);
+        // IF canon: Anneal Blade is the iconic starter 1H sword Kirito buys
+        // on Floor 1. Agil always carries one in stock (with vendor markup).
+        var anneal = ItemRegistry.Create("anneal_blade");
+        if (anneal != null)
+        {
+            anneal.Value = (int)(anneal.Value * 1.2);
+            vendor.ShopStock.Add(anneal);
+        }
         TryPlaceEntityNear(map, vendor, sx - 15, sy + 6);
 
         var klein = new WorldSpawn('K', Color.BrightRed)
@@ -376,6 +385,28 @@ public static partial class MapGenerator
         ((f, r) => f == 98 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('C', Color.Gray) { Name = "Sentinel Captain",
              Dialogue = "The guardians have fallen, one by one. Hold their line and Gungnir is yours." }),
+
+        // ── HF Endgame Expansion — Lisbeth (F48 Lindarth blacksmith) ─
+        // Canon: Lindarth on F48 is Lisbeth's smithing hub. Opens the
+        // Lisbeth Rarity 6 craft dialog on interact (TurnManager wiring).
+        ((f, r) => f == 48 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
+         () => new WorldSpawn('L', Color.BrightMagenta) { Name = "Lisbeth",
+             Dialogue = "Lindarth's the heart of my forge. Got Col and rare materials? I'll craft you something the labyrinth won't forget." }),
+
+        // ── HF Endgame Expansion Implement System questgivers (4) ───
+        // F84 Spiralblade, F85 Crusher, F92 Aurumbrand, F99 Deathglutton.
+        ((f, r) => f == 84 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('V', Color.BrightCyan) { Name = "Spiralist Vey",
+             Dialogue = "Geometry broke here. Ten failed spirals and the rapier answers." }),
+        ((f, r) => f == 85 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('D', Color.BrightYellow) { Name = "Crusher Drago",
+             Dialogue = "The storm-axe hums for a worthy haft. Ten battles and it's yours." }),
+        ((f, r) => f == 92 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('H', Color.Yellow) { Name = "Auric Knight Halric",
+             Dialogue = "Hauteclaire will shroud only the unshaken. Show me your fifteen." }),
+        ((f, r) => f == 99 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('X', Color.BrightRed) { Name = "Last Herald Xiv",
+             Dialogue = "The pact demands twenty. Feed Epetamu, and it will feed your climb." }),
     };
 
     // Walks FloorNpcSpawns in order, placing each NPC whose gate passes.

@@ -92,6 +92,109 @@ public static class LootGenerator
         [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito canon
     };
 
+    // ── Hollow Fragment Last-Attack Bonus (Avatar Weapons) ─────────
+    // When a field boss F70+ is killed, if the killer's weapon type matches
+    // an Avatar Weapon type, roll the drop chance. 2% for regular F70+ field
+    // bosses; 10% for canon HNM bosses listed in CanonHnmBosses. OHS doesn't
+    // have a canon Avatar, so OHS kills don't trigger.
+    public static readonly Dictionary<string, string> AvatarWeaponByWeaponType = new()
+    {
+        ["Rapier"]            = "rap_ishvalca_avatar",
+        ["Dagger"]            = "dag_genocide_avatar",
+        ["Scimitar"]          = "sci_saphir_avatar",
+        ["Katana"]            = "kat_burning_haze_avatar",
+        ["Axe"]               = "axe_lord_burster_avatar",
+        ["Two-Handed Sword"]  = "ths_absoludia_avatar",
+        ["Spear"]             = "spr_asleigeon_avatar",
+        ["Mace"]              = "mce_ijelfur_avatar",
+    };
+
+    // Canon Hollow Named Monster (HNM) field bosses — 10% Last-Attack drop
+    // rate, vs the 2% base rate. Keyed by FieldBoss.FieldBossId.
+    public static readonly HashSet<string> CanonHnmBosses = new()
+    {
+        "abased_beast_f85",
+        "ark_knight_f94",
+        "gaia_breaker_f95",
+        "eternal_dragon_f96",
+    };
+
+    // Field-boss secondary guaranteed drops — paired with the primary
+    // GuaranteedDropId in FieldBossFactory. Used for series that drop both
+    // a signature weapon AND a series shield (IF canon: each series has
+    // its matching Fermat-style shield). Keyed by FieldBoss.FieldBossId.
+    public static readonly Dictionary<string, string> FieldBossSecondaryDrops = new()
+    {
+        // IF Integral Series — F14, canon shield Fermat.
+        ["starlight_sentinel_f14"] = "shd_fermat",
+        // IF Nox Series — F25, canon shield Nox Fermat.
+        ["labyrinth_warden_f25"]   = "shd_nox_fermat",
+        // IF Rosso Series — F61, [INVENTED] Rosso Aegis.
+        ["crimson_forneus_f61"]    = "shd_rosso_aegis",
+        // IF Yasha Series — F87, [INVENTED] Yasha Kavacha.
+        ["yasha_night_demon_f87"]  = "shd_yasha_kavacha",
+        // IF Gaou Series — F90, [INVENTED] Gaou Tatari.
+        ["gaou_ox_king_f90"]       = "shd_gaou_tatari",
+    };
+
+    // Floor-banded registered-item loot pool. When RollChestItem picks the
+    // "registered loot" branch (~5% of equipment rolls), a DefId is chosen
+    // from the pool whose (minFloor, maxFloor) band contains CurrentFloor.
+    // This is how the IF Anneal line (F1-10) and non-guaranteed series
+    // weapons reach the player — they are drop-table items that would
+    // otherwise only be reachable via the series field boss.
+    public static readonly (int MinFloor, int MaxFloor, string DefId)[] FloorBandedRegisteredLoot =
+    {
+        // Anneal line — Sachi/Kirito-era starter OHS (IF canon, F1-10).
+        (1,  10, "anneal_blade"),                 // Common-Uncommon; also stocked at Agil
+        (4,  10, "tough_anneal_blade"),           // Rare upgrade
+        (8,  12, "pitch_black_anneal_blade"),     // Rare black-steel variant
+
+        // IF Integral Series secondaries (primary = Arc Angel via F14 boss).
+        (12, 22, "ohs_integral_radgrid"),
+        (12, 22, "rap_integral_gusion"),
+        (12, 22, "ths_integral_after_glow"),
+
+        // IF Nox Series secondaries (primary = Nox Radgrid via F25 boss).
+        (22, 34, "dag_nox_nocturne"),
+        (22, 34, "rap_nox_gusion"),
+        (22, 34, "bow_nox_arc_angel"),
+        (22, 34, "ths_nox_after_glow"),
+
+        // IF Rosso Series secondaries (primary = Rosso Forneus via F61 boss).
+        (58, 72, "bow_rosso_albatross"),
+        (58, 72, "spr_rosso_sigrun"),
+        (58, 72, "rap_rosso_rhapsody"),
+        (58, 72, "axe_rosso_dominion"),
+
+        // IF Yasha Series secondaries (primary = Yasha Astaroth via F87 boss).
+        (84, 94, "kat_yasha_oratorio"),
+        (84, 94, "dag_yasha_envy"),
+
+        // IF Gaou Series secondaries (primary = Gaou Reginleifr via F90 boss).
+        (88, 99, "kat_gaou_oratorio"),
+
+        // ── Hollow Fragment Hollow Area Uniques (5) — rare chest drops ─
+        // Spread across floor bands per scope doc. NOT guaranteed.
+        (30, 40, "ohs_traitorblade_argute_brand"), // F35
+        (50, 60, "bow_shroudbow_star_stitcher"),   // F55
+        (65, 75, "scy_reaper_scythe"),             // F70
+        (78, 88, "ohs_velocious_brain"),           // F82
+        (92, 99, "ths_saintblade_ragnarok"),       // F95
+    };
+
+    // Pick a floor-banded registered loot DefId for the current floor, or
+    // null if no entries cover this floor. Used by RollChestItem to wire
+    // IF canon weapons (Anneal line + series secondaries) into chests.
+    public static string? PickFloorBandedRegisteredDefId(int floor)
+    {
+        var pool = new List<string>();
+        foreach (var (minF, maxF, defId) in FloorBandedRegisteredLoot)
+            if (floor >= minF && floor <= maxF) pool.Add(defId);
+        if (pool.Count == 0) return null;
+        return pool[Random.Shared.Next(pool.Count)];
+    }
+
     // Canon-named mob → (DefinitionId, dropChance 0-1) overrides. Checked
     // BEFORE the generic LootTag roll so named mobs drop their iconic items
     // at the rate canon/game sources indicate. Multiple entries per mob = multi-roll.

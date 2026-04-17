@@ -35,4 +35,15 @@ public static class ScytheDefinitions
 
     public static Weapon CreateCelestialScythe() => Make("celestial_scythe", "Celestial Scythe", 6000, "Legendary", 210, 75, 155,
         B().Add(StatType.Attack, 85).Add(StatType.Strength, 28).Add(StatType.Agility, 10));
+
+    // ── Hollow Area Uniques (Scythe) ─────────────────────────────
+
+    // HF F70 Hollow Area. Reaper Scythe — hollow grim warscythe, dark bleed affinity.
+    public static Weapon CreateReaperScythe() => Make("scy_reaper_scythe", "Reaper Scythe", 11500, "Epic", 180, 65, 120,
+        B().Add(StatType.Attack, 58).Add(StatType.Strength, 22).Add(StatType.Dexterity, 14), "Bleed+25");
+
+    // ── Lisbeth Rarity 6 Crafted (Scythe) ─────────────────────────
+
+    public static Weapon CreateEldarkRadiusSigma() => Make("scy_eldark_radius_sigma", "Eldark Radius Sigma", 31000, "Legendary", 265, 89, 178,
+        B().Add(StatType.Attack, 88).Add(StatType.Strength, 28).Add(StatType.Dexterity, 18), "DarknessRending+25");
 }

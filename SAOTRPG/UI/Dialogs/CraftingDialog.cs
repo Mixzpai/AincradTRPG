@@ -1,6 +1,7 @@
 using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
+using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Items.Materials;
 using SAOTRPG.Inventory.Core;
@@ -16,7 +17,7 @@ namespace SAOTRPG.UI.Dialogs;
 // chain-specific catalysts and swaps the equipped weapon for its apex tier.
 public static class CraftingDialog
 {
-    private const int DialogWidth = 70, DialogHeight = 22;
+    private const int DialogWidth = 72, DialogHeight = 26;
     private const int MaxEnhancement = 10;
 
     // Col cost per enhancement level: scales steeply.
@@ -70,10 +71,13 @@ public static class CraftingDialog
         var evolveBtn = DialogHelper.CreateButton("Evolve Weapon");
         evolveBtn.X = 2; evolveBtn.Y = 6;
 
+        var refineBtn = DialogHelper.CreateButton("Refine Equipment");
+        refineBtn.X = 2; refineBtn.Y = 8;
+
         var resultLabel = new Label
         {
-            Text = "", X = 2, Y = 8,
-            Width = Dim.Fill(2), Height = 10, ColorScheme = ColorSchemes.Body,
+            Text = "", X = 2, Y = 10,
+            Width = Dim.Fill(2), Height = 12, ColorScheme = ColorSchemes.Body,
         };
 
         int repairCost = 50 + floor * 25;
@@ -124,13 +128,19 @@ public static class CraftingDialog
             TryEvolveWeapon(player, resultLabel, header);
         };
 
+        refineBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            ShowRefineMenu(player, resultLabel, header);
+        };
+
         var hintLabel = new Label
         {
             Text = "Enter: select | Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
         };
 
-        dialog.Add(header, repairBtn, enhanceBtn, evolveBtn, resultLabel, hintLabel);
+        dialog.Add(header, repairBtn, enhanceBtn, evolveBtn, refineBtn, resultLabel, hintLabel);
         DialogHelper.AddCloseFooter(dialog);
         repairBtn.SetFocus();
         DialogHelper.RunModal(dialog);
@@ -407,6 +417,179 @@ public static class CraftingDialog
         foreach (var item in toRemove)
             player.Inventory.RemoveItem(item);
     }
+
+    // ── Refine (IF Phase B Agent 4) ──────────────────────────────────────
+    // Socket an Ingot into one of the 3 Refinement slots on the currently
+    // equipped weapon or shield (OffHand). Override-only: replacing an
+    // occupied slot destroys the old ingot. Divine-rarity gear is sealed
+    // and cannot be refined (handled here + in Refinement.Socket).
+    private static void ShowRefineMenu(Player player, Label resultLabel, Label header)
+    {
+        // Collect refinable equipment: Weapon slot + OffHand if it's a shield
+        // (Armor but NOT a Weapon — dual-blade offhands are not refinable via
+        // this flow either since they compete with the weapon branch).
+        var candidates = new List<(EquipmentSlot Slot, EquipmentBase Item, string Label)>();
+        var weapon = player.Inventory.GetEquipped(EquipmentSlot.Weapon);
+        if (weapon is EquipmentBase wEq) candidates.Add((EquipmentSlot.Weapon, wEq, "Weapon"));
+        var off = player.Inventory.GetEquipped(EquipmentSlot.OffHand);
+        if (off is Armor offArmor) candidates.Add((EquipmentSlot.OffHand, offArmor, "Shield"));
+
+        if (candidates.Count == 0)
+        {
+            resultLabel.Text = "Refinement requires an equipped weapon or shield.";
+            resultLabel.ColorScheme = ColorSchemes.Dim;
+            return;
+        }
+
+        // Pick which piece of gear to refine (if there are multiple candidates).
+        EquipmentBase? target;
+        string targetLabel;
+        if (candidates.Count == 1)
+        {
+            target = candidates[0].Item;
+            targetLabel = candidates[0].Label;
+        }
+        else
+        {
+            var btnLabels = candidates
+                .Select(c => $"{c.Label}: {c.Item.EnhancedName}")
+                .Append("Cancel")
+                .ToArray();
+            int which = MessageBox.Query("Refine Which?",
+                "Choose equipment to refine:", btnLabels);
+            if (which < 0 || which >= candidates.Count) return;
+            target = candidates[which].Item;
+            targetLabel = candidates[which].Label;
+        }
+
+        // Divine = sealed endgame gear.
+        if (target.Rarity == "Divine")
+        {
+            resultLabel.Text = $"{target.EnhancedName}: Divine weapons cannot be refined.";
+            resultLabel.ColorScheme = ColorSchemes.Gold;
+            return;
+        }
+
+        // Pick slot (1/2/3) — show current occupant per slot.
+        var slotChoices = new string[EquipmentBase.RefinementSlotCount + 1];
+        for (int i = 0; i < EquipmentBase.RefinementSlotCount; i++)
+        {
+            string occ = target.RefinementSlots[i] ?? "";
+            string occName = string.IsNullOrEmpty(occ)
+                ? "<empty>" : (ItemRegistry.Create(occ)?.Name ?? occ);
+            slotChoices[i] = $"Slot {i + 1}: {occName}";
+        }
+        slotChoices[EquipmentBase.RefinementSlotCount] = "Cancel";
+        var summary = Refinement.GetBonusSummary(target);
+        int slotIdx = MessageBox.Query(
+            $"Refine — {targetLabel}",
+            $"{target.EnhancedName}\nCurrent refinement: {summary.DisplayText}\n\nChoose a slot:",
+            slotChoices);
+        if (slotIdx < 0 || slotIdx >= EquipmentBase.RefinementSlotCount) return;
+
+        // Pick an Ingot from inventory. Group by rarity label in the list.
+        var ingotStacks = player.Inventory.Items
+            .OfType<Ingot>()
+            .Where(ig => ig.Quantity > 0)
+            .GroupBy(ig => ig.DefinitionId ?? "")
+            .Select(g => (DefId: g.Key, Sample: g.First(), Qty: g.Sum(x => x.Quantity)))
+            .Where(t => !string.IsNullOrEmpty(t.DefId))
+            .OrderBy(t => RarityOrder(t.Sample.Rarity))
+            .ThenBy(t => t.Sample.Name)
+            .ToList();
+
+        if (ingotStacks.Count == 0)
+        {
+            resultLabel.Text = "You have no Ingots to socket.";
+            resultLabel.ColorScheme = ColorSchemes.Dim;
+            return;
+        }
+
+        // Build a choice list. MessageBox.Query gets cramped with 12+
+        // buttons — truncate to the first 10 owned ingots, cheapest first.
+        var shown = ingotStacks.Take(10).ToList();
+        var ingotLabels = shown
+            .Select(t =>
+            {
+                int need = Refinement.CostForRarity(t.Sample.Rarity);
+                return $"[{t.Sample.Rarity}] {t.Sample.Name} x{t.Qty} (cost {need})";
+            })
+            .Append("Cancel")
+            .ToArray();
+        int which2 = MessageBox.Query(
+            $"Slot {slotIdx + 1} — Pick an Ingot",
+            $"{target.EnhancedName} slot {slotIdx + 1}:",
+            ingotLabels);
+        if (which2 < 0 || which2 >= shown.Count) return;
+
+        var pick = shown[which2];
+        string ingotDefId = pick.DefId!;
+        int cost = Refinement.CostForRarity(pick.Sample.Rarity);
+
+        // Confirmation with DESTROY warning for override.
+        string? occId = target.RefinementSlots[slotIdx];
+        string oldLine = string.IsNullOrEmpty(occId)
+            ? ""
+            : $"Will DESTROY: {ItemRegistry.Create(occId)?.Name ?? occId}\n";
+        if (player.Inventory.CountByDefinitionId(ingotDefId) < cost)
+        {
+            resultLabel.Text =
+                $"Need {cost}x {pick.Sample.Name}, have {pick.Qty}.";
+            resultLabel.ColorScheme = ColorSchemes.Danger;
+            return;
+        }
+
+        int confirm = MessageBox.Query("Confirm Refinement",
+            $"Socket {pick.Sample.Name} into slot {slotIdx + 1} of\n" +
+            $"{target.EnhancedName}?\n\n" +
+            $"{oldLine}" +
+            $"Effect: {pick.Sample.EffectDescription}\n" +
+            $"Cost: {cost}x {pick.Sample.Name}",
+            "Confirm", "Cancel");
+        if (confirm != 0) return;
+
+        // Refinement.Socket consumes exactly 1 ingot from the inventory.
+        // Any "rarity tax" beyond that (CostForRarity - 1) is consumed here
+        // as additional matching ingots. This mirrors the scout's intent
+        // (higher-tier ingots demand more stock to attempt the socket).
+        int extra = Math.Max(0, cost - 1);
+        if (extra > 0)
+        {
+            if (!player.Inventory.ConsumeByDefinitionId(ingotDefId, extra))
+            {
+                resultLabel.Text = "Failed to consume extra ingots — aborted.";
+                resultLabel.ColorScheme = ColorSchemes.Danger;
+                return;
+            }
+        }
+
+        bool ok = Refinement.Socket(target, slotIdx, ingotDefId, player.Inventory, player);
+        if (!ok)
+        {
+            resultLabel.Text = "Refinement failed (sealed gear or inventory mismatch).";
+            resultLabel.ColorScheme = ColorSchemes.Danger;
+            return;
+        }
+
+        var newSummary = Refinement.GetBonusSummary(target);
+        resultLabel.Text =
+            $"◈ {pick.Sample.Name} socketed into {target.EnhancedName} slot {slotIdx + 1}.\n" +
+            $"New refinement: {newSummary.DisplayText}";
+        resultLabel.ColorScheme = ColorSchemes.Gold;
+        header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
+    }
+
+    // Sort order for ingot listing — Common → Legendary.
+    private static int RarityOrder(string? rarity) => rarity switch
+    {
+        "Common"    => 0,
+        "Uncommon"  => 1,
+        "Rare"      => 2,
+        "Epic"      => 3,
+        "Legendary" => 4,
+        "Divine"    => 5,
+        _           => 9,
+    };
 
     private static int CountMaterials(Player player) =>
         player.Inventory.Items.OfType<Material>().Sum(m => m.Quantity);

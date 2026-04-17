@@ -131,7 +131,7 @@ public partial class TurnManager
         int loot = Random.Shared.Next(100);
 
         if (tier == "far" && loot < 40)
-            return LootGenerator.CreateRandomEquipment(CurrentFloor)
+            return RollEquipmentWithRegisteredPool()
                    ?? (BaseItem)PotionDefinitions.CreateGreaterHealthPotion();
 
         int equipThreshold = tier == "mid" ? 75 : 95;
@@ -146,9 +146,27 @@ public partial class TurnManager
             < 68 => FoodDefinitions.CreateHoneyBread(),
             < 74 => FoodDefinitions.CreateSpicedJerky(),
             _ when loot < equipThreshold => RollChestConsumable(),
-            _ => LootGenerator.CreateRandomEquipment(CurrentFloor)
+            _ => RollEquipmentWithRegisteredPool()
                  ?? (BaseItem)PotionDefinitions.CreateHealthPotion(),
         };
+    }
+
+    // 15% of chest equipment rolls pull from the floor-banded registered
+    // loot pool (IF canon Anneal line + series secondary weapons). Falls
+    // back to the procedural generator if the pool is empty for this floor
+    // or the DefId fails to resolve.
+    private BaseItem? RollEquipmentWithRegisteredPool()
+    {
+        if (Random.Shared.Next(100) < 15)
+        {
+            var defId = LootGenerator.PickFloorBandedRegisteredDefId(CurrentFloor);
+            if (defId != null)
+            {
+                var reg = ItemRegistry.Create(defId);
+                if (reg != null) return reg;
+            }
+        }
+        return LootGenerator.CreateRandomEquipment(CurrentFloor);
     }
 
     private BaseItem RollChestConsumable()

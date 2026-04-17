@@ -55,4 +55,29 @@ public static class ScimitarDefinitions
     // No existing Legendary Scimitar peer; this creates the Scimitar chain endpoint.
     public static Weapon CreateSatanachia() => Make("satanachia", "Satanachia", 40000, "Divine", 999, 80, 165,
         B().Add(StatType.Attack, 85).Add(StatType.Dexterity, 26).Add(StatType.Agility, 18).Add(StatType.Strength, 14), "Bleed+25");
+
+    // ── Hollow Fragment Implement System (Scimitar) ────────────────
+    // Canon HF F80-F99 implements filling the Scimitar gaps.
+
+    // HF F80 implement. Arcaneblade — soul-binder curve edge; SP gain on hit (flavor).
+    public static Weapon CreateArcanebladeSoulBinder() => Make("sci_arcaneblade_soul_binder", "Arcaneblade: Soul Binder", 15000, "Legendary", 195, 76, 140,
+        B().Add(StatType.Attack, 72).Add(StatType.Dexterity, 22).Add(StatType.Agility, 16), "SPOnHit+5");
+
+    // HF F83 implement. Fellblade — ruinous doom; drains party HP for +50% ATK (flavor).
+    public static Weapon CreateFellbladeRuinousDoom() => Make("sci_fellblade_ruinous_doom", "Fellblade: Ruinous Doom", 17000, "Legendary", 205, 79, 155,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 18).Add(StatType.Dexterity, 20), "PartyHPDrainATK+50");
+
+    // HF F99 implement. Deathglutton — forbidden blade; -80% HP for +100% ATK (flavor).
+    public static Weapon CreateDeathgluttonEpetamu() => Make("sci_deathglutton_epetamu", "Deathglutton: Epetamu", 36000, "Legendary", 265, 95, 185,
+        B().Add(StatType.Attack, 95).Add(StatType.Dexterity, 28).Add(StatType.Agility, 22).Add(StatType.Strength, 18), "HPCostATKBonus+100");
+
+    // ── Hollow Fragment Avatar Weapons (Scimitar) ─────────────────
+
+    public static Weapon CreateSaphirAvatar() => Make("sci_saphir_avatar", "Saphir Avatar", 20500, "Legendary", 220, 82, 160,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 24).Add(StatType.Agility, 18), "CritRate+20");
+
+    // ── Lisbeth Rarity 6 Crafted (Scimitar) ───────────────────────
+
+    public static Weapon CreateCrescentbladeOriginalSin() => Make("sci_crescentblade_original_sin", "Crescentblade: Original Sin", 29500, "Legendary", 255, 88, 172,
+        B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 28).Add(StatType.Agility, 20), "LifeSteal+10");
 }

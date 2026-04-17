@@ -156,6 +156,8 @@ public partial class TurnManager
     // Fires when the player steps on an Anvil. UI opens CraftingDialog.
     public event Action? AnvilInteraction;
     public event Action? CookingInteraction;
+    // Fires when the player talks to Lisbeth at Lindarth. UI opens LisbethCraftDialog.
+    public event Action? LisbethInteraction;
 
     // ── Sword Skills state ───────────────────────────────────────────
     private readonly Dictionary<string, int> _skillCooldowns = new();
@@ -365,6 +367,8 @@ public partial class TurnManager
         tm._bountyKillsCurrent = save.BountyKillsCurrent; tm._bountyRewardCol = save.BountyRewardCol;
         tm._bountyRewardXp = save.BountyRewardXp; tm._bountyComplete = save.BountyComplete;
         foreach (var kvp in save.WeaponKills) tm._weaponKills[kvp.Key] = kvp.Value;
+        // IF Proficiency forks (Agent 4) — rehydrate per-weapon pick state.
+        tm.RehydrateForkChoices(save.WeaponProficiencyForks);
         if (save.DiscoveredLore != null) foreach (var idx in save.DiscoveredLore) tm._discoveredLore.Add(idx);
         if (save.UnlockedAchievements != null) Achievements.Unlocked = new HashSet<string>(save.UnlockedAchievements);
         if (save.SeenTutorialTips != null) TutorialSystem.SeenTips = new HashSet<string>(save.SeenTutorialTips);

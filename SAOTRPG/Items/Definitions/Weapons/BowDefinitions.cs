@@ -57,4 +57,24 @@ public static class BowDefinitions
     // Celestial bow — hits from cosmic distance. Crit-oriented.
     public static Weapon CreateStarfall() => Make("starfall", "Starfall", 8500, "Legendary", 170, 18, 85, 1, 4,
         B().Add(StatType.Attack, 42).Add(StatType.Dexterity, 20).Add(StatType.Agility, 10), "CritRate+20");
+
+    // ── Integral Factor Series (Bow entries) ────────────────────────
+
+    // F14 Integral Series bow. Arc Angel — pale-feathered holy-shot bow.
+    public static Weapon CreateIntegralArcAngel() => Make("bow_integral_arc_angel", "Integral Arc Angel", 4600, "Epic", 155, 14, 78, 1, 3,
+        B().Add(StatType.Attack, 40).Add(StatType.Dexterity, 16).Add(StatType.Agility, 8), "HolyDamage+10");
+
+    // F25 Nox Series bow. Nox Arc Angel — dark-feathered counterpart from B5F.
+    public static Weapon CreateNoxArcAngel() => Make("bow_nox_arc_angel", "Nox Arc Angel", 7000, "Epic", 170, 25, 90, 1, 3,
+        B().Add(StatType.Attack, 46).Add(StatType.Dexterity, 18).Add(StatType.Agility, 10), "Bleed+12");
+
+    // F61 Rosso Series bow. Albatross — red-plumed greatbow, long-travel shots.
+    public static Weapon CreateRossoAlbatross() => Make("bow_rosso_albatross", "Rosso Albatross", 13500, "Legendary", 215, 55, 140, 1, 4,
+        B().Add(StatType.Attack, 68).Add(StatType.Dexterity, 26).Add(StatType.Agility, 12), "CritRate+15");
+
+    // ── Hollow Area Uniques (Bow) — Rare/Epic drops ──────────────
+
+    // HF F55 Hollow Area. Shroudbow — Star Stitcher; stitches constellations into the air as it fires.
+    public static Weapon CreateShroudbowStarStitcher() => Make("bow_shroudbow_star_stitcher", "Shroudbow: Star Stitcher", 7400, "Epic", 170, 50, 92, 1, 4,
+        B().Add(StatType.Attack, 46).Add(StatType.Dexterity, 22).Add(StatType.Agility, 12), "CritRate+15");
 }

@@ -101,6 +101,9 @@ public static partial class GameScreen
         turnManager.NpcDialogRequested += (npc) =>
             InvokeDialog(() => NpcDialogDialog.Show(npc), false);
 
+        turnManager.LisbethInteraction += () =>
+            InvokeDialog(() => LisbethCraftDialog.Show(player, gameLog));
+
         turnManager.TalentPickRequested += (perks) =>
             InvokeDialog(() =>
             {
@@ -109,6 +112,26 @@ public static partial class GameScreen
                 {
                     turnManager.ApplyTalent(picked);
                     gameLog.Log($"  Talent acquired: {picked.Name} — {picked.Description}");
+                }
+            });
+
+        // IF Proficiency fork (Agent 4) — fires when a weapon type crosses
+        // L25/50/75/100. Dialog modal picks 1 of 2 passives. Esc leaves the
+        // fork pending; the player can resolve it later from StatsDialog.
+        turnManager.ProficiencyForkRequested += (weaponType, forkLevel, opt1, opt2) =>
+            InvokeDialog(() =>
+            {
+                int picked = ProficiencyForkDialog.Show(weaponType, forkLevel, opt1, opt2);
+                if (picked == 1 || picked == 2)
+                {
+                    turnManager.ApplyProficiencyFork(weaponType, forkLevel, picked);
+                    var chosen = picked == 1 ? opt1 : opt2;
+                    gameLog.LogSystem(
+                        $"  {weaponType} L{forkLevel} fork: {chosen.Name} — {chosen.Description}");
+                }
+                else
+                {
+                    gameLog.Log($"  (Fork for {weaponType} L{forkLevel} pending — resume from Stats.)");
                 }
             });
 
@@ -177,7 +200,7 @@ public static partial class GameScreen
         mapView.InventoryRequested += () => { InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); };
         mapView.StatsRequested += () => { StatsDialog.Show(player, turnManager); refreshHud(); };
         mapView.HelpRequested += () => HelpDialog.Show();
-        mapView.PlayerGuideRequested += () => PlayerGuideDialog.Show();
+        mapView.PlayerGuideRequested += () => PlayerGuideDialog.Show(turnManager, player);
         mapView.KillStatsRequested += () => { KillStatsDialog.Show(player, turnManager); };
         mapView.EquipmentRequested += () => { EquipmentDialog.Show(player); refreshHud(); };
         mapView.PickupRequested += () => { turnManager.PickupItems(); refreshHud(); };

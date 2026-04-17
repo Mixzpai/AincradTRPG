@@ -487,6 +487,33 @@ public partial class TurnManager
             "Gungnir returns to a worthy grip. Strike true.",
             "The line still bleeds.", "Odin's spear rests with you now.",
             800, 600),
+
+        // ── HF Endgame Expansion Implement System questgivers (4) ──
+        // F84, F85, F92, F99 — quest-only Implement System weapons.
+        ["Spiralist Vey"] = new("hf_spiralblade_rendering_fail", "The Spiral That Fails",
+            "Ten break the pattern. The rapier answers only the spiral that fails.",
+            10, "rap_spiralblade_rendering_fail",
+            "Rendering Fail is yours. It knows imperfect geometry now.",
+            "The spiral still turns true.", "The rapier rests with you.",
+            500, 360),
+        ["Crusher Drago"] = new("hf_crusher_bond_cyclone", "The Iron Cyclone",
+            "Ten storms. Break them all, and the cyclone axe is yours.",
+            10, "axe_crusher_bond_cyclone",
+            "Bond Cyclone answers the steady haft. Heft it well.",
+            "The storm still churns.", "The axe is yours, wielder.",
+            550, 380),
+        ["Auric Knight Halric"] = new("hf_aurumbrand_hauteclaire", "The Golden Shroud",
+            "Fifteen fall to prove the shroud will not shroud a coward. Go.",
+            15, "ohs_aurumbrand_hauteclaire",
+            "Hauteclaire's gold recognises you. Be as steady as its edge.",
+            "The shroud waits on.", "Hauteclaire shines in your hand.",
+            700, 500),
+        ["Last Herald Xiv"] = new("hf_deathglutton_epetamu", "The Last Hollow Glutton",
+            "Twenty. The floor before the top. The blade that feeds on its wielder asks for proof.",
+            20, "sci_deathglutton_epetamu",
+            "Epetamu will feed. It asks only that you feed it well.",
+            "The pact is not yet written.", "The hollow-blade answers no other now.",
+            900, 700),
     };
 
     // Generic dispatcher for all Hollow Fragment quest NPCs.
@@ -505,6 +532,19 @@ public partial class TurnManager
             postCompleteLine: q.PostComplete,
             rewardCol:        q.Col,
             rewardXp:         q.Xp);
+    }
+
+    // Lisbeth at Lindarth (F48) — opens the Rarity 6 craft dialog in place
+    // of the generic NPC dialog/quest flow. Only fires when we're on the
+    // canon Lindarth floor so the Town-of-Beginnings Lisbeth still greets
+    // the player normally on F1.
+    private bool HandleLisbethLindarth(Entities.NPC npc)
+    {
+        if (npc.Name != "Lisbeth") return false;
+        if (CurrentFloor != 48) return false;
+        _log.Log($"{npc.Name}: \"Welcome to the Lindarth forge. Show me rare steel and I'll show you rare work.\"");
+        LisbethInteraction?.Invoke();
+        return true;
     }
 
     private void HandleOccupantInteraction(Map.Tile tile, int tx, int ty)
@@ -562,7 +602,9 @@ public partial class TurnManager
             bool handledBySelka = HandleSelka(npc);
             // Hollow Fragment HNM quests (9 NPCs F79-F98).
             bool handledByHollowNpc = HandleHollowWeaponNpc(npc);
-            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByHollowNpc;
+            // Lisbeth at Lindarth (F48) — opens Rarity 6 craft dialog.
+            bool handledByLisbeth = HandleLisbethLindarth(npc);
+            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByHollowNpc || handledByLisbeth;
 
             // Turn in completed quests
             QuestSystem.OnNpcTalk(_log);
@@ -590,17 +632,23 @@ public partial class TurnManager
                 _log.Log($"  Reward: {quest.RewardCol} Col, {quest.RewardXp} XP");
             }
 
-            if (npc.DialogueLines != null && npc.DialogueLines.Length > 0)
-                NpcDialogRequested?.Invoke(npc);
-            else
+            // Lisbeth at Lindarth already opens the craft dialog and logs her
+            // line; skip the generic dialogue + recruitment offer to avoid
+            // layering an "offer to join party" over the forge UI.
+            if (!handledByLisbeth)
             {
-                string dialogue = npc.Dialogue
-                    ?? FlavorText.NpcFallbackDialogue[Random.Shared.Next(FlavorText.NpcFallbackDialogue.Length)];
-                _log.Log($"{npc.Name}: \"{dialogue}\"");
-            }
+                if (npc.DialogueLines != null && npc.DialogueLines.Length > 0)
+                    NpcDialogRequested?.Invoke(npc);
+                else
+                {
+                    string dialogue = npc.Dialogue
+                        ?? FlavorText.NpcFallbackDialogue[Random.Shared.Next(FlavorText.NpcFallbackDialogue.Length)];
+                    _log.Log($"{npc.Name}: \"{dialogue}\"");
+                }
 
-            // Offer recruitment for named SAO characters.
-            TryRecruitNpc(npc);
+                // Offer recruitment for named SAO characters.
+                TryRecruitNpc(npc);
+            }
 
             // Push the NPC aside so the player can pass through.
             PushNpcAside(npc, tx, ty);

@@ -82,4 +82,27 @@ public static class KatanaDefinitions
     // Stealth katana. Bleed-on-hit, favors sudden strikes.
     public static Weapon CreateMidnightSun() => Make("midnight_sun", "Midnight Sun", 17000, "Legendary", 220, 48, 145, 1,
         B().Add(StatType.Attack, 70).Add(StatType.Dexterity, 22).Add(StatType.Agility, 18).Add(StatType.Speed, 12), "Bleed+20");
+
+    // ── Integral Factor Series (Katana entries) ─────────────────────
+
+    // F85→F87 Yasha Series katana. Oratorio — chant-blade, resonates on multi-hit combos.
+    public static Weapon CreateYashaOratorio() => Make("kat_yasha_oratorio", "Yasha Oratorio", 18500, "Legendary", 230, 78, 148, 1,
+        B().Add(StatType.Attack, 72).Add(StatType.Agility, 22).Add(StatType.Dexterity, 18).Add(StatType.Speed, 12), "ComboBonus+40");
+
+    // F90+ Gaou Series katana. Oratorio — demon-king refrain of the same resonant blade lineage.
+    public static Weapon CreateGaouOratorio() => Make("kat_gaou_oratorio", "Gaou Oratorio", 28000, "Legendary", 260, 88, 172, 1,
+        B().Add(StatType.Attack, 86).Add(StatType.Agility, 26).Add(StatType.Dexterity, 20).Add(StatType.Speed, 16), "Bleed+25");
+
+    // ── Hollow Fragment Avatar Weapons (Katana) ───────────────────
+
+    public static Weapon CreateBurningHazeAvatar() => Make("kat_burning_haze_avatar", "Burning Haze Avatar", 21000, "Legendary", 230, 83, 162, 1,
+        B().Add(StatType.Attack, 80).Add(StatType.Agility, 24).Add(StatType.Strength, 18).Add(StatType.Dexterity, 18), "Burn+20");
+
+    // ── Lisbeth Rarity 6 Crafted (Katana) ─────────────────────────
+
+    public static Weapon CreateGodslayerTatteredHope() => Make("kat_godslayer_tattered_hope", "Godslayer: Tattered Hope", 31000, "Legendary", 260, 90, 175, 1,
+        B().Add(StatType.Attack, 86).Add(StatType.Agility, 26).Add(StatType.Dexterity, 20).Add(StatType.Speed, 16), "SkillCooldown-2");
+
+    public static Weapon CreateAvidyaSamsaraBlade() => Make("kat_avidya_samsara_blade", "Avidya Samsara Blade", 33000, "Legendary", 270, 92, 183, 1,
+        B().Add(StatType.Attack, 90).Add(StatType.Agility, 28).Add(StatType.Dexterity, 22).Add(StatType.Speed, 18), "CritImmune+100");
 }

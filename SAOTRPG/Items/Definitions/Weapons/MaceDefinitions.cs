@@ -78,4 +78,17 @@ public static class MaceDefinitions
     // Thorn-covered bludgeon. Heavy hit, bleed proc on thorns.
     public static Weapon CreateCactusBludgeon() => Make("cactus_bludgeon", "Cactus Bludgeon", 13500, "Legendary", 205, 36, 112,
         B().Add(StatType.Attack, 58).Add(StatType.Strength, 22).Add(StatType.Vitality, 18), "Bleed+15");
+
+    // ── Hollow Fragment Avatar Weapons (Mace) ────────────────────
+
+    public static Weapon CreateIjelfurAvatar() => Make("mce_ijelfur_avatar", "Ijelfur Avatar", 20500, "Legendary", 235, 82, 158,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 24).Add(StatType.Vitality, 18), "Stun+15");
+
+    // ── Lisbeth Rarity 6 Crafted (Mace) ──────────────────────────
+
+    public static Weapon CreateDictatorsPunisher() => Make("mce_dictators_punisher", "Dictator's Punisher", 29500, "Legendary", 260, 88, 172,
+        B().Add(StatType.Attack, 84).Add(StatType.Strength, 26).Add(StatType.Vitality, 20), "Stun+20");
+
+    public static Weapon CreatePhotonHammerXPSmasher() => Make("mce_photon_hammer_xp_smasher", "Photon Hammer: XP Smasher", 30500, "Legendary", 260, 90, 175,
+        B().Add(StatType.Attack, 86).Add(StatType.Strength, 28).Add(StatType.Vitality, 18), "XPBonus+20");
 }

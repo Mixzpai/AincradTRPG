@@ -141,6 +141,7 @@ public static class SaveManager
         CurrentFloor = tm.CurrentFloor, Difficulty = tm.Difficulty, IsHardcore = tm.IsHardcore,
         Satiety = tm.Satiety, KillStreak = tm.KillStreak,
         WeaponKills = new Dictionary<string, int>(tm.WeaponKills),
+        WeaponProficiencyForks = tm.SnapshotForkChoices(),
         RestCounter = tm.RestCounter,
         BountyTarget = tm.BountyTarget, BountyKillsNeeded = tm.BountyKillsNeeded,
         BountyKillsCurrent = tm.BountyKillsCurrent, BountyRewardCol = tm.BountyRewardCol,
@@ -187,7 +188,14 @@ public static class SaveManager
     {
         var save = new ItemSaveData { DefinitionId = item.DefinitionId, Durability = item.ItemDurability };
         if (item is StackableItem stackable) save.Quantity = stackable.Quantity;
-        if (item is EquipmentBase eq) save.EnhancementLevel = eq.EnhancementLevel;
+        if (item is EquipmentBase eq)
+        {
+            save.EnhancementLevel = eq.EnhancementLevel;
+            // IF Refinement (Agent 3): persist slot contents if any slot is
+            // occupied. Empty slot arrays stay null to keep legacy saves clean.
+            if (eq.HasAnyRefinement)
+                save.RefinementSlots = eq.RefinementSlots.ToList();
+        }
         if (item.DefinitionId == null) save.FullItemJson = SerializeFullItem(item);
         return save;
     }
@@ -207,12 +215,14 @@ public static class SaveManager
                 dict["AttackSpeed"] = w.AttackSpeed; dict["Range"] = w.Range;
                 dict["RequiredLevel"] = w.RequiredLevel; dict["EquipmentType"] = w.EquipmentType;
                 dict["Bonuses"] = SerializeBonuses(w.Bonuses);
+                if (w.HasAnyRefinement) dict["RefinementSlots"] = w.RefinementSlots.ToList();
                 break;
             case Armor a:
                 dict["BaseDefense"] = a.BaseDefense; dict["ArmorSlot"] = a.ArmorSlot;
                 dict["Weight"] = a.Weight; dict["BlockChance"] = a.BlockChance;
                 dict["RequiredLevel"] = a.RequiredLevel; dict["EquipmentType"] = a.EquipmentType;
                 dict["Bonuses"] = SerializeBonuses(a.Bonuses);
+                if (a.HasAnyRefinement) dict["RefinementSlots"] = a.RefinementSlots.ToList();
                 break;
             case Accessory acc:
                 dict["AccessorySlot"] = acc.AccessorySlot; dict["MaxEquipped"] = acc.MaxEquipped;
@@ -283,6 +293,14 @@ public static class SaveManager
                     else eq.Bonuses.Add(StatType.Attack, bonus);
                 }
             }
+            // IF Refinement (Agent 3): restore slot DefIds and fold ingot
+            // bonuses back into Bonuses so equipped gear re-grants them.
+            if (item is EquipmentBase eqRef && save.RefinementSlots != null)
+            {
+                for (int i = 0; i < EquipmentBase.RefinementSlotCount && i < save.RefinementSlots.Count; i++)
+                    eqRef.RefinementSlots[i] = save.RefinementSlots[i];
+                Refinement.RehydrateBonuses(eqRef);
+            }
         }
         else if (save.FullItemJson != null)
             item = DeserializeFullItem(save.FullItemJson);
@@ -323,29 +341,55 @@ public static class SaveManager
         }
     }
 
-    private static Weapon DeserializeWeapon(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
+    private static Weapon DeserializeWeapon(JsonElement root, string? name, int value, string? rarity, int durability, int weight)
     {
-        Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
-        BaseDamage = root.TryGetProperty("BaseDamage", out var bd) ? bd.GetInt32() : 0,
-        WeaponType = root.TryGetProperty("WeaponType", out var wt) ? wt.GetString() : null,
-        AttackSpeed = root.TryGetProperty("AttackSpeed", out var a) ? a.GetInt32() : 1,
-        Range = root.TryGetProperty("Range", out var rng) ? rng.GetInt32() : 1,
-        RequiredLevel = root.TryGetProperty("RequiredLevel", out var rl) ? rl.GetInt32() : 1,
-        EquipmentType = root.TryGetProperty("EquipmentType", out var et) ? et.GetString() : "Weapon",
-        Bonuses = DeserializeBonuses(root),
-    };
+        var w = new Weapon
+        {
+            Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
+            BaseDamage = root.TryGetProperty("BaseDamage", out var bd) ? bd.GetInt32() : 0,
+            WeaponType = root.TryGetProperty("WeaponType", out var wt) ? wt.GetString() : null,
+            AttackSpeed = root.TryGetProperty("AttackSpeed", out var a) ? a.GetInt32() : 1,
+            Range = root.TryGetProperty("Range", out var rng) ? rng.GetInt32() : 1,
+            RequiredLevel = root.TryGetProperty("RequiredLevel", out var rl) ? rl.GetInt32() : 1,
+            EquipmentType = root.TryGetProperty("EquipmentType", out var et) ? et.GetString() : "Weapon",
+            Bonuses = DeserializeBonuses(root),
+        };
+        HydrateRefinementSlots(w, root);
+        return w;
+    }
 
-    private static Armor DeserializeArmor(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
+    private static Armor DeserializeArmor(JsonElement root, string? name, int value, string? rarity, int durability, int weight)
     {
-        Name = name, Value = value, Rarity = rarity, ItemDurability = durability,
-        BaseDefense = root.TryGetProperty("BaseDefense", out var bd) ? bd.GetInt32() : 0,
-        ArmorSlot = root.TryGetProperty("ArmorSlot", out var slot) ? slot.GetString() : null,
-        Weight = root.TryGetProperty("Weight", out var w) ? w.GetInt32() : weight,
-        BlockChance = root.TryGetProperty("BlockChance", out var bc) ? bc.GetInt32() : 0,
-        RequiredLevel = root.TryGetProperty("RequiredLevel", out var rl) ? rl.GetInt32() : 1,
-        EquipmentType = root.TryGetProperty("EquipmentType", out var et) ? et.GetString() : "Armor",
-        Bonuses = DeserializeBonuses(root),
-    };
+        var a = new Armor
+        {
+            Name = name, Value = value, Rarity = rarity, ItemDurability = durability,
+            BaseDefense = root.TryGetProperty("BaseDefense", out var bd) ? bd.GetInt32() : 0,
+            ArmorSlot = root.TryGetProperty("ArmorSlot", out var slot) ? slot.GetString() : null,
+            Weight = root.TryGetProperty("Weight", out var w) ? w.GetInt32() : weight,
+            BlockChance = root.TryGetProperty("BlockChance", out var bc) ? bc.GetInt32() : 0,
+            RequiredLevel = root.TryGetProperty("RequiredLevel", out var rl) ? rl.GetInt32() : 1,
+            EquipmentType = root.TryGetProperty("EquipmentType", out var et) ? et.GetString() : "Armor",
+            Bonuses = DeserializeBonuses(root),
+        };
+        HydrateRefinementSlots(a, root);
+        return a;
+    }
+
+    // Restore RefinementSlots from procedural FullItemJson. Bonuses from the
+    // ingots are ALREADY present in the serialized Bonuses collection, so we
+    // do NOT re-fold — we just rehydrate the slot DefIds for the UI and for
+    // future override-socketing logic.
+    private static void HydrateRefinementSlots(EquipmentBase eq, JsonElement root)
+    {
+        if (!root.TryGetProperty("RefinementSlots", out var slots)) return;
+        int i = 0;
+        foreach (var entry in slots.EnumerateArray())
+        {
+            if (i >= EquipmentBase.RefinementSlotCount) break;
+            eq.RefinementSlots[i] = entry.ValueKind == JsonValueKind.Null ? null : entry.GetString();
+            i++;
+        }
+    }
 
     private static Accessory DeserializeAccessory(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
     {
