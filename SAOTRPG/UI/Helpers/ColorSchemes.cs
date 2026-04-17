@@ -128,6 +128,18 @@ public static class ColorSchemes
         Disabled  = Gfx.Attr(Color.DarkGray,     Color.Black),
     };
 
+    // ListView selection: dim gray rows, bright-inverted row under the cursor.
+    // Used by the Player Guide topic list and any vertically-scrolling picker
+    // where the player must immediately see which row they're on.
+    public static readonly ColorScheme ListSelection = new()
+    {
+        Normal    = Gfx.Attr(Color.Gray,         Color.Black),
+        Focus     = Gfx.Attr(Color.Black,        Color.BrightYellow),
+        HotNormal = Gfx.Attr(Color.Gray,         Color.Black),
+        HotFocus  = Gfx.Attr(Color.Black,        Color.BrightYellow),
+        Disabled  = Gfx.Attr(Color.DarkGray,     Color.Black),
+    };
+
     // ── Dynamic palette helpers ─────────────────────────────────────
 
     // Creates a non-interactive scheme with the given foreground on black.

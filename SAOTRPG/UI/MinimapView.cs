@@ -191,6 +191,7 @@ public class MinimapView : View
                     case TileType.Door:              landmarkCh = DoorMarker;     landmarkFg = Color.BrightYellow;  haveLandmark = true; break;
                     case TileType.Shrine:
                     case TileType.Fountain:          landmarkCh = ShrineMarker;   landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
+                    case TileType.SecretShrine:      landmarkCh = '!';            landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
                     case TileType.Campfire:          landmarkCh = CampfireMarker; landmarkFg = Color.Yellow;        haveLandmark = true; break;
                 }
             }

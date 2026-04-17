@@ -62,8 +62,8 @@ public static class UniqueSkillSystem
 
         [UniqueSkill.ExtraSearch] = new(UniqueSkill.ExtraSearch,
             "Extra Skill: Search",
-            "Argo's scouting art. Reveals nearby traps and lifts the top off chests.",
-            "Taught by Argo after five information-broker contracts.",
+            "Argo's scouting art. Reveals nearby traps within a 3-tile radius.",
+            "Earned after disarming 10 traps — the instinct sharpens with practice.",
             Color.BrightYellow,
             Array.Empty<string>()),
     };
@@ -76,6 +76,13 @@ public static class UniqueSkillSystem
     public static bool Has(UniqueSkill skill) => Unlocked.Contains(skill);
 
     public static bool TryUnlock(UniqueSkill skill) => Unlocked.Add(skill);
+
+    // Convenience: true when Dual Blades is unlocked. Used to gate OffHand
+    // one-handed-sword equipping + the bonus offhand swing in combat.
+    public static bool HasDualBlades() => Has(UniqueSkill.DualBlades);
+
+    // Convenience: true when Martial Arts is unlocked.
+    public static bool HasMartialArts() => Has(UniqueSkill.MartialArts);
 
     // ── Active-state predicates (checked at combat time) ──────────────
     public static bool IsDualBladesActive(string wpnType)

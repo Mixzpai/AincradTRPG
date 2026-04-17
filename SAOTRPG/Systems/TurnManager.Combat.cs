@@ -29,7 +29,10 @@ public partial class TurnManager
             + SatietyAtkBonus + FatigueAtkPenalty + BiomeSystem.AttackModifier;
 
         // Unique-skill passive damage modifiers.
-        bool hasShield = _player.Inventory.GetEquipped(Inventory.Core.EquipmentSlot.OffHand) != null;
+        // A Dual-Blades second sword in the OffHand slot is NOT a shield —
+        // Holy Sword's shield-gated bonus should only apply for true shields.
+        var offHandItem = _player.Inventory.GetEquipped(Inventory.Core.EquipmentSlot.OffHand);
+        bool hasShield = offHandItem != null && offHandItem is not Weapon;
         int uniqueBonusPct = Skills.UniqueSkillSystem.DamageBonusPercent(wpnType, hasShield)
                            + Skills.UniqueSkillSystem.ElementalBonusPercent(monster.Name);
         if (uniqueBonusPct > 0)
@@ -77,8 +80,9 @@ public partial class TurnManager
 
         // Dual Blades offhand swing: if the OffHand holds a weapon (not a shield)
         // and the player has unlocked Dual Blades, land a bonus strike at 60% damage.
+        // Skipped when the target is already dead — no swinging at corpses.
         if (!monster.IsDefeated
-            && Skills.UniqueSkillSystem.Has(Skills.UniqueSkill.DualBlades)
+            && Skills.UniqueSkillSystem.HasDualBlades()
             && _player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Weapon offhand)
         {
             int offhandDmg = Math.Max(1, offhand.BaseDamage * 60 / 100 + profBonus / 2);
@@ -255,6 +259,16 @@ public partial class TurnManager
             Story.StorySystem.TryFire(Story.StoryTrigger.BossDefeat,
                 new Story.StoryContext(CurrentFloor, KillCount, _player, boss));
 
+            // Guaranteed floor-boss drop (Divine Objects + P4 Alicization
+            // Lycoris Divine Beast rewards on non-canon floor bosses).
+            // DropItem formats Divine with the bespoke ◈ line, Legendary with
+            // the standard [Legendary] format.
+            if (LootGenerator.FloorBossGuaranteedDrops.TryGetValue(CurrentFloor, out var dropId))
+            {
+                var drop = Items.ItemRegistry.Create(dropId);
+                if (drop != null) DropItem(boss.X, boss.Y, drop, boss.Name);
+            }
+
             // Boss-kill unique-skill unlocks (Darkness Blade at Night, Blazing/Frozen by biome).
             var bossUnlock = Skills.UniqueSkillSystem.CheckBossKillUnlock(BiomeSystem.DisplayName);
             if (bossUnlock != null) NotifyUniqueSkillUnlock(bossUnlock.Value);
@@ -342,7 +356,9 @@ public partial class TurnManager
             "Mace"             => Color.White,
             "Spear"            => Color.BrightCyan,
             "Bow"              => Color.BrightYellow,
-            "Staff"            => Color.BrightMagenta,
+            "Scimitar"         => Color.Yellow,
+            "Claws"            => Color.BrightRed,
+            "Scythe"           => Color.BrightMagenta,
             _                  => Color.White,
         };
     }

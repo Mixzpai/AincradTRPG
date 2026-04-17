@@ -177,6 +177,7 @@ public static partial class GameScreen
         mapView.InventoryRequested += () => { InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); };
         mapView.StatsRequested += () => { StatsDialog.Show(player, turnManager); refreshHud(); };
         mapView.HelpRequested += () => HelpDialog.Show();
+        mapView.PlayerGuideRequested += () => PlayerGuideDialog.Show();
         mapView.KillStatsRequested += () => { KillStatsDialog.Show(player, turnManager); };
         mapView.EquipmentRequested += () => { EquipmentDialog.Show(player); refreshHud(); };
         mapView.PickupRequested += () => { turnManager.PickupItems(); refreshHud(); };

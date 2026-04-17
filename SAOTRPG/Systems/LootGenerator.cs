@@ -20,25 +20,76 @@ public static class LootGenerator
     // Remaining 4% → Epic
 
     // Number of equipment type slots in the random equipment roll.
-    // 0-9 = weapon types, 10-13 = armor/shield/accessory, 14 = null fallback.
-    private const int EquipmentTypeCount = 15;
+    // 0-11 = weapon types, 12-15 = armor/shield, 16 = accessory fallback.
+    private const int EquipmentTypeCount = 17;
 
     // ── Mob loot tables — themed drops by LootTag ─────────────────────
     // Themed drop tables keyed by mob LootTag. Each entry maps to an array
     // of (item name, Col value) tuples. Add new tags/items freely.
+    //
+    // Priority 5 Phase B: the 9 chain catalyst materials are woven into the
+    // themed tables. When TurnManager.DropLoot picks a tuple whose Name
+    // matches an entry in ChainMaterialByName, the drop is routed through
+    // ItemRegistry.Create so the player receives a real registered item with
+    // a proper DefinitionId (required for the Anvil Evolve flow to see it).
     public static readonly Dictionary<string, (string Name, int Value)[]> MobLootTable = new()
     {
         { "beast",     new[] { ("Raw Hide",        8), ("Beast Fang",     12), ("Sinew",         6) } },
         { "kobold",    new[] { ("Kobold Ear",      5), ("Crude Dagger",   15), ("Tattered Cloth", 4) } },
-        { "insect",    new[] { ("Chitin Shard",   10), ("Wing Fragment",   8), ("Venom Sac",     14) } },
+        { "insect",    new[] { ("Chitin Shard",   10), ("Wing Fragment",   8), ("Venom Sac",     14), ("Valkyrie Feather", 3) } },
         { "plant",     new[] { ("Herb Bundle",    12), ("Toxic Spore",    10), ("Root Fiber",     6) } },
-        { "humanoid",  new[] { ("Coin Pouch",     20), ("Iron Ring",      15), ("Worn Map",      10) } },
+        { "humanoid",  new[] { ("Coin Pouch",     20), ("Iron Ring",      15), ("Worn Map",      10), ("Demonic Sigil",    3), ("Oni Ash",          3) } },
         { "reptile",   new[] { ("Scale Plate",    12), ("Forked Tongue",   8), ("Reptile Eye",   14) } },
-        { "undead",    new[] { ("Bone Fragment",    6), ("Soul Dust",      18), ("Cursed Shard",  14) } },
-        { "construct", new[] { ("Gear Fragment",   10), ("Crystal Core",   20), ("Iron Bolt",      8) } },
-        { "dragon",    new[] { ("Dragon Scale",   30), ("Flame Essence",  25), ("Dragon Claw",   20) } },
-        { "elemental", new[] { ("Fire Crystal",   22), ("Essence Wisp",   18), ("Elemental Ash",  12) } },
+        { "undead",    new[] { ("Bone Fragment",    6), ("Soul Dust",      18), ("Cursed Shard",  14), ("Lunar Core",       3) } },
+        { "construct", new[] { ("Gear Fragment",   10), ("Crystal Core",   20), ("Iron Bolt",      8), ("Geometric Shard",  3), ("Titan Fragment",   3) } },
+        { "dragon",    new[] { ("Dragon Scale",   30), ("Flame Essence",  25), ("Dragon Claw",   20), ("Infernal Gem",     3), ("Nidhogg Scale",    3) } },
+        { "elemental", new[] { ("Fire Crystal",   22), ("Essence Wisp",   18), ("Elemental Ash",  12), ("Trishula Tip",     3) } },
         { "aquatic",   new[] { ("Water Core",     15), ("Fish Scale",      8), ("Murky Pearl",   18) } },
+    };
+
+    // Chain catalyst display name → ItemRegistry DefId. When the themed-drop
+    // roll picks a name that lives in this map, DropLoot routes the drop
+    // through ItemRegistry.Create so the resulting item has a DefinitionId
+    // (so the Anvil "Evolve Weapon" flow can find + consume it).
+    public static readonly Dictionary<string, string> ChainMaterialByName = new()
+    {
+        ["Demonic Sigil"]    = "demonic_sigil",
+        ["Geometric Shard"]  = "geometric_shard",
+        ["Infernal Gem"]     = "infernal_gem",
+        ["Valkyrie Feather"] = "valkyrie_feather",
+        ["Lunar Core"]       = "lunar_core",
+        ["Oni Ash"]          = "oni_ash",
+        ["Titan Fragment"]   = "titan_fragment",
+        ["Nidhogg Scale"]    = "nidhogg_scale",
+        ["Trishula Tip"]     = "trishula_tip",
+    };
+
+    // Floor-boss guaranteed drops — Divine Objects AND Legendary hand-placed
+    // rewards. When a floor boss is defeated on one of these floors, the
+    // matching item is guaranteed-dropped alongside usual boss rewards.
+    // DropItem() auto-formats Divine rarity with the bespoke ◈ log line;
+    // Legendary rarity uses the standard [Legendary] format. Field boss
+    // divines live in FieldBossFactory. Quest-rewarded items are handled
+    // inline by their NPC dialogue handlers and not listed here.
+    //
+    // P4 Alicization Lycoris Divine Beast drops (F1-F50) are placed on
+    // NON-CANON floor bosses (no Progressive/novel/Hollow Fragment sources)
+    // so canonical floor bosses keep their existing drop-table behaviour.
+    public static readonly Dictionary<int, string> FloorBossGuaranteedDrops = new()
+    {
+        // ── Priority 4 Alicization Lycoris Divine Beast drops ──────
+        [11] = "starfall",                    // F11 Felos the Ember Drake (invented)
+        [17] = "savage_squall",               // F17 Gelidus the Frozen Colossus (invented)
+        [24] = "phantasmagoria",              // F24 Grimhollow the Phantom (invented)
+        [30] = "void_eater",                  // F30 Primos the World Serpent (invented)
+        [38] = "cactus_bludgeon",             // F38 Obsidian the Black Knight (invented)
+        [40] = "demonblade_crimson_stream",   // F40 Dracoflame the Elder Wyrm (invented)
+        [43] = "midnight_rain",               // F43 Undine the Water Maiden (invented)
+        [49] = "midnight_sun",                // F49 Shadowstep Assassin (invented)
+
+        // ── Divine Objects (canon Integrity Knight weapons) ────────
+        [20] = "blue_rose_sword",             // Absolut the Winter Monarch — ice theme, Eugeo canon
+        [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito canon
     };
 
     // Canon-named mob → (DefinitionId, dropChance 0-1) overrides. Checked
@@ -126,7 +177,9 @@ public static class LootGenerator
         { "Mace",             new[] { "Mace", "Hammer", "Club", "Flail", "Morningstar" } },
         { "Spear",            new[] { "Spear", "Lance", "Pike", "Halberd", "Glaive" } },
         { "Bow",              new[] { "Bow", "Longbow", "Shortbow", "Recurve", "Composite Bow" } },
-        { "Staff",            new[] { "Staff", "Wand", "Rod", "Scepter" } },
+        { "Scimitar",         new[] { "Scimitar", "Cutlass", "Saber", "Falchion", "Khopesh" } },
+        { "Claws",            new[] { "Claws", "Talons", "Katars", "Punchblades", "Fang Gauntlets" } },
+        { "Scythe",           new[] { "Scythe", "Warscythe", "Reaper", "Death's Edge", "Sickle" } },
     };
 
     private static string PickName(string weaponType) =>
@@ -152,7 +205,7 @@ public static class LootGenerator
     }
 
     // Creates a random equipment piece scaled to the given floor number.
-    // All 10 weapon types can drop. Returns null on the fallback roll.
+    // All 12 weapon types can drop. Returns null on the fallback roll.
     public static BaseItem? CreateRandomEquipment(int currentFloor)
     {
         string rarity = PickRarity();
@@ -172,11 +225,13 @@ public static class LootGenerator
             6  => MakeWeapon("Mace",             currentFloor, rarity, scale, 1.1, 2, 1, StatType.Vitality),
             7  => MakeWeapon("Spear",            currentFloor, rarity, scale, 0.95, 1, 2, StatType.Dexterity),
             8  => MakeWeapon("Bow",              currentFloor, rarity, scale, 0.85, 1, 3, StatType.Dexterity),
-            9  => MakeWeapon("Staff",            currentFloor, rarity, scale, 0.5, 1, 1, StatType.Intelligence),
-            10 => MakeArmor("Chest", "Chestplate", currentFloor, rarity, scale, 1.0, 6),
-            11 => MakeArmor("Helmet", "Helmet",    currentFloor, rarity, scale, 0.8, 3),
-            12 => MakeArmor("Boots", "Boots",      currentFloor, rarity, scale, 0.7, 2),
-            13 => new Armor
+            9  => MakeWeapon("Scimitar",         currentFloor, rarity, scale, 0.95, 2, 1, StatType.Dexterity),
+            10 => MakeWeapon("Claws",            currentFloor, rarity, scale, 0.7, 3, 1, StatType.Agility),
+            11 => MakeWeapon("Scythe",           currentFloor, rarity, scale, 1.35, 0, 2, StatType.Strength),
+            12 => MakeArmor("Chest", "Chestplate", currentFloor, rarity, scale, 1.0, 6),
+            13 => MakeArmor("Helmet", "Helmet",    currentFloor, rarity, scale, 0.8, 3),
+            14 => MakeArmor("Boots", "Boots",      currentFloor, rarity, scale, 0.7, 2),
+            15 => new Armor
             {
                 Name = PickShieldName(), Value = (40 + currentFloor * 22) * scale.ValMul / 100,
                 Rarity = rarity, ItemDurability = dur,

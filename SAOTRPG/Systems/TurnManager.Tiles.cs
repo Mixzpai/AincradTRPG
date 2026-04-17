@@ -25,6 +25,7 @@ public partial class TurnManager
             case TileType.DangerZone:    if (HandleDangerZone(tile)) return true; break;
             case TileType.Journal:       HandleJournal(tile, tx, ty); break;
             case TileType.EnchantShrine: HandleEnchantShrine(tile, tx, ty); break;
+            case TileType.SecretShrine:  HandleSecretShrine(tile, tx, ty); break;
             case TileType.Lever:         HandleLever(tile); break;
             case TileType.PressurePlate: HandlePressurePlate(tile); break;
         }
@@ -232,6 +233,44 @@ public partial class TurnManager
         }
         _log.LogSystem($"The shrine's energy flows into your {pickedItem.Name}! (+2 {statLabel})");
         _log.LogLoot($"  {pickedItem.Name} enchanted!");
+        _map.SetTileType(tx, ty, TileType.Floor);
+    }
+
+    // Priority 5 Phase B: Secret Shrine tile. One-shot weapon discovery —
+    // when the player steps on a shrine, they receive the T1 chain weapon
+    // associated with the current floor and the tile reverts to plain Floor.
+    // No dialog, no confirmation — walk, gain, continue.
+    private void HandleSecretShrine(Tile tile, int tx, int ty)
+    {
+        if (!WeaponEvolutionChains.SecretShrineByFloor.TryGetValue(CurrentFloor, out var defId))
+        {
+            // Shouldn't happen — shrine was placed on an unlisted floor somehow.
+            // Convert to floor silently rather than hand out nothing.
+            _map.SetTileType(tx, ty, TileType.Floor);
+            return;
+        }
+
+        var weapon = ItemRegistry.Create(defId);
+        if (weapon == null)
+        {
+            _log.LogSystem($"The Secret Shrine hums... but whatever it held has vanished.");
+            _map.SetTileType(tx, ty, TileType.Floor);
+            return;
+        }
+
+        // Try to add to inventory. If full, drop on the ground so it can be
+        // picked up after clearing a slot. The ◈ prefix triggers the
+        // LogColorRules BrightRed rule, matching the Divine Object cadence.
+        if (_player.Inventory.AddItem(weapon))
+        {
+            _log.LogLoot($"  ◈ A Secret Shrine hums. You receive {weapon.Name}.");
+        }
+        else
+        {
+            _map.AddItem(tx, ty, weapon);
+            _log.LogLoot($"  ◈ A Secret Shrine hums. {weapon.Name} rests at your feet (inventory full).");
+        }
+
         _map.SetTileType(tx, ty, TileType.Floor);
     }
 

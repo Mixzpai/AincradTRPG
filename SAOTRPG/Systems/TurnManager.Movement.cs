@@ -232,11 +232,14 @@ public partial class TurnManager
 
     // Extra Skill: Search — scans a 3-tile radius around the player and unhides
     // any trap tiles. Only active when UniqueSkill.ExtraSearch is unlocked.
+    // Logs once per floor on the first reveal; subsequent reveals are silent
+    // so the log doesn't spam as the player sweeps a corridor.
     private void RevealNearbyTraps()
     {
         if (!Skills.UniqueSkillSystem.Has(Skills.UniqueSkill.ExtraSearch)) return;
         int r = Skills.UniqueSkillSystem.SearchRadius();
         int px = _player.X, py = _player.Y;
+        bool revealedAny = false;
         for (int dx = -r; dx <= r; dx++)
         for (int dy = -r; dy <= r; dy++)
         {
@@ -248,7 +251,12 @@ public partial class TurnManager
             if (tile.Type is not (TileType.TrapSpike or TileType.TrapTeleport
                 or TileType.TrapPoison or TileType.TrapAlarm)) continue;
             tile.TrapHidden = false;
-            _log.Log($"Your trained eye spots a {TrapLabel(tile.Type)} nearby.");
+            revealedAny = true;
+        }
+        if (revealedAny && !_extraSearchRevealedThisFloor)
+        {
+            _extraSearchRevealedThisFloor = true;
+            _log.LogSystem("Your trained eye spots a hidden trap nearby!");
         }
     }
 
@@ -290,8 +298,11 @@ public partial class TurnManager
         if (existing.Status == QuestStatus.Complete)
         {
             _log.LogSystem($"{npc.Name}: \"You passed. Now feel what your body is capable of.\"");
-            Skills.UniqueSkillSystem.TryUnlock(Skills.UniqueSkill.MartialArts);
-            NotifyUniqueSkillUnlock(Skills.UniqueSkill.MartialArts);
+            // Guard against double-banner: the 30-unarmed-kill milestone route may have
+            // already unlocked Martial Arts. TryUnlock returns false in that case; only
+            // fire the banner when this call is actually the one doing the unlocking.
+            if (Skills.UniqueSkillSystem.TryUnlock(Skills.UniqueSkill.MartialArts))
+                NotifyUniqueSkillUnlock(Skills.UniqueSkill.MartialArts);
             existing.Status = QuestStatus.TurnedIn;
             _player.ColOnHand += existing.RewardCol;
             TotalColEarned += existing.RewardCol;
@@ -305,14 +316,196 @@ public partial class TurnManager
         return true;
     }
 
-    private static string TrapLabel(TileType t) => t switch
+    // Shared Divine-Object quest handler used by Sister Azariya (F50, Heaven-
+    // Piercing Blade) and Selka the Novice (F65, Fragrant Olive Sword).
+    // Flow: first-talk offers a Kill quest scoped to the current floor; on return
+    // with quest complete, grants the Divine into inventory (or drops it at the
+    // player's feet if inventory is full). Status 'TurnedIn' prevents re-grant.
+    private bool HandleDivineQuest(Entities.NPC npc, string questId, string questTitle,
+        string openingLine, int killCount, string divineDefId, string handOverLine,
+        string inProgressLine, string postCompleteLine, int rewardCol, int rewardXp)
     {
-        TileType.TrapSpike    => "spike trap",
-        TileType.TrapTeleport => "teleport trap",
-        TileType.TrapPoison   => "poison trap",
-        TileType.TrapAlarm    => "alarm wire",
-        _                         => "trap",
+        if (npc.Name == null) return false;
+
+        var existing = QuestSystem.GetQuest(questId);
+
+        // First talk — offer the trial.
+        if (existing == null)
+        {
+            QuestSystem.ActiveQuests.Add(new Quest
+            {
+                Id = questId,
+                Title = questTitle,
+                Description = $"Defeat {killCount} monsters on Floor {CurrentFloor}.",
+                GiverName = npc.Name,
+                Floor = CurrentFloor,
+                Type = QuestType.Kill,
+                TargetMob = "",
+                TargetCount = killCount,
+                Persistent = true,
+                RewardCol = rewardCol,
+                RewardXp = rewardXp,
+            });
+            _log.Log($"{npc.Name}: \"{openingLine}\"");
+            _log.LogSystem($"  [QUEST] New quest from {npc.Name}: '{questTitle}' — {killCount} kills on this floor.");
+            return true;
+        }
+
+        // Already turned in — just flavor, no re-grant.
+        if (existing.Status == QuestStatus.TurnedIn)
+        {
+            _log.Log($"{npc.Name}: \"{postCompleteLine}\"");
+            return true;
+        }
+
+        // Quest complete — grant Divine and mark turned in.
+        if (existing.Status == QuestStatus.Complete)
+        {
+            _log.Log($"{npc.Name}: \"{handOverLine}\"");
+            existing.Status = QuestStatus.TurnedIn;
+            _player.ColOnHand += existing.RewardCol;
+            TotalColEarned += existing.RewardCol;
+            _player.GainExperience(existing.RewardXp);
+            QuestSystem.ActiveQuests.Remove(existing);
+            QuestSystem.CompletedQuests.Add(existing);
+
+            var divine = Items.ItemRegistry.Create(divineDefId);
+            if (divine != null)
+            {
+                if (_player.Inventory.AddItem(divine))
+                    _log.LogLoot($"  ◈ You receive {divine.Name} — Divine Object.");
+                else
+                {
+                    _map.AddItem(_player.X, _player.Y, divine);
+                    _log.LogLoot($"  ◈ {divine.Name} — Divine Object. (Inventory full — dropped at your feet.)");
+                }
+            }
+            return true;
+        }
+
+        // In progress.
+        int remaining = existing.TargetCount - existing.CurrentCount;
+        _log.Log($"{npc.Name}: \"{inProgressLine} ({remaining} more.)\"");
+        return true;
+    }
+
+    // Sister Azariya — F50 Heaven-Piercing Blade giver.
+    private bool HandleSisterAzariya(Entities.NPC npc)
+    {
+        if (npc.Name != "Sister Azariya") return false;
+        return HandleDivineQuest(npc,
+            questId:          "divine_heaven_piercing",
+            questTitle:       "Light at the Edge of Sight",
+            openingLine:      "Twenty shadows fall on this floor before the light finds its wielder. Go.",
+            killCount:        20,
+            divineDefId:      "heaven_piercing_blade",
+            handOverLine:     "The light recognises you. Take it — and pierce what comes next.",
+            inProgressLine:   "Your work is not yet done.",
+            postCompleteLine: "Let its beam cut the dark for you.",
+            rewardCol:        500,
+            rewardXp:         400);
+    }
+
+    // Selka the Novice — F65 Fragrant Olive Sword giver.
+    private bool HandleSelka(Entities.NPC npc)
+    {
+        if (npc.Name != "Selka the Novice") return false;
+        return HandleDivineQuest(npc,
+            questId:          "divine_fragrant_olive",
+            questTitle:       "The Last Knight's Bequest",
+            openingLine:      "Twenty-five monsters on this floor. Prove my sister's memory is safe with you.",
+            killCount:        25,
+            divineDefId:      "fragrant_olive_sword",
+            handOverLine:     "Alice's blade answers to you now. Carry it well — let the petals remember her.",
+            inProgressLine:   "My sister would want to see more resolve from you.",
+            postCompleteLine: "Her blade is yours. Walk in the light she left behind.",
+            rewardCol:        500,
+            rewardXp:         400);
+    }
+
+    // ── Hollow Fragment Hollow Mission questgivers (9 HNM weapons) ────
+    // Canon-accurate placement for HF Legendary weapons gated behind NPC
+    // quests. Spec: (questId, title, opening, kills, defId, handover,
+    // in-progress, post-complete, col, xp).
+    private record HollowWeaponQuest(string QuestId, string Title, string Opening,
+        int KillCount, string RewardDefId, string HandOver, string InProgress,
+        string PostComplete, int Col, int Xp);
+
+    private static readonly Dictionary<string, HollowWeaponQuest> _hollowWeaponQuests = new()
+    {
+        ["Scholar Ellroy"] = new("hf_infinite_ouroboros", "The Endless Coil",
+            "Fifteen serpent-beasts must fall below. When they do, the coil is yours.",
+            15, "infinite_ouroboros",
+            "You have broken the coil. Take it — let it remember you.",
+            "The coils still turn.", "The Ouroboros answers to you now.",
+            400, 300),
+        ["Hunter Kojiro"] = new("hf_jato_onikirimaru", "The Oni Cutter's Trial",
+            "Fifteen kills. Any mob, any make. Then the blade of oni-splitting is yours.",
+            15, "jato_onikirimaru",
+            "Onikiri-maru has waited long enough. Swing it well.",
+            "Fifteen. No fewer.", "The blade remembers every cut now.",
+            400, 300),
+        ["Ranger Torva"] = new("hf_fiendblade_deathbringer", "Thinning the Grove",
+            "The grove dies in cycles. Fell fifteen and the blade it buried is yours.",
+            15, "fiendblade_deathbringer",
+            "The grove gives up its secret. Drink deep — and quickly.",
+            "The grove still breathes.", "Deathbringer bleeds in your hand.",
+            450, 320),
+        ["Apiarist Nell"] = new("hf_fayblade_tizona", "The Hornet's Undoing",
+            "Fifteen fall, and the fay-blade remembers its owner.",
+            15, "fayblade_tizona",
+            "Tizona is yours. Let it sing against the wing.",
+            "The hornets still hum.", "Fay-steel. Move quickly with it.",
+            450, 320),
+        ["Watcher Kael"] = new("hf_starmace_elysium", "The Shining Swarm",
+            "Twenty of the shining ones. Elysium crowns the steady hand.",
+            20, "starmace_elysium",
+            "Elysium answers. You will not be moved again.",
+            "The swarm returns each turn.", "Elysium stands with you.",
+            600, 450),
+        ["High Priestess Sola"] = new("hf_eurynomes_holy_sword", "The Holy Trial",
+            "Twenty of the fallen. Then and only then does the holy sword judge you.",
+            20, "eurynomes_holy_sword",
+            "Eurynome's blessing is yours. The blade obeys the worthy alone.",
+            "The trial is not complete.", "Walk in the light, champion.",
+            650, 480),
+        ["Torchbearer Meir"] = new("hf_saintspear_rhongomyniad", "The Dark Lanterns",
+            "Twenty lanterns must be broken. The saint's spear judges the rest.",
+            20, "saintspear_rhongomyniad",
+            "Rhongomyniad lights again. Hold it high.",
+            "The dark still pools.", "The spear carries your will now.",
+            700, 520),
+        ["Elder Beastkeeper"] = new("hf_shinto_ama_no_murakumo", "The Restless Herd",
+            "Twenty-five. Still them, and the cloud-splitter is yours.",
+            25, "shinto_ama_no_murakumo",
+            "Ama-no-Murakumo answers the quiet hand. Carry it so.",
+            "My charges still rage.", "The cloud parts for you.",
+            800, 600),
+        ["Sentinel Captain"] = new("hf_godspear_gungnir", "The Broken Line",
+            "Twenty-five. Hold the line no one else held. Gungnir is its own reward.",
+            25, "godspear_gungnir",
+            "Gungnir returns to a worthy grip. Strike true.",
+            "The line still bleeds.", "Odin's spear rests with you now.",
+            800, 600),
     };
+
+    // Generic dispatcher for all Hollow Fragment quest NPCs.
+    private bool HandleHollowWeaponNpc(Entities.NPC npc)
+    {
+        if (npc.Name == null) return false;
+        if (!_hollowWeaponQuests.TryGetValue(npc.Name, out var q)) return false;
+        return HandleDivineQuest(npc,
+            questId:          q.QuestId,
+            questTitle:       q.Title,
+            openingLine:      q.Opening,
+            killCount:        q.KillCount,
+            divineDefId:      q.RewardDefId,
+            handOverLine:     q.HandOver,
+            inProgressLine:   q.InProgress,
+            postCompleteLine: q.PostComplete,
+            rewardCol:        q.Col,
+            rewardXp:         q.Xp);
+    }
 
     private void HandleOccupantInteraction(Map.Tile tile, int tx, int ty)
     {
@@ -363,6 +556,13 @@ public partial class TurnManager
 
             // Ran the Brawler: Martial Arts trial (Progressive canon F2 quest).
             bool handledByRan = HandleRanTheBrawler(npc);
+            // Sister Azariya (F50): Heaven-Piercing Blade quest.
+            bool handledByAzariya = HandleSisterAzariya(npc);
+            // Selka the Novice (F65): Fragrant Olive Sword quest.
+            bool handledBySelka = HandleSelka(npc);
+            // Hollow Fragment HNM quests (9 NPCs F79-F98).
+            bool handledByHollowNpc = HandleHollowWeaponNpc(npc);
+            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByHollowNpc;
 
             // Turn in completed quests
             QuestSystem.OnNpcTalk(_log);
@@ -377,8 +577,9 @@ public partial class TurnManager
                 if (_player.Level > lvlBefore) LeveledUp?.Invoke();
             }
 
-            // Offer a new quest if the player has room — Ran never gives random quests.
-            if (!handledByRan
+            // Offer a new quest if the player has room — Divine-quest NPCs never
+            // give random quests layered on top of their canonical handler.
+            if (!handledByDivineNpc
                 && QuestSystem.ActiveQuests.Count < QuestSystem.MaxActiveQuests
                 && npc.CanInteract && Random.Shared.Next(3) == 0)
             {

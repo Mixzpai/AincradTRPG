@@ -37,7 +37,23 @@ public static class AxeDefinitions
     public static Weapon CreatePaleEdge() => Make("pale_edge", "Pale Edge", 400, "Rare", 65, 15, 22,
         B().Add(StatType.Attack, 14).Add(StatType.Strength, 6).Add(StatType.Agility, 4));
 
-    public static Weapon CreateOuroboros() => Make("ouroboros", "Ouroboros", 20000, "Legendary", 250, 80, 170,
+    // ── Hollow Realization Evolution Chain (Axe) ────────────────────
+    // Bardiche -> Archaic Murder -> Nidhogg's Fang -> Ouroboros.
+
+    // Bardiche, crescent-polearm-axe, reliable through heavy armor. T1 of the Ouroboros chain.
+    public static Weapon CreateBardiche() => Make("bardiche", "Bardiche", 2100, "Rare", 120, 15, 68,
+        B().Add(StatType.Attack, 35).Add(StatType.Strength, 10));
+
+    // Archaic Murder, primeval head of black iron, feels older than smithing. T2 of the Ouroboros chain.
+    public static Weapon CreateArchaicMurder() => Make("archaic_murder", "Archaic Murder", 5800, "Epic", 160, 35, 112,
+        B().Add(StatType.Attack, 55).Add(StatType.Strength, 15).Add(StatType.Vitality, 8), "CritRate+10");
+
+    // Nidhogg's Fang, root-serpent tooth mounted on a war-haft. T3 of the Ouroboros chain.
+    public static Weapon CreateNidhoggsFang() => Make("nidhoggs_fang", "Nidhogg's Fang", 14000, "Legendary", 210, 60, 152,
+        B().Add(StatType.Attack, 75).Add(StatType.Strength, 22).Add(StatType.Vitality, 14), "Bleed+20");
+
+    // T4 Divine of the Axe evolution chain.
+    public static Weapon CreateOuroboros() => Make("ouroboros", "Ouroboros", 20000, "Divine", 999, 80, 170,
         B().Add(StatType.Attack, 85).Add(StatType.Strength, 28).Add(StatType.Vitality, 15), "AoERadius+1");
 
     // Agil's starter broadaxe. Reliable through the lower floors.
@@ -47,4 +63,10 @@ public static class AxeDefinitions
     // Agil's 'falling-lotus' battleaxe. Earned through a mid-game befriend quest.
     public static Weapon CreateOchigaitou() => Make("ochigaitou", "Ochigaitou", 9500, "Epic", 210, 42, 105,
         B().Add(StatType.Attack, 52).Add(StatType.Strength, 22).Add(StatType.Vitality, 8), "KnockbackChance+30");
+
+    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+
+    // Hollow Fragment F94 implement. Executioner's axe; massive damage vs low-HP foes (flavor).
+    public static Weapon CreateRagnaroksBaneHeadsman() => Make("ragnaroks_bane_headsman", "Ragnarok's Bane: Headsman", 27000, "Legendary", 260, 90, 178,
+        B().Add(StatType.Attack, 100).Add(StatType.Strength, 40).Add(StatType.Vitality, 15), "ExecuteThreshold+40");
 }

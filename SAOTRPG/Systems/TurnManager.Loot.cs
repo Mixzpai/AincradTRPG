@@ -31,14 +31,26 @@ public partial class TurnManager
             && Random.Shared.Next(100) < 40)
         {
             var entry = lootTable[Random.Shared.Next(lootTable.Length)];
-            var lootItem = new Items.Materials.MobDrop
+
+            // Priority 5 Phase B: chain catalyst materials must arrive as real
+            // registered items (DefinitionId set) so the Anvil Evolve flow can
+            // find them. Route via ItemRegistry when the drop name matches.
+            BaseItem? lootItem;
+            if (LootGenerator.ChainMaterialByName.TryGetValue(entry.Name, out var chainDefId))
             {
-                Name = entry.Name, Value = entry.Value + CurrentFloor * 3,
-                SourceMonster = monster.Name, Quantity = 1, MaxStacks = 10,
-                CraftingTier = Math.Clamp(1 + CurrentFloor / 20, 1, 5),
-                MaterialType = "Monster Material",
-            };
-            DropItem(mx, my, lootItem, monster.Name);
+                lootItem = ItemRegistry.Create(chainDefId);
+            }
+            else
+            {
+                lootItem = new Items.Materials.MobDrop
+                {
+                    Name = entry.Name, Value = entry.Value + CurrentFloor * 3,
+                    SourceMonster = monster.Name, Quantity = 1, MaxStacks = 10,
+                    CraftingTier = Math.Clamp(1 + CurrentFloor / 20, 1, 5),
+                    MaterialType = "Monster Material",
+                };
+            }
+            if (lootItem != null) DropItem(mx, my, lootItem, monster.Name);
         }
 
         int roll = Random.Shared.Next(100);
@@ -69,6 +81,13 @@ public partial class TurnManager
     private void DropItem(int x, int y, BaseItem item, string source)
     {
         _map.AddItem(x, y, item);
+        // Divine Objects get a bespoke sleek log line (colored BrightRed via
+        // LogColorRules ◈ keyword match). Skips the usual rare-loot flavor.
+        if (item.Rarity == "Divine")
+        {
+            _log.LogLoot($"  ◈ {source} drops {item.Name} — Divine Object.");
+            return;
+        }
         _log.LogLoot($"  {RarityHelper.LogTag(item.Rarity)}{source} dropped a {item.Name}!");
         if (item.Rarity is "Rare" or "Epic" or "Legendary")
         {
@@ -99,7 +118,10 @@ public partial class TurnManager
         {
             BaseItem item = RollChestItem(tier);
             _map.AddItem(chestX, chestY, item);
-            _log.LogLoot($"  {RarityHelper.LogTag(item.Rarity)}Found {item.Name}!");
+            if (item.Rarity == "Divine")
+                _log.LogLoot($"  ◈ The chest holds {item.Name} — Divine Object.");
+            else
+                _log.LogLoot($"  {RarityHelper.LogTag(item.Rarity)}Found {item.Name}!");
         }
         _floorItemsFound += rolls;
     }
@@ -190,10 +212,17 @@ public partial class TurnManager
                 _floorItemsFound++;
                 _map.RemoveItem(px, py, item);
                 QuestSystem.OnItemPickup(item.Name ?? "", _log);
-                string rarityTag = RarityHelper.LogTag(item.Rarity);
-                string pickMsg = string.Format(
-                    FlavorText.PickupFlavors[Random.Shared.Next(FlavorText.PickupFlavors.Length)], item.Name);
-                _log.LogLoot($"{rarityTag}{pickMsg}");
+                if (item.Rarity == "Divine")
+                {
+                    _log.LogLoot($"  ◈ You receive {item.Name} — Divine Object.");
+                }
+                else
+                {
+                    string rarityTag = RarityHelper.LogTag(item.Rarity);
+                    string pickMsg = string.Format(
+                        FlavorText.PickupFlavors[Random.Shared.Next(FlavorText.PickupFlavors.Length)], item.Name);
+                    _log.LogLoot($"{rarityTag}{pickMsg}");
+                }
             }
             else
             {

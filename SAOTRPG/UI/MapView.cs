@@ -202,6 +202,7 @@ public partial class MapView : View
     public event Action? AutoExploreRequested;
     public event Action? StatsRequested;
     public event Action? HelpRequested;
+    public event Action? PlayerGuideRequested;
     public event Action? RestRequested;
     public event Action? CounterRequested;
     public event Action? KillStatsRequested;

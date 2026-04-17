@@ -4,13 +4,16 @@ using SAOTRPG.Items;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Items.Materials;
 using SAOTRPG.Inventory.Core;
+using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Anvil crafting dialog -- Repair equipment or Enhance it (+1 to +10).
+// Anvil crafting dialog -- Repair equipment, Enhance it (+1 to +10),
+// or Evolve a chain weapon to its next tier (Priority 5 Phase B).
 // Enhancement costs Col + materials and has a success rate that drops
-// at higher levels, following SAO canon mechanics.
+// at higher levels, following SAO canon mechanics. Evolution consumes
+// chain-specific catalysts and swaps the equipped weapon for its apex tier.
 public static class CraftingDialog
 {
     private const int DialogWidth = 70, DialogHeight = 22;
@@ -64,9 +67,12 @@ public static class CraftingDialog
         var enhanceBtn = DialogHelper.CreateButton("Enhance Equipment");
         enhanceBtn.X = 2; enhanceBtn.Y = 4;
 
+        var evolveBtn = DialogHelper.CreateButton("Evolve Weapon");
+        evolveBtn.X = 2; evolveBtn.Y = 6;
+
         var resultLabel = new Label
         {
-            Text = "", X = 2, Y = 6,
+            Text = "", X = 2, Y = 8,
             Width = Dim.Fill(2), Height = 10, ColorScheme = ColorSchemes.Body,
         };
 
@@ -112,13 +118,19 @@ public static class CraftingDialog
             ShowEnhanceMenu(player, floor, resultLabel, header);
         };
 
+        evolveBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            TryEvolveWeapon(player, resultLabel, header);
+        };
+
         var hintLabel = new Label
         {
             Text = "Enter: select | Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
         };
 
-        dialog.Add(header, repairBtn, enhanceBtn, resultLabel, hintLabel);
+        dialog.Add(header, repairBtn, enhanceBtn, evolveBtn, resultLabel, hintLabel);
         DialogHelper.AddCloseFooter(dialog);
         repairBtn.SetFocus();
         DialogHelper.RunModal(dialog);
@@ -232,6 +244,168 @@ public static class CraftingDialog
         item.Equip(player);
         // Bonuses list was mutated on a still-equipped item — drop cache.
         player.Inventory.InvalidateStatCache();
+    }
+
+    // ── Evolve (Priority 5 Phase B) ───────────────────────────────────
+    // Consumes chain-specific catalysts (+ peak extra at T3) and swaps the
+    // equipped weapon for its next-tier incarnation. Preserves enhancement
+    // level. T4 apex weapons cannot evolve further.
+    private static void TryEvolveWeapon(Player player, Label resultLabel, Label header)
+    {
+        var equipped = player.Inventory.GetEquipped(EquipmentSlot.Weapon);
+        if (equipped is not Weapon weapon)
+        {
+            resultLabel.Text = "Equip a weapon first to check for evolution paths.";
+            resultLabel.ColorScheme = ColorSchemes.Dim;
+            return;
+        }
+
+        var step = WeaponEvolutionChains.Get(weapon.DefinitionId);
+        if (step == null)
+        {
+            resultLabel.Text = $"{weapon.Name}\nThis weapon is not part of an evolution chain.";
+            resultLabel.ColorScheme = ColorSchemes.Dim;
+            return;
+        }
+
+        if (step.Tier == ChainTier.T4 || step.NextDefId == null)
+        {
+            resultLabel.Text = $"{weapon.Name}\nThis weapon is already at its peak evolution.";
+            resultLabel.ColorScheme = ColorSchemes.Gold;
+            return;
+        }
+
+        // Compose costs + resolve display names up front for the prompt.
+        string matName = MaterialDisplayName(step.MaterialDefId);
+        int haveMat = CountMaterialByDefId(player, step.MaterialDefId);
+
+        string? peakName = step.PeakExtraMatId != null ? MaterialDisplayName(step.PeakExtraMatId) : null;
+        int havePeak = step.PeakExtraMatId != null ? CountMaterialByDefId(player, step.PeakExtraMatId) : 0;
+
+        // Preview the resulting weapon (without committing it) so we can show its name.
+        var previewNext = ItemRegistry.Create(step.NextDefId);
+        string nextName = previewNext?.Name ?? step.NextDefId;
+
+        // Build the cost summary shown in the confirmation prompt.
+        string costLine = $"{step.MaterialQty}x {matName} ({haveMat} owned)";
+        if (step.PeakExtraMatId != null && peakName != null)
+            costLine += $"\n + 1x {peakName} ({havePeak} owned)";
+
+        string promptBody =
+            $"Evolve {weapon.EnhancedName} into {nextName}?\n\n" +
+            $"Cost: {costLine}";
+
+        int choice = MessageBox.Query("Evolve Weapon", promptBody, "Confirm", "Cancel");
+        if (choice != 0) return;
+
+        // Validate materials after confirm so the player sees the full prompt first.
+        if (haveMat < step.MaterialQty)
+        {
+            resultLabel.Text = $"Not enough {matName}! Need {step.MaterialQty}, have {haveMat}.";
+            resultLabel.ColorScheme = ColorSchemes.Danger;
+            return;
+        }
+        if (step.PeakExtraMatId != null && havePeak < 1)
+        {
+            resultLabel.Text = $"Apex evolution requires 1x {peakName}. You have {havePeak}.";
+            resultLabel.ColorScheme = ColorSchemes.Danger;
+            return;
+        }
+
+        // Build the next-tier weapon, preserving enhancement level if supported.
+        var created = ItemRegistry.Create(step.NextDefId);
+        if (created is not Weapon nextWeapon)
+        {
+            resultLabel.Text = $"Internal error: next weapon '{step.NextDefId}' could not be created.";
+            resultLabel.ColorScheme = ColorSchemes.Danger;
+            return;
+        }
+
+        // Consume materials.
+        ConsumeMaterialByDefId(player, step.MaterialDefId, step.MaterialQty);
+        if (step.PeakExtraMatId != null)
+            ConsumeMaterialByDefId(player, step.PeakExtraMatId, 1);
+
+        // Preserve enhancement. The enhance bonuses live in Bonuses; we bake
+        // the equivalent of the existing level into the new weapon, then swap.
+        int oldEnhLevel = weapon.EnhancementLevel;
+        string oldName = weapon.EnhancedName;
+
+        // Unequip old weapon (removes its stat bonuses from the player).
+        weapon.Unequip(player);
+
+        // If the old weapon was +N, fold those bonuses into the new weapon so
+        // the displayed +N is real. ApplyEnhancementDelta's pattern of adding
+        // flat Attack per level is reused here for parity with Enhance flow.
+        if (oldEnhLevel > 0)
+        {
+            int bonusPerLevel = BonusPerLevel(nextWeapon);
+            nextWeapon.Bonuses.Add(StatType.Attack, bonusPerLevel * oldEnhLevel);
+            nextWeapon.EnhancementLevel = oldEnhLevel;
+        }
+
+        // Put the old weapon back in the backpack (inventory list) so the
+        // player can verify the swap / sell the previous tier. The Equip call
+        // below will auto-remove the old one from the equipped slot anyway.
+        player.Inventory.AddItem(weapon);
+
+        // Equip the new weapon. Inventory.Equip will also pull it off the
+        // backpack list if present; since we just created it, we add first
+        // then equip to route through the normal flow.
+        player.Inventory.AddItem(nextWeapon);
+        player.Inventory.Equip(nextWeapon, player);
+        player.Inventory.InvalidateStatCache();
+
+        // Log with gold + magenta emphasis. The ◈ prefix triggers
+        // LogColorRules.Rules to render the line in BrightRed as a heavy
+        // accent for the transformation, matching the Divine Object log style.
+        resultLabel.Text =
+            $"◈ Your {oldName} evolves into {nextWeapon.EnhancedName}!\n" +
+            $"Consumed {step.MaterialQty}x {matName}" +
+            (step.PeakExtraMatId != null ? $" + 1x {peakName}." : ".");
+        resultLabel.ColorScheme = ColorSchemes.Gold;
+
+        header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
+    }
+
+    // Resolves the display name of a material from its DefId via a throwaway
+    // ItemRegistry.Create lookup. Falls back to the DefId if unknown.
+    private static string MaterialDisplayName(string defId)
+    {
+        var item = ItemRegistry.Create(defId);
+        return item?.Name ?? defId;
+    }
+
+    // Count of a specific chain material in the player's backpack, keyed by DefId.
+    private static int CountMaterialByDefId(Player player, string defId) =>
+        player.Inventory.Items
+            .OfType<Material>()
+            .Where(m => m.DefinitionId == defId)
+            .Sum(m => m.Quantity);
+
+    // Decrement `count` units of the material matching `defId` across stacks.
+    // Removes empty stacks from the inventory. No-op if insufficient.
+    private static void ConsumeMaterialByDefId(Player player, string defId, int count)
+    {
+        int remaining = count;
+        var toRemove = new List<BaseItem>();
+        foreach (var mat in player.Inventory.Items.OfType<Material>().ToList())
+        {
+            if (remaining <= 0) break;
+            if (mat.DefinitionId != defId) continue;
+            if (mat.Quantity <= remaining)
+            {
+                remaining -= mat.Quantity;
+                toRemove.Add(mat);
+            }
+            else
+            {
+                mat.Quantity -= remaining;
+                remaining = 0;
+            }
+        }
+        foreach (var item in toRemove)
+            player.Inventory.RemoveItem(item);
     }
 
     private static int CountMaterials(Player player) =>

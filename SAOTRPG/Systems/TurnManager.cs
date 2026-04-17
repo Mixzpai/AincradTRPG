@@ -71,6 +71,9 @@ public partial class TurnManager
     private bool _floorFullyExplored;
     private readonly HashSet<int> _aggroAlerted = new(), _dangerWarned = new();
     private bool _stairsDiscovered;
+    // ExtraSearch passive: true after the first trap reveal this floor so we
+    // only log the flavor line once per floor (subsequent reveals are silent).
+    private bool _extraSearchRevealedThisFloor;
     private static readonly int[] FloorParTurns = { 200, 220, 250, 280, 320, 360, 400, 450, 500, 550 };
     private int _floorStartTurn;
 

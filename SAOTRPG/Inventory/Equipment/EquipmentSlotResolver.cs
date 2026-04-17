@@ -13,6 +13,23 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterDefaultMappings();
     }
 
+    // True if the item is a legal OffHand occupant. Shields are always
+    // legal; one-handed swords become legal once Dual Blades is unlocked.
+    // Inventory.Equip handles the actual auto-routing; this predicate lets
+    // UI / validation code ask the same question without duplicating logic.
+    public bool CanGoInOffHand(EquipmentBase equipment)
+    {
+        var resolved = ResolveSlot(equipment);
+        if (resolved == EquipmentSlot.OffHand) return true;  // shields, bucklers, etc.
+        if (equipment is Weapon w
+            && string.Equals(w.WeaponType, "One-Handed Sword", StringComparison.OrdinalIgnoreCase)
+            && SAOTRPG.Systems.Skills.UniqueSkillSystem.HasDualBlades())
+        {
+            return true;
+        }
+        return false;
+    }
+
     public EquipmentSlot? ResolveSlot(EquipmentBase equipment)
     {
         if (string.IsNullOrWhiteSpace(equipment.EquipmentType))
@@ -59,7 +76,7 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         // Weapons — specific subtypes
         RegisterMany(EquipmentSlot.Weapon,
             "sword", "broadsword", "longsword", "rapier", "dagger", "mace",
-            "hammer", "polearm", "handaxe", "staff", "bow");
+            "hammer", "polearm", "handaxe", "bow", "scimitar", "claws", "scythe");
 
         // Head
         RegisterMany(EquipmentSlot.Head,

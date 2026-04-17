@@ -120,6 +120,7 @@ public partial class MapView
             TileType.Door or TileType.StairsUp or TileType.StairsDown  => MemoryLandmark,
             TileType.Shrine or TileType.Fountain or TileType.Anvil
                 or TileType.BountyBoard or TileType.EnchantShrine
+                or TileType.SecretShrine
                 or TileType.Pillar or TileType.Chest or TileType.Campfire
                 or TileType.LoreStone or TileType.Journal             => MemoryLandmark,
             _                                                          => MemoryTerrain,

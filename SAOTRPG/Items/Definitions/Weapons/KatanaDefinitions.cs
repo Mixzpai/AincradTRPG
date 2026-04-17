@@ -37,7 +37,23 @@ public static class KatanaDefinitions
     public static Weapon CreateKarakurenai() => Make("karakurenai", "Karakurenai", 1300, "Epic", 100, 25, 40, 1,
         B().Add(StatType.Attack, 25).Add(StatType.Agility, 12).Add(StatType.Strength, 6), "BackstabDmg+50");
 
-    public static Weapon CreateMasamune() => Make("masamune", "Masamune", 20000, "Legendary", 250, 80, 150, 1,
+    // ── Hollow Realization Evolution Chain (Katana) ─────────────────
+    // Matamon -> Shishi-Otoshi -> Shichishito -> Masamune.
+
+    // Matamon, oni-marked first-blade, smoldering faintly red. T1 of the Masamune chain.
+    public static Weapon CreateMatamon() => Make("matamon", "Matamon", 1900, "Rare", 120, 15, 60, 0,
+        B().Add(StatType.Attack, 35).Add(StatType.Agility, 10));
+
+    // Shishi-Otoshi, deer-startler — balance strike that disarms poise. T2 of the Masamune chain.
+    public static Weapon CreateShishiOtoshi() => Make("shishi_otoshi", "Shishi-Otoshi", 5400, "Epic", 160, 35, 105, 1,
+        B().Add(StatType.Attack, 55).Add(StatType.Agility, 15).Add(StatType.Speed, 8), "CritRate+10");
+
+    // Shichishito, seven-branched blade granting seven angles of strike. T3 of the Masamune chain.
+    public static Weapon CreateShichishito() => Make("shichishito", "Shichishito", 13000, "Legendary", 210, 60, 145, 1,
+        B().Add(StatType.Attack, 72).Add(StatType.Agility, 22).Add(StatType.Speed, 14), "CritRate+15");
+
+    // T4 Divine of the Katana evolution chain.
+    public static Weapon CreateMasamune() => Make("masamune", "Masamune", 20000, "Divine", 999, 80, 150, 1,
         B().Add(StatType.Attack, 78).Add(StatType.Agility, 25).Add(StatType.Speed, 18), "CritRate+20");
 
     // F2 hidden miniboss drop. Violet-black, drinks HP from what it cuts.
@@ -47,4 +63,23 @@ public static class KatanaDefinitions
     // Klein's shadow-stitcher upgrade. Awarded by befriending him through F1-F30.
     public static Weapon CreateKagenui() => Make("kagenui", "Kagenui", 7800, "Epic", 180, 35, 82, 1,
         B().Add(StatType.Attack, 42).Add(StatType.Agility, 15).Add(StatType.Dexterity, 10), "BackstabDmg+25");
+
+    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+
+    // Hollow Fragment F80 implement. Oni-slaying blade, sheds crimson mist.
+    public static Weapon CreateJatoOnikirimaru() => Make("jato_onikirimaru", "Jato: Onikiri-maru", 15000, "Legendary", 190, 76, 145, 1,
+        B().Add(StatType.Attack, 68).Add(StatType.Dexterity, 22).Add(StatType.Agility, 15), "Bleed+20");
+
+    // Hollow Fragment F95 implement. Susanoo's cloud-splitter; SP regen on evade (flavor).
+    public static Weapon CreateShintoAmaNoMurakumo() => Make("shinto_ama_no_murakumo", "Shinto: Ama-no-Murakumo", 26000, "Legendary", 240, 90, 170, 1,
+        B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 25).Add(StatType.Agility, 20).Add(StatType.Speed, 15), "EvadeRegen+10");
+
+    // Hollow Area endgame find. The Yato-grade Masamune — cuts without sound.
+    public static Weapon CreateYatoMasamune() => Make("yato_masamune", "Yato: Masamune", 32000, "Legendary", 250, 95, 175, 1,
+        B().Add(StatType.Attack, 90).Add(StatType.Strength, 20).Add(StatType.Dexterity, 25).Add(StatType.Agility, 15), "Bleed+30");
+
+    // F49 Shadowstep Assassin drops (Alicization Lycoris Divine Beast tier).
+    // Stealth katana. Bleed-on-hit, favors sudden strikes.
+    public static Weapon CreateMidnightSun() => Make("midnight_sun", "Midnight Sun", 17000, "Legendary", 220, 48, 145, 1,
+        B().Add(StatType.Attack, 70).Add(StatType.Dexterity, 22).Add(StatType.Agility, 18).Add(StatType.Speed, 12), "Bleed+20");
 }

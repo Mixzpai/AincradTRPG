@@ -191,6 +191,9 @@ public partial class TurnManager
     {
         var item = _player.Inventory.GetEquipped(slot);
         if (item == null || item.ItemDurability <= 0) return;
+        // Divine Objects are unbreakable — canon Priority / Sacred Object flavor.
+        // Their durability never ticks down.
+        if (item.Rarity == "Divine") return;
         item.ItemDurability--;
         if (item.ItemDurability <= 0)
         {

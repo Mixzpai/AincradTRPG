@@ -48,6 +48,10 @@ public enum TileType
     Anvil,
     BountyBoard,
     EnchantShrine,
+    // Priority 5 Phase B: one-shot weapon-discovery tile. On floors listed in
+    // WeaponEvolutionChains.SecretShrineByFloor, exactly one shrine is placed
+    // in a random non-spawn room and grants a T1 chain weapon on step-on.
+    SecretShrine,
 
     // Mechanical
     GasVent,

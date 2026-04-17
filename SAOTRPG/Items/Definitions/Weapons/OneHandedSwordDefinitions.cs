@@ -57,7 +57,23 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateLiberator() => Make("liberator", "Liberator", 15000, "Legendary", 250, 75, 140,
         B().Add(StatType.Attack, 65).Add(StatType.Strength, 25), "BlockChance+15");
 
-    public static Weapon CreateTyrfing() => Make("tyrfing", "Tyrfing", 20000, "Legendary", 250, 80, 160,
+    // ── Hollow Realization Evolution Chain (1H Sword) ───────────────
+    // Final Espada -> Asmodeus -> Final Avalanche -> Tyrfing.
+
+    // Final Espada, gleaming duel-sword. T1 of the Tyrfing chain.
+    public static Weapon CreateFinalEspada() => Make("final_espada", "Final Espada", 1900, "Rare", 120, 15, 62,
+        B().Add(StatType.Attack, 35).Add(StatType.Strength, 10));
+
+    // Asmodeus, demon-prince blade wreathed in sin. T2 of the Tyrfing chain.
+    public static Weapon CreateAsmodeus() => Make("asmodeus", "Asmodeus", 5400, "Epic", 160, 35, 108,
+        B().Add(StatType.Attack, 55).Add(StatType.Strength, 15).Add(StatType.Dexterity, 8), "CritRate+10");
+
+    // Final Avalanche, cascading-strike longsword. T3 of the Tyrfing chain.
+    public static Weapon CreateFinalAvalanche() => Make("final_avalanche", "Final Avalanche", 12500, "Legendary", 210, 60, 148,
+        B().Add(StatType.Attack, 75).Add(StatType.Strength, 22).Add(StatType.Dexterity, 14), "SkillCooldown-1");
+
+    // T4 Divine of the One-Handed Sword evolution chain.
+    public static Weapon CreateTyrfing() => Make("tyrfing", "Tyrfing", 20000, "Divine", 999, 80, 160,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 20).Add(StatType.Dexterity, 15), "SkillDamage+25");
 
     // F3 Elf War reward. Dark-elven steel, faint twilight glow.
@@ -71,4 +87,70 @@ public static class OneHandedSwordDefinitions
     // Drop from Laughing Coffin-aligned PKers. Bloody red, jagged.
     public static Weapon CreateCrimsonLongsword() => Make("crimson_longsword", "Crimson Longsword", 4200, "Epic", 150, 25, 62,
         B().Add(StatType.Attack, 34).Add(StatType.Strength, 12).Add(StatType.Dexterity, 6), "Bleed+15");
+
+    // Remains Heart — Lisbeth's masterwork (Infinity Moment / Hollow Fragment canon).
+    // Her character-episode questline ends in this weapon — the sole top-tier
+    // Legendary that is fully enhanceable in canon. Strongest enhanceable 1H sword.
+    public static Weapon CreateRemainsHeart() => Make("remains_heart", "Remains Heart", 22000, "Legendary", 240, 85, 158,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 22).Add(StatType.Dexterity, 12).Add(StatType.Defense, 10), "SkillCooldown-1");
+
+    // Alicization Lycoris Divine Beast drops (Priority 4). Dropped by non-canon
+    // floor bosses on F1-F50 as their canonical hand-placed reward.
+
+    // F17 Gelidus the Frozen Colossus drops. Storm-wrapped blade. "Squall" flavor.
+    public static Weapon CreateSavageSquall() => Make("savage_squall", "Savage Squall", 9500, "Legendary", 180, 38, 110,
+        B().Add(StatType.Attack, 55).Add(StatType.Strength, 18).Add(StatType.Agility, 12), "Slow+15");
+
+    // F30 Primos the World Serpent drops. Void-blackened blade, devours skill time.
+    public static Weapon CreateVoidEater() => Make("void_eater", "Void Eater", 15000, "Legendary", 210, 35, 135,
+        B().Add(StatType.Attack, 68).Add(StatType.Strength, 20).Add(StatType.Dexterity, 12).Add(StatType.Agility, 8), "SkillCooldown-1");
+
+    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+    // Endgame drops from F77-F99 in the Hollow Fragment canon.
+
+    // Hollow Fragment F90 floor-boss weapon. Holy radiance, blessed steel.
+    public static Weapon CreateEurynomesHolySword() => Make("eurynomes_holy_sword", "Eurynome's Holy Sword", 18000, "Legendary", 220, 85, 155,
+        B().Add(StatType.Attack, 75).Add(StatType.Strength, 22).Add(StatType.Dexterity, 12), "HolyDamage+20");
+
+    // Hollow Fragment F81 implement. Absorbs 20% HP on hit (flavor).
+    public static Weapon CreateFiendbladeDeathbringer() => Make("fiendblade_deathbringer", "Fiendblade: Deathbringer", 16000, "Legendary", 200, 78, 148,
+        B().Add(StatType.Attack, 72).Add(StatType.Strength, 20).Add(StatType.Dexterity, 10), "Bleed+25");
+
+    // Hollow Fragment F83 implement. High-speed fay-forged blade.
+    public static Weapon CreateFaybladeTizona() => Make("fayblade_tizona", "Fayblade: Tizona", 17000, "Legendary", 210, 80, 152,
+        B().Add(StatType.Attack, 70).Add(StatType.Speed, 18).Add(StatType.Agility, 15).Add(StatType.Dexterity, 10), "AttackSpeed+2");
+
+    // Hollow Fragment F85 implement. +50% damage versus dragons (flavor).
+    public static Weapon CreateGodbladeDragonslayer() => Make("godblade_dragonslayer", "Godblade: Dragonslayer", 19000, "Legendary", 220, 82, 160,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 25).Add(StatType.Dexterity, 12), "DragonSlayer+50");
+
+    // ── Divine Objects ──────────────────────────────────────────────
+    // Above Legendary. Hand-placed only (no random drops). Unbreakable.
+    // Bypass enemy block rolls (armor damage reduction still applies).
+    // Canon Priority / Sacred Object tier from Alicization arc.
+
+    // Kirito's Priority 46 Divine Object. Wooden blade carved from the Gigas
+    // Cedar's top branch. Canonical Underworld weapon — "bypass armor" feel.
+    public static Weapon CreateNightSkySword() => Make("night_sky_sword", "Night Sky Sword", 40000, "Divine", 999, 80, 180,
+        B().Add(StatType.Attack, 95).Add(StatType.Strength, 28).Add(StatType.Agility, 15).Add(StatType.Dexterity, 12), "ArmorPierce+30");
+
+    // Eugeo's ice-attribute Divine Object. Pure white blade with blue rose guard.
+    // Full Control Art freezes a wide field; we model it as high freeze-on-hit.
+    public static Weapon CreateBlueRoseSword() => Make("blue_rose_sword", "Blue Rose Sword", 40000, "Divine", 999, 80, 175,
+        B().Add(StatType.Attack, 90).Add(StatType.Strength, 25).Add(StatType.Dexterity, 18), "Freeze+20");
+
+    // Alice Synthesis Thirty's Divine Object. Forged from a fragrant olive tree
+    // blessed by Goddess Stacia. Full Control Art scatters thousands of petals.
+    public static Weapon CreateFragrantOliveSword() => Make("fragrant_olive_sword", "Fragrant Olive Sword", 45000, "Divine", 999, 85, 178,
+        B().Add(StatType.Attack, 92).Add(StatType.Strength, 22).Add(StatType.Agility, 14).Add(StatType.Dexterity, 14).Add(StatType.SkillDamage, 15), "HolyAoE+15");
+
+    // Bercouli Synthesis One's Divine Object. Created from the original System
+    // Clock of the Underworld — can slice a moment of the past or future.
+    public static Weapon CreateTimePiercingSword() => Make("time_piercing_sword", "Time Piercing Sword", 48000, "Divine", 999, 88, 185,
+        B().Add(StatType.Attack, 95).Add(StatType.Strength, 30).Add(StatType.Dexterity, 15), "ExecuteThreshold+25");
+
+    // Sheyta Synthesis Twelve's Divine Object. Granted by Administrator;
+    // said to cut through any and all things. Severing flavor.
+    public static Weapon CreateBlackLilySword() => Make("black_lily_sword", "Black Lily Sword", 50000, "Divine", 999, 90, 190,
+        B().Add(StatType.Attack, 100).Add(StatType.Strength, 28).Add(StatType.Dexterity, 22), "SeveringStrike+50");
 }

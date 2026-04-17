@@ -39,6 +39,62 @@ public static class FieldBossFactory
         new("nicholas_f49",         "Nicholas the Renegade", "Fallen Saint of the Winter Fir", 49, 2.5f, 1.5f, 'N', Color.BrightRed, "divine_stone_of_returning_soul",
             "Jingling bells echo through the dead pines. A hulking red-coated giant waits beneath the fir tree.",
             IsSeasonal: true, SeasonalEventId: "christmas"),
+
+        // ── Divine Object couriers ────────────────────────────────────
+        // Canon-themed field bosses that guarantee-drop Divine Objects.
+        // Stronger HP/ATK scaling than normal field bosses — they're meant
+        // to be memorable encounters that the player prepares for.
+
+        // F40 — Deusolbert Synthesis Seven's Divine Object (Conflagrant Flame Bow).
+        new("phoenix_of_smolder_peak_f40", "Phoenix of the Smolder Peak", "Guardian of the Flame Bow",
+            40, 3.5f, 1.6f, 'P', Color.BrightRed, "conflagrant_flame_bow",
+            "A hollow-eyed phoenix perches on the smolder cliff. Its gaze is older than fire itself."),
+
+        // F85 — Sheyta Synthesis Twelve's Divine Object (Black Lily Sword).
+        new("silent_edge_f85",       "The Silent Edge",   "Wielder of the Severing Blade", 85, 4.0f, 1.7f, 'S', Color.BrightMagenta, "black_lily_sword",
+            "A silent figure stands in the gloom, one hand resting on a blade that seems to drink the light."),
+
+        // F95 — Bercouli Synthesis One's Divine Object (Time Piercing Sword).
+        new("warden_of_stopped_hours_f95", "Warden of Stopped Hours", "Sentinel of the Broken Clock",
+            95, 4.5f, 1.8f, 'W', Color.BrightCyan, "time_piercing_sword",
+            "A warden in ancient armor stands beneath a clock that has stopped. Time feels heavier here."),
+
+        // ── Hollow Fragment canon NM/HNM field bosses ──────────────────
+        // Canon-accurate placements for HF endgame Legendary weapons.
+        // NM = Named Monster (free spawn), HNM = Hollow Named Monster
+        // (promoted to field boss tier for "worldboss" feel).
+
+        // F77 NM Goblin Leader drops Mace of Asclepius (HF canon).
+        new("goblin_leader_f77",    "Goblin Leader",    "Warchief of the Kobold Host", 77, 3.0f, 1.5f, 'G', Color.Green,        "mace_of_asclepius",
+            "A hulking kobold in iron plate looms over its horde. Its mace drips with old blood."),
+
+        // F83 NM Arboreal Fear drops Demonspear: Gae Bolg (HF canon).
+        new("arboreal_fear_f83",    "Arboreal Fear",    "Horror of the Hanging Grove",  83, 3.5f, 1.6f, 'T', Color.BrightMagenta,"demonspear_gae_bolg",
+            "The forest watches with too many eyes. A twisted dryad steps from the bark, spear in hand."),
+
+        // F85 HNM Abased Beast (promoted) drops Godblade: Dragonslayer (HF canon).
+        new("abased_beast_f85",     "Abased Beast",     "Fallen Wyrm of the Crimson Cliff", 85, 4.0f, 1.7f, 'B', Color.BrightRed,"godblade_dragonslayer",
+            "A draconic beast drags its broken wings across the stone. Still, it hungers."),
+
+        // F87 NM Night Stalker drops Saintblade: Durandal (HF canon).
+        new("night_stalker_f87",    "Night Stalker",    "Predator of the Moonless Halls", 87, 4.0f, 1.7f, 'N', Color.DarkGray,   "saintblade_durandal",
+            "A silent predator stalks the corridor. Light dims where it passes."),
+
+        // F94 HNM Ark Knight (promoted) drops Ragnarok's Bane: Headsman (HF canon).
+        new("ark_knight_f94",       "Ark Knight",       "Executioner of the Final Ark",    94, 4.8f, 1.8f, 'K', Color.White,      "ragnaroks_bane_headsman",
+            "A headsman in ceremonial armor stands ready. His axe has seen a thousand endings."),
+
+        // F95 NM Gaia Breaker drops Stigmablade: Arondight (HF canon).
+        new("gaia_breaker_f95",     "Gaia Breaker",     "Titan of the Cracked Earth",      95, 4.5f, 1.8f, 'G', Color.Yellow,     "stigmablade_arondight",
+            "The ground shudders. A stone colossus rises, its fists the size of your torso."),
+
+        // F96 HNM Eternal Dragon (promoted) drops Demonblade: Gram (HF canon).
+        new("eternal_dragon_f96",   "Eternal Dragon",   "The Wyrm That Refuses to Die",    96, 5.0f, 1.9f, 'D', Color.BrightMagenta,"demonblade_gram",
+            "A scarred wyrm coiled on ancient bones. Gram was forged for this."),
+
+        // F98 NM Blaze Armor (Hollow Area relocated to F98) drops Yato: Masamune (HF canon).
+        new("blaze_armor_f98",      "Blaze Armor",      "Living Armor of the Hollow Forge",98, 5.2f, 2.0f, 'A', Color.BrightRed,  "yato_masamune",
+            "Empty armor glowing with inner flame. The soul inside remembers every sword it has wielded."),
     };
 
     // Returns all field bosses that should spawn on this floor right now.

@@ -7,7 +7,8 @@ namespace SAOTRPG.UI.Helpers;
 // Centralized rarity utilities — tag formatting, sort order, color, abbreviation, log tags.
 // Used by InventoryDialog, EquipmentSlotView, ShopDialog, TurnManager, and loot displays.
 // Tier order (lowest → highest):
-//   Common (C, Gray) → Uncommon (U, Green) → Rare (R, Cyan) → Epic (E, Magenta) → Legendary (L, Yellow)
+//   Common (C, Gray) → Uncommon (U, Green) → Rare (R, Cyan) → Epic (E, Magenta)
+//   → Legendary (L, Yellow) → Divine (◈, BrightRed) — top tier, SAO canon Priority / Divine Object
 public static class RarityHelper
 {
     // Formats a complete item line for list display: "[R] Iron Sword x1 (R)"
@@ -21,11 +22,12 @@ public static class RarityHelper
         return line.Length > maxWidth ? line[..maxWidth] : line.PadRight(maxWidth);
     }
 
-    // Bracketed tag prefix for list display: [E], [R], [U], or spaces.
+    // Bracketed tag prefix for list display: [◈], [L], [E], [R], [U], or spaces.
     public static string FormatTag(string? rarity) => rarity switch
     {
-        "Epic"      => "[E] ",
+        "Divine"    => "[◈] ",
         "Legendary" => "[L] ",
+        "Epic"      => "[E] ",
         "Rare"      => "[R] ",
         "Uncommon"  => "[U] ",
         _           => "    "
@@ -34,6 +36,7 @@ public static class RarityHelper
     // Sort weight (higher = rarer). Used for ByRarity sort mode.
     public static int SortOrder(string? rarity) => rarity switch
     {
+        "Divine"    => 6,
         "Legendary" => 5,
         "Epic"      => 4,
         "Rare"      => 3,
@@ -42,7 +45,7 @@ public static class RarityHelper
         _           => 0
     };
 
-    // Single-letter rarity codes for compact display.
+    // Single-letter rarity codes for compact display. Divine uses ◈ diamond glyph.
     public static string Abbreviation(string? rarity) => rarity switch
     {
         "Common"    => "C",
@@ -50,12 +53,15 @@ public static class RarityHelper
         "Rare"      => "R",
         "Epic"      => "E",
         "Legendary" => "L",
+        "Divine"    => "◈",
         _           => "?"
     };
 
-    // Item name color based on rarity tier.
+    // Item name color based on rarity tier. Divine uses BrightRed — the "sacred
+    // flame" / Mirror-tier / Exotic-tier convention above Legendary yellow.
     public static Color GetColor(string? rarity) => rarity switch
     {
+        "Divine"    => Color.BrightRed,
         "Legendary" => Color.BrightYellow,
         "Epic"      => Color.BrightMagenta,
         "Rare"      => Color.BrightCyan,
@@ -64,13 +70,17 @@ public static class RarityHelper
         _           => Color.White
     };
 
-    // Rarity tag for log messages: "[Rare] ", "[Epic] ", etc. Empty for Common.
+    // Rarity tag for log messages: "[Divine ◈] ", "[Legendary] ", etc. Empty for Common.
     public static string LogTag(string? rarity) => rarity switch
     {
+        "Divine"    => "[Divine ◈] ",
         "Legendary" => "[Legendary] ",
         "Epic"      => "[Epic] ",
         "Rare"      => "[Rare] ",
         "Uncommon"  => "[Uncommon] ",
         _           => ""
     };
+
+    // True if the item is a Divine Object — unbreakable, bypasses block rolls.
+    public static bool IsDivine(string? rarity) => rarity == "Divine";
 }

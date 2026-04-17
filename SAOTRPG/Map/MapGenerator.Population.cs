@@ -152,6 +152,20 @@ public static partial class MapGenerator
             if (cx >= 0)
                 map.Tiles[cx, cy].Type = TileType.Chest;
         }
+
+        // Priority 5 Phase B: Secret Shrines — one per listed floor, placed in
+        // a random non-spawn room. Each hosts a T1 chain weapon that the
+        // player collects on step-on (handled in TurnManager.Tiles).
+        if (rooms.Count > 3 && Systems.WeaponEvolutionChains.SecretShrineByFloor.ContainsKey(floor))
+        {
+            // Pick a room with index > 2 so the shrine is never in the spawn
+            // area or immediately adjacent corridors.
+            int shrineRoomIdx = Random.Shared.Next(3, rooms.Count);
+            var shrineRoom = rooms[shrineRoomIdx];
+            var (sx, sy) = FindOpenSpot(map, shrineRoom);
+            if (sx >= 0)
+                map.Tiles[sx, sy].Type = TileType.SecretShrine;
+        }
     }
 
     // Floor 1 populator: places the town NPCs + shopkeeper relative to
@@ -282,13 +296,15 @@ public static partial class MapGenerator
              Name = "Ran the Brawler",
              DialogueLines = new DialogueLine[]
              {
-                 new("You think a blade makes you strong? Bah. Real strength is in the fist. I can teach you the hidden art — if you pass my trial.",
+                 new("You want power? Fists only. Defeat five beasts on this floor using nothing but your bare hands. No blade. No bow. Just you.",
                      new DialogueChoice[]
                      {
-                         new("What's the trial?",
-                             "Simple. Defeat five beasts on this floor using nothing but your bare hands. No blade. No bow. Just fists. Return when it's done and I'll show you what your body can really do."),
+                         new("Accept the trial.",
+                             "Good. Five kills, bare-handed, on this floor. Come back when it's done and I'll show you what your body can truly do."),
                          new("Not interested.",
                              "Suit yourself. The offer stands if you change your mind."),
+                         new("Leave.",
+                             "Walk well, then."),
                      }),
              },
          }),
@@ -308,6 +324,58 @@ public static partial class MapGenerator
              Name = "Argo the Rat",
              Dialogue = "Information is power, friend. Want to know what lurks ahead?",
          }),
+
+        // Sister Azariya — F50 Divine Object questline. Former Fanatio apprentice
+        // who left the order, now guards the Heaven-Piercing Blade until worthy.
+        ((f, r) => f == 50 && r.Count > 2,
+         (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('A', Color.BrightCyan)
+         {
+             Name = "Sister Azariya",
+             Dialogue = "The light does not answer to unsteady hands. Prove yourself and I will entrust it to you.",
+         }),
+
+        // Selka the Novice — F65 Divine Object questline. Alice's younger sister
+        // (canon), keeps the Fragrant Olive Sword until one proves worthy of its legacy.
+        ((f, r) => f == 65 && r.Count > 2,
+         (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('S', Color.White)
+         {
+             Name = "Selka the Novice",
+             Dialogue = "My sister's blade waits for a worthy wielder. Show me you can honor her memory.",
+         }),
+
+        // ── Hollow Fragment Hollow Mission questgivers (9 NPCs) ────────
+        // Each gates a canon HNM weapon behind a kill-count quest. NPC names
+        // are original but thematically match the weapon/region.
+
+        ((f, r) => f == 79 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('E', Color.BrightMagenta) { Name = "Scholar Ellroy",
+             Dialogue = "The coil-beasts below multiply. I need proof of their fall." }),
+        ((f, r) => f == 80 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('H', Color.BrightRed) { Name = "Hunter Kojiro",
+             Dialogue = "The ant-knight walks the galleries. Walk them too." }),
+        ((f, r) => f == 81 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('T', Color.BrightGreen) { Name = "Ranger Torva",
+             Dialogue = "The grove is sick. Thin its ranks and a weapon waits for you." }),
+        ((f, r) => f == 83 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('P', Color.BrightYellow) { Name = "Apiarist Nell",
+             Dialogue = "The hornets have gone wrong. I hold a blade for whoever ends them." }),
+        ((f, r) => f == 88 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('W', Color.BrightCyan) { Name = "Watcher Kael",
+             Dialogue = "The shining swarms grow bolder each turn. Break them." }),
+        ((f, r) => f == 90 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('O', Color.BrightYellow) { Name = "High Priestess Sola",
+             Dialogue = "The holy sword tests resolve, not strength. Prove yours." }),
+        ((f, r) => f == 91 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('M', Color.Yellow) { Name = "Torchbearer Meir",
+             Dialogue = "The lanterns have gone out. Rekindle them the only way left — in blood." }),
+        ((f, r) => f == 95 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('B', Color.BrightRed) { Name = "Elder Beastkeeper",
+             Dialogue = "My charges turn on themselves. The sword of the storm cloud is yours if you still them." }),
+        ((f, r) => f == 98 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('C', Color.Gray) { Name = "Sentinel Captain",
+             Dialogue = "The guardians have fallen, one by one. Hold their line and Gungnir is yours." }),
     };
 
     // Walks FloorNpcSpawns in order, placing each NPC whose gate passes.

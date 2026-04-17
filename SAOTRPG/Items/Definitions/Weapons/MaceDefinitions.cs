@@ -37,10 +37,45 @@ public static class MaceDefinitions
     public static Weapon CreateMinotaurWarhammer() => Make("minotaur_warhammer", "Warhammer of the Minotaur", 1600, "Epic", 120, 35, 52,
         B().Add(StatType.Attack, 30).Add(StatType.Strength, 14), "StunChance+15");
 
-    public static Weapon CreateMjolnir() => Make("mjolnir", "Mjolnir", 20000, "Legendary", 250, 80, 140,
+    // ── Hollow Realization Evolution Chain (Mace) ───────────────────
+    // Lunatic Press -> Nemesis -> Yggdrasil -> Mjolnir.
+
+    // Lunatic Press, moon-forged bludgeon whose weight breaks plate. T1 of the Mjolnir chain.
+    public static Weapon CreateLunaticPress() => Make("lunatic_press", "Lunatic Press", 2000, "Rare", 120, 15, 65,
+        B().Add(StatType.Attack, 35).Add(StatType.Strength, 10));
+
+    // Nemesis, retribution-mace that answers every sin with a crack of bone. T2 of the Mjolnir chain.
+    public static Weapon CreateNemesis() => Make("nemesis", "Nemesis", 5600, "Epic", 160, 35, 108,
+        B().Add(StatType.Attack, 55).Add(StatType.Strength, 15).Add(StatType.Vitality, 8), "StunChance+10");
+
+    // Yggdrasil, world-tree haft bound in living root. T3 of the Mjolnir chain.
+    public static Weapon CreateYggdrasil() => Make("yggdrasil", "Yggdrasil", 13000, "Legendary", 210, 60, 148,
+        B().Add(StatType.Attack, 75).Add(StatType.Strength, 22).Add(StatType.Vitality, 14), "StunChance+15");
+
+    // T4 Divine of the Mace evolution chain.
+    public static Weapon CreateMjolnir() => Make("mjolnir", "Mjolnir", 20000, "Divine", 999, 80, 140,
         B().Add(StatType.Attack, 75).Add(StatType.Strength, 25).Add(StatType.Vitality, 20), "StunChance+25");
 
     // Lisbeth's signature smithing mace. Heavier than it looks; built to last.
     public static Weapon CreateMaceOfLord() => Make("mace_of_lord", "Mace of Lord", 4800, "Rare", 220, 20, 52,
         B().Add(StatType.Attack, 28).Add(StatType.Strength, 14).Add(StatType.Vitality, 6), "DurabilityBonus+50");
+
+    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+
+    // Hollow Fragment F77 implement. Healer-god's rod; steady life regen (flavor).
+    public static Weapon CreateMaceOfAsclepius() => Make("mace_of_asclepius", "Mace of Asclepius", 13500, "Legendary", 190, 73, 135,
+        B().Add(StatType.Attack, 62).Add(StatType.Vitality, 25).Add(StatType.Strength, 15).Add(StatType.Defense, 15), "HPRegen+3");
+
+    // Hollow Fragment F79 implement. Coiled eternity; periodic barrier procs (flavor).
+    public static Weapon CreateInfiniteOuroboros() => Make("infinite_ouroboros", "Infinite Ouroboros", 14500, "Legendary", 200, 75, 140,
+        B().Add(StatType.Attack, 65).Add(StatType.Vitality, 28).Add(StatType.Defense, 18), "Barrier+20");
+
+    // Hollow Fragment F88 implement. Heavenly mace; resists interrupts (flavor).
+    public static Weapon CreateStarmaceElysium() => Make("starmace_elysium", "Starmace: Elysium", 21000, "Legendary", 240, 84, 158,
+        B().Add(StatType.Attack, 75).Add(StatType.Vitality, 30).Add(StatType.Defense, 25).Add(StatType.Strength, 15), "Uninterruptible+50");
+
+    // F38 Obsidian the Black Knight drops (Alicization Lycoris Divine Beast tier).
+    // Thorn-covered bludgeon. Heavy hit, bleed proc on thorns.
+    public static Weapon CreateCactusBludgeon() => Make("cactus_bludgeon", "Cactus Bludgeon", 13500, "Legendary", 205, 36, 112,
+        B().Add(StatType.Attack, 58).Add(StatType.Strength, 22).Add(StatType.Vitality, 18), "Bleed+15");
 }

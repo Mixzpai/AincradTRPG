@@ -67,6 +67,7 @@ public static class TileDefinitions
             TileType.Anvil        => ('╬', GoldBright, Color.Black),
             TileType.BountyBoard  => ('▣', FountainCyan, Color.Black),
             TileType.EnchantShrine => ('☥', GoldBright, Color.Black),
+            TileType.SecretShrine => ('!', new Color(255, 100, 255), Color.Black),
             TileType.Journal      => ('≡', GoldBright, Color.Black),
             TileType.GasVent      => ('¤', new Color(120, 255, 120), Color.Black),
             TileType.Lever        => ('╥', GoldBright, Color.Black),

@@ -44,4 +44,17 @@ public static class BowDefinitions
 
     public static Weapon CreateTiasLongbow() => Make("tias_longbow", "Tia's Longbow", 900, "Rare", 90, 25, 32, 2, 4,
         B().Add(StatType.Attack, 22).Add(StatType.Dexterity, 12));
+
+    // ── Divine Objects ──────────────────────────────────────────────
+    // Above Legendary. Hand-placed only. Unbreakable. Bypass block rolls.
+
+    // Deusolbert Synthesis Seven's Divine Object. Created from a phoenix that
+    // lived in a volcano. Canon: fires unlimited flaming arrows via Full Control Art.
+    public static Weapon CreateConflagrantFlameBow() => Make("conflagrant_flame_bow", "Conflagrant Flame Bow", 42000, "Divine", 999, 82, 155, 2, 4,
+        B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Strength, 18), "Burn+30");
+
+    // F11 Felos the Ember Drake drops (Alicization Lycoris Divine Beast tier).
+    // Celestial bow — hits from cosmic distance. Crit-oriented.
+    public static Weapon CreateStarfall() => Make("starfall", "Starfall", 8500, "Legendary", 170, 18, 85, 1, 4,
+        B().Add(StatType.Attack, 42).Add(StatType.Dexterity, 20).Add(StatType.Agility, 10), "CritRate+20");
 }

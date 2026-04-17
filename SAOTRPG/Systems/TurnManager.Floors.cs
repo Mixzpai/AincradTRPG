@@ -156,6 +156,7 @@ public partial class TurnManager
         _floorStartRealTime = DateTime.Now;
         _floorFullyExplored = false;
         _stairsDiscovered = false;
+        _extraSearchRevealedThisFloor = false;
         _aggroAlerted.Clear();
         _dangerWarned.Clear();
         ClearAllMobStatuses();

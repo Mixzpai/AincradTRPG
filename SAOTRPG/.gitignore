@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+debug.log
+debug_*.log
+stderr.txt
+*.user
+*.suo

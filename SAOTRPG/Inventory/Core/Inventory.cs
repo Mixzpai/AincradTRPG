@@ -133,13 +133,16 @@ public class Inventory
 
         // Dual Blades: auto-route a second one-handed sword to the OffHand
         // slot when the main Weapon is occupied, OffHand is empty, and the
-        // player has unlocked the Dual Blades unique skill.
+        // player has unlocked the Dual Blades unique skill. The resolver
+        // also accepts 1H swords into OffHand when Dual Blades is unlocked
+        // (see EquipmentSlotResolver.CanGoInOffHand) — this block handles
+        // the auto-routing for the typical "equip second sword" flow.
         if (slot == EquipmentSlot.Weapon
             && _equippedItems[EquipmentSlot.Weapon] != null
             && _equippedItems[EquipmentSlot.OffHand] == null
             && equipment is Weapon incomingWeapon
             && incomingWeapon.WeaponType == "One-Handed Sword"
-            && SAOTRPG.Systems.Skills.UniqueSkillSystem.Has(SAOTRPG.Systems.Skills.UniqueSkill.DualBlades))
+            && SAOTRPG.Systems.Skills.UniqueSkillSystem.HasDualBlades())
         {
             slot = EquipmentSlot.OffHand;
         }

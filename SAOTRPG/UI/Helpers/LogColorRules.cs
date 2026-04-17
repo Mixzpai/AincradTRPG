@@ -11,6 +11,11 @@ public static class LogColorRules
     // the first keyword found in the line determines the line's color.
     public static readonly (string Keyword, Color Color)[] Rules =
     {
+        // ── Divine Objects (top rarity) ─────────────────────────────
+        // Any log line containing the ◈ diamond renders BrightRed.
+        // Matches bespoke Divine drop/pickup/chest lines.
+        ("◈",               Color.BrightRed),
+
         // ── Critical / special moments ──────────────────────────────
         ("CRITICAL HIT",    Color.BrightMagenta),
         ("LEVEL UP",        Color.BrightMagenta),
