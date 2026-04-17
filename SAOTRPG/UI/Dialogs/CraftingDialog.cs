@@ -2,6 +2,7 @@ using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
+using SAOTRPG.Items.Definitions;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Items.Materials;
 using SAOTRPG.Inventory.Core;
@@ -172,7 +173,8 @@ public static class CraftingDialog
             int cost = EnhanceCost(item.EnhancementLevel, floor);
             int mats = MaterialsNeeded(item.EnhancementLevel);
             int rate = SuccessRate(item.EnhancementLevel);
-            labels[i] = $"{slot}: {item.EnhancedName} -> +{item.EnhancementLevel + 1}  " +
+            string lock1 = item is Weapon w && !w.IsEnhanceable ? " [SEALED]" : "";
+            labels[i] = $"{slot}: {item.EnhancedName}{lock1} -> +{item.EnhancementLevel + 1}  " +
                          $"({cost} Col, {mats} mats, {rate}% chance)";
         }
 
@@ -183,6 +185,17 @@ public static class CraftingDialog
         if (choice < 0 || choice >= candidates.Count) return;
 
         var (chosenSlot, chosenItem) = candidates[choice];
+
+        // IM Non-enhanceable check (System 2): LAB floor-boss weapons are
+        // sealed — canon IM tradeoff for their higher flat stats.
+        if (chosenItem is Weapon weaponCheck && !weaponCheck.IsEnhanceable)
+        {
+            resultLabel.Text = $"{weaponCheck.EnhancedName} cannot be enhanced.\n" +
+                               "This Last-Attack Bonus weapon is sealed by its forging.";
+            resultLabel.ColorScheme = ColorSchemes.Dim;
+            return;
+        }
+
         int enhCost = EnhanceCost(chosenItem.EnhancementLevel, floor);
         int matsNeeded = MaterialsNeeded(chosenItem.EnhancementLevel);
         int successRate = SuccessRate(chosenItem.EnhancementLevel);
@@ -202,21 +215,42 @@ public static class CraftingDialog
             return;
         }
 
+        // IM System 3: for weapons, require the player to pick an
+        // enhancement ore up front. Ore identity decides which stat gets
+        // this level's bonus. Armor/accessories skip the ore picker and
+        // use the legacy flat-Defense/-Attack path.
+        string? chosenOreDefId = null;
+        if (chosenItem is Weapon)
+        {
+            chosenOreDefId = PickEnhancementOre(player, resultLabel);
+            if (chosenOreDefId == null) return;  // player cancelled or no ores
+        }
+
         // Consume resources
         player.ColOnHand -= enhCost;
         ConsumeMaterials(player, matsNeeded);
+        if (chosenOreDefId != null)
+            player.Inventory.ConsumeByDefinitionId(chosenOreDefId, 1);
 
         // Roll for success
         bool success = Random.Shared.Next(100) < successRate;
 
         if (success)
         {
-            // Unequip to remove old bonuses, enhance, re-equip with new bonuses
-            ApplyEnhancementDelta(player, chosenItem, +1);
+            // Unequip to remove old bonuses, enhance, re-equip with new bonuses.
+            // Weapon path threads the ore DefId through so the per-level bonus
+            // is biased to the ore's stat instead of flat Attack.
+            ApplyEnhancementDelta(player, chosenItem, +1, chosenOreDefId);
 
-            resultLabel.Text = $"SUCCESS! {chosenItem.EnhancedName}\n" +
-                               $"+{BonusPerLevel(chosenItem)} {(chosenItem is Weapon ? "ATK" : "DEF")} per level\n" +
-                               $"(-{enhCost} Col, -{matsNeeded} materials)";
+            string biasMsg = "";
+            if (chosenOreDefId != null &&
+                EnhancementOreDefinitions.OreDefIdToStat.TryGetValue(chosenOreDefId, out var biasStat))
+            {
+                biasMsg = $"\n+{BonusPerLevel(chosenItem)} {biasStat} from this ore.";
+            }
+            resultLabel.Text = $"SUCCESS! {chosenItem.EnhancedName}{biasMsg}\n" +
+                               $"(-{enhCost} Col, -{matsNeeded} materials" +
+                               (chosenOreDefId != null ? $", -1 ore" : "") + ")";
             resultLabel.ColorScheme = ColorSchemes.Gold;
         }
         else
@@ -225,7 +259,9 @@ public static class CraftingDialog
             // On +7 or higher, risk of losing a level (SAO canon).
             if (chosenItem.EnhancementLevel >= 7 && Random.Shared.Next(100) < 30)
             {
-                ApplyEnhancementDelta(player, chosenItem, -1);
+                // On level loss we pop the last ore from history (if any) and
+                // remove the stat it contributed, matching the +1 inverse.
+                ApplyEnhancementDelta(player, chosenItem, -1, null);
 
                 resultLabel.Text = $"FAILURE! Enhancement dropped to +{chosenItem.EnhancementLevel}!\n" +
                                    $"Materials and Col consumed. High-level enhancement is risky!";
@@ -242,18 +278,107 @@ public static class CraftingDialog
         header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
     }
 
+    // IM System 3: list all enhancement ores the player holds (grouped by
+    // DefId, counts shown) and return the chosen DefId — or null if the
+    // player has no ores or cancels. Writes a hint into resultLabel on the
+    // no-ore path so the Anvil UI reflects why the flow aborted.
+    private static string? PickEnhancementOre(Player player, Label resultLabel)
+    {
+        var oreStacks = player.Inventory.Items
+            .OfType<EnhancementOre>()
+            .Where(o => o.Quantity > 0)
+            .GroupBy(o => o.DefinitionId ?? "")
+            .Select(g => (DefId: g.Key, Sample: g.First(), Qty: g.Sum(x => x.Quantity)))
+            .Where(t => !string.IsNullOrEmpty(t.DefId))
+            .OrderBy(t => t.Sample.Name)
+            .ToList();
+
+        if (oreStacks.Count == 0)
+        {
+            resultLabel.Text = "Enhancement requires an Enhancement Ore.\n" +
+                               "Defeat themed mobs or bosses to collect one.";
+            resultLabel.ColorScheme = ColorSchemes.Dim;
+            return null;
+        }
+
+        // MessageBox.Query supports ~10 buttons comfortably — 7 ores fits.
+        var labels = oreStacks
+            .Select(t => $"{t.Sample.Name} x{t.Qty} (+{t.Sample.BiasStat})")
+            .Append("Cancel")
+            .ToArray();
+        int which = MessageBox.Query(
+            "Choose Enhancement Ore",
+            "Pick an ore — its theme biases this level's bonus:",
+            labels);
+        if (which < 0 || which >= oreStacks.Count) return null;
+        return oreStacks[which].DefId;
+    }
+
     // Shared enhance/de-enhance: unequip, adjust level and stat bonus by ±1,
-    // re-equip. Weapon bonuses go to Attack, Armor+other to Defense/Attack.
-    private static void ApplyEnhancementDelta(Player player, EquipmentBase item, int delta)
+    // re-equip. Weapon bonuses route through the ore-biased stat (IM System 3)
+    // — oreDefId names the ore consumed for +1, and is pulled from history on
+    // -1. Armor/accessories keep legacy flat-Defense/-Attack behavior.
+    private static void ApplyEnhancementDelta(Player player, EquipmentBase item, int delta, string? oreDefId)
     {
         item.Unequip(player);
-        int signedBonus = BonusPerLevel(item) * delta;
-        StatType stat = item is Armor ? StatType.Defense : StatType.Attack;
-        item.Bonuses.Add(stat, signedBonus);
+        int bonus = BonusPerLevel(item);
+
+        if (item is Weapon weapon)
+        {
+            if (delta > 0)
+            {
+                // oreDefId must be non-null on the +1 path.
+                string ore = oreDefId ?? "ore_crimson_flame";
+                weapon.EnhancementOreHistory.Add(ore);
+                var stat = EnhancementOreDefinitions.OreDefIdToStat
+                    .TryGetValue(ore, out var s) ? s : StatType.Attack;
+                weapon.Bonuses.Add(stat, bonus);
+                // Adamant flavour: ores may carry a one-off ItemDurability
+                // reinforcement on socket. Read via ItemRegistry prototype
+                // to avoid hard-coded ore defId lookups here. Tyler Q3=a.
+                int durBump = GetOreDurabilityBonus(ore);
+                if (durBump != 0) weapon.ItemDurability += durBump;
+            }
+            else
+            {
+                // -1 path: pop the last ore and refund its biased stat.
+                if (weapon.EnhancementOreHistory.Count > 0)
+                {
+                    string lastOre = weapon.EnhancementOreHistory[^1];
+                    weapon.EnhancementOreHistory.RemoveAt(weapon.EnhancementOreHistory.Count - 1);
+                    var stat = EnhancementOreDefinitions.OreDefIdToStat
+                        .TryGetValue(lastOre, out var s) ? s : StatType.Attack;
+                    weapon.Bonuses.Add(stat, -bonus);
+                    int durBump = GetOreDurabilityBonus(lastOre);
+                    if (durBump != 0) weapon.ItemDurability = Math.Max(1, weapon.ItemDurability - durBump);
+                }
+                else
+                {
+                    weapon.Bonuses.Add(StatType.Attack, -bonus);
+                }
+            }
+        }
+        else
+        {
+            int signedBonus = bonus * delta;
+            StatType stat = item is Armor ? StatType.Defense : StatType.Attack;
+            item.Bonuses.Add(stat, signedBonus);
+        }
+
         item.EnhancementLevel += delta;
         item.Equip(player);
         // Bonuses list was mutated on a still-equipped item — drop cache.
         player.Inventory.InvalidateStatCache();
+    }
+
+    // Look up an ore's DurabilityBonus by instantiating its prototype from
+    // ItemRegistry. Returns 0 for any ore that doesn't define one (default).
+    // Adamant Ore is the only ore with a non-zero value today (+10/level).
+    private static int GetOreDurabilityBonus(string oreDefId)
+    {
+        if (ItemRegistry.Create(oreDefId) is EnhancementOre ore)
+            return ore.DurabilityBonus;
+        return 0;
     }
 
     // ── Evolve (Priority 5 Phase B) ───────────────────────────────────
@@ -345,13 +470,26 @@ public static class CraftingDialog
         weapon.Unequip(player);
 
         // If the old weapon was +N, fold those bonuses into the new weapon so
-        // the displayed +N is real. ApplyEnhancementDelta's pattern of adding
-        // flat Attack per level is reused here for parity with Enhance flow.
+        // the displayed +N is real. IM System 3: preserve per-level ore
+        // biases from the old weapon's history so the stat distribution
+        // follows the player's prior investment (not a flat +Attack rebake).
         if (oldEnhLevel > 0)
         {
             int bonusPerLevel = BonusPerLevel(nextWeapon);
-            nextWeapon.Bonuses.Add(StatType.Attack, bonusPerLevel * oldEnhLevel);
             nextWeapon.EnhancementLevel = oldEnhLevel;
+            // Copy ore history 1:1 (length == oldEnhLevel on any save-migrated
+            // or natively-forged weapon). Fallback to Crimson Flame if the
+            // count mismatch sneaks through.
+            nextWeapon.EnhancementOreHistory = new List<string>(weapon.EnhancementOreHistory);
+            while (nextWeapon.EnhancementOreHistory.Count < oldEnhLevel)
+                nextWeapon.EnhancementOreHistory.Add("ore_crimson_flame");
+            for (int i = 0; i < oldEnhLevel; i++)
+            {
+                string oreId = nextWeapon.EnhancementOreHistory[i];
+                var stat = EnhancementOreDefinitions.OreDefIdToStat
+                    .TryGetValue(oreId, out var s) ? s : StatType.Attack;
+                nextWeapon.Bonuses.Add(stat, bonusPerLevel);
+            }
         }
 
         // Put the old weapon back in the backpack (inventory list) so the

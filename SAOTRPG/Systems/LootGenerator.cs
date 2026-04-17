@@ -45,6 +45,10 @@ public static class LootGenerator
         { "dragon",    new[] { ("Dragon Scale",   30), ("Flame Essence",  25), ("Dragon Claw",   20), ("Infernal Gem",     3), ("Nidhogg Scale",    3) } },
         { "elemental", new[] { ("Fire Crystal",   22), ("Essence Wisp",   18), ("Elemental Ash",  12), ("Trishula Tip",     3) } },
         { "aquatic",   new[] { ("Water Core",     15), ("Fish Scale",      8), ("Murky Pearl",   18) } },
+        // Hollow / corrupted / celestial — F76+ endgame mobs (Hollow Mutated
+        // Wolf, Cardinal Error, Immortal Echo, Void Seraph). Flavoured toward
+        // Ash White ore + hollow-themed mats. Added 2026-04-17 per Tyler Q2=c.
+        { "hollow",    new[] { ("Hollow Essence", 22), ("Corrupted Shard", 18), ("Void Particle", 14), ("Ectoplasm",       8) } },
     };
 
     // Chain catalyst display name → ItemRegistry DefId. When the themed-drop
@@ -90,6 +94,25 @@ public static class LootGenerator
         // ── Divine Objects (canon Integrity Knight weapons) ────────
         [20] = "blue_rose_sword",             // Absolut the Winter Monarch — ice theme, Eugeo canon
         [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito canon
+    };
+
+    // ── Infinity Moment Last-Attack Bonus (Floor Bosses) ───────────
+    // When the PLAYER lands the killing blow on a floor boss at one of
+    // these floors, the matching weapon drops at 100% rate IN ADDITION to
+    // any FloorBossGuaranteedDrops entry for the same floor (e.g. F99
+    // drops both Night Sky Sword Divine AND Artemis). All 8 entries are
+    // non-enhanceable Legendaries — canon IM tradeoff. Wired in
+    // TurnManager.Combat.HandleMonsterKill → Boss branch.
+    public static readonly Dictionary<int, string> FloorBossLastAttackDrops = new()
+    {
+        [85] = "bow_zephyros",
+        [92] = "ths_sacred_cross",
+        [93] = "sci_glow_haze",
+        [94] = "kat_saku",
+        [95] = "dag_mirage_knife",
+        [96] = "axe_northern_light",
+        [98] = "spr_lunatic_roof",
+        [99] = "bow_artemis",           // additional drop alongside Night Sky Sword
     };
 
     // ── Hollow Fragment Last-Attack Bonus (Avatar Weapons) ─────────
@@ -181,7 +204,65 @@ public static class LootGenerator
         (65, 75, "scy_reaper_scythe"),             // F70
         (78, 88, "ohs_velocious_brain"),           // F82
         (92, 99, "ths_saintblade_ragnarok"),       // F95
+
+        // ── Infinity Moment Shop weapons — fallback drop paths ─────
+        // These also rotate into F50+ dynamic shop tiers (ShopTierSystem),
+        // but are added here so they can still reach the player via the
+        // chest/drop-table path when a shop isn't reachable.
+        (76, 85, "rap_edelweiss"),                  // Epic band
+        (86, 99, "rap_noctis_strasse"),             // Legendary band
+        (76, 85, "ths_fasislawine"),                // Epic band
+        (86, 99, "ths_wice_ritter"),                // Legendary band
+        (86, 99, "axe_schwarzs_blitz"),             // Legendary band
+        (86, 99, "kat_muramasa"),                   // Legendary band
+        (76, 85, "spr_foa_stoss"),                  // Epic band
+        (86, 99, "spr_wave_schneider"),             // Legendary band
+        (76, 85, "sci_poisoned_syringe"),           // Epic band
+        (86, 99, "sci_silver_wing"),                // Legendary band
+        (76, 85, "dag_flyheight_fang"),             // Epic band
+        (86, 99, "dag_rue_feuille"),                // Legendary band
     };
+
+    // ── IM Enhancement Ore themed drops ──────────────────────────────
+    // Mob LootTag → ore DefId. When a matching mob dies, TurnManager rolls
+    // OreDropChancePercent for the themed ore. If no tag matches, no ore
+    // drops via this path — rare-boss drops still fire from a separate path.
+    public static readonly Dictionary<string, string> OreByLootTag = new()
+    {
+        // Crimson Flame — fire/demon/volcanic themes (dragon+elemental proxy).
+        ["dragon"]    = "ore_crimson_flame",
+        ["elemental"] = "ore_crimson_flame",
+        // Adamant — armored/construct/golem themes.
+        ["construct"] = "ore_adamant",
+        // Crust — earth/giant/undead themes.
+        ["undead"]    = "ore_crust",
+        ["reptile"]   = "ore_crust",
+        // Sharp Blade — humanoid/bandit/PK themes.
+        ["humanoid"]  = "ore_sharp_blade",
+        ["kobold"]    = "ore_sharp_blade",
+        // Flowing Water — aquatic/ice themes.
+        ["aquatic"]   = "ore_flowing_water",
+        // Wind Flower — insect/beast/flying themes.
+        ["insect"]    = "ore_wind_flower",
+        ["beast"]     = "ore_wind_flower",
+        // Ash White — hollow/corrupted/celestial F76+ endgame mobs. The
+        // "hollow" LootTag covers Hollow Mutated Wolf, Cardinal Error,
+        // Immortal Echo, Void Seraph. (Tyler Q2=c, 2026-04-17.)
+        ["hollow"]    = "ore_ash_white",
+    };
+
+    // 4% themed ore drop chance per tagged mob kill. Tunable from one spot.
+    public const int OreDropChancePercent = 4;
+
+    // Rare boss path — 20% chance per field/floor boss to drop a random ore.
+    public const int BossOreDropChancePercent = 20;
+
+    // Pick a random ore DefId for boss drops (uniform across the 7 ores).
+    public static string PickRandomOreDefId()
+    {
+        var ids = EnhancementOreDefinitions.AllOreDefIds;
+        return ids[Random.Shared.Next(ids.Length)];
+    }
 
     // Pick a floor-banded registered loot DefId for the current floor, or
     // null if no entries cover this floor. Used by RollChestItem to wire

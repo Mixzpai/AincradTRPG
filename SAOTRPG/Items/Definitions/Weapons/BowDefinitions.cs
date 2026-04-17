@@ -45,6 +45,33 @@ public static class BowDefinitions
     public static Weapon CreateTiasLongbow() => Make("tias_longbow", "Tia's Longbow", 900, "Rare", 90, 25, 32, 2, 4,
         B().Add(StatType.Attack, 22).Add(StatType.Dexterity, 12));
 
+    // ── Infinity Moment Last-Attack Bonus bows (non-enhanceable) ──────
+    // Both drop as guaranteed extras via FloorBossLastAttackDrops on the
+    // player's killing-blow against the floor boss. Non-enhanceable, so
+    // base stats run slightly higher than a comparable Legendary to
+    // compensate for losing the +1..+10 progression.
+
+    // IM F85 floor-boss LAB reward. Wind-sheared hunting bow.
+    public static Weapon CreateZephyros()
+    {
+        var w = Make("bow_zephyros", "Zephyros", 24000, "Legendary", 240, 82, 170, 1, 4,
+            B().Add(StatType.Attack, 88).Add(StatType.Dexterity, 22).Add(StatType.Agility, 14),
+            "Burst+20");
+        w.IsEnhanceable = false;
+        return w;
+    }
+
+    // IM F99 floor-boss LAB reward (paired with Night Sky Sword Divine drop).
+    // Piercing moon-touched bow of the huntress.
+    public static Weapon CreateArtemis()
+    {
+        var w = Make("bow_artemis", "Artemis", 32000, "Legendary", 260, 92, 188, 1, 5,
+            B().Add(StatType.Attack, 98).Add(StatType.Dexterity, 28).Add(StatType.Agility, 18),
+            "PiercingShot+25");
+        w.IsEnhanceable = false;
+        return w;
+    }
+
     // ── Divine Objects ──────────────────────────────────────────────
     // Above Legendary. Hand-placed only. Unbreakable. Bypass block rolls.
 

@@ -309,6 +309,40 @@ public static class ItemRegistry
         Register("axe_ingurgitator_belzericht",    () => AxeDefinitions.CreateIngurgitatorBelzericht());
         Register("scy_eldark_radius_sigma",        () => ScytheDefinitions.CreateEldarkRadiusSigma());
 
+        // ── Infinity Moment expansion — 8 LAB + 12 Shop weapons ────
+        // LAB (non-enhanceable) floor-boss drops F85/F92-F96/F98/F99.
+        Register("bow_zephyros",          () => BowDefinitions.CreateZephyros());
+        Register("bow_artemis",           () => BowDefinitions.CreateArtemis());
+        Register("ths_sacred_cross",      () => TwoHandedSwordDefinitions.CreateSacredCross());
+        Register("sci_glow_haze",         () => ScimitarDefinitions.CreateGlowHaze());
+        Register("kat_saku",              () => KatanaDefinitions.CreateSaku());
+        Register("dag_mirage_knife",      () => DaggerDefinitions.CreateMirageKnife());
+        Register("axe_northern_light",    () => AxeDefinitions.CreateNorthernLight());
+        Register("spr_lunatic_roof",      () => SpearDefinitions.CreateLunaticRoof());
+
+        // IM Shop weapons — rotate into F50+ tier shops + floor-banded drops.
+        Register("rap_edelweiss",         () => RapierDefinitions.CreateEdelweiss());
+        Register("rap_noctis_strasse",    () => RapierDefinitions.CreateNoctisStrasse());
+        Register("ths_fasislawine",       () => TwoHandedSwordDefinitions.CreateFasislawine());
+        Register("ths_wice_ritter",       () => TwoHandedSwordDefinitions.CreateWiceRitter());
+        Register("axe_schwarzs_blitz",    () => AxeDefinitions.CreateSchwarzsBlitz());
+        Register("kat_muramasa",          () => KatanaDefinitions.CreateMuramasa());
+        Register("spr_foa_stoss",         () => SpearDefinitions.CreateFoaStoss());
+        Register("spr_wave_schneider",    () => SpearDefinitions.CreateWaveSchneider());
+        Register("sci_poisoned_syringe",  () => ScimitarDefinitions.CreatePoisonedSyringe());
+        Register("sci_silver_wing",       () => ScimitarDefinitions.CreateSilverWing());
+        Register("dag_flyheight_fang",    () => DaggerDefinitions.CreateFlyheightFang());
+        Register("dag_rue_feuille",       () => DaggerDefinitions.CreateRueFeuille());
+
+        // ── IM Enhancement Ores (System 3) ───────────────────────────
+        Register("ore_crimson_flame",  () => EnhancementOreDefinitions.CreateCrimsonFlame());
+        Register("ore_adamant",        () => EnhancementOreDefinitions.CreateAdamant());
+        Register("ore_crust",          () => EnhancementOreDefinitions.CreateCrust());
+        Register("ore_sharp_blade",    () => EnhancementOreDefinitions.CreateSharpBlade());
+        Register("ore_flowing_water",  () => EnhancementOreDefinitions.CreateFlowingWater());
+        Register("ore_wind_flower",    () => EnhancementOreDefinitions.CreateWindFlower());
+        Register("ore_ash_white",      () => EnhancementOreDefinitions.CreateAshWhite());
+
         // ── Refinement Ingots (Agent 3 partition — see IF_EXPANSION_SCOUT §9) ──
         Register("sharpening_ingot",  () => IngotDefinitions.CreateSharpeningIngot());
         Register("warden_ingot",      () => IngotDefinitions.CreateWardenIngot());

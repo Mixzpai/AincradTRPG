@@ -118,6 +118,12 @@ public class SaveData
 
     // Active Run Modifiers (FB-564) — set at run start, fixed per run
     public List<string> ActiveRunModifiers { get; set; } = [];
+
+    // IM Dynamic Shop Tiering (System 4) — highest floor whose BOSS has
+    // been cleared. 0 = tier system inactive (base shop stock only).
+    // Missing in legacy saves; deserialization defaults to 0 so existing
+    // runs see unchanged inventories until their next F50+ clear.
+    public int HighestFloorBossCleared { get; set; }
 }
 
 // Serialized form of a single item (backpack or equipped).
@@ -135,6 +141,13 @@ public class ItemSaveData
     // Null array means "no refinement data saved" (legacy/pre-Agent3 saves).
     // Saved only when at least one slot is non-null to keep legacy saves clean.
     public List<string?>? RefinementSlots { get; set; }
+
+    // IM Enhancement Ore history (System 3). Parallel to EnhancementLevel —
+    // entry i is the ore DefId consumed for the (i+1)th level. Length SHOULD
+    // equal EnhancementLevel when present. Null / missing on legacy saves, in
+    // which case SaveManager.DeserializeItem auto-populates with N × Crimson
+    // Flame so stat totals match the pre-ore flat-Attack implementation.
+    public List<string>? EnhancementOreHistory { get; set; }
 }
 
 // Serialized party member data.

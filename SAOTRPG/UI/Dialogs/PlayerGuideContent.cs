@@ -1778,7 +1778,10 @@ public static class PlayerGuideContent
             "claw flurries to slow scythe reach. Each lists speed, range,\n" +
             "and the attributes it scales with. Integral Factor adds named\n" +
             "series weapons (Integral/Nox/Rosso/Yasha/Gaou) across most of\n" +
-            "these classes.\n\n" +
+            "these classes, and Infinity Moment adds 20 further canon\n" +
+            "weapons — 8 LAB floor-boss drops (F85-F99) and 12 enhanceable\n" +
+            "shop weapons (F76-F99) — spanning Bow, 2H Sword, Scimitar,\n" +
+            "Katana, Dagger, 2H Axe, Spear, and Rapier.\n\n" +
             "USAGE\n" +
             "Equip any class in the main-hand slot. The OffHand Shield is\n" +
             "the only dedicated offhand until Dual Blades unlocks.\n\n" +
@@ -1804,7 +1807,7 @@ public static class PlayerGuideContent
             "Rapier or Dagger proficiency. Every weapon and shield gets 3\n" +
             "Refinement slots — see the Refinement System topic.\n\n" +
             "SEE ALSO\n" +
-            "[Material Tiers (Baseline)] · [Integral Factor Weapon Series] · [Weapon Refinement System]")
+            "[Material Tiers (Baseline)] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Weapon Refinement System]")
         {
             Tags = new[] { "weapons", "equipment", "integral-factor" }
         },
@@ -1832,7 +1835,11 @@ public static class PlayerGuideContent
             "ladder: Leather/Iron/Steel/Mythril/Adamantite/Celestial.\n" +
             "Refinement Ingots (Common/Rare/Epic/Legendary) are a separate\n" +
             "material family — they socket into weapon/shield slots rather\n" +
-            "than forging a new item. See Refinement Ingots for the list.\n\n" +
+            "than forging a new item. See Refinement Ingots for the list.\n" +
+            "Enhancement Ores (7 types, Uncommon, 85-120 Col) are a third\n" +
+            "family — each Anvil Enhance level consumes one ore, and the\n" +
+            "ore picked biases the level's bonus into a specific stat. See\n" +
+            "Enhancement Ores System for details.\n\n" +
             "COSTS\n" +
             "Col scales sharply at the top — Celestial is 60x the Iron\n" +
             "price.\n\n" +
@@ -1841,7 +1848,7 @@ public static class PlayerGuideContent
             "gets bought; jumping straight to Adamantite burns your purse\n" +
             "and leaves you under-enhanced.\n\n" +
             "SEE ALSO\n" +
-            "[Weapon Types Overview] · [Named Legendary Highlights] · [Refinement Ingots]")
+            "[Weapon Types Overview] · [Named Legendary Highlights] · [Refinement Ingots] · [Enhancement Ores System]")
         {
             Tags = new[] { "weapons", "equipment", "rarity" }
         },
@@ -1881,18 +1888,28 @@ public static class PlayerGuideContent
             "  Majestic Lord     Mace (Deliverer), craft-only    Lisbeth R6\n" +
             "  Giga Disaster     Axe (Hecatomb), craft-only      Lisbeth R6\n" +
             "  Saphir Avatar     Scimitar, F70+ Last-Attack      Avatar drop\n" +
-            "  Absoludia Avatar  2H Sword, F70+ Last-Attack      Avatar drop\n\n" +
+            "  Absoludia Avatar  2H Sword, F70+ Last-Attack      Avatar drop\n" +
+            "IM LAB highlights (non-enhanceable, F85+ 100% drop):\n" +
+            "  Saku              Katana (F94), NightDamage\n" +
+            "  Lunatic Roof      Spear (F98), Lunacy\n" +
+            "  Artemis           Bow (F99), PiercingShot\n" +
+            "IM Shop highlights (enhanceable via Anvil + ores):\n" +
+            "  Muramasa          Katana (F86-99), Bleed — Legendary\n" +
+            "  Noctis Strasse    Rapier (F86-99), Bleed — Legendary\n\n" +
             "COSTS\n" +
             "None — the encounter itself is the cost. Lisbeth R6 crafts\n" +
-            "cost 3M Col + rare mats each (see Lisbeth craft topic).\n\n" +
+            "cost 3M Col + rare mats each (see Lisbeth craft topic).\n" +
+            "IM LAB weapons carry the IsEnhanceable=false flag — high base\n" +
+            "stats, no scaling. IM Shop weapons enhance normally.\n\n" +
             "TIPS\n" +
             "Mjolnir is flagged as Divine apex; pair it with stun-heavy\n" +
             "skills for lockdown. Dual Blades users should chase both\n" +
             "Elucidator and Dark Repulser. The three IF Legendary series\n" +
             "(Rosso/Yasha/Gaou) cover F61-F100. Lisbeth's 18-recipe R6\n" +
-            "line and Avatar Weapons round out the F70+ arsenal.\n\n" +
+            "line, Avatar Weapons, and the 20 Infinity Moment additions\n" +
+            "round out the F70+ arsenal.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Weapon Series] · [Integral Factor Field Bosses] · [Lisbeth — Rarity 6 Craft Line] · [Avatar Weapons & Last-Attack Bonus]")
+            "[Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Lisbeth — Rarity 6 Craft Line] · [Avatar Weapons & Last-Attack Bonus]")
         {
             Tags = new[] { "weapons", "rarity", "integral-factor" }
         },
@@ -2059,27 +2076,37 @@ public static class PlayerGuideContent
             "EFFECTS\n" +
             "REPAIR ALL — Restores all equipped gear to cap:\n" +
             "  50 + 10*floor + 5*enhancementLevel durability.\n" +
-            "ENHANCE (+0 to +10) — Weapons gain +3 ATK per level, armor\n" +
-            "+2 DEF, accessories +1 primary. Success rates: +1 95%,\n" +
-            "+5 60%, +7 40%, +10 10%. From +7 up, failed attempts have a\n" +
-            "30% chance to DOWNGRADE by 1 (SAO canon).\n" +
+            "ENHANCE (+0 to +10) — Each level now consumes 1 Enhancement\n" +
+            "Ore (7 types) plus the Col cost, and the ore picked biases\n" +
+            "that level's BonusPerLevel into a specific stat — Crimson\n" +
+            "Flame = Attack, Adamant = Defense, Crust = Vitality, Sharp\n" +
+            "Blade = Dexterity, Flowing Water = Speed, Wind Flower =\n" +
+            "Agility, Ash White = Intelligence. Baseline: weapons +3 ATK\n" +
+            "per level on Crimson Flame, armor +2 DEF on Adamant, other\n" +
+            "ores redirect the bump. Success rates: +1 95%, +5 60%, +7\n" +
+            "40%, +10 10%. From +7 up, failed attempts have a 30% chance\n" +
+            "to DOWNGRADE by 1 (SAO canon). IM LAB weapons cannot be\n" +
+            "enhanced — the menu shows [SEALED].\n" +
             "EVOLVE — Swaps the equipped chain weapon, keeps the old in\n" +
-            "backpack, and preserves enhancement level.\n" +
+            "backpack, and preserves enhancement level AND ore history.\n" +
             "REFINE — Socket an Ingot into one of 3 slots on a weapon or\n" +
             "shield. Override-only: socketing into an occupied slot\n" +
             "destroys the previous ingot. Divines cannot be refined.\n\n" +
             "COSTS\n" +
             "Repair: 50 + 25*floor Col. Enhance attempt: (level+1)*100 +\n" +
-            "50*floor Col plus 1 + level/3 materials. Evolve: catalysts\n" +
-            "per Weapon Evolution Chains. Refine: 1/1/2/3/5 Red Hot Ore\n" +
-            "scaling with ingot rarity (Common through Legendary).\n\n" +
+            "50*floor Col plus 1 Enhancement Ore of the chosen bias.\n" +
+            "Evolve: catalysts per Weapon Evolution Chains. Refine: 1/1/\n" +
+            "2/3/5 Red Hot Ore scaling with ingot rarity (Common through\n" +
+            "Legendary).\n\n" +
             "TIPS\n" +
             "Stop at +6 on everything cheap — the +7 downgrade risk makes\n" +
             "further pushes economically dangerous without a Divine safety\n" +
             "net. Refine last: ingots are cheaper to swap than enhancement\n" +
-            "is to rebuild.\n\n" +
+            "is to rebuild. Plan ore spend by farming themed mob biomes\n" +
+            "(Ash White from hollow mobs F76+, Crimson Flame from fire/demon,\n" +
+            "etc.) — see Enhancement Ores System.\n\n" +
             "SEE ALSO\n" +
-            "[Weapon Refinement System] · [Weapon Evolution Chains] · [Refinement Ingots] · [Lisbeth — Rarity 6 Craft Line]")
+            "[Weapon Refinement System] · [Weapon Evolution Chains] · [Refinement Ingots] · [Enhancement Ores System] · [Non-Enhanceable LAB Weapons] · [Lisbeth — Rarity 6 Craft Line]")
         {
             Tags = new[] { "crafting", "anvil", "refinement" }
         },
@@ -2281,7 +2308,12 @@ public static class PlayerGuideContent
             "Canon HNM (10% rate): F85 Abased Beast, F94 Ark Knight, F95\n" +
             "Gaia Breaker, F96 Eternal Dragon. All other F70+ field bosses\n" +
             "use the 2% rate. 1H Sword has NO canon Avatar — OHS killing\n" +
-            "blows skip the roll entirely.\n\n" +
+            "blows skip the roll entirely.\n" +
+            "DISTINCT FROM IM LAB: the Infinity Moment Last Attack Bonus\n" +
+            "drops on F85+ FLOOR BOSSES at 100% are a separate hook (see\n" +
+            "Infinity Moment Last Attack Bonus Weapons). Avatar rolls fire\n" +
+            "on FIELD bosses at 2%/10%. Both hooks can trigger on the same\n" +
+            "climb — they don't compete.\n\n" +
             "COSTS\n" +
             "None beyond the field-boss fight itself. A wrong-weapon last\n" +
             "hit forfeits the Avatar roll for that encounter forever (field\n" +
@@ -2292,7 +2324,7 @@ public static class PlayerGuideContent
             "the type you want. Dual Blades users should finish with the\n" +
             "off-hand weapon type they care about.\n\n" +
             "SEE ALSO\n" +
-            "[Field Bosses — Guaranteed Drops] · [Named Legendary Highlights] · [Weapon Types Overview] · [Hollow Fragment HNM Questgivers (F79-F99)]")
+            "[Field Bosses — Guaranteed Drops] · [Named Legendary Highlights] · [Weapon Types Overview] · [Infinity Moment Last Attack Bonus Weapons] · [Hollow Fragment HNM Questgivers (F79-F99)]")
         {
             Tags = new[] { "avatar", "weapons", "hollow-fragment" }
         },
@@ -2562,6 +2594,205 @@ public static class PlayerGuideContent
             "[Equipment Slots & Dual Wield] · [The Six Attributes] · [Derived Combat Stats]")
         {
             Tags = new[] { "accessories", "equipment", "stats" }
+        },
+
+        new("Items", "Infinity Moment Last Attack Bonus Weapons",
+            "┌─ Items\n" +
+            "│ Topic: Infinity Moment Last Attack Bonus Weapons\n" +
+            "│ Tier: Legendary (non-enhanceable, 8 canon IM drops)\n" +
+            "│ Weapon type: Bow, 2H Sword, Scimitar, Katana, Dagger, 2H Axe, Spear\n" +
+            "│ Source: F85-F99 floor-boss killing blow (100% drop)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Eight canon Infinity Moment weapons that drop at 100% when the\n" +
+            "PLAYER lands the killing blow on a designated floor boss from\n" +
+            "F85 upward. LAB (Last Attack Bonus) weapons are non-enhanceable\n" +
+            "— high base stats are the tradeoff for zero scaling headroom.\n\n" +
+            "USAGE\n" +
+            "Deliver the killing blow yourself on the listed floor boss —\n" +
+            "ally KOs don't count. Drop logs a BrightYellow line alongside\n" +
+            "any existing guaranteed boss drop (additive, not replacing).\n\n" +
+            "EFFECTS\n" +
+            "  F85  Zephyros          Bow\n" +
+            "  F92  Sacred Cross      2H Sword, HolyDamage\n" +
+            "  F93  Glow Haze         Scimitar, BlindOnHit\n" +
+            "  F94  Saku              Katana, NightDamage\n" +
+            "  F95  Mirage Knife      Dagger, Invisibility\n" +
+            "  F96  Northern Light    2H Axe, FrostDamage\n" +
+            "  F98  Lunatic Roof      Spear, Lunacy\n" +
+            "  F99  Artemis           Bow, PiercingShot\n" +
+            "F99 drops BOTH Night Sky Sword Divine AND Artemis — additive.\n\n" +
+            "COSTS\n" +
+            "IsEnhanceable=false: Anvil Enhance shows [SEALED]. Durability\n" +
+            "ticks normally; repair at the Anvil like any Legendary piece.\n\n" +
+            "TIPS\n" +
+            "Wield the weapon type you want a later LAB to replace when\n" +
+            "closing the boss — LAB drops are floor-locked and won't repeat\n" +
+            "on a later climb. Park Saku (Katana, NightDamage) for Darkness\n" +
+            "Blade builds; Artemis (Bow) is one of only two F99 apex drops.\n\n" +
+            "SEE ALSO\n" +
+            "[Non-Enhanceable LAB Weapons] · [Avatar Weapons & Last-Attack Bonus] · [Infinity Moment Shop Weapons] · [Named Legendary Highlights]")
+        {
+            Tags = new[] { "infinity-moment", "lab-weapon", "weapons" }
+        },
+
+        new("Items", "Infinity Moment Shop Weapons",
+            "┌─ Items\n" +
+            "│ Topic: Infinity Moment Shop Weapons\n" +
+            "│ Tier: Epic (F76-85) + Legendary (F86-99), enhanceable\n" +
+            "│ Weapon type: Rapier, 2H Sword, 2H Axe, Katana, Spear, Scimitar, Dagger\n" +
+            "│ Source: F50+ Dynamic Shop Tiering stock (tier-unlocked)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Twelve canon Infinity Moment weapons purchasable from vendors\n" +
+            "once their floor tier unlocks via the Dynamic Shop Tiering\n" +
+            "system. Unlike LAB weapons, these ARE enhanceable — each level\n" +
+            "consumes an Enhancement Ore of your chosen bias.\n\n" +
+            "USAGE\n" +
+            "Clear floor bosses at F50+ to push the shop tier counter. When\n" +
+            "the listed floor band unlocks, the weapon appears in EVERY\n" +
+            "vendor's stock with a [NEW] badge on first visit. Buy once and\n" +
+            "it's yours — stock is additive and never shrinks.\n\n" +
+            "EFFECTS\n" +
+            "EPIC band (F76-85):\n" +
+            "  Edelweiss         Rapier, CritRate\n" +
+            "  Fasislawine       2H Sword, Cleave\n" +
+            "  Foa Stoss         Spear, ThrustDmg\n" +
+            "  Poisoned Syringe  Scimitar, Poison\n" +
+            "  Flyheight Fang    Dagger, BackstabDmg\n" +
+            "LEGENDARY band (F86-99):\n" +
+            "  Noctis Strasse    Rapier, Bleed\n" +
+            "  Wice Ritter       2H Sword, ArmorPierce\n" +
+            "  Schwarzs Blitz    2H Axe, Stun\n" +
+            "  Muramasa          Katana, Bleed\n" +
+            "  Wave Schneider    Spear, FrostDamage\n" +
+            "  Silver Wing       Scimitar, AttackSpeed\n" +
+            "  Rue Feuille       Dagger, CritRate\n\n" +
+            "COSTS\n" +
+            "Standard vendor markup. Enhancement ore cost scales as normal\n" +
+            "(see Anvil — Repair, Enhance, Evolve, Refine).\n\n" +
+            "TIPS\n" +
+            "Muramasa (Katana, Bleed) stacks cleanly with Katana Mastery's\n" +
+            "15% bleed passive for constant DoT pressure. Schwarzs Blitz\n" +
+            "pairs with stun-skill builds. Enhance with Crimson Flame for\n" +
+            "raw ATK or Sharp Blade for crit-focused DPS.\n\n" +
+            "SEE ALSO\n" +
+            "[Dynamic Shop Tiering (F50+)] · [Enhancement Ores System] · [Anvil — Repair, Enhance, Evolve, Refine] · [Vendors — Rotating Stock]")
+        {
+            Tags = new[] { "infinity-moment", "shop-tiering", "weapons" }
+        },
+
+        new("Items", "Enhancement Ores System",
+            "┌─ Items\n" +
+            "│ Topic: Enhancement Ores System\n" +
+            "│ Tier: Uncommon material (7 ore types)\n" +
+            "│ Weapon type: Consumed by Anvil Enhance\n" +
+            "│ Source: Themed mob drops (~3-5%) + boss drops (15-30%)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Seven themed Enhancement Ores replace the old flat +N Enhance.\n" +
+            "Each Anvil Enhance level now consumes exactly one ore, and the\n" +
+            "ore chosen biases that level's BonusPerLevel into a specific\n" +
+            "stat — you pick the stat by picking the ore.\n\n" +
+            "USAGE\n" +
+            "Farm ores from themed mob biomes. At the Anvil, pick Enhance,\n" +
+            "choose a bias ore from inventory, confirm. The ore is consumed\n" +
+            "whether the enhance succeeds or fails. Ore history is stored\n" +
+            "per-weapon and preserved through Evolve.\n\n" +
+            "EFFECTS\n" +
+            "  Crimson Flame Ore  +Attack         fire / demon / volcanic mobs\n" +
+            "  Adamant Ore        +Defense        armored / construct / golem mobs\n" +
+            "  Crust Ore          +Vitality       earth / giant / undead mobs\n" +
+            "  Sharp Blade Ore    +Dexterity      humanoid / bandit / pk mobs\n" +
+            "  Flowing Water Ore  +Speed          aquatic / ice mobs\n" +
+            "  Wind Flower Ore    +Agility        insect / beast / flying mobs\n" +
+            "  Ash White Ore      +Intelligence   hollow mobs F76+\n" +
+            "Prices: 85-120 Col each, Uncommon rarity, stack to 20.\n\n" +
+            "COSTS\n" +
+            "One ore per Enhance attempt (in addition to the normal Col\n" +
+            "cost). Legacy save migration: any pre-existing +N weapon gets\n" +
+            "N × Crimson Flame Ore entries baked into history, so stats\n" +
+            "match pre-session behavior (+Attack-only) — no regression.\n\n" +
+            "TIPS\n" +
+            "Pre-farm 7-10 ores of your primary bias before a major Enhance\n" +
+            "push; running out mid-attempt wastes a trip. Boss drops roll\n" +
+            "15-30% so floor-boss farming is the fastest stockpile route.\n" +
+            "Humanoid/bandit biomes double-dip as chain-catalyst farms.\n\n" +
+            "SEE ALSO\n" +
+            "[Anvil — Repair, Enhance, Evolve, Refine] · [Material Tiers (Baseline)] · [Non-Enhanceable LAB Weapons] · [Infinity Moment Shop Weapons]")
+        {
+            Tags = new[] { "enhancement-ore", "anvil", "crafting" }
+        },
+
+        new("Items", "Non-Enhanceable LAB Weapons",
+            "┌─ Items\n" +
+            "│ Topic: Non-Enhanceable LAB Weapons\n" +
+            "│ Tier: Legendary (IsEnhanceable flag = false)\n" +
+            "│ Weapon type: All 8 Infinity Moment LAB drops\n" +
+            "│ Source: F85-F99 floor-boss LAB hook\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A subset of late-game weapons carry the IsEnhanceable=false\n" +
+            "flag. Canon IM rationale: LAB weapons ship with high base\n" +
+            "stats and cannot scale further. The Anvil Enhance menu marks\n" +
+            "them [SEALED] and blocks any attempt with a clear message.\n\n" +
+            "USAGE\n" +
+            "Equip and fight as normal. Repair, Evolve (if on a chain), and\n" +
+            "Refine flows all still apply — only Enhance is blocked.\n\n" +
+            "EFFECTS\n" +
+            "Sealed weapons (all 8 current IM LAB drops):\n" +
+            "  Zephyros, Sacred Cross, Glow Haze, Saku, Mirage Knife,\n" +
+            "  Northern Light, Lunatic Roof, Artemis.\n" +
+            "Remains Heart remains enhanceable (canon Lisbeth masterwork\n" +
+            "exception). Any future LAB additions inherit the flag.\n\n" +
+            "COSTS\n" +
+            "Opportunity cost only: a sealed weapon's +3 ATK / +N bias\n" +
+            "ceiling is forfeit. Factor high base stats into the comparison\n" +
+            "against an enhanceable Epic/Legendary you could push to +10.\n\n" +
+            "TIPS\n" +
+            "Pair a sealed LAB with heavy Refinement investment — socket 3\n" +
+            "Astral or Chimeric Ingots to recover the ATK you can't enhance\n" +
+            "in. Dual Blades users can mix a sealed main-hand with an\n" +
+            "enhanceable off-hand for scaling on one side.\n\n" +
+            "SEE ALSO\n" +
+            "[Infinity Moment Last Attack Bonus Weapons] · [Anvil — Repair, Enhance, Evolve, Refine] · [Enhancement Ores System] · [Weapon Refinement System]")
+        {
+            Tags = new[] { "infinity-moment", "lab-weapon", "weapons" }
+        },
+
+        new("Items", "Dynamic Shop Tiering (F50+)",
+            "┌─ Items\n" +
+            "│ Topic: Dynamic Shop Tiering (F50+)\n" +
+            "│ Tier: 50 stock tiers across F51-F99\n" +
+            "│ Weapon type: Shop-wide stock injector\n" +
+            "│ Source: Floor-boss clears at F50+ (persistent)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Every floor-boss cleared at F50 or higher unlocks a new stock\n" +
+            "entry across EVERY vendor. Fifty tiers span F51-F99. Stock is\n" +
+            "additive — once unlocked, an item stays available for the rest\n" +
+            "of the save.\n\n" +
+            "USAGE\n" +
+            "Ascend past F50, then clear each subsequent floor boss. The\n" +
+            "shop header shows \"Tier N/50 unlocked\" and the first-visit\n" +
+            "items carry a [NEW] badge until inspected.\n\n" +
+            "EFFECTS\n" +
+            "Tier count persists via SaveData.HighestFloorBossCleared. The\n" +
+            "12 Infinity Moment shop weapons slot into canon F76-F96 tier\n" +
+            "bands (Epic at F76-85, Legendary at F86-99). Higher tiers also\n" +
+            "inject future expansion content into the same pipeline.\n\n" +
+            "COSTS\n" +
+            "None for unlocks — the floor-boss climb IS the unlock. Vendor\n" +
+            "markup (+20%) applies to the priced item as normal.\n\n" +
+            "TIPS\n" +
+            "Revisit every vendor after each F50+ boss kill to grab the\n" +
+            "[NEW] item before it blends into the stock wall. Missing the\n" +
+            "badge doesn't lock you out — the item remains in stock — but\n" +
+            "the badge is the best way to spot the new drop quickly.\n\n" +
+            "SEE ALSO\n" +
+            "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Ascending a Floor] · [Floor Boss Roster — Canon Highlights]")
+        {
+            Tags = new[] { "shop-tiering", "infinity-moment", "economy" }
         },
 
         // ═══════════════════════════════════════════════════════════════

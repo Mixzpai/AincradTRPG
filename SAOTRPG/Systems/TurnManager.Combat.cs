@@ -298,6 +298,9 @@ public partial class TurnManager
             // Seasonal one-shot marker: Nicholas beaten → mark the year's flag.
             if (fieldBoss.IsSeasonal && fieldBoss.SeasonalEventId == "christmas")
                 Story.ProfileData.MarkSeen($"nicholas_christmas_{DateTime.Now.Year}");
+
+            // IM rare-boss ore drop — field boss has a chance to drop 1-2 random ores.
+            RollBossOreDrops(fieldBoss.X, fieldBoss.Y, fieldBoss.Name);
         }
         else if (monster is Boss boss)
         {
@@ -321,6 +324,31 @@ public partial class TurnManager
                 var drop = Items.ItemRegistry.Create(dropId);
                 if (drop != null) DropItem(boss.X, boss.Y, drop, boss.Name);
             }
+
+            // IM Last-Attack Bonus floor-boss drops. F85/F92-F96/F98/F99 each
+            // drop a guaranteed non-enhanceable Legendary on the player's
+            // killing blow. Both this AND the FloorBossGuaranteedDrops entry
+            // fire — e.g. F99 drops Night Sky Sword (Divine) AND Artemis (LAB).
+            // Kill-credit assumption: HandleMonsterKill only runs after the
+            // player's attack resolves, so any boss reaching this branch had
+            // its killing blow from the player.
+            if (LootGenerator.FloorBossLastAttackDrops.TryGetValue(CurrentFloor, out var labDropId))
+            {
+                var labDrop = Items.ItemRegistry.Create(labDropId);
+                if (labDrop != null)
+                {
+                    _map.AddItem(boss.X, boss.Y, labDrop);
+                    _log.LogLoot($"  ◈ Last-Attack Bonus! {boss.Name} drops: {labDrop.Name}!");
+                }
+            }
+
+            // ShopTierSystem: floor-boss clear at F50+ unlocks the next tier
+            // of late-game stock for all shops. Additive only — never shrinks.
+            ShopTierSystem.RegisterFloorBossClear(CurrentFloor, _log);
+
+            // IM rare-boss ore drop — floor boss has a chance to drop 1-2
+            // random enhancement ores.
+            RollBossOreDrops(boss.X, boss.Y, boss.Name);
 
             // Boss-kill unique-skill unlocks (Darkness Blade at Night, Blazing/Frozen by biome).
             var bossUnlock = Skills.UniqueSkillSystem.CheckBossKillUnlock(BiomeSystem.DisplayName);

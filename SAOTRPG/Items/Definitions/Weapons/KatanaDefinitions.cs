@@ -105,4 +105,26 @@ public static class KatanaDefinitions
 
     public static Weapon CreateAvidyaSamsaraBlade() => Make("kat_avidya_samsara_blade", "Avidya Samsara Blade", 33000, "Legendary", 270, 92, 183, 1,
         B().Add(StatType.Attack, 90).Add(StatType.Agility, 28).Add(StatType.Dexterity, 22).Add(StatType.Speed, 18), "CritImmune+100");
+
+    // ── Infinity Moment shop katana ─────────────────────────────────
+
+    // IM Legendary-band shop weapon. Canon demon-smith folded katana; hemorrhage
+    // bleed theme. DefId uses kat_muramasa to avoid colliding with the existing
+    // HR evolution chain's Masamune (Divine T4, memory #409).
+    public static Weapon CreateMuramasa() => Make("kat_muramasa", "Muramasa", 21000, "Legendary", 230, 80, 168, 1,
+        B().Add(StatType.Attack, 80).Add(StatType.Agility, 24).Add(StatType.Dexterity, 20).Add(StatType.Strength, 14), "Bleed+30");
+
+    // ── Infinity Moment LAB katana (non-enhanceable) ────────────────
+
+    // IM F94 floor-boss LAB reward. Canon name is 朔 (new-moon) kanji; we
+    // render as plain "Saku" for terminal-font compatibility (Tyler Q1=b).
+    // Shaded night-cutter blade; damage climbs in darkness.
+    public static Weapon CreateSaku()
+    {
+        var w = Make("kat_saku", "Saku", 25000, "Legendary", 245, 84, 175, 1,
+            B().Add(StatType.Attack, 88).Add(StatType.Agility, 26).Add(StatType.Dexterity, 20).Add(StatType.Speed, 14),
+            "NightDamage+20");
+        w.IsEnhanceable = false;
+        return w;
+    }
 }

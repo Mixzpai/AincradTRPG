@@ -117,14 +117,14 @@ public static class MobFactory
         // Tier 9 — Floors 76-100: Hollow Fragment + divine ascension
         new[]
         {
-            new MobTemplate("Hollow Mutated Wolf",    'w', Color.BrightMagenta, 10, Bleed: true, LootTag: "beast", Ability: "Leap"),
+            new MobTemplate("Hollow Mutated Wolf",    'w', Color.BrightMagenta, 10, Bleed: true, LootTag: "hollow", Ability: "Leap"),
             new MobTemplate("Death Gaze",             'E', Color.DarkGray,     12, Stun: true, LootTag: "undead", Range: 4),
             new MobTemplate("Crawling Pain",          'x', Color.BrightMagenta, 8, Poison: true, LootTag: "insect"),
             new MobTemplate("Infected Griffin",       'g', Color.Green,         9, Poison: true, LootTag: "beast", Ability: "Leap"),
             new MobTemplate("Unholy Dragon",          'D', Color.BrightRed,    10, Bleed: true, LootTag: "dragon", Range: 3),
-            new MobTemplate("Void Seraph",            'A', Color.White,        12, Slow: true, LootTag: "elemental", Range: 3),
-            new MobTemplate("Cardinal Error",         'C', Color.BrightMagenta, 8, LootTag: "construct"),
-            new MobTemplate("Immortal Echo",          '@', Color.BrightRed,    10, Bleed: true, LootTag: "humanoid"),
+            new MobTemplate("Void Seraph",            'A', Color.White,        12, Slow: true, LootTag: "hollow", Range: 3),
+            new MobTemplate("Cardinal Error",         'C', Color.BrightMagenta, 8, LootTag: "hollow"),
+            new MobTemplate("Immortal Echo",          '@', Color.BrightRed,    10, Bleed: true, LootTag: "hollow"),
         },
     };
 

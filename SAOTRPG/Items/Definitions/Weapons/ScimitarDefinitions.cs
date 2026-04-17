@@ -80,4 +80,26 @@ public static class ScimitarDefinitions
 
     public static Weapon CreateCrescentbladeOriginalSin() => Make("sci_crescentblade_original_sin", "Crescentblade: Original Sin", 29500, "Legendary", 255, 88, 172,
         B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 28).Add(StatType.Agility, 20), "LifeSteal+10");
+
+    // ── Infinity Moment shop scimitars ──────────────────────────────
+
+    // IM Epic-band shop weapon. Venom-etched apothecary blade.
+    public static Weapon CreatePoisonedSyringe() => Make("sci_poisoned_syringe", "Poisoned Syringe", 5800, "Epic", 160, 38, 128,
+        B().Add(StatType.Attack, 54).Add(StatType.Dexterity, 22).Add(StatType.Agility, 10), "Poison+25");
+
+    // IM Legendary-band shop weapon. Swan-feather light curve, weightless swing.
+    public static Weapon CreateSilverWing() => Make("sci_silver_wing", "Silver Wing", 20000, "Legendary", 225, 78, 162,
+        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 24).Add(StatType.Agility, 20), "AttackSpeed+3");
+
+    // ── Infinity Moment LAB scimitar (non-enhanceable) ──────────────
+
+    // IM F93 floor-boss LAB reward. Refracting mirage edge, blinds on cut.
+    public static Weapon CreateGlowHaze()
+    {
+        var w = Make("sci_glow_haze", "Glow Haze", 24500, "Legendary", 240, 83, 172,
+            B().Add(StatType.Attack, 86).Add(StatType.Dexterity, 26).Add(StatType.Agility, 18),
+            "BlindOnHit+15");
+        w.IsEnhanceable = false;
+        return w;
+    }
 }

@@ -181,6 +181,7 @@ public static class SaveManager
         TrapsDisarmed = SAOTRPG.Systems.Skills.UniqueSkillSystem.TrapsDisarmed,
         DefeatedFieldBosses = tm.DefeatedFieldBosses.ToList(),
         ActiveRunModifiers = RunModifiers.ToSaveList(),
+        HighestFloorBossCleared = ShopTierSystem.HighestFloorBossCleared,
     };
 
     // Item serialization.
@@ -196,6 +197,11 @@ public static class SaveManager
             if (eq.HasAnyRefinement)
                 save.RefinementSlots = eq.RefinementSlots.ToList();
         }
+        // IM Enhancement Ore history (System 3): persist the per-level ore
+        // DefIds so ore-biased stat bonuses restore exactly on reload.
+        // Null/empty on unenhanced weapons to keep the save clean.
+        if (item is Weapon weaponSave && weaponSave.EnhancementOreHistory.Count > 0)
+            save.EnhancementOreHistory = new List<string>(weaponSave.EnhancementOreHistory);
         if (item.DefinitionId == null) save.FullItemJson = SerializeFullItem(item);
         return save;
     }
@@ -281,16 +287,46 @@ public static class SaveManager
             item.ItemDurability = save.Durability;
             if (item is StackableItem stackable && save.Quantity.HasValue)
                 stackable.Quantity = save.Quantity.Value;
-            // Restore enhancement level and re-apply bonus stats
+            // Restore enhancement level and re-apply bonus stats. For
+            // weapons, IM System 3 maps each level's bonus to the stat biased
+            // by the ore consumed at that level. Legacy saves (no ore history)
+            // auto-migrate to N × Crimson Flame (Attack) so pre-IM enhanced
+            // weapons keep the exact +Attack bonus they had before.
             if (item is EquipmentBase eq && save.EnhancementLevel > 0)
             {
                 eq.EnhancementLevel = save.EnhancementLevel;
                 int bonus = eq is Weapon ? 3 : eq is Armor ? 2 : 1;
-                for (int i = 0; i < save.EnhancementLevel; i++)
+                if (eq is Weapon eqWeapon)
                 {
-                    if (eq is Weapon) eq.Bonuses.Add(StatType.Attack, bonus);
-                    else if (eq is Armor) eq.Bonuses.Add(StatType.Defense, bonus);
-                    else eq.Bonuses.Add(StatType.Attack, bonus);
+                    // Hydrate or migrate the ore history.
+                    if (save.EnhancementOreHistory != null && save.EnhancementOreHistory.Count > 0)
+                    {
+                        eqWeapon.EnhancementOreHistory = new List<string>(save.EnhancementOreHistory);
+                    }
+                    else
+                    {
+                        eqWeapon.EnhancementOreHistory = new List<string>(save.EnhancementLevel);
+                        for (int i = 0; i < save.EnhancementLevel; i++)
+                            eqWeapon.EnhancementOreHistory.Add("ore_crimson_flame");
+                    }
+                    // Apply per-level biased stat bonus.
+                    for (int i = 0; i < save.EnhancementLevel; i++)
+                    {
+                        string oreId = i < eqWeapon.EnhancementOreHistory.Count
+                            ? eqWeapon.EnhancementOreHistory[i] : "ore_crimson_flame";
+                        var stat = Items.Definitions.EnhancementOreDefinitions
+                            .OreDefIdToStat.TryGetValue(oreId, out var s) ? s : StatType.Attack;
+                        eqWeapon.Bonuses.Add(stat, bonus);
+                    }
+                }
+                else
+                {
+                    // Armor / other equipment — unchanged legacy behavior.
+                    for (int i = 0; i < save.EnhancementLevel; i++)
+                    {
+                        if (eq is Armor) eq.Bonuses.Add(StatType.Defense, bonus);
+                        else eq.Bonuses.Add(StatType.Attack, bonus);
+                    }
                 }
             }
             // IF Refinement (Agent 3): restore slot DefIds and fold ingot

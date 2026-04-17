@@ -14,4 +14,16 @@ public class Weapon : EquipmentBase
     // Named weapon special effect. Null = normal weapon.
     // Examples: "SkillCooldown-1", "CritHeal+5", "ParryChance+10", "Bleed+20"
     public string? SpecialEffect { get; set; }
+
+    // IM canon: a small set of Last-Attack-Bonus floor-boss weapons trade
+    // enhance-ability for higher flat stats. When false, CraftingDialog Enhance
+    // is blocked on this weapon.
+    public bool IsEnhanceable { get; set; } = true;
+
+    // IM Enhancement Ores (System 3): parallel history of which ore defId
+    // contributed each enhance level (length == EnhancementLevel). On legacy
+    // saves where the history is missing, SaveManager.DeserializeItem
+    // auto-populates with Crimson Flame (Attack) so existing +N still reads
+    // as +N Attack — no retroactive stat change.
+    public List<string> EnhancementOreHistory { get; set; } = new();
 }

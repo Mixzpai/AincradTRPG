@@ -110,4 +110,26 @@ public static class TwoHandedSwordDefinitions
 
     public static Weapon CreateAmbitiousJuggernaut() => Make("ths_ambitious_juggernaut", "Ambitious Juggernaut", 34000, "Legendary", 275, 93, 185,
         B().Add(StatType.Attack, 94).Add(StatType.Strength, 33).Add(StatType.Vitality, 20), "Uninterruptible+50");
+
+    // ── Infinity Moment shop 2H swords ──────────────────────────────
+
+    // IM Epic-band shop weapon. Alpine flower-motif greatsword, cleaving arcs.
+    public static Weapon CreateFasislawine() => Make("ths_fasislawine", "Fasislawine", 5200, "Epic", 165, 36, 132,
+        B().Add(StatType.Attack, 58).Add(StatType.Strength, 18).Add(StatType.Dexterity, 10), "Cleave+30");
+
+    // IM Legendary-band shop weapon. White-knight cavalry blade, armor-piercing.
+    public static Weapon CreateWiceRitter() => Make("ths_wice_ritter", "Wice Ritter", 19500, "Legendary", 225, 78, 165,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 26).Add(StatType.Dexterity, 14), "ArmorPierce+20");
+
+    // ── Infinity Moment LAB 2H sword (non-enhanceable) ──────────────
+
+    // IM F92 floor-boss LAB reward. Cross-hilt cathedral greatsword.
+    public static Weapon CreateSacredCross()
+    {
+        var w = Make("ths_sacred_cross", "Sacred Cross", 26000, "Legendary", 250, 85, 178,
+            B().Add(StatType.Attack, 92).Add(StatType.Strength, 28).Add(StatType.Dexterity, 14),
+            "HolyDamage+25");
+        w.IsEnhanceable = false;
+        return w;
+    }
 }

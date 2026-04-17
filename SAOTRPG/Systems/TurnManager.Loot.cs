@@ -76,6 +76,32 @@ public partial class TurnManager
             var gear = LootGenerator.CreateRandomEquipment(CurrentFloor);
             if (gear != null) DropItem(mx, my, gear, monster.Name);
         }
+
+        // IM Enhancement Ores — themed mob drops. Fires once per kill on mobs
+        // whose LootTag maps to an ore theme. Rare-boss drops use a separate
+        // path in TurnManager.Combat (RollBossOreDrops).
+        if (monster is Mob mob2
+            && LootGenerator.OreByLootTag.TryGetValue(mob2.LootTag, out var oreDefId)
+            && Random.Shared.Next(100) < LootGenerator.OreDropChancePercent)
+        {
+            var ore = ItemRegistry.Create(oreDefId);
+            if (ore != null) DropItem(mx, my, ore, monster.Name);
+        }
+    }
+
+    // IM Enhancement Ore drop for field/floor bosses — 20% chance to drop
+    // a small stack of 1-2 ores. Ore identity is rolled independently per
+    // drop so a boss can yield mixed types.
+    private void RollBossOreDrops(int bx, int by, string sourceName)
+    {
+        if (Random.Shared.Next(100) >= LootGenerator.BossOreDropChancePercent) return;
+        int count = 1 + Random.Shared.Next(2); // 1 or 2 ores
+        for (int i = 0; i < count; i++)
+        {
+            var defId = LootGenerator.PickRandomOreDefId();
+            var ore = ItemRegistry.Create(defId);
+            if (ore != null) DropItem(bx, by, ore, sourceName);
+        }
     }
 
     private void DropItem(int x, int y, BaseItem item, string source)

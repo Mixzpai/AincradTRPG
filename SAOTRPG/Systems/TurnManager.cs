@@ -237,6 +237,11 @@ public partial class TurnManager
         IsHardcore = hardcore;
         _floorColStart = _player.ColOnHand;
 
+        // IM Shop Tiering — statics live across runs, so reset to 0 on
+        // construct. LoadFromSave will overwrite with the saved value if
+        // this is a load path (see SetForLoad below in LoadSaveData).
+        ShopTierSystem.SetForLoad(0);
+
         player.Inventory.Events.ConsumableUsed += (_, e) =>
         {
             if (e.Consumable is Potion { PotionType: "Antidote" })
@@ -398,6 +403,10 @@ public partial class TurnManager
         if (save.DefeatedFieldBosses != null)
             tm.DefeatedFieldBosses = new HashSet<string>(save.DefeatedFieldBosses);
         RunModifiers.LoadFromSave(save.ActiveRunModifiers);
+        // IM Shop Tiering — hydrate cross-save progress so post-update runs
+        // regain their unlocks on reload. Legacy saves lack the field and
+        // default to 0 (no tiered stock until the next F50+ clear).
+        ShopTierSystem.SetForLoad(save.HighestFloorBossCleared);
 
         // Restore party members
         PartySystem.Clear();

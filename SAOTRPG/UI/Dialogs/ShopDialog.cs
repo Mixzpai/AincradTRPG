@@ -5,6 +5,7 @@ using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Inventory.Core;
+using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
@@ -18,10 +19,40 @@ public static class ShopDialog
     // Opens the shop dialog — buy, sell, and repair items from a vendor.
     public static void Show(Player player, Vendor vendor, int currentFloor = 1)
     {
+        // IM Dynamic Shop Tiering — before rendering, fold any newly-unlocked
+        // tier items into the vendor stock. This is additive; duplicate DefIds
+        // are suppressed so repeat visits don't stack copies. A snapshot of
+        // DefIds NEW to this visit is captured here so the render loop can
+        // flag them — and then MarkSeen is called so the flag clears next time.
+        var newFlags = new HashSet<string>();
+        if (ShopTierSystem.HighestFloorBossCleared >= 50)
+        {
+            var existingDefIds = new HashSet<string>(
+                vendor.ShopStock
+                    .Where(i => !string.IsNullOrEmpty(i.DefinitionId))
+                    .Select(i => i.DefinitionId!));
+            foreach (var item in ShopTierSystem.BuildTierStock())
+            {
+                if (!string.IsNullOrEmpty(item.DefinitionId)
+                    && !existingDefIds.Contains(item.DefinitionId))
+                {
+                    vendor.ShopStock.Add(item);
+                    existingDefIds.Add(item.DefinitionId);
+                    if (ShopTierSystem.IsNew(item.DefinitionId))
+                        newFlags.Add(item.DefinitionId);
+                }
+            }
+            // Clear the NEW flags so the badge only shows once.
+            foreach (var defId in newFlags) ShopTierSystem.MarkSeen(defId);
+        }
+
         var dialog = DialogHelper.Create(vendor.ShopName ?? "Shop", DialogWidth, DialogHeight);
 
         var colLabel = new Label { Text = $"Your Col: {player.ColOnHand}", X = Pos.Center(), Y = 0 };
-        var modeHeader = new Label { Text = "[ For Sale ]", X = Pos.Center(), Y = 1 };
+        string tierInfo = ShopTierSystem.HighestFloorBossCleared >= 50
+            ? $"   Tier {ShopTierSystem.CurrentTierCount()}/{ShopTierSystem.TotalTiers} unlocked"
+            : "";
+        var modeHeader = new Label { Text = $"[ For Sale ]{tierInfo}", X = Pos.Center(), Y = 1 };
         var emptyLabel = new Label
         {
             Text = "", X = Pos.Center(), Y = 6,
@@ -39,7 +70,10 @@ public static class ShopDialog
             foreach (var item in vendor.ShopStock)
             {
                 string tag = RarityHelper.FormatTag(item.Rarity);
-                buyNames.Add($"  {tag}{item.Name} — {item.Value} Col  ({FormatItemInfo(item)})");
+                string newTag = (!string.IsNullOrEmpty(item.DefinitionId)
+                                 && newFlags.Contains(item.DefinitionId!))
+                    ? "[NEW] " : "";
+                buyNames.Add($"  {newTag}{tag}{item.Name} — {item.Value} Col  ({FormatItemInfo(item)})");
                 buyRefs.Add(item);
             }
             colLabel.Text = $"Your Col: {player.ColOnHand}";

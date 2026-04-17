@@ -125,4 +125,14 @@ public static class RapierDefinitions
 
     public static Weapon CreateGlimmerspineSilverBullet() => Make("rap_glimmerspine_silver_bullet", "Glimmerspine: Silver Bullet", 30000, "Legendary", 255, 88, 175,
         B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 30).Add(StatType.Speed, 24), "TrueStrike+15");
+
+    // ── Infinity Moment shop rapiers ────────────────────────────────
+
+    // IM Epic-band shop weapon. Alpine flower foil, precise critical threading.
+    public static Weapon CreateEdelweiss() => Make("rap_edelweiss", "Edelweiss", 4600, "Epic", 150, 36, 122,
+        B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 20).Add(StatType.Speed, 12), "CritRate+15");
+
+    // IM Legendary-band shop weapon. Night-street duelist estoc, hemorrhage edge.
+    public static Weapon CreateNoctisStrasse() => Make("rap_noctis_strasse", "Noctis Strasse", 18800, "Legendary", 220, 76, 158,
+        B().Add(StatType.Attack, 74).Add(StatType.Dexterity, 24).Add(StatType.Speed, 20), "Bleed+20");
 }

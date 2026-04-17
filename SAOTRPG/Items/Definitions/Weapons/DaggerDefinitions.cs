@@ -96,4 +96,26 @@ public static class DaggerDefinitions
 
     public static Weapon CreateNotesEndTrinity() => Make("dag_notes_end_trinity", "Notes' End Trinity", 28000, "Legendary", 245, 85, 165,
         B().Add(StatType.Attack, 80).Add(StatType.Agility, 28).Add(StatType.Dexterity, 22), "CritRate+25");
+
+    // ── Infinity Moment shop daggers ─────────────────────────────────
+
+    // IM Epic-band shop weapon. Assassin's flight-steel dagger, backstab focus.
+    public static Weapon CreateFlyheightFang() => Make("dag_flyheight_fang", "Flyheight Fang", 4800, "Epic", 155, 36, 120,
+        B().Add(StatType.Attack, 52).Add(StatType.Agility, 20).Add(StatType.Dexterity, 10), "BackstabDmg+30");
+
+    // IM Legendary-band shop weapon. Leaf-thin rue blade, precision crit.
+    public static Weapon CreateRueFeuille() => Make("dag_rue_feuille", "Rue Feuille", 18500, "Legendary", 220, 76, 155,
+        B().Add(StatType.Attack, 72).Add(StatType.Agility, 25).Add(StatType.Dexterity, 22), "CritRate+20");
+
+    // ── Infinity Moment LAB dagger (non-enhanceable) ────────────────
+
+    // IM F95 floor-boss LAB reward. Shimmering illusion-dagger — post-hit fade.
+    public static Weapon CreateMirageKnife()
+    {
+        var w = Make("dag_mirage_knife", "Mirage Knife", 24000, "Legendary", 235, 82, 165,
+            B().Add(StatType.Attack, 82).Add(StatType.Agility, 28).Add(StatType.Dexterity, 22),
+            "Invisibility+5");
+        w.IsEnhanceable = false;
+        return w;
+    }
 }

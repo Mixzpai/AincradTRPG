@@ -96,4 +96,26 @@ public static class SpearDefinitions
 
     public static Weapon CreateHeavenslanceElpisOrder() => Make("spr_heavenslance_elpis_order", "Heavenslance: Elpis Order", 30500, "Legendary", 260, 88, 175,
         B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 26).Add(StatType.Strength, 18).Add(StatType.Vitality, 20), "HPRegen+5");
+
+    // ── Infinity Moment shop spears ─────────────────────────────────
+
+    // IM Epic-band shop weapon. Straight-thrust cavalry pike, heavy stab stack.
+    public static Weapon CreateFoaStoss() => Make("spr_foa_stoss", "Foa Stoss", 5000, "Epic", 160, 36, 125,
+        B().Add(StatType.Attack, 55).Add(StatType.Dexterity, 18).Add(StatType.Strength, 12), "ThrustDmg+20");
+
+    // IM Legendary-band shop weapon. Cresting-wave polearm, frost spray.
+    public static Weapon CreateWaveSchneider() => Make("spr_wave_schneider", "Wave Schneider", 20500, "Legendary", 225, 78, 163,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 24).Add(StatType.Strength, 16), "FrostDamage+25");
+
+    // ── Infinity Moment LAB spear (non-enhanceable) ─────────────────
+
+    // IM F98 floor-boss LAB reward. Moon-whisper spear; power waxes at night.
+    public static Weapon CreateLunaticRoof()
+    {
+        var w = Make("spr_lunatic_roof", "Lunatic Roof", 27500, "Legendary", 255, 87, 185,
+            B().Add(StatType.Attack, 96).Add(StatType.Dexterity, 28).Add(StatType.Strength, 20).Add(StatType.Agility, 14),
+            "Lunacy+30");
+        w.IsEnhanceable = false;
+        return w;
+    }
 }

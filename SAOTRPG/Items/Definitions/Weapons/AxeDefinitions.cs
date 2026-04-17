@@ -98,4 +98,22 @@ public static class AxeDefinitions
 
     public static Weapon CreateIngurgitatorBelzericht() => Make("axe_ingurgitator_belzericht", "Ingurgitator: Belzericht", 32000, "Legendary", 265, 91, 182,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 30).Add(StatType.Vitality, 18), "HPDrain+10");
+
+    // ── Infinity Moment shop 2H axe ─────────────────────────────────
+
+    // IM Legendary-band shop weapon. Lightning-etched black-steel axe.
+    public static Weapon CreateSchwarzsBlitz() => Make("axe_schwarzs_blitz", "Schwarzs Blitz", 19000, "Legendary", 225, 77, 160,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 26).Add(StatType.Vitality, 14), "Stun+15");
+
+    // ── Infinity Moment LAB 2H axe (non-enhanceable) ────────────────
+
+    // IM F96 floor-boss LAB reward. Auroral glacial axe — frost bite.
+    public static Weapon CreateNorthernLight()
+    {
+        var w = Make("axe_northern_light", "Northern Light", 26500, "Legendary", 250, 86, 180,
+            B().Add(StatType.Attack, 94).Add(StatType.Strength, 30).Add(StatType.Vitality, 16),
+            "FrostDamage+25");
+        w.IsEnhanceable = false;
+        return w;
+    }
 }
