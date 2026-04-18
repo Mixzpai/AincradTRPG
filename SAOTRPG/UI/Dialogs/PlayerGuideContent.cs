@@ -1101,6 +1101,53 @@ public static class PlayerGuideContent
             Tags = new[] { "leveling", "floors" }
         },
 
+        new("Progression", "Karma & Alignment",
+            "┌─ Progression\n" +
+            "│ Topic: Karma & Alignment\n" +
+            "│ Range: -100 (Outlaw) to +100 (Honorable)\n" +
+            "│ Default: 0 (Neutral)\n" +
+            "│ Unlock: Always active from character creation\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Karma is a signed alignment score from -100 to +100 that tracks\n" +
+            "how the world sees you. It gates guild membership, shifts shop\n" +
+            "prices, and at the extremes triggers Town Guard aggro or unlocks\n" +
+            "the Laughing Coffin (LC) hideout.\n\n" +
+            "USAGE\n" +
+            "Karma changes automatically as you play. No menu to spend — the\n" +
+            "value lives on your Player sheet and the StatsDialog shows the\n" +
+            "current score and tier.\n\n" +
+            "EFFECTS\n" +
+            "Gain / loss events:\n" +
+            "  +3   Quest completion\n" +
+            "  +2   Kill a PK mob (Titan's Hand, Crimson Longsword,\n" +
+            "       LC PKer, Fallen Paladin)\n" +
+            "  -3   Leave a guild voluntarily\n" +
+            "  -5   Kill a peaceful / neutral mob (beast, insect, non-aggressor)\n" +
+            "  -5   Moonlit Black Cats fate event on F27 entry\n" +
+            "  -20  Kill a named NPC\n\n" +
+            "Thresholds:\n" +
+            "  +50 to +100  Honorable — NPC dialogue respectful, shop -10%\n" +
+            "    0 to  +50  Neutral — default baseline\n" +
+            "  -50 to    0  Shady — NPC warnings, shop +10%\n" +
+            " -100 to  -50  Outlaw — Town Guards spawn + aggro in F1 plaza,\n" +
+            "               LC F75 gate unlocks, shops refuse service\n\n" +
+            "COSTS\n" +
+            "Farming karma in either direction has opportunity cost — Honorable\n" +
+            "gets cheaper shops but cannot join LC; Outlaw gains the LC guild\n" +
+            "path but loses all civilian shop access.\n\n" +
+            "TIPS\n" +
+            "Plan the swing deliberately. If you want the KoB or Sleeping\n" +
+            "Knights end-game guilds (karma >=+30 / +50) grind quest turn-ins\n" +
+            "early; if you want LC stockpile PK-mob kills and avoid guild\n" +
+            "joins. Never kill peaceful mobs casually — a -5 swing undoes\n" +
+            "almost two quest turn-ins.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Town Guard (Outlaw Mode)] · [Laughing Coffin (F75 Hidden)] · [Sleeping Knights (F60)] · [Moonlit Black Cats (F10)] · [Vendors — Rotating Stock]")
+        {
+            Tags = new[] { "karma", "alignment", "progression" }
+        },
+
         new("Progression", "Life Skills",
             "┌─ Progression\n" +
             "│ Topic: Life Skills\n" +
@@ -1887,9 +1934,13 @@ public static class PlayerGuideContent
             "recruits, Anti-Crystal Tyranny disables Crystal consumables.\n\n" +
             "TIPS\n" +
             "Stack compatible modifiers to approach the x10 multiplier cap.\n" +
-            "Starless Night pairs well with Darkness Blade builds.\n\n" +
+            "Starless Night pairs well with Darkness Blade builds. The\n" +
+            "Laughing Coffin modifier synergizes with the LC guild path —\n" +
+            "more LC mob spawns on one side, +20% BackstabDmg passive on\n" +
+            "the other — and with Legend Braves' +15 Attack vs LC-tagged\n" +
+            "mobs if you're running the anti-PK track instead.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Darkness Blade] · [Recruitable Allies & Party System] · [Permadeath & Save Deletion] · [Save System]")
+            "[Unique Skill: Darkness Blade] · [Laughing Coffin (F75 Hidden)] · [Legend Braves (F25)] · [Permadeath & Save Deletion] · [Save System]")
         {
             Tags = new[] { "world", "progression", "permadeath" }
         },
@@ -1963,6 +2014,44 @@ public static class PlayerGuideContent
             "[Lisbeth — Rarity 6 Craft Line] · [Field Bosses — Guaranteed Drops] · [Town of Beginnings NPCs (F1)] · [Anvil — Repair, Enhance, Evolve, Refine]")
         {
             Tags = new[] { "world", "lisbeth", "npcs" }
+        },
+
+        new("World", "Town Guard (Outlaw Mode)",
+            "┌─ World\n" +
+            "│ Topic: Town Guard (Outlaw Mode)\n" +
+            "│ Floors: 1 (Town of Beginnings plaza only)\n" +
+            "│ Landmark: Spawns on entry when karma <= -50\n" +
+            "│ Unlock: Player karma reaches Outlaw tier\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Town Guards are the F1 plaza's enforcement response to Outlaw-\n" +
+            "tier karma. They only exist when your karma is at or below -50\n" +
+            "and they spawn specifically in the Town of Beginnings (TOB)\n" +
+            "plaza — not on any other floor.\n\n" +
+            "USAGE\n" +
+            "Drop to karma <= -50, then step into the F1 TOB plaza. 3-5\n" +
+            "guards spawn on entry and aggro immediately. Leave the plaza\n" +
+            "(or raise karma back above -50) to stop the spawn trigger.\n\n" +
+            "EFFECTS\n" +
+            "  Glyph     'G' in BrightBlue\n" +
+            "  Scaling   ~Level 20 (100 HP / 25 ATK baseline)\n" +
+            "  Spawn     3-5 per plaza entry, only while karma <= -50\n" +
+            "  LC bonus  Laughing Coffin members gain +20 guild rep per\n" +
+            "            Town Guard killed\n\n" +
+            "COSTS\n" +
+            "Killing Town Guards is a named-NPC-class hit in everyone else's\n" +
+            "eyes but not a karma drop (they are PK-flag enemies, not peaceful\n" +
+            "NPCs). The fight eats durability and consumables on every F1\n" +
+            "visit until you either raise karma or stay off the plaza.\n\n" +
+            "TIPS\n" +
+            "If you're running the LC path, farm Town Guards deliberately —\n" +
+            "+20 LC rep per kill is the fastest reputation faucet in the\n" +
+            "game. If you're NOT running LC, push karma above -50 with\n" +
+            "quest turn-ins before setting foot in TOB again.\n\n" +
+            "SEE ALSO\n" +
+            "[Karma & Alignment] · [Laughing Coffin (F75 Hidden)] · [Town of Beginnings NPCs (F1)] · [Guild System Overview]")
+        {
+            Tags = new[] { "outlaw", "karma", "world" }
         },
 
         new("World", "Ascending a Floor",
@@ -3825,24 +3914,27 @@ public static class PlayerGuideContent
 
         new("Quests & NPCs", "Town of Beginnings NPCs (F1)",
             "┌─ Quests & NPCs\n" +
-            "│ NPC: Agil, Klein, Argo, Lisbeth, Silica, +3\n" +
+            "│ NPC: Agil, Klein, Argo, Kibaou, Lisbeth, Silica, +3\n" +
             "│ Floor: 1 (hub)\n" +
-            "│ Quest: Tutorial + vendor + info-broker\n" +
-            "│ Reward: Dialogue, shop access, tips\n" +
+            "│ Quest: Tutorial + vendor + ALF recruiter\n" +
+            "│ Reward: Dialogue, shop access, tips, guild join\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "F1's hand-built Town of Beginnings hosts eight fixed canon NPCs\n" +
-            "— the core SAO cast plus supporting staff. They anchor the\n" +
-            "tutorial flow and the early recruitment pool.\n\n" +
+            "F1's hand-built Town of Beginnings hosts fixed canon NPCs — the\n" +
+            "core SAO cast plus supporting staff and the Aincrad Liberation\n" +
+            "Force (ALF) recruiter. Anchors the tutorial flow, the early\n" +
+            "recruitment pool, and the ALF guild onramp.\n\n" +
             "USAGE\n" +
             "Bump to trigger dialogue or a shop. Klein and Argo also wander\n" +
-            "beyond F1 once the player climbs.\n\n" +
+            "beyond F1 once the player climbs. Kibaou stays in the plaza as\n" +
+            "ALF's permanent recruiter.\n\n" +
             "EFFECTS\n" +
             "  Agil            Vendor, \"Agil's General Store\"\n" +
             "  Klein           Tutorial dialogue (combat / progression /\n" +
             "                  survival)\n" +
             "  Argo the Rat    Information broker; tips on bosses,\n" +
             "                  proficiency, death\n" +
+            "  Kibaou          ALF recruiter (see Aincrad Liberation Force)\n" +
             "  Priest Tadashi  Flavor\n" +
             "  Nezha           Smith; points to anvil\n" +
             "  Lisbeth         Short canon dialogue\n" +
@@ -3859,11 +3951,15 @@ public static class PlayerGuideContent
             "Talk to Argo before every new era — her tips rotate with your\n" +
             "current floor. Klein and the F1 Lisbeth townsfolk become\n" +
             "recruitable once bumped outside F1. Agil's shop offers the\n" +
-            "Anneal Blade craft line. NOTE: the F1 Lisbeth here is the\n" +
-            "flavor/recruit NPC — the F48 Lindarth Lisbeth is a separate\n" +
-            "crafting NPC that gates the Rarity 6 craft line.\n\n" +
+            "Anneal Blade craft line. Kibaou is the lowest-gate guild\n" +
+            "recruit in the game (ALF, Lv1, karma >=-30). NOTE: the F1\n" +
+            "Lisbeth here is the flavor/recruit NPC — the F48 Lindarth\n" +
+            "Lisbeth is a separate crafting NPC that gates the Rarity 6\n" +
+            "craft line. If your karma has dropped to <=-50, Town Guards\n" +
+            "spawn in this plaza on entry — raise karma first or bring a\n" +
+            "fight.\n\n" +
             "SEE ALSO\n" +
-            "[Anneal Blade Craft Line] · [Lindarth Town (F48)] · [Starting Loadout] · [Vendors — Rotating Stock] · [Ran the Brawler (F2)] · [SAO Switch (Party)] · [Monument of Swordsmen (F1)]")
+            "[Aincrad Liberation Force (F1)] · [Town Guard (Outlaw Mode)] · [Guild System Overview] · [Anneal Blade Craft Line] · [Ran the Brawler (F2)] · [Lindarth Town (F48)] · [Starting Loadout] · [Monument of Swordsmen (F1)]")
         {
             Tags = new[] { "quests", "npcs", "shops" }
         },
@@ -3931,9 +4027,377 @@ public static class PlayerGuideContent
             "front/back composition. Silica's Dragon Tamer extra-hit stacks\n" +
             "with Combo Attacks for fast takedowns.\n\n" +
             "SEE ALSO\n" +
-            "[SAO Switch (Party)] · [Town of Beginnings NPCs (F1)] · [Run Modifiers (12 Optional Challenges)] · [Combo Attacks]")
+            "[SAO Switch (Party)] · [Town of Beginnings NPCs (F1)] · [Guild System Overview] · [Run Modifiers (12 Optional Challenges)] · [Combo Attacks]")
         {
             Tags = new[] { "quests", "npcs", "combat" }
+        },
+
+        new("Quests & NPCs", "Guild System Overview",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Guild recruiter per faction\n" +
+            "│ Floor: Varies (F1 to F75)\n" +
+            "│ Quest: Recruitment + signature per guild\n" +
+            "│ Reward: Passive perk, guild rep, quest line\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Eight canon guilds plus a Player-Founded option make up Aincrad's\n" +
+            "social spine. You can hold ONE active guild at a time — leaving a\n" +
+            "guild costs -3 karma and wipes that guild's passive perk. Each\n" +
+            "guild has a level + karma gate, a recruiter NPC, a passive perk,\n" +
+            "and two quests: a 10-kill recruitment and a canon-themed signature.\n\n" +
+            "USAGE\n" +
+            "Open StatsDialog, click \"View All Guilds\" to open the Guild\n" +
+            "Roster. Travel to the guild's HQ floor, bump the recruiter, and\n" +
+            "accept if you meet the level + karma gate. The single-active-\n" +
+            "guild rule is enforced: join a new one and the old one drops you.\n\n" +
+            "EFFECTS\n" +
+            "Eight canon guilds (see individual entries for detail):\n" +
+            "  KoB (F55)    Knights of the Blood Oath — Heathcliff\n" +
+            "  ALF (F1)     Aincrad Liberation Force  — Kibaou\n" +
+            "  DDA (F40)    Divine Dragon Alliance    — Lind\n" +
+            "  Fuurinkazan  (F20)                     — Klein\n" +
+            "  Legend Braves (F25)                    — Schmitt\n" +
+            "  Sleeping Knights (F60)                 — Siune / Yuuki\n" +
+            "  LC  (F75)    Laughing Coffin (hidden)  — PoH's Herald\n" +
+            "  Moonlit Black Cats (F10)               — Keita\n\n" +
+            "Plus Player-Founded Guild — 5000 Col to start your own.\n\n" +
+            "COSTS\n" +
+            "Leaving a guild: -3 karma. Player-Founded creation: 5000 Col.\n" +
+            "No Col cost to join a canon guild — only the karma/level gate.\n\n" +
+            "TIPS\n" +
+            "Pick your alignment target before F10 — the Moonlit Black Cats\n" +
+            "join window closes once you take fate-sealed damage on F27, and\n" +
+            "LC karma requirements (<=-50) take deliberate grinding. Stack\n" +
+            "signature-quest rewards with the guild's passive perk for the\n" +
+            "biggest power spike per floor.\n\n" +
+            "SEE ALSO\n" +
+            "[Karma & Alignment] · [Knights of the Blood Oath (F55)] · [Aincrad Liberation Force (F1)] · [Laughing Coffin (F75 Hidden)] · [Player-Founded Guild]")
+        {
+            Tags = new[] { "guild", "quests", "npcs" }
+        },
+
+        new("Quests & NPCs", "Knights of the Blood Oath (F55)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Heathcliff (leader), Godfree (recruiter)\n" +
+            "│ Floor: 55 Granzam HQ\n" +
+            "│ Quest: Recruitment + \"Defend the Frontline\"\n" +
+            "│ Reward: +8 Defense + BlockChance via Vitality\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Knights of the Blood Oath (KoB) is Heathcliff's elite frontline\n" +
+            "order headquartered at F55 Granzam. Steep gate — Level 25 with\n" +
+            "karma >= +30 — but the passive is one of the strongest in the\n" +
+            "canon roster.\n\n" +
+            "USAGE\n" +
+            "Climb to F55, find Granzam, bump Godfree to open the recruit\n" +
+            "dialog. Decline the prompt if you haven't decided yet; Godfree\n" +
+            "stays available while your gate is met.\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 25, Karma >= +30\n" +
+            "  Passive   +8 Defense + BlockChance scaling on Vitality\n" +
+            "  Recruit   10 labyrinth mob kills (frontline-tagged)\n" +
+            "  Signature \"Defend the Frontline\" — hold a KoB-coded\n" +
+            "            labyrinth push\n\n" +
+            "COSTS\n" +
+            "The karma gate locks out anyone running the LC path. Leaving KoB\n" +
+            "drops the Defense passive and costs -3 karma — don't flip guilds\n" +
+            "casually once you're tanking on the +8.\n\n" +
+            "TIPS\n" +
+            "Vitality-heavy builds benefit the most — the BlockChance bonus\n" +
+            "scales with VIT, so KoB compounds with a shield / 1H build. Pair\n" +
+            "with DDA-style tank gear for the highest survivability ceiling.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Divine Dragon Alliance (F40)] · [Defense — Block, Parry, Dodge] · [Karma & Alignment]")
+        {
+            Tags = new[] { "guild", "npcs", "quests" }
+        },
+
+        new("Quests & NPCs", "Aincrad Liberation Force (F1)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Kibaou (leader + recruiter)\n" +
+            "│ Floor: 1 Town of Beginnings plaza\n" +
+            "│ Quest: Recruitment + \"Raid the Frontlines\"\n" +
+            "│ Reward: +5% XP + 2 all stats\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Aincrad Liberation Force (ALF) is Kibaou's mass-recruitment guild\n" +
+            "— the largest faction in the game, headquartered in the F1 TOB\n" +
+            "plaza. Lowest gate of any canon guild: Level 1, karma >= -30.\n\n" +
+            "USAGE\n" +
+            "Bump Kibaou in the F1 plaza to open the recruit dialog. The\n" +
+            "gate is loose enough that any early-floor build can sign up\n" +
+            "on Day One.\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 1, Karma >= -30\n" +
+            "  Passive   +5% XP gain, +2 to all stats\n" +
+            "  Recruit   10 low-floor mob kills\n" +
+            "  Signature \"Raid the Frontlines\" — canon-themed push quest\n\n" +
+            "COSTS\n" +
+            "ALF's mass-recruitment identity means the passive is generalist\n" +
+            "rather than specialist — other guilds hit harder in single\n" +
+            "stats. Leaving costs -3 karma like any guild drop.\n\n" +
+            "TIPS\n" +
+            "ALF is the best fallback guild while you climb toward a gated\n" +
+            "option (KoB +30, Sleeping Knights +50). The +5% XP rider\n" +
+            "stacks cleanly with quest turn-in XP — use ALF as your\n" +
+            "early-game engine, then swap once you hit the level thresholds.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Town of Beginnings NPCs (F1)] · [Experience & Leveling] · [Karma & Alignment]")
+        {
+            Tags = new[] { "guild", "npcs", "quests" }
+        },
+
+        new("Quests & NPCs", "Fuurinkazan (F20)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Klein (leader + recruiter)\n" +
+            "│ Floor: 20 HQ\n" +
+            "│ Quest: Recruitment + \"Blades of Friendship\"\n" +
+            "│ Reward: +5% CritRate, +10 Attack with Katana\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Fuurinkazan is Klein's samurai-themed crew, headquartered on\n" +
+            "Floor 20. The passive is the single best Katana buff in the\n" +
+            "game — +10 flat Attack on every Katana swing on top of +5%\n" +
+            "CritRate across all weapons.\n\n" +
+            "USAGE\n" +
+            "Reach F20, find the Fuurinkazan HQ, bump Klein to open the\n" +
+            "recruit dialog. Any karma is acceptable — no alignment gate.\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 10, any karma\n" +
+            "  Passive   +5% CritRate + +10 Attack when wielding a Katana\n" +
+            "  Recruit   10 mob kills (Katana-tagged theme)\n" +
+            "  Signature \"Blades of Friendship\" — canon Klein-crew quest\n\n" +
+            "COSTS\n" +
+            "Non-Katana weapons still get the +5% crit — but the +10 Attack\n" +
+            "rider is the real draw. If you're not committing to Katana the\n" +
+            "guild is underutilized.\n\n" +
+            "TIPS\n" +
+            "Stack Fuurinkazan with Katana Mastery and a Klein-recruit ally\n" +
+            "for a full samurai composition. Karakurenai (Klein's canon\n" +
+            "Katana) hits hardest when its BackstabDmg+50 rider lands on\n" +
+            "top of the Fuurinkazan +10.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Unique Skill: Katana Mastery] · [Recruitable Allies & Party System] · [Critical Hits]")
+        {
+            Tags = new[] { "guild", "katana", "quests" }
+        },
+
+        new("Quests & NPCs", "Legend Braves (F25)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Schmitt (recruiter)\n" +
+            "│ Floor: 25 HQ\n" +
+            "│ Quest: Recruitment + \"Hunt the Coffin\"\n" +
+            "│ Reward: +5% Attack, +15 Atk vs LC-tagged mobs\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Legend Braves is the player-organized anti-Laughing Coffin\n" +
+            "(LC) guild on Floor 25. Its perk directly counters LC — +15\n" +
+            "flat Attack specifically against LC-tagged enemies on top of\n" +
+            "a generalist +5% Attack.\n\n" +
+            "USAGE\n" +
+            "Climb to F25, find the Legend Braves HQ, bump Schmitt to\n" +
+            "recruit. Karma >= 0 is the gate; you cannot be Shady or Outlaw\n" +
+            "and wear the tabard.\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 15, Karma >= 0\n" +
+            "  Passive   +5% Attack + +15 Attack vs LC-flagged mobs\n" +
+            "  Recruit   10 LC-theme mob kills\n" +
+            "  Signature \"Hunt the Coffin\" — LC-themed push\n\n" +
+            "COSTS\n" +
+            "Mutually exclusive with LC itself (karma gates don't overlap).\n" +
+            "Leaving is -3 karma, and Schmitt will not re-admit you without\n" +
+            "a karma rebuild.\n\n" +
+            "TIPS\n" +
+            "Stack with the Laughing Coffin run modifier — modifier spawns\n" +
+            "more LC mobs, and Legend Braves' +15 Attack rider applies to\n" +
+            "every one of them. A canon synergy with a real damage gain.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Laughing Coffin (F75 Hidden)] · [Run Modifiers (12 Optional Challenges)] · [Karma & Alignment]")
+        {
+            Tags = new[] { "guild", "quests", "npcs" }
+        },
+
+        new("Quests & NPCs", "Divine Dragon Alliance (F40)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Lind (leader + recruiter)\n" +
+            "│ Floor: 40 HQ\n" +
+            "│ Quest: Recruitment + \"Drake Hunt\"\n" +
+            "│ Reward: +10 Vitality, +5 Defense\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Divine Dragon Alliance (DDA) is Lind's rival-tank guild to KoB,\n" +
+            "headquartered on Floor 40. The passive is the raw-tank package:\n" +
+            "+10 VIT and +5 Defense on every equipped loadout.\n\n" +
+            "USAGE\n" +
+            "Ascend to F40, find the DDA HQ, bump Lind to recruit. Gate is\n" +
+            "Level 15 and karma >= 0 — a middleweight gate between ALF\n" +
+            "(easy) and KoB (strict).\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 15, Karma >= 0\n" +
+            "  Passive   +10 Vitality + +5 Defense\n" +
+            "  Recruit   10 labyrinth-drake-tagged mob kills\n" +
+            "  Signature \"Drake Hunt\" — canon dragon-themed push\n\n" +
+            "COSTS\n" +
+            "DDA and KoB are mutually exclusive active guilds — pick one\n" +
+            "tank identity. Leaving is the standard -3 karma.\n\n" +
+            "TIPS\n" +
+            "Raw +10 VIT feeds HP, stamina, and (via BlockChance scaling on\n" +
+            "Vitality) defense at the same time — DDA is the better pick\n" +
+            "for pure survivability, while KoB edges ahead for shield-\n" +
+            "focused builds.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Knights of the Blood Oath (F55)] · [The Six Attributes] · [Defense — Block, Parry, Dodge]")
+        {
+            Tags = new[] { "guild", "quests", "npcs" }
+        },
+
+        new("Quests & NPCs", "Sleeping Knights (F60)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Siune (recruiter), Yuuki (leader)\n" +
+            "│ Floor: 60 HQ\n" +
+            "│ Quest: Recruitment + \"The Moon's Rest\"\n" +
+            "│ Reward: +3 all stats, +5% CritRate\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Sleeping Knights is Yuuki's late-game elite order on Floor 60.\n" +
+            "The steepest positive-karma gate in the game (Level 50, karma\n" +
+            ">= +50) but a clean all-stats passive plus crit.\n\n" +
+            "USAGE\n" +
+            "Reach F60, find the Sleeping Knights HQ, bump Siune to open\n" +
+            "the recruit dialog. Karma floor (+50) means you're likely\n" +
+            "already in Honorable tier by the time you qualify.\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 50, Karma >= +50\n" +
+            "  Passive   +3 to all stats + +5% CritRate\n" +
+            "  Recruit   10 late-floor mob kills\n" +
+            "  Signature \"The Moon's Rest\" — canon Yuuki-crew quest\n\n" +
+            "COSTS\n" +
+            "The karma + level gate locks this out of speedruns. Leaving is\n" +
+            "-3 karma — but you've earned enough to survive the drop.\n\n" +
+            "TIPS\n" +
+            "Treat Sleeping Knights as the endgame honorable-path capstone\n" +
+            "— swap in from ALF or KoB once you clear the +50 karma + L50\n" +
+            "gate and ride the +3 all-stats through the F75 Heathcliff\n" +
+            "fight.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Karma & Alignment] · [Knights of the Blood Oath (F55)] · [Critical Hits]")
+        {
+            Tags = new[] { "guild", "quests", "npcs" }
+        },
+
+        new("Quests & NPCs", "Laughing Coffin (F75 Hidden)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: PoH's Herald (recruiter)\n" +
+            "│ Floor: 75 (hidden hideout)\n" +
+            "│ Quest: Recruitment + \"Crimson Letter\"\n" +
+            "│ Reward: +20% BackstabDmg, Town Guard hostility\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Laughing Coffin (LC) is PoH's PKer guild, hidden on Floor 75\n" +
+            "and gated behind karma <= -50 (Outlaw tier). The signature\n" +
+            "quest \"Crimson Letter\" demands 5 NPC kills — canon atrocity\n" +
+            "as written.\n\n" +
+            "USAGE\n" +
+            "Drop to karma <= -50, climb to F75, find the hidden hideout,\n" +
+            "bump PoH's Herald. The gate opens only while you're Outlaw —\n" +
+            "bounce above -50 and the entrance closes again.\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 30, Karma <= -50\n" +
+            "  Passive   +20% BackstabDmg\n" +
+            "  Recruit   10 PK-mob / LC-mob kills\n" +
+            "  Signature \"Crimson Letter\" — 5 NPC kills\n" +
+            "  Side      Town Guards hostile at F1 plaza while in LC\n\n" +
+            "COSTS\n" +
+            "Shops refuse service (karma tier). Town Guards aggro on F1\n" +
+            "entry. Named NPC kills cost -20 karma each — the signature\n" +
+            "quest alone will bottom your score.\n\n" +
+            "TIPS\n" +
+            "Farm Town Guards on F1 for +20 LC rep each — fastest rep\n" +
+            "faucet in the game. Pair with the Laughing Coffin run modifier\n" +
+            "for a themed, self-consistent PKer run. The BackstabDmg +20%\n" +
+            "stacks multiplicatively with weapons like Karakurenai.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Karma & Alignment] · [Town Guard (Outlaw Mode)] · [Run Modifiers (12 Optional Challenges)]")
+        {
+            Tags = new[] { "guild", "outlaw", "karma" }
+        },
+
+        new("Quests & NPCs", "Moonlit Black Cats (F10)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Keita (leader + recruiter)\n" +
+            "│ Floor: 10 HQ (quest turn-in stays F10)\n" +
+            "│ Quest: Recruitment + \"One More Floor\"\n" +
+            "│ Reward: +5 Vitality, +3 Defense (fate-sealed)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Moonlit Black Cats is Keita's tragic early-game guild on\n" +
+            "Floor 10. The passive is modest but the canon fate is the\n" +
+            "hook — the guild dissolves on F27 entry regardless of your\n" +
+            "play, losing -5 karma along with the perk.\n\n" +
+            "USAGE\n" +
+            "Climb to F10, find the Moonlit Black Cats HQ, bump Keita.\n" +
+            "The signature \"One More Floor\" auto-completes when you\n" +
+            "step onto F25 — turn it in back at Keita on F10.\n\n" +
+            "EFFECTS\n" +
+            "  Gate      Level 5, Karma >= -20\n" +
+            "  Passive   +5 Vitality + +3 Defense\n" +
+            "  Recruit   10 F10-tier mob kills\n" +
+            "  Signature \"One More Floor\" — auto-complete on F25 entry,\n" +
+            "            turn in at Keita (F10)\n" +
+            "  FATE      Guild dissolves on F27 entry (-5 karma, perk lost)\n\n" +
+            "COSTS\n" +
+            "The F27 fate is canonical and unavoidable. Plan your F27 ascend\n" +
+            "knowing the perk drops and the karma dings — banked guild rep\n" +
+            "does not carry into a replacement guild.\n\n" +
+            "TIPS\n" +
+            "Use Moonlit Black Cats as a known-expiry stepping stone between\n" +
+            "F5 and F27 — collect the signature turn-in reward on F25 and\n" +
+            "bank the XP / Col before the fate event fires. Line up the\n" +
+            "replacement guild recruit (Fuurinkazan F20 is a good bridge)\n" +
+            "before you step onto F27.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Karma & Alignment] · [Fuurinkazan (F20)] · [Ascending a Floor]")
+        {
+            Tags = new[] { "guild", "npcs", "quests" }
+        },
+
+        new("Quests & NPCs", "Player-Founded Guild",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: N/A (created from StatsDialog)\n" +
+            "│ Floor: Any\n" +
+            "│ Quest: Pick name + perk preset\n" +
+            "│ Reward: 1 of 5 passive perk presets\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Player-Founded Guild lets you skip the canon roster and roll\n" +
+            "your own. Spend 5000 Col, pick a name, choose 1 of 5 perk\n" +
+            "presets — your guild counts as your single active guild for\n" +
+            "every downstream rule.\n\n" +
+            "USAGE\n" +
+            "Open StatsDialog, click \"View All Guilds\" to open the Guild\n" +
+            "Roster, pick the Player-Founded option, pay 5000 Col, enter\n" +
+            "a guild name, pick a perk preset. The guild is created in-\n" +
+            "place and counts immediately.\n\n" +
+            "EFFECTS\n" +
+            "  Cost      5000 Col\n" +
+            "  Naming    Freeform string\n" +
+            "  Presets   1 of 5 (attack / tank / crit / XP / utility flavor)\n" +
+            "  Rule      Counts as your single active guild — joining any\n" +
+            "            canon guild drops the Player-Founded one\n\n" +
+            "COSTS\n" +
+            "5000 Col upfront. The perk presets are all weaker than the\n" +
+            "strongest canon options (KoB, Sleeping Knights), so the\n" +
+            "trade-off is identity + flexibility vs raw power.\n\n" +
+            "TIPS\n" +
+            "Good early-game option if your karma or level locks you out\n" +
+            "of the canon guild you want — roll Player-Founded as a\n" +
+            "stepping stone, then swap to the real one once you qualify.\n" +
+            "Pick the preset that matches your build's weakest column\n" +
+            "for the biggest marginal gain.\n\n" +
+            "SEE ALSO\n" +
+            "[Guild System Overview] · [Karma & Alignment] · [Aincrad Liberation Force (F1)] · [Col Economy — How You Earn]")
+        {
+            Tags = new[] { "guild", "economy", "quests" }
         },
 
         new("Quests & NPCs", "Vendors — Rotating Stock",
@@ -3963,14 +4427,18 @@ public static class PlayerGuideContent
             "  F5+  1 random accessory\n\n" +
             "Plus 3-4 random floor-scaled weapons, 1-2 armors.\n\n" +
             "COSTS\n" +
-            "All prices marked up +20% over base.\n\n" +
+            "All prices marked up +20% over base. Karma tier modifies on top:\n" +
+            "  Honorable (+50..+100)  -10% final price\n" +
+            "  Neutral / Shady        +/-0% / +10%\n" +
+            "  Outlaw   (-100..-50)   shops refuse service\n\n" +
             "TIPS\n" +
             "Stock Revive Crystals and Escape Ropes before entering a\n" +
             "Labyrinth — they're cheaper on the floor you find them than\n" +
             "carrying them from F1. Accessories at F5+ are random per run,\n" +
-            "so revisit shops if you're hunting a specific slot.\n\n" +
+            "so revisit shops if you're hunting a specific slot. Push karma\n" +
+            "to Honorable for a -10% price cut before a big shop run.\n\n" +
             "SEE ALSO\n" +
-            "[Col Economy — How You Earn] · [Potions, Crystals & Throwables] · [Accessories] · [Food & Cooking]")
+            "[Col Economy — How You Earn] · [Karma & Alignment] · [Potions, Crystals & Throwables] · [Accessories] · [Food & Cooking]")
         {
             Tags = new[] { "npcs", "shops", "economy" }
         },
@@ -4123,7 +4591,9 @@ public static class PlayerGuideContent
             "  - Party members (with behaviors)\n" +
             "  - Tutorial tips seen\n" +
             "  - Discovered lore\n" +
-            "  - Faction reputation\n" +
+            "  - Faction reputation (10-faction enum incl. guild + player-\n" +
+            "    founded sentinels; legacy saves auto-migrate)\n" +
+            "  - Karma score + active guild membership\n" +
             "  - Defeated field bosses\n" +
             "  - ACTIVE RUN MODIFIERS\n" +
             "  - Equipped skills + cooldowns\n" +

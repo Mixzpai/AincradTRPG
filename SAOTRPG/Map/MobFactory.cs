@@ -244,6 +244,35 @@ public static class MobFactory
         return mob;
     }
 
+    // FB-063 Town Guard — spawns in F1 Town of Beginnings plaza when the
+    // player's karma is <= -50 (Outlaw tier). Not a random-roster mob;
+    // placed directly by PopulateTownOfBeginnings. Mid-tier stats at Lv20.
+    public static Mob CreateTownGuard()
+    {
+        var guard = new Mob
+        {
+            Name = "Town Guard",
+            Level = 20,
+            AggroRange = 10,
+            BaseAttack = 25,
+            BaseDefense = 8,
+            BaseSpeed = 8,
+            BaseSkillDamage = 4,
+            Strength = 12, Vitality = 10, Endurance = 10,
+            Dexterity = 8, Agility = 10, Intelligence = 6,
+            MaxHealth = 100,
+            ExperienceYield = 80,
+            ColYield = 40,
+            LootTag = "humanoid",
+            AttackRange = 1,
+            LeashRange = 25,
+        };
+        guard.SetAppearance('G', Terminal.Gui.Color.BrightBlue);
+        guard.CurrentHealth = guard.MaxHealth;
+        guard.Id = Random.Shared.Next(20000, 99999);
+        return guard;
+    }
+
     // ── Affix system — random modifiers for elite/champion mobs ──
     private static readonly string[] AffixPool =
     {

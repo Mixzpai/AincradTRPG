@@ -536,7 +536,13 @@ public partial class TurnManager
         {
             Story.StorySystem.Reputation.Clear();
             foreach (var kvp in save.FactionReputation)
-                if (Enum.TryParse<Story.Faction>(kvp.Key, out var f)) Story.StorySystem.Reputation[f] = kvp.Value;
+            {
+                // FB-063 faction rename: legacy saves use "AincradLiberationSquad".
+                string key = kvp.Key == "AincradLiberationSquad"
+                    ? "AincradLiberationForce" : kvp.Key;
+                if (Enum.TryParse<Story.Faction>(key, out var f))
+                    Story.StorySystem.Reputation[f] = kvp.Value;
+            }
         }
         if (save.UnlockedUniqueSkills != null)
         {

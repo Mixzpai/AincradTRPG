@@ -14,9 +14,10 @@ public static class StatsDialog
 
     // Dialog width in columns.
     private const int DialogWidth  = 64;
-    // Dialog height in rows. Bumped to house the FB-050 Life Skills and
-    // FB-058 Titles sections without squeezing the existing stat grid.
-    private const int DialogHeight = 52;
+    // Dialog height in rows. Bumped to house the FB-050 Life Skills,
+    // FB-058 Titles, and FB-063 Guild/Karma sections without squeezing
+    // the existing stat grid.
+    private const int DialogHeight = 58;
 
     // Stat definition — name, getter, and tooltip describing what it does.
     // Add new stats here to extend the dialog automatically.
@@ -263,6 +264,55 @@ public static class StatsDialog
             X = 1, Y = tY + 2,
             ColorScheme = ColorSchemes.Dim,
         });
+
+        // ── FB-063 Guild Affiliation + Karma section ──────────────────
+        int gY = tY + 4;
+        dialog.Add(new Label
+        {
+            Text = "[ Guild & Karma ]",
+            X = 1, Y = gY,
+            ColorScheme = ColorSchemes.Gold,
+        });
+        string karmaTier = Systems.KarmaSystem.TierLabel(player.Karma);
+        string karmaLine = $"  Karma: {player.Karma,+4} [{karmaTier}]";
+        dialog.Add(new Label
+        {
+            Text = karmaLine, X = 1, Y = gY + 1, Width = Dim.Fill(1),
+            ColorScheme = karmaTier switch
+            {
+                "Honorable" => ColorSchemes.Gold,
+                "Outlaw"    => ColorSchemes.Danger,
+                "Shady"     => ColorSchemes.Dim,
+                _           => ColorSchemes.Body,
+            },
+        });
+        string guildName = Systems.GuildSystem.ActiveGuildDisplayName(player);
+        string guildPerk = Systems.GuildSystem.ActiveGuildPerkFlavor(player);
+        dialog.Add(new Label
+        {
+            Text = $"  Guild: {guildName}", X = 1, Y = gY + 2,
+            Width = Dim.Fill(1),
+            ColorScheme = player.ActiveGuildId == Systems.Story.Faction.None
+                ? ColorSchemes.Dim : ColorSchemes.Body,
+        });
+        if (!string.IsNullOrEmpty(guildPerk))
+        {
+            string perkLine = $"    Perk: {guildPerk}";
+            if (perkLine.Length > DialogWidth - 4) perkLine = perkLine[..(DialogWidth - 5)] + "…";
+            dialog.Add(new Label
+            {
+                Text = perkLine, X = 1, Y = gY + 3, Width = Dim.Fill(1),
+                ColorScheme = ColorSchemes.Dim,
+            });
+        }
+        var rosterBtn = DialogHelper.CreateButton("View All Guilds");
+        rosterBtn.X = 1; rosterBtn.Y = gY + 4;
+        rosterBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            GuildRosterDialog.Show(player);
+        };
+        dialog.Add(rosterBtn);
 
         var hintLabel = new Label
         {

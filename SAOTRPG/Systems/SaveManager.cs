@@ -192,6 +192,12 @@ public static class SaveManager
         // FB-058 Titles — unlocked set + active id.
         UnlockedTitleIds = player.UnlockedTitleIds.ToList(),
         ActiveTitleId = player.ActiveTitleId,
+        // FB-063 Karma + Guild — serialize enum as its name so rename migrations
+        // (AincradLiberationSquad → AincradLiberationForce) can hook in at load.
+        Karma = player.Karma,
+        ActiveGuildId = player.ActiveGuildId.ToString(),
+        FoundedGuildName = player.FoundedGuildName,
+        FoundedGuildPerk = player.FoundedGuildPerk,
     };
 
     // Item serialization.

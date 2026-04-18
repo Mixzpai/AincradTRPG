@@ -122,6 +122,25 @@ public partial class TurnManager
         // isn't needed when death is already permanent.
         TitleSystem.CheckFloor50Survivor(_player, CurrentFloor);
 
+        // FB-063 Moonlit Black Cats fate-sealed dissolution. Only fires
+        // when the player entered F27 as an active Moonlit Black Cat. Force-
+        // leaves the guild, -5 karma, unlocks Survivor title. Save still
+        // loads cleanly in either direction — the check is idempotent.
+        GuildSystem.CheckBlackCatsFate(_player, CurrentFloor, _log);
+
+        // FB-063 Moonlit Black Cats "One More Floor" signature quest —
+        // auto-advances to Complete on F25 entry. Players turn it in by
+        // talking to Keita back on F10 (or get credit if they stop over
+        // on the way up). The quest tracks a sentinel target so the
+        // standard OnMobKilled hook cannot auto-advance it.
+        var catsSig = QuestSystem.GetQuest("guild_sig_cats_one_more_floor");
+        if (catsSig != null && catsSig.Status == QuestStatus.Active && CurrentFloor >= 25)
+        {
+            catsSig.CurrentCount = catsSig.TargetCount;
+            catsSig.Status = QuestStatus.Complete;
+            _log.LogSystem("  [QUEST] 'One More Floor' complete — return to Keita.");
+        }
+
         // FB-564 Laughing Coffin modifier — PK squad ambush every 5 floors.
         if (RunModifiers.IsActive(RunModifier.LaughingCoffin) && CurrentFloor % 5 == 0)
             SpawnLaughingCoffinSquad();

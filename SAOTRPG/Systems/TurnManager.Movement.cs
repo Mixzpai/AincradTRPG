@@ -602,6 +602,162 @@ public partial class TurnManager
             rewardXp:         q.Xp);
     }
 
+    // ── FB-063 Guild Recruiter dispatcher ────────────────────────────────
+    // Recruitment flow:
+    //   1. First talk → offer "Prove yourself" quest (10 kills).
+    //   2. Quest complete + turn in → induct into guild, seed +10 rep,
+    //      apply flat perk. If player already in THIS guild, offer the
+    //      signature quest. If in a DIFFERENT guild, warn (join requires
+    //      leaving the current one, which is done automatically via Join).
+    //   3. Signature quest post-join: kill-count themed quest from
+    //      GuildSystem.SignatureQuests. Turn in → +rep / +col / +xp.
+    //
+    // Laughing Coffin's Herald is a special case: it refuses to deal until
+    // the player's karma is Outlaw (≤-50).
+    private bool HandleGuildRecruiter(Entities.NPC npc)
+    {
+        if (npc.Name == null) return false;
+        if (!GuildSystem.RecruiterToGuild.TryGetValue(npc.Name, out var guildId)) return false;
+        if (!GuildSystem.Guilds.TryGetValue(guildId, out var def)) return false;
+
+        // Laughing Coffin gate — refuses conversation above karma threshold.
+        if (guildId == Story.Faction.LaughingCoffin && _player.Karma > -50)
+        {
+            _log.Log($"{npc.Name}: \"You carry too much light for our kind. Come back when the world has taken more from you.\"");
+            return true;
+        }
+
+        bool alreadyMember = _player.ActiveGuildId == guildId;
+
+        // Already a member → offer signature quest (or completed-flavor).
+        if (alreadyMember) return HandleGuildSignatureQuest(npc, def);
+
+        string questId = $"guild_join_{guildId}";
+        var existing = QuestSystem.GetQuest(questId);
+
+        // First talk — gate on requirements.
+        if (existing == null)
+        {
+            var (ok, reason) = GuildSystem.CanJoin(_player, def);
+            if (!ok)
+            {
+                _log.Log($"{npc.Name}: \"{def.DisplayName} is not for you — yet.\"");
+                _log.Log($"  {reason}");
+                return true;
+            }
+            // Warn if player is currently in another guild.
+            if (_player.ActiveGuildId != Story.Faction.None)
+            {
+                _log.Log($"{npc.Name}: \"You already wear another guild's colors. Finish our trial and we'll sort that out.\"");
+            }
+
+            QuestSystem.ActiveQuests.Add(new Quest
+            {
+                Id = questId,
+                Title = $"Prove yourself to {def.DisplayName}",
+                Description = $"Slay 10 monsters to earn {def.DisplayName}'s trust.",
+                GiverName = npc.Name,
+                Floor = CurrentFloor,
+                Type = QuestType.Kill,
+                TargetMob = "",
+                TargetCount = 10,
+                Persistent = true,
+                RewardCol = 300,
+                RewardXp = 200,
+            });
+            _log.Log($"{npc.Name}: \"Ten kills. Any mob. Come back and we'll talk about joining.\"");
+            _log.LogSystem($"  [QUEST] '{def.DisplayName}' recruitment quest added.");
+            return true;
+        }
+
+        // Quest complete — induct.
+        if (existing.Status == QuestStatus.Complete)
+        {
+            existing.Status = QuestStatus.TurnedIn;
+            QuestSystem.ActiveQuests.Remove(existing);
+            QuestSystem.CompletedQuests.Add(existing);
+            _player.ColOnHand += existing.RewardCol;
+            TotalColEarned += existing.RewardCol;
+            int lvlBefore = _player.Level;
+            _player.GainExperience(existing.RewardXp);
+            if (_player.Level > lvlBefore) LeveledUp?.Invoke();
+            KarmaSystem.Adjust(_player, KarmaSystem.DeltaQuestComplete, "guild recruitment quest", _log);
+
+            _log.Log($"{npc.Name}: \"{def.DisplayName} accepts you.\"");
+            GuildSystem.Join(_player, guildId, _log);
+            return true;
+        }
+
+        // Already turned in (stale path) — treat as member.
+        if (existing.Status == QuestStatus.TurnedIn)
+            return HandleGuildSignatureQuest(npc, def);
+
+        // In progress.
+        int remaining = existing.TargetCount - existing.CurrentCount;
+        _log.Log($"{npc.Name}: \"{remaining} more, then we'll talk.\"");
+        return true;
+    }
+
+    private bool HandleGuildSignatureQuest(Entities.NPC npc, GuildSystem.GuildDef def)
+    {
+        if (!GuildSystem.SignatureQuests.TryGetValue(def.Id, out var sig))
+        {
+            _log.Log($"{npc.Name}: \"Walk tall under our banner.\"");
+            return true;
+        }
+        var existing = QuestSystem.GetQuest(sig.QuestId);
+
+        // First talk while a member — offer signature quest.
+        if (existing == null)
+        {
+            QuestSystem.ActiveQuests.Add(new Quest
+            {
+                Id = sig.QuestId,
+                Title = sig.Title,
+                Description = sig.Description,
+                GiverName = npc.Name!,
+                Floor = CurrentFloor,
+                Type = QuestType.Kill,
+                TargetMob = sig.MobNameFragment ?? "",
+                TargetCount = sig.KillCount,
+                Persistent = true,
+                RewardCol = sig.RewardCol,
+                RewardXp = sig.RewardXp,
+                RequiresWeaponType = sig.WeaponType,
+            });
+            _log.Log($"{npc.Name}: \"{sig.Description}\"");
+            _log.LogSystem($"  [QUEST] Signature quest: '{sig.Title}'.");
+            return true;
+        }
+        if (existing.Status == QuestStatus.Complete)
+        {
+            existing.Status = QuestStatus.TurnedIn;
+            QuestSystem.ActiveQuests.Remove(existing);
+            QuestSystem.CompletedQuests.Add(existing);
+            _player.ColOnHand += existing.RewardCol;
+            TotalColEarned += existing.RewardCol;
+            int lvlBefore = _player.Level;
+            _player.GainExperience(existing.RewardXp);
+            if (_player.Level > lvlBefore) LeveledUp?.Invoke();
+            Story.StorySystem.AdjustRep(def.Id, 30);
+            // FB-063 — signature quest karma. LC's Crimson Letter is
+            // intentionally excluded from the +3 bonus (the 5 NPC kills it
+            // demands already drained -100 karma; no +3 redemption).
+            if (def.Id != Story.Faction.LaughingCoffin)
+                KarmaSystem.Adjust(_player, KarmaSystem.DeltaQuestComplete, $"{def.DisplayName} signature quest", _log);
+            _log.LogSystem($"  [QUEST] '{sig.Title}' turned in! +30 {def.DisplayName} rep, +{existing.RewardCol} Col, +{existing.RewardXp} XP.");
+            return true;
+        }
+        if (existing.Status == QuestStatus.TurnedIn)
+        {
+            _log.Log($"{npc.Name}: \"Your deeds are remembered. {def.DisplayName} walks with you.\"");
+            return true;
+        }
+        int remaining = existing.TargetCount - existing.CurrentCount;
+        _log.Log($"{npc.Name}: \"{remaining} more. We'll see it through.\"");
+        return true;
+    }
+
     // Lisbeth at Lindarth (F48) — opens the Rarity 6 craft dialog in place
     // of the generic NPC dialog/quest flow. Only fires when we're on the
     // canon Lindarth floor so the Town-of-Beginnings Lisbeth still greets
@@ -674,10 +830,15 @@ public partial class TurnManager
             bool handledByHollowNpc = HandleHollowWeaponNpc(npc);
             // Lisbeth at Lindarth (F48) — opens Rarity 6 craft dialog.
             bool handledByLisbeth = HandleLisbethLindarth(npc);
-            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByDorothy || handledByHollowNpc || handledByLisbeth;
+            // FB-063 Guild recruiters — 8 canon guild recruitment NPCs.
+            bool handledByGuildRecruiter = HandleGuildRecruiter(npc);
+            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByDorothy || handledByHollowNpc || handledByLisbeth || handledByGuildRecruiter;
 
             // Turn in completed quests
             QuestSystem.OnNpcTalk(_log);
+            // Count how many will turn in so FB-063 karma grants scale with
+            // the actual number of completions (each completed quest = +3 karma).
+            int turnInCount = QuestSystem.ActiveQuests.Count(q => q.Status == QuestStatus.Complete);
             var (qCol, qXp) = QuestSystem.TurnInCompleted();
             if (qCol > 0 || qXp > 0)
             {
@@ -687,6 +848,9 @@ public partial class TurnManager
                 _player.GainExperience(qXp);
                 _log.LogSystem($"  [QUEST] Rewards: +{qCol} Col, +{qXp} XP!");
                 if (_player.Level > lvlBefore) LeveledUp?.Invoke();
+                // FB-063 — +3 karma per quest completed (generic turn-ins).
+                for (int k = 0; k < turnInCount; k++)
+                    KarmaSystem.Adjust(_player, KarmaSystem.DeltaQuestComplete, "quest complete", _log);
             }
 
             // Offer a new quest if the player has room — Divine-quest NPCs never

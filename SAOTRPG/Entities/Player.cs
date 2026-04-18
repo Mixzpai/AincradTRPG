@@ -50,6 +50,20 @@ namespace SAOTRPG.Entities
         public HashSet<string> UnlockedTitleIds { get; set; } = new();
         public string? ActiveTitleId { get; set; }
 
+        // FB-063 Karma — signed integer in [-100, +100], default 0 (Neutral).
+        // Adjusted via KarmaSystem.Adjust. Thresholds drive NPC dialogue,
+        // shop price multipliers, and the F1 Town Guard outlaw spawn.
+        public int Karma { get; set; }
+
+        // FB-063 Guild System — active guild id. None = not in any guild.
+        // Single-guild membership (joining a new one forces leaving current).
+        public Systems.Story.Faction ActiveGuildId { get; set; } = Systems.Story.Faction.None;
+
+        // Player-founded guild — custom name + perk preset index. Only
+        // meaningful when ActiveGuildId == Faction.PlayerGuild.
+        public string? FoundedGuildName { get; set; }
+        public int FoundedGuildPerk { get; set; }
+
         public int Attack => BaseAttack + (Strength * 2) + Inventory.GetTotalEquipmentBonus(StatType.Attack);
         public int Defense => BaseDefense + (Endurance * 2)
             + Inventory.GetTotalEquipmentBonus(StatType.Defense)
@@ -145,6 +159,23 @@ namespace SAOTRPG.Entities
                 // DO NOT reapply the bonus — the base stats already have it.
                 player.ActiveTitleId = save.ActiveTitleId;
             }
+
+            // FB-063 Karma + Guild — hydrate. Missing/unparseable values
+            // default to 0 karma / no guild (legacy save behavior). Guild
+            // ID accepts the legacy "AincradLiberationSquad" name and
+            // migrates it to AincradLiberationForce on the fly.
+            player.Karma = Math.Clamp(save.Karma, Systems.KarmaSystem.Min, Systems.KarmaSystem.Max);
+            string guildName = save.ActiveGuildId ?? "None";
+            if (guildName == "AincradLiberationSquad") guildName = "AincradLiberationForce";
+            if (Enum.TryParse<Systems.Story.Faction>(guildName, out var fac))
+                player.ActiveGuildId = fac;
+            else
+                player.ActiveGuildId = Systems.Story.Faction.None;
+            player.FoundedGuildName = save.FoundedGuildName;
+            player.FoundedGuildPerk = save.FoundedGuildPerk;
+            // Player's BaseAttack/Vitality/etc. already contain any guild perk
+            // that was baked in at Join-time in the prior session, so we do
+            // NOT re-apply here (matches the Title hydration rule above).
 
             return player;
         }

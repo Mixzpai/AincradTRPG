@@ -79,11 +79,11 @@ public static class StoryEvents
                         new CutsceneChoice(
                             "\"A beta-tester? Don't insult me. I'm a BEATER.\"",
                             "The word lands like a slap. You pull up your cloak and walk past them alone. Let them hate a scapegoat — the solo clearers they would have hunted are safer now.",
-                            () => { StorySystem.SetFlag(StoryFlag.OwnedBeaterLabel); StorySystem.AdjustRep(Faction.AincradLiberationSquad, -10); }),
+                            () => { StorySystem.SetFlag(StoryFlag.OwnedBeaterLabel); StorySystem.AdjustRep(Faction.AincradLiberationForce, -10); }),
                         new CutsceneChoice(
                             "\"I would have warned anyone who asked me.\"",
                             "The raiders mutter but don't disperse. You earn a reputation as honest — and a dozen new acquaintances who will ask you for everything next time.",
-                            () => { StorySystem.SetFlag(StoryFlag.DeniedBeaterLabel); StorySystem.AdjustRep(Faction.AincradLiberationSquad, 5); }),
+                            () => { StorySystem.SetFlag(StoryFlag.DeniedBeaterLabel); StorySystem.AdjustRep(Faction.AincradLiberationForce, 5); }),
                     }),
             }
         )
@@ -198,7 +198,7 @@ public static class StoryEvents
                         new CutsceneChoice(
                             "Clasp Kibaou's forearm.",
                             "Kibaou grins. \"Good. The Liberation remembers its friends.\" Later you will wonder if it remembers its enemies better.",
-                            () => { StorySystem.AdjustRep(Faction.AincradLiberationSquad, 15); StorySystem.SetFlag(StoryFlag.KnowsLaughingCoffin); }),
+                            () => { StorySystem.AdjustRep(Faction.AincradLiberationForce, 15); StorySystem.SetFlag(StoryFlag.KnowsLaughingCoffin); }),
                         new CutsceneChoice(
                             "Walk between them without speaking.",
                             "Both leaders watch you pass. You can feel Heathcliff's calculation and Kibaou's contempt in equal measure. Solo suits you.",

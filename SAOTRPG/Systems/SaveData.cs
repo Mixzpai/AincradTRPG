@@ -133,6 +133,16 @@ public class SaveData
     // they visit the Monument of Swordsmen.
     public List<string> UnlockedTitleIds { get; set; } = new();
     public string? ActiveTitleId { get; set; }
+
+    // FB-063 Karma + Guild — new fields default to neutral/empty so legacy
+    // saves load cleanly. Karma in [-100, +100]; 0 = Neutral tier. Guild
+    // id is serialized as the Faction enum name (string) via SaveManager;
+    // "None" means no active guild. Founded-guild name/perk apply only
+    // when ActiveGuildId == "PlayerGuild".
+    public int Karma { get; set; }
+    public string ActiveGuildId { get; set; } = "None";
+    public string? FoundedGuildName { get; set; }
+    public int FoundedGuildPerk { get; set; }
 }
 
 // FB-050 — serialized form of a single life skill's live state.

@@ -273,6 +273,17 @@ public static partial class MapGenerator
                 sy + Random.Shared.Next(-10, 11));
         }
 
+        // FB-063 Guild recruitment NPCs: Kibaou (ALF) on F1 TOB. Other
+        // recruiters live on their guild's HQ floor and are spawned via
+        // FloorNpcSpawns (see below). Low-bar guild, placed inside the
+        // plaza so players meet him early.
+        var kibaou = new WorldSpawn('K', Color.BrightYellow)
+        {
+            Name = "Kibaou",
+            Dialogue = "The ALF needs every able sword. Clear some beasts for us and we'll make it official.",
+        };
+        TryPlaceEntityNear(map, kibaou, sx + 6, sy + 6);
+
         // Campfire rest point in the wilderness just north of the gate —
         // a landmark that signals "the wilds start here."
         if (map.InBounds(sx, sy - TownHalfH - 4))
@@ -286,6 +297,23 @@ public static partial class MapGenerator
             if (wx < 0) continue;
             var mob = MobFactory.CreateFloorMob(floor, statScale);
             map.PlaceEntity(mob, wx, wy);
+        }
+
+        // FB-063 Town Guard outlaw spawn — plaza patrol activates if player
+        // karma <= -50. 3-5 guards stationed near the spawn point. If the
+        // player's karma rises out of Outlaw tier on a later TOB visit, the
+        // gate above is false and no new guards spawn (existing ones from a
+        // prior visit live/die normally; map is regenerated on each entry).
+        if (player.Karma <= -50)
+        {
+            int guardCount = 3 + Random.Shared.Next(0, 3);
+            for (int i = 0; i < guardCount; i++)
+            {
+                var guard = MobFactory.CreateTownGuard();
+                int ox = Random.Shared.Next(-8, 9);
+                int oy = Random.Shared.Next(-8, 9);
+                TryPlaceEntityNear(map, guard, sx + ox, sy + oy);
+            }
         }
     }
 
@@ -432,6 +460,48 @@ public static partial class MapGenerator
         ((f, r) => f == 99 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('X', Color.BrightRed) { Name = "Last Herald Xiv",
              Dialogue = "The pact demands twenty. Feed Epetamu, and it will feed your climb." }),
+
+        // ── FB-063 Guild recruiters ─────────────────────────────────────
+        // Kibaou (ALF) is placed directly inside TOB F1 by PopulateTownOfBeginnings.
+        // The remaining 7 recruiters spawn on each guild's HQ floor.
+
+        // Keita — Moonlit Black Cats (F10). BrightCyan K — distinct from
+        // Kibaou's BrightYellow. Fate-sealed guild.
+        ((f, r) => f == 10 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
+         () => new WorldSpawn('K', Color.BrightCyan) { Name = "Keita",
+             Dialogue = "The Cats are a small family. If you've got a warm heart and a steady blade, we'll make room." }),
+
+        // Klein's Second — Fuurinkazan (F20).
+        ((f, r) => f == 20 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
+         () => new WorldSpawn('F', Color.BrightRed) { Name = "Klein's Second",
+             Dialogue = "Klein's off drinking. I handle the paperwork. Katana in hand, karma in pocket — we don't check the second." }),
+
+        // Schmitt — Legend Braves (F25). Wary of Coffin sympathizers.
+        ((f, r) => f == 25 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
+         () => new WorldSpawn('S', Color.Green) { Name = "Schmitt",
+             Dialogue = "We're forging a name out here. Prove you hunt PKers, not work with them, and we'll have you." }),
+
+        // Lind — Divine Dragon Alliance (F40).
+        ((f, r) => f == 40 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
+         () => new WorldSpawn('L', Color.BrightBlue) { Name = "Lind",
+             Dialogue = "The DDA clears floors by formation, not by heroics. If you can keep a line, we'll have you." }),
+
+        // Godfree — Knights of the Blood Oath lieutenant (F55). Honor-gated.
+        ((f, r) => f == 55 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
+         () => new WorldSpawn('G', Color.BrightRed) { Name = "Godfree",
+             Dialogue = "Commander Heathcliff does not suffer shady oaths. Bring honor, or bring yourself elsewhere." }),
+
+        // Siune — Sleeping Knights (F60). Elite, karma-gated.
+        ((f, r) => f == 60 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
+         () => new WorldSpawn('Y', Color.BrightMagenta) { Name = "Siune",
+             Dialogue = "Yuuki left one condition: only the worthy. Show us resolve and we'll show you a family." }),
+
+        // PoH's Herald — Laughing Coffin (F75 hidden). Only meaningful when
+        // the player's karma is <= -50; the dispatcher shows a generic
+        // fallback line otherwise so the encounter doesn't spoil the guild.
+        ((f, r) => f == 75 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('P', Color.Red) { Name = "PoH's Herald",
+             Dialogue = "PoH is always listening. When you have earned enough crimson, come back — we'll be watching." }),
     };
 
     // Walks FloorNpcSpawns in order, placing each NPC whose gate passes.

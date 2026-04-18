@@ -45,6 +45,11 @@ public partial class TurnManager
 
         int damage = baseDmg + profBonus + comboBonus + _shrineBuff + _levelUpBuff
             + SatietyAtkBonus + FatigueAtkPenalty + BiomeSystem.AttackModifier;
+
+        // FB-063 Guild combat bonuses — Fuurinkazan: +10 ATK w/ Katana equipped.
+        // Legend Braves: +15 ATK vs Laughing Coffin PKer mobs.
+        damage += GuildSystem.KatanaAttackBonus(_player, wpnType);
+        damage += GuildSystem.LegendBravesVsLcBonus(_player, monster.Name);
         if (pairResonance)
             damage = damage * 110 / 100;
 
@@ -154,6 +159,20 @@ public partial class TurnManager
     {
         Bestiary.RecordKill(monster.Name);
         QuestSystem.OnMobKilled(monster.Name, _log, wpnType);
+
+        // FB-063 Karma — adjust on kill. PKer human mobs gain karma; peaceful
+        // mob kills drain it; hostile non-human mobs are neutral. Town Guard
+        // kills additionally seed +20 Laughing Coffin rep so LC members
+        // earn standing with every outlaw encounter cleared.
+        string lootTag = monster is Mob mob ? mob.LootTag : "generic";
+        int karmaDelta = KarmaSystem.DeltaForMobKill(monster.Name, lootTag);
+        if (karmaDelta != 0)
+            KarmaSystem.Adjust(_player, karmaDelta, $"slew {monster.Name}", _log);
+        if (monster.Name == "Town Guard" && _player.ActiveGuildId == Story.Faction.LaughingCoffin)
+        {
+            Story.StorySystem.AdjustRep(Story.Faction.LaughingCoffin, 20);
+            _log.Log("  Laughing Coffin notes your handiwork. (+20 LC rep)");
+        }
         // FB-058 Title System — check unlocks after each kill so the
         // banner fires immediately on milestone crossings.
         CheckTitleUnlocksAfterKill(monster);

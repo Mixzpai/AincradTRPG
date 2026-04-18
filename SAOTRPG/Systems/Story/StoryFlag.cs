@@ -16,11 +16,21 @@ public enum StoryFlag
     RefusedDuel,         // F75: refused — triggers alternate F100 path
 }
 
+// Faction / guild identity. Used by StorySystem reputation AND the
+// FB-063 GuildSystem for guild membership + rep. The `None` sentinel
+// is the default ActiveGuildId — player is not a member of any guild.
 public enum Faction
 {
+    None,
     KnightsOfBlood,
-    AincradLiberationSquad,
+    AincradLiberationForce,
+    DivineDragonAlliance,
+    Fuurinkazan,
+    LegendBraves,
+    SleepingKnights,
     LaughingCoffin,
+    MoonlitBlackCats,
+    PlayerGuild,
 }
 
 public enum StoryTrigger

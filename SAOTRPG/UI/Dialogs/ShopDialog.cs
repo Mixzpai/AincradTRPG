@@ -19,6 +19,20 @@ public static class ShopDialog
     // Opens the shop dialog — buy, sell, and repair items from a vendor.
     public static void Show(Player player, Vendor vendor, int currentFloor = 1)
     {
+        // FB-063 Karma — Outlaw-tier players are refused service outright.
+        // Honorable / Shady tiers apply a ±10% markup via BuyPrice() below.
+        float karmaMul = KarmaSystem.ShopPriceMultiplier(player.Karma);
+        if (karmaMul < 0)
+        {
+            MessageBox.Query(vendor.ShopName ?? "Shop",
+                $"{vendor.Name ?? "The shopkeep"} will not serve an outlaw.\n\n" +
+                $"Your karma is {player.Karma} ({KarmaSystem.TierLabel(player.Karma)}).\n" +
+                "Come back when the world sees you differently.",
+                "Leave");
+            return;
+        }
+        int BuyPrice(BaseItem it) => Math.Max(1, (int)Math.Round(it.Value * karmaMul));
+
         // IM Dynamic Shop Tiering — before rendering, fold any newly-unlocked
         // tier items into the vendor stock. This is additive; duplicate DefIds
         // are suppressed so repeat visits don't stack copies. A snapshot of
@@ -73,7 +87,10 @@ public static class ShopDialog
                 string newTag = (!string.IsNullOrEmpty(item.DefinitionId)
                                  && newFlags.Contains(item.DefinitionId!))
                     ? "[NEW] " : "";
-                buyNames.Add($"  {newTag}{tag}{item.Name} — {item.Value} Col  ({FormatItemInfo(item)})");
+                int price = BuyPrice(item);
+                string karmaMark = karmaMul > 1.01f ? " (+karma markup)"
+                                 : karmaMul < 0.99f ? " (-karma discount)" : "";
+                buyNames.Add($"  {newTag}{tag}{item.Name} — {price} Col{karmaMark}  ({FormatItemInfo(item)})");
                 buyRefs.Add(item);
             }
             colLabel.Text = $"Your Col: {player.ColOnHand}";
@@ -128,7 +145,7 @@ public static class ShopDialog
             sellRefs.Clear();
             foreach (var item in player.Inventory.Items)
             {
-                int sellPrice = CalcSellPrice(item, currentFloor);
+                int sellPrice = CalcSellPrice(item, currentFloor, player);
                 string tag = RarityHelper.FormatTag(item.Rarity);
                 string qty = item is StackableItem s ? $" x{s.Quantity}" : "";
                 sellNames.Add($"  {tag}{item.Name}{qty} — sells for {sellPrice} Col");
@@ -171,9 +188,10 @@ public static class ShopDialog
             if (!sellMode && idx >= 0 && idx < buyRefs.Count)
             {
                 var item = buyRefs[idx];
-                bool canAfford = player.ColOnHand >= item.Value;
+                int price = BuyPrice(item);
+                bool canAfford = player.ColOnHand >= price;
                 detailLabel.Text = canAfford
-                    ? $"Press Buy to purchase for {item.Value} Col."
+                    ? $"Press Buy to purchase for {price} Col."
                     : "Not enough Col!";
                 compareLabel.Text = BuildComparison(item, player);
                 if (item is EquipmentBase eqItem)
@@ -189,7 +207,7 @@ public static class ShopDialog
             }
             else if (sellMode && idx >= 0 && idx < sellRefs.Count)
             {
-                detailLabel.Text = $"Press Sell to sell for {CalcSellPrice(sellRefs[idx], currentFloor)} Col.";
+                detailLabel.Text = $"Press Sell to sell for {CalcSellPrice(sellRefs[idx], currentFloor, player)} Col.";
                 compareLabel.Text = "";
                 compareLabel.ColorScheme = ColorSchemes.Dim;
             }
@@ -209,7 +227,8 @@ public static class ShopDialog
             if (idx < 0 || idx >= buyRefs.Count) return;
 
             var item = buyRefs[idx];
-            if (player.ColOnHand < item.Value)
+            int price = BuyPrice(item);
+            if (player.ColOnHand < price)
             {
                 detailLabel.Text = "Not enough Col!";
                 detailLabel.ColorScheme = ColorSchemes.Danger;
@@ -224,8 +243,8 @@ public static class ShopDialog
                 return;
             }
 
-            player.ColOnHand -= item.Value;
-            detailLabel.Text = $"Purchased {item.Name} for {item.Value} Col.";
+            player.ColOnHand -= price;
+            detailLabel.Text = $"Purchased {item.Name} for {price} Col.";
             detailLabel.ColorScheme = ColorSchemes.Success;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
         };
@@ -238,7 +257,7 @@ public static class ShopDialog
             if (idx < 0 || idx >= sellRefs.Count) return;
 
             var item = sellRefs[idx];
-            int sellPrice = CalcSellPrice(item, currentFloor);
+            int sellPrice = CalcSellPrice(item, currentFloor, player);
 
             string qtyTag = item is StackableItem st ? $" x{st.Quantity}" : "";
             bool isRarePlus = item.Rarity != null && item.Rarity != "Common";
@@ -330,7 +349,7 @@ public static class ShopDialog
                 return;
             }
 
-            int totalCol = junkItems.Sum(i => CalcSellPrice(i, currentFloor));
+            int totalCol = junkItems.Sum(i => CalcSellPrice(i, currentFloor, player));
             int confirm = MessageBox.Query("Sell Junk",
                 $"Sell {junkItems.Count} Common item(s) for {totalCol} Col?", "Sell All", "Cancel");
             if (confirm != 0) return;
@@ -369,11 +388,22 @@ public static class ShopDialog
         shopItem is not EquipmentBase eq ? "" : EquipmentComparer.BuildComparison(player, eq);
 
     // Calculates the sell price for an item, factoring in floor bonus.
-    public static int CalcSellPrice(BaseItem item, int floor = 1)
+    // When `player` is non-null, applies a symmetric karma-based multiplier:
+    // Honorable NPCs pay 10% more, Shady NPCs pay 10% less. Mirrors the
+    // buy-side multiplier (Honorable buy -10%, Shady buy +10%) so karma
+    // rewards / punishes consistently on both sides of the transaction.
+    // Outlaw (karma ≤ -50) is blocked at the ShopDialog entry point so no
+    // sell pricing is needed here.
+    public static int CalcSellPrice(BaseItem item, int floor = 1, Player? player = null)
     {
         int basePrice = Math.Max(1, item.Value / 2);
         int floorBonus = basePrice * Math.Max(0, floor - 1) * 5 / 100;
-        return basePrice + floorBonus;
+        int raw = basePrice + floorBonus;
+        if (player == null) return raw;
+        float buyMul = KarmaSystem.ShopPriceMultiplier(player.Karma);
+        if (buyMul < 0) return raw;  // Outlaw — caller already blocked entry
+        float sellMul = 2f - buyMul;
+        return Math.Max(1, (int)Math.Round(raw * sellMul));
     }
 
     private static string FormatItemInfo(BaseItem item) => item switch
