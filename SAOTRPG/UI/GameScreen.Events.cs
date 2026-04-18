@@ -94,7 +94,7 @@ public static partial class GameScreen
         {
             InvokeDialog(() =>
             {
-                ShopDialog.Show(player, vendor, turnManager.CurrentFloor);
+                ShopDialog.Show(player, vendor, turnManager.CurrentFloor, gameLog);
                 string[] farewells =
                 {
                     "{0}: \"Come back anytime!\"", "{0}: \"Safe travels, adventurer.\"",

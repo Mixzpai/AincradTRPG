@@ -198,6 +198,9 @@ public static class SaveManager
         ActiveGuildId = player.ActiveGuildId.ToString(),
         FoundedGuildName = player.FoundedGuildName,
         FoundedGuildPerk = player.FoundedGuildPerk,
+        // FB-072 Investing — snapshot the per-vendor deposit dict. Legacy saves
+        // simply omit it; VendorInvestmentSystem.SetForLoad(null) clears state.
+        VendorInvestments = VendorInvestmentSystem.Snapshot(),
     };
 
     // Item serialization.

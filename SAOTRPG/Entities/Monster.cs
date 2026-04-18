@@ -17,6 +17,12 @@ namespace SAOTRPG.Entities
         // Col (gold) awarded on defeat.
         public int ColYield { get; set; }
 
+        // FB-077 — Aquatic mobs can enter Water + WaterDeep tiles. Mirrors
+        // the player's Swimming skill gate, but binary (no slow penalty).
+        // Set per template in MobFactory; defaults false so land-bound mobs
+        // still treat water as a choke point.
+        public bool CanSwim { get; set; }
+
         /****************************************************************************************/
         // Result structure for when monster is defeated
 

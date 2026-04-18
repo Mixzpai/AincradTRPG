@@ -242,6 +242,8 @@ public partial class TurnManager
         // construct. LoadFromSave will overwrite with the saved value if
         // this is a load path (see SetForLoad below in LoadSaveData).
         ShopTierSystem.SetForLoad(0);
+        // FB-072 Investing — same reset cadence. Load path overwrites below.
+        VendorInvestmentSystem.Clear();
 
         // FB-050..054 + FB-058 — subscribe Life Skill + Title hooks before
         // any gameplay systems fire so the first rest/walk/sprint/food grant
@@ -558,6 +560,9 @@ public partial class TurnManager
         // regain their unlocks on reload. Legacy saves lack the field and
         // default to 0 (no tiered stock until the next F50+ clear).
         ShopTierSystem.SetForLoad(save.HighestFloorBossCleared);
+        // FB-072 Investing — hydrate per-vendor deposits. Legacy saves lack
+        // the dict → cleared state (no bonus tiers until first Invest call).
+        VendorInvestmentSystem.SetForLoad(save.VendorInvestments);
 
         // Restore party members
         PartySystem.Clear();

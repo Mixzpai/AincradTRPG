@@ -28,7 +28,7 @@ public static class TalentPickDialog
         for (int i = 0; i < choices.Length; i++)
         {
             var perk = choices[i];
-            var btn = DialogHelper.CreateButton(perk.Name);
+            var btn = DialogHelper.CreateMenuButton(perk.Name);
             btn.X = 1;
             btn.Y = 1 + i * 3;
             btn.HasFocusChanged += (s, e) => { if (e.NewValue) descLabel.Text = perk.Description; };

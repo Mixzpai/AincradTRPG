@@ -15,11 +15,25 @@ public class Tile
     public List<BaseItem> Items { get; } = new();
 
     // True if this terrain type blocks entity movement.
+    // Note: Water + WaterDeep are "blocking" at the tile level — the player
+    // bypasses via FB-077 Swimming skill (checked in TurnManager.Movement),
+    // and aquatic mobs bypass via Monster.CanSwim (checked in TurnManager.AI).
     public bool BlocksMovement => Type is TileType.Wall or TileType.CrackedWall or TileType.Water
                                     or TileType.WaterDeep or TileType.Mountain or TileType.Tree
                                     or TileType.TreePine or TileType.Rock;
     // True if the tile is passable and unoccupied.
     public bool IsWalkable => !BlocksMovement && Occupant == null;
+
+    // FB-077 — Minimum Swimming life-skill level required for the player to
+    // enter this tile. -1 for non-water terrain (Swimming is irrelevant),
+    // 1 for shallow Water, 25 for deep WaterDeep. TurnManager checks this
+    // before treating Water/WaterDeep as a hard block for the player.
+    public int RequiresSwimmingLevel => Type switch
+    {
+        TileType.Water     => 1,
+        TileType.WaterDeep => 25,
+        _                  => -1,
+    };
     // True if one or more items are on the ground here.
     public bool HasItems => Items.Count > 0;
     // If true, this trap tile renders as Floor until revealed by DEX check or triggering.

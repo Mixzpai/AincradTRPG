@@ -64,7 +64,9 @@ public static class DeathScreen
 
         LifetimeStats.RecordRun(kills, floor, player.Level, grade,
             turnManager?.TotalPlayTime ?? TimeSpan.Zero,
-            turnManager?.TotalColEarned ?? player.ColOnHand, victory: false);
+            turnManager?.TotalColEarned ?? player.ColOnHand, victory: false,
+            playerName: $"{player.FirstName} {player.LastName}".Trim(),
+            turnCount: turns);
 
         string summaryText = BuildSummary(player, floor, kills, turns, turnManager);
         var summaryLabel = new Label

@@ -143,6 +143,12 @@ public class SaveData
     public string ActiveGuildId { get; set; } = "None";
     public string? FoundedGuildName { get; set; }
     public int FoundedGuildPerk { get; set; }
+
+    // FB-072 Investing — per-vendor Col deposit totals, keyed by vendor
+    // ShopName (or fallback id). Empty on legacy saves; VendorInvestmentSystem
+    // clamps each value to [0, MaxInvestmentPerVendor] on load so corrupt
+    // entries can't cascade. Serializes cleanly via System.Text.Json.
+    public Dictionary<string, int> VendorInvestments { get; set; } = new();
 }
 
 // FB-050 — serialized form of a single life skill's live state.

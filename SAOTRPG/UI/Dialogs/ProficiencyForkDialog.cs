@@ -25,7 +25,7 @@ public static class ProficiencyForkDialog
             ColorScheme = ColorSchemes.Gold,
         };
 
-        var opt1Btn = DialogHelper.CreateButton(opt1.Name, isDefault: true);
+        var opt1Btn = DialogHelper.CreateMenuButton(opt1.Name, isDefault: true);
         opt1Btn.X = 2; opt1Btn.Y = 3;
         var opt1Desc = new Label
         {
@@ -34,7 +34,7 @@ public static class ProficiencyForkDialog
             ColorScheme = ColorSchemes.Dim,
         };
 
-        var opt2Btn = DialogHelper.CreateButton(opt2.Name);
+        var opt2Btn = DialogHelper.CreateMenuButton(opt2.Name);
         opt2Btn.X = 2; opt2Btn.Y = 6;
         var opt2Desc = new Label
         {

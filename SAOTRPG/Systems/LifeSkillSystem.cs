@@ -15,6 +15,14 @@ public enum LifeSkillType
     Walking,
     Running,
     Eating,
+    // FB-072 — shopkeep haggling. XP per shop transaction (buy or sell).
+    // Milestone bonus is a buy-discount / sell-bonus multiplier that stacks
+    // multiplicatively on top of the karma shop price multiplier.
+    Bargaining,
+    // FB-077 — aquatic traversal. XP per water tile stepped. Level gates
+    // shallow vs. deep water passability; below the upper threshold each
+    // water step costs an extra turn tick (slow penalty).
+    Swimming,
     // (Extensible — add Fishing/Mining/Cooking here in later passes.)
 }
 
@@ -156,8 +164,41 @@ public class LifeSkillSystem
             case LifeSkillType.Eating:
                 // Eating's bonus is a multiplier — no flat stat bonus here.
                 break;
+            case LifeSkillType.Bargaining:
+                // Bargaining's bonus is a price multiplier — see BargainingDiscount().
+                break;
+            case LifeSkillType.Swimming:
+                // Swimming is purely a traversal gate — no flat stat bonus.
+                break;
         }
     }
+
+    // FB-072 — Bargaining buy-price multiplier (< 1.0 = discount).
+    //   L10  0.97   (−3%)
+    //   L25  0.94   (−6%)
+    //   L50  0.90  (−10%)
+    //   L99  0.85  (−15% cap)
+    // Returns 1.0 at L<10 (no effect). Stacks multiplicatively on top of
+    // the karma shop price multiplier at the ShopDialog call sites.
+    public float BargainingBuyMultiplier()
+    {
+        int lvl = Skills[LifeSkillType.Bargaining].Level;
+        if (lvl >= MaxLevel) return 0.85f;
+        if (lvl >= 50) return 0.90f;
+        if (lvl >= 25) return 0.94f;
+        if (lvl >= 10) return 0.97f;
+        return 1.0f;
+    }
+
+    // Convenience helper for callers that have a Player reference. Null-safe
+    // so early boot paths (character creation, test harnesses) can't crash.
+    public static float BargainingDiscount(SAOTRPG.Entities.Player? player)
+        => player?.LifeSkills.BargainingBuyMultiplier() ?? 1.0f;
+
+    // FB-077 — Swimming level. Water (shallow) passable at L1+; WaterDeep
+    // passable at L25+. Below the upper threshold the move costs an extra
+    // turn tick (L<10 slow on shallow, L<50 slow on deep).
+    public int SwimmingLevel => Skills[LifeSkillType.Swimming].Level;
 
     // Cumulative flat MaxHP bonus from Sleep skill tiers.
     public int SleepMaxHpBonus()
@@ -216,11 +257,13 @@ public class LifeSkillSystem
     // Pretty label for UI rendering.
     public static string Label(LifeSkillType skill) => skill switch
     {
-        LifeSkillType.Sleep   => "Sleep",
-        LifeSkillType.Walking => "Walking",
-        LifeSkillType.Running => "Running",
-        LifeSkillType.Eating  => "Eating",
-        _                     => skill.ToString(),
+        LifeSkillType.Sleep      => "Sleep",
+        LifeSkillType.Walking    => "Walking",
+        LifeSkillType.Running    => "Running",
+        LifeSkillType.Eating     => "Eating",
+        LifeSkillType.Bargaining => "Bargain",
+        LifeSkillType.Swimming   => "Swim",
+        _                        => skill.ToString(),
     };
 
     // One-line milestone description for the log banner.
@@ -242,6 +285,14 @@ public class LifeSkillSystem
         (LifeSkillType.Eating,  25) => "+25% food potency",
         (LifeSkillType.Eating,  50) => "+50% food potency",
         (LifeSkillType.Eating,  99) => "+100% food duration",
+        (LifeSkillType.Bargaining, 10) => "-3% buy / +3% sell",
+        (LifeSkillType.Bargaining, 25) => "-6% buy / +6% sell",
+        (LifeSkillType.Bargaining, 50) => "-10% buy / +10% sell",
+        (LifeSkillType.Bargaining, 99) => "-15% buy / +15% sell (cap)",
+        (LifeSkillType.Swimming,   10) => "Water at full speed",
+        (LifeSkillType.Swimming,   25) => "Deep water passable (slow)",
+        (LifeSkillType.Swimming,   50) => "Deep water at full speed",
+        (LifeSkillType.Swimming,   99) => "Master swimmer",
         _                           => "",
     };
 }

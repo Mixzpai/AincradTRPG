@@ -17,7 +17,8 @@ public static class ShopDialog
     private const int CostPerDurability = 2, BaseDurability = 50, DurabilityPerLevel = 10;
 
     // Opens the shop dialog — buy, sell, and repair items from a vendor.
-    public static void Show(Player player, Vendor vendor, int currentFloor = 1)
+    public static void Show(Player player, Vendor vendor, int currentFloor = 1,
+        SAOTRPG.UI.IGameLog? log = null)
     {
         // FB-063 Karma — Outlaw-tier players are refused service outright.
         // Honorable / Shady tiers apply a ±10% markup via BuyPrice() below.
@@ -31,7 +32,11 @@ public static class ShopDialog
                 "Leave");
             return;
         }
-        int BuyPrice(BaseItem it) => Math.Max(1, (int)Math.Round(it.Value * karmaMul));
+        // FB-072 — Bargaining skill multiplier stacks MULTIPLICATIVELY on the
+        // karma multiplier. A L99 Bargainer with Honorable karma stacks to
+        // 0.90 × 0.85 = 0.765 (23.5% off).
+        float bargainMul = LifeSkillSystem.BargainingDiscount(player);
+        int BuyPrice(BaseItem it) => Math.Max(1, (int)Math.Round(it.Value * karmaMul * bargainMul));
 
         // IM Dynamic Shop Tiering — before rendering, fold any newly-unlocked
         // tier items into the vendor stock. This is additive; duplicate DefIds
@@ -39,12 +44,12 @@ public static class ShopDialog
         // DefIds NEW to this visit is captured here so the render loop can
         // flag them — and then MarkSeen is called so the flag clears next time.
         var newFlags = new HashSet<string>();
+        var existingDefIds = new HashSet<string>(
+            vendor.ShopStock
+                .Where(i => !string.IsNullOrEmpty(i.DefinitionId))
+                .Select(i => i.DefinitionId!));
         if (ShopTierSystem.HighestFloorBossCleared >= 50)
         {
-            var existingDefIds = new HashSet<string>(
-                vendor.ShopStock
-                    .Where(i => !string.IsNullOrEmpty(i.DefinitionId))
-                    .Select(i => i.DefinitionId!));
             foreach (var item in ShopTierSystem.BuildTierStock())
             {
                 if (!string.IsNullOrEmpty(item.DefinitionId)
@@ -60,13 +65,28 @@ public static class ShopDialog
             foreach (var defId in newFlags) ShopTierSystem.MarkSeen(defId);
         }
 
+        // FB-072 — Per-vendor invested stock. Adds items from tiers beyond
+        // the globally unlocked band, scoped to THIS vendor only. Duplicates
+        // from the global tier are suppressed via existingDefIds.
+        foreach (var item in VendorInvestmentSystem.BuildVendorExtraStock(vendor))
+        {
+            if (!string.IsNullOrEmpty(item.DefinitionId)
+                && !existingDefIds.Contains(item.DefinitionId))
+            {
+                vendor.ShopStock.Add(item);
+                existingDefIds.Add(item.DefinitionId);
+            }
+        }
+
         var dialog = DialogHelper.Create(vendor.ShopName ?? "Shop", DialogWidth, DialogHeight);
 
         var colLabel = new Label { Text = $"Your Col: {player.ColOnHand}", X = Pos.Center(), Y = 0 };
         string tierInfo = ShopTierSystem.HighestFloorBossCleared >= 50
             ? $"   Tier {ShopTierSystem.CurrentTierCount()}/{ShopTierSystem.TotalTiers} unlocked"
             : "";
-        var modeHeader = new Label { Text = $"[ For Sale ]{tierInfo}", X = Pos.Center(), Y = 1 };
+        int investTiers = VendorInvestmentSystem.GetInvestedTiers(vendor);
+        string investInfo = investTiers > 0 ? $"   Invested +{investTiers}" : "";
+        var modeHeader = new Label { Text = $"[ For Sale ]{tierInfo}{investInfo}", X = Pos.Center(), Y = 1 };
         var emptyLabel = new Label
         {
             Text = "", X = Pos.Center(), Y = 6,
@@ -122,16 +142,18 @@ public static class ShopDialog
         var sellBtn = DialogHelper.CreateButton("Sell");
         var junkBtn = DialogHelper.CreateButton("Sell Junk");
         var repairBtn = DialogHelper.CreateButton("Repair");
+        var investBtn = DialogHelper.CreateButton("Invest");
         var closeBtn = DialogHelper.CreateButton("Leave", isDefault: true);
 
-        var buttonBar = new View { X = Pos.Center(), Y = Pos.AnchorEnd(3), Width = 54, Height = 1 };
+        var buttonBar = new View { X = Pos.Center(), Y = Pos.AnchorEnd(3), Width = 62, Height = 1 };
         buyBtn.X = 0;
         sellBtn.X = Pos.Right(buyBtn) + 1;
         junkBtn.X = Pos.Right(sellBtn) + 1;
         repairBtn.X = Pos.Right(junkBtn) + 1;
-        closeBtn.X = Pos.Right(repairBtn) + 1;
-        buyBtn.Y = sellBtn.Y = junkBtn.Y = repairBtn.Y = closeBtn.Y = 0;
-        buttonBar.Add(buyBtn, sellBtn, junkBtn, repairBtn, closeBtn);
+        investBtn.X = Pos.Right(repairBtn) + 1;
+        closeBtn.X = Pos.Right(investBtn) + 1;
+        buyBtn.Y = sellBtn.Y = junkBtn.Y = repairBtn.Y = investBtn.Y = closeBtn.Y = 0;
+        buttonBar.Add(buyBtn, sellBtn, junkBtn, repairBtn, investBtn, closeBtn);
 
         var sellHeader = new Label { Text = "", X = Pos.Center(), Y = Pos.AnchorEnd(2) };
         bool sellMode = false;
@@ -244,6 +266,8 @@ public static class ShopDialog
             }
 
             player.ColOnHand -= price;
+            // FB-072 — Bargaining XP: +1 per shop transaction (buy).
+            player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Purchased {item.Name} for {price} Col.";
             detailLabel.ColorScheme = ColorSchemes.Success;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
@@ -270,6 +294,8 @@ public static class ShopDialog
 
             player.Inventory.RemoveItem(item);
             player.ColOnHand += sellPrice;
+            // FB-072 — Bargaining XP: +1 per shop transaction (sell).
+            player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Sold {item.Name} for {sellPrice} Col.";
             detailLabel.ColorScheme = ColorSchemes.Success;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
@@ -356,6 +382,8 @@ public static class ShopDialog
 
             foreach (var item in junkItems) player.Inventory.RemoveItem(item);
             player.ColOnHand += totalCol;
+            // FB-072 — Bargaining XP: +1 per bulk-junk transaction.
+            player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Sold {junkItems.Count} junk item(s) for {totalCol} Col!";
             detailLabel.ColorScheme = ColorSchemes.Success;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
@@ -368,6 +396,53 @@ public static class ShopDialog
                 listView.SetNeedsDraw();
                 emptyLabel.Visible = sellNames.Count == 0;
             }
+        };
+
+        // FB-072 — Invest in Shop. Opens a MessageBox with preset tiers of
+        // Col to deposit. Clamps against player ColOnHand and the per-vendor
+        // 20,000 Col cap. Results (tier-up + running total) pipe into the
+        // supplied game log so the player sees them in the main HUD.
+        investBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            string shop = vendor.ShopName ?? "Shop";
+            int current = VendorInvestmentSystem.GetInvested(vendor);
+            int tiers = VendorInvestmentSystem.GetInvestedTiers(vendor);
+            int nextCost = VendorInvestmentSystem.NextTierCost(vendor);
+            string nextLine = nextCost > 0
+                ? $"Next tier at {current + nextCost} Col invested (need {nextCost} more)."
+                : "Maxed — 20,000 Col invested, +3 stock tiers unlocked.";
+            int choice = MessageBox.Query("Invest in Shop",
+                $"Deposit Col at {shop}.\n\n" +
+                $"Invested: {current}/{VendorInvestmentSystem.MaxInvestmentPerVendor} Col\n" +
+                $"Bonus stock tiers: +{tiers}\n" +
+                $"{nextLine}\n\n" +
+                $"Your Col on hand: {player.ColOnHand}\n" +
+                "Choose deposit amount:",
+                "500", "1000", "5000", "20000", "Cancel");
+
+            int[] amounts = { 500, 1000, 5000, 20000 };
+            if (choice < 0 || choice >= amounts.Length) return;
+            int deposit = amounts[choice];
+            int actual = VendorInvestmentSystem.Invest(vendor, player, deposit, log);
+            if (actual <= 0)
+            {
+                detailLabel.Text = "Investment failed — not enough Col or vendor at cap.";
+                detailLabel.ColorScheme = ColorSchemes.Danger;
+                return;
+            }
+
+            int newTiers = VendorInvestmentSystem.GetInvestedTiers(vendor);
+            string tierMsg = newTiers > tiers ? $" (+{newTiers - tiers} new stock tier!)" : "";
+            detailLabel.Text = $"Invested {actual} Col at {shop}.{tierMsg}";
+            detailLabel.ColorScheme = ColorSchemes.Success;
+            colLabel.Text = $"Your Col: {player.ColOnHand}";
+            // Update header readout so the +Invested badge refreshes live.
+            investTiers = VendorInvestmentSystem.GetInvestedTiers(vendor);
+            string newInvestInfo = investTiers > 0 ? $"   Invested +{investTiers}" : "";
+            modeHeader.Text = sellMode
+                ? "[ Your Items -- Sell ]"
+                : $"[ For Sale ]{tierInfo}{newInvestInfo}";
         };
 
         closeBtn.Accepting += (s, e) => { Application.RequestStop(); e.Cancel = true; };
@@ -403,7 +478,13 @@ public static class ShopDialog
         float buyMul = KarmaSystem.ShopPriceMultiplier(player.Karma);
         if (buyMul < 0) return raw;  // Outlaw — caller already blocked entry
         float sellMul = 2f - buyMul;
-        return Math.Max(1, (int)Math.Round(raw * sellMul));
+        // FB-072 — Bargaining sell bonus. Mirrors the buy-side inversion:
+        // bargainBuy=0.85 → sellBargain=1.15 (+15% at L99 cap). Stacks
+        // multiplicatively on top of the karma sell multiplier for parity
+        // with BuyPrice's karma × bargain chain.
+        float bargainBuy = LifeSkillSystem.BargainingDiscount(player);
+        float sellBargain = 2f - bargainBuy;
+        return Math.Max(1, (int)Math.Round(raw * sellMul * sellBargain));
     }
 
     private static string FormatItemInfo(BaseItem item) => item switch

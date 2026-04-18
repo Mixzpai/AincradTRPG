@@ -12,7 +12,8 @@ public static class MobFactory
     // Set Poison/Bleed to true for status-inflicting mobs.
     private record MobTemplate(string Name, char Symbol, Color Color, int Aggro,
         bool Poison = false, bool Bleed = false, bool Stun = false, bool Slow = false,
-        string LootTag = "generic", int Range = 1, string? Ability = null);
+        string LootTag = "generic", int Range = 1, string? Ability = null,
+        bool Swim = false);
 
     // Floor-tiered mob template table. Index mapped via FloorToTier() so lower
     // floors (F1-F5) each get a dedicated canon-named roster, and later floors
@@ -51,14 +52,16 @@ public static class MobFactory
             new MobTemplate("Cave Bat",               'v', Color.DarkGray,      8, LootTag: "insect", Ability: "Leap"),
             new MobTemplate("Toadstool Walker",       'f', Color.BrightMagenta, 4, Poison: true, LootTag: "plant"),
         },
-        // Tier 3 — Floor 4: Rovia flooded (Progressive Vol 4)
+        // Tier 3 — Floor 4: Rovia flooded (Progressive Vol 4). FB-077 — all
+        // five F4 mobs carry CanSwim so water tiles aren't a free choke for
+        // the player on a flood-themed floor.
         new[]
         {
-            new MobTemplate("Water Drake",            'd', Color.BrightBlue,    6, LootTag: "dragon", Range: 3),
-            new MobTemplate("Lakeshore Crab",         'c', Color.Cyan,          4, LootTag: "aquatic"),
-            new MobTemplate("Giant Clam",             'C', Color.Blue,          2, LootTag: "aquatic"),
-            new MobTemplate("Water Wight",            'u', Color.BrightCyan,    7, Slow: true, LootTag: "undead"),
-            new MobTemplate("Scavenger Toad",         'f', Color.Green,         4, Poison: true, LootTag: "beast"),
+            new MobTemplate("Water Drake",            'd', Color.BrightBlue,    6, LootTag: "dragon", Range: 3, Swim: true),
+            new MobTemplate("Lakeshore Crab",         'c', Color.Cyan,          4, LootTag: "aquatic", Swim: true),
+            new MobTemplate("Giant Clam",             'C', Color.Blue,          2, LootTag: "aquatic", Swim: true),
+            new MobTemplate("Water Wight",            'u', Color.BrightCyan,    7, Slow: true, LootTag: "undead", Swim: true),
+            new MobTemplate("Scavenger Toad",         'f', Color.Green,         4, Poison: true, LootTag: "beast", Swim: true),
         },
         // Tier 4 — Floor 5: Karluin / Pitch-Black Cathedral (Progressive Vol 5)
         new[]
@@ -206,6 +209,7 @@ public static class MobFactory
         mob.LootTag = template.LootTag;
         mob.AttackRange = template.Range;
         mob.SpecialAbility = template.Ability;
+        mob.CanSwim = template.Swim;
 
         // Variant roll — 10% Elite (1.5x stats/2x rewards), 3% Champion (2x stats/3x rewards)
         // Add new variants by extending this block.

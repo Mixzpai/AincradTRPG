@@ -72,13 +72,15 @@ public static class TitleScreen
             Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim,
         };
 
-        // Menu buttons
+        // Menu buttons — bracket-free. The diamond markers `► … ►` toggle on
+        // focus via HasFocusChanged below so the highlighted option is
+        // spatially obvious without framing chrome around idle rows.
         int menuY = 18;
-        var newGameBtn  = MakeBtn("[ New Game ]",  menuY,     true);
-        var loadGameBtn = MakeBtn("[ Load Game ]", menuY + 2, false);
-        var recordsBtn  = MakeBtn("[ Records ]",   menuY + 4, false);
-        var optionsBtn  = MakeBtn("[ Options ]",   menuY + 6, false);
-        var exitBtn     = MakeBtn("[ Exit ]",      menuY + 8, false);
+        var newGameBtn  = MakeBtn("New Game",  menuY,     true);
+        var loadGameBtn = MakeBtn("Load Game", menuY + 2, false);
+        var recordsBtn  = MakeBtn("Records",   menuY + 4, false);
+        var optionsBtn  = MakeBtn("Options",   menuY + 6, false);
+        var exitBtn     = MakeBtn("Exit",      menuY + 8, false);
 
         // Save preview
         string savePreview = BuildSavePreview();
@@ -92,9 +94,26 @@ public static class TitleScreen
             };
         }
 
-        // Focus highlight wiring
+        // Focus highlight wiring — wrap focused row in `► Label ◄` (mirror
+        // pair, triangles point INTO the word like framing brackets). Strip
+        // markers on blur. Text is pre-padded with 2 spaces either side when
+        // idle so horizontal alignment stays stable when focus moves. Also
+        // keeps IsDefault synced with focus so Enter always activates the
+        // currently-highlighted row.
         foreach (var btn in new[] { newGameBtn, loadGameBtn, recordsBtn, optionsBtn, exitBtn })
-            btn.HasFocusChanged += (s, e) => { if (s is Button b) b.IsDefault = e.NewValue; };
+        {
+            btn.HasFocusChanged += (s, e) =>
+            {
+                if (s is not Button b) return;
+                b.IsDefault = e.NewValue;
+                string core = StripMarkers(b.Text?.ToString() ?? "");
+                b.Text = e.NewValue ? $"► {core} ◄" : $"  {core}  ";
+            };
+        }
+        // Initialize the triangle markers on the default-focused row.
+        newGameBtn.Text = $"► {StripMarkers(newGameBtn.Text?.ToString() ?? "")} ◄";
+        foreach (var btn in new[] { loadGameBtn, recordsBtn, optionsBtn, exitBtn })
+            btn.Text = $"  {StripMarkers(btn.Text?.ToString() ?? "")}  ";
 
         // Button actions
         newGameBtn.Accepting += (s, e) => { DifficultyScreen.Show(mainWindow); e.Cancel = true; };
@@ -176,7 +195,24 @@ public static class TitleScreen
     {
         Text = text, X = Pos.Center(), Y = y,
         IsDefault = isDefault, ColorScheme = ColorSchemes.MenuButton,
+        // Strip Terminal.Gui's own [ ] button chrome so the only decoration
+        // is the `► … ►` focus marker we manage via HasFocusChanged.
+        NoDecorations = true, NoPadding = true,
     };
+
+    // Remove existing markers (triangles + surrounding spaces) before
+    // re-applying a new state. Idempotent — safe to call on any button
+    // text regardless of current focus state. Handles both the mirror
+    // pair (► … ◄) and any legacy single-direction pair from prior
+    // iterations so swapping marker styles doesn't leave stale glyphs.
+    private static string StripMarkers(string text)
+    {
+        var s = text.Trim();
+        if (s.StartsWith("► ")) s = s[2..];
+        if (s.EndsWith(" ◄")) s = s[..^2];
+        if (s.EndsWith(" ►")) s = s[..^2];  // legacy guard
+        return s.Trim();
+    }
 
     private static string BuildSavePreview()
     {
@@ -196,41 +232,10 @@ public static class TitleScreen
         catch { return ""; }
     }
 
-    private static void ShowRecords()
-    {
-        var data = LifetimeStats.Load();
-        string totalTime = data.TotalPlayTimeSeconds >= 3600
-            ? $"{data.TotalPlayTimeSeconds / 3600}h {data.TotalPlayTimeSeconds % 3600 / 60:D2}m"
-            : $"{data.TotalPlayTimeSeconds / 60}m";
-
-        string content =
-            "[ Lifetime Stats ]\n\n" +
-            $"  Runs .......... {data.TotalRuns}\n" +
-            $"  Deaths ........ {data.TotalDeaths}\n" +
-            $"  Victories ..... {data.TotalVictories}\n" +
-            $"  Kills ......... {data.TotalKills}\n" +
-            $"  Highest Floor . {data.HighestFloor}\n" +
-            $"  Highest Level . {data.HighestLevel}\n" +
-            $"  Best Grade .... {data.BestGrade}\n" +
-            $"  Col Earned .... {data.TotalColEarned}\n" +
-            $"  Play Time ..... {totalTime}";
-
-        if (data.RecentRuns.Count > 0)
-        {
-            content += "\n\n[ Recent Runs ]\n";
-            foreach (var run in data.RecentRuns)
-            {
-                string outcome = run.Victory ? "WIN" : "DIED";
-                string runTime = run.PlayTimeSeconds >= 3600
-                    ? $"{run.PlayTimeSeconds / 3600}h{run.PlayTimeSeconds % 3600 / 60:D2}m"
-                    : $"{run.PlayTimeSeconds / 60}m";
-                content += $"  F{run.Floor} Lv{run.Level} {run.Kills}K {run.Grade} {outcome} {runTime} ({run.Date})\n";
-            }
-        }
-
-        if (data.TotalRuns == 0)
-            content = "No runs recorded yet.\nPlay a game to start tracking!";
-
-        MessageBox.Query("Lifetime Records", content, "OK");
-    }
+    // Routed to the new RecordsDialog (2026-04-19) — replaces the old
+    // MessageBox.Query text dump with a structured 80x30 dialog that
+    // shows summary, achievement panels, progress bars, recent runs (10),
+    // and a tab-switchable victory leaderboard sortable by Col / Turns /
+    // Level / Kills / PlayTime / Date / Grade.
+    private static void ShowRecords() => Dialogs.RecordsDialog.Show();
 }

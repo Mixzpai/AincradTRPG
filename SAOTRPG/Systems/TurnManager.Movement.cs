@@ -126,7 +126,27 @@ public partial class TurnManager
 
         TutorialSystem.ShowTip(_log, "first_move");
 
-        if (tile.BlocksMovement)
+        // FB-077 — Swimming gate. If this is a water tile the player would
+        // otherwise be blocked on, check their Swimming level. Pass → allow
+        // entry (below), block → regular BlocksMovement path.
+        bool swimmingBypass = false;
+        bool swimSlowPenalty = false;
+        if (tile.RequiresSwimmingLevel > 0)
+        {
+            int swimLvl = _player.LifeSkills.SwimmingLevel;
+            int req = tile.RequiresSwimmingLevel;
+            if (swimLvl >= req)
+            {
+                swimmingBypass = true;
+                // Slow penalty window: shallow water slow below L10, deep
+                // water slow below L50. Each slow swim step consumes an
+                // extra turn tick (ProcessSwimSlowTick below).
+                if (tile.Type == TileType.Water && swimLvl < 10) swimSlowPenalty = true;
+                else if (tile.Type == TileType.WaterDeep && swimLvl < 50) swimSlowPenalty = true;
+            }
+        }
+
+        if (tile.BlocksMovement && !swimmingBypass)
         {
             TutorialSystem.ShowTip(_log, "first_wall_bump");
             if (tile.Type == TileType.CrackedWall)
@@ -134,6 +154,13 @@ public partial class TurnManager
                 _map.SetTileType(tx, ty, TileType.Floor);
                 _log.LogLoot("You smash through the cracked wall! A hidden chamber lies beyond!");
                 CombatTextEvent?.Invoke(tx, ty, "SECRET!", Color.BrightYellow);
+                return;
+            }
+            // Swim-blocked (too low Swimming skill) — give the player a hint.
+            if (tile.RequiresSwimmingLevel > 0)
+            {
+                string kind = tile.Type == TileType.WaterDeep ? "deep water" : "water";
+                _log.Log($"The {kind} is too much for your swimming skill (need L{tile.RequiresSwimmingLevel}).");
                 return;
             }
             if (Random.Shared.Next(100) < 3)
@@ -150,10 +177,22 @@ public partial class TurnManager
 
         _map.MoveEntity(_player, tx, ty);
         _map.IncrementVisit(tx, ty);
+        // FB-077 — Swimming XP per water tile entered. +2 for shallow, +3
+        // for deep. Runs INSTEAD of walking XP since the player isn't on
+        // land for this step. Deep water requires L25 gate (already enforced
+        // above), so both branches are reachable only after skill-up.
+        if (swimmingBypass)
+        {
+            int swimXp = tile.Type == TileType.WaterDeep ? 3 : 2;
+            _player.LifeSkills.GrantXp(LifeSkillType.Swimming, swimXp);
+            if (swimSlowPenalty)
+                _log.Log("You struggle through the water…");
+        }
         // FB-052 — Walking skill XP per normal-step tile. Excludes sprint
         // (which has its own hook in ProcessSprint) and stealth (which may
         // be wired to its own future Stealth skill). +1 XP per tile.
-        if (!_stealthActive && !_lastMoveWasStealth && (dx != 0 || dy != 0))
+        // Water-step moves skip walking XP (swim XP above covers them).
+        else if (!_stealthActive && !_lastMoveWasStealth && (dx != 0 || dy != 0))
             GrantWalkingXp();
 
         // Tip when first leaving safe zone on Floor 1
@@ -231,6 +270,15 @@ public partial class TurnManager
         TickPoison(); TickBleed(); TickSlow();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
+        // FB-077 — Swim slow penalty. Player enters water at low skill and
+        // the step costs 2 actions: one extra turn tick + an extra entity
+        // turn round. Mobs get a free turn while the player wades through.
+        if (swimSlowPenalty && !_player.IsDefeated)
+        {
+            TurnCount++;
+            TickPoison(); TickBleed(); TickSlow();
+            if (!_player.IsDefeated) ProcessEntityTurns();
+        }
         PassiveRegen();
         UpdateVisibility();
         RevealNearbyTraps();

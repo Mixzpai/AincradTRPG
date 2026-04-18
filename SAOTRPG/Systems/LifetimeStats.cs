@@ -24,6 +24,11 @@ public static class LifetimeStats
         public long PlayTimeSeconds { get; set; }
         public bool Victory { get; set; }
         public string Date { get; set; } = "";
+        // Added 2026-04-19 for RecordsDialog — legacy entries default to
+        // "Unknown" / 0 since old saves lack these fields. Deserializer
+        // leaves them at default for pre-update entries; no migration needed.
+        public string PlayerName { get; set; } = "Unknown";
+        public int TurnCount { get; set; }
     }
 
     public class Data
@@ -37,7 +42,13 @@ public static class LifetimeStats
         public long TotalPlayTimeSeconds { get; set; }
         public int HighestLevel { get; set; }
         public int TotalColEarned { get; set; }
+        // RecentRuns = last N completed runs regardless of outcome (death
+        // or victory). Cap is 10 as of 2026-04-19.
         public List<RunEntry> RecentRuns { get; set; } = new();
+        // VictoryRuns = ONLY completed victories. Uncapped — the leaderboard
+        // view can sort these by any field. Legacy saves start with an
+        // empty list and get populated on the next victory.
+        public List<RunEntry> VictoryRuns { get; set; } = new();
     }
 
     // Load stats from disk. Returns empty stats if file missing or corrupt.
@@ -78,9 +89,12 @@ public static class LifetimeStats
         _ => 1,
     };
 
-    // Record a completed run (death or victory).
+    // Record a completed run (death or victory). As of 2026-04-19,
+    // victories are ALSO appended to the VictoryRuns list (uncapped) for
+    // the leaderboard view. RecentRuns holds the last 10 of any outcome.
     public static void RecordRun(int kills, int floor, int level, string grade,
-        TimeSpan playTime, int colEarned, bool victory)
+        TimeSpan playTime, int colEarned, bool victory,
+        string playerName = "Unknown", int turnCount = 0)
     {
         var data = Load();
         data.TotalRuns++;
@@ -93,13 +107,23 @@ public static class LifetimeStats
         data.TotalPlayTimeSeconds += (long)playTime.TotalSeconds;
         data.TotalColEarned += colEarned;
 
-        data.RecentRuns.Insert(0, new RunEntry
+        var entry = new RunEntry
         {
             Floor = floor, Level = level, Kills = kills, Grade = grade,
             ColEarned = colEarned, PlayTimeSeconds = (long)playTime.TotalSeconds,
-            Victory = victory, Date = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
-        });
-        if (data.RecentRuns.Count > 5) data.RecentRuns.RemoveRange(5, data.RecentRuns.Count - 5);
+            Victory = victory, Date = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            PlayerName = playerName, TurnCount = turnCount,
+        };
+
+        // RecentRuns: last 10 of any outcome. Insert at head, trim tail.
+        data.RecentRuns.Insert(0, entry);
+        if (data.RecentRuns.Count > 10)
+            data.RecentRuns.RemoveRange(10, data.RecentRuns.Count - 10);
+
+        // VictoryRuns: ONLY completed victories. Uncapped (Aincrad-climb
+        // achievements are permanent brag-worthy). Leaderboard sort is
+        // done at display time — stored in insertion order.
+        if (victory) data.VictoryRuns.Add(entry);
 
         Save(data);
     }

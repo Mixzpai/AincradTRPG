@@ -558,9 +558,9 @@ public static class PlayerGuideContent
             "normal steps on long treks — both life skills bank XP on the\n" +
             "same trip.\n\n" +
             "SEE ALSO\n" +
-            "[Heavy Attacks (Winding Up)] · [Unique Skill: Extra Skill — Search] · [Traps & Hazards] · [Life Skills]")
+            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Unique Skill: Extra Skill — Search] · [Traps & Hazards] · [Life Skills]")
         {
-            Tags = new[] { "combat", "movement" }
+            Tags = new[] { "combat", "movement", "controls" }
         },
 
         new("Combat & Rarity", "Quick-Use Slots (1-5)",
@@ -590,9 +590,9 @@ public static class PlayerGuideContent
             "if empty. Battle Elixir (slot 4) on a boss fight almost always\n" +
             "outperforms saving it.\n\n" +
             "SEE ALSO\n" +
-            "[Potions, Crystals & Throwables] · [Status: Bleed & Poison] · [Run Modifiers (12 Optional Challenges)]")
+            "[Controls & Keybindings] · [Potions, Crystals & Throwables] · [Status: Bleed & Poison] · [Run Modifiers (12 Optional Challenges)]")
         {
-            Tags = new[] { "combat", "potions" }
+            Tags = new[] { "combat", "potions", "controls" }
         },
 
         new("Combat & Rarity", "Vision & FOV",
@@ -654,9 +654,9 @@ public static class PlayerGuideContent
             "game. Stance shines when a boss telegraphs Winding Up and you\n" +
             "can't reposition.\n\n" +
             "SEE ALSO\n" +
-            "[Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV]")
+            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV]")
         {
-            Tags = new[] { "combat", "vision" }
+            Tags = new[] { "combat", "vision", "controls" }
         },
 
         new("Combat & Rarity", "Permadeath & Save Deletion",
@@ -1127,11 +1127,16 @@ public static class PlayerGuideContent
             "  -5   Moonlit Black Cats fate event on F27 entry\n" +
             "  -20  Kill a named NPC\n\n" +
             "Thresholds:\n" +
-            "  +50 to +100  Honorable — NPC dialogue respectful, shop -10%\n" +
+            "  +50 to +100  Honorable — NPC dialogue respectful, shop x0.90\n" +
             "    0 to  +50  Neutral — default baseline\n" +
-            "  -50 to    0  Shady — NPC warnings, shop +10%\n" +
+            "  -50 to    0  Shady — NPC warnings, shop x1.10\n" +
             " -100 to  -50  Outlaw — Town Guards spawn + aggro in F1 plaza,\n" +
             "               LC F75 gate unlocks, shops refuse service\n\n" +
+            "Bargaining Life Skill milestones STACK MULTIPLICATIVELY with\n" +
+            "karma: Honorable (x0.90) × Bargaining L99 (x0.85) = x0.765 →\n" +
+            "23.5% off buys, the maximum discount in the game. Outlaw still\n" +
+            "blocks shop entry BEFORE Bargaining math runs, so no amount of\n" +
+            "Life Skill grinding rescues a -50 karma slot.\n\n" +
             "COSTS\n" +
             "Farming karma in either direction has opportunity cost — Honorable\n" +
             "gets cheaper shops but cannot join LC; Outlaw gains the LC guild\n" +
@@ -1141,9 +1146,10 @@ public static class PlayerGuideContent
             "Knights end-game guilds (karma >=+30 / +50) grind quest turn-ins\n" +
             "early; if you want LC stockpile PK-mob kills and avoid guild\n" +
             "joins. Never kill peaceful mobs casually — a -5 swing undoes\n" +
-            "almost two quest turn-ins.\n\n" +
+            "almost two quest turn-ins. Pair Honorable with L99 Bargaining\n" +
+            "before a big shop run for the full -23.5% stack.\n\n" +
             "SEE ALSO\n" +
-            "[Guild System Overview] · [Town Guard (Outlaw Mode)] · [Laughing Coffin (F75 Hidden)] · [Sleeping Knights (F60)] · [Moonlit Black Cats (F10)] · [Vendors — Rotating Stock]")
+            "[Guild System Overview] · [Town Guard (Outlaw Mode)] · [Laughing Coffin (F75 Hidden)] · [Sleeping Knights (F60)] · [Bargaining (Life Skill)] · [Vendors — Rotating Stock]")
         {
             Tags = new[] { "karma", "alignment", "progression" }
         },
@@ -1151,43 +1157,140 @@ public static class PlayerGuideContent
         new("Progression", "Life Skills",
             "┌─ Progression\n" +
             "│ Topic: Life Skills\n" +
-            "│ Skills: Sleep / Walking / Running / Eating\n" +
+            "│ Skills: Sleep · Walking · Running · Eating · Bargaining · Swimming\n" +
             "│ Cap: Level 99 per skill\n" +
             "│ Save: Per-player, in SaveData.LifeSkills\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Four non-combat skills level from everyday play — Sleep, Walking,\n" +
-            "Running, and Eating. They sit parallel to Weapon Proficiency:\n" +
-            "proficiency rewards combat with one weapon type, Life Skills\n" +
-            "reward the travel and rest loop.\n\n" +
+            "Six non-combat skills level from everyday play — Sleep, Walking,\n" +
+            "Running, Eating, Bargaining, and Swimming. They sit parallel to\n" +
+            "Weapon Proficiency: proficiency rewards combat with one weapon\n" +
+            "type, Life Skills reward the travel, trade, and rest loop.\n\n" +
             "USAGE\n" +
             "No menu — each skill banks XP from the matching in-world action.\n" +
             "Milestones at L10/25/50/99 fire a banner and stamp a permanent\n" +
-            "stat passive onto your character.\n\n" +
+            "stat passive (or traversal gate) onto your character.\n\n" +
             "EFFECTS\n" +
             "XP curve (piecewise geometric): L5=10, L10=100, L25=1000,\n" +
             "L50=5000, L99=50000.\n\n" +
-            "  SLEEP     +20 XP per ProcessRest, +10 XP per campfire step\n" +
-            "            L10 +5 MaxHP / L25 +15 / L50 +35 / L99 +80 + regen\n" +
-            "  WALKING   +1 XP per normal step (sprint + stealth skip)\n" +
-            "            L10 +2 END / L25 +5 / L50 +10 / L99 +20\n" +
-            "  RUNNING   +2 XP per sprint step\n" +
-            "            L10 +2 SPD / L25 +5 / L50 +10 / L99 +20 + sprint cost\n" +
-            "  EATING    +10 XP per food item consumed\n" +
-            "            L10 +10% food potency / L25 +25% / L50 +50% / L99 +100%\n\n" +
+            "  SKILL       XP SOURCE                       L10/25/50/99\n" +
+            "  SLEEP       +20 ProcessRest / +10 campfire  MaxHP +5/+15/+35/+80 +regen\n" +
+            "  WALKING     +1 per normal step              END  +2/+5/+10/+20\n" +
+            "              (suppressed on Water tiles — Swim takes over)\n" +
+            "  RUNNING     +2 per sprint step              SPD  +2/+5/+10/+20 +cost\n" +
+            "  EATING      +10 per food consumed           Potency +10/25/50/100%\n" +
+            "  BARGAINING  +1 per shop transaction         Buy x0.97/0.94/0.90/0.85\n" +
+            "              (Sell Junk = 1 XP total)        Sell x1.03/1.06/1.10/1.15\n" +
+            "  SWIMMING    +2 Water step / +3 WaterDeep    L10 Water full-speed\n" +
+            "                                              L25 WaterDeep passable\n" +
+            "                                              L50 WaterDeep full-speed\n\n" +
             "COSTS\n" +
             "None. Life Skills cost only the time spent doing the activity;\n" +
-            "they never block or gate other progression.\n\n" +
+            "they never block or gate other progression. Swimming below L10\n" +
+            "charges 2 turn ticks per water step (mobs get a free turn).\n\n" +
             "TIPS\n" +
             "Running and Walking level in parallel — a mix of sprint bursts\n" +
             "and normal steps feeds both XP pools on the same trip. Rest at\n" +
             "campfires whenever idle; each step-on is Sleep XP even before\n" +
             "you trigger the cook menu. Eating cheap bread between fights\n" +
-            "grinds Eating XP without burning rare consumables.\n\n" +
+            "grinds Eating XP without burning rare consumables. Bargaining\n" +
+            "ticks on EVERY shop buy and sell — split a bulk sell into\n" +
+            "individual transactions early if you want the XP. Swimming\n" +
+            "stacks +2/+3 XP per water tile crossed, so scenic routes through\n" +
+            "rivers beat dryland detours once you're willing to take the hit.\n\n" +
             "SEE ALSO\n" +
-            "[Weapon Proficiency Tree] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move] · [Safe Rooms & Mechanics]")
+            "[Bargaining (Life Skill)] · [Swimming (Life Skill)] · [Weapon Proficiency Tree] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move]")
         {
             Tags = new[] { "life-skills", "progression" }
+        },
+
+        new("Progression", "Bargaining (Life Skill)",
+            "┌─ Progression\n" +
+            "│ Topic: Bargaining (Life Skill)\n" +
+            "│ XP: +1 per shop transaction (buy or sell)\n" +
+            "│ Cap: Level 99 (-15% buy / +15% sell)\n" +
+            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Bargaining is a Life Skill that tilts shop math in your favor.\n" +
+            "Every buy, sell, or Sell Junk transaction banks +1 XP; milestones\n" +
+            "at L10/25/50/99 STACK MULTIPLICATIVELY with Karma tier and any\n" +
+            "floor/vendor markup to shave Col off buys and pad sells.\n\n" +
+            "USAGE\n" +
+            "Automatic — any ShopDialog transaction feeds XP. Sell Junk grants\n" +
+            "1 XP for the bulk action, not 1-per-item, so split high-volume\n" +
+            "sells across individual transactions if you're grinding the\n" +
+            "curve. Milestone banners fire on level-up.\n\n" +
+            "EFFECTS\n" +
+            "  LEVEL   BUY PRICE   SELL PRICE   NOTE\n" +
+            "  L1-9    x1.00       x1.00        No bonus — grind window\n" +
+            "  L10+    x0.97       x1.03        -3% / +3%\n" +
+            "  L25+    x0.94       x1.06        -6% / +6%\n" +
+            "  L50+    x0.90       x1.10        -10% / +10%\n" +
+            "  L99     x0.85       x1.15        -15% / +15% (cap)\n\n" +
+            "Stacking: Honorable karma (x0.9 buy) × L99 Bargaining (x0.85)\n" +
+            "= x0.765 final → 23.5% off. Shady karma (+10% markup) × L99\n" +
+            "bargain still nets ≈x0.935 → 6.5% off. Outlaw karma refuses\n" +
+            "service entirely BEFORE the Bargaining math runs — no discount\n" +
+            "rescues a -50 karma slot.\n\n" +
+            "COSTS\n" +
+            "None. Bargaining XP is pure upside; every shop visit feeds it.\n\n" +
+            "TIPS\n" +
+            "Hit L10 early — the first -3%/+3% swing pays back the inventory\n" +
+            "time cost inside two shop runs. If you're Outlaw-drifting for\n" +
+            "Laughing Coffin access, Bargaining XP freezes (shops refuse\n" +
+            "you) — bank transactions before the karma flip. The multiplier\n" +
+            "also applies to Vendor Investing deposits, so L99 + Honorable\n" +
+            "shaves nearly a quarter off every tier-boost payment.\n\n" +
+            "SEE ALSO\n" +
+            "[Life Skills] · [Vendor Investing] · [Karma & Alignment] · [Vendors — Rotating Stock] · [Col Economy — How You Earn]")
+        {
+            Tags = new[] { "life-skills", "bargaining", "economy" }
+        },
+
+        new("Progression", "Swimming (Life Skill)",
+            "┌─ Progression\n" +
+            "│ Topic: Swimming (Life Skill)\n" +
+            "│ XP: +2 per Water step / +3 per WaterDeep step\n" +
+            "│ Gates: L1 Water / L25 WaterDeep\n" +
+            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Swimming is a Life Skill that turns water tiles from impassable\n" +
+            "walls into traversable terrain. Level gates control WHICH water\n" +
+            "you can enter, and milestone thresholds drop the slow penalty\n" +
+            "that otherwise gives aquatic mobs a free turn on every step.\n\n" +
+            "USAGE\n" +
+            "Step onto a Water or WaterDeep tile to bank XP. Walking XP is\n" +
+            "SUPPRESSED on water steps — no double-dip with the Walking\n" +
+            "skill. Below the speed threshold for a water type, each step\n" +
+            "costs 2 turn ticks instead of 1 (the mob acts between your\n" +
+            "frames).\n\n" +
+            "EFFECTS\n" +
+            "  LEVEL   WATER (shallow)       WATERDEEP            XP/STEP\n" +
+            "  L1-9    Passable, slow (2t)   Blocked              +2 / n/a\n" +
+            "  L10-24  Full speed            Blocked              +2 / n/a\n" +
+            "  L25-49  Full speed            Passable, slow (2t)  +2 / +3\n" +
+            "  L50-98  Full speed            Full speed           +2 / +3\n" +
+            "  L99     Master swimmer (flavor-only capstone)      +2 / +3\n\n" +
+            "RequiresSwimmingLevel on Tile: Water = 1, WaterDeep = 25.\n\n" +
+            "COSTS\n" +
+            "Below-threshold water steps burn 2 turn ticks — a slow tax that\n" +
+            "lets aquatic mobs (CanSwim = true) reposition or attack between\n" +
+            "your frames. Mob AI IsWalkable is unchanged, so dryland mobs\n" +
+            "still treat water as a wall — rivers remain a choke point.\n\n" +
+            "TIPS\n" +
+            "Grind the first 10 levels on shallow rivers before pushing F4 —\n" +
+            "the slow penalty alone gives Water Drakes or Lakeshore Crabs\n" +
+            "two free swings per crossing. Use water as a MOAT against\n" +
+            "non-CanSwim pursuers even before L10; they can't follow, and\n" +
+            "the 2-tick cost is cheaper than a long detour when you're\n" +
+            "already wounded. L99 is flavor — the real cliffs are L10 and\n" +
+            "L50.\n\n" +
+            "SEE ALSO\n" +
+            "[Life Skills] · [River Crossing & Aquatic Mobs] · [Mechanical Tiles] · [Biomes] · [Hunger, Satiety & Fatigue]")
+        {
+            Tags = new[] { "life-skills", "swimming", "world" }
         },
 
         new("Progression", "Titles & the Active Title Slot",
@@ -1378,9 +1481,12 @@ public static class PlayerGuideContent
             "TIPS\n" +
             "Carry Antidotes into Swamps, fire resist gear into Volcanic, and\n" +
             "a torch or Extra Skill Search into Darkness floors. Settlement\n" +
-            "floors are the best time to off-load loot and re-stock potions.\n\n" +
+            "floors are the best time to off-load loot and re-stock potions.\n" +
+            "On Aquatic floors (and F4 Rovia) ensure Swimming L10+ before\n" +
+            "engaging — below the threshold the slow tax on water tiles\n" +
+            "compounds the -3 ATK biome debuff.\n\n" +
             "SEE ALSO\n" +
-            "[Weather] · [Vision & FOV] · [Traps & Hazards] · [Unique Skill: Blazing & Frozen Edge]")
+            "[Weather] · [Vision & FOV] · [Traps & Hazards] · [Swimming (Life Skill)] · [River Crossing & Aquatic Mobs] · [Unique Skill: Blazing & Frozen Edge]")
         {
             Tags = new[] { "world", "biomes", "floors" }
         },
@@ -1658,18 +1764,76 @@ public static class PlayerGuideContent
             "MONUMENT (M, yellow)     F1 Town of Beginnings only. Opens kill\n" +
             "                          log + Active Title picker; never\n" +
             "                          consumes.\n" +
+            "WATER (shallow, blue ~)  Swim gate L1+. Below L10, step costs\n" +
+            "                          2 turn ticks (mobs get a free turn).\n" +
+            "                          Walking XP suppressed; Swimming +2 XP.\n" +
+            "WATERDEEP (dark blue ≈)  Swim gate L25+. Below L50, 2-tick slow\n" +
+            "                          penalty. Swimming +3 XP per step.\n" +
             "STAIRS DOWN (<)          Never used (Aincrad climbs up only).\n" +
             "STAIRS UP (>)            Sealed until the floor boss is dead.\n\n" +
             "COSTS\n" +
-            "Breaking a cracked wall costs 1 weapon durability per swing.\n\n" +
+            "Breaking a cracked wall costs 1 weapon durability per swing.\n" +
+            "Water tiles below the speed threshold cost 2 turn ticks each.\n\n" +
             "TIPS\n" +
             "Any lever that seems pointless probably has a linked plate\n" +
             "elsewhere — trace the floor systematically. Cracked walls almost\n" +
-            "always guard Epic-or-better chests.\n\n" +
+            "always guard Epic-or-better chests. Water is a moat against\n" +
+            "dryland mobs (their IsWalkable refuses it) but porous to any\n" +
+            "aquatic mob flagged CanSwim.\n\n" +
             "SEE ALSO\n" +
-            "[Labyrinth System] · [Safe Rooms & Mechanics] · [Ascending a Floor] · [Col Economy — How You Earn] · [Monument of Swordsmen (F1)]")
+            "[Labyrinth System] · [Safe Rooms & Mechanics] · [River Crossing & Aquatic Mobs] · [Swimming (Life Skill)] · [Ascending a Floor] · [Monument of Swordsmen (F1)]")
         {
             Tags = new[] { "world", "floors", "economy" }
+        },
+
+        new("World", "River Crossing & Aquatic Mobs",
+            "┌─ World\n" +
+            "│ Topic: River Crossing & Aquatic Mobs\n" +
+            "│ Floors: Water tiles on many overworlds; F4 Rovia hub\n" +
+            "│ Landmark: Blue ~ (shallow) / dark ≈ (deep)\n" +
+            "│ Unlock: Swimming Life Skill L1+ (shallow), L25+ (deep)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Water tiles are passable terrain gated by the Swimming Life Skill\n" +
+            "— a strategic choke point for most mobs, but an open highway for\n" +
+            "the five aquatic mobs flagged Monster.CanSwim = true. F4 Rovia is\n" +
+            "where the design shows up most clearly, with a river system and\n" +
+            "a roster of swim-capable predators.\n\n" +
+            "USAGE\n" +
+            "Walk onto a Water or WaterDeep tile to cross. Your Swimming level\n" +
+            "sets BOTH the pass gate (L1 shallow, L25 deep) and the speed gate\n" +
+            "(L10 shallow full-speed, L50 deep full-speed). Mob AI checks each\n" +
+            "mob's CanSwim flag against the tile's water type.\n\n" +
+            "EFFECTS\n" +
+            "CanSwim = TRUE (Tier 3 / F4 Rovia):\n" +
+            "  Water Drake        Draconic aquatic predator\n" +
+            "  Lakeshore Crab     Coastal crustacean\n" +
+            "  Giant Clam         Sessile ambusher\n" +
+            "  Water Wight        Undead drifter\n" +
+            "  Scavenger Toad     Amphibian brawler\n\n" +
+            "These mobs traverse BOTH Water and WaterDeep — they'll pursue\n" +
+            "you into a river and close the gap you thought was a moat.\n" +
+            "Both SimpleAI and TurnManager.AI honor the flag.\n\n" +
+            "CanSwim = FALSE (everything else, including F2 Plumed Mist\n" +
+            "Lizard which is flagged as reptile but intentionally land-bound):\n" +
+            "  Water is a hard wall — the mob routes around or pulls up\n" +
+            "  short at the bank. Use this as a kiting aid.\n\n" +
+            "COSTS\n" +
+            "Slow-tick water steps (below swim-speed threshold) cost you a\n" +
+            "free turn to any CanSwim pursuer in range. Waste water crossings\n" +
+            "on low-Swimming chars are the single biggest mid-river death\n" +
+            "vector.\n\n" +
+            "TIPS\n" +
+            "Scout the overworld before crossing — a Water Drake on the far\n" +
+            "bank turns a 2-tick-per-step swim into a gauntlet. Bank Swimming\n" +
+            "XP to L10 before pushing F4 Rovia so your shallow crossings are\n" +
+            "at normal speed. For non-aquatic mob chases (wolves, kobolds,\n" +
+            "Plumed Mist Lizard), rivers remain a clean escape route at any\n" +
+            "Swimming level — the slow tax is cheaper than a fight.\n\n" +
+            "SEE ALSO\n" +
+            "[Swimming (Life Skill)] · [Mechanical Tiles] · [Biomes] · [Sprint & Stealth Move]")
+        {
+            Tags = new[] { "world", "aquatic", "swimming" }
         },
 
         new("World", "Monument of Swordsmen (F1)",
@@ -3221,7 +3385,7 @@ public static class PlayerGuideContent
             "badge doesn't lock you out — the item remains in stock — but\n" +
             "the badge is the best way to spot the new drop quickly.\n\n" +
             "SEE ALSO\n" +
-            "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Ascending a Floor] · [Floor Boss Roster — Canon Highlights]")
+            "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Vendor Investing] · [Ascending a Floor] · [Floor Boss Roster — Canon Highlights]")
         {
             Tags = new[] { "shop-tiering", "infinity-moment", "economy" }
         },
@@ -4426,21 +4590,74 @@ public static class PlayerGuideContent
             "  F4+  Elven Waybread, Flash Bomb, Revive Crystal\n" +
             "  F5+  1 random accessory\n\n" +
             "Plus 3-4 random floor-scaled weapons, 1-2 armors.\n\n" +
+            "The Invest button (in ShopDialog) deposits Col per-vendor to\n" +
+            "unlock bonus stock tiers beyond the global ShopTierSystem — see\n" +
+            "Vendor Investing for thresholds and the \"Invested +N\" header\n" +
+            "badge. Bargaining XP ticks +1 per buy/sell/Sell Junk action.\n\n" +
             "COSTS\n" +
-            "All prices marked up +20% over base. Karma tier modifies on top:\n" +
-            "  Honorable (+50..+100)  -10% final price\n" +
-            "  Neutral / Shady        +/-0% / +10%\n" +
-            "  Outlaw   (-100..-50)   shops refuse service\n\n" +
+            "All prices marked up +20% over base. Karma tier and Bargaining\n" +
+            "milestones STACK MULTIPLICATIVELY on top:\n" +
+            "  Honorable (+50..+100)  x0.90 final price\n" +
+            "  Neutral / Shady        x1.00 / x1.10\n" +
+            "  Outlaw   (-100..-50)   shops refuse service\n" +
+            "  Bargaining L99         x0.85 on top (max -23.5% combined)\n\n" +
             "TIPS\n" +
             "Stock Revive Crystals and Escape Ropes before entering a\n" +
             "Labyrinth — they're cheaper on the floor you find them than\n" +
             "carrying them from F1. Accessories at F5+ are random per run,\n" +
             "so revisit shops if you're hunting a specific slot. Push karma\n" +
-            "to Honorable for a -10% price cut before a big shop run.\n\n" +
+            "to Honorable AND grind Bargaining to L99 for the compounded\n" +
+            "-23.5% price cut before a big shop run.\n\n" +
             "SEE ALSO\n" +
-            "[Col Economy — How You Earn] · [Karma & Alignment] · [Potions, Crystals & Throwables] · [Accessories] · [Food & Cooking]")
+            "[Vendor Investing] · [Bargaining (Life Skill)] · [Col Economy — How You Earn] · [Karma & Alignment] · [Potions, Crystals & Throwables] · [Accessories]")
         {
             Tags = new[] { "npcs", "shops", "economy" }
+        },
+
+        new("Quests & NPCs", "Vendor Investing",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Any Vendor (green 'V')\n" +
+            "│ Floor: 2+ (any vendor shop)\n" +
+            "│ Quest: Deposit Col to boost that vendor's stock tier\n" +
+            "│ Reward: +1 / +2 / +3 bonus stock tiers, per-vendor\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Per-vendor Col deposits that layer on top of the global\n" +
+            "ShopTierSystem. Each vendor tracks its OWN cumulative investment\n" +
+            "keyed by ShopName — a boost at Lindarth's Elite Outfitters\n" +
+            "doesn't carry over to F5 General Store. Cap is 20,000 Col\n" +
+            "invested per vendor (+3 tiers).\n\n" +
+            "USAGE\n" +
+            "Open ShopDialog → click \"Invest\" → MessageBox picker: 500 /\n" +
+            "1,000 / 5,000 / 20,000 / Cancel. The deposit is clamped to\n" +
+            "your Col on hand and to the 20,000-per-vendor cap. Header\n" +
+            "badge \"Invested +N\" appears once the vendor has earned any\n" +
+            "bonus tiers. Persists in SaveData.VendorInvestments.\n\n" +
+            "EFFECTS\n" +
+            "  CUMULATIVE COL   BONUS TIERS   RESULT\n" +
+            "      1,000 Col    +1 tier       Next unlocked tier added\n" +
+            "      5,000 Col    +2 tiers      Two tiers added\n" +
+            "     20,000 Col    +3 tiers      Three tiers (CAP)\n\n" +
+            "Bonus tiers pull from ShopTierSystem tiers that the RUN hasn't\n" +
+            "globally unlocked yet (floors the player hasn't cleared bosses\n" +
+            "on). If every tier is already globally unlocked, investment\n" +
+            "produces no visible stock — the Col is effectively wasted,\n" +
+            "which the UI flags in the Invest dialog. Extra stock is marked\n" +
+            "up +20% on top of the base Value.\n\n" +
+            "COSTS\n" +
+            "Col. Investments do NOT refund — once deposited, the Col is\n" +
+            "converted to permanent per-vendor tier progress. Dies with the\n" +
+            "save on permadeath like any other Col sink.\n\n" +
+            "TIPS\n" +
+            "Front-load the 1,000 Col threshold at a vendor you'll actually\n" +
+            "revisit — the +1 tier is a 10x return if the tier unlocks a\n" +
+            "weapon you need. Don't chase 20,000 unless you're post-F50 and\n" +
+            "the global ShopTierSystem has stalled. Bargaining L99 stacks on\n" +
+            "deposits — grind Bargaining first for a -15% invest cost.\n\n" +
+            "SEE ALSO\n" +
+            "[Vendors — Rotating Stock] · [Dynamic Shop Tiering (F50+)] · [Bargaining (Life Skill)] · [Col Economy — How You Earn] · [Save System]")
+        {
+            Tags = new[] { "npcs", "shops", "investing" }
         },
 
         new("Quests & NPCs", "Col Economy — How You Earn",
@@ -4561,7 +4778,7 @@ public static class PlayerGuideContent
             "roll-back when you mispicked a Passive Talent on level-up\n" +
             "and haven't saved since.\n\n" +
             "SEE ALSO\n" +
-            "[Save System] · [Permadeath & Save Deletion] · [Passive Talents (Level-Up Perks)]")
+            "[Controls & Keybindings] · [Save System] · [Permadeath & Save Deletion] · [Passive Talents (Level-Up Perks)]")
         {
             Tags = new[] { "save", "pause-menu", "controls" }
         },
@@ -4610,9 +4827,74 @@ public static class PlayerGuideContent
             "save on ascend is overwrite-in-place, so you can't roll back a\n" +
             "bad ascend — F5 quick-save before boss pulls instead.\n\n" +
             "SEE ALSO\n" +
-            "[Permadeath & Save Deletion] · [Pause Menu (Esc)] · [Run Modifiers (12 Optional Challenges)] · [Ascending a Floor] · [Achievements]")
+            "[Controls & Keybindings] · [Permadeath & Save Deletion] · [Pause Menu (Esc)] · [Run Modifiers (12 Optional Challenges)] · [Ascending a Floor] · [Achievements]")
         {
             Tags = new[] { "save", "permadeath", "progression" }
+        },
+
+        new("Quests & NPCs", "Controls & Keybindings",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: N/A (system)\n" +
+            "│ Floor: All\n" +
+            "│ Quest: In-game keyboard reference\n" +
+            "│ Reward: One screen, every binding\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Every in-game key in one place. The map view is modal — dialogs\n" +
+            "swallow keys while open, so these bindings assume the map has\n" +
+            "focus unless noted. The title screen has no rotating hints;\n" +
+            "this topic is the single source of truth for controls.\n\n" +
+            "USAGE\n" +
+            "Open this page any time with B. Hold Shift + dir to sprint,\n" +
+            "Ctrl + dir to stealth-move. Esc closes any open dialog; Esc\n" +
+            "from the map itself opens the Pause Menu.\n\n" +
+            "EFFECTS\n" +
+            "MOVEMENT\n" +
+            "  W A S D / Arrows  Step one tile (cardinal)\n" +
+            "  Q E Z C           Step one tile (diagonals)\n" +
+            "  Shift + dir       Sprint 2 tiles (+50% satiety drain)\n" +
+            "  Ctrl + dir        Stealth Move 1 tile (halves aggro)\n" +
+            "  Space             Wait / skip turn\n\n" +
+            "ACTIONS\n" +
+            "  G                 Pick up item on your tile\n" +
+            "  L                 Enter Look Mode\n" +
+            "  V                 Counter Stance (forces next Parry)\n" +
+            "  R                 Rest (regen, advances turns)\n" +
+            "  X                 Auto-explore\n" +
+            "  F                 Open Sword Skill menu\n" +
+            "  F1-F4             Fire equipped skills 1-4\n" +
+            "  1-5               Quick-Use consumable slots\n\n" +
+            "UI\n" +
+            "  I                 Inventory\n" +
+            "  T                 Equipment\n" +
+            "  P                 Player stats\n" +
+            "  J                 Quest log\n" +
+            "  K                 Kill stats\n" +
+            "  B                 Player Guide (this dialog)\n" +
+            "  H                 Quick help overlay\n" +
+            "  PageUp / PageDown Scroll the combat log\n\n" +
+            "SYSTEM\n" +
+            "  F5                Quick-save (no prompt)\n" +
+            "  Esc               Close dialog — or open Pause Menu from map\n\n" +
+            "TITLE SCREEN\n" +
+            "  Arrows / Enter    Navigate + pick (Continue / New Game /\n" +
+            "                    Records / Options / Exit)\n" +
+            "  Esc               Quit with confirmation\n\n" +
+            "COSTS\n" +
+            "Sprint, Stealth, and every action key consume a turn in the\n" +
+            "same way a normal step does. UI keys (I, T, P, J, K, B, H) and\n" +
+            "the Pause Menu pause the game — no turns pass while they are\n" +
+            "open.\n\n" +
+            "TIPS\n" +
+            "Bind your brain to the shape, not the letters — movement is\n" +
+            "the WASD + QEZC 3x3, utilities cluster on the left home row\n" +
+            "(G, R, X, F), and data panels are on the right (I, J, K, T).\n" +
+            "F5 before any risky pull; the Pause Menu's Load is your only\n" +
+            "roll-back if you haven't saved since.\n\n" +
+            "SEE ALSO\n" +
+            "[Pause Menu (Esc)] · [Save System] · [Sprint & Stealth Move] · [Look Mode & Counter Stance] · [Quick-Use Slots (1-5)] · [Sword Skills — Unlock & Use]")
+        {
+            Tags = new[] { "controls", "keybindings", "ui" }
         },
     };
 }

@@ -440,7 +440,19 @@ public partial class TurnManager
             }
         }
 
-        if (_map.InBounds(newX, newY) && _map.GetTile(newX, newY).IsWalkable)
+        if (_map.InBounds(newX, newY) && IsMonsterWalkable(monster, newX, newY))
             _map.MoveEntity(monster, newX, newY);
+    }
+
+    // FB-077 — Monster-specific passability. Land-bound mobs fall back to
+    // Tile.IsWalkable (water blocks). Aquatic mobs (CanSwim) also accept
+    // Water + WaterDeep tiles, provided the tile isn't otherwise occupied.
+    private bool IsMonsterWalkable(Monster monster, int x, int y)
+    {
+        var tile = _map.GetTile(x, y);
+        if (tile.IsWalkable) return true;
+        if (!monster.CanSwim) return false;
+        if (tile.Occupant != null) return false;
+        return tile.Type is TileType.Water or TileType.WaterDeep;
     }
 }

@@ -16,8 +16,9 @@ public static class StatsDialog
     private const int DialogWidth  = 64;
     // Dialog height in rows. Bumped to house the FB-050 Life Skills,
     // FB-058 Titles, and FB-063 Guild/Karma sections without squeezing
-    // the existing stat grid.
-    private const int DialogHeight = 58;
+    // the existing stat grid. FB-072/077 added Bargaining + Swimming —
+    // +2 rows for those two new Life Skill entries.
+    private const int DialogHeight = 60;
 
     // Stat definition — name, getter, and tooltip describing what it does.
     // Add new stats here to extend the dialog automatically.

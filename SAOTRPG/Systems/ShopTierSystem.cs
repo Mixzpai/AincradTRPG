@@ -135,6 +135,15 @@ public static class ShopTierSystem
                     yield return id;
     }
 
+    // FB-072 — Exposes every registered tier (floor → DefIds) in ascending
+    // floor order. VendorInvestmentSystem uses this to synthesize per-vendor
+    // bonus stock from tiers that haven't been globally unlocked yet.
+    public static IEnumerable<(int Floor, string[] DefIds)> EnumerateAllTiers()
+    {
+        foreach (var kv in TierUnlocks.OrderBy(x => x.Key))
+            yield return (kv.Key, kv.Value);
+    }
+
     // Build the tiered stock additions as live BaseItem instances with the
     // standard 20% vendor markup already applied. Skips DefIds that fail to
     // resolve (defensive — ItemRegistry should know them all).

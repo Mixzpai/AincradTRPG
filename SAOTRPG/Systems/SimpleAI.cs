@@ -74,13 +74,13 @@ public static class SimpleAI
         int fleeY = -Math.Sign(player.Y - monster.Y);
 
         // Try diagonal flee
-        if (fleeX != 0 && fleeY != 0 && CanMoveTo(map, monster.X + fleeX, monster.Y + fleeY))
+        if (fleeX != 0 && fleeY != 0 && CanMoveTo(map, monster, monster.X + fleeX, monster.Y + fleeY))
             return (fleeX, fleeY);
 
         // Try cardinal flee
-        if (fleeX != 0 && CanMoveTo(map, monster.X + fleeX, monster.Y))
+        if (fleeX != 0 && CanMoveTo(map, monster, monster.X + fleeX, monster.Y))
             return (fleeX, 0);
-        if (fleeY != 0 && CanMoveTo(map, monster.X, monster.Y + fleeY))
+        if (fleeY != 0 && CanMoveTo(map, monster, monster.X, monster.Y + fleeY))
             return (0, fleeY);
 
         return (0, 0); // cornered
@@ -95,22 +95,22 @@ public static class SimpleAI
         int stepY = Math.Sign(distY);
 
         // Try diagonal first if both axes have distance
-        if (stepX != 0 && stepY != 0 && CanMoveTo(map, monster.X + stepX, monster.Y + stepY))
+        if (stepX != 0 && stepY != 0 && CanMoveTo(map, monster, monster.X + stepX, monster.Y + stepY))
             return (stepX, stepY);
 
         // Fall back to cardinal — prefer the larger axis
         if (Math.Abs(distX) >= Math.Abs(distY))
         {
-            if (stepX != 0 && CanMoveTo(map, monster.X + stepX, monster.Y))
+            if (stepX != 0 && CanMoveTo(map, monster, monster.X + stepX, monster.Y))
                 return (stepX, 0);
-            if (stepY != 0 && CanMoveTo(map, monster.X, monster.Y + stepY))
+            if (stepY != 0 && CanMoveTo(map, monster, monster.X, monster.Y + stepY))
                 return (0, stepY);
         }
         else
         {
-            if (stepY != 0 && CanMoveTo(map, monster.X, monster.Y + stepY))
+            if (stepY != 0 && CanMoveTo(map, monster, monster.X, monster.Y + stepY))
                 return (0, stepY);
-            if (stepX != 0 && CanMoveTo(map, monster.X + stepX, monster.Y))
+            if (stepX != 0 && CanMoveTo(map, monster, monster.X + stepX, monster.Y))
                 return (stepX, 0);
         }
 
@@ -123,11 +123,11 @@ public static class SimpleAI
         int stepX = Math.Sign(tx - monster.X);
         int stepY = Math.Sign(ty - monster.Y);
 
-        if (stepX != 0 && stepY != 0 && CanMoveTo(map, monster.X + stepX, monster.Y + stepY))
+        if (stepX != 0 && stepY != 0 && CanMoveTo(map, monster, monster.X + stepX, monster.Y + stepY))
             return (stepX, stepY);
-        if (stepX != 0 && CanMoveTo(map, monster.X + stepX, monster.Y))
+        if (stepX != 0 && CanMoveTo(map, monster, monster.X + stepX, monster.Y))
             return (stepX, 0);
-        if (stepY != 0 && CanMoveTo(map, monster.X, monster.Y + stepY))
+        if (stepY != 0 && CanMoveTo(map, monster, monster.X, monster.Y + stepY))
             return (0, stepY);
         return (0, 0);
     }
@@ -141,7 +141,7 @@ public static class SimpleAI
         foreach (int i in indices)
         {
             var (dx, dy) = Directions[i];
-            if (CanMoveTo(map, monster.X + dx, monster.Y + dy))
+            if (CanMoveTo(map, monster, monster.X + dx, monster.Y + dy))
                 return (dx, dy);
         }
 
@@ -149,11 +149,17 @@ public static class SimpleAI
     }
 
     // Checks if a tile is in-bounds, walkable, and unoccupied.
-    private static bool CanMoveTo(GameMap map, int x, int y)
+    // FB-077 — aquatic mobs (Monster.CanSwim) accept Water + WaterDeep
+    // tiles in addition to normal walkable floor.
+    private static bool CanMoveTo(GameMap map, Monster monster, int x, int y)
     {
         if (!map.InBounds(x, y)) return false;
         var tile = map.GetTile(x, y);
-        return !tile.BlocksMovement && tile.Occupant == null;
+        if (tile.Occupant != null) return false;
+        if (!tile.BlocksMovement) return true;
+        if (monster.CanSwim && tile.Type is TileType.Water or TileType.WaterDeep)
+            return true;
+        return false;
     }
 
     // Fisher-Yates in-place shuffle for direction randomization.

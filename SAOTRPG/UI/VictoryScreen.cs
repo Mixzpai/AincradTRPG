@@ -65,7 +65,9 @@ public static class VictoryScreen
         string grade0 = RunGradeHelper.RateVictory(100, kills, turns);
         LifetimeStats.RecordRun(kills, 100, player.Level, grade0,
             turnManager?.TotalPlayTime ?? TimeSpan.Zero,
-            turnManager?.TotalColEarned ?? player.ColOnHand, victory: true);
+            turnManager?.TotalColEarned ?? player.ColOnHand, victory: true,
+            playerName: $"{player.FirstName} {player.LastName}".Trim(),
+            turnCount: turns);
 
         // ── Final summary card ────────────────────────────────────────
         string summaryText = BuildSummary(player, kills, turns, turnManager);

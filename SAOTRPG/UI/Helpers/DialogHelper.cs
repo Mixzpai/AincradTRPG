@@ -20,6 +20,45 @@ public static class DialogHelper
         IsDefault = isDefault,
     };
 
+    // Creates a menu-selection button with the `► Label ◄` focus marker.
+    // Strips Terminal.Gui's own [ ] chrome via NoDecorations/NoPadding so
+    // the triangles are the only framing. Idle rows pad with 2 spaces on
+    // each side so horizontal alignment stays stable when focus moves.
+    // Used by vertical menu screens (TitleScreen, PauseMenuDialog,
+    // DifficultyScreen, TalentPickDialog, ProficiencyForkDialog) for
+    // consistent selection visuals across the app.
+    public static Button CreateMenuButton(string text, bool isDefault = false)
+    {
+        var btn = new Button
+        {
+            Text = isDefault ? $"► {text} ◄" : $"  {text}  ",
+            ColorScheme = ColorSchemes.MenuButton,
+            IsDefault = isDefault,
+            NoDecorations = true,
+            NoPadding = true,
+        };
+        btn.HasFocusChanged += (s, e) =>
+        {
+            if (s is not Button b) return;
+            b.IsDefault = e.NewValue;
+            string core = StripMenuMarkers(b.Text?.ToString() ?? "");
+            b.Text = e.NewValue ? $"► {core} ◄" : $"  {core}  ";
+        };
+        return btn;
+    }
+
+    // Strips menu-marker decorations + padding so the core label can be
+    // re-wrapped. Idempotent — handles both the current `► … ◄` mirror
+    // pair and any legacy single-direction variants.
+    private static string StripMenuMarkers(string text)
+    {
+        var s = text.Trim();
+        if (s.StartsWith("► ")) s = s[2..];
+        if (s.EndsWith(" ◄")) s = s[..^2];
+        if (s.EndsWith(" ►")) s = s[..^2];  // legacy guard
+        return s.Trim();
+    }
+
     // Standard dialog factory — applies the shared color scheme and dimensions
     // so every popup looks identical from frame inward.
     public static Dialog Create(string title, int width, int height) => new()

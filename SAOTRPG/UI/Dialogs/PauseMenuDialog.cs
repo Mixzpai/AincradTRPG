@@ -140,11 +140,14 @@ public static class PauseMenuDialog
         }
     }
 
-    private static Button MakeMenuButton(string text, int y, bool isDefault = false) => new()
+    // Uses the shared CreateMenuButton helper for the ► label ◄ focus
+    // marker — consistent with TitleScreen / DifficultyScreen / TalentPick
+    // / ProficiencyFork selection visuals across the app.
+    private static Button MakeMenuButton(string text, int y, bool isDefault = false)
     {
-        Text = $" {text} ",
-        X = Pos.Center(), Y = y,
-        ColorScheme = ColorSchemes.MenuButton,
-        IsDefault = isDefault,
-    };
+        var btn = DialogHelper.CreateMenuButton(text, isDefault);
+        btn.X = Pos.Center();
+        btn.Y = y;
+        return btn;
+    }
 }
