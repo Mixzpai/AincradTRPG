@@ -58,12 +58,19 @@ public static partial class GameScreen
 
         turnManager.PlayerDied += () =>
         {
-            if (turnManager.IsHardcore) SaveManager.DeleteSave(saveSlot);
+            // Universal permadeath (post-Hardcore-removal) — delete the save
+            // slot immediately, before the death screen renders, so the slot
+            // is already gone by the time the player dismisses the summary.
+            SaveManager.DeleteSave(saveSlot);
             InvokeDialog(() => DeathScreen.Show(
                 mainWindow, player, turnManager.CurrentFloor,
                 turnManager.KillCount, turnManager.TurnCount,
-                turnManager.LastKillerName, turnManager.IsHardcore, turnManager, coloredLog), false);
+                turnManager.LastKillerName, turnManager, coloredLog), false);
         };
+
+        mapView.PauseRequested += () =>
+            InvokeDialog(() => Dialogs.PauseMenuDialog.Show(
+                mainWindow, player, turnManager, saveSlot, gameLog, saveFlash), false);
 
         turnManager.GameWon += () =>
         {
@@ -103,6 +110,10 @@ public static partial class GameScreen
 
         turnManager.LisbethInteraction += () =>
             InvokeDialog(() => LisbethCraftDialog.Show(player, gameLog));
+
+        // FB-057 Monument of Swordsmen — opens kill log + title browser.
+        turnManager.MonumentInteraction += () =>
+            InvokeDialog(() => { MonumentDialog.Show(player); refreshHud(); });
 
         turnManager.TalentPickRequested += (perks) =>
             InvokeDialog(() =>

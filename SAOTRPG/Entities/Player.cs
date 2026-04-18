@@ -114,6 +114,38 @@ namespace SAOTRPG.Entities
                 }
             }
 
+            // FB-050 Life Skills — hydrate each skill's Level + CurrentXp
+            // from the save. Missing entries keep the default L1/0, so
+            // legacy saves pre-FB-050 load cleanly without crashing.
+            if (save.LifeSkills != null)
+            {
+                foreach (var kvp in save.LifeSkills)
+                {
+                    if (Enum.TryParse<Systems.LifeSkillType>(kvp.Key, out var skillType)
+                        && player.LifeSkills.Skills.TryGetValue(skillType, out var state))
+                    {
+                        state.Level = Math.Clamp(kvp.Value.Level, 1, Systems.LifeSkillSystem.MaxLevel);
+                        state.CurrentXp = Math.Max(0, kvp.Value.CurrentXp);
+                    }
+                }
+            }
+
+            // FB-058 Titles — rebuild unlocked set, then (re)apply the
+            // active title's stat bonus via SetActiveTitle so the loaded
+            // base stats reflect the saved Active title exactly.
+            if (save.UnlockedTitleIds != null)
+                player.UnlockedTitleIds = new HashSet<string>(save.UnlockedTitleIds);
+            if (!string.IsNullOrEmpty(save.ActiveTitleId)
+                && player.UnlockedTitleIds.Contains(save.ActiveTitleId))
+            {
+                // The SaveData.BaseAttack etc. already contain the baked-in
+                // title bonus from the previous session (SetActiveTitle
+                // mutated base stats when the player equipped). To avoid
+                // double-applying, we store the ActiveTitleId directly and
+                // DO NOT reapply the bonus — the base stats already have it.
+                player.ActiveTitleId = save.ActiveTitleId;
+            }
+
             return player;
         }
 

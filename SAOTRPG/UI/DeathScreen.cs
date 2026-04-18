@@ -10,7 +10,6 @@ public static class DeathScreen
 {
     private const int BannerY = 2, FlavorY = 11, NameY = 13, SummaryY = 15;
     private const int RecapBoxW = 49, RecapTrimW = 45, RecapCount = 5;
-    private static EventHandler<Key>? _keyHandler;
 
     private const string DeathArt = @"
     ╔══════════════════════════════════════╗
@@ -23,25 +22,13 @@ public static class DeathScreen
     ╚══════════════════════════════════════╝";
 
     // Renders the death screen with banner, summary, recap, and return button.
+    // Universal permadeath — save slot is already deleted by the caller before
+    // this screen renders, so there are no resource-loss penalties to apply.
     public static void Show(Window mainWindow, Player player, int floor = 1,
-        int kills = 0, int turns = 0, string? killedBy = null, bool hardcore = false,
+        int kills = 0, int turns = 0, string? killedBy = null,
         TurnManager? turnManager = null, ColoredLogView? logView = null)
     {
         mainWindow.RemoveAll();
-        if (_keyHandler != null) mainWindow.KeyDown -= _keyHandler;
-
-        // Death penalty on Normal mode: lose 25% Col and 10% XP (never drop a level).
-        int colLost = 0, xpLost = 0;
-        if (!hardcore && player.ColOnHand > 0)
-        {
-            colLost = player.ColOnHand / 4;
-            player.ColOnHand -= colLost;
-        }
-        if (!hardcore && player.CurrentExperience > 0)
-        {
-            xpLost = player.CurrentExperience / 10;
-            player.CurrentExperience -= xpLost;
-        }
 
         var deathLabel = new Label
         {
@@ -49,24 +36,12 @@ public static class DeathScreen
             Width = Dim.Auto(), Height = Dim.Auto(), ColorScheme = ColorSchemes.Danger
         };
 
-        if (hardcore)
+        mainWindow.Add(new Label
         {
-            mainWindow.Add(new Label
-            {
-                Text = "[ HARDCORE ]  This death is permanent.  There are no second chances.",
-                X = Pos.Center(), Y = BannerY - 1,
-                Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger
-            });
-        }
-        else if (colLost > 0 || xpLost > 0)
-        {
-            string penalty = $"Death penalty: -{colLost} Col, -{xpLost} XP lost";
-            mainWindow.Add(new Label
-            {
-                Text = penalty, X = Pos.Center(), Y = BannerY - 1,
-                Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger
-            });
-        }
+            Text = "This death is permanent.  Your save has been deleted.",
+            X = Pos.Center(), Y = BannerY - 1,
+            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger
+        });
 
         string flavor = FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)];
         var flavorLabel = new Label
@@ -84,7 +59,7 @@ public static class DeathScreen
         };
 
         string grade = RunGradeHelper.Rate(floor, kills, turns);
-        DeathRecapWriter.WriteRecap(player, floor, kills, turns, killedBy, grade, hardcore,
+        DeathRecapWriter.WriteRecap(player, floor, kills, turns, killedBy, grade,
             turnManager?.TotalColEarned ?? player.ColOnHand, turnManager?.TotalPlayTime);
 
         LifetimeStats.RecordRun(kills, floor, player.Level, grade,
@@ -134,47 +109,28 @@ public static class DeathScreen
         });
         buttonY += 2;
 
-        if (hardcore)
+        // Universal permadeath: offer a Return-to-menu confirmation. "No"
+        // keeps the player on the death screen (cosmetic — they're dead).
+        var returnBtn = new Button
         {
-            var quitBtn = new Button
-            {
-                Text = " Quit Game ", X = Pos.Center(), Y = buttonY,
-                IsDefault = true, ColorScheme = ColorSchemes.Button
-            };
-            quitBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
-            var quitHint = new Label
-            {
-                Text = "[ Hardcore mode — no retries ]",
-                X = Pos.Center(), Y = buttonY + 2,
-                Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
-            };
-            mainWindow.Add(deathLabel, flavorLabel, nameLabel, summaryLabel, quitBtn, quitHint);
-            quitBtn.SetFocus();
-        }
-        else
+            Text = " Return to Title ", X = Pos.Center(), Y = buttonY,
+            IsDefault = true, ColorScheme = ColorSchemes.Button
+        };
+        returnBtn.Accepting += (s, e) =>
         {
-            var returnBtn = new Button
-            {
-                Text = " Return to Title ", X = Pos.Center(), Y = buttonY,
-                IsDefault = true, ColorScheme = ColorSchemes.Button
-            };
-            returnBtn.Accepting += (s, e) => { e.Cancel = true; TitleScreen.Show(mainWindow); };
-            var hint = new Label
-            {
-                Text = "[ Enter — Title ]  [ R — Restart ]",
-                X = Pos.Center(), Y = buttonY + 2,
-                Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
-            };
+            e.Cancel = true;
+            int choice = MessageBox.Query("Return to Title", "Return to main menu?", "Yes", "No");
+            if (choice == 0) TitleScreen.Show(mainWindow);
+        };
+        var hint = new Label
+        {
+            Text = "[ Permadeath — save deleted.  Enter — Title ]",
+            X = Pos.Center(), Y = buttonY + 2,
+            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+        };
 
-            _keyHandler = (s, e) =>
-            {
-                if (e.KeyCode == KeyCode.R) { e.Handled = true; DifficultyScreen.Show(mainWindow); }
-            };
-            mainWindow.KeyDown += _keyHandler;
-
-            mainWindow.Add(deathLabel, flavorLabel, nameLabel, summaryLabel, returnBtn, hint);
-            returnBtn.SetFocus();
-        }
+        mainWindow.Add(deathLabel, flavorLabel, nameLabel, summaryLabel, returnBtn, hint);
+        returnBtn.SetFocus();
     }
 
     private static string BuildSummary(Player player, int floor, int kills, int turns,

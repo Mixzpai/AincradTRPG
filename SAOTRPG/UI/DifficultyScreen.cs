@@ -13,6 +13,14 @@ public static class DifficultyScreen
     private const int DefaultTier = 3;
     private static EventHandler<Key>? _escHandler;
 
+    // Unhook this screen's Esc handler from mainWindow. Called by screens
+    // that transition AWAY from DifficultyScreen so the static handler
+    // doesn't leak its "Esc → TitleScreen" behavior into GameScreen, etc.
+    public static void UnhookEscHandler(Window mainWindow)
+    {
+        if (_escHandler != null) { mainWindow.KeyDown -= _escHandler; _escHandler = null; }
+    }
+
     public static void Show(Window mainWindow)
     {
         mainWindow.RemoveAll();
@@ -90,24 +98,15 @@ public static class DifficultyScreen
             descLabel.Text = tiers[idx].Description;
         };
 
-        // ── Hardcore toggle (centered) ───────────────────────────────
-        int hcY = previewY + 6;
-        var hardcoreCheck = new CheckBox
+        // Permadeath is now universal — all deaths delete the save slot.
+        // The former Hardcore checkbox has been removed; kept the Y anchor
+        // as a spacer row so the rest of the layout shifts up only slightly.
+        int hcY = previewY + 5;
+        var permadeathNotice = new Label
         {
-            Text = " Hardcore — death is permanent, save deleted on death",
-            X = Pos.Center() - 26, Y = hcY,
-            ColorScheme = ColorSchemes.Body,
-        };
-
-        int unwinnableIndex = GetUnwinnableIndex(count);
-        hardcoreCheck.CheckedStateChanging += (s, e) =>
-        {
-            if (e.NewValue != CheckState.Checked) return;
-            int sel = tierRadio.SelectedItem;
-            if (sel == 0)
-                MessageBox.Query("Really?", "Hardcore on Story mode? Bold choice.", "Yes, really");
-            else if (sel == unwinnableIndex)
-                MessageBox.Query("Good Luck", "There's no way you can do this, but good luck.", "Bring it on");
+            Text = "All runs are permadeath — death deletes your save.",
+            X = Pos.Center(), Y = hcY,
+            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger,
         };
 
         // ── Run Modifiers row (FB-564) — TESTING_ALWAYS_ON (memory #375).
@@ -159,7 +158,7 @@ public static class DifficultyScreen
 
         var hint = new Label
         {
-            Text = "Up/Down: select   Space: hardcore   Enter: continue   Esc: back",
+            Text = "Up/Down: select   Enter: continue   Esc: back",
             X = Pos.Center(), Y = btnY + 2,
             Width = Dim.Auto(), ColorScheme = ColorSchemes.Dim,
         };
@@ -178,15 +177,7 @@ public static class DifficultyScreen
         continueBtn.Accepting += (s, e) =>
         {
             e.Cancel = true;
-            bool hc = hardcoreCheck.CheckedState == CheckState.Checked;
-            if (hc)
-            {
-                int confirm = MessageBox.Query("Hardcore Mode",
-                    "Death is PERMANENT.\nYour save will be deleted on death.\n\nAre you sure?",
-                    "I'm Ready", "Cancel");
-                if (confirm != 0) return;
-            }
-            CharacterCreationScreen.Show(mainWindow, tierRadio.SelectedItem, hc);
+            CharacterCreationScreen.Show(mainWindow, tierRadio.SelectedItem);
         };
 
         backBtn.Accepting += (s, e) => { e.Cancel = true; TitleScreen.Show(mainWindow); };
@@ -206,7 +197,7 @@ public static class DifficultyScreen
             if (e.KeyCode is KeyCode.CursorDown or KeyCode.S
                 && tierRadio.SelectedItem == count - 1)
             {
-                hardcoreCheck.SetFocus(); e.Handled = true;
+                modifierBtn.SetFocus(); e.Handled = true;
             }
             else if (e.KeyCode is KeyCode.CursorUp or KeyCode.W
                 && tierRadio.SelectedItem == 0)
@@ -220,16 +211,17 @@ public static class DifficultyScreen
             }
         };
 
-        // Checkbox ↔ tier list / footer row
-        NavigationHelper.WireUpDown(hardcoreCheck, tierRadio, continueBtn);
+        // Run Modifiers button ↔ tier list / footer row (replaces the old
+        // hardcore checkbox in the nav chain).
+        NavigationHelper.WireUpDown(modifierBtn, tierRadio, continueBtn);
 
-        // Footer buttons: Up→checkbox, Down→tier list, Left/Right between them
+        // Footer buttons: Up→modifier row, Down→tier list, Left/Right between them
         var footerBtns = new[] { continueBtn, detailsBtn, backBtn };
         for (int i = 0; i < footerBtns.Length; i++)
         {
             int li = (i - 1 + footerBtns.Length) % footerBtns.Length;
             int ri = (i + 1) % footerBtns.Length;
-            NavigationHelper.WireUpDown(footerBtns[i], hardcoreCheck, tierRadio);
+            NavigationHelper.WireUpDown(footerBtns[i], modifierBtn, tierRadio);
             NavigationHelper.WireLeftRight(footerBtns[i], footerBtns[li], footerBtns[ri]);
         }
 
@@ -237,7 +229,7 @@ public static class DifficultyScreen
         mainWindow.Add(header, headerRule,
             tierRadio, tierModRule,
             modHeader, modLabel, modDescRule, descLabel,
-            hardcoreCheck,
+            permadeathNotice,
             modifierBtn, modifierChipLabel,
             continueBtn, detailsBtn, backBtn,
             hint);
@@ -261,8 +253,5 @@ public static class DifficultyScreen
         if (names.Length > 28) names = names[..27] + "…";
         return $"   ×{mul:F2}  {names}";
     }
-
-    private static int GetUnwinnableIndex(int tierCount) =>
-        tierCount - (DebugMode.IsEnabled ? 2 : 1);
 
 }

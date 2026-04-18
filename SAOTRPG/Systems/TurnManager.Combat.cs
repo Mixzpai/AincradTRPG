@@ -154,6 +154,9 @@ public partial class TurnManager
     {
         Bestiary.RecordKill(monster.Name);
         QuestSystem.OnMobKilled(monster.Name, _log, wpnType);
+        // FB-058 Title System — check unlocks after each kill so the
+        // banner fires immediately on milestone crossings.
+        CheckTitleUnlocksAfterKill(monster);
         // Agent 2: Player Guide known/unknown gating — record kill so the
         // corresponding "Monster: <name>" / "Boss: ..." / "Field Boss: ..."
         // guide entry unlocks from the "??? (Unknown)" mask.

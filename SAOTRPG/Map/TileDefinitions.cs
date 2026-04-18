@@ -63,6 +63,7 @@ public static class TileDefinitions
             TileType.Shrine       => ('☥', ShrineViolet, Color.Black),
             TileType.Pillar       => ('║', WallGray, Color.Black),
             TileType.LoreStone    => ('◆', ShrineViolet, Color.Black),
+            TileType.MonumentOfSwordsmen => ('M', GoldBright, Color.Black),
             TileType.DangerZone   => ('.', LavaOrange, Color.Black),
             TileType.Anvil        => ('╬', GoldBright, Color.Black),
             TileType.BountyBoard  => ('▣', FountainCyan, Color.Black),

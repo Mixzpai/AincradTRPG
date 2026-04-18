@@ -48,7 +48,7 @@ public static class PlayerGuideContent
             "(gear). Keep proficiency high — it feeds both the sum and the\n" +
             "rank bonuses.\n\n" +
             "SEE ALSO\n" +
-            "[Critical Hits] · [Combo Attacks] · [Weapon Proficiency Ranks]")
+            "[Critical Hits] · [Combo Attacks] · [Weapon Proficiency Ranks] · [Rarity Colors & Glyphs]")
         {
             Tags = new[] { "combat", "stats" }
         },
@@ -512,16 +512,18 @@ public static class PlayerGuideContent
             "Well Fed (>=80): +1 HP regen, +3 ATK/DEF. Hungry (<20): -2 ATK.\n" +
             "Starving (0): -5 HP/turn plus STARVING status. Mild Fatigue:\n" +
             "-1 SPD. Heavy Fatigue: -3 SPD, -5% crit. Food restores satiety\n" +
-            "and HP over turns.\n\n" +
+            "and HP over turns. The Eating life skill scales food potency by\n" +
+            "+10% / +25% / +50% / +100% at L10 / L25 / L50 / L99.\n\n" +
             "COSTS\n" +
             "Satiety drains 1 point per N turns (biome- and modifier-\n" +
             "dependent). The Iron Rank run modifier doubles drain rate.\n\n" +
             "TIPS\n" +
             "Hover at Well Fed before any boss — the +3 ATK/DEF feeds right\n" +
             "into Damage Mitigation. Carry at least one stack of cheap bread\n" +
-            "for emergency top-ups.\n\n" +
+            "for emergency top-ups; each bread also banks Eating XP toward\n" +
+            "the food-potency milestones.\n\n" +
             "SEE ALSO\n" +
-            "[Food & Cooking] · [Damage Mitigation] · [Run Modifiers (12 Optional Challenges)]")
+            "[Food & Cooking] · [Damage Mitigation] · [Run Modifiers (12 Optional Challenges)] · [Life Skills] · [Campfires — Rest & Sleep XP]")
         {
             Tags = new[] { "combat", "stats" }
         },
@@ -544,15 +546,19 @@ public static class PlayerGuideContent
             "stop short. Stealth Move halves aggro range that turn and\n" +
             "hides you from mobs farther than 5 tiles; it breaks on attack.\n" +
             "Neither triggers Extra Search's passive trap-reveal — only\n" +
-            "normal step moves do.\n\n" +
+            "normal step moves do. Each sprint step banks +2 Running XP;\n" +
+            "each normal step banks +1 Walking XP (sprint and stealth skip\n" +
+            "the Walking track).\n\n" +
             "COSTS\n" +
             "Sprint adds +50% satiety drain for the turn spent.\n\n" +
             "TIPS\n" +
             "Use Sprint to escape post-motion recovery before the follow-up\n" +
             "hit lands. Use Stealth Move when scouting unfamiliar rooms so\n" +
-            "you don't pull the whole pack at once.\n\n" +
+            "you don't pull the whole pack at once. Alternate sprint and\n" +
+            "normal steps on long treks — both life skills bank XP on the\n" +
+            "same trip.\n\n" +
             "SEE ALSO\n" +
-            "[Heavy Attacks (Winding Up)] · [Unique Skill: Extra Skill — Search] · [Traps & Hazards]")
+            "[Heavy Attacks (Winding Up)] · [Unique Skill: Extra Skill — Search] · [Traps & Hazards] · [Life Skills]")
         {
             Tags = new[] { "combat", "movement" }
         },
@@ -653,35 +659,39 @@ public static class PlayerGuideContent
             Tags = new[] { "combat", "vision" }
         },
 
-        new("Combat & Rarity", "Death Penalty & Hardcore",
+        new("Combat & Rarity", "Permadeath & Save Deletion",
             "┌─ Combat & Rarity\n" +
-            "│ Topic: Death Penalty & Hardcore\n" +
-            "│ Normal: -25% Col + XP loss\n" +
-            "│ Hardcore: Permanent save wipe\n" +
+            "│ Topic: Permadeath & Save Deletion\n" +
+            "│ Rule: One life per save — all deaths are final\n" +
+            "│ Consequence: Save file deleted immediately\n" +
             "│ Trigger: HP reaches 0\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Two death rules. Normal mode respawns you at last save with\n" +
-            "some resource loss; Hardcore ends the run and wipes the slot.\n\n" +
+            "Every run is a death-game run. When HP hits 0 the DeathScreen\n" +
+            "shows your run stats and the save slot is wiped — there is no\n" +
+            "partial penalty, no respawn, and no reload.\n\n" +
             "USAGE\n" +
-            "Applies automatically when HP hits 0. Hardcore mode must be\n" +
-            "selected at character creation.\n\n" +
+            "Applies automatically on any death, anywhere on the floor. The\n" +
+            "DeathScreen asks you to confirm a return to the main menu; by\n" +
+            "the time you see it, the save file is already gone from disk.\n\n" +
             "EFFECTS\n" +
-            "NORMAL: lose 25% Col on hand, XP toward next level is lost\n" +
-            "(but levels aren't taken away), equipment stays intact,\n" +
-            "respawn at last save with full HP. HARDCORE: one life only,\n" +
-            "death wipes the save slot permanently, score converts to a\n" +
-            "permanent leaderboard entry.\n\n" +
+            "Death deletes save_N.json from %LOCALAPPDATA%/AincradTRPG. The\n" +
+            "run's score still posts to achievements/leaderboard state, but\n" +
+            "the slot itself cannot be reloaded. Equipment, Col, XP, party,\n" +
+            "and quests are all lost with the save. No 25% Col penalty or\n" +
+            "XP rollback — the previous soft-death fallback has been\n" +
+            "replaced by universal permadeath.\n\n" +
             "COSTS\n" +
-            "Hardcore saves cannot be loaded after the run ends.\n\n" +
+            "The entire run. There is no middle ground.\n\n" +
             "TIPS\n" +
-            "Hardcore mirrors the SAO novel's death-game rule — Normal is a\n" +
-            "beta-tester-style run. Keep a Revive Crystal equipped on\n" +
-            "Normal runs to avoid the Col penalty entirely.\n\n" +
+            "Keep a Revive Crystal in a quick-use slot — it intercepts the\n" +
+            "fatal hit before the save is deleted. Use Safe Rooms between\n" +
+            "labyrinth pushes, and F5 quick-save before a boss pull so the\n" +
+            "auto-save on ascend doesn't overwrite a bad position.\n\n" +
             "SEE ALSO\n" +
-            "[Save System] · [Potions, Crystals & Throwables] · [Achievements]")
+            "[Save System] · [Pause Menu (Esc)] · [Potions, Crystals & Throwables] · [Safe Rooms & Mechanics]")
         {
-            Tags = new[] { "combat", "hardcore" }
+            Tags = new[] { "combat", "permadeath", "save" }
         },
 
         // ═══════════════════════════════════════════════════════════════
@@ -713,7 +723,7 @@ public static class PlayerGuideContent
             "allocation matters as much as level. Save tough boss attempts\n" +
             "for immediately after a level-up to ride the HP restore.\n\n" +
             "SEE ALSO\n" +
-            "[The Six Attributes] · [Passive Talents (Level-Up Perks)] · [Floor Titles]")
+            "[The Six Attributes] · [Passive Talents (Level-Up Perks)] · [Floor Titles] · [Starting Loadout]")
         {
             Tags = new[] { "leveling", "stats" }
         },
@@ -776,9 +786,11 @@ public static class PlayerGuideContent
             "TIPS\n" +
             "Dex double-dips on crit rate and crit damage, so it scales\n" +
             "crit builds twice. Vit is the only defensive stat that also\n" +
-            "boosts passive regen.\n\n" +
+            "boosts passive regen. Life-Skill milestones add flat bonuses\n" +
+            "on top of your SP spend — Walking feeds END, Running feeds\n" +
+            "SPD, and Sleep lifts MaxHP at L10/25/50/99 thresholds.\n\n" +
             "SEE ALSO\n" +
-            "[Derived Combat Stats] · [Experience & Leveling] · [Critical Hits]")
+            "[Derived Combat Stats] · [Experience & Leveling] · [Critical Hits] · [Life Skills]")
         {
             Tags = new[] { "attributes", "stats" }
         },
@@ -872,7 +884,7 @@ public static class PlayerGuideContent
             "Repulser, Elucidator Rouge/Flare Pulsar, Black Iron A/B)\n" +
             "bypass the unlock entirely — see Paired Dual-Wield Weapons.\n\n" +
             "SEE ALSO\n" +
-            "[Paired Dual-Wield Weapons] · [Unique Skill: Holy Sword] · [Equipment Slots & Dual Wield]")
+            "[Paired Dual-Wield Weapons] · [Unique Skill: Holy Sword] · [Unique Skill: Martial Arts] · [Equipment Slots & Dual Wield]")
         {
             Tags = new[] { "combat", "unique-skills", "dual-blades" }
         },
@@ -1084,9 +1096,97 @@ public static class PlayerGuideContent
             "fight that unlocks Holy Sword — a natural story beat to look\n" +
             "forward to.\n\n" +
             "SEE ALSO\n" +
-            "[Aincrad's 100 Floors & Eras] · [Ascending a Floor] · [Achievements]")
+            "[Aincrad's 100 Floors & Eras] · [Ascending a Floor] · [Achievements] · [Titles & the Active Title Slot]")
         {
             Tags = new[] { "leveling", "floors" }
+        },
+
+        new("Progression", "Life Skills",
+            "┌─ Progression\n" +
+            "│ Topic: Life Skills\n" +
+            "│ Skills: Sleep / Walking / Running / Eating\n" +
+            "│ Cap: Level 99 per skill\n" +
+            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Four non-combat skills level from everyday play — Sleep, Walking,\n" +
+            "Running, and Eating. They sit parallel to Weapon Proficiency:\n" +
+            "proficiency rewards combat with one weapon type, Life Skills\n" +
+            "reward the travel and rest loop.\n\n" +
+            "USAGE\n" +
+            "No menu — each skill banks XP from the matching in-world action.\n" +
+            "Milestones at L10/25/50/99 fire a banner and stamp a permanent\n" +
+            "stat passive onto your character.\n\n" +
+            "EFFECTS\n" +
+            "XP curve (piecewise geometric): L5=10, L10=100, L25=1000,\n" +
+            "L50=5000, L99=50000.\n\n" +
+            "  SLEEP     +20 XP per ProcessRest, +10 XP per campfire step\n" +
+            "            L10 +5 MaxHP / L25 +15 / L50 +35 / L99 +80 + regen\n" +
+            "  WALKING   +1 XP per normal step (sprint + stealth skip)\n" +
+            "            L10 +2 END / L25 +5 / L50 +10 / L99 +20\n" +
+            "  RUNNING   +2 XP per sprint step\n" +
+            "            L10 +2 SPD / L25 +5 / L50 +10 / L99 +20 + sprint cost\n" +
+            "  EATING    +10 XP per food item consumed\n" +
+            "            L10 +10% food potency / L25 +25% / L50 +50% / L99 +100%\n\n" +
+            "COSTS\n" +
+            "None. Life Skills cost only the time spent doing the activity;\n" +
+            "they never block or gate other progression.\n\n" +
+            "TIPS\n" +
+            "Running and Walking level in parallel — a mix of sprint bursts\n" +
+            "and normal steps feeds both XP pools on the same trip. Rest at\n" +
+            "campfires whenever idle; each step-on is Sleep XP even before\n" +
+            "you trigger the cook menu. Eating cheap bread between fights\n" +
+            "grinds Eating XP without burning rare consumables.\n\n" +
+            "SEE ALSO\n" +
+            "[Weapon Proficiency Tree] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move] · [Safe Rooms & Mechanics]")
+        {
+            Tags = new[] { "life-skills", "progression" }
+        },
+
+        new("Progression", "Titles & the Active Title Slot",
+            "┌─ Progression\n" +
+            "│ Topic: Titles & the Active Title Slot\n" +
+            "│ Unlocks: Species, tag, total, floor-clear triggers\n" +
+            "│ Slot: One equipped title at a time\n" +
+            "│ Manage: Monument of Swordsmen (F1) or StatsDialog\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "15 starter titles unlock from kill milestones and floor clears.\n" +
+            "You equip ONE into the Active Title slot for a flat passive\n" +
+            "bonus; swapping is free and can be done any time.\n\n" +
+            "USAGE\n" +
+            "Unlock fires automatically when the trigger resolves — a banner\n" +
+            "notification announces the new title. Equip/unequip at the\n" +
+            "Monument of Swordsmen on F1 or through the Life Skills / Active\n" +
+            "Title section of the character sheet.\n\n" +
+            "EFFECTS\n" +
+            "  Boar Slayer          10 boar kills\n" +
+            "  Nepent Cutter        10 nepent kills\n" +
+            "  Kobold Crusher       10 kobold kills\n" +
+            "  Titan Breaker        10 taurus kills\n" +
+            "  Cardinal Breaker     10 Cardinal Error kills\n" +
+            "  Beast Hunter         100 beast-tag kills\n" +
+            "  Beast Lord           1000 beast-tag kills\n" +
+            "  Dragon Slayer        100 dragon-tag kills\n" +
+            "  Dragon Lord          1000 dragon-tag kills\n" +
+            "  Hollow Walker        100 hollow-tag kills\n" +
+            "  Undead Exorcist      100 undead-tag kills\n" +
+            "  Insect Crusher       100 insect-tag kills\n" +
+            "  Beginner Slayer      100 total kills\n" +
+            "  The Black Swordsman  9999 total kills\n" +
+            "  Survivor             F50 cleared\n\n" +
+            "COSTS\n" +
+            "None. Single-slot only — equipping a new title replaces the old.\n\n" +
+            "TIPS\n" +
+            "The Black Swordsman title is distinct from the L110 per-weapon\n" +
+            "proficiency rank of the same name — the title unlocks at 9999\n" +
+            "TOTAL kills across all weapons. Swap titles to match the next\n" +
+            "leg: species-specific passives for floor grinds, then a\n" +
+            "tag-aggregate like Beast Lord once you move on.\n\n" +
+            "SEE ALSO\n" +
+            "[Monument of Swordsmen (F1)] · [Life Skills] · [Weapon Proficiency Ranks] · [Floor Titles]")
+        {
+            Tags = new[] { "titles", "progression" }
         },
 
         new("Progression", "Weapon Proficiency Tree",
@@ -1123,9 +1223,10 @@ public static class PlayerGuideContent
             "Don't split early kills across 3 weapons. A single primary\n" +
             "weapon reaches L50 long before a split build, giving you the\n" +
             "second fork faster. Use secondaries only after your primary\n" +
-            "crosses L50.\n\n" +
+            "crosses L50. Life Skills are the non-combat parallel track —\n" +
+            "they level from travel and rest, not kills.\n\n" +
             "SEE ALSO\n" +
-            "[Weapon Proficiency Ranks] · [Sword Skills — Unlock & Use] · [Passive Talents (Level-Up Perks)]")
+            "[Weapon Proficiency Ranks] · [Sword Skills — Unlock & Use] · [Passive Talents (Level-Up Perks)] · [Life Skills]")
         {
             Tags = new[] { "proficiency", "skills", "weapons" }
         },
@@ -1333,9 +1434,46 @@ public static class PlayerGuideContent
             "of +ATK/+DEF goes a long way in a boss fight. Never ascend a\n" +
             "floor without visiting the Anvil first.\n\n" +
             "SEE ALSO\n" +
-            "[Anvil — Repair, Enhance, Evolve, Refine] · [Hunger, Satiety & Fatigue] · [Col Economy — How You Earn] · [Lore, Journals & Enchant Shrines]")
+            "[Anvil — Repair, Enhance, Evolve, Refine] · [Hunger, Satiety & Fatigue] · [Col Economy — How You Earn] · [Lore, Journals & Enchant Shrines] · [Campfires — Rest & Sleep XP]")
         {
             Tags = new[] { "world", "economy", "progression" }
+        },
+
+        new("World", "Campfires — Rest & Sleep XP",
+            "┌─ World\n" +
+            "│ Topic: Campfires — Rest & Sleep XP\n" +
+            "│ Glyph: Orange &/*\n" +
+            "│ Floors: All (scattered overworld)\n" +
+            "│ Unlock: Walk-on, cooking interaction\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "The standard Safe Room campfire doubles as a Sleep-skill farm.\n" +
+            "Each step onto a campfire tile banks +10 Sleep XP, and the\n" +
+            "ProcessRest action (cook/sleep from the campfire menu) banks\n" +
+            "another +20.\n\n" +
+            "USAGE\n" +
+            "Walk onto an orange & or * tile. The status purge and heal fire\n" +
+            "as with any campfire; the cooking menu opens on bump. Resting\n" +
+            "from the menu counts as ProcessRest for the +20 XP drop.\n\n" +
+            "EFFECTS\n" +
+            "Stacked with the Safe Rooms effect package:\n" +
+            "  +10 Sleep XP          on step (campfire tile)\n" +
+            "  +20 Sleep XP          on ProcessRest action\n" +
+            "  Purge Poison / Bleed / Slow\n" +
+            "  Heal 15 + 5*floor HP\n" +
+            "  Reset rest + fatigue timers\n\n" +
+            "COSTS\n" +
+            "None. Campfire tiles are one-shot per tile (consume on use), but\n" +
+            "Sleep XP banks before the tile is spent.\n\n" +
+            "TIPS\n" +
+            "Route through every campfire you pass even when not injured —\n" +
+            "the Sleep XP compounds toward L10/25/50/99 MaxHP milestones. The\n" +
+            "Eating skill levels from the cook menu, so campfires pull double\n" +
+            "duty if you roast food between fights.\n\n" +
+            "SEE ALSO\n" +
+            "[Safe Rooms & Mechanics] · [Life Skills] · [Food & Cooking] · [Hunger, Satiety & Fatigue]")
+        {
+            Tags = new[] { "sleep", "world", "life-skills" }
         },
 
         new("World", "Lore, Journals & Enchant Shrines",
@@ -1470,6 +1608,9 @@ public static class PlayerGuideContent
             "CRACKED WALL (shaded)    Hidden passage - break to reveal a\n" +
             "                          safe room with a chest.\n" +
             "CHEST (gold diamond)     Loot container; tier scales with floor.\n" +
+            "MONUMENT (M, yellow)     F1 Town of Beginnings only. Opens kill\n" +
+            "                          log + Active Title picker; never\n" +
+            "                          consumes.\n" +
             "STAIRS DOWN (<)          Never used (Aincrad climbs up only).\n" +
             "STAIRS UP (>)            Sealed until the floor boss is dead.\n\n" +
             "COSTS\n" +
@@ -1479,9 +1620,43 @@ public static class PlayerGuideContent
             "elsewhere — trace the floor systematically. Cracked walls almost\n" +
             "always guard Epic-or-better chests.\n\n" +
             "SEE ALSO\n" +
-            "[Labyrinth System] · [Safe Rooms & Mechanics] · [Ascending a Floor] · [Col Economy — How You Earn]")
+            "[Labyrinth System] · [Safe Rooms & Mechanics] · [Ascending a Floor] · [Col Economy — How You Earn] · [Monument of Swordsmen (F1)]")
         {
             Tags = new[] { "world", "floors", "economy" }
+        },
+
+        new("World", "Monument of Swordsmen (F1)",
+            "┌─ World\n" +
+            "│ Topic: Monument of Swordsmen (F1)\n" +
+            "│ Glyph: BrightYellow M\n" +
+            "│ Floor: 1 — Town of Beginnings, south plaza grass park\n" +
+            "│ Unlock: Walk onto the tile\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A canonical Town of Beginnings landmark. Stepping on it opens a\n" +
+            "dialog showing your species kill log with milestone checkmarks\n" +
+            "and the equip/unequip picker for every title you've unlocked.\n\n" +
+            "USAGE\n" +
+            "Walk onto the M tile in the southern plaza park of F1. The\n" +
+            "MonumentDialog pops with two sections: species kill list\n" +
+            "(checkmarks at 10 / 100 / 1000) and the active title picker.\n\n" +
+            "EFFECTS\n" +
+            "  KILL LOG    Per-species tally vs milestone thresholds; check\n" +
+            "              marks show which title triggers have fired.\n" +
+            "  TITLE SLOT  Equip / unequip any unlocked title — same single-\n" +
+            "              slot passive available from StatsDialog.\n" +
+            "  LANDMARK    Does not consume on step; revisit freely.\n\n" +
+            "COSTS\n" +
+            "None. Zero-durability, zero-Col interaction.\n\n" +
+            "TIPS\n" +
+            "Check in whenever you return to F1 — the kill log is the fastest\n" +
+            "way to spot which species title you're closest to unlocking.\n" +
+            "Swap titles here before heading to the next floor so the right\n" +
+            "passive rides with you up the stairs.\n\n" +
+            "SEE ALSO\n" +
+            "[Titles & the Active Title Slot] · [Town of Beginnings NPCs (F1)] · [Mechanical Tiles] · [Life Skills]")
+        {
+            Tags = new[] { "monument", "titles", "world" }
         },
 
         new("World", "Floor Boss Roster — Canon Highlights",
@@ -1516,7 +1691,7 @@ public static class PlayerGuideContent
             "  Col   = 4000 + 500*floor + 20*floor^2\n\n" +
             "COSTS\n" +
             "Durability, consumables, and allies' HP. Boss deaths cannot be\n" +
-            "rolled back; Hardcore runs wipe on a boss-fight death.\n\n" +
+            "rolled back — a wipe in a boss fight deletes the save slot.\n\n" +
             "TIPS\n" +
             "F74 Gleam Eyes unlocks Dual Blades; F75 Heathcliff locks Holy\n" +
             "Sword unless you defeat him. Park major quest turn-ins before\n" +
@@ -1588,7 +1763,7 @@ public static class PlayerGuideContent
             "bosses also roll a 10% Corruption Stone drop (random Night or\n" +
             "Shadow), independent of the Avatar last-attack roll.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Corruption Stones & Corrupted Weapons] · [Divine Object Set — Integrity Knights]")
+            "[Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Corruption Stones & Corrupted Weapons] · [Divine Object Set — Integrity Knights] · [Seasonal Events]")
         {
             Tags = new[] { "world", "bosses", "fractured-daydream" }
         },
@@ -1714,9 +1889,9 @@ public static class PlayerGuideContent
             "Stack compatible modifiers to approach the x10 multiplier cap.\n" +
             "Starless Night pairs well with Darkness Blade builds.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Darkness Blade] · [Recruitable Allies & Party System] · [Death Penalty & Hardcore] · [Save System]")
+            "[Unique Skill: Darkness Blade] · [Recruitable Allies & Party System] · [Permadeath & Save Deletion] · [Save System]")
         {
-            Tags = new[] { "world", "progression", "hardcore" }
+            Tags = new[] { "world", "progression", "permadeath" }
         },
 
         new("World", "Seasonal Events",
@@ -1749,9 +1924,9 @@ public static class PlayerGuideContent
             "TIPS\n" +
             "Plan a December run targeting F49 to grab the Divine Stone of\n" +
             "Returning Soul — it auto-revives you within 10 seconds of death\n" +
-            "and is a lifesaver on Hardcore.\n\n" +
+            "and is a literal save-from-deletion since every run is permadeath.\n\n" +
             "SEE ALSO\n" +
-            "[Field Bosses — Guaranteed Drops] · [Potions, Crystals & Throwables] · [Death Penalty & Hardcore] · [Divine Objects]")
+            "[Field Bosses — Guaranteed Drops] · [Potions, Crystals & Throwables] · [Permadeath & Save Deletion] · [Divine Objects]")
         {
             Tags = new[] { "world", "bosses", "divine" }
         },
@@ -1821,9 +1996,11 @@ public static class PlayerGuideContent
             "Chase the 90% exploration flag on every floor — the +XP/+Col is\n" +
             "large and compounds. Speed Clear par doubles the reward window;\n" +
             "aggressive runs are rewarded. Watch the ascend banner for Floor\n" +
-            "Title promotions — they fire at F2/5/10/15/25/35/50/75/100.\n\n" +
+            "Title promotions — they fire at F2/5/10/15/25/35/50/75/100.\n" +
+            "Clearing F50 also unlocks the equippable Survivor title (see\n" +
+            "Titles & the Active Title Slot).\n\n" +
             "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Floor Titles] · [Save System] · [Col Economy — How You Earn]")
+            "[Floor Boss Roster — Canon Highlights] · [Floor Titles] · [Save System] · [Col Economy — How You Earn] · [Titles & the Active Title Slot]")
         {
             Tags = new[] { "world", "progression", "xp" }
         },
@@ -3671,7 +3848,10 @@ public static class PlayerGuideContent
             "  Lisbeth         Short canon dialogue\n" +
             "  Silica          Short canon dialogue\n" +
             "  Diavel          Short canon dialogue\n\n" +
-            "Klein also appears on F2-F3; Argo on F3+ as wandering NPCs.\n\n" +
+            "Klein also appears on F2-F3; Argo on F3+ as wandering NPCs.\n" +
+            "The Monument of Swordsmen (BrightYellow M) stands in the south\n" +
+            "plaza park — step on to review species kill milestones and\n" +
+            "swap your Active Title.\n\n" +
             "COSTS\n" +
             "None for dialogue. Agil's shop prices follow standard vendor\n" +
             "markup (+20%).\n\n" +
@@ -3683,7 +3863,7 @@ public static class PlayerGuideContent
             "flavor/recruit NPC — the F48 Lindarth Lisbeth is a separate\n" +
             "crafting NPC that gates the Rarity 6 craft line.\n\n" +
             "SEE ALSO\n" +
-            "[Anneal Blade Craft Line] · [Lindarth Town (F48)] · [Starting Loadout] · [Vendors — Rotating Stock] · [Ran the Brawler (F2)] · [SAO Switch (Party)]")
+            "[Anneal Blade Craft Line] · [Lindarth Town (F48)] · [Starting Loadout] · [Vendors — Rotating Stock] · [Ran the Brawler (F2)] · [SAO Switch (Party)] · [Monument of Swordsmen (F1)]")
         {
             Tags = new[] { "quests", "npcs", "shops" }
         },
@@ -3800,12 +3980,12 @@ public static class PlayerGuideContent
             "│ NPC: N/A (systemic)\n" +
             "│ Floor: All\n" +
             "│ Quest: Col source reference\n" +
-            "│ Reward: Col faucets; 25% sink on death\n" +
+            "│ Reward: Col faucets; save wipes on death\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Col is earned from mobs, chests, speed and exploration bonuses,\n" +
-            "quests, and achievements. Dying on non-Hardcore loses 25%;\n" +
-            "Hardcore wipes the save entirely.\n\n" +
+            "quests, and achievements. Death deletes the entire save slot,\n" +
+            "so every Col you bank is backed by the run staying alive.\n\n" +
             "USAGE\n" +
             "Passive — every income source logs Col to your wallet as it\n" +
             "fires. Open the inventory screen to see totals.\n\n" +
@@ -3823,17 +4003,18 @@ public static class PlayerGuideContent
             "  Achievements    50-10000 Col per milestone\n" +
             "  Bounty          100 + 50*floor Col\n\n" +
             "COSTS\n" +
-            "DEATH PENALTY: lose 25% Col on non-Hardcore death. Hardcore wipes\n" +
-            "the save.\n\n" +
+            "DEATH: the save file is deleted. Every Col carried is forfeit\n" +
+            "along with the rest of the run.\n\n" +
             "TIPS\n" +
             "Perfect Kill streaks stack on mob yield — don't break cover if\n" +
-            "you're farming a floor. Deposit Col into gear before risky\n" +
-            "fights; equipped gear isn't a Col holding and can't be stolen by\n" +
-            "the death penalty.\n\n" +
+            "you're farming a floor. Sink Col into Anvil enhance/refine\n" +
+            "before a risky push; the gear still dies with the save, but\n" +
+            "invested Col beats banked Col on a speed-clear floor where\n" +
+            "every swing counts.\n\n" +
             "SEE ALSO\n" +
-            "[Kill Streaks] · [Achievements] · [Ascending a Floor] · [Death Penalty & Hardcore]")
+            "[Kill Streaks] · [Achievements] · [Ascending a Floor] · [Permadeath & Save Deletion]")
         {
-            Tags = new[] { "economy", "progression", "hardcore" }
+            Tags = new[] { "economy", "progression", "permadeath" }
         },
 
         new("Quests & NPCs", "Achievements",
@@ -3878,6 +4059,45 @@ public static class PlayerGuideContent
             Tags = new[] { "economy", "progression", "xp" }
         },
 
+        new("Quests & NPCs", "Pause Menu (Esc)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: N/A (system)\n" +
+            "│ Floor: All (map view only)\n" +
+            "│ Quest: Mid-run system menu\n" +
+            "│ Reward: Save / Load / Options / Exit with confirmations\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Esc on the map view opens a four-option Pause Menu: Save game,\n" +
+            "Load game, Options, Exit game. Each action asks for a yes/no\n" +
+            "confirmation before it runs. Esc again closes the menu and\n" +
+            "returns you to the same turn.\n\n" +
+            "USAGE\n" +
+            "Press Esc in the map view to open. Press Esc inside the menu\n" +
+            "to close it. Pick an option with arrow keys + Enter, or click.\n" +
+            "Esc closes other dialogs (Player Guide, Stats, Inventory) as\n" +
+            "normal — it only opens the Pause Menu from the map itself.\n\n" +
+            "EFFECTS\n" +
+            "  Save game   Confirmation prompt, then writes the current slot\n" +
+            "  Load game   Confirmation prompt, then reloads the last save\n" +
+            "  Options     Opens the existing OptionsScreen\n" +
+            "  Exit game   Confirmation prompt, then quits the app\n\n" +
+            "F5 quick-save still works from the map and bypasses the menu\n" +
+            "with no confirmation prompt.\n\n" +
+            "COSTS\n" +
+            "No in-game time passes while the menu is open — this is a true\n" +
+            "pause, not a turn-consuming action.\n\n" +
+            "TIPS\n" +
+            "Use F5 for fast checkpoints mid-floor, and the Pause Menu's\n" +
+            "Save option when you want the confirmation safety net before\n" +
+            "a boss pull. Load game from the Pause Menu is the fastest\n" +
+            "roll-back when you mispicked a Passive Talent on level-up\n" +
+            "and haven't saved since.\n\n" +
+            "SEE ALSO\n" +
+            "[Save System] · [Permadeath & Save Deletion] · [Passive Talents (Level-Up Perks)]")
+        {
+            Tags = new[] { "save", "pause-menu", "controls" }
+        },
+
         new("Quests & NPCs", "Save System",
             "┌─ Quests & NPCs\n" +
             "│ NPC: N/A (system)\n" +
@@ -3887,11 +4107,12 @@ public static class PlayerGuideContent
             "└─\n\n" +
             "SUMMARY\n" +
             "Three save slots, auto-save on every floor ascend, and a legacy-\n" +
-            "save auto-migration path. Hardcore deletes the save on death.\n\n" +
+            "save auto-migration path. Every death deletes the active save.\n\n" +
             "USAGE\n" +
             "Files live in %LOCALAPPDATA%/AincradTRPG/save_N.json. Legacy\n" +
             "save.json auto-migrates to slot 1. Auto-save fires on every\n" +
-            "floor ascend; manual save from the pause menu works any time.\n\n" +
+            "floor ascend; F5 is a no-prompt quick-save, and the Esc Pause\n" +
+            "Menu offers Save / Load / Options / Exit with confirmations.\n\n" +
             "EFFECTS\n" +
             "Saved state includes:\n" +
             "  - Player stats / inventory / equipment\n" +
@@ -3907,18 +4128,21 @@ public static class PlayerGuideContent
             "  - ACTIVE RUN MODIFIERS\n" +
             "  - Equipped skills + cooldowns\n" +
             "  - Story flags / events\n\n" +
-            "Slot summary shows name, level, floor, difficulty, hardcore\n" +
-            "flag, timestamp, and playtime.\n\n" +
+            "Slot summary shows name, level, floor, difficulty, timestamp,\n" +
+            "and playtime.\n\n" +
             "COSTS\n" +
-            "None for normal saves. Hardcore saves cost a save slot on death.\n\n" +
+            "Every save is permadeath — on death the slot file is deleted\n" +
+            "from disk before the DeathScreen's confirmation prompt returns\n" +
+            "you to the main menu.\n\n" +
             "TIPS\n" +
-            "Back up %LOCALAPPDATA%/AincradTRPG manually before a big\n" +
-            "Hardcore push if you want insurance. The auto-save is\n" +
-            "overwrite-in-place, so you can't roll back a bad ascend.\n\n" +
+            "Back up %LOCALAPPDATA%/AincradTRPG manually before a big push\n" +
+            "if you want insurance against the permadeath wipe. The auto-\n" +
+            "save on ascend is overwrite-in-place, so you can't roll back a\n" +
+            "bad ascend — F5 quick-save before boss pulls instead.\n\n" +
             "SEE ALSO\n" +
-            "[Death Penalty & Hardcore] · [Run Modifiers (12 Optional Challenges)] · [Ascending a Floor] · [Achievements]")
+            "[Permadeath & Save Deletion] · [Pause Menu (Esc)] · [Run Modifiers (12 Optional Challenges)] · [Ascending a Floor] · [Achievements]")
         {
-            Tags = new[] { "save", "hardcore", "progression" }
+            Tags = new[] { "save", "permadeath", "progression" }
         },
     };
 }

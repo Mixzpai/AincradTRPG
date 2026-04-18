@@ -121,7 +121,7 @@ public partial class TurnManager
         _tagKills.Clear();
         foreach (var entry in Bestiary.GetAll())
         {
-            string tag = Map.MobFactory.GetLootTagForName(entry.Name) ?? "generic";
+            string tag = SAOTRPG.Map.MobFactory.GetLootTagForName(entry.Name) ?? "generic";
             _tagKills[tag] = _tagKills.GetValueOrDefault(tag) + entry.TimesKilled;
         }
     }

@@ -12,7 +12,7 @@ public static class DeathRecapWriter
 
     // Write a death recap text file. Returns the file path on success, null on failure.
     public static string? WriteRecap(Player player, int floor, int kills, int turns,
-        string? killedBy, string grade, bool hardcore, int totalColEarned = 0,
+        string? killedBy, string grade, int totalColEarned = 0,
         TimeSpan? playTime = null)
     {
         try
@@ -23,7 +23,6 @@ public static class DeathRecapWriter
             string fileName = $"death_{timestamp}.txt";
             string filePath = Path.Combine(DeathDir, fileName);
 
-            string mode = hardcore ? "HARDCORE" : "Normal";
             string killer = killedBy ?? "Unknown";
 
             string content =
@@ -34,7 +33,6 @@ public static class DeathRecapWriter
                 $"  Player:     {player.FirstName} {player.LastName}\n" +
                 $"  Level:      {player.Level}\n" +
                 $"  Title:      {player.Title}\n" +
-                $"  Mode:       {mode}\n" +
                 $"\n" +
                 $"  Floor:      {floor}\n" +
                 $"  Killed by:  {killer}\n" +

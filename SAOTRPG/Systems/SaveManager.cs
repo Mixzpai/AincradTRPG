@@ -114,7 +114,6 @@ public static class SaveManager
                     Level = root.TryGetProperty("Level", out var lv) ? lv.GetInt32() : 1,
                     Floor = root.TryGetProperty("CurrentFloor", out var fl) ? fl.GetInt32() : 1,
                     Difficulty = DifficultyData.GetName(diff),
-                    IsHardcore = root.TryGetProperty("IsHardcore", out var hc) && hc.GetBoolean(),
                     Timestamp = root.TryGetProperty("Timestamp", out var ts) ? ts.GetDateTime() : DateTime.MinValue,
                     PlayTime = TimeSpan.FromSeconds(root.TryGetProperty("PlayTimeSeconds", out var pt) ? pt.GetInt64() : 0),
                 };
@@ -138,7 +137,7 @@ public static class SaveManager
         BaseSkillDamage = player.BaseSkillDamage, BaseCriticalRate = player.BaseCriticalRate,
         BaseCriticalHitDamage = player.BaseCriticalHitDamage,
         TurnCount = tm.TurnCount, KillCount = tm.KillCount, TotalColEarned = tm.TotalColEarned,
-        CurrentFloor = tm.CurrentFloor, Difficulty = tm.Difficulty, IsHardcore = tm.IsHardcore,
+        CurrentFloor = tm.CurrentFloor, Difficulty = tm.Difficulty,
         Satiety = tm.Satiety, KillStreak = tm.KillStreak,
         WeaponKills = new Dictionary<string, int>(tm.WeaponKills),
         WeaponProficiencyForks = tm.SnapshotForkChoices(),
@@ -182,6 +181,17 @@ public static class SaveManager
         DefeatedFieldBosses = tm.DefeatedFieldBosses.ToList(),
         ActiveRunModifiers = RunModifiers.ToSaveList(),
         HighestFloorBossCleared = ShopTierSystem.HighestFloorBossCleared,
+        // FB-050 Life Skills — roundtrip the four (or more) skills' state.
+        LifeSkills = player.LifeSkills.Skills
+            .ToDictionary(kvp => kvp.Key.ToString(),
+                          kvp => new LifeSkillStateSave
+                          {
+                              Level = kvp.Value.Level,
+                              CurrentXp = kvp.Value.CurrentXp,
+                          }),
+        // FB-058 Titles — unlocked set + active id.
+        UnlockedTitleIds = player.UnlockedTitleIds.ToList(),
+        ActiveTitleId = player.ActiveTitleId,
     };
 
     // Item serialization.

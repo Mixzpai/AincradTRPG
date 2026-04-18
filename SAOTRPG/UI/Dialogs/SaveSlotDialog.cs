@@ -178,10 +178,9 @@ public static class SaveSlotDialog
 
         if (hasData)
         {
-            string hcTag = summary!.IsHardcore ? " [HC]" : "";
             dialog.Add(new Label
             {
-                Text = $"{summary.Difficulty}{hcTag}", X = 13, Y = rowY + 1,
+                Text = $"{summary!.Difficulty}", X = 13, Y = rowY + 1,
                 Width = Dim.Auto(),
                 ColorScheme = ColorSchemes.FromColor(GetDifficultyColor(summary.Difficulty))
             });

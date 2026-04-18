@@ -33,10 +33,10 @@ public static partial class GameScreen
         "  Combat: Bump to attack  |  F1-F4: Sword Skills  |  V: Counter",
     };
 
-    public static void Show(Window mainWindow, Player player, int difficulty = 3, bool hardcore = false,
+    public static void Show(Window mainWindow, Player player, int difficulty = 3,
         SaveData? saveData = null, int saveSlot = 1)
     {
-        try { ShowInternal(mainWindow, player, difficulty, hardcore, saveData, saveSlot); }
+        try { ShowInternal(mainWindow, player, difficulty, saveData, saveSlot); }
         catch (Exception ex)
         {
             DebugLogger.LogError("GameScreen.Show", ex);
@@ -44,10 +44,14 @@ public static partial class GameScreen
         }
     }
 
-    private static void ShowInternal(Window mainWindow, Player player, int difficulty, bool hardcore,
+    private static void ShowInternal(Window mainWindow, Player player, int difficulty,
         SaveData? saveData, int saveSlot)
     {
         mainWindow.RemoveAll();
+        // Unhook menu-screen Esc handlers so they don't shadow MapView's
+        // Esc → PauseRequested routing once we enter gameplay.
+        DifficultyScreen.UnhookEscHandler(mainWindow);
+        CharacterCreationScreen.UnhookEscHandler(mainWindow);
         var sw = DebugLogger.StartTimer("GameScreen.Show");
         DebugLogger.LogScreen("GameScreen");
 
@@ -69,7 +73,7 @@ public static partial class GameScreen
         Story.StorySystem.Handler = Dialogs.CutsceneDialog.Show;
 
         int startFloor = saveData?.CurrentFloor ?? 1;
-        DebugLogger.LogGame("GAME", $"ShowInternal: floor={startFloor} diff={difficulty} hc={hardcore} save={saveData != null}");
+        DebugLogger.LogGame("GAME", $"ShowInternal: floor={startFloor} diff={difficulty} save={saveData != null}");
         var (map, rooms) = MapGenerator.GenerateFloor(startFloor);
         DebugLogger.LogGame("GAME", $"Map generated: {map.Width}x{map.Height}, {rooms.Count} rooms");
 
@@ -235,7 +239,7 @@ public static partial class GameScreen
 
         var turnManager = saveData != null
             ? TurnManager.LoadFromSave(saveData, map, player, gameLog)
-            : new TurnManager(map, player, gameLog, startFloor, difficulty, hardcore);
+            : new TurnManager(map, player, gameLog, startFloor, difficulty);
         turnManager.ActiveSaveSlot = saveSlot;
         mainWindow.Title = $"Aincrad TRPG — Floor {turnManager.CurrentFloor}";
         int[] saveFlash = { 0 };
@@ -394,17 +398,16 @@ public static partial class GameScreen
         mainWindow.Add(mapArea, rightPanel, ruleBottom, actionBar);
         mapView.SetFocus();
 
-        bool activeHc = saveData?.IsHardcore ?? hardcore;
         string diffLabel = DifficultyData.Get(activeDifficulty)?.Name ?? "Normal";
         if (saveData != null)
         {
             gameLog.Log($"Save loaded — Welcome back, {player.FirstName}.");
-            gameLog.Log($"Floor {startFloor} | Lv.{player.Level} | {diffLabel}{(activeHc ? " [HARDCORE]" : "")}");
+            gameLog.Log($"Floor {startFloor} | Lv.{player.Level} | {diffLabel}");
         }
         else
         {
             gameLog.Log($"Welcome to Floor 1 of Aincrad, {player.FirstName}.");
-            gameLog.Log($"Difficulty: {diffLabel}{(activeHc ? " [HARDCORE]" : "")}");
+            gameLog.Log($"Difficulty: {diffLabel}");
             TutorialSystem.ShowTip(gameLog, "floor1_welcome");
         }
         foreach (var helpLine in WelcomeHelpLines) gameLog.Log(helpLine);
@@ -480,7 +483,7 @@ public static partial class GameScreen
     {
         var tempLog = new StringGameLog(new System.Text.StringBuilder());
         var player = Player.LoadFromSave(save, tempLog);
-        Show(mainWindow, player, save.Difficulty, save.IsHardcore, saveData: save, saveSlot: slot);
+        Show(mainWindow, player, save.Difficulty, saveData: save, saveSlot: slot);
     }
 
     private static ColorScheme FloorThemeColor(int floor) => ColorSchemes.FromColor(floor switch

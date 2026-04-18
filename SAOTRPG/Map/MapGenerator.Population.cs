@@ -235,8 +235,8 @@ public static partial class MapGenerator
                             "Higher proficiency = more damage + new Sword Skills. " +
                             "Also check shops for better gear as you climb floors."),
                         new("What's the catch?",
-                            "If you die, you lose 25% of your Col and 10% of your XP. " +
-                            "On Hardcore? You lose everything. So don't die, yeah?"),
+                            "Die here and you lose everything — save gets wiped clean. " +
+                            "Aincrad doesn't hand out second chances, yeah? So don't die."),
                     }),
                 new("That's all the freebies you get. Next time, bring Col!"),
             },

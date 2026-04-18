@@ -28,10 +28,20 @@ public static class CharacterCreationScreen
 
     private static readonly string[] GenderOptions = { "Male", "Female" };
 
-    public static void Show(Window mainWindow, int difficulty = 3, bool hardcore = false)
+    // Unhook this screen's Esc handler from mainWindow. Called by screens
+    // that transition AWAY from CharacterCreationScreen so the static
+    // handler doesn't leak its "Esc → DifficultyScreen" behavior into
+    // GameScreen, etc.
+    public static void UnhookEscHandler(Window mainWindow)
+    {
+        if (_escHandler != null) { mainWindow.KeyDown -= _escHandler; _escHandler = null; }
+    }
+
+    public static void Show(Window mainWindow, int difficulty = 3)
     {
         mainWindow.RemoveAll();
         if (_escHandler != null) mainWindow.KeyDown -= _escHandler;
+        DifficultyScreen.UnhookEscHandler(mainWindow);
         var sw = DebugLogger.StartTimer("CharacterCreationScreen.Show");
         DebugLogger.LogScreen("CharacterCreationScreen");
 
@@ -223,7 +233,7 @@ public static class CharacterCreationScreen
             for (int i = 0; i < Stats.Length; i++)
                 if (allocated[i] > 0) player.SpendSkillPoints(Stats[i].Name, allocated[i]);
 
-            GameScreen.Show(mainWindow, player, difficulty, hardcore, saveSlot: slot);
+            GameScreen.Show(mainWindow, player, difficulty, saveSlot: slot);
         };
 
         backBtn.Accepting += (s, e) => { e.Cancel = true; DifficultyScreen.Show(mainWindow); };

@@ -216,6 +216,8 @@ public partial class MapView : View
     public event Action<int>? SwordSkillRequested;
     public event Action? SwordSkillMenuRequested;
     public event Action? QuestLogRequested;
+    // Fired on Esc from the map view — opens the pause menu.
+    public event Action? PauseRequested;
 
     public void SetMap(GameMap map)
     {

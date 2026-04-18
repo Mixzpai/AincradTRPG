@@ -48,6 +48,11 @@ public partial class MapView
             case KeyCode.D5: QuickUseRequested?.Invoke(5); keyEvent.Handled = true; return true;
             case KeyCode.PageUp:   return FireEvent(LogScrollUpRequested,   keyEvent);
             case KeyCode.PageDown: return FireEvent(LogScrollDownRequested, keyEvent);
+            // Esc from map focus opens the pause menu. When a dialog is on
+            // top, Terminal.Gui routes KeyDown to the focused dialog first
+            // (see DialogHelper.CloseOnEscape) so this only fires from the
+            // map itself, never doubling up with dialog close handlers.
+            case KeyCode.Esc:      return FireEvent(PauseRequested,          keyEvent);
             default: return base.OnKeyDown(keyEvent);
         }
 

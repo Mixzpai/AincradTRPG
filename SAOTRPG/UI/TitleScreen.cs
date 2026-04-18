@@ -191,8 +191,7 @@ public static class TitleScreen
             string timeStr = best.PlayTime.TotalHours >= 1
                 ? $"{(int)best.PlayTime.TotalHours}h {best.PlayTime.Minutes:D2}m"
                 : $"{best.PlayTime.Minutes}m";
-            string hc = best.IsHardcore ? " [HC]" : "";
-            return $"Last save: {best.Name} Lv.{best.Level}  Floor {best.Floor}  {timeStr}{hc}";
+            return $"Last save: {best.Name} Lv.{best.Level}  Floor {best.Floor}  {timeStr}";
         }
         catch { return ""; }
     }

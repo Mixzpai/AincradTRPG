@@ -39,6 +39,9 @@ public partial class TurnManager
         _restCounter = 0;
         _fatiguedWarned = false;
         _exhaustedWarned = false;
+        // FB-051 — Sleep skill XP for resting. One grant per rest action
+        // (not per heal tick) so the log/curve stays clean.
+        GrantRestSleepXp();
         _log.LogSystem($"You feel refreshed. (+{totalHealed} HP)");
         UpdateVisibility();
         TurnCompleted?.Invoke();
@@ -58,6 +61,8 @@ public partial class TurnManager
         { _log.Log("Can't sprint — path blocked!"); return; }
 
         _map.MoveEntity(_player, x2, y2);
+        // FB-053 — Running skill XP per sprint action (covers 2 tiles).
+        GrantSprintRunningXp();
         TurnCount++;
         TickPoison(); TickBleed(); TickSlow();
         if (_player.IsDefeated) return;
@@ -145,6 +150,11 @@ public partial class TurnManager
 
         _map.MoveEntity(_player, tx, ty);
         _map.IncrementVisit(tx, ty);
+        // FB-052 — Walking skill XP per normal-step tile. Excludes sprint
+        // (which has its own hook in ProcessSprint) and stealth (which may
+        // be wired to its own future Stealth skill). +1 XP per tile.
+        if (!_stealthActive && !_lastMoveWasStealth && (dx != 0 || dy != 0))
+            GrantWalkingXp();
 
         // Tip when first leaving safe zone on Floor 1
         if (_map.SafeZone.HasValue && !_map.SafeZone.Value.Contains(tx, ty))

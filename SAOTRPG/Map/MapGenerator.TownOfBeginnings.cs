@@ -112,6 +112,22 @@ public static partial class MapGenerator
             map.Tiles[px, py].Type = (dx + dy) % 2 == 0 ? TileType.Grass : TileType.Flowers;
         }
 
+        // ── 13. FB-057 Monument of Swordsmen ─────────────────────────
+        // Canon TOB placement — stands in the plaza grass park, west side,
+        // two tiles off the boulevard so the player passes it on the way
+        // to the south gate. Flanked by pillars to read as a civic feature.
+        int swmX = sx - 4, swmY = parkCy;
+        if (map.InBounds(swmX, swmY))
+        {
+            map.Tiles[swmX, swmY].Type = TileType.MonumentOfSwordsmen;
+            SetTileSafe(map, swmX - 1, swmY, TileType.Pillar, TileType.Grass);
+            SetTileSafe(map, swmX + 1, swmY, TileType.Pillar, TileType.Grass);
+            SetTileSafe(map, swmX - 1, swmY, TileType.Pillar, TileType.Flowers);
+            SetTileSafe(map, swmX + 1, swmY, TileType.Pillar, TileType.Flowers);
+            SetTileSafe(map, swmX - 1, swmY, TileType.Pillar, TileType.Floor);
+            SetTileSafe(map, swmX + 1, swmY, TileType.Pillar, TileType.Floor);
+        }
+
         return new Room(tx, ty, TownFullW, TownFullH);
     }
 

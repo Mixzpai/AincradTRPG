@@ -42,6 +42,9 @@ public enum TileType
 
     // Environmental
     LoreStone,
+    // FB-057 Monument of Swordsmen — F1 Town of Beginnings monument
+    // that opens the MonumentDialog (species kill log + title browser).
+    MonumentOfSwordsmen,
     DangerZone,
 
     // Services

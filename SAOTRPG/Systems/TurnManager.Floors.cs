@@ -115,6 +115,13 @@ public partial class TurnManager
         Story.StorySystem.TryFire(Story.StoryTrigger.FloorEntry,
             new Story.StoryContext(CurrentFloor, KillCount, _player));
 
+        // FB-058 — Survivor title: reaching F50 in a live run. Since all
+        // deaths delete the save (universal permadeath), any player still
+        // alive at F50 entry is by definition un-died, so simply crossing
+        // F50 is the unlock signal. Strict "no-death-this-run" gating
+        // isn't needed when death is already permanent.
+        TitleSystem.CheckFloor50Survivor(_player, CurrentFloor);
+
         // FB-564 Laughing Coffin modifier — PK squad ambush every 5 floors.
         if (RunModifiers.IsActive(RunModifier.LaughingCoffin) && CurrentFloor % 5 == 0)
             SpawnLaughingCoffinSquad();

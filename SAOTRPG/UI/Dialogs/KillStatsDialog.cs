@@ -39,10 +39,9 @@ public static class KillStatsDialog
 
         // Difficulty
         var tier = DifficultyData.Get(turnManager.Difficulty);
-        string hcTag = turnManager.IsHardcore ? " [HC]" : "";
         dialog.Add(new Label
         {
-            Text = $"  Diff     {tier.Name}{hcTag}",
+            Text = $"  Diff     {tier.Name}",
             X = 1, Y = y++, ColorScheme = ColorSchemes.FromColor(tier.ThemeColor),
         });
 

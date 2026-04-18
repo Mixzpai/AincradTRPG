@@ -15,7 +15,11 @@ public static class OptionsScreen
     private const int ControlOffset =   2;
     private const int LabelWidth    = 22;
 
-    public static void Show(Window mainWindow)
+    // onBack: optional callback invoked when the Back button is pressed.
+    // When null (default TitleScreen flow), returns to the Title screen.
+    // Pause menu passes a callback that reloads the current save so the
+    // in-progress run is restored instead of abandoned.
+    public static void Show(Window mainWindow, Action? onBack = null)
     {
         mainWindow.RemoveAll();
         var settings = UserSettings.Current;
@@ -143,7 +147,12 @@ public static class OptionsScreen
             Text = " Back ", X = Pos.Center() + 5, Y = y,
             IsDefault = true, ColorScheme = ColorSchemes.Button,
         };
-        backBtn.Accepting += (s, e) => { TitleScreen.Show(mainWindow); e.Cancel = true; };
+        backBtn.Accepting += (s, e) =>
+        {
+            e.Cancel = true;
+            if (onBack != null) onBack();
+            else TitleScreen.Show(mainWindow);
+        };
 
         mainWindow.Add(
             header, headerRule, saveLabel,

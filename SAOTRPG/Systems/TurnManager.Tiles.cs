@@ -22,6 +22,7 @@ public partial class TurnManager
             case TileType.BountyBoard:   HandleBountyBoard(); break;
             case TileType.Lava:          if (HandleLava(tile)) return true; break;
             case TileType.LoreStone:     HandleLoreStone(tile, tx, ty); break;
+            case TileType.MonumentOfSwordsmen: HandleMonumentOfSwordsmen(); break;
             case TileType.DangerZone:    if (HandleDangerZone(tile)) return true; break;
             case TileType.Journal:       HandleJournal(tile, tx, ty); break;
             case TileType.EnchantShrine: HandleEnchantShrine(tile, tx, ty); break;
@@ -53,6 +54,9 @@ public partial class TurnManager
         _restCounter = 0;
         _fatiguedWarned = false;
         _exhaustedWarned = false;
+        // FB-051 — Campfire counts as restful sleep. Slightly less XP than
+        // a full rest (10 vs 20) since the player doesn't spend turns.
+        GrantCampfireSleepXp();
         CookingInteraction?.Invoke();
     }
 
@@ -288,6 +292,16 @@ public partial class TurnManager
             _map.SetTileType(dx, dy, TileType.Wall);
             _log.LogSystem($"The {source} activates — a passage seals shut!");
         }
+    }
+
+    // FB-057 — opens the Monument of Swordsmen dialog. One-shot hit per
+    // step; the tile does not consume itself so the player can check
+    // progress repeatedly.
+    private void HandleMonumentOfSwordsmen()
+    {
+        _log.Log("You stand before the Monument of Swordsmen...");
+        _log.Log("  Names, victories, and titles are etched into the black iron.");
+        MonumentInteraction?.Invoke();
     }
 
     private void HandleLever(Tile tile)

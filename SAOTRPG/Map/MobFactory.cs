@@ -147,6 +147,26 @@ public static class MobFactory
         return FloorMobs[tier].Select(t => t.Name).ToArray();
     }
 
+    // FB-058 Title System support: resolve a species Name (as recorded by
+    // Bestiary, which may carry Elite/Champion/Affix prefixes stripped by
+    // callers) back to its template LootTag. Walks every tier so species
+    // shared across tiers resolve against the first-seen entry. Returns
+    // null for unrecognized names so callers can default to "generic".
+    public static string? GetLootTagForName(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        // Try exact match first.
+        foreach (var tier in FloorMobs)
+            foreach (var t in tier)
+                if (t.Name == name) return t.LootTag;
+        // Fall back to suffix match so "Elite Frenzy Boar" still resolves
+        // if the caller forgot to strip the prefix.
+        foreach (var tier in FloorMobs)
+            foreach (var t in tier)
+                if (name.EndsWith(t.Name)) return t.LootTag;
+        return null;
+    }
+
     // Creates a floor-appropriate mob with difficulty scaling.
     // Picks a random template from the floor's tier, applies stat scaling,
     // then rolls for Elite/Champion variant.

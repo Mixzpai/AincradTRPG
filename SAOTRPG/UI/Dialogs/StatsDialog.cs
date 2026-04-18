@@ -14,8 +14,9 @@ public static class StatsDialog
 
     // Dialog width in columns.
     private const int DialogWidth  = 64;
-    // Dialog height in rows.
-    private const int DialogHeight = 40;
+    // Dialog height in rows. Bumped to house the FB-050 Life Skills and
+    // FB-058 Titles sections without squeezing the existing stat grid.
+    private const int DialogHeight = 52;
 
     // Stat definition — name, getter, and tooltip describing what it does.
     // Add new stats here to extend the dialog automatically.
@@ -168,6 +169,7 @@ public static class StatsDialog
         };
         dialog.Add(profHeader);
 
+        int profEndRow = profY + 1;
         if (turnManager != null && turnManager.WeaponKills.Count > 0)
         {
             int row = profY + 1;
@@ -180,8 +182,10 @@ public static class StatsDialog
                     Width = Dim.Fill(1)
                 });
                 row++;
-                if (row >= DialogHeight - 3) break;
+                // Stop just before the life-skills section kicks in.
+                if (row >= DialogHeight - 18) break;
             }
+            profEndRow = row;
         }
         else
         {
@@ -191,7 +195,74 @@ public static class StatsDialog
                 X = 1, Y = profY + 1,
                 ColorScheme = ColorSchemes.Dim
             });
+            profEndRow = profY + 2;
         }
+
+        // ── FB-050 Life Skills section ────────────────────────────────
+        int lsY = profEndRow + 1;
+        dialog.Add(new Label
+        {
+            Text = "[ Life Skills ]",
+            X = 1, Y = lsY,
+            ColorScheme = ColorSchemes.Gold,
+        });
+        int lsRow = lsY + 1;
+        foreach (var skill in Enum.GetValues<Systems.LifeSkillType>())
+        {
+            int lvl = player.LifeSkills.GetLevel(skill);
+            var (cur, nxt) = player.LifeSkills.GetLevelProgress(skill);
+            string bar = BuildProgressBar(cur, nxt, 10);
+            string bonus = ActiveBonusSummary(player.LifeSkills, skill);
+            string line = $"  {Systems.LifeSkillSystem.Label(skill),-8} L{lvl,2}/99 {bar} "
+                + $"{cur}/{Math.Max(1, nxt)}  {bonus}";
+            if (line.Length > DialogWidth - 4) line = line[..(DialogWidth - 5)] + "…";
+            dialog.Add(new Label
+            {
+                Text = line,
+                X = 1, Y = lsRow,
+                Width = Dim.Fill(1),
+                ColorScheme = lvl > 1 ? ColorSchemes.Body : ColorSchemes.Dim,
+            });
+            lsRow++;
+        }
+
+        // ── FB-058 Active Title section ───────────────────────────────
+        int tY = lsRow + 1;
+        dialog.Add(new Label
+        {
+            Text = "[ Active Title ]",
+            X = 1, Y = tY,
+            ColorScheme = ColorSchemes.Gold,
+        });
+        string titleText;
+        ColorScheme titleScheme;
+        if (player.ActiveTitleId != null
+            && Systems.TitleSystem.Titles.TryGetValue(player.ActiveTitleId, out var activeDef))
+        {
+            titleText = $"  ★ {activeDef.DisplayName} — {activeDef.Description}";
+            titleScheme = ColorSchemes.Gold;
+        }
+        else
+        {
+            titleText = "  (none equipped — visit the Monument of Swordsmen on F1 to choose)";
+            titleScheme = ColorSchemes.Dim;
+        }
+        if (titleText.Length > DialogWidth - 4) titleText = titleText[..(DialogWidth - 5)] + "…";
+        dialog.Add(new Label
+        {
+            Text = titleText,
+            X = 1, Y = tY + 1,
+            Width = Dim.Fill(1),
+            ColorScheme = titleScheme,
+        });
+        int unlockedCount = player.UnlockedTitleIds.Count;
+        int totalTitles = Systems.TitleSystem.Titles.Count;
+        dialog.Add(new Label
+        {
+            Text = $"  Titles unlocked: {unlockedCount}/{totalTitles}",
+            X = 1, Y = tY + 2,
+            ColorScheme = ColorSchemes.Dim,
+        });
 
         var hintLabel = new Label
         {
@@ -202,5 +273,23 @@ public static class StatsDialog
         dialog.Add(spLabel, combatLabel, hintLabel);
         DialogHelper.AddCloseFooter(dialog);
         DialogHelper.RunModal(dialog);
+    }
+
+    // Simple horizontal XP bar: [#####-----]. Width is the inner-bar length.
+    private static string BuildProgressBar(int current, int total, int width)
+    {
+        if (total <= 0) return "[" + new string('#', width) + "]";
+        int filled = Math.Clamp(current * width / total, 0, width);
+        return "[" + new string('#', filled) + new string('·', width - filled) + "]";
+    }
+
+    // One-line summary of the current active milestone bonus for a skill.
+    // Shown alongside the XP bar so the player sees exactly what they have.
+    private static string ActiveBonusSummary(Systems.LifeSkillSystem ls, Systems.LifeSkillType skill)
+    {
+        int lvl = ls.GetLevel(skill);
+        if (lvl < 10) return "";
+        int milestone = lvl >= 99 ? 99 : lvl >= 50 ? 50 : lvl >= 25 ? 25 : 10;
+        return "— " + Systems.LifeSkillSystem.MilestoneBonusDescription(skill, milestone);
     }
 }

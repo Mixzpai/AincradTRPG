@@ -25,7 +25,6 @@ public partial class TurnManager
     public int CurrentFloor { get; private set; }
 
     public int Difficulty { get; }
-    public bool IsHardcore { get; }
     private readonly DifficultyData.DifficultyTier _diffTier;
 
     private int _killStreak, _idleTurns, _dodgeStreak, _lastCombatTurn, _comboTarget, _comboCount;
@@ -158,6 +157,9 @@ public partial class TurnManager
     public event Action? CookingInteraction;
     // Fires when the player talks to Lisbeth at Lindarth. UI opens LisbethCraftDialog.
     public event Action? LisbethInteraction;
+    // FB-057 — fires when the player steps on the Monument of Swordsmen
+    // tile (F1 Town of Beginnings). UI opens the MonumentDialog.
+    public event Action? MonumentInteraction;
 
     // ── Sword Skills state ───────────────────────────────────────────
     private readonly Dictionary<string, int> _skillCooldowns = new();
@@ -227,20 +229,24 @@ public partial class TurnManager
     public void ApplyTalent(PassiveTalents.Perk perk) => perk.Apply(_player);
 
     public TurnManager(GameMap map, Player player, IGameLog log, int floor = 1,
-        int difficulty = 3, bool hardcore = false)
+        int difficulty = 3)
     {
         _map = map; _player = player; _log = log;
         CurrentFloor = floor;
         TileDefinitions.CurrentFloor = floor;
         Difficulty = difficulty;
         _diffTier = DifficultyData.Get(difficulty);
-        IsHardcore = hardcore;
         _floorColStart = _player.ColOnHand;
 
         // IM Shop Tiering — statics live across runs, so reset to 0 on
         // construct. LoadFromSave will overwrite with the saved value if
         // this is a load path (see SetForLoad below in LoadSaveData).
         ShopTierSystem.SetForLoad(0);
+
+        // FB-050..054 + FB-058 — subscribe Life Skill + Title hooks before
+        // any gameplay systems fire so the first rest/walk/sprint/food grant
+        // and the first kill of the run are observed.
+        WireLifeSkillHooks();
 
         player.Inventory.Events.ConsumableUsed += (_, e) =>
         {
@@ -266,8 +272,15 @@ public partial class TurnManager
                 HandleCorruptionStone(stone);
             if (e.Consumable is Food food)
             {
-                Satiety = Math.Min(MaxSatiety, Satiety + food.RegenerationDuration * 2);
-                _log.Log($"You feel sated. (Satiety: {Satiety}/{MaxSatiety})");
+                // FB-054 — Eating skill scales satiety gain by its current
+                // milestone multiplier (L10 +10%, L25 +25%, L50 +50%,
+                // L99 +100%). Flat integer math so curves stay predictable.
+                int baseGain = food.RegenerationDuration * 2;
+                int bonusPct = _player.LifeSkills.EatingFoodPotencyPercent();
+                int scaledGain = baseGain + (baseGain * bonusPct / 100);
+                Satiety = Math.Min(MaxSatiety, Satiety + scaledGain);
+                string bonusTag = bonusPct > 0 ? $" [+{bonusPct}% Eating]" : "";
+                _log.Log($"You feel sated. (Satiety: {Satiety}/{MaxSatiety}){bonusTag}");
                 _starvingWarned = false;
             }
             if (e.Consumable is DamageItem dmgItem) HandleThrowable(dmgItem);
@@ -492,7 +505,7 @@ public partial class TurnManager
 
     public static TurnManager LoadFromSave(SaveData save, GameMap map, Player player, IGameLog log)
     {
-        var tm = new TurnManager(map, player, log, save.CurrentFloor, save.Difficulty, save.IsHardcore);
+        var tm = new TurnManager(map, player, log, save.CurrentFloor, save.Difficulty);
         tm.TurnCount = save.TurnCount; tm.KillCount = save.KillCount; tm.TotalColEarned = save.TotalColEarned;
         tm.Satiety = save.Satiety; tm._killStreak = save.KillStreak;
         tm._poisonTurnsLeft = save.PoisonTurnsLeft; tm._bleedTurnsLeft = save.BleedTurnsLeft;
@@ -566,6 +579,10 @@ public partial class TurnManager
         if (save.SkillCooldowns != null)
             foreach (var kvp in save.SkillCooldowns) tm._skillCooldowns[kvp.Key] = kvp.Value;
         tm._priorPlayTime = TimeSpan.FromSeconds(save.PlayTimeSeconds);
+        // FB-058 — rebuild tag-kill cache from the loaded Bestiary so Title
+        // System tag-milestone unlocks (beast 100/1000, dragon, insect, etc.)
+        // stay consistent across sessions without persisting a parallel dict.
+        tm.RebuildTagKillsFromBestiary();
         return tm;
     }
 

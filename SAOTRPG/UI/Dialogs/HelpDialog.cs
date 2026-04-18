@@ -54,7 +54,7 @@ public static class HelpDialog
   - Talk to NPCs for quests and to      Your torch provides light.
     turn in completed ones.             Campfires glow in the dark.
   - Enhanced weapons show +N suffix.
-  - Death costs 25% Col + 10% XP.
+  - Death is permanent — save deleted.
 ";
 
     public static void Show()

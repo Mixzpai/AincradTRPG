@@ -50,8 +50,6 @@ public class SaveData
     public int CurrentFloor { get; set; }
     // Difficulty tier index (0 = Easy … 3 = Nightmare).
     public int Difficulty { get; set; }
-    // True if permadeath is enabled.
-    public bool IsHardcore { get; set; }
     // Current hunger level (decreases over time).
     public int Satiety { get; set; }
     // Consecutive kills without taking damage.
@@ -124,6 +122,24 @@ public class SaveData
     // Missing in legacy saves; deserialization defaults to 0 so existing
     // runs see unchanged inventories until their next F50+ clear.
     public int HighestFloorBossCleared { get; set; }
+
+    // FB-050 Life Skills — per-skill Level + CurrentXp, keyed by enum name
+    // so adding new skills (Fishing, Mining, etc.) is additive. Missing
+    // entries default to L1/0.
+    public Dictionary<string, LifeSkillStateSave> LifeSkills { get; set; } = new();
+
+    // FB-058 Titles — unlocked IDs + currently-active ID (nullable). Empty
+    // / null on legacy saves so the player sees no equipped title until
+    // they visit the Monument of Swordsmen.
+    public List<string> UnlockedTitleIds { get; set; } = new();
+    public string? ActiveTitleId { get; set; }
+}
+
+// FB-050 — serialized form of a single life skill's live state.
+public class LifeSkillStateSave
+{
+    public int Level { get; set; } = 1;
+    public int CurrentXp { get; set; }
 }
 
 // Serialized form of a single item (backpack or equipped).
@@ -171,7 +187,6 @@ public class SaveSlotSummary
     public int Level { get; set; }
     public int Floor { get; set; }
     public string Difficulty { get; set; } = "";
-    public bool IsHardcore { get; set; }
     public DateTime Timestamp { get; set; }
     public TimeSpan PlayTime { get; set; }
 }
