@@ -400,6 +400,92 @@ public static class ItemRegistry
         Register("ohs_excalibur_oberon",       () => OneHandedSwordDefinitions.CreateExcaliburOberon());
         Register("ohs_bloodthirst",            () => OneHandedSwordDefinitions.CreateBloodthirst());
 
+        // ── Cross-Game Sweep (Alicization Lycoris / Lost Song / Last Recollection) ──
+        // Final cross-game weapon pass. 55 weapons + 2 Corrupted variants.
+        // Placement primarily via FloorBandedRegisteredLoot; Starlight Banner
+        // via Dorothy questline on F78; Corrupted variants only via stones.
+
+        // Group 1 — Alicization Lycoris Normal Raid (Epic F70-85)
+        Register("axe_skyrend",                    () => AxeDefinitions.CreateSkyrend());
+        Register("rap_timestream",                 () => RapierDefinitions.CreateTimestream());
+        Register("dag_veinshredder",               () => DaggerDefinitions.CreateVeinshredder());
+        Register("ohs_dragonstar",                 () => OneHandedSwordDefinitions.CreateDragonstar());
+        Register("spr_heavenstriker",              () => SpearDefinitions.CreateHeavenstriker());
+        Register("ohs_superior_blade",             () => OneHandedSwordDefinitions.CreateSuperiorBlade());
+        Register("ths_sacred_inferno",             () => TwoHandedSwordDefinitions.CreateSacredInferno());
+
+        // Group 2 — Alicization Lycoris Extreme Raid (Legendary F85-95)
+        Register("ohs_blade_of_the_lightwolf",     () => OneHandedSwordDefinitions.CreateBladeOfTheLightwolf());
+        Register("rap_graceful_needle",            () => RapierDefinitions.CreateGracefulNeedle());
+        Register("dag_whitespark",                 () => DaggerDefinitions.CreateWhitespark());
+        Register("ths_demonslayer",                () => TwoHandedSwordDefinitions.CreateDemonslayer());
+        Register("ths_blazewyrm_greatsword",       () => TwoHandedSwordDefinitions.CreateBlazewyrmGreatsword());
+        Register("spr_arctic_pillar",              () => SpearDefinitions.CreateArcticPillar());
+        Register("mce_starshatter",                () => MaceDefinitions.CreateStarshatter());
+
+        // Group 3 — Alicization Lycoris Relic Boss Drops (Legendary F80-95)
+        Register("ohs_scorching_blade",            () => OneHandedSwordDefinitions.CreateScorchingBlade());
+        Register("mce_beasthowl",                  () => MaceDefinitions.CreateBeasthowl());
+        Register("ohs_double_edged_blade",         () => OneHandedSwordDefinitions.CreateDoubleEdgedBlade());
+        Register("mce_whirlpool_hammer",           () => MaceDefinitions.CreateWhirlpoolHammer());
+        Register("bow_cinder_bow",                 () => BowDefinitions.CreateCinderBow());
+        Register("ohs_dragoncrest",                () => OneHandedSwordDefinitions.CreateDragoncrest());
+        Register("axe_deathbringer",               () => AxeDefinitions.CreateDeathbringer());
+        Register("spr_frostpeak",                  () => SpearDefinitions.CreateFrostpeak());
+        Register("axe_snowsunder",                 () => AxeDefinitions.CreateSnowsunder());
+
+        // Group 4 — Alicization Lycoris DLC (Legendary F85-99)
+        Register("bow_loveblight_bow",             () => BowDefinitions.CreateLoveblightBow());
+        Register("ths_purgatorial_greatsword",     () => TwoHandedSwordDefinitions.CreatePurgatorialGreatsword());
+        Register("sci_savage_sandstorm",           () => ScimitarDefinitions.CreateSavageSandstorm());
+        Register("ohs_illustrious_sword",          () => OneHandedSwordDefinitions.CreateIllustriousSword());
+        Register("ths_lifestream_greatsword",      () => TwoHandedSwordDefinitions.CreateLifestreamGreatsword());
+        Register("bow_glitzwood_bow",              () => BowDefinitions.CreateGlitzwoodBow());
+
+        // Group 5 — SAO Lost Song Top-Tier per Type (Legendary F80-95)
+        Register("ohs_blazing_sword",              () => OneHandedSwordDefinitions.CreateBlazingSword());
+        Register("rap_glaring_light",              () => RapierDefinitions.CreateGlaringLight());
+        Register("dag_fragarach",                  () => DaggerDefinitions.CreateFragarach());
+        Register("kat_demon_blade_muramasa",       () => KatanaDefinitions.CreateDemonBladeMuramasa());
+        Register("axe_lang",                       () => AxeDefinitions.CreateLang());
+        Register("mce_caduceus",                   () => MaceDefinitions.CreateCaduceus());
+        Register("spr_brave_song",                 () => SpearDefinitions.CreateBraveSong());
+        Register("bow_silvan_bow",                 () => BowDefinitions.CreateSilvanBow());
+        Register("clw_iron_fist_oguma",            () => ClawsDefinitions.CreateIronFistOguma());
+
+        // Group 6 — SAO Lost Song Canon Mythological (Legendary F75-99)
+        Register("kat_futsu_no_mitama",            () => KatanaDefinitions.CreateFutsuNoMitama());
+        Register("axe_nadr",                       () => AxeDefinitions.CreateNadr());
+        Register("spr_divine_laevateinn",          () => SpearDefinitions.CreateDivineLaevateinn());
+        Register("spr_elders_trident",             () => SpearDefinitions.CreateEldersTrident());
+        Register("bow_holy_larc_qui_ne_faut",      () => BowDefinitions.CreateHolyLarcQuiNeFaut());
+        Register("bow_artemis_fult",               () => BowDefinitions.CreateArtemisFult());
+        Register("clw_paopei",                     () => ClawsDefinitions.CreatePaopei());
+        Register("ths_object_eraser",              () => TwoHandedSwordDefinitions.CreateObjectEraser());
+        Register("dag_giardino",                   () => DaggerDefinitions.CreateGiardino());
+        Register("shd_ancile",                     () => ShieldDefinitions.CreateAncile());
+
+        // Group 7 — SAO Lost Song Easter Eggs (Epic F50-70)
+        Register("ohs_kagetsu_4",                  () => OneHandedSwordDefinitions.CreateKagetsu4());
+        Register("ohs_laser_sword_hg",             () => OneHandedSwordDefinitions.CreateLaserSwordHG());
+
+        // Group 8 — SAO Last Recollection Game-Original
+        Register("scy_azuretear_scythe",           () => ScytheDefinitions.CreateAzuretearScythe());
+        Register("scy_starlight_banner",           () => ScytheDefinitions.CreateStarlightBanner());
+        Register("kat_darkness_rending_blade",     () => KatanaDefinitions.CreateDarknessRendingBlade());
+
+        // Group 9 — SAO Last Recollection DLC skins
+        Register("ohs_rainbow_blade_ex_eterna",    () => OneHandedSwordDefinitions.CreateRainbowBladeExEterna());
+        Register("ohs_aetherial_glow",             () => OneHandedSwordDefinitions.CreateAetherialGlow());
+
+        // Group 10 — Corrupted Weapons (transform-only, no loot pool)
+        Register("ohs_corrupted_elucidator",       () => OneHandedSwordDefinitions.CreateCorruptedElucidator());
+        Register("ohs_corrupted_dark_repulser",    () => OneHandedSwordDefinitions.CreateCorruptedDarkRepulser());
+
+        // Corruption Stones (consumables)
+        Register("night_corruption_stone",         () => CorruptionStoneDefinitions.CreateNightCorruptionStone());
+        Register("shadow_corruption_stone",        () => CorruptionStoneDefinitions.CreateShadowCorruptionStone());
+
         // IM Shop weapons — rotate into F50+ tier shops + floor-banded drops.
         Register("rap_edelweiss",         () => RapierDefinitions.CreateEdelweiss());
         Register("rap_noctis_strasse",    () => RapierDefinitions.CreateNoctisStrasse());

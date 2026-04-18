@@ -46,4 +46,24 @@ public static class ScytheDefinitions
 
     public static Weapon CreateEldarkRadiusSigma() => Make("scy_eldark_radius_sigma", "Eldark Radius Sigma", 31000, "Legendary", 265, 89, 178,
         B().Add(StatType.Attack, 88).Add(StatType.Strength, 28).Add(StatType.Dexterity, 18), "DarknessRending+25");
+
+    // ── SAO Last Recollection Game-Original (Scythe) ─────────────────
+
+    // Azuretear Scythe — Dorothy's base scythe (LR canon). Epic F50-65.
+    public static Weapon CreateAzuretearScythe() => Make("scy_azuretear_scythe", "Azuretear Scythe", 5400, "Epic", 165, 50, 115,
+        B().Add(StatType.Attack, 56).Add(StatType.Strength, 18).Add(StatType.Dexterity, 10), "Bleed+20");
+
+    // ── Divine Object (8th) — Starlight Banner ──────────────────────
+    // Dorothy's Divine Object from SAO Last Recollection. Purification
+    // scythe — skill-cooldown reduction + holy damage.
+    // Quest reward via Dorothy on F78. Rarity=Divine, durability 999,
+    // cannot be enhanced. Bespoke ◈ log format.
+    public static Weapon CreateStarlightBanner()
+    {
+        var w = Make("scy_starlight_banner", "Starlight Banner", 48000, "Divine", 999, 82, 188,
+            B().Add(StatType.Attack, 96).Add(StatType.Strength, 26).Add(StatType.Dexterity, 18).Add(StatType.Agility, 14),
+            "SkillCooldown-2,HolyDamage+25");
+        w.IsEnhanceable = false;
+        return w;
+    }
 }

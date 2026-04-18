@@ -329,13 +329,14 @@ public static class PlayerGuideContent
         new("Combat & Rarity", "Divine Objects",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Divine Objects\n" +
-            "│ Count: 16 total\n" +
-            "│ Source: 7 Integrity Knights + 9 T4 chain\n" +
+            "│ Count: 17 total\n" +
+            "│ Source: 8 NPC-quest Divines + 9 T4 chain\n" +
             "│ Trigger: Hand-placed, never random\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Peak rarity gear. All 16 Divine weapons are hand-placed — 7\n" +
-            "canon Integrity Knight swords and 9 Evolution Chain T4 apex\n" +
+            "Peak rarity gear. All 17 Divine weapons are hand-placed — 7\n" +
+            "canon Integrity Knight swords, Dorothy's Starlight Banner\n" +
+            "(Last Recollection, F78), and 9 Evolution Chain T4 apex\n" +
             "weapons.\n\n" +
             "USAGE\n" +
             "Earn via specific named encounters or the T4 evolution craft.\n" +
@@ -1441,7 +1442,7 @@ public static class PlayerGuideContent
             "does NOT trigger Extra Skill: Search's passive reveal — walk\n" +
             "normally through trap-heavy rooms.\n\n" +
             "SEE ALSO\n" +
-            "[Weather] · [Biomes] · [Unique Skill: Extra Skill — Search] · [Sprint & Stealth Move]")
+            "[Weather] · [Biomes] · [Unique Skill: Extra Skill — Search] · [Sprint & Stealth Move] · [Mechanical Tiles]")
         {
             Tags = new[] { "world", "biomes", "floors" }
         },
@@ -1583,9 +1584,11 @@ public static class PlayerGuideContent
             "entrance — missing a Divine, HF, or FD character drop is\n" +
             "painful. Christmas-only Nicholas on F49 is one of only two\n" +
             "Divine Stone of Returning Soul sources. F98 Ashen Kirito\n" +
-            "coexists with Blaze Armor, so budget durability.\n\n" +
+            "coexists with Blaze Armor, so budget durability. F95+ field\n" +
+            "bosses also roll a 10% Corruption Stone drop (random Night or\n" +
+            "Shadow), independent of the Avatar last-attack roll.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Divine Object Set — Integrity Knights]")
+            "[Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Corruption Stones & Corrupted Weapons] · [Divine Object Set — Integrity Knights]")
         {
             Tags = new[] { "world", "bosses", "fractured-daydream" }
         },
@@ -1845,8 +1848,10 @@ public static class PlayerGuideContent
             "— 8 LAB floor-boss drops (F85-F99) and 12 enhanceable shop\n" +
             "weapons (F76-F99) — and the Memory Defrag (MD, SAO mobile\n" +
             "game) and Fractured Daydream (FD, Bandai 2024 co-op action\n" +
-            "game) imports add another 65 canon weapons across 1H Sword,\n" +
-            "2H Sword, Katana, Rapier, Dagger, Mace, Axe, Bow, and Spear.\n\n" +
+            "game) imports add 65 canon weapons. The cross-game sweep\n" +
+            "further adds 55 named weapons from Alicization Lycoris (AL),\n" +
+            "Lost Song (LS), and Last Recollection (LR) — putting the\n" +
+            "named roster at roughly 190 weapons across all 13 classes.\n\n" +
             "USAGE\n" +
             "Equip any class in the main-hand slot. The OffHand Shield is\n" +
             "the only dedicated offhand until Dual Blades unlocks.\n\n" +
@@ -1872,9 +1877,9 @@ public static class PlayerGuideContent
             "Rapier or Dagger proficiency. Every weapon and shield gets 3\n" +
             "Refinement slots — see the Refinement System topic.\n\n" +
             "SEE ALSO\n" +
-            "[Material Tiers (Baseline)] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Memory Defrag Originals] · [Fractured Daydream Character Weapons] · [Weapon Refinement System]")
+            "[Material Tiers (Baseline)] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Memory Defrag Originals] · [Fractured Daydream Character Weapons] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons] · [SAO Last Recollection Weapons] · [Weapon Refinement System]")
         {
-            Tags = new[] { "weapons", "equipment", "integral-factor" }
+            Tags = new[] { "weapons", "equipment" }
         },
 
         new("Items", "Material Tiers (Baseline)",
@@ -1904,7 +1909,11 @@ public static class PlayerGuideContent
             "Enhancement Ores (7 types, Uncommon, 85-120 Col) are a third\n" +
             "family — each Anvil Enhance level consumes one ore, and the\n" +
             "ore picked biases the level's bonus into a specific stat. See\n" +
-            "Enhancement Ores System for details.\n\n" +
+            "Enhancement Ores System for details.\n" +
+            "Corruption Stones (Epic, F95+ field-boss drop @ 10%) are a\n" +
+            "fourth family — they consume on use to transform a specific\n" +
+            "target weapon into its Corrupted variant. See Corruption\n" +
+            "Stones & Corrupted Weapons.\n\n" +
             "COSTS\n" +
             "Col scales sharply at the top — Celestial is 60x the Iron\n" +
             "price.\n\n" +
@@ -1913,7 +1922,7 @@ public static class PlayerGuideContent
             "gets bought; jumping straight to Adamantite burns your purse\n" +
             "and leaves you under-enhanced.\n\n" +
             "SEE ALSO\n" +
-            "[Weapon Types Overview] · [Named Legendary Highlights] · [Refinement Ingots] · [Enhancement Ores System]")
+            "[Weapon Types Overview] · [Named Legendary Highlights] · [Refinement Ingots] · [Enhancement Ores System] · [Corruption Stones & Corrupted Weapons]")
         {
             Tags = new[] { "weapons", "equipment", "rarity" }
         },
@@ -1979,7 +1988,17 @@ public static class PlayerGuideContent
             "  Grida Replicant   Mace                            Lisbeth FD\n" +
             "  Excalibur Oberon  1H Sword                        Oberon FD\n" +
             "  Silvery Ruler     1H Sword                        Administrator FD\n" +
-            "  Macafitel         Rapier                          Yuuki FD\n\n" +
+            "  Macafitel         Rapier                          Yuuki FD\n" +
+            "Cross-game sweep (AL/LS/LR, F70-F99):\n" +
+            "  Demon Blade Muramasa    Katana, LS apex           LS top-tier\n" +
+            "  Lang                    2H Axe, highest LS ATK    LS top-tier\n" +
+            "  Futsu no Mitama         Katana, canon myth        LS mytho\n" +
+            "  Divine Laevateinn       Spear, canon myth         LS mytho\n" +
+            "  Object Eraser           2H Sword, canon myth      LS mytho\n" +
+            "  Darkness Rending Blade  Katana, Eydis canon       LR canon\n" +
+            "  Rainbow Blade Ex Eterna 1H Sword, LR DLC skin     LR DLC\n" +
+            "  Corrupted Elucidator    1H Sword, +Bleed/-Holy    Corruption Stone\n" +
+            "  Corrupted Dark Repulser 1H Sword, +Freeze/-Holy   Corruption Stone\n\n" +
             "COSTS\n" +
             "None — the encounter itself is the cost. Lisbeth R6 crafts\n" +
             "cost 3M Col + rare mats each (see Lisbeth craft topic).\n" +
@@ -1989,28 +2008,30 @@ public static class PlayerGuideContent
             "TIPS\n" +
             "Mjolnir is flagged as Divine apex; pair it with stun-heavy\n" +
             "skills for lockdown. Dual Blades users should chase both\n" +
-            "Elucidator and Dark Repulser (or the FD Elucidator Rouge +\n" +
-            "Chaos Raider Dual pair). The three IF Legendary series (Rosso/\n" +
-            "Yasha/Gaou) cover F61-F100. With Lisbeth's 18-recipe R6 line,\n" +
-            "Avatar Weapons, the 20 Infinity Moment additions, and the new\n" +
-            "MD/FD canon drops, the F50+ arsenal spans every SAO game.\n\n" +
+            "Elucidator and Dark Repulser (or their Corrupted variants via\n" +
+            "Corruption Stones, which preserve IsDualWieldPaired). The\n" +
+            "three IF Legendary series (Rosso/Yasha/Gaou) cover F61-F100.\n" +
+            "With Lisbeth's 18-recipe R6 line, Avatar Weapons, Infinity\n" +
+            "Moment additions, MD/FD canon drops, and the AL/LS/LR cross-\n" +
+            "game sweep, the F50+ arsenal spans every SAO game.\n\n" +
             "SEE ALSO\n" +
-            "[Memory Defrag Originals] · [MD Alicization Canonical Extras] · [Fractured Daydream Character Weapons] · [Elemental Weapon Variants] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Lisbeth — Rarity 6 Craft Line] · [Avatar Weapons & Last-Attack Bonus]")
+            "[Memory Defrag Originals] · [MD Alicization Canonical Extras] · [Fractured Daydream Character Weapons] · [Elemental Weapon Variants] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Lisbeth — Rarity 6 Craft Line] · [Avatar Weapons & Last-Attack Bonus] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons] · [SAO Last Recollection Weapons] · [Corruption Stones & Corrupted Weapons]")
         {
-            Tags = new[] { "weapons", "rarity", "integral-factor" }
+            Tags = new[] { "weapons", "rarity", "cross-game" }
         },
 
         new("Items", "Divine Object Set — Integrity Knights",
             "┌─ Items\n" +
             "│ Topic: Divine Object Set — Integrity Knights\n" +
-            "│ Tier: Divine (top of 16 total)\n" +
-            "│ Weapon type: Knight-themed set\n" +
+            "│ Tier: Divine (8 NPC-quest Divines of 17 total)\n" +
+            "│ Weapon type: Knight-themed + Dorothy's scythe\n" +
             "│ Source: Canon boss / quest hand-placed\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Seven canon Integrity Knight swords make up the non-chain\n" +
-            "half of the 16-piece Divine Object roster. Each is locked to\n" +
-            "a specific encounter or quest.\n\n" +
+            "Seven canon Integrity Knight swords plus Dorothy's Starlight\n" +
+            "Banner (Last Recollection, F78) make up the non-chain half of\n" +
+            "the 17-piece Divine Object roster. Each is locked to a\n" +
+            "specific encounter or quest.\n\n" +
             "USAGE\n" +
             "Clear the listed boss or quest to claim the weapon. Drops log\n" +
             "with the Divine BrightRed line and diamond glyph.\n\n" +
@@ -2021,17 +2042,20 @@ public static class PlayerGuideContent
             "  Time Piercing Sword   Bercouli   F95 Warden of Stopped Hrs ExecuteThreshold+25\n" +
             "  Black Lily Sword      Sheyta     F85 The Silent Edge       SeveringStrike+50\n" +
             "  Conflagrant Flame Bow Deusolbert F40 Phoenix of Smolder P. Burn+30\n" +
-            "  Heaven-Piercing Blade Fanatio    Azariya's quest (F50)     PiercingBeam+30 Rng2\n\n" +
+            "  Heaven-Piercing Blade Fanatio    Azariya's quest (F50)     PiercingBeam+30 Rng2\n" +
+            "  Starlight Banner      Dorothy    Dorothy's quest (F78)     HolyAoE+20, Scythe\n\n" +
             "COSTS\n" +
             "Divine gear is unbreakable, so no Anvil repair cost applies.\n\n" +
             "TIPS\n" +
-            "Alice's Fragrant Olive and Fanatio's Heaven-Piercing Blade\n" +
-            "both come from quests rather than boss kills — don't skip\n" +
-            "Selka and Azariya's questlines on your climb.\n\n" +
+            "Four of the eight are quest-locked — Alice (Selka F65), Fanatio\n" +
+            "(Azariya F50), and Dorothy's Starlight Banner (F78) each\n" +
+            "require the associated NPC chain. Starlight Banner is the only\n" +
+            "Divine Scythe; pair it with Scythe proficiency for the 2-range\n" +
+            "reaper build.\n\n" +
             "SEE ALSO\n" +
-            "[Divine Objects] · [Selka the Novice (F65)] · [Sister Azariya (F50)]")
+            "[Divine Objects] · [Dorothy (F78)] · [Selka the Novice (F65)] · [Sister Azariya (F50)]")
         {
-            Tags = new[] { "weapons", "divine", "rarity" }
+            Tags = new[] { "weapons", "divine", "last-recollection" }
         },
 
         new("Items", "Weapon Evolution Chains",
@@ -2399,7 +2423,11 @@ public static class PlayerGuideContent
             "drops on F85+ FLOOR BOSSES at 100% are a separate hook (see\n" +
             "Infinity Moment Last Attack Bonus Weapons). Avatar rolls fire\n" +
             "on FIELD bosses at 2%/10%. Both hooks can trigger on the same\n" +
-            "climb — they don't compete.\n\n" +
+            "climb — they don't compete.\n" +
+            "DISTINCT FROM CORRUPTION STONES: F95+ field bosses also roll\n" +
+            "a 10% Corruption Stone drop. Avatar (2%/10%) and Corruption\n" +
+            "Stone (10%) rolls are independent — a single F95+ field-boss\n" +
+            "kill can yield both.\n\n" +
             "COSTS\n" +
             "None beyond the field-boss fight itself. A wrong-weapon last\n" +
             "hit forfeits the Avatar roll for that encounter forever (field\n" +
@@ -2410,7 +2438,7 @@ public static class PlayerGuideContent
             "the type you want. Dual Blades users should finish with the\n" +
             "off-hand weapon type they care about.\n\n" +
             "SEE ALSO\n" +
-            "[Field Bosses — Guaranteed Drops] · [Named Legendary Highlights] · [Weapon Types Overview] · [Infinity Moment Last Attack Bonus Weapons] · [Hollow Fragment HNM Questgivers (F79-F99)]")
+            "[Field Bosses — Guaranteed Drops] · [Named Legendary Highlights] · [Weapon Types Overview] · [Infinity Moment Last Attack Bonus Weapons] · [Hollow Fragment HNM Questgivers (F79-F99)] · [Corruption Stones & Corrupted Weapons]")
         {
             Tags = new[] { "avatar", "weapons", "hollow-fragment" }
         },
@@ -2569,7 +2597,7 @@ public static class PlayerGuideContent
             "canon weapon early, you can start dual-wielding before the\n" +
             "Dual Blades grind completes.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System]")
+            "[Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System] · [Accessories]")
         {
             Tags = new[] { "equipment", "weapons", "refinement" }
         },
@@ -3112,6 +3140,178 @@ public static class PlayerGuideContent
             Tags = new[] { "elemental-variants", "weapons", "fractured-daydream" }
         },
 
+        new("Items", "Alicization Lycoris Raid Weapons",
+            "┌─ Items\n" +
+            "│ Topic: Alicization Lycoris Raid Weapons\n" +
+            "│ Tier: Epic + Legendary (29 weapons)\n" +
+            "│ Weapon type: Spread across classes (F70-F99)\n" +
+            "│ Source: AL raid tiers + Relic bosses + DLC\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Twenty-nine canon weapons imported from Alicization Lycoris\n" +
+            "(AL), the 2020 action-RPG Underworld entry. Split across four\n" +
+            "subgroups: Normal Raid (7 Epic), Extreme Raid (7 Legendary),\n" +
+            "Relic Boss drops (9 Legendary), and DLC (6 Legendary).\n\n" +
+            "USAGE\n" +
+            "Drop from the listed floor-banded canon source. All 29 slot\n" +
+            "into standard loot pools and enhance normally at the Anvil.\n\n" +
+            "EFFECTS\n" +
+            "NORMAL RAID (Epic, F70-85):\n" +
+            "  Skyrend (2H Axe), Timestream (Rapier), Veinshredder (Dagger),\n" +
+            "  Dragonstar (1H), Heavenstriker (Spear), Superior Blade (1H),\n" +
+            "  Sacred Inferno (2H)\n" +
+            "EXTREME RAID (Legendary, F85-95):\n" +
+            "  Blade of the Lightwolf (1H), Graceful Needle (Rapier),\n" +
+            "  Whitespark (Dagger), Demonslayer (2H), Blazewyrm Greatsword\n" +
+            "  (2H), Arctic Pillar (Spear), Starshatter (Mace)\n" +
+            "RELIC BOSS (Legendary, F80-95):\n" +
+            "  Scorching Blade (1H), Beasthowl (Mace), Double-Edged Blade\n" +
+            "  (2H), Whirlpool Hammer (Mace), Cinder Bow, Dragoncrest (1H),\n" +
+            "  Deathbringer (2H Axe), Frostpeak (Spear), Snowsunder (Axe)\n" +
+            "DLC (Legendary, F85-99):\n" +
+            "  Loveblight Bow, Purgatorial Greatsword, Savage Sandstorm\n" +
+            "  (Scimitar), Illustrious Sword, Lifestream Greatsword,\n" +
+            "  Glitzwood Bow\n\n" +
+            "COSTS\n" +
+            "None beyond the encounter. Epic Normal-Raid set tops out at\n" +
+            "F85, while the Relic/Extreme/DLC Legendaries cover F85-F99.\n\n" +
+            "TIPS\n" +
+            "If you're deep into a specific class, skim the subgroups for\n" +
+            "the right weapon type rather than farming every raid tier —\n" +
+            "the Normal Raid 7 together cover every major melee class at\n" +
+            "Epic, so they're often a mid-climb upgrade before the F85\n" +
+            "Legendary wave lands.\n\n" +
+            "SEE ALSO\n" +
+            "[Named Legendary Highlights] · [SAO Lost Song Named Weapons] · [SAO Last Recollection Weapons] · [Weapon Types Overview]")
+        {
+            Tags = new[] { "alicization-lycoris", "weapons", "cross-game" }
+        },
+
+        new("Items", "SAO Lost Song Named Weapons",
+            "┌─ Items\n" +
+            "│ Topic: SAO Lost Song Named Weapons\n" +
+            "│ Tier: Epic + Legendary (21 weapons)\n" +
+            "│ Weapon type: Spread across classes (F50-F99)\n" +
+            "│ Source: LS canon drops / pool rolls\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Twenty-one canon weapons imported from Sword Art Online: Lost\n" +
+            "Song (LS), the 2015 ALfheim-set entry with flight combat and\n" +
+            "race-gated magic. Split into top-tier-per-type (9 Legendary),\n" +
+            "canon mythological (10 Legendary), and 2 Easter-egg Epics.\n\n" +
+            "USAGE\n" +
+            "Drop from floor-banded loot pools and canon named sources.\n" +
+            "All 21 enhance normally at the Anvil.\n\n" +
+            "EFFECTS\n" +
+            "TOP-TIER PER TYPE (Legendary, F80-95):\n" +
+            "  Blazing Sword (1H), Glaring Light (Rapier), Fragarach\n" +
+            "  (Dagger), Demon Blade Muramasa (Katana), Lang (2H Axe,\n" +
+            "  highest LS ATK), Caduceus (Mace), Brave Song (Spear),\n" +
+            "  Silvan Bow, Iron Fist Oguma (Claws)\n" +
+            "CANON MYTHOLOGICAL (Legendary, F75-99):\n" +
+            "  Futsu no Mitama (Katana), Nadr (Axe), Divine Laevateinn\n" +
+            "  (Spear), Elder's Trident (Spear), Holy L'arc Qui ne Faut\n" +
+            "  (Bow), Artemis' Fult (Bow), Paopei (Claws), Object Eraser\n" +
+            "  (2H), Giardino (Dagger), Ancile (Shield)\n" +
+            "EASTER EGGS (Epic, F50-70):\n" +
+            "  Kagetsu-4 (1H), Laser Sword HG (1H)\n\n" +
+            "COSTS\n" +
+            "None beyond the encounter or floor-pool roll.\n\n" +
+            "TIPS\n" +
+            "Lang is the highest-ATK canonical LS axe — worth the dedicated\n" +
+            "farm on F90+ if you main 2H Axe. Artemis' Fult (LS) and\n" +
+            "Artemis (IM LAB F99 bow) are separate weapons with distinct\n" +
+            "DefIds; both can live in the same inventory.\n\n" +
+            "SEE ALSO\n" +
+            "[Named Legendary Highlights] · [Alicization Lycoris Raid Weapons] · [SAO Last Recollection Weapons] · [Weapon Types Overview]")
+        {
+            Tags = new[] { "lost-song", "weapons", "cross-game" }
+        },
+
+        new("Items", "SAO Last Recollection Weapons",
+            "┌─ Items\n" +
+            "│ Topic: SAO Last Recollection Weapons\n" +
+            "│ Tier: Epic / Legendary / Divine (5 weapons)\n" +
+            "│ Weapon type: Scythes + 1H Swords + Katana\n" +
+            "│ Source: LR canon / Dorothy F78 quest / DLC\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Five canon weapons imported from Sword Art Online: Last\n" +
+            "Recollection (LR), the 2023 entry that caps the Alicization\n" +
+            "Aocean arc. Includes the 8th Divine Object (Starlight Banner)\n" +
+            "and Eydis's canon katana.\n\n" +
+            "USAGE\n" +
+            "Dorothy's Starlight Banner is a fixed F78 quest reward. The\n" +
+            "other four drop from floor-banded pools or canon sources.\n\n" +
+            "EFFECTS\n" +
+            "  Starlight Banner       DIVINE Scythe, F78 Dorothy quest  HolyAoE+20\n" +
+            "  Azuretear Scythe       Epic Scythe, Dorothy's base, F50-65\n" +
+            "  Darkness Rending Blade Legendary Katana, Eydis canon, F80-95\n" +
+            "  Rainbow Blade Ex Eterna Legendary 1H Sword, LR DLC skin, F90-99\n" +
+            "  Aetherial Glow         Epic 1H Sword, LR DLC skin, F60-80\n\n" +
+            "COSTS\n" +
+            "Starlight Banner costs the Dorothy quest (22 kills on F78);\n" +
+            "the rest cost nothing beyond the encounter or pool roll.\n\n" +
+            "TIPS\n" +
+            "Starlight Banner is the ONLY Divine Scythe in the game and\n" +
+            "the 8th non-chain Divine Object overall — don't skip Dorothy's\n" +
+            "questline if you main Scythe. Azuretear pairs thematically as\n" +
+            "Dorothy's pre-purification base and works as an F50-65 bridge\n" +
+            "toward the Divine upgrade.\n\n" +
+            "SEE ALSO\n" +
+            "[Dorothy (F78)] · [Divine Object Set — Integrity Knights] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons]")
+        {
+            Tags = new[] { "last-recollection", "weapons", "divine" }
+        },
+
+        new("Items", "Corruption Stones & Corrupted Weapons",
+            "┌─ Items\n" +
+            "│ Topic: Corruption Stones & Corrupted Weapons\n" +
+            "│ Tier: Epic Stone -> Legendary Corrupted weapon\n" +
+            "│ Weapon type: Consumable + transformation hook\n" +
+            "│ Source: F95+ field-boss 10% drop, random stone\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A new consumable family that transforms a specific target\n" +
+            "weapon into its Corrupted variant — higher base stats with a\n" +
+            "HolyDamage penalty. Two stones, two Corrupted weapons, all\n" +
+            "canon trade-off flavor.\n\n" +
+            "USAGE\n" +
+            "Kill any F95+ field boss; 10% chance to drop a stone (randomly\n" +
+            "Night or Shadow). Use the stone from inventory — the game\n" +
+            "checks equipped slot, off-hand, and backpack for the matching\n" +
+            "target weapon, prompts for confirmation, consumes one stone,\n" +
+            "removes the target, and grants the Corrupted variant.\n\n" +
+            "EFFECTS\n" +
+            "  Night Corruption Stone  Elucidator     -> Corrupted Elucidator\n" +
+            "  Shadow Corruption Stone Dark Repulser  -> Corrupted Dark Repulser\n" +
+            "Corrupted Elucidator: Legendary 1H Sword, baseDmg 175,\n" +
+            "Attack+92, Bleed+25, CritRate+20, HolyDamage-10.\n" +
+            "Corrupted Dark Repulser: Legendary 1H Sword, baseDmg 175,\n" +
+            "Attack+92, Freeze+25, CritRate+20, HolyDamage-10.\n" +
+            "EnhancementLevel, EnhancementOreHistory, and RefinementSlots\n" +
+            "are preserved on transformation. IsDualWieldPaired stays true\n" +
+            "— Corrupted variants still pair with non-corrupted partners.\n" +
+            "If the target weapon is missing, the stone is refunded rather\n" +
+            "than silently consumed.\n\n" +
+            "COSTS\n" +
+            "One stone per transformation. F100 ends the game, so there's\n" +
+            "no post-F100 canon source — F95+ field bosses are the only\n" +
+            "stone tap. Canon trade-off: Corrupted pays a HolyDamage-10\n" +
+            "penalty for its stat boost.\n\n" +
+            "TIPS\n" +
+            "Enhance Elucidator / Dark Repulser to +7 or higher BEFORE you\n" +
+            "apply a Corruption Stone — levels carry forward and you avoid\n" +
+            "re-grinding Anvil attempts on the higher-base Corrupted form.\n" +
+            "Dual Blades users can keep one corrupted and one clean (e.g.\n" +
+            "Corrupted Elucidator + Dark Repulser) to soften the HolyDamage\n" +
+            "hit on the pair.\n\n" +
+            "SEE ALSO\n" +
+            "[Named Legendary Highlights] · [Field Bosses — Guaranteed Drops] · [Avatar Weapons & Last-Attack Bonus] · [Material Tiers (Baseline)]")
+        {
+            Tags = new[] { "corruption-stone", "corrupted-weapon", "weapons" }
+        },
+
         // ═══════════════════════════════════════════════════════════════
         // ── 5. Quests, NPCs & Economy ──────────────────────────────────
         // ═══════════════════════════════════════════════════════════════
@@ -3250,7 +3450,7 @@ public static class PlayerGuideContent
             "Double-dip by accepting weapon-gated random Kill quests from\n" +
             "another F50 NPC first — the same 20 kills can pay out twice.\n\n" +
             "SEE ALSO\n" +
-            "[Divine Object Set — Integrity Knights] · [Divine Objects] · [Selka the Novice (F65)] · [Quest Types & Rewards]")
+            "[Divine Object Set — Integrity Knights] · [Divine Objects] · [Selka the Novice (F65)] · [Dorothy (F78)] · [Quest Types & Rewards]")
         {
             Tags = new[] { "quests", "npcs", "divine" }
         },
@@ -3289,7 +3489,7 @@ public static class PlayerGuideContent
             "Quest 2 for the awakened upgrade — the 30 kills overlap with\n" +
             "any standing F65+ kill quests, so stack your accept list.\n\n" +
             "SEE ALSO\n" +
-            "[The Sword's Awakening (Selka F65)] · [Divine Object Set — Integrity Knights] · [MD Alicization Canonical Extras] · [Unique Skill: Holy Sword]")
+            "[The Sword's Awakening (Selka F65)] · [Divine Object Set — Integrity Knights] · [Dorothy (F78)] · [MD Alicization Canonical Extras] · [Unique Skill: Holy Sword]")
         {
             Tags = new[] { "quests", "npcs", "unfolding-truth" }
         },
@@ -3331,6 +3531,45 @@ public static class PlayerGuideContent
             "[Selka the Novice (F65)] · [MD Alicization Canonical Extras] · [Divine Object Set — Integrity Knights] · [Quest Types & Rewards]")
         {
             Tags = new[] { "quests", "unfolding-truth", "npcs" }
+        },
+
+        new("Quests & NPCs", "Dorothy (F78)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Dorothy (BrightCyan 'D' glyph)\n" +
+            "│ Floor: 78\n" +
+            "│ Quest: Purify the Darkness (22 kills)\n" +
+            "│ Reward: Starlight Banner (Divine) + 700 Col + 550 XP\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A Divine Object giver on Floor 78, canon Last Recollection\n" +
+            "character. Dorothy hands over the Starlight Banner — the 8th\n" +
+            "Divine Object and the only Divine Scythe in the game — in\n" +
+            "exchange for purifying her floor.\n\n" +
+            "USAGE\n" +
+            "Bump the BrightCyan 'D' on F78. Accept \"Purify the Darkness\":\n" +
+            "slay 22 monsters on Floor 78. Return to Dorothy complete.\n\n" +
+            "EFFECTS\n" +
+            "On turn-in:\n" +
+            "  - Starlight Banner (Divine Scythe, HolyAoE+20, range 2)\n" +
+            "  - +700 Col\n" +
+            "  - +550 XP\n" +
+            "Drop logs with a bespoke diamond (◈) Divine line to mark the\n" +
+            "8th Divine Object placement. Auto-added to inventory; dropped\n" +
+            "at your feet if full.\n\n" +
+            "COSTS\n" +
+            "22 F78 monster kills. Single-quest NPC — no chained follow-up\n" +
+            "like Selka's awakening arc.\n\n" +
+            "TIPS\n" +
+            "Bring Scythe proficiency into the F78 push if you want to\n" +
+            "wield Starlight Banner on receipt — its 2-range reach shines\n" +
+            "on Scythe builds. Stack the 22 kills with any standing F78\n" +
+            "weapon-gated Kill quests before turn-in; the counter overlaps.\n" +
+            "Dorothy pairs neatly with Sister Azariya (F50) and Selka\n" +
+            "(F65) to complete the NPC-quest Divine trio before F80.\n\n" +
+            "SEE ALSO\n" +
+            "[Divine Object Set — Integrity Knights] · [Divine Objects] · [SAO Last Recollection Weapons] · [Sister Azariya (F50)] · [Selka the Novice (F65)] · [Quest Types & Rewards]")
+        {
+            Tags = new[] { "quests", "npcs", "last-recollection" }
         },
 
         new("Quests & NPCs", "Agil's Apprentice (F55)",
@@ -3444,7 +3683,7 @@ public static class PlayerGuideContent
             "flavor/recruit NPC — the F48 Lindarth Lisbeth is a separate\n" +
             "crafting NPC that gates the Rarity 6 craft line.\n\n" +
             "SEE ALSO\n" +
-            "[Anneal Blade Craft Line] · [Lindarth Town (F48)] · [Starting Loadout] · [Vendors — Rotating Stock] · [SAO Switch (Party)]")
+            "[Anneal Blade Craft Line] · [Lindarth Town (F48)] · [Starting Loadout] · [Vendors — Rotating Stock] · [Ran the Brawler (F2)] · [SAO Switch (Party)]")
         {
             Tags = new[] { "quests", "npcs", "shops" }
         },

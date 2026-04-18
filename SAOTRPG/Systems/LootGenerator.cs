@@ -305,6 +305,85 @@ public static class LootGenerator
         (60, 85, "axe_sturm_welt"),                 // Agil wind Epic
         (60, 85, "mce_blazing_torch"),              // Lisbeth fire Epic
         (60, 85, "mce_elemental_hammer"),           // Lisbeth light Epic
+
+        // ── Cross-Game Sweep (AL / Lost Song / Last Recollection) ──────
+        // Final cross-game weapon pass: 55 weapons placed across the F50-99
+        // endgame bands. Starlight Banner (Dorothy's Divine) + Corrupted
+        // variants are NOT in this pool — quest-reward + stone-transform
+        // respectively. Corruption Stones drop via field-boss F95+ path
+        // wired in TurnManager.Combat.
+
+        // Group 1 — AL Normal Raid (Epic F70-85)
+        (70, 85, "axe_skyrend"),
+        (70, 85, "rap_timestream"),
+        (70, 85, "dag_veinshredder"),
+        (70, 85, "ohs_dragonstar"),
+        (70, 85, "spr_heavenstriker"),
+        (70, 85, "ohs_superior_blade"),
+        (70, 85, "ths_sacred_inferno"),
+
+        // Group 2 — AL Extreme Raid (Legendary F85-95)
+        (85, 95, "ohs_blade_of_the_lightwolf"),
+        (85, 95, "rap_graceful_needle"),
+        (85, 95, "dag_whitespark"),
+        (85, 95, "ths_demonslayer"),
+        (85, 95, "ths_blazewyrm_greatsword"),
+        (85, 95, "spr_arctic_pillar"),
+        (85, 95, "mce_starshatter"),
+
+        // Group 3 — AL Relic Boss Drops (Legendary F80-95)
+        (80, 95, "ohs_scorching_blade"),
+        (80, 95, "mce_beasthowl"),
+        (80, 95, "ohs_double_edged_blade"),
+        (80, 95, "mce_whirlpool_hammer"),
+        (80, 95, "bow_cinder_bow"),
+        (80, 95, "ohs_dragoncrest"),
+        (80, 95, "axe_deathbringer"),
+        (80, 95, "spr_frostpeak"),
+        (80, 95, "axe_snowsunder"),
+
+        // Group 4 — AL DLC (Legendary F85-99)
+        (85, 99, "bow_loveblight_bow"),
+        (85, 99, "ths_purgatorial_greatsword"),
+        (85, 99, "sci_savage_sandstorm"),
+        (85, 99, "ohs_illustrious_sword"),
+        (85, 99, "ths_lifestream_greatsword"),
+        (85, 99, "bow_glitzwood_bow"),
+
+        // Group 5 — Lost Song Top-Tier per Type (Legendary F80-95)
+        (80, 95, "ohs_blazing_sword"),
+        (80, 95, "rap_glaring_light"),
+        (80, 95, "dag_fragarach"),
+        (80, 95, "kat_demon_blade_muramasa"),
+        (80, 95, "axe_lang"),
+        (80, 95, "mce_caduceus"),
+        (80, 95, "spr_brave_song"),
+        (80, 95, "bow_silvan_bow"),
+        (80, 95, "clw_iron_fist_oguma"),
+
+        // Group 6 — Lost Song Canon Mythological (Legendary F75-99)
+        (75, 99, "kat_futsu_no_mitama"),
+        (75, 99, "axe_nadr"),
+        (75, 99, "spr_divine_laevateinn"),
+        (75, 99, "spr_elders_trident"),
+        (75, 99, "bow_holy_larc_qui_ne_faut"),
+        (75, 99, "bow_artemis_fult"),
+        (75, 99, "clw_paopei"),
+        (75, 99, "ths_object_eraser"),
+        (75, 99, "dag_giardino"),
+        (75, 99, "shd_ancile"),
+
+        // Group 7 — Lost Song Easter Eggs (Epic F50-70)
+        (50, 70, "ohs_kagetsu_4"),
+        (50, 70, "ohs_laser_sword_hg"),
+
+        // Group 8 — Last Recollection Game-Original (Epic + Legendary)
+        (50, 65, "scy_azuretear_scythe"),            // Dorothy's base scythe
+        (80, 95, "kat_darkness_rending_blade"),      // Eydis's shadow katana
+
+        // Group 9 — Last Recollection DLC skins
+        (90, 99, "ohs_rainbow_blade_ex_eterna"),     // Rainbow Blade Ex Eterna Legendary
+        (60, 80, "ohs_aetherial_glow"),              // Aetherial Glow Epic
     };
 
     // ── IM Enhancement Ore themed drops ──────────────────────────────

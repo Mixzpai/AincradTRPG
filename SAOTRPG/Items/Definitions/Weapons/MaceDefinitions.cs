@@ -113,4 +113,25 @@ public static class MaceDefinitions
     // Lisbeth light variant. Elemental Hammer — consecrated smithing hammer.
     public static Weapon CreateElementalHammer() => Make("mce_elemental_hammer", "Elemental Hammer", 5500, "Epic", 165, 55, 116,
         B().Add(StatType.Attack, 54).Add(StatType.Strength, 16).Add(StatType.Vitality, 10), "HolyDamage+15");
+
+    // ── Alicization Lycoris Extreme Raid (Mace) — Legendary F85-95 ────
+
+    // Starshatter — celestial-crowned warmace, stun-biased.
+    public static Weapon CreateStarshatter() => Make("mce_starshatter", "Starshatter", 19500, "Legendary", 225, 85, 158,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 26).Add(StatType.Vitality, 14), "Stun+20");
+
+    // ── Alicization Lycoris Relic Boss Drops (Mace) — Legendary F80-95 ─
+
+    // Beasthowl — fanged warmace, roaring-impact stun.
+    public static Weapon CreateBeasthowl() => Make("mce_beasthowl", "Beasthowl", 18200, "Legendary", 215, 82, 150,
+        B().Add(StatType.Attack, 75).Add(StatType.Strength, 24).Add(StatType.Vitality, 12), "Stun+15");
+
+    // Whirlpool Hammer — flanged spiral-edged warhammer, slow-on-hit.
+    public static Weapon CreateWhirlpoolHammer() => Make("mce_whirlpool_hammer", "Whirlpool Hammer", 18500, "Legendary", 218, 83, 152,
+        B().Add(StatType.Attack, 76).Add(StatType.Strength, 24).Add(StatType.Vitality, 12), "Slow+20");
+
+    // ── SAO Lost Song Top-Tier (Mace) — Legendary F80-95 ───────────
+    // Caduceus — herald's staff-mace, lifeflow motif.
+    public static Weapon CreateCaduceus() => Make("mce_caduceus", "Caduceus", 19800, "Legendary", 225, 84, 158,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 24).Add(StatType.Vitality, 18), "HPRegen+5");
 }

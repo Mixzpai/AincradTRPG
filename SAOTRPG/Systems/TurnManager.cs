@@ -262,6 +262,8 @@ public partial class TurnManager
             }
             if (e.Consumable is SAOTRPG.Items.Consumables.Crystal crystal)
                 HandleCrystal(crystal);
+            if (e.Consumable is SAOTRPG.Items.Consumables.CorruptionStone stone)
+                HandleCorruptionStone(stone);
             if (e.Consumable is Food food)
             {
                 Satiety = Math.Min(MaxSatiety, Satiety + food.RegenerationDuration * 2);
@@ -355,6 +357,136 @@ public partial class TurnManager
                 _player.CurrentHealth = _player.MaxHealth;
                 _log.LogSystem($"{crystal.Name} glows white-hot — you are restored to full health!");
                 break;
+        }
+    }
+
+    // Corruption Stone handler. Canon corruption mechanic from Hollow Fragment.
+    // Our F100 ends the game, so the post-F100 boss that canonically grants
+    // Corrupted Elucidator/Dark Repulser is unreachable — the stone is an
+    // inventory consumable that transforms the matching base weapon instead.
+    //
+    // Searches inventory (items + equipped weapon/offhand slot) for the
+    // target DefId, removes it, and grants the Corrupted variant. Preserves
+    // the target's enhancement level + refinement slots (both live on
+    // EquipmentBase and survive the DefId swap by direct field copy).
+    private void HandleCorruptionStone(SAOTRPG.Items.Consumables.CorruptionStone stone)
+    {
+        if (string.IsNullOrEmpty(stone.TargetWeaponDefId) || string.IsNullOrEmpty(stone.CorruptedWeaponDefId))
+        {
+            _log.Log("The corruption stone crumbles. It had no target bound to it.");
+            return;
+        }
+
+        // Search for the target weapon in inventory and in the Weapon/OffHand
+        // equip slots. Prefer an equipped target if both present (rare).
+        SAOTRPG.Items.Equipment.Weapon? target = null;
+        SAOTRPG.Inventory.Core.EquipmentSlot? equippedSlot = null;
+
+        var mainWeapon = _player.Inventory.GetEquipped(SAOTRPG.Inventory.Core.EquipmentSlot.Weapon)
+            as SAOTRPG.Items.Equipment.Weapon;
+        if (mainWeapon != null && mainWeapon.DefinitionId == stone.TargetWeaponDefId)
+        {
+            target = mainWeapon;
+            equippedSlot = SAOTRPG.Inventory.Core.EquipmentSlot.Weapon;
+        }
+        if (target == null)
+        {
+            var offWeapon = _player.Inventory.GetEquipped(SAOTRPG.Inventory.Core.EquipmentSlot.OffHand)
+                as SAOTRPG.Items.Equipment.Weapon;
+            if (offWeapon != null && offWeapon.DefinitionId == stone.TargetWeaponDefId)
+            {
+                target = offWeapon;
+                equippedSlot = SAOTRPG.Inventory.Core.EquipmentSlot.OffHand;
+            }
+        }
+        if (target == null)
+        {
+            foreach (var item in _player.Inventory.Items)
+            {
+                if (item is SAOTRPG.Items.Equipment.Weapon w && w.DefinitionId == stone.TargetWeaponDefId)
+                {
+                    target = w;
+                    break;
+                }
+            }
+        }
+
+        if (target == null)
+        {
+            // No target in inventory — surface the failure loudly per project
+            // "fail loud" policy. The stone is NOT consumed (ConsumableUsed
+            // already decremented Quantity, so re-add one charge).
+            string needName = Items.ItemRegistry.Create(stone.TargetWeaponDefId)?.Name ?? stone.TargetWeaponDefId;
+            _log.Log($"The corruption stone finds nothing to corrupt. You need {needName} in your inventory or equipped.");
+            stone.Quantity++;
+            return;
+        }
+
+        // Build the Corrupted variant and transfer preserved state.
+        var corrupted = Items.ItemRegistry.Create(stone.CorruptedWeaponDefId)
+            as SAOTRPG.Items.Equipment.Weapon;
+        if (corrupted == null)
+        {
+            _log.Log("The corruption stone flickers and fails. (Corrupted weapon def not found.)");
+            stone.Quantity++;
+            return;
+        }
+
+        corrupted.EnhancementLevel = target.EnhancementLevel;
+        corrupted.EnhancementOreHistory = new List<string>(target.EnhancementOreHistory);
+        for (int i = 0; i < SAOTRPG.Items.Equipment.EquipmentBase.RefinementSlotCount; i++)
+            corrupted.RefinementSlots[i] = target.RefinementSlots[i];
+
+        // Replay enhancement-level ore stat bonuses onto the corrupted variant.
+        // Mirrors SaveManager.DeserializeItem: each ore in EnhancementOreHistory
+        // contributed +3 Attack/Agility/etc. per level; those live in Bonuses
+        // but Create() returned a fresh Bonuses collection, so we rebuild.
+        if (corrupted.EnhancementLevel > 0)
+        {
+            const int weaponLevelBonus = 3;
+            for (int i = 0; i < corrupted.EnhancementLevel; i++)
+            {
+                string oreId = i < corrupted.EnhancementOreHistory.Count
+                    ? corrupted.EnhancementOreHistory[i] : "ore_crimson_flame";
+                var stat = Items.Definitions.EnhancementOreDefinitions
+                    .OreDefIdToStat.TryGetValue(oreId, out var s) ? s : StatType.Attack;
+                corrupted.Bonuses.Add(stat, weaponLevelBonus);
+            }
+        }
+        // Replay refinement ingot bonuses for any socketed slot. Refinement
+        // stores slot DefIds on the item but folds the actual stat bonuses
+        // into Bonuses at socket time — Create() produced a fresh Bonuses
+        // collection, so we rehydrate here (same helper SaveManager uses).
+        Refinement.RehydrateBonuses(corrupted);
+
+        // Remove the target and grant the corrupted variant.
+        if (equippedSlot != null)
+        {
+            // Unequip to the inventory, then swap.
+            _player.Inventory.Unequip(equippedSlot.Value, _player);
+            _player.Inventory.RemoveItem(target);
+            if (!_player.Inventory.AddItem(corrupted))
+            {
+                _map.AddItem(_player.X, _player.Y, corrupted);
+                _log.LogLoot($"  ◆ The {target.Name} transforms... it is now Corrupted. (Inventory full — dropped at your feet.)");
+            }
+            else
+            {
+                _log.LogLoot($"  ◆ The {target.Name} transforms... it is now Corrupted.");
+            }
+        }
+        else
+        {
+            _player.Inventory.RemoveItem(target);
+            if (!_player.Inventory.AddItem(corrupted))
+            {
+                _map.AddItem(_player.X, _player.Y, corrupted);
+                _log.LogLoot($"  ◆ The {target.Name} transforms... it is now Corrupted. (Inventory full — dropped at your feet.)");
+            }
+            else
+            {
+                _log.LogLoot($"  ◆ The {target.Name} transforms... it is now Corrupted.");
+            }
         }
     }
 

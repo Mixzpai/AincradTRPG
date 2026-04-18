@@ -114,4 +114,35 @@ public static class BowDefinitions
     // MD Rare. Supportive bow of the heart-crowd; crit-boost on encourage shots.
     public static Weapon CreateCheerOfLoveBow() => Make("bow_cheer_of_love", "Cheer of Love Bow", 2600, "Rare", 115, 30, 65, 1, 3,
         B().Add(StatType.Attack, 30).Add(StatType.Dexterity, 14).Add(StatType.Agility, 6), "CritRate+10");
+
+    // ── Alicization Lycoris Relic Boss Drops (Bow) — Legendary F80-95 ─
+
+    // Cinder Bow — ember-fletched longbow, burning arrow motif.
+    public static Weapon CreateCinderBow() => Make("bow_cinder_bow", "Cinder Bow", 18500, "Legendary", 218, 82, 150, 1, 4,
+        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 26).Add(StatType.Agility, 14), "Burn+25");
+
+    // ── Alicization Lycoris DLC (Bow) — Legendary F85-99 ───────────
+
+    // Loveblight Bow — DLC cursed-compassion bow, deep bleed.
+    public static Weapon CreateLoveblightBow() => Make("bow_loveblight_bow", "Loveblight Bow", 20000, "Legendary", 225, 86, 158, 1, 4,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 28).Add(StatType.Agility, 16), "Bleed+30");
+
+    // Glitzwood Bow — DLC lacquered-wood crit-bow.
+    public static Weapon CreateGlitzwoodBow() => Make("bow_glitzwood_bow", "Glitzwood Bow", 20500, "Legendary", 225, 87, 160, 1, 4,
+        B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 28).Add(StatType.Agility, 16), "CritRate+25");
+
+    // ── SAO Lost Song Top-Tier (Bow) — Legendary F80-95 ──────────
+    // Silvan Bow — canonical LS apex bow, forest-hunter crit.
+    public static Weapon CreateSilvanBow() => Make("bow_silvan_bow", "Silvan Bow", 19200, "Legendary", 220, 83, 155, 1, 4,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 26).Add(StatType.Agility, 14), "CritRate+20");
+
+    // ── SAO Lost Song Mythological (Bow) — Legendary F75-99 ──────────
+
+    // Holy L'arc Qui ne Faut — holy piercing bow of infallible aim.
+    public static Weapon CreateHolyLarcQuiNeFaut() => Make("bow_holy_larc_qui_ne_faut", "Holy L'arc Qui ne Faut", 20000, "Legendary", 225, 85, 160, 1, 4,
+        B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 28).Add(StatType.Agility, 14), "PiercingShot+25");
+
+    // Artemis' Fult — hunter-goddess shortbow, crit-focused.
+    public static Weapon CreateArtemisFult() => Make("bow_artemis_fult", "Artemis' Fult", 19500, "Legendary", 220, 84, 158, 1, 4,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 28).Add(StatType.Agility, 16), "CritRate+25");
 }

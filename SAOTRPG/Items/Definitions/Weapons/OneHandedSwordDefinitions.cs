@@ -345,4 +345,87 @@ public static class OneHandedSwordDefinitions
     // Oberon fire variant. Bloodthirst — crimson-kissed Tanquiem cousin.
     public static Weapon CreateBloodthirst() => Make("ohs_bloodthirst", "Bloodthirst", 5500, "Epic", 160, 55, 118,
         B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 14).Add(StatType.Agility, 10), "Burn+20");
+
+    // ── Alicization Lycoris Normal Raid (1H Sword) — Epic F70-85 ────────
+    // Canon raid boss drops from the AL Normal Raid tier.
+
+    // Dragonstar — celestial-edged longsword, star-pattern temper line.
+    public static Weapon CreateDragonstar() => Make("ohs_dragonstar", "Dragonstar", 7200, "Epic", 175, 70, 128,
+        B().Add(StatType.Attack, 62).Add(StatType.Strength, 16).Add(StatType.Dexterity, 12), "CritRate+15");
+
+    // Superior Blade — plain-but-perfect cutting longsword, canonical AL farm drop.
+    public static Weapon CreateSuperiorBlade() => Make("ohs_superior_blade", "Superior Blade", 6800, "Epic", 170, 72, 132,
+        B().Add(StatType.Attack, 66).Add(StatType.Strength, 18).Add(StatType.Dexterity, 10));
+
+    // ── Alicization Lycoris Extreme Raid (1H Sword) — Legendary F85-95 ─
+    // Canon AL Extreme raid drops. Higher stat band than Normal.
+
+    // Blade of the Lightwolf — silvered wolf-crest longsword, lightning affinity.
+    public static Weapon CreateBladeOfTheLightwolf() => Make("ohs_blade_of_the_lightwolf", "Blade of the Lightwolf", 19500, "Legendary", 220, 85, 158,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 22).Add(StatType.Agility, 14), "CritRate+20");
+
+    // ── Alicization Lycoris Relic Boss Drops (1H Sword) — Legendary F80-95 ─
+
+    // Scorching Blade — ember-scarred longsword, relic-bound flame motif.
+    public static Weapon CreateScorchingBlade() => Make("ohs_scorching_blade", "Scorching Blade", 18500, "Legendary", 215, 82, 152,
+        B().Add(StatType.Attack, 76).Add(StatType.Strength, 20).Add(StatType.Dexterity, 12), "Burn+25");
+
+    // Double-Edged Blade — twin-fullered longsword, split-edge relic weapon.
+    public static Weapon CreateDoubleEdgedBlade() => Make("ohs_double_edged_blade", "Double-Edged Blade", 18800, "Legendary", 218, 83, 155,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 22).Add(StatType.Dexterity, 14), "CritRate+15");
+
+    // Dragoncrest — dragon-crested longsword, slayer affinity.
+    public static Weapon CreateDragoncrest() => Make("ohs_dragoncrest", "Dragoncrest", 19200, "Legendary", 220, 84, 158,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 24).Add(StatType.Dexterity, 12), "DragonSlayer+25");
+
+    // ── Alicization Lycoris DLC (1H Sword) — Legendary F85-99 ───────
+
+    // Illustrious Sword — DLC radiant longsword, consecrated edge.
+    public static Weapon CreateIllustriousSword() => Make("ohs_illustrious_sword", "Illustrious Sword", 20500, "Legendary", 225, 86, 162,
+        B().Add(StatType.Attack, 82).Add(StatType.Strength, 22).Add(StatType.Dexterity, 14), "HolyDamage+20");
+
+    // ── SAO Lost Song Top-Tier (1H Sword) — Legendary F80-95 ──────────
+
+    // Blazing Sword — canonical LS fire-tier 1H apex.
+    public static Weapon CreateBlazingSword() => Make("ohs_blazing_sword", "Blazing Sword", 19000, "Legendary", 218, 82, 156,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 20).Add(StatType.Dexterity, 12), "Burn+25");
+
+    // ── SAO Last Recollection DLC skins (1H Sword) ────────────────────
+
+    // Rainbow Blade Ex Eterna — prismatic-refraction LR DLC longsword.
+    public static Weapon CreateRainbowBladeExEterna() => Make("ohs_rainbow_blade_ex_eterna", "Rainbow Blade Ex Eterna", 22500, "Legendary", 225, 90, 168,
+        B().Add(StatType.Attack, 88).Add(StatType.Strength, 22).Add(StatType.Dexterity, 16).Add(StatType.Agility, 10), "CritRate+25,ComboBonus+30");
+
+    // Aetherial Glow — mid-tier LR DLC longsword, soft halo motif.
+    public static Weapon CreateAetherialGlow() => Make("ohs_aetherial_glow", "Aetherial Glow", 5400, "Epic", 160, 60, 118,
+        B().Add(StatType.Attack, 52).Add(StatType.Strength, 14).Add(StatType.Dexterity, 10), "HolyDamage+15");
+
+    // ── SAO Lost Song Easter Eggs (1H Sword) — Epic F50-70 ─────────────
+    // GGO-flavored photon-blade cameos that crossed into LS.
+
+    // Kagetsu-4 — corrupted GGO photon-pistol-flavored blade. DefId safe ASCII.
+    public static Weapon CreateKagetsu4() => Make("ohs_kagetsu_4", "Kagetsu-4", 3400, "Epic", 150, 52, 118,
+        B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 16).Add(StatType.Agility, 10), "CritRate+20");
+
+    // Laser Sword HG — GGO photon sword easter egg, blinding edge.
+    public static Weapon CreateLaserSwordHG() => Make("ohs_laser_sword_hg", "Laser Sword HG", 3300, "Epic", 150, 52, 116,
+        B().Add(StatType.Attack, 50).Add(StatType.Dexterity, 14).Add(StatType.Agility, 10), "BlindOnHit+10");
+
+    // ── Group 10 — Corrupted Variants (1H Sword) ──────────────────────
+    // Obtained ONLY via Corruption Stone consumables applied to the base
+    // Elucidator / Dark Repulser. Not registered in any loot pool.
+    // Corrupted = "Legendary" per canon (not Divine).
+
+    // Corrupted Elucidator — stone-transformed blade. Higher raw stats than
+    // base but suffers a HolyDamage penalty per corrupted canon.
+    public static Weapon CreateCorruptedElucidator() => Paired(Make("ohs_corrupted_elucidator", "Corrupted Elucidator",
+        22000, "Legendary", 220, 60, 175,
+        B().Add(StatType.Attack, 92).Add(StatType.Strength, 22).Add(StatType.Agility, 12).Add(StatType.Dexterity, 10),
+        "Bleed+25,CritRate+20,HolyDamage-10"));
+
+    // Corrupted Dark Repulser — stone-transformed ice blade.
+    public static Weapon CreateCorruptedDarkRepulser() => Paired(Make("ohs_corrupted_dark_repulser", "Corrupted Dark Repulser",
+        22000, "Legendary", 220, 60, 175,
+        B().Add(StatType.Attack, 92).Add(StatType.Dexterity, 16).Add(StatType.Strength, 16).Add(StatType.Agility, 10),
+        "Freeze+25,CritRate+20,HolyDamage-10"));
 }

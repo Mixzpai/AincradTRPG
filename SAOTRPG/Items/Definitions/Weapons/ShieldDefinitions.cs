@@ -94,4 +94,10 @@ public static class ShieldDefinitions
     public static Armor CreateGaouTatari() => Make("shd_gaou_tatari", "Gaou Tatari", 28000, "Legendary",
         255, 88, 46, 30, 46,
         B().Add(StatType.Defense, 45).Add(StatType.Vitality, 22));
+
+    // ── SAO Lost Song Mythological (Shield) — Legendary F75-99 ────────
+    // Ancile — Roman sacred shield, block-biased.
+    public static Armor CreateAncile() => Make("shd_ancile", "Ancile", 22000, "Legendary",
+        240, 82, 40, 28, 50,
+        B().Add(StatType.Defense, 40).Add(StatType.Vitality, 20));
 }

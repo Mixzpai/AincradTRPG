@@ -102,4 +102,10 @@ public static class ScimitarDefinitions
         w.IsEnhanceable = false;
         return w;
     }
+
+    // ── Alicization Lycoris DLC (Scimitar) — Legendary F85-99 ────────
+
+    // Savage Sandstorm — DLC desert-edge scimitar, crit-on-whirl.
+    public static Weapon CreateSavageSandstorm() => Make("sci_savage_sandstorm", "Savage Sandstorm", 19800, "Legendary", 220, 85, 158,
+        B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Agility, 18), "CritRate+20");
 }

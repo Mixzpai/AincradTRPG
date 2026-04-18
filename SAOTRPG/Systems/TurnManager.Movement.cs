@@ -406,6 +406,24 @@ public partial class TurnManager
             rewardXp:         400);
     }
 
+    // Dorothy — F78 Starlight Banner (8th Divine Object) giver.
+    // SAO Last Recollection canon (Underworld purification-scythe wielder).
+    private bool HandleDorothy(Entities.NPC npc)
+    {
+        if (npc.Name != "Dorothy") return false;
+        return HandleDivineQuest(npc,
+            questId:          "dorothy_starlight_banner",
+            questTitle:       "Purify the Darkness",
+            openingLine:      "Twenty-two shadows walk this floor. Cut them down, and the banner of starlight is yours.",
+            killCount:        22,
+            divineDefId:      "scy_starlight_banner",
+            handOverLine:     "The banner answers. Carry it — every swing you make now is a prayer against the dark.",
+            inProgressLine:   "The dark is thicker than your count suggests.",
+            postCompleteLine: "The banner walks with you. There is nothing more I can give.",
+            rewardCol:        700,
+            rewardXp:         550);
+    }
+
     // Selka the Novice — F65 Fragrant Olive Sword giver, with a chained
     // "Unfolding Truth" awakening quest offered once the base Fragrant
     // Olive quest is turned in. Quest order:
@@ -640,11 +658,13 @@ public partial class TurnManager
             bool handledByAzariya = HandleSisterAzariya(npc);
             // Selka the Novice (F65): Fragrant Olive Sword quest.
             bool handledBySelka = HandleSelka(npc);
+            // Dorothy (F78): Starlight Banner (8th Divine) quest.
+            bool handledByDorothy = HandleDorothy(npc);
             // Hollow Fragment HNM quests (9 NPCs F79-F98).
             bool handledByHollowNpc = HandleHollowWeaponNpc(npc);
             // Lisbeth at Lindarth (F48) — opens Rarity 6 craft dialog.
             bool handledByLisbeth = HandleLisbethLindarth(npc);
-            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByHollowNpc || handledByLisbeth;
+            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByDorothy || handledByHollowNpc || handledByLisbeth;
 
             // Turn in completed quests
             QuestSystem.OnNpcTalk(_log);

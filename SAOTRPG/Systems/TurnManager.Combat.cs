@@ -327,6 +327,23 @@ public partial class TurnManager
 
             // IM rare-boss ore drop — field boss has a chance to drop 1-2 random ores.
             RollBossOreDrops(fieldBoss.X, fieldBoss.Y, fieldBoss.Name);
+
+            // Corruption Stone drop — F95+ field bosses have a 10% chance to
+            // drop one of the two Corruption Stones. Canon workaround: Hollow
+            // Fragment distributes Corrupted Elucidator/Dark Repulser via the
+            // post-F100 boss which our F100 ending forecloses, so we route
+            // the corruption mechanic through rare endgame stones instead.
+            if (CurrentFloor >= 95 && Random.Shared.Next(100) < 10)
+            {
+                string stoneId = Random.Shared.Next(2) == 0
+                    ? "night_corruption_stone" : "shadow_corruption_stone";
+                var stoneDrop = Items.ItemRegistry.Create(stoneId);
+                if (stoneDrop != null)
+                {
+                    _map.AddItem(fieldBoss.X, fieldBoss.Y, stoneDrop);
+                    _log.LogLoot($"  ◆ {fieldBoss.Name} drops: {stoneDrop.Name}!");
+                }
+            }
         }
         else if (monster is Boss boss)
         {

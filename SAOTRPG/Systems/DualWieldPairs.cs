@@ -33,6 +33,13 @@ public static class DualWieldPairs
         // Alicization Underworld Kirito — Black Iron Dual Sword A/B.
         ["ohs_black_iron_dual_sword_a"] = "ohs_black_iron_dual_sword_b",
         ["ohs_black_iron_dual_sword_b"] = "ohs_black_iron_dual_sword_a",
+
+        // Corrupted Kirito pair — post-F100 canonical HF Corrupted variants
+        // of Elucidator + Dark Repulser. Transform via Corruption Stone
+        // consumables. Pair Resonance still fires because the corrupted
+        // versions remain canon Kirito dual-wield.
+        ["ohs_corrupted_elucidator"] = "ohs_corrupted_dark_repulser",
+        ["ohs_corrupted_dark_repulser"] = "ohs_corrupted_elucidator",
     };
 
     // True when the given main-hand and off-hand DefinitionIds form a

@@ -28,8 +28,11 @@ namespace SAOTRPG.Entities
         public int ExperienceRequired => (BaseExperienceRequired + (BaseExperienceRequired * Level));
         public int BaseExperienceRequired { get; set; } = 100;
 
-        // Max HP derived from Vitality: 100 + Vitality * 10.
-        public new int MaxHealth => 100 + (Vitality * 10);
+        // Max HP derived from Vitality: 100 + Vitality * 10. Plus Sleep
+        // life-skill milestone bonus (FB-050/051) which folds in here so
+        // every call-site (rest healing, recap, Death screen) picks it up
+        // without touching each read path.
+        public new int MaxHealth => 100 + (Vitality * 10) + LifeSkills.SleepMaxHpBonus();
 
         public int ColOnHand { get; set; }
         public int SkillPoints { get; set; }
@@ -37,9 +40,23 @@ namespace SAOTRPG.Entities
         // Player's inventory — backpack items and equipped gear.
         public PlayerInventory Inventory { get; private set; } = null!;
 
+        // FB-050 Life Skills — per-skill level/XP, milestone bonuses fold
+        // into Player stats below. Instantiated eagerly so stat reads never
+        // null-check. Save/load roundtrips this via SaveData.LifeSkills.
+        public LifeSkillSystem LifeSkills { get; private set; } = new();
+
+        // FB-058 Titles — unlocked set + active id. SetActiveTitle applies
+        // bonuses via base-stat pokes; unequip reverses.
+        public HashSet<string> UnlockedTitleIds { get; set; } = new();
+        public string? ActiveTitleId { get; set; }
+
         public int Attack => BaseAttack + (Strength * 2) + Inventory.GetTotalEquipmentBonus(StatType.Attack);
-        public int Defense => BaseDefense + (Endurance * 2) + Inventory.GetTotalEquipmentBonus(StatType.Defense);
-        public int Speed => BaseSpeed + (Agility * 2) + Inventory.GetTotalEquipmentBonus(StatType.Speed);
+        public int Defense => BaseDefense + (Endurance * 2)
+            + Inventory.GetTotalEquipmentBonus(StatType.Defense)
+            + (LifeSkills.WalkingEnduranceBonus() * 2);
+        public int Speed => BaseSpeed + (Agility * 2)
+            + Inventory.GetTotalEquipmentBonus(StatType.Speed)
+            + LifeSkills.RunningSpeedBonus();
         public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
 
         // Creates a new player with starting gear (Iron Sword + Health Potion) and full HP.
@@ -108,12 +125,22 @@ namespace SAOTRPG.Entities
         // Formatted to fit inside a 48-column panel without wrapping.
         // Additional sections (progress, equipment, status effects, bounty)
         // are appended by GameScreen.RefreshHud.
+        // Prefers the active FB-058 title display name when set; falls back
+        // to the legacy Player.Title string (e.g. "Adventurer") otherwise.
+        public string EffectiveTitleName()
+        {
+            if (ActiveTitleId != null
+                && Systems.TitleSystem.Titles.TryGetValue(ActiveTitleId, out var def))
+                return def.DisplayName;
+            return Title;
+        }
+
         public string GetStatsDisplay()
         {
             string sp = SkillPoints > 0 ? $"  ({SkillPoints} SP)" : "";
             return
 $@"{FirstName} {LastName}
-{Title}  Lv.{Level}{sp}
+{EffectiveTitleName()}  Lv.{Level}{sp}
 
 ATK {Attack,-4} DEF {Defense,-4} SPD {Speed}
 CRT {CriticalRate}%   CD +{CriticalHitDamage,-3} SD {SkillDamage}

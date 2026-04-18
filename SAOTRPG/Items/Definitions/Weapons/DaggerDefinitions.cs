@@ -148,4 +148,28 @@ public static class DaggerDefinitions
     // Argo wind variant. Hermit Fang — recluse's razor.
     public static Weapon CreateHermitFang() => Make("dag_hermit_fang", "Hermit Fang", 3200, "Rare", 120, 45, 72,
         B().Add(StatType.Attack, 34).Add(StatType.Agility, 14).Add(StatType.Dexterity, 10), "Slow+15");
+
+    // ── Alicization Lycoris Normal Raid (Dagger) — Epic F70-85 ────────
+
+    // Veinshredder — serrated vein-parting dagger, heavy bleed.
+    public static Weapon CreateVeinshredder() => Make("dag_veinshredder", "Veinshredder", 6800, "Epic", 165, 70, 120,
+        B().Add(StatType.Attack, 58).Add(StatType.Agility, 18).Add(StatType.Dexterity, 14), "Bleed+25");
+
+    // ── Alicization Lycoris Extreme Raid (Dagger) — Legendary F85-95 ──
+
+    // Whitespark — silver-edged dagger, crit-focused.
+    public static Weapon CreateWhitespark() => Make("dag_whitespark", "Whitespark", 18800, "Legendary", 215, 85, 150,
+        B().Add(StatType.Attack, 74).Add(StatType.Agility, 26).Add(StatType.Dexterity, 18), "CritRate+25");
+
+    // ── SAO Lost Song Top-Tier (Dagger) — Legendary F80-95 ──────────
+
+    // Fragarach — Celtic true-strike dagger.
+    public static Weapon CreateFragarach() => Make("dag_fragarach", "Fragarach", 18500, "Legendary", 215, 82, 148,
+        B().Add(StatType.Attack, 72).Add(StatType.Agility, 24).Add(StatType.Dexterity, 18), "TrueStrike+20");
+
+    // ── SAO Lost Song Mythological (Dagger) — Legendary F75-99 ───────
+
+    // Giardino — poison-garden Italianate dagger.
+    public static Weapon CreateGiardino() => Make("dag_giardino", "Giardino", 19000, "Legendary", 218, 80, 152,
+        B().Add(StatType.Attack, 76).Add(StatType.Agility, 24).Add(StatType.Dexterity, 16), "Poison+30");
 }

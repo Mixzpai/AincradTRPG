@@ -187,4 +187,22 @@ public static class RapierDefinitions
     // Asuna dark variant. Shadow Grace — nightshade thrust-blade.
     public static Weapon CreateShadowGrace() => Make("rap_shadow_grace", "Shadow Grace", 3300, "Rare", 125, 48, 78,
         B().Add(StatType.Attack, 36).Add(StatType.Dexterity, 14).Add(StatType.Speed, 8), "Bleed+15");
+
+    // ── Alicization Lycoris Normal Raid (Rapier) — Epic F70-85 ────────
+
+    // Timestream — clockwork-pattern rapier, parry-biased.
+    public static Weapon CreateTimestream() => Make("rap_timestream", "Timestream", 7000, "Epic", 170, 72, 125,
+        B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 18).Add(StatType.Speed, 14), "ParryChance+15");
+
+    // ── Alicization Lycoris Extreme Raid (Rapier) — Legendary F85-95 ──
+
+    // Graceful Needle — slim-profile rapier, backstab-specialist.
+    public static Weapon CreateGracefulNeedle() => Make("rap_graceful_needle", "Graceful Needle", 19200, "Legendary", 218, 85, 155,
+        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 26).Add(StatType.Speed, 18), "BackstabDmg+35");
+
+    // ── SAO Lost Song Top-Tier (Rapier) — Legendary F80-95 ──────────
+
+    // Glaring Light — apex LS rapier, radiant jab.
+    public static Weapon CreateGlaringLight() => Make("rap_glaring_light", "Glaring Light", 18800, "Legendary", 218, 83, 152,
+        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 24).Add(StatType.Speed, 16), "HolyDamage+20");
 }

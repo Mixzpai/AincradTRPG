@@ -180,4 +180,20 @@ public static class KatanaDefinitions
     // Leafa light variant. Eradicate Saber — purifying sunblade.
     public static Weapon CreateEradicateSaber() => Make("kat_eradicate_saber", "Eradicate Saber", 5500, "Epic", 160, 55, 118, 1,
         B().Add(StatType.Attack, 54).Add(StatType.Agility, 20).Add(StatType.Speed, 10), "HolyDamage+15");
+
+    // ── SAO Lost Song Top-Tier (Katana) — Legendary F80-95 ──────────
+    // Demon Blade Muramasa — distinct from IM kat_muramasa (lower-band
+    // shop variant). This is the apex LS Muramasa drop.
+    public static Weapon CreateDemonBladeMuramasa() => Make("kat_demon_blade_muramasa", "Demon Blade Muramasa", 20500, "Legendary", 225, 86, 160, 1,
+        B().Add(StatType.Attack, 82).Add(StatType.Agility, 26).Add(StatType.Dexterity, 14), "Bleed+30");
+
+    // ── SAO Lost Song Mythological (Katana) — Legendary F75-99 ────────
+    // Futsu no Mitama — shinto-spirit katana.
+    public static Weapon CreateFutsuNoMitama() => Make("kat_futsu_no_mitama", "Futsu no Mitama", 20000, "Legendary", 220, 84, 158, 1,
+        B().Add(StatType.Attack, 80).Add(StatType.Agility, 24).Add(StatType.Dexterity, 14), "HolyDamage+25");
+
+    // ── SAO Last Recollection Game-Original (Katana) ─────────────────
+    // Darkness Rending Blade — Eydis's shadow katana.
+    public static Weapon CreateDarknessRendingBlade() => Make("kat_darkness_rending_blade", "Darkness Rending Blade", 19500, "Legendary", 220, 82, 156, 1,
+        B().Add(StatType.Attack, 78).Add(StatType.Agility, 24).Add(StatType.Dexterity, 16), "Bleed+25");
 }

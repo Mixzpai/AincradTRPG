@@ -144,4 +144,41 @@ public static class TwoHandedSwordDefinitions
     // Heathcliff canon — Flame Lord. F80+ Legendary drop.
     public static Weapon CreateFlameLord() => Make("ths_flame_lord", "Flame Lord", 23500, "Legendary", 245, 80, 170,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 30).Add(StatType.Vitality, 14), "Burn+20");
+
+    // ── Alicization Lycoris Normal Raid (2H Sword) — Epic F70-85 ────────
+
+    // Sacred Inferno — consecrated flame-edged greatsword.
+    public static Weapon CreateSacredInferno() => Make("ths_sacred_inferno", "Sacred Inferno", 7400, "Epic", 185, 72, 130,
+        B().Add(StatType.Attack, 65).Add(StatType.Strength, 22).Add(StatType.Vitality, 10), "Burn+20");
+
+    // ── Alicization Lycoris Extreme Raid (2H Sword) — Legendary F85-95 ──
+
+    // Demonslayer — wide-bladed demonic-bane greatsword.
+    public static Weapon CreateDemonslayer() => Make("ths_demonslayer", "Demonslayer", 19800, "Legendary", 230, 86, 162,
+        B().Add(StatType.Attack, 82).Add(StatType.Strength, 26).Add(StatType.Vitality, 12), "DragonSlayer+30");
+
+    // Blazewyrm Greatsword — wyrm-etched greatsword, burns on contact.
+    public static Weapon CreateBlazewyrmGreatsword() => Make("ths_blazewyrm_greatsword", "Blazewyrm Greatsword", 19500, "Legendary", 228, 85, 160,
+        B().Add(StatType.Attack, 80).Add(StatType.Strength, 26).Add(StatType.Vitality, 10), "Burn+30");
+
+    // ── Alicization Lycoris Relic Boss Drops (2H Sword) — Legendary F80-95 ─
+
+    // Object Relic note: AL Relic F80-95 band drops 2H entry.
+    // (None additional — AL Relic 2H covered under Group 6 Object Eraser.)
+
+    // ── Alicization Lycoris DLC (2H Sword) — Legendary F85-99 ───────
+
+    // Purgatorial Greatsword — penitential flame-bound DLC greatsword.
+    public static Weapon CreatePurgatorialGreatsword() => Make("ths_purgatorial_greatsword", "Purgatorial Greatsword", 20200, "Legendary", 232, 87, 165,
+        B().Add(StatType.Attack, 84).Add(StatType.Strength, 26).Add(StatType.Vitality, 14), "HolyDamage+25");
+
+    // Lifestream Greatsword — DLC greatsword, slow-regen lifeflow motif.
+    public static Weapon CreateLifestreamGreatsword() => Make("ths_lifestream_greatsword", "Lifestream Greatsword", 21500, "Legendary", 240, 88, 170,
+        B().Add(StatType.Attack, 86).Add(StatType.Strength, 26).Add(StatType.Vitality, 18), "HPRegen+5");
+
+    // ── SAO Lost Song Mythological (2H Sword) — Legendary F75-99 ───────
+
+    // Object Eraser — annihilator-class greatsword, ignores armor layers.
+    public static Weapon CreateObjectEraser() => Make("ths_object_eraser", "Object Eraser", 22000, "Legendary", 240, 88, 172,
+        B().Add(StatType.Attack, 88).Add(StatType.Strength, 28).Add(StatType.Dexterity, 12), "ArmorPierce+25");
 }

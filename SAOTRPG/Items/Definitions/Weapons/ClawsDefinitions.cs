@@ -35,4 +35,14 @@ public static class ClawsDefinitions
 
     public static Weapon CreateCelestialClaws() => Make("celestial_claws", "Celestial Claws", 6000, "Legendary", 175, 75, 95,
         B().Add(StatType.Attack, 52).Add(StatType.Agility, 28).Add(StatType.Dexterity, 12));
+
+    // ── SAO Lost Song Top-Tier (Claws) — Legendary F80-95 ────────────
+    // Iron Fist Oguma — apex LS martial-claws, attack-speed biased.
+    public static Weapon CreateIronFistOguma() => Make("clw_iron_fist_oguma", "Iron Fist Oguma", 18800, "Legendary", 205, 82, 148,
+        B().Add(StatType.Attack, 72).Add(StatType.Agility, 32).Add(StatType.Dexterity, 16), "AttackSpeed+3");
+
+    // ── SAO Lost Song Mythological (Claws) — Legendary F75-99 ──────
+    // Paopei — daoist martial-artifact claws, crit affinity.
+    public static Weapon CreatePaopei() => Make("clw_paopei", "Paopei", 19000, "Legendary", 205, 83, 150,
+        B().Add(StatType.Attack, 74).Add(StatType.Agility, 30).Add(StatType.Dexterity, 18), "CritRate+20");
 }

@@ -140,4 +140,31 @@ public static class AxeDefinitions
     // Agil wind variant. Sturm Welt — stormfront axe, wide cleave.
     public static Weapon CreateSturmWelt() => Make("axe_sturm_welt", "Sturm Welt", 5500, "Epic", 165, 55, 116,
         B().Add(StatType.Attack, 54).Add(StatType.Strength, 18).Add(StatType.Vitality, 8), "Slow+15");
+
+    // ── Alicization Lycoris Normal Raid (Axe) — Epic F70-85 ──────────
+
+    // Skyrend — cleaving long-hafted greataxe, canonical AL raid drop.
+    public static Weapon CreateSkyrend() => Make("axe_skyrend", "Skyrend", 7200, "Epic", 175, 72, 132,
+        B().Add(StatType.Attack, 62).Add(StatType.Strength, 22).Add(StatType.Vitality, 10), "Cleave+20");
+
+    // ── Alicization Lycoris Relic Boss Drops (Axe) — Legendary F80-95 ─
+
+    // Deathbringer — executioner's greataxe, low-HP threshold trigger.
+    public static Weapon CreateDeathbringer() => Make("axe_deathbringer", "Deathbringer", 19500, "Legendary", 225, 85, 158,
+        B().Add(StatType.Attack, 82).Add(StatType.Strength, 28).Add(StatType.Vitality, 10), "ExecuteThreshold+25");
+
+    // Snowsunder — frost-sheathed axe, freeze-on-cleave.
+    public static Weapon CreateSnowsunder() => Make("axe_snowsunder", "Snowsunder", 18200, "Legendary", 215, 82, 150,
+        B().Add(StatType.Attack, 76).Add(StatType.Strength, 24).Add(StatType.Vitality, 10), "Freeze+20");
+
+    // ── SAO Lost Song Top-Tier (Axe) — Legendary F80-95 ──────────────
+    // Lang — highest-Attack canonical LS greataxe. No SpecialEffect; raw
+    // stat weapon at the top of its band.
+    public static Weapon CreateLang() => Make("axe_lang", "Lang", 20800, "Legendary", 235, 88, 175,
+        B().Add(StatType.Attack, 90).Add(StatType.Strength, 30).Add(StatType.Vitality, 12));
+
+    // ── SAO Lost Song Mythological (Axe) — Legendary F75-99 ──────────
+    // Nadr — dwarven-smith named axe, crit affinity.
+    public static Weapon CreateNadr() => Make("axe_nadr", "Nadr", 19000, "Legendary", 220, 82, 155,
+        B().Add(StatType.Attack, 78).Add(StatType.Strength, 26).Add(StatType.Vitality, 10), "CritRate+15");
 }

@@ -124,4 +124,37 @@ public static class SpearDefinitions
     // MD Epic. Oceanic trident-spear, brine-iron tip.
     public static Weapon CreateNeoAtlantis() => Make("spr_neo_atlantis", "Neo Atlantis", 5800, "Epic", 165, 50, 120,
         B().Add(StatType.Attack, 55).Add(StatType.Dexterity, 18).Add(StatType.Strength, 12), "FrostDamage+15");
+
+    // ── Alicization Lycoris Normal Raid (Spear) — Epic F70-85 ────────
+
+    // Heavenstriker — skyward-point ascending spear, holy motif.
+    public static Weapon CreateHeavenstriker() => Make("spr_heavenstriker", "Heavenstriker", 7000, "Epic", 175, 71, 128,
+        B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 20).Add(StatType.Strength, 14), "HolyDamage+15");
+
+    // ── Alicization Lycoris Extreme Raid (Spear) — Legendary F85-95 ──
+
+    // Arctic Pillar — frost-bound spear shaft, freeze on thrust.
+    public static Weapon CreateArcticPillar() => Make("spr_arctic_pillar", "Arctic Pillar", 19200, "Legendary", 222, 85, 158,
+        B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Strength, 14), "Freeze+25");
+
+    // ── Alicization Lycoris Relic Boss Drops (Spear) — Legendary F80-95 ─
+
+    // Frostpeak — glacial-tip relic spear, matches AL Relic band.
+    public static Weapon CreateFrostpeak() => Make("spr_frostpeak", "Frostpeak", 18500, "Legendary", 218, 82, 152,
+        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 22).Add(StatType.Strength, 14), "Freeze+25");
+
+    // ── SAO Lost Song Top-Tier (Spear) — Legendary F80-95 ──────────
+    // Brave Song — heroic-call polearm, combo-extender.
+    public static Weapon CreateBraveSong() => Make("spr_brave_song", "Brave Song", 19500, "Legendary", 225, 84, 158,
+        B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Strength, 14), "ComboBonus+40");
+
+    // ── SAO Lost Song Mythological (Spear) — Legendary F75-99 ──────
+
+    // Divine Laevateinn — Surtr's flame-spear, burn on thrust.
+    public static Weapon CreateDivineLaevateinn() => Make("spr_divine_laevateinn", "Divine Laevateinn", 20500, "Legendary", 230, 86, 165,
+        B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 24).Add(StatType.Strength, 16), "Burn+30");
+
+    // Elder's Trident — water-element trident of the elders.
+    public static Weapon CreateEldersTrident() => Make("spr_elders_trident", "Elder's Trident", 19000, "Legendary", 220, 82, 155,
+        B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 22).Add(StatType.Strength, 14), "Freeze+20");
 }

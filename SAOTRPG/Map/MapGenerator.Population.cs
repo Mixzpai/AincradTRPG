@@ -367,6 +367,18 @@ public static partial class MapGenerator
              Dialogue = "Agil sent me up with a two-hander he swears cleaves the ground. Prove you can swing it.",
          }),
 
+        // Dorothy — F78 Divine Object questline (Starlight Banner, 8th Divine).
+        // Canon Underworld character (SAO Last Recollection, purification scythe
+        // wielder). Offers "Purify the Darkness" quest on F78: 20 kills on the
+        // current floor returns the Starlight Banner Divine Object.
+        ((f, r) => f == 78 && r.Count > 2,
+         (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('D', Color.BrightCyan)
+         {
+             Name = "Dorothy",
+             Dialogue = "Shadow gathers thick on this floor. I need a blade that cleaves darkness, not flesh — are you that blade?",
+         }),
+
         // ── Hollow Fragment Hollow Mission questgivers (9 NPCs) ────────
         // Each gates a canon HNM weapon behind a kill-count quest. NPC names
         // are original but thematically match the weapon/region.
