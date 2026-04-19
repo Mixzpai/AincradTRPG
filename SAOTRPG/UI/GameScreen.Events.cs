@@ -126,9 +126,9 @@ public static partial class GameScreen
                 }
             });
 
-        // IF Proficiency fork (Agent 4) — fires when a weapon type crosses
-        // L25/50/75/100. Dialog modal picks 1 of 2 passives. Esc leaves the
-        // fork pending; the player can resolve it later from StatsDialog.
+        // Proficiency fork — fires when a weapon type crosses L25/50/75/100.
+        // Dialog modal picks 1 of 2 passives. Esc leaves the fork pending;
+        // the player can resolve it later from StatsDialog.
         turnManager.ProficiencyForkRequested += (weaponType, forkLevel, opt1, opt2) =>
             InvokeDialog(() =>
             {

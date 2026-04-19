@@ -110,14 +110,14 @@ public static class KatanaDefinitions
 
     // IM Legendary-band shop weapon. Canon demon-smith folded katana; hemorrhage
     // bleed theme. DefId uses kat_muramasa to avoid colliding with the existing
-    // HR evolution chain's Masamune (Divine T4, memory #409).
+    // HR evolution chain's Masamune (Divine T4).
     public static Weapon CreateMuramasa() => Make("kat_muramasa", "Muramasa", 21000, "Legendary", 230, 80, 168, 1,
         B().Add(StatType.Attack, 80).Add(StatType.Agility, 24).Add(StatType.Dexterity, 20).Add(StatType.Strength, 14), "Bleed+30");
 
     // ── Infinity Moment LAB katana (non-enhanceable) ────────────────
 
     // IM F94 floor-boss LAB reward. Canon name is 朔 (new-moon) kanji; we
-    // render as plain "Saku" for terminal-font compatibility (Tyler Q1=b).
+    // render as plain "Saku" for terminal-font compatibility.
     // Shaded night-cutter blade; damage climbs in darkness.
     public static Weapon CreateSaku()
     {

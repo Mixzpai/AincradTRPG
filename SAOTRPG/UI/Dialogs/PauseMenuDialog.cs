@@ -112,8 +112,8 @@ public static class PauseMenuDialog
 
         // Up/Down arrows between the four menu buttons. Terminal.Gui's
         // default Tab order handles left/right but Up/Down on buttons is
-        // not wired — follow memory #416: attach key handling to the
-        // buttons themselves (children), not the Dialog, so presses land.
+        // not wired — attach key handling to the buttons themselves
+        // (children), not the Dialog, so presses land.
         NavigationHelper.WireUpDown(saveBtn, exitBtn, loadBtn);
         NavigationHelper.WireUpDown(loadBtn, saveBtn, optionsBtn);
         NavigationHelper.WireUpDown(optionsBtn, loadBtn, exitBtn);

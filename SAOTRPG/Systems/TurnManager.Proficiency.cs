@@ -3,16 +3,15 @@ namespace SAOTRPG.Systems;
 // Weapon proficiency system — kills per weapon type grant cumulative
 // passive damage bonuses and rank titles.
 //
-// ── Expansion (IF Phase B Agent 4) ─────────────────────────────────────
-// The legacy 15-tier "Novice → The Black Swordsman" ladder is now a
-// cosmetic display draped over a numeric 110-level curve. Kill-count
-// anchors L1=0, L25=25, L50=100, L75=500, L100=2000, L110=10000 — the
-// Kills-per-level is interpolated geometrically between anchors. At
-// L25/L50/L75/L100 the player picks 1 of 2 passive "fork" bonuses per
-// weapon type (Bloodfever/Bulwark, Keen Edge/Guarded Stance, Onslaught/
-// Hardened Core, Weapon Master/Immortal Vanguard). Forks are fired
-// through the same FloorLevelUp-style modal pattern used by talent
-// picks (GameScreen.Events.cs TalentPickRequested hook).
+// The legacy 15-tier "Novice → The Black Swordsman" ladder is a cosmetic
+// display draped over a numeric 110-level curve. Kill-count anchors
+// L1=0, L25=25, L50=100, L75=500, L100=2000, L110=10000 — Kills-per-level
+// is interpolated geometrically between anchors. At L25/L50/L75/L100 the
+// player picks 1 of 2 passive "fork" bonuses per weapon type
+// (Bloodfever/Bulwark, Keen Edge/Guarded Stance, Onslaught/Hardened Core,
+// Weapon Master/Immortal Vanguard). Forks fire through the same
+// FloorLevelUp-style modal pattern used by talent picks
+// (GameScreen.Events.cs TalentPickRequested hook).
 public partial class TurnManager
 {
     // ── Legacy 15-tier cosmetic rank ladder (display only) ────────────
@@ -229,9 +228,9 @@ public partial class TurnManager
     }
 
     // Apply the stat impact of a fork passive directly to the player.
-    // Placeholder numbers per Tyler's instruction: minimalist, rebalance later.
-    // Fork damage components (opt 1 of L25, opt 1 of L100) fold into
-    // GetProficiencyBonus above; the stat-based components land here.
+    // Placeholder numbers — rebalance later. Fork damage components
+    // (opt 1 of L25, opt 1 of L100) fold into GetProficiencyBonus above;
+    // the stat-based components land here.
     private void ApplyForkPassive(string weaponType, int forkLevel, int option)
     {
         switch (forkLevel)

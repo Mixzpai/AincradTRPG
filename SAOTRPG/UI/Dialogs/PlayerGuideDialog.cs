@@ -16,7 +16,7 @@ namespace SAOTRPG.UI.Dialogs;
 //   ↑/↓            move tree selection (body updates live)
 //   ← / →          collapse / expand a category node
 //   Enter (tree)   jump into the first [Bracketed] reference in the body,
-//                  or activate the topic (used by Agent 2)
+//                  or activate the topic
 //   Enter (body)   same jump — uses the body's visible text
 //   Backspace /    pop the SEE ALSO jump stack (previous topic)
 //    Ctrl+O
@@ -30,29 +30,29 @@ namespace SAOTRPG.UI.Dialogs;
 // (digit type-ahead, letter nav, Enter activation). Shortcuts MUST be wired
 // on the widget itself, not on dialog.KeyDown — by the time dialog sees the
 // event, e.Handled is already true. HandleGuideKey() centralizes the
-// dispatch so Agent 2 can inject ?, e, and other overlay hooks cleanly.
+// dispatch so ?, e, and other overlay hooks can inject cleanly.
 public static class PlayerGuideDialog
 {
     private const int MinWidth = 96, MinHeight = 32;
     private const int LeftPaneWidth = 44;
-    // Agent 2: hard body-wrap column per scout §10 Q2 — matches man-page
-    // convention and stays readable regardless of dialog width.
+    // Hard body-wrap column — matches man-page convention and stays
+    // readable regardless of dialog width.
     private const int BodyWrapCols = 72;
 
-    // Agent 2: session-only state. Cleared at Show(); the persistent mirrors
-    // live in ProfileData.GuideVisitedTopics and ProfileData.GuideBookmarks.
+    // Session-only state. Cleared at Show(); the persistent mirrors live in
+    // ProfileData.GuideVisitedTopics and ProfileData.GuideBookmarks.
     // Static so the static TreeAspect/TreeColor stubs can read them.
     private static readonly HashSet<string> _visitedThisSession = new();
     private static readonly HashSet<(string topic, string block)> _expanded = new();
 
-    // Agent 2: captured by Show() so the static TreeAspect/TreeColor can see
-    // the current run context (for stat-dump only). Null when the guide is
+    // Captured by Show() so the static TreeAspect/TreeColor can see the
+    // current run context (for stat-dump only). Null when the guide is
     // opened outside an active run (main menu → guide).
     private static TurnManager? _activeTm;
     private static Player? _activePlayer;
 
-    // Footer hint segments — Agent 2 appends "?: help" and "e: export".
-    // Render with " · " joiner so adds are non-conflicting string ops.
+    // Footer hint segments. Rendered with " · " joiner so appending extras
+    // (e.g. "?: help", "e: export") stays a non-conflicting string op.
     private static readonly string[] FooterHint =
     {
         "↑↓: select",
@@ -90,8 +90,8 @@ public static class PlayerGuideDialog
     // Note: non-greedy, no nested brackets — titles don't contain ']'.
     private static readonly Regex BracketRegex = new(@"\[([^\]]+)\]", RegexOptions.Compiled);
 
-    // Agent 2: signature extended to receive run context for the stat-dump
-    // export. Both params nullable so main-menu callers still compile.
+    // Receives run context for the stat-dump export. Both params nullable
+    // so main-menu callers (no active run) still compile.
     public static void Show(TurnManager? turnManager = null, Player? player = null)
     {
         ProfileData.EnsureLoaded();
@@ -247,8 +247,8 @@ public static class PlayerGuideDialog
             X = LeftPaneWidth + 2, Y = 2,
             Width = Dim.Fill(2), Height = Dim.Fill(4),
             ColorScheme = ColorSchemes.Body,
-            // Agent 2: bodies are pre-wrapped to BodyWrapCols via WrapTo() so
-            // the TextView's auto-wrap is disabled — gives consistent 72-col
+            // Bodies are pre-wrapped to BodyWrapCols via WrapTo() so the
+            // TextView's auto-wrap is disabled — gives consistent 72-col
             // layout regardless of dialog width and preserves [bracket] tokens.
             ReadOnly = true, WordWrap = false,
         };
@@ -268,15 +268,15 @@ public static class PlayerGuideDialog
 
         var hint = new Label
         {
-            // Agent 2: appended "?: help" and "e: export" to the footer hints.
+            // "?: help" and "e: export" appended to the footer hints.
             Text = string.Join("   ", FooterHint.Concat(new[] { "?: help", "e: export" })),
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1),
             ColorScheme = ColorSchemes.Dim,
         };
 
-        // Agent 2: transient footer flash used by stat-dump (copy confirm)
-        // and any other status message. Hidden until a Flash() call makes it
-        // visible for 3s. Anchored above the hint bar.
+        // Transient footer flash used by stat-dump (copy confirm) and any
+        // other status message. Hidden until Flash() shows it for 3s.
+        // Anchored above the hint bar.
         var footerFlash = new Label
         {
             Text = "", X = LeftPaneWidth + 2, Y = Pos.AnchorEnd(2),
@@ -332,7 +332,7 @@ public static class PlayerGuideDialog
             var node = tree.SelectedObject;
             if (node is TopicNode t)
             {
-                // Agent 2: gated monster/boss topics stay masked until
+                // Gated monster/boss topics stay masked until
                 // PlayerGuideKnowledge.MarkKnown fires at kill time.
                 bool known = !IsGatedTitle(t.Entry.Title)
                           || ProfileData.GuideKnownTopics.Contains(t.Entry.Title);
@@ -349,11 +349,11 @@ public static class PlayerGuideDialog
                 }
                 bodyHeader.Text = $"{t.Entry.Category} › {t.Entry.Title}";
                 bodyHeader.ColorScheme = CategoryColor(t.Entry.Category);
-                // Agent 2: render <details:TITLE>...</details> per expansion
-                // state, then hard-wrap to BodyWrapCols.
+                // Render <details:TITLE>...</details> per expansion state,
+                // then hard-wrap to BodyWrapCols.
                 string rendered = RenderBodyWithDetails(TopicKey(t.Entry), t.Entry.Body);
                 bodyText.Text = WrapTo(rendered, BodyWrapCols);
-                // Agent 2: session visited set — clears the "· " unread dot.
+                // Session visited set — clears the "· " unread dot.
                 _visitedThisSession.Add(TopicKey(t.Entry));
             }
             else if (node is CategoryNode c)
@@ -578,8 +578,8 @@ public static class PlayerGuideDialog
         }
 
         // ── Central key dispatch ──────────────────────────────────────
-        // Returns true if the key was handled. Agent 2 adds their `?` /
-        // `e` / stat-dump handlers here, with clear comments tagging them.
+        // Returns true if the key was handled. Overlay hooks (`?`, `e`,
+        // stat-dump) inject here.
         bool HandleGuideKey(KeyCode key, System.Text.Rune rune)
         {
             switch (key)
@@ -592,9 +592,9 @@ public static class PlayerGuideDialog
             }
             if (rune.Value == '/') { StartSearch(); return true; }
 
-            // Agent 2: ? overlay
+            // ? overlay
             if (rune.Value == '?') { ShowKeybindOverlay(); return true; }
-            // Agent 2: stat dump
+            // stat dump
             if (rune.Value == 'e' || rune.Value == 'E')
             {
                 ShowStatDump(Flash);
@@ -650,9 +650,9 @@ public static class PlayerGuideDialog
                     if (PopNavStack()) { e.Handled = true; return; }
                     break;
                 case KeyCode.Enter:
-                    // Agent 2 priority: if the cursor line has a [Topic] xref,
-                    // Agent 1's SEE ALSO jump wins; otherwise a ▸/▾ marker on
-                    // that line toggles the progressive-disclosure block.
+                    // If the cursor line has a [Topic] xref, the SEE ALSO
+                    // jump wins; otherwise a ▸/▾ marker on that line toggles
+                    // the progressive-disclosure block.
                     if (tree.SelectedObject is TopicNode currentTopic)
                     {
                         string cursorLine = GetCursorLine(bodyText);
@@ -727,10 +727,10 @@ public static class PlayerGuideDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // ── Agent 2: stub fills ───────────────────────────────────────────
+    // ── Tree row rendering ────────────────────────────────────────────
 
-    // Agent 2 fills: visited-marker "· " prefix for unread topics, "??? (Unknown)"
-    // masking for gated monster/boss entries, trailing "*" for bookmarked rows.
+    // Visited-marker "· " prefix for unread topics, "??? (Unknown)" masking
+    // for gated monster/boss entries, trailing "*" for bookmarked rows.
     private static string TreeAspect(object? node)
     {
         switch (node)
@@ -756,8 +756,8 @@ public static class PlayerGuideDialog
         }
     }
 
-    // Agent 2 fills: dim unread and gated rows; brighten bookmarks (Gold).
-    // Categories/tags keep Agent 1's baseline tinting.
+    // Dim unread and gated rows; brighten bookmarks (Gold).
+    // Categories/tags keep the baseline tinting.
     private static ColorScheme? TreeColor(object? node)
     {
         switch (node)
@@ -784,12 +784,12 @@ public static class PlayerGuideDialog
         }
     }
 
-    // ── Agent 2: ??? gating helper ────────────────────────────────────
+    // ── ??? gating helper ─────────────────────────────────────────────
     // Title prefixes mirror PlayerGuideKnowledge.MarkKnown conventions.
     private static bool IsGatedTitle(string title) =>
         title.StartsWith("Monster: ") || title.StartsWith("Boss: ") || title.StartsWith("Field Boss: ");
 
-    // ── Agent 2: progressive disclosure (feature 1) ───────────────────
+    // ── Progressive disclosure ────────────────────────────────────────
     //
     // Content markers: <details:TITLE>...</details> embedded in a body.
     // Collapsed: "▸ TITLE (Enter to expand)"
@@ -878,7 +878,7 @@ public static class PlayerGuideDialog
         return false;
     }
 
-    // ── Agent 2: 72-col paragraph-preserving wrap (feature 5) ─────────
+    // ── 72-col paragraph-preserving wrap ──────────────────────────────
     //
     // Blank-line-separated paragraphs wrap independently. Leading whitespace
     // on the first line of a paragraph is repeated on continuation lines so
@@ -962,9 +962,9 @@ public static class PlayerGuideDialog
         return result;
     }
 
-    // ── Agent 2: ? contextual keybindings overlay (feature 4) ─────────
+    // ── ? contextual keybindings overlay ──────────────────────────────
     // Modal 60x20, centered. Any key dismisses. Grouped Nav / Search /
-    // Actions / Exit per task spec.
+    // Actions / Exit.
     private static void ShowKeybindOverlay()
     {
         const int W = 60, H = 20;
@@ -1022,7 +1022,7 @@ public static class PlayerGuideDialog
         overlay.Dispose();
     }
 
-    // ── Agent 2: Cogmind-style run-summary clipboard dump (feature 6) ─
+    // ── Cogmind-style run-summary clipboard dump ──────────────────────
     // Pulls live data from the TurnManager + Player captured by Show().
     // If null (main-menu invocation), flashes "No active run".
     private static void ShowStatDump(Action<string, ColorScheme?> flash)

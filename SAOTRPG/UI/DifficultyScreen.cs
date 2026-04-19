@@ -109,7 +109,7 @@ public static class DifficultyScreen
             Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger,
         };
 
-        // ── Run Modifiers row (FB-564) — TESTING_ALWAYS_ON (memory #375).
+        // ── Run Modifiers row (FB-564) — TESTING_ALWAYS_ON.
         // Canonical unlock: ProfileData.HasCompletedGame after F100 clear.
         int modY = hcY + 2;
         bool modifiersUnlocked = true; // TESTING_ALWAYS_ON — restore: ProfileData.HasCompletedGame

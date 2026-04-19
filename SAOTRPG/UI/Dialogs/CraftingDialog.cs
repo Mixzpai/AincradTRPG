@@ -335,7 +335,7 @@ public static class CraftingDialog
                 weapon.Bonuses.Add(stat, bonus);
                 // Adamant flavour: ores may carry a one-off ItemDurability
                 // reinforcement on socket. Read via ItemRegistry prototype
-                // to avoid hard-coded ore defId lookups here. Tyler Q3=a.
+                // to avoid hard-coded ore defId lookups here.
                 int durBump = GetOreDurabilityBonus(ore);
                 if (durBump != 0) weapon.ItemDurability += durBump;
             }
@@ -556,7 +556,7 @@ public static class CraftingDialog
             player.Inventory.RemoveItem(item);
     }
 
-    // ── Refine (IF Phase B Agent 4) ──────────────────────────────────────
+    // ── Refine ───────────────────────────────────────────────────────────
     // Socket an Ingot into one of the 3 Refinement slots on the currently
     // equipped weapon or shield (OffHand). Override-only: replacing an
     // occupied slot destroys the old ingot. Divine-rarity gear is sealed

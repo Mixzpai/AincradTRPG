@@ -7,10 +7,10 @@ namespace SAOTRPG.Systems;
 // a new slice of late-game weapon stock across ALL shops for the rest of the
 // run. Additive only — shops never lose stock if the player regresses.
 //
-// Tyler's Q4 adjustment: start at F50 (not canon F76). Fifty unlock tiers
-// across F51..F100. Each tier adds 1–2 weapons — a mix of existing mid-to-
-// late registered weapons and the 12 new IM shop weapons (clustered at
-// their canon floor bands: Epic at F76/78/80/82/84, Legendary at F86/88/90/92/94).
+// Tiers start at F50 (not canon F76). Fifty unlock tiers across F51..F100.
+// Each tier adds 1–2 weapons — a mix of existing mid-to-late registered
+// weapons and the 12 new IM shop weapons (clustered at their canon floor
+// bands: Epic at F76/78/80/82/84, Legendary at F86/88/90/92/94).
 //
 // State flow:
 //   • TurnManager.HandleMonsterKill (Boss branch, not FieldBoss) calls

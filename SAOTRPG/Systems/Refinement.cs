@@ -7,7 +7,7 @@ using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;
 
 namespace SAOTRPG.Systems;
 
-// IF-canon Refinement helper. Public API consumed by Agent 4's UI layer
+// IF-canon Refinement helper. Public API consumed by the UI layer
 // (CraftingDialog.ShowRefineMenu) and by the damage-calc pipeline via
 // Equipment.Bonuses folding. Override-only: socketing into an occupied slot
 // destroys the previous ingot's effect and consumes one new ingot from
@@ -84,7 +84,7 @@ public static class Refinement
         return false;
     }
 
-    // Public summary for Agent 4's preview UI. Returns the flat list of
+    // Public summary for the preview UI. Returns the flat list of
     // (StatType, potency) tuples contributed by all currently-socketed ingots
     // on `eq`, plus a display string like "Attack +25, Defense -5".
     public static (List<(StatType Stat, int Value)> Stats, string DisplayText)

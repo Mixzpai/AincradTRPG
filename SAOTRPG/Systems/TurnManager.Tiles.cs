@@ -240,10 +240,10 @@ public partial class TurnManager
         _map.SetTileType(tx, ty, TileType.Floor);
     }
 
-    // Priority 5 Phase B: Secret Shrine tile. One-shot weapon discovery —
-    // when the player steps on a shrine, they receive the T1 chain weapon
-    // associated with the current floor and the tile reverts to plain Floor.
-    // No dialog, no confirmation — walk, gain, continue.
+    // Secret Shrine tile. One-shot weapon discovery — when the player steps
+    // on a shrine, they receive the T1 chain weapon associated with the
+    // current floor and the tile reverts to plain Floor. No dialog, no
+    // confirmation — walk, gain, continue.
     private void HandleSecretShrine(Tile tile, int tx, int ty)
     {
         if (!WeaponEvolutionChains.SecretShrineByFloor.TryGetValue(CurrentFloor, out var defId))

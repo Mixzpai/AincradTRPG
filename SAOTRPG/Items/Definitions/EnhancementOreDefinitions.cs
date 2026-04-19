@@ -6,7 +6,7 @@ namespace SAOTRPG.Items.Definitions;
 // level consumes exactly one ore, and the ore chosen biases that level's
 // BonusPerLevel into a specific stat instead of the legacy flat +Attack.
 //
-// Ore → stat map (Tyler-approved):
+// Ore → stat map:
 //   Crimson Flame  → Attack
 //   Adamant        → Defense (+ small Durability bump on socket)
 //   Crust          → Vitality (feeds MaxHP indirectly)
@@ -98,6 +98,6 @@ public class EnhancementOre : Material
 
     // Adamant flavour: +N ItemDurability on socket. Default 0 for every
     // other ore. Applied additively each enhance level by CraftingDialog
-    // and refunded on demote. Tyler Q3=a (2026-04-17).
+    // and refunded on demote.
     public int DurabilityBonus { get; set; }
 }

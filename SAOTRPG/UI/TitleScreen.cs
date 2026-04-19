@@ -232,10 +232,9 @@ public static class TitleScreen
         catch { return ""; }
     }
 
-    // Routed to the new RecordsDialog (2026-04-19) — replaces the old
-    // MessageBox.Query text dump with a structured 80x30 dialog that
-    // shows summary, achievement panels, progress bars, recent runs (10),
-    // and a tab-switchable victory leaderboard sortable by Col / Turns /
-    // Level / Kills / PlayTime / Date / Grade.
+    // Routes to RecordsDialog: structured 80x30 dialog showing summary,
+    // achievement panels, progress bars, recent runs (10), and a
+    // tab-switchable victory leaderboard sortable by Col / Turns / Level /
+    // Kills / PlayTime / Date / Grade.
     private static void ShowRecords() => Dialogs.RecordsDialog.Show();
 }

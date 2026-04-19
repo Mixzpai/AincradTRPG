@@ -10,10 +10,9 @@ public static class ShieldDefinitions
     // Mirror the 1H-sword Make() pattern for consistency with the rest of the
     // weapon definition files. Shields are Armor subtype; slot = "Shield".
     //
-    // NOTE: Armor has no SpecialEffect field today (only Weapon does). IF shields
-    // have canon-flavor strings (DamageReflect, HPRegen, Barrier, CritImmune) that
-    // we annotate in comments until Agent 3 optionally lifts SpecialEffect to
-    // EquipmentBase. These strings are flavor-only in current parser regardless.
+    // NOTE: Armor has no SpecialEffect field (only Weapon does). IF shields' canon-flavor
+    // effects (DamageReflect, HPRegen, Barrier, CritImmune) are annotated in comments
+    // only — they are flavor-only in the current parser.
     private static Armor Make(string id, string name, int value, string rarity, int durability,
         int level, int baseDefense, int weight, int blockChance,
         StatModifierCollection bonuses)

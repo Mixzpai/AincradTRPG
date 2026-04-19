@@ -205,7 +205,7 @@ public static class OneHandedSwordDefinitions
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 22).Add(StatType.Vitality, 18).Add(StatType.Dexterity, 16), "DamageReduction+20");
 
     // ── Hollow Area Uniques (1H Sword) — Rare/Legendary drops ────
-    // Tyler's placement direction: balanced variety, rare chest drops.
+    // Placement direction: balanced variety, rare chest drops.
 
     // HF F35 Hollow Area. Traitorblade — cursed duel-edge, pitch-dark finish.
     public static Weapon CreateTraitorbladeArguteBrand() => Make("ohs_traitorblade_argute_brand", "Traitorblade: Argute Brand", 2400, "Rare", 130, 30, 65,

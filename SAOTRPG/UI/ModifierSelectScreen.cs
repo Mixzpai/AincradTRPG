@@ -6,7 +6,7 @@ namespace SAOTRPG.UI;
 
 // FB-564 — Run Modifier picker. Checkbox grid grouped by tier. Live score
 // multiplier preview. Writes directly to RunModifiers.Active on Apply.
-// Post-F100 canon unlock; TESTING_ALWAYS_ON per memory #375.
+// Post-F100 canon unlock; currently TESTING_ALWAYS_ON.
 public static class ModifierSelectScreen
 {
     public static void Show(Window mainWindow, Action onApplied)

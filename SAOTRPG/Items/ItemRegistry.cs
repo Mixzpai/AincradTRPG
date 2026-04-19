@@ -229,7 +229,7 @@ public static class ItemRegistry
         // Series ladder: Integral (F14 Epic) -> Nox (F25 Epic) ->
         //                Rosso (F61 Legendary) -> Yasha (F87 Legendary) ->
         //                Gaou (F90+ Legendary).
-        // Agent 2 handles field-boss wiring + guaranteed drops for these.
+        // Field-boss wiring + guaranteed drops are handled in FieldBossFactory.
         // Anneal Blade line (F1-10) is registered inline in the 1H-sword block above.
 
         // Integral Series (F14 Epic) — 4 weapons + 1 shield
@@ -509,7 +509,7 @@ public static class ItemRegistry
         Register("ore_wind_flower",    () => EnhancementOreDefinitions.CreateWindFlower());
         Register("ore_ash_white",      () => EnhancementOreDefinitions.CreateAshWhite());
 
-        // ── Refinement Ingots (Agent 3 partition — see IF_EXPANSION_SCOUT §9) ──
+        // ── Refinement Ingots ──
         Register("sharpening_ingot",  () => IngotDefinitions.CreateSharpeningIngot());
         Register("warden_ingot",      () => IngotDefinitions.CreateWardenIngot());
         Register("hunter_ingot",      () => IngotDefinitions.CreateHunterIngot());

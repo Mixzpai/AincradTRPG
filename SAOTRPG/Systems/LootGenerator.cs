@@ -27,11 +27,11 @@ public static class LootGenerator
     // Themed drop tables keyed by mob LootTag. Each entry maps to an array
     // of (item name, Col value) tuples. Add new tags/items freely.
     //
-    // Priority 5 Phase B: the 9 chain catalyst materials are woven into the
-    // themed tables. When TurnManager.DropLoot picks a tuple whose Name
-    // matches an entry in ChainMaterialByName, the drop is routed through
-    // ItemRegistry.Create so the player receives a real registered item with
-    // a proper DefinitionId (required for the Anvil Evolve flow to see it).
+    // The 9 chain catalyst materials are woven into the themed tables. When
+    // TurnManager.DropLoot picks a tuple whose Name matches an entry in
+    // ChainMaterialByName, the drop is routed through ItemRegistry.Create so
+    // the player receives a real registered item with a proper DefinitionId
+    // (required for the Anvil Evolve flow to see it).
     public static readonly Dictionary<string, (string Name, int Value)[]> MobLootTable = new()
     {
         { "beast",     new[] { ("Raw Hide",        8), ("Beast Fang",     12), ("Sinew",         6) } },
@@ -47,7 +47,7 @@ public static class LootGenerator
         { "aquatic",   new[] { ("Water Core",     15), ("Fish Scale",      8), ("Murky Pearl",   18) } },
         // Hollow / corrupted / celestial — F76+ endgame mobs (Hollow Mutated
         // Wolf, Cardinal Error, Immortal Echo, Void Seraph). Flavoured toward
-        // Ash White ore + hollow-themed mats. Added 2026-04-17 per Tyler Q2=c.
+        // Ash White ore + hollow-themed mats.
         { "hollow",    new[] { ("Hollow Essence", 22), ("Corrupted Shard", 18), ("Void Particle", 14), ("Ectoplasm",       8) } },
     };
 
@@ -410,7 +410,7 @@ public static class LootGenerator
         ["beast"]     = "ore_wind_flower",
         // Ash White — hollow/corrupted/celestial F76+ endgame mobs. The
         // "hollow" LootTag covers Hollow Mutated Wolf, Cardinal Error,
-        // Immortal Echo, Void Seraph. (Tyler Q2=c, 2026-04-17.)
+        // Immortal Echo, Void Seraph.
         ["hollow"]    = "ore_ash_white",
     };
 

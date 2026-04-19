@@ -19,7 +19,7 @@ public abstract class EquipmentBase : BaseItem
     // Display name with enhancement suffix: "Iron Sword +3"
     public string EnhancedName => EnhancementLevel > 0 ? $"{Name} +{EnhancementLevel}" : Name ?? "";
 
-    // ── IF Refinement (Agent 3) ──────────────────────────────────────────
+    // ── IF Refinement ────────────────────────────────────────────────────
     // Three refinement slots. Each entry is either null (empty) or the
     // DefinitionId of a socketed Ingot. Use Systems.Refinement.Socket() to
     // mutate — do NOT write directly, because the helper also folds the

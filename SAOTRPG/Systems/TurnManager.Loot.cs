@@ -32,9 +32,9 @@ public partial class TurnManager
         {
             var entry = lootTable[Random.Shared.Next(lootTable.Length)];
 
-            // Priority 5 Phase B: chain catalyst materials must arrive as real
-            // registered items (DefinitionId set) so the Anvil Evolve flow can
-            // find them. Route via ItemRegistry when the drop name matches.
+            // Chain catalyst materials must arrive as real registered items
+            // (DefinitionId set) so the Anvil Evolve flow can find them. Route
+            // via ItemRegistry when the drop name matches.
             BaseItem? lootItem;
             if (LootGenerator.ChainMaterialByName.TryGetValue(entry.Name, out var chainDefId))
             {

@@ -1,6 +1,6 @@
 namespace SAOTRPG.Systems;
 
-// Priority 5 Phase B: weapon evolution chain lookup table.
+// Weapon evolution chain lookup table.
 // 9 chains × 4 tiers = 36 entries. Each entry ties a weapon DefId to its
 // current tier, the next weapon in the chain, and the materials required to
 // perform the upgrade. T4 entries are apex — NextDefId is null and the
@@ -24,11 +24,11 @@ public static class WeaponEvolutionChains
 {
     // Maps a weapon DefId → its step in the chain. Missing entries = not in a chain.
     //
-    // NOTE on PeakExtraMatId substitutions: the Phase B spec called for several
-    // material DefIds that are not yet registered in MobDropDefinitions
+    // NOTE on PeakExtraMatId substitutions: several intended material DefIds
     // (crystal_core, soul_dust, gear_fragment, wing_fragment, venom_sac,
-    // flame_essence). Each substitute below is an already-registered material
-    // in ItemRegistry.cs (see IngredientDefinitions / MobDropDefinitions).
+    // flame_essence) are not yet registered in MobDropDefinitions. Each
+    // substitute below is an already-registered material in ItemRegistry.cs
+    // (see IngredientDefinitions / MobDropDefinitions).
     public static readonly Dictionary<string, ChainStep> Chains = new()
     {
         // ── 1H Sword chain: Final Espada → Asmodeus → Final Avalanche → Tyrfing

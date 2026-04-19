@@ -12,7 +12,7 @@ namespace SAOTRPG.UI.Dialogs;
 // Lisbeth Rarity 6 crafting dialog — F48 Lindarth blacksmith hub.
 // Lists 18 canon HF craft recipes, shows availability status, and
 // consumes materials + 3M Col per craft. Recipes are not once-per-run
-// (Tyler Q1=C: canon cost is steep enough to self-gate).
+// (the canon cost is steep enough to self-gate).
 public static class LisbethCraftDialog
 {
     private const int DialogWidth = 86, DialogHeight = 26;

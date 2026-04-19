@@ -519,7 +519,7 @@ public partial class TurnManager
         tm._bountyKillsCurrent = save.BountyKillsCurrent; tm._bountyRewardCol = save.BountyRewardCol;
         tm._bountyRewardXp = save.BountyRewardXp; tm._bountyComplete = save.BountyComplete;
         foreach (var kvp in save.WeaponKills) tm._weaponKills[kvp.Key] = kvp.Value;
-        // IF Proficiency forks (Agent 4) — rehydrate per-weapon pick state.
+        // IF Proficiency forks — rehydrate per-weapon pick state.
         tm.RehydrateForkChoices(save.WeaponProficiencyForks);
         if (save.DiscoveredLore != null) foreach (var idx in save.DiscoveredLore) tm._discoveredLore.Add(idx);
         if (save.UnlockedAchievements != null) Achievements.Unlocked = new HashSet<string>(save.UnlockedAchievements);

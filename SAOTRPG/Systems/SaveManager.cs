@@ -211,8 +211,8 @@ public static class SaveManager
         if (item is EquipmentBase eq)
         {
             save.EnhancementLevel = eq.EnhancementLevel;
-            // IF Refinement (Agent 3): persist slot contents if any slot is
-            // occupied. Empty slot arrays stay null to keep legacy saves clean.
+            // IF Refinement: persist slot contents if any slot is occupied.
+            // Empty slot arrays stay null to keep legacy saves clean.
             if (eq.HasAnyRefinement)
                 save.RefinementSlots = eq.RefinementSlots.ToList();
         }
@@ -348,8 +348,8 @@ public static class SaveManager
                     }
                 }
             }
-            // IF Refinement (Agent 3): restore slot DefIds and fold ingot
-            // bonuses back into Bonuses so equipped gear re-grants them.
+            // IF Refinement: restore slot DefIds and fold ingot bonuses back
+            // into Bonuses so equipped gear re-grants them.
             if (item is EquipmentBase eqRef && save.RefinementSlots != null)
             {
                 for (int i = 0; i < EquipmentBase.RefinementSlotCount && i < save.RefinementSlots.Count; i++)

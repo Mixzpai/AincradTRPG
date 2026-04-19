@@ -56,7 +56,7 @@ public class SaveData
     public int KillStreak { get; set; }
     public Dictionary<string, int> WeaponKills { get; set; } = [];
 
-    // IF Proficiency (Agent 4) — per-weapon fork picks at L25/50/75/100.
+    // IF Proficiency — per-weapon fork picks at L25/50/75/100.
     // Each int[] is length-4: 0 = unpicked, 1 or 2 = chosen option. Empty /
     // null on legacy saves; TurnManager defaults to no picks on load.
     public Dictionary<string, int[]> WeaponProficiencyForks { get; set; } = [];
@@ -169,8 +169,8 @@ public class ItemSaveData
     // Enhancement level for equipment (+0 to +10). Persisted so enhanced
     // definition items don't lose their upgrades on reload.
     public int EnhancementLevel { get; set; }
-    // IF Refinement (Agent 3) — 3 slots of socketed Ingot DefIds, or null.
-    // Null array means "no refinement data saved" (legacy/pre-Agent3 saves).
+    // IF Refinement — 3 slots of socketed Ingot DefIds, or null.
+    // Null array means "no refinement data saved" (legacy saves).
     // Saved only when at least one slot is non-null to keep legacy saves clean.
     public List<string?>? RefinementSlots { get; set; }
 

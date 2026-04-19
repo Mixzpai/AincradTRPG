@@ -18,25 +18,25 @@ public static class ProfileData
     public static bool HasCompletedGame { get; private set; }
 
     // ── Player Guide persistence ──────────────────────────────────────
-    // Keys are "{Category}|{Title}" per scout §4. Lists round-trip cleanly
-    // through System.Text.Json; runtime uses the ordered List<string> for
-    // Bookmarks and RecentlyViewed (order matters — newest-first recency,
-    // user-ordered bookmarks) and HashSet<string> for the gating sets.
+    // Keys are "{Category}|{Title}". Lists round-trip cleanly through
+    // System.Text.Json; runtime uses the ordered List<string> for Bookmarks
+    // and RecentlyViewed (order matters — newest-first recency, user-ordered
+    // bookmarks) and HashSet<string> for the gating sets.
 
     // User-pinned topics (unlimited).
     public static List<string> GuideBookmarks { get; private set; } = new();
 
-    // Most-recently-viewed topics, oldest at index 0, newest at end. Capped
-    // at 10 per scout §10 Q3. Oldest-out eviction.
+    // Most-recently-viewed topics, oldest at index 0, newest at end.
+    // Capped at 10 with oldest-out eviction.
     public static List<string> GuideRecentlyViewed { get; private set; } = new();
 
-    // Every topic the player has ever opened. Agent 2 uses this for
-    // first-visit "unread" marker decoration.
+    // Every topic the player has ever opened. Used for first-visit
+    // "unread" marker decoration.
     public static HashSet<string> GuideVisitedTopics { get; private set; } = new();
 
-    // Topics unlocked via gameplay (boss kills, area entry, etc.). Agent 2
-    // populates this at session start + on discovery events, and uses it to
-    // mask unseen entries as "???" via the TreeView AspectGetter.
+    // Topics unlocked via gameplay (boss kills, area entry, etc.). Populated
+    // at session start + on discovery events, and used to mask unseen
+    // entries as "???" via the TreeView AspectGetter.
     public static HashSet<string> GuideKnownTopics { get; private set; } = new();
 
     private const int RecentlyViewedCap = 10;
@@ -151,9 +151,8 @@ public static class ProfileData
         public List<string> EverSeenEvents { get; set; } = new();
         public bool HasCompletedGame { get; set; }
 
-        // Player Guide persistence — see scout §4. Lists (not HashSets) so
-        // System.Text.Json reflection round-trips cleanly without needing a
-        // source-gen context.
+        // Player Guide persistence. Lists (not HashSets) so System.Text.Json
+        // reflection round-trips cleanly without needing a source-gen context.
         public List<string> GuideBookmarks { get; set; } = new();
         public List<string> GuideRecentlyViewed { get; set; } = new();
         public List<string> GuideVisitedTopics { get; set; } = new();

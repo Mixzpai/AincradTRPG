@@ -1,12 +1,9 @@
 namespace SAOTRPG.Systems;
 
 // Canon Hollow Fragment Lisbeth Rarity 6 craft recipes. 18 weapons,
-// each crafted at Lindarth (F48) via LisbethCraftDialog. Tyler's call:
-// keep canon 3M Col cost — balance later if needed.
-//
-// Each recipe also consumes 3-5 rare materials. Materials are cross-
-// checked against ItemRegistry DefIds (see IngredientDefinitions) so
-// every required DefId actually exists in the game's drop tables.
+// each crafted at Lindarth (F48) via LisbethCraftDialog. Canon 3M Col
+// cost per recipe. Each recipe also consumes 3-5 rare materials, all
+// cross-checked against ItemRegistry DefIds (see IngredientDefinitions).
 public static class LisbethRecipes
 {
     public record MaterialRequirement(string DefId, int Qty);
@@ -16,7 +13,7 @@ public static class LisbethRecipes
         int ColCost,
         MaterialRequirement[] Materials);
 
-    // Canon cost per craft. Tyler Q1 = C "keep canon, balance later".
+    // Canon 3M Col per craft.
     private const int CanonColCost = 3_000_000;
 
     // All 18 Lisbeth Rarity 6 recipes. Each uses a mix of the existing

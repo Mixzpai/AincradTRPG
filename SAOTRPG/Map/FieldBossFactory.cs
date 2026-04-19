@@ -137,8 +137,8 @@ public static class FieldBossFactory
         new("crimson_forneus_f61",   "Crimson Forneus",   "Demon of the Scarlet Depths",      61, 4.0f, 1.7f, 'F', Color.BrightRed, "ohs_rosso_forneus",
             "The air reddens. A demon-knight in crimson plate levels a heavy sword and advances."),
 
-        // F87 — Yasha Series (moved from F85 due to Silent Edge + Abased
-        // Beast collision per scout §9).
+        // F87 — Yasha Series (moved from F85 to avoid Silent Edge + Abased
+        // Beast collision).
         new("yasha_night_demon_f87", "Yasha the Night Demon", "Demon-Warrior of the Moonless Path", 87, 4.2f, 1.75f, 'Y', Color.BrightMagenta, "ohs_yasha_astaroth",
             "A horned silhouette waits at the corridor's end. Its blade drinks the moonlight."),
 

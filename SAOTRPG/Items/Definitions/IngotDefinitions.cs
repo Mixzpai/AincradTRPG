@@ -3,12 +3,10 @@ using SAOTRPG.Items.Consumables;
 namespace SAOTRPG.Items.Definitions;
 
 // IF Refinement Ingots — 12 canon-flavored ingots across Common/Rare/Epic/Legendary.
-// Balance per Tyler Q4: Common tier halved relative to scout's proposal.
-// StatType enum limitations: CritRate/AttackSpeed/BlockChance/HPRegen/
-// SkillCooldown/Durability are NOT StatType entries, so scout names are
-// remapped onto existing entries (Dexterity for crit-like, Speed for
-// attack-speed / durability tradeoff, Vitality for HPRegen/block, Intelligence
-// for skill-cooldown effects). Flagged in Agent 3 report for Tyler.
+// StatType enum lacks CritRate/AttackSpeed/BlockChance/HPRegen/SkillCooldown/Durability,
+// so flavor names are remapped onto existing entries (Dexterity for crit-like, Speed for
+// attack-speed / durability tradeoff, Vitality for HPRegen/block, Intelligence for
+// skill-cooldown effects).
 public static class IngotDefinitions
 {
     private static Ingot Make(

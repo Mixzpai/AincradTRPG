@@ -4,13 +4,12 @@ namespace SAOTRPG.Systems.Story;
 // MarkKnown(...) on monster/boss defeat and the Player Guide's TreeAspect
 // lifts the "??? (Unknown)" mask for those topics.
 //
-// Title convention mirrors the Phase B scout §9 content schema:
+// Title convention:
 //   "Monster: <base name>"     — any non-boss mob kill
 //   "Boss: <name>"             — floor boss defeat
 //   "Field Boss: <name>"       — roaming elite defeat (FieldBoss subclass)
 //
-// Titles must match PlayerGuideContent.GuideEntry.Title verbatim; content
-// agents 3/4 will add the corresponding entries using these exact prefixes.
+// Titles must match PlayerGuideContent.GuideEntry.Title verbatim.
 public static class PlayerGuideKnowledge
 {
     // Record a discovery. Idempotent; persists on first write.

@@ -3,14 +3,11 @@ namespace SAOTRPG.UI.Dialogs;
 // Static content for the in-game Player Guide (hotkey B).
 // Organized as a flat list of (Category, Title, Body) entries.
 // The dialog renders the category headers inline and shows one body at a time.
-// Compiled from 5 parallel research agents 2026-04-17 — foundation pass,
-// iterate content as gameplay evolves.
 public static class PlayerGuideContent
 {
     // Tags enable polyhierarchy — a topic appears under its primary Category
     // plus a virtual "Tag: <name>" root for each tag (see PlayerGuideDialog).
-    // Default [] keeps existing call sites valid; content agents 3/4 can tag
-    // during the content-rewrite pass. Use `with { Tags = [...] }` to add.
+    // Default [] keeps existing call sites valid. Use `with { Tags = [...] }` to add.
     public record GuideEntry(string Category, string Title, string Body)
     {
         public string[] Tags { get; init; } = System.Array.Empty<string>();
@@ -630,7 +627,7 @@ public static class PlayerGuideContent
         new("Combat & Rarity", "Look Mode & Counter Stance",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Look Mode & Counter Stance\n" +
-            "│ Look: L key, cursor inspect\n" +
+            "│ Look: L key, cursor inspect + target list panel\n" +
             "│ Stance: V key, forces Parry\n" +
             "│ Trigger: Manual hotkey\n" +
             "└─\n\n" +
@@ -639,20 +636,28 @@ public static class PlayerGuideContent
             "without moving; Counter Stance trades your turn for an\n" +
             "auto-Parry on the next incoming hit.\n\n" +
             "USAGE\n" +
-            "Press L to enter Look Mode. Use arrows to move the cursor,\n" +
-            "Tab/Shift+Tab to cycle visible monsters, Esc or L again to\n" +
-            "exit. Press V to enter Counter Stance.\n\n" +
+            "Press L to enter Look Mode. Yellow brackets wrap the selected\n" +
+            "target; a right-side Target List panel shows all visible\n" +
+            "hostiles with HP bars, distance, and threat color. Tab/Arrows\n" +
+            "cycle, T cycles the sort (Dist -> HP -> Threat -> Level ->\n" +
+            "Index), and 1-9 jump directly to a numbered target. Esc or\n" +
+            "L again exits. Press V to enter Counter Stance.\n\n" +
             "EFFECTS\n" +
-            "Look Mode shows each target's name, HP, stats, and status\n" +
-            "without advancing time. Counter Stance auto-Parries the next\n" +
-            "incoming hit for a 25% Attack counter-strike.\n\n" +
+            "Look Mode shows each target's name, HP, stats, skills, and\n" +
+            "status without advancing time. Threat color reflects the\n" +
+            "target's level versus yours (grey/green/white/yellow/red).\n" +
+            "Counter Stance auto-Parries the next incoming hit for a 25%\n" +
+            "Attack counter-strike.\n\n" +
             "COSTS\n" +
-            "Counter Stance consumes 1 turn. The stance ends after one\n" +
-            "incoming hit or one turn, whichever comes first.\n\n" +
+            "Look Mode is free (no turn consumed). Counter Stance consumes\n" +
+            "1 turn. The stance ends after one incoming hit or one turn,\n" +
+            "whichever comes first.\n\n" +
             "TIPS\n" +
-            "Look Mode before engaging is the safest scouting tool in the\n" +
-            "game. Stance shines when a boss telegraphs Winding Up and you\n" +
-            "can't reposition.\n\n" +
+            "Sort by HP to finish off low-HP stragglers first. Sort by\n" +
+            "Threat before engaging a mixed group to identify the deadliest\n" +
+            "target. Look Mode before any fight is the safest scouting tool\n" +
+            "in the game. Stance shines when a boss telegraphs Winding Up\n" +
+            "and you can't reposition.\n\n" +
             "SEE ALSO\n" +
             "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV]")
         {
