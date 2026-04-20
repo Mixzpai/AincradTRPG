@@ -161,9 +161,7 @@ public partial class TurnManager
         int interval = _diffTier.RegenInterval;
         if (_player.IsDefeated || interval <= 0) return;
         if (Satiety < HungerRegenThreshold) return;
-        // FB-051 Sleep L99 capstone — faster HP regen halves the regen
-        // cadence (ticks on interval/2 when > 1), so the player heals
-        // roughly twice as often outside of rest.
+        // FB-051 Sleep L99: regen cadence halves (interval/2) → ~2x heal outside rest.
         if (_player.LifeSkills.SleepFasterRegen && interval > 1) interval = Math.Max(1, interval / 2);
         if (TurnCount % interval != 0) return;
         if (_player.CurrentHealth >= _player.MaxHealth) return;

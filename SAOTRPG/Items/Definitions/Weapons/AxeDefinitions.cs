@@ -37,8 +37,7 @@ public static class AxeDefinitions
     public static Weapon CreatePaleEdge() => Make("pale_edge", "Pale Edge", 400, "Rare", 65, 15, 22,
         B().Add(StatType.Attack, 14).Add(StatType.Strength, 6).Add(StatType.Agility, 4));
 
-    // ── Hollow Realization Evolution Chain (Axe) ────────────────────
-    // Bardiche -> Archaic Murder -> Nidhogg's Fang -> Ouroboros.
+    // ── HR Axe Chain: Bardiche → Archaic Murder → Nidhogg's Fang → Ouroboros.
 
     // Bardiche, crescent-polearm-axe, reliable through heavy armor. T1 of the Ouroboros chain.
     public static Weapon CreateBardiche() => Make("bardiche", "Bardiche", 2100, "Rare", 120, 15, 68,
@@ -157,9 +156,7 @@ public static class AxeDefinitions
     public static Weapon CreateSnowsunder() => Make("axe_snowsunder", "Snowsunder", 18200, "Legendary", 215, 82, 150,
         B().Add(StatType.Attack, 76).Add(StatType.Strength, 24).Add(StatType.Vitality, 10), "Freeze+20");
 
-    // ── SAO Lost Song Top-Tier (Axe) — Legendary F80-95 ──────────────
-    // Lang — highest-Attack canonical LS greataxe. No SpecialEffect; raw
-    // stat weapon at the top of its band.
+    // ── LS Top-Tier (Axe), Legendary F80-95 — Lang is highest-Attack LS greataxe, raw-stat no-effect.
     public static Weapon CreateLang() => Make("axe_lang", "Lang", 20800, "Legendary", 235, 88, 175,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 30).Add(StatType.Vitality, 12));
 

@@ -3,47 +3,39 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// FB-063 Karma System. Tracks a single signed integer in [-100, +100]
-// reflecting the moral weight of player actions. Thresholds drive NPC
-// dialogue, shop pricing, guild gating, and the F1 Town Guard spawn.
-//
-// State lives on Player.Karma (see Player.Stats.cs). This class is the
-// central adjust/query API so every call-site logs consistently and the
-// threshold-cross banner fires exactly once per transition.
+// FB-063 Karma — signed int [-100, +100] gating NPC dialog, shop pricing,
+// guild entry, F1 Town Guard spawn. State on Player.Karma; this = central
+// adjust/query so call-sites log uniformly and tier-cross banner fires once.
 public static class KarmaSystem
 {
     public const int Min = -100;
     public const int Max = +100;
 
-    // Gain/loss deltas for canonical events. Keep as consts so quest + combat
-    // hooks surface the same numbers in-log and in the guide.
-    public const int DeltaPkKill          = +2;  // Killing a PKer (hostile human mob) is lawful.
-    public const int DeltaPeacefulKill    = -5;  // Slaying a neutral / non-hostile creature.
-    public const int DeltaNpcKill         = -20; // Murdering a named NPC.
+    // Canonical event deltas (consts so quest/combat hooks match guide).
+    public const int DeltaPkKill          = +2;  // PKer (hostile human)
+    public const int DeltaPeacefulKill    = -5;  // non-hostile creature
+    public const int DeltaNpcKill         = -20; // named NPC
     public const int DeltaQuestComplete   = +3;
     public const int DeltaSteal           = -5;
-    public const int DeltaLeaveGuild      = -3;  // Abandoning a guild leaves a mark.
-    public const int DeltaBlackCatsFall   = -5;  // Moonlit Black Cats dissolution.
+    public const int DeltaLeaveGuild      = -3;
+    public const int DeltaBlackCatsFall   = -5;  // Moonlit Black Cats dissolution
 
     // Karma tier used by dialogue/shop/spawn gating.
     public enum Tier { Honorable, Neutral, Shady, Outlaw }
 
-    // Names of mob LootTag / Name fragments that count as "PKer" — hostile
-    // humans who attack players. Kills here GAIN karma.
+    // Hostile-human mob name fragments. Kills here GAIN karma.
     private static readonly string[] PkerFragments =
     {
         "Titan's Hand", "Crimson Longsword", "Laughing Coffin PKer", "Fallen Paladin",
     };
 
-    // Peaceful tags — creatures that do not actively hunt the player (boar,
-    // beast, insect, plant, aquatic). Killing these drains karma.
+    // Peaceful LootTags — kills drain karma.
     private static readonly string[] PeacefulTags =
     {
         "beast", "insect", "plant", "aquatic",
     };
 
-    // Returns the tier for a karma value. Thresholds are inclusive on the
-    // outlaw edge so karma == -50 still gates Town Guard spawn.
+    // Thresholds: karma == -50 inclusive for Outlaw (gates Town Guard spawn).
     public static Tier GetTier(int karma)
     {
         if (karma >= 50) return Tier.Honorable;
@@ -52,7 +44,6 @@ public static class KarmaSystem
         return Tier.Outlaw;
     }
 
-    // Display label for HUD / StatsDialog.
     public static string TierLabel(int karma) => GetTier(karma) switch
     {
         Tier.Honorable => "Honorable",
@@ -62,8 +53,7 @@ public static class KarmaSystem
         _ => "Neutral",
     };
 
-    // Shop price multiplier by tier. Outlaw returns -1f to signal
-    // "shops refuse service" — callers check for the negative sentinel.
+    // Shop price mult. Outlaw = -1f sentinel (shops refuse service).
     public static float ShopPriceMultiplier(int karma) => GetTier(karma) switch
     {
         Tier.Honorable => 0.9f,
@@ -73,9 +63,7 @@ public static class KarmaSystem
         _ => 1.0f,
     };
 
-    // Adjust karma by delta, clamp to [-100, +100], log the reason, and
-    // fire a banner if the tier crossed. Log is optional so silent early
-    // hooks (character creation) don't crash.
+    // Adjust + clamp + log + tier-cross banner. Log null-safe for boot paths.
     public static void Adjust(Player player, int delta, string reason, IGameLog? log = null)
     {
         if (delta == 0) return;
@@ -93,8 +81,7 @@ public static class KarmaSystem
             log?.LogSystem($"  ** Karma threshold crossed: you are now {TierLabel(player.Karma)}. **");
     }
 
-    // Classify a mob by name/tag into the karma-relevant bucket. Called from
-    // HandleMonsterKill so every kill funnels through one place.
+    // Mob → karma delta. Called from HandleMonsterKill.
     public static int DeltaForMobKill(string mobName, string lootTag)
     {
         if (string.IsNullOrEmpty(mobName)) return 0;
@@ -102,8 +89,7 @@ public static class KarmaSystem
             if (mobName.Contains(frag)) return DeltaPkKill;
         foreach (var tag in PeacefulTags)
             if (lootTag == tag) return DeltaPeacefulKill;
-        // humanoid/undead/construct/kobold/reptile/elemental/dragon/hollow/generic
-        // are all "hostile but not human" — neutral for karma purposes.
+        // Other hostile-non-human tags = neutral for karma.
         return 0;
     }
 }

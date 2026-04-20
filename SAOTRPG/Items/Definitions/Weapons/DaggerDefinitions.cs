@@ -45,8 +45,7 @@ public static class DaggerDefinitions
     public static Weapon CreateMateChopper() => Make("mate_chopper", "Mate Chopper", 6000, "Legendary", 150, 35, 55,
         B().Add(StatType.Attack, 35).Add(StatType.Agility, 15), "Bleed+20");
 
-    // ── Hollow Realization Evolution Chain (Dagger) ─────────────────
-    // Heated Razor -> Valkyrie -> Misericorde -> The Iron Maiden.
+    // ── HR Dagger Chain: Heated Razor → Valkyrie → Misericorde → Iron Maiden.
 
     // Heated Razor, a forge-tempered slip-knife. T1 of the Iron Maiden chain.
     public static Weapon CreateHeatedRazor() => Make("heated_razor", "Heated Razor", 1500, "Rare", 120, 15, 55,
@@ -72,8 +71,7 @@ public static class DaggerDefinitions
     public static Weapon CreateStoutBrave() => Make("stout_brave", "Stout Brave", 400, "Uncommon", 90, 2, 14,
         B().Add(StatType.Attack, 8).Add(StatType.Agility, 4), "CritRate+10");
 
-    // F24 Grimhollow the Phantom drops (Alicization Lycoris Divine Beast tier).
-    // Illusion-dagger. Tops out crit chance.
+    // F24 Grimhollow Phantom drop (AL Divine Beast tier). Illusion-dagger, caps crit chance.
     public static Weapon CreatePhantasmagoria() => Make("phantasmagoria", "Phantasmagoria", 10500, "Legendary", 180, 28, 92,
         B().Add(StatType.Attack, 48).Add(StatType.Agility, 20).Add(StatType.Dexterity, 18), "CritRate+25");
 

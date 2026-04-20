@@ -3,43 +3,17 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Systems;
 
-// IM Dynamic Shop Tiering (System 4). Clearing a floor boss at F50+ unlocks
-// a new slice of late-game weapon stock across ALL shops for the rest of the
-// run. Additive only — shops never lose stock if the player regresses.
-//
-// Tiers start at F50 (not canon F76). Fifty unlock tiers across F51..F100.
-// Each tier adds 1–2 weapons — a mix of existing mid-to-late registered
-// weapons and the 12 new IM shop weapons (clustered at their canon floor
-// bands: Epic at F76/78/80/82/84, Legendary at F86/88/90/92/94).
-//
-// State flow:
-//   • TurnManager.HandleMonsterKill (Boss branch, not FieldBoss) calls
-//     RegisterFloorBossClear(floor) — updates HighestClearedFloor if higher.
-//   • ShopDialog queries GetUnlockedStockForFloor(vendor, floor).
-//   • SaveData.HighestFloorBossCleared persists across sessions.
-//
-// Legacy saves default HighestFloorBossCleared = 0 → no tiered stock at all,
-// so previously-saved runs see unchanged shop inventories unless the player
-// clears their next F50+ floor post-update.
+// IM Dynamic Shop Tiering (System 4). Floor-boss clear at F50+ unlocks new
+// shop stock for the run. Additive — shops never lose stock.
+// Flow: HandleMonsterKill(Boss) → RegisterFloorBossClear → ShopDialog query.
+// Persisted on SaveData.HighestFloorBossCleared; legacy saves default to 0.
 public static class ShopTierSystem
 {
-    // Highest floor whose BOSS has been cleared. 0 = nothing cleared.
-    // Persisted on SaveData.HighestFloorBossCleared.
+    // Highest floor whose boss cleared. 0 = none. Persists via SaveData.
     public static int HighestFloorBossCleared { get; set; }
 
-    // Per-floor stock unlocks. Each floor key unlocks the listed DefIds
-    // when HighestFloorBossCleared >= floor. All floors ≤ 50 unlock nothing
-    // (baseline shop stock covers early game). Floors 51..99 each add 1–2
-    // entries — IM shop weapons live at their canon band floors; the rest
-    // are existing mid-to-late registered weapons, rotated to flesh out the
-    // tier progression.
-    //
-    // IM shop weapon placement (F76..F94):
-    //   F76 rap_edelweiss, F78 ths_fasislawine, F80 sci_poisoned_syringe,
-    //   F82 spr_foa_stoss,  F84 dag_flyheight_fang,
-    //   F86 rap_noctis_strasse, F88 ths_wice_ritter, F90 axe_schwarzs_blitz,
-    //   F92 kat_muramasa,  F94 sci_silver_wing + spr_wave_schneider,
-    //   F96 dag_rue_feuille.
+    // Floor → DefIds unlocked when HighestFloorBossCleared >= floor. F≤50 = baseline.
+    // IM shop weapons inline-tagged below at their canon band floors.
     private static readonly Dictionary<int, string[]> TierUnlocks = new()
     {
         [51] = new[] { "mythril_katana" },
@@ -93,12 +67,9 @@ public static class ShopTierSystem
         [99] = new[] { "anubis_spear" },
     };
 
-    // Number of unlock tiers that can still fire (F51..F99 inclusive).
     public const int TotalTiers = 50;
 
-    // Register a floor-boss clear. Tier unlocks only start at F50+.
-    // If floor is already <= HighestFloorBossCleared we no-op (additive only).
-    // Returns the number of NEWLY unlocked stock tiers so the caller can log.
+    // Register floor-boss clear (F50+ only). Returns count of newly unlocked tiers.
     public static int RegisterFloorBossClear(int floor, SAOTRPG.UI.IGameLog? log = null)
     {
         if (floor < 50) return 0;
@@ -115,8 +86,7 @@ public static class ShopTierSystem
         return newTiers;
     }
 
-    // Number of unlock tiers already reached (up to TotalTiers). Shown in
-    // the ShopDialog header as "Tier N/50 unlocked" for progression feedback.
+    // Reached-tier count (up to TotalTiers). ShopDialog shows "Tier N/50".
     public static int CurrentTierCount()
     {
         int count = 0;
@@ -125,8 +95,7 @@ public static class ShopTierSystem
         return count;
     }
 
-    // Return all DefIds unlocked by the current tier state. Called by
-    // ShopDialog to augment a vendor's base stock each visit.
+    // Unlocked DefIds at current tier. ShopDialog augments vendor base stock per visit.
     public static IEnumerable<string> GetUnlockedDefIds()
     {
         foreach (var kv in TierUnlocks)
@@ -135,18 +104,15 @@ public static class ShopTierSystem
                     yield return id;
     }
 
-    // FB-072 — Exposes every registered tier (floor → DefIds) in ascending
-    // floor order. VendorInvestmentSystem uses this to synthesize per-vendor
-    // bonus stock from tiers that haven't been globally unlocked yet.
+    // FB-072 — all tiers ascending. VendorInvestmentSystem synthesizes per-vendor
+    // bonus stock from tiers not yet globally unlocked.
     public static IEnumerable<(int Floor, string[] DefIds)> EnumerateAllTiers()
     {
         foreach (var kv in TierUnlocks.OrderBy(x => x.Key))
             yield return (kv.Key, kv.Value);
     }
 
-    // Build the tiered stock additions as live BaseItem instances with the
-    // standard 20% vendor markup already applied. Skips DefIds that fail to
-    // resolve (defensive — ItemRegistry should know them all).
+    // Tier additions as live BaseItems with 20% vendor markup. Skips unknown DefIds.
     public static List<BaseItem> BuildTierStock()
     {
         var list = new List<BaseItem>();
@@ -160,24 +126,19 @@ public static class ShopTierSystem
         return list;
     }
 
-    // Reset the tier state to a specific value (used by SaveManager on load).
-    // Additive only during gameplay — SetForLoad is the sole backward path.
+    // Reset tier state for SaveManager load — only backward path.
     public static void SetForLoad(int highest)
     {
         HighestFloorBossCleared = Math.Max(0, highest);
         _seenDefIds.Clear();
     }
 
-    // DefIds the player has seen flagged at shop-open. Used so the first
-    // shop visit after unlocking a tier shows a "NEW" badge next to the
-    // newly-unlocked items.
+    // Tracks seen DefIds for the "NEW" badge on first shop visit post-unlock.
     private static readonly HashSet<string> _seenDefIds = new();
 
-    // True if this DefId is still flagged NEW (never shown to the player).
     public static bool IsNew(string defId) =>
         !string.IsNullOrEmpty(defId) && !_seenDefIds.Contains(defId);
 
-    // Mark a DefId as seen (so the NEW badge clears on the next visit).
     public static void MarkSeen(string defId)
     {
         if (!string.IsNullOrEmpty(defId)) _seenDefIds.Add(defId);

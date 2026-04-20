@@ -4,18 +4,13 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Difficulty selection screen. A vertical RadioGroup handles the tier
-// list with native Up/Down arrow navigation and a visible focus ring.
-// The selected tier's description and stat modifiers update live.
-// All elements centered via Pos.Center() for any terminal width.
+// Difficulty select: vertical RadioGroup (native Up/Down), live description + stat modifiers update.
 public static class DifficultyScreen
 {
     private const int DefaultTier = 3;
     private static EventHandler<Key>? _escHandler;
 
-    // Unhook this screen's Esc handler from mainWindow. Called by screens
-    // that transition AWAY from DifficultyScreen so the static handler
-    // doesn't leak its "Esc → TitleScreen" behavior into GameScreen, etc.
+    // Unhook Esc handler before transitioning AWAY so Esc→TitleScreen doesn't leak into GameScreen.
     public static void UnhookEscHandler(Window mainWindow)
     {
         if (_escHandler != null) { mainWindow.KeyDown -= _escHandler; _escHandler = null; }
@@ -98,9 +93,7 @@ public static class DifficultyScreen
             descLabel.Text = tiers[idx].Description;
         };
 
-        // Permadeath is now universal — all deaths delete the save slot.
-        // The former Hardcore checkbox has been removed; kept the Y anchor
-        // as a spacer row so the rest of the layout shifts up only slightly.
+        // Permadeath is universal now; old Hardcore checkbox removed but Y anchor kept as spacer.
         int hcY = previewY + 5;
         var permadeathNotice = new Label
         {
@@ -188,10 +181,8 @@ public static class DifficultyScreen
         };
         mainWindow.KeyDown += _escHandler;
 
-        // ── Arrow key navigation ─────────────────────────────────────
-        // RadioGroup consumes Up/Down internally, so intercept at the
-        // boundary: Down on last tier → checkbox, Up on first → buttons.
-        // Enter on the tier list fires Continue for fast selection.
+        // ── Arrow nav ── RadioGroup eats Up/Down; intercept at boundary (Down on last → checkbox,
+        // Up on first → buttons). Enter on tier list fires Continue.
         tierRadio.KeyDown += (s, e) =>
         {
             if (e.KeyCode is KeyCode.CursorDown or KeyCode.S

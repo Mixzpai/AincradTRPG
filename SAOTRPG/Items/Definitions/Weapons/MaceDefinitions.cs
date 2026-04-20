@@ -37,8 +37,7 @@ public static class MaceDefinitions
     public static Weapon CreateMinotaurWarhammer() => Make("minotaur_warhammer", "Warhammer of the Minotaur", 1600, "Epic", 120, 35, 52,
         B().Add(StatType.Attack, 30).Add(StatType.Strength, 14), "StunChance+15");
 
-    // ── Hollow Realization Evolution Chain (Mace) ───────────────────
-    // Lunatic Press -> Nemesis -> Yggdrasil -> Mjolnir.
+    // ── HR Mace Chain: Lunatic Press → Nemesis → Yggdrasil → Mjolnir.
 
     // Lunatic Press, moon-forged bludgeon whose weight breaks plate. T1 of the Mjolnir chain.
     public static Weapon CreateLunaticPress() => Make("lunatic_press", "Lunatic Press", 2000, "Rare", 120, 15, 65,
@@ -74,8 +73,7 @@ public static class MaceDefinitions
     public static Weapon CreateStarmaceElysium() => Make("starmace_elysium", "Starmace: Elysium", 21000, "Legendary", 240, 84, 158,
         B().Add(StatType.Attack, 75).Add(StatType.Vitality, 30).Add(StatType.Defense, 25).Add(StatType.Strength, 15), "Uninterruptible+50");
 
-    // F38 Obsidian the Black Knight drops (Alicization Lycoris Divine Beast tier).
-    // Thorn-covered bludgeon. Heavy hit, bleed proc on thorns.
+    // F38 Obsidian Black Knight drop (AL Divine Beast tier). Thorn bludgeon, heavy + bleed proc.
     public static Weapon CreateCactusBludgeon() => Make("cactus_bludgeon", "Cactus Bludgeon", 13500, "Legendary", 205, 36, 112,
         B().Add(StatType.Attack, 58).Add(StatType.Strength, 22).Add(StatType.Vitality, 18), "Bleed+15");
 
@@ -94,9 +92,7 @@ public static class MaceDefinitions
 
     // ── Fractured Daydream — Character Core Canon (Mace) ───────────────
 
-    // Lisbeth canon — Plain Mace. F40+ craft/shop starter mace.
-    // Tier intentionally Rare (not Legendary) per spec — Lisbeth's
-    // entry-tier weapon, not an endgame piece.
+    // Lisbeth Plain Mace — F40+ starter craft/shop; intentionally Rare (not Legendary) as entry-tier.
     public static Weapon CreatePlainMace() => Make("mce_plain_mace", "Plain Mace", 1600, "Rare", 140, 25, 55,
         B().Add(StatType.Attack, 28).Add(StatType.Strength, 12).Add(StatType.Vitality, 6), "DurabilityBonus+30");
 
@@ -130,8 +126,7 @@ public static class MaceDefinitions
     public static Weapon CreateWhirlpoolHammer() => Make("mce_whirlpool_hammer", "Whirlpool Hammer", 18500, "Legendary", 218, 83, 152,
         B().Add(StatType.Attack, 76).Add(StatType.Strength, 24).Add(StatType.Vitality, 12), "Slow+20");
 
-    // ── SAO Lost Song Top-Tier (Mace) — Legendary F80-95 ───────────
-    // Caduceus — herald's staff-mace, lifeflow motif.
+    // ── LS Top-Tier (Mace), Legendary F80-95 — Caduceus herald's staff-mace, lifeflow motif.
     public static Weapon CreateCaduceus() => Make("mce_caduceus", "Caduceus", 19800, "Legendary", 225, 84, 158,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 24).Add(StatType.Vitality, 18), "HPRegen+5");
 }

@@ -1,15 +1,8 @@
 namespace SAOTRPG.Systems.Story;
 
-// Thin helper around ProfileData.GuideKnownTopics — gameplay sites call
-// MarkKnown(...) on monster/boss defeat and the Player Guide's TreeAspect
-// lifts the "??? (Unknown)" mask for those topics.
-//
-// Title convention:
-//   "Monster: <base name>"     — any non-boss mob kill
-//   "Boss: <name>"             — floor boss defeat
-//   "Field Boss: <name>"       — roaming elite defeat (FieldBoss subclass)
-//
-// Titles must match PlayerGuideContent.GuideEntry.Title verbatim.
+// Wraps ProfileData.GuideKnownTopics. MarkKnown on kill → lifts ??? mask.
+// Title convention: "Monster: <name>" / "Boss: <name>" / "Field Boss: <name>".
+// Must match PlayerGuideContent.GuideEntry.Title verbatim.
 public static class PlayerGuideKnowledge
 {
     // Record a discovery. Idempotent; persists on first write.

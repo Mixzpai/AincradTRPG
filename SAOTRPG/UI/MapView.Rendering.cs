@@ -15,9 +15,7 @@ public partial class MapView
         _camera.ViewHeight = vp.Height;
         _camera.CenterOn(_player.X, _player.Y);
 
-        // Use the smaller viewport dimension as the FOV radius so the
-        // visible area is a proper circle, not an oval. Terminal chars are
-        // ~2:1 aspect so height is the limiting factor.
+        // FOV radius from smaller viewport dim — terminal chars ~2:1 aspect → height limits.
         int halfH = vp.Height / 2 + 2;
         Map.DayNightCycle.ViewportRadius = halfH;
 
@@ -45,9 +43,7 @@ public partial class MapView
             if (f.FramesLeft <= 1)
             {
                 _hitFlashes.RemoveAt(i);
-                // Only drop from the lookup set once no other active entry
-                // still flashes this tile (duplicate hits on the same cell
-                // keep the set membership alive until the last one expires).
+                // Only drop from set once no other active entry flashes this tile (dup-hit safe).
                 bool stillFlashing = false;
                 for (int j = 0; j < _hitFlashes.Count; j++)
                 {
@@ -92,10 +88,7 @@ public partial class MapView
         return (ch, fg, bg);
     }
 
-    // Memory rendering: explored but out-of-sight tiles use a deep cool blue
-    // instead of desaturated grey. Structural elements (walls, doors, stairs)
-    // get a brighter variant so the layout of remembered rooms reads clearly;
-    // everything else sinks into the backdrop.
+    // Memory tint: explored-but-unseen = deep cool blue; structural (walls/doors/stairs) brighter.
     private static readonly Color MemoryStructural = new(80, 100, 140);
     private static readonly Color MemoryTerrain    = new(35,  45,  75);
     private static readonly Color MemoryLandmark   = new(110, 130, 170);
@@ -210,16 +203,11 @@ public partial class MapView
 
     private const float InvLightScale = 1f / 255f;
 
-    // How much of the light color bleeds into the cell background.
-    // Low enough to keep the glyph readable, high enough to create
-    // visible Brogue-style ambient glow on the floor around campfires,
-    // lava, and fountains.
+    // Light-color bleed into cell bg — keeps glyph readable while producing Brogue-style ambient glow.
     private const float BgGlowScale = 0.12f;
 
-    // Multiplicative RGB tint on fg; additive dim glow on bg.
-    // Foreground colors are multiplied by the light map so tiles near warm sources
-    // (campfire, lava) shift orange and cool sources (fountain) shift cyan.
-    // Background gets a faint additive glow capped at 50 to keep glyphs readable.
+    // fg = base × light (warm→orange near campfire/lava, cool→cyan near fountain);
+    // bg = additive dim glow (implicit ≤50 cap since light ≤255 × 0.12 ≈ 30.6).
     private void ApplyLighting(int mx, int my, ref Color fg, ref Color bg)
     {
         var light = _map.Lighting.GetLightUnchecked(mx, my);
@@ -230,12 +218,7 @@ public partial class MapView
         byte fgB = (byte)(fg.B * light.B * InvLightScale);
         fg = new Color(fgR, fgG, fgB);
 
-        // Background: dim colored glow so the floor itself picks up the
-        // light source's hue. Near a campfire (255,180,80) this makes the
-        // surrounding cells glow dark-orange; near a fountain, dark-cyan.
-        // Math.Min(50, x) is a no-op here because light channels are clamped
-        // to 255 during accumulation and 255 * 0.12 ≈ 30.6 < 50, so the
-        // multiply+cast is enough. Byte-identical to the previous formulation.
+        // Dim colored bg glow — floor picks up light source hue (orange near campfire, cyan near fountain).
         byte bgR = (byte)(light.R * BgGlowScale);
         byte bgG = (byte)(light.G * BgGlowScale);
         byte bgB = (byte)(light.B * BgGlowScale);
@@ -244,8 +227,7 @@ public partial class MapView
         // Hit flash: override bg with dim red on tiles that just took damage.
         if (IsHitFlashed(mx, my)) bg = new Color(120, 10, 10);
 
-        // Crit screen flash: one-frame brightness boost across all visible
-        // tiles on a player crit — blends fg toward white.
+        // Crit screen flash: one-frame fg→white blend across all visible tiles.
         if (_critScreenFlashFrames > 0)
         {
             fg = new Color(

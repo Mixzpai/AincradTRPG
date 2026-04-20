@@ -2,19 +2,14 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Map;
 
-// Visual definitions for all tile types — glyph + colors with position-hash
-// variation and era-based themes (Verdant 1-5, Stone 6-10, Crimson 11-15,
-// Crystal 16-20, Void 21+).
-// Uses RGB colors where possible so the multiplicative lighting system in
-// LightingSystem produces richer tints than the 16 named
-// ANSI colors can achieve on their own.
+// Glyph + colors per tile, position-hash variation, era themes (Verdant 1-5, Stone 6-10, Crimson 11-15, Crystal 16-20, Void 21+).
+// RGB-based so LightingSystem's multiplicative blend produces richer tints than ANSI-16.
 public static class TileDefinitions
 {
     public static int CurrentFloor { get; set; } = 1;
     private static int Era => Math.Min((CurrentFloor - 1) / 5, 4);
 
-    // RGB palette — richer base colors for terrain so lighting multiplication
-    // creates warm/cool gradients instead of flat tints.
+    // RGB palette — richer base colors so lighting multiplication yields warm/cool gradients, not flat tints.
     private static readonly Color GrassGreen    = new(60, 180, 70);
     private static readonly Color GrassBright   = new(90, 220, 100);
     private static readonly Color GrassDim      = new(40, 120, 50);
@@ -88,11 +83,8 @@ public static class TileDefinitions
 
     private static readonly char[] GrassGlyphs = { '.', ',', '\'', '`' };
 
-    // Era-indexed color palettes. Length of each inner array equals the N in
-    // the original `hash % N switch` — so `arr[Era][hash % arr[Era].Length]`
-    // yields byte-identical output to the old switches.
-    // Era order: 0 Verdant, 1 Stone, 2 Crimson, 3 Crystal, 4 Void.
-
+    // Era-indexed palettes; inner[i] array length = N in original `hash % N switch` (byte-identical output).
+    // Eras: 0 Verdant, 1 Stone, 2 Crimson, 3 Crystal, 4 Void.
     private static readonly Color[][] GrassColors =
     {
         /* Era 0 */ new[] { GrassGreen, GrassBright, GrassDim },
@@ -139,7 +131,7 @@ public static class TileDefinitions
             PathColors[Era][hash % PathColors[Era].Length],
             Color.Black);
 
-    // Floor palette: eras 0/1/3/4 mod 2, era 2 mods 3 — mirror the original.
+    // Floor palette mirrors original: eras 0/1/3/4 mod 2, era 2 mod 3.
     private static readonly Color[][] FloorColors =
     {
         /* Era 0 */ new[] { FloorStone, FloorDim },

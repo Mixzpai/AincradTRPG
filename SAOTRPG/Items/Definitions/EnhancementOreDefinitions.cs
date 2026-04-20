@@ -2,22 +2,8 @@ using SAOTRPG.Items.Materials;
 
 namespace SAOTRPG.Items.Definitions;
 
-// IM canon Enhancement Ores (System 3). Seven themed ores — each enhance
-// level consumes exactly one ore, and the ore chosen biases that level's
-// BonusPerLevel into a specific stat instead of the legacy flat +Attack.
-//
-// Ore → stat map:
-//   Crimson Flame  → Attack
-//   Adamant        → Defense (+ small Durability bump on socket)
-//   Crust          → Vitality (feeds MaxHP indirectly)
-//   Sharp Blade    → Dexterity (crit feel)
-//   Flowing Water  → Speed
-//   Wind Flower    → Agility
-//   Ash White      → Intelligence (feeds SkillDamage indirectly)
-//
-// All ores are Uncommon Materials, stack to 20, price ~80–120 Col. They
-// drop from themed mobs via LootGenerator.OreByLootTag (3–5%) and from
-// field/floor bosses at 15–30% via the boss roll in TurnManager.Combat.
+// IM Enhancement Ores: 1 ore per enhance level biases BonusPerLevel into a stat. Crimson Flame→ATK, Adamant→DEF(+Dur), Crust→VIT, Sharp Blade→DEX, Flowing Water→SPD, Wind Flower→AGI, Ash White→INT.
+// All Uncommon Materials, stack 20, 80-120 Col. Drop from themed mobs (3-5%) and bosses (15-30%).
 public static class EnhancementOreDefinitions
 {
     private static EnhancementOre Make(string id, string name, int value, StatType stat)
@@ -87,17 +73,11 @@ public static class EnhancementOreDefinitions
     };
 }
 
-// Enhancement Ore material subclass. Stackable, routed via ItemRegistry; its
-// BiasStat is read by CraftingDialog.Enhance to decide which stat gets the
-// level's BonusPerLevel. Kept separate from Ingot (Refinement system) so
-// the two systems don't cross-contaminate inventory filters.
+// Enhancement Ore material. Stackable; BiasStat read by CraftingDialog.Enhance. Separate from Ingot (Refinement) to avoid filter cross-contamination.
 public class EnhancementOre : Material
 {
-    // Which stat this ore biases the enhancement into on use.
     public StatType BiasStat { get; set; }
 
-    // Adamant flavour: +N ItemDurability on socket. Default 0 for every
-    // other ore. Applied additively each enhance level by CraftingDialog
-    // and refunded on demote.
+    // Adamant-only: +N ItemDurability/level (additive; refunded on demote).
     public int DurabilityBonus { get; set; }
 }

@@ -1,9 +1,7 @@
 namespace SAOTRPG.Systems;
 
-// Canon Hollow Fragment Lisbeth Rarity 6 craft recipes. 18 weapons,
-// each crafted at Lindarth (F48) via LisbethCraftDialog. Canon 3M Col
-// cost per recipe. Each recipe also consumes 3-5 rare materials, all
-// cross-checked against ItemRegistry DefIds (see IngredientDefinitions).
+// HF Lisbeth Rarity 6 recipes (18 weapons, F48 Lindarth, 3M Col + 3-5 rare mats).
+// Mats cross-checked vs ItemRegistry DefIds.
 public static class LisbethRecipes
 {
     public record MaterialRequirement(string DefId, int Qty);

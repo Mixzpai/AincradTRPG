@@ -2,10 +2,8 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.Items.Definitions;
 
-// Canon: Corrupted Elucidator + Corrupted Dark Repulser are post-F100 boss
-// drops in Hollow Fragment. Our F100 ends the game, so we implement
-// corruption as a Corruption Stone consumable applied on the base weapon
-// (see Items.Consumables.CorruptionStone + TurnManager.HandleCorruptionStone).
+// Canon HF post-F100 drops (Corrupted Elucidator/Dark Repulser); our F100 ends game,
+// so corruption applied via Corruption Stone consumable on base weapon.
 public static class CorruptionStoneDefinitions
 {
     private static CorruptionStone Make(string id, string name, int value, string rarity,
@@ -20,8 +18,7 @@ public static class CorruptionStoneDefinitions
             EffectDescription = effect,
         };
 
-    // Night Corruption Stone — transforms Elucidator → Corrupted Elucidator.
-    // Keeps enhancement level + refinement slots from the target.
+    // Night Stone: Elucidator → Corrupted Elucidator; preserves enhance level + refinement slots.
     public static CorruptionStone CreateNightCorruptionStone() => Make(
         "night_corruption_stone", "Night Corruption Stone",
         18000, "Legendary", 3,

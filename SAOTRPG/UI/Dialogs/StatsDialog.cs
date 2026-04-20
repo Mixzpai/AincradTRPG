@@ -14,11 +14,13 @@ public static class StatsDialog
 
     // Dialog width in columns.
     private const int DialogWidth  = 64;
-    // Dialog height in rows. Bumped to house the FB-050 Life Skills,
-    // FB-058 Titles, and FB-063 Guild/Karma sections without squeezing
-    // the existing stat grid. FB-072/077 added Bargaining + Swimming —
-    // +2 rows for those two new Life Skill entries.
-    private const int DialogHeight = 60;
+    // Preferred height houses Life Skills / Titles / Guild / Karma / Bargaining / Swimming
+    // without squeezing the stat grid; clamped at open time via DialogHeight() for small terminals.
+    private const int PreferredDialogHeight = 60;
+
+    // Clamp preferred height to terminal, 4-row margin keeps border inside screen bounds.
+    private static int DialogHeight() =>
+        Math.Min(PreferredDialogHeight, Math.Max(20, Application.Screen.Height - 4));
 
     // Stat definition — name, getter, and tooltip describing what it does.
     // Add new stats here to extend the dialog automatically.
@@ -37,10 +39,8 @@ public static class StatsDialog
     // Opens the skill allocation dialog with live combat stat preview and weapon proficiency.
     public static void Show(Player player, TurnManager? turnManager = null)
     {
-        // Resolve any pending proficiency forks first — pending means the
-        // player crossed L25/50/75/100 but dismissed (Esc'd) the picker.
-        // Each pending entry opens its own modal here before the Stats sheet
-        // proper so the displayed stats reflect the fresh fork bonuses.
+        // Resolve pending proficiency forks first (L25/50/75/100 thresholds the player Esc'd past).
+        // Each opens its own modal so displayed stats reflect the fresh fork bonuses.
         if (turnManager != null)
         {
             foreach (var (wpnType, forkLevel) in turnManager.EnumeratePendingForks())
@@ -52,7 +52,8 @@ public static class StatsDialog
             }
         }
 
-        var dialog = DialogHelper.Create("Allocate Skill Points", DialogWidth, DialogHeight);
+        int dlgH = DialogHeight();
+        var dialog = DialogHelper.Create("Allocate Skill Points", DialogWidth, dlgH);
 
         // ── Available points header ──────────────────────────────────
         var spLabel = new Label
@@ -185,7 +186,7 @@ public static class StatsDialog
                 });
                 row++;
                 // Stop just before the life-skills section kicks in.
-                if (row >= DialogHeight - 18) break;
+                if (row >= dlgH - 18) break;
             }
             profEndRow = row;
         }

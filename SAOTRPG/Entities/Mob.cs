@@ -7,50 +7,35 @@ namespace SAOTRPG.Entities
         public override char Symbol { get; protected set; } = 'M';
         public override Color SymbolColor { get; protected set; } = Color.Red;
 
-        // How far this mob detects the player (Chebyshev distance).
-        // Default 6; set per-mob-type for variety.
+        // Chebyshev detection range. Per-mob in MobFactory.
         public int AggroRange { get; set; } = 6;
 
-        // Whether this mob's attacks can inflict poison.
-        // Set per-mob-type in MobFactory. Add new poisonous mobs there.
+        // Status-inflict flags (set per template in MobFactory).
         public bool CanPoison { get; set; }
-
-        // Whether this mob's attacks can inflict bleed.
-        // Set per-mob-type in MobFactory. Add new bleeding mobs there.
         public bool CanBleed { get; set; }
-
-        // Whether this mob's attacks can inflict stun (skip turn).
         public bool CanStun { get; set; }
-
-        // Whether this mob's attacks can inflict slow (halved dodge).
         public bool CanSlow { get; set; }
 
-        // Random affix for elite/champion mobs (null for normal mobs).
+        // Elite/Champion affix (null for normal).
         public string? Affix { get; set; }
 
-        // Variant prefix: "", "Elite", or "Champion". Set by MobFactory.
-        // Elite/Champion mobs have boosted stats and better rewards.
+        // Variant: "", "Elite", or "Champion" — boosted stats + better rewards.
         public string Variant { get; set; } = "";
 
-        // Loot category tag — determines themed drops on kill.
-        // Set per-mob-type in MobFactory. Add new loot tables in TurnManager.MobLootTable.
+        // Themed drops on kill (TurnManager.MobLootTable).
         public string LootTag { get; set; } = "generic";
 
-        // Spawn position — used for aggro leashing. Mob gives up chase when
-        // too far from spawn. Set automatically when placed on the map.
+        // Aggro leash: spawn pos auto-set on placement; chase drops if beyond LeashRange.
         public int SpawnX { get; set; }
         public int SpawnY { get; set; }
-
-        // Max distance from spawn before giving up chase. Default 12.
         public int LeashRange { get; set; } = 12;
 
-        // Attack range in Chebyshev distance. 1 = melee, 2-3 = ranged.
+        // Chebyshev attack range: 1 melee, 2-3 ranged.
         public int AttackRange { get; set; } = 1;
 
-        // Named special ability (e.g. "Charge", "Leap"). Null for normal mobs.
+        // Named ability (e.g. "Charge", "Leap").
         public string? SpecialAbility { get; set; }
 
-        // Override the default map symbol and color. Called by MobFactory per template.
         public void SetAppearance(char symbol, Color color)
         {
             Symbol = symbol;

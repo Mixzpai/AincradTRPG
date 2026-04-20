@@ -213,6 +213,7 @@ public static partial class GameScreen
         mapView.HelpRequested += () => HelpDialog.Show();
         mapView.PlayerGuideRequested += () => PlayerGuideDialog.Show(turnManager, player);
         mapView.KillStatsRequested += () => { KillStatsDialog.Show(player, turnManager); };
+        mapView.BestiaryRequested += () => { BestiaryDialog.Show(player, turnManager); };
         mapView.EquipmentRequested += () => { EquipmentDialog.Show(player); refreshHud(); };
         mapView.PickupRequested += () => { turnManager.PickupItems(); refreshHud(); };
         mapView.RestRequested += () => { turnManager.ProcessRest(); refreshHud(); };
@@ -227,7 +228,12 @@ public static partial class GameScreen
         mapView.SaveRequested += () =>
         {
             if (SaveManager.SaveGame(player, turnManager, saveSlot))
-            { gameLog.LogSystem("[Game saved]"); saveFlash[0] = 5; }
+            {
+                // Persist bestiary knowledge alongside the run save so it
+                // survives unexpected crashes without requiring a death.
+                Bestiary.SaveToLifetimeStats();
+                gameLog.LogSystem("[Game saved]"); saveFlash[0] = 5;
+            }
             else gameLog.LogSystem("[Save failed!]");
         };
 

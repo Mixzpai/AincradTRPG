@@ -9,7 +9,7 @@ namespace SAOTRPG.UI.Dialogs;
 // Scrollable content area for all sections.
 public static class HelpDialog
 {
-    private const int DialogWidth = 78, DialogHeight = 34;
+    private const int DialogWidth = 78, DialogHeight = 35;
 
     // Left column: controls (40 chars). Right column: legend (34 chars).
     private const string Content = @"
@@ -38,6 +38,7 @@ public static class HelpDialog
   P .............. Stats / Levels
   T .............. Equipment            !PSN  Poison     !BLD  Bleed
   K .............. Kill Stats           !STN  Stun       vSLW  Slow
+  Y .............. Bestiary
   H .............. This help            +SRG  Surge      +BLS  Shrine
   R .............. Rest (3 turns)       +FED  Well Fed   ~FTG  Fatigue
   X .............. Auto-explore

@@ -62,6 +62,10 @@ public static class DeathScreen
         DeathRecapWriter.WriteRecap(player, floor, kills, turns, killedBy, grade,
             turnManager?.TotalColEarned ?? player.ColOnHand, turnManager?.TotalPlayTime);
 
+        // Tally the killer against the lifetime bestiary so the detail
+        // pane can show "You've died to this N times" cross-run.
+        if (!string.IsNullOrEmpty(killedBy)) Bestiary.RecordDeathCause(killedBy);
+
         LifetimeStats.RecordRun(kills, floor, player.Level, grade,
             turnManager?.TotalPlayTime ?? TimeSpan.Zero,
             turnManager?.TotalColEarned ?? player.ColOnHand, victory: false,

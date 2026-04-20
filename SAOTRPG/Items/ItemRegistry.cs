@@ -224,13 +224,8 @@ public static class ItemRegistry
         Register("adamantite_scythe",    () => ScytheDefinitions.CreateAdamantiteScythe());
         Register("celestial_scythe",     () => ScytheDefinitions.CreateCelestialScythe());
 
-        // ── Integral Factor weapons ──────────────────────────────────
-        // Canon named-series weapons from SAO: Integral Factor (Bandai Namco).
-        // Series ladder: Integral (F14 Epic) -> Nox (F25 Epic) ->
-        //                Rosso (F61 Legendary) -> Yasha (F87 Legendary) ->
-        //                Gaou (F90+ Legendary).
-        // Field-boss wiring + guaranteed drops are handled in FieldBossFactory.
-        // Anneal Blade line (F1-10) is registered inline in the 1H-sword block above.
+        // ── IF weapons — series ladder: Integral(F14 E) → Nox(F25 E) → Rosso(F61 L) → Yasha(F87 L) → Gaou(F90+ L).
+        // Field-boss wiring + guaranteed drops in FieldBossFactory; Anneal line (F1-10) registered inline above.
 
         // Integral Series (F14 Epic) — 4 weapons + 1 shield
         Register("bow_integral_arc_angel",   () => BowDefinitions.CreateIntegralArcAngel());
@@ -320,12 +315,7 @@ public static class ItemRegistry
         Register("axe_northern_light",    () => AxeDefinitions.CreateNorthernLight());
         Register("spr_lunatic_roof",      () => SpearDefinitions.CreateLunaticRoof());
 
-        // ── Memory Defrag + Fractured Daydream expansion ───────────────
-        // 65+ weapons: MD Alicization gaps, MD Originals, FD character
-        // canon, FD elemental variants. Placement via FloorBandedRegisteredLoot
-        // (rare pool), FloorBossGuaranteedDrops (guaranteed canon drops),
-        // and FieldBossFactory (named field bosses). FD class-lock is
-        // flavor only; any player can equip these weapons.
+        // ── MD + FD expansion — 65+ weapons via FloorBandedRegisteredLoot / FloorBossGuaranteedDrops / FieldBossFactory. FD class-lock is flavor only.
 
         // MD Alicization gap weapons (Legendary, 4 entries — Black Iron is a pair)
         Register("ohs_unfolding_truth_fragrant_olive", () => OneHandedSwordDefinitions.CreateUnfoldingTruthFragrantOlive());
@@ -400,10 +390,7 @@ public static class ItemRegistry
         Register("ohs_excalibur_oberon",       () => OneHandedSwordDefinitions.CreateExcaliburOberon());
         Register("ohs_bloodthirst",            () => OneHandedSwordDefinitions.CreateBloodthirst());
 
-        // ── Cross-Game Sweep (Alicization Lycoris / Lost Song / Last Recollection) ──
-        // Final cross-game weapon pass. 55 weapons + 2 Corrupted variants.
-        // Placement primarily via FloorBandedRegisteredLoot; Starlight Banner
-        // via Dorothy questline on F78; Corrupted variants only via stones.
+        // ── Cross-Game Sweep (AL/LS/LR) — 55 weapons + 2 Corrupted. FloorBandedRegisteredLoot; Starlight Banner via Dorothy F78; Corrupted via stones only.
 
         // Group 1 — Alicization Lycoris Normal Raid (Epic F70-85)
         Register("axe_skyrend",                    () => AxeDefinitions.CreateSkyrend());

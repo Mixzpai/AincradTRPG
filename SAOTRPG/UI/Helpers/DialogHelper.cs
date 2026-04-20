@@ -2,9 +2,7 @@ using Terminal.Gui;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Shared dialog utilities — factory, separators, buttons, confirmation,
-// Escape key close, and standard footer. Used by all dialog screens so
-// popups share consistent look, sizing, and behavior.
+// Shared dialog utilities: factory, separators, buttons, confirm, Esc-close, close footer.
 public static class DialogHelper
 {
     // Creates a horizontal separator string for dialogs: "  ───────..."
@@ -20,13 +18,8 @@ public static class DialogHelper
         IsDefault = isDefault,
     };
 
-    // Creates a menu-selection button with the `► Label ◄` focus marker.
-    // Strips Terminal.Gui's own [ ] chrome via NoDecorations/NoPadding so
-    // the triangles are the only framing. Idle rows pad with 2 spaces on
-    // each side so horizontal alignment stays stable when focus moves.
-    // Used by vertical menu screens (TitleScreen, PauseMenuDialog,
-    // DifficultyScreen, TalentPickDialog, ProficiencyForkDialog) for
-    // consistent selection visuals across the app.
+    // Menu-selection button with ► Label ◄ focus marker; [ ] chrome stripped via NoDecorations/NoPadding.
+    // Idle rows pad 2 spaces each side so horizontal alignment stays stable when focus moves.
     public static Button CreateMenuButton(string text, bool isDefault = false)
     {
         var btn = new Button
@@ -47,9 +40,7 @@ public static class DialogHelper
         return btn;
     }
 
-    // Strips menu-marker decorations + padding so the core label can be
-    // re-wrapped. Idempotent — handles both the current `► … ◄` mirror
-    // pair and any legacy single-direction variants.
+    // Strips ► … ◄ mirror (and legacy single-direction) so core label can be rewrapped.
     private static string StripMenuMarkers(string text)
     {
         var s = text.Trim();
@@ -88,9 +79,7 @@ public static class DialogHelper
         };
     }
 
-    // Adds the uniform close footer — a centered Close button plus a dim
-    // "[Esc] Close" hint anchored bottom-right — and wires Escape handling.
-    // Returns the Close button so callers can `SetFocus()` or customize it.
+    // Close footer: centered Close button + dim "[Esc] Close" hint bottom-right + Esc wiring.
     public static Button AddCloseFooter(Dialog dialog)
     {
         var closeBtn = CreateButton("Close", isDefault: true);

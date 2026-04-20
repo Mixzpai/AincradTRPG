@@ -2,10 +2,7 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
-// Static registry of all scythe weapons.
-// Scythes: heavy reach weapons. Slow but long range (2 tiles) and high
-// per-hit damage. Strength-scaling. Canon in SAO Last Recollection (Dorothy's
-// signature weapon class). Death-associated flavor, often HP-cost skill kits.
+// Scythe registry. Slow, long-reach (Range 2), high per-hit, STR-scaling. SAO Last Recollection canon (Dorothy's class).
 public static class ScytheDefinitions
 {
     private static Weapon Make(string id, string name, int value, string rarity, int durability,
@@ -53,11 +50,7 @@ public static class ScytheDefinitions
     public static Weapon CreateAzuretearScythe() => Make("scy_azuretear_scythe", "Azuretear Scythe", 5400, "Epic", 165, 50, 115,
         B().Add(StatType.Attack, 56).Add(StatType.Strength, 18).Add(StatType.Dexterity, 10), "Bleed+20");
 
-    // ── Divine Object (8th) — Starlight Banner ──────────────────────
-    // Dorothy's Divine Object from SAO Last Recollection. Purification
-    // scythe — skill-cooldown reduction + holy damage.
-    // Quest reward via Dorothy on F78. Rarity=Divine, durability 999,
-    // cannot be enhanced. Bespoke ◈ log format.
+    // ── Divine 8th — Starlight Banner (Dorothy LR canon). F78 quest reward, purification scythe with CDR + holy damage. Non-enhanceable.
     public static Weapon CreateStarlightBanner()
     {
         var w = Make("scy_starlight_banner", "Starlight Banner", 48000, "Divine", 999, 82, 188,

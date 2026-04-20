@@ -2,9 +2,7 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Entities;
 
-// Party member ally -- fights alongside the player using simple AI.
-// Follows the player, attacks nearby enemies, and uses the SAO Switch mechanic.
-// Each ally has a weapon type that determines their combat style.
+// Party ally — simple AI: follows player, attacks nearby enemies, uses SAO Switch.
 public class Ally : Entity
 {
     public override char Symbol { get; protected set; }

@@ -37,8 +37,7 @@ public static class KatanaDefinitions
     public static Weapon CreateKarakurenai() => Make("karakurenai", "Karakurenai", 1300, "Epic", 100, 25, 40, 1,
         B().Add(StatType.Attack, 25).Add(StatType.Agility, 12).Add(StatType.Strength, 6), "BackstabDmg+50");
 
-    // ── Hollow Realization Evolution Chain (Katana) ─────────────────
-    // Matamon -> Shishi-Otoshi -> Shichishito -> Masamune.
+    // ── HR Katana Chain: Matamon → Shishi-Otoshi → Shichishito → Masamune.
 
     // Matamon, oni-marked first-blade, smoldering faintly red. T1 of the Masamune chain.
     public static Weapon CreateMatamon() => Make("matamon", "Matamon", 1900, "Rare", 120, 15, 60, 0,
@@ -78,8 +77,7 @@ public static class KatanaDefinitions
     public static Weapon CreateYatoMasamune() => Make("yato_masamune", "Yato: Masamune", 32000, "Legendary", 250, 95, 175, 1,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 20).Add(StatType.Dexterity, 25).Add(StatType.Agility, 15), "Bleed+30");
 
-    // F49 Shadowstep Assassin drops (Alicization Lycoris Divine Beast tier).
-    // Stealth katana. Bleed-on-hit, favors sudden strikes.
+    // F49 Shadowstep Assassin drop (AL Divine Beast tier). Stealth katana, bleed-on-hit.
     public static Weapon CreateMidnightSun() => Make("midnight_sun", "Midnight Sun", 17000, "Legendary", 220, 48, 145, 1,
         B().Add(StatType.Attack, 70).Add(StatType.Dexterity, 22).Add(StatType.Agility, 18).Add(StatType.Speed, 12), "Bleed+20");
 
@@ -108,17 +106,13 @@ public static class KatanaDefinitions
 
     // ── Infinity Moment shop katana ─────────────────────────────────
 
-    // IM Legendary-band shop weapon. Canon demon-smith folded katana; hemorrhage
-    // bleed theme. DefId uses kat_muramasa to avoid colliding with the existing
-    // HR evolution chain's Masamune (Divine T4).
+    // IM Legendary shop weapon — demon-smith folded hemorrhage katana. DefId kat_muramasa avoids collision with HR Masamune.
     public static Weapon CreateMuramasa() => Make("kat_muramasa", "Muramasa", 21000, "Legendary", 230, 80, 168, 1,
         B().Add(StatType.Attack, 80).Add(StatType.Agility, 24).Add(StatType.Dexterity, 20).Add(StatType.Strength, 14), "Bleed+30");
 
     // ── Infinity Moment LAB katana (non-enhanceable) ────────────────
 
-    // IM F94 floor-boss LAB reward. Canon name is 朔 (new-moon) kanji; we
-    // render as plain "Saku" for terminal-font compatibility.
-    // Shaded night-cutter blade; damage climbs in darkness.
+    // IM F94 LAB reward — canon 朔 (new-moon) rendered as "Saku" for terminal-font compat. Night-cutter, damage scales in darkness.
     public static Weapon CreateSaku()
     {
         var w = Make("kat_saku", "Saku", 25000, "Legendary", 245, 84, 175, 1,
@@ -136,15 +130,10 @@ public static class KatanaDefinitions
 
     // ── Fractured Daydream — Character Core Canon (Katana) ─────────────
 
-    // Kirito canon — dual G4 Murasama blades. F90+ rare drop. DefId
-    // disambiguated from the existing `kat_muramasa` (IM shop katana)
-    // via the `murasama_g4` subtag and distinct display spelling.
+    // Kirito dual G4 Murasama, F90+ drop. DefId `murasama_g4` disambiguates from IM `kat_muramasa`.
     public static Weapon CreateMurasamaG4Dual()
     {
-        // FD canon "Dual" katana — pre-tuned for dual-wield. Flags
-        // IsDualWieldPaired=true so it can occupy the OffHand slot without
-        // the DualBlades unlock (bypasses the 1H-sword gate). Solo — no
-        // canonical partner, so no Pair Resonance synergy.
+        // FD "Dual" pre-tuned — IsDualWieldPaired bypasses 1H-sword OffHand gate. Solo, no Pair Resonance.
         var w = Make("kat_murasama_g4_dual", "Murasama G4", 24500, "Legendary", 240, 88, 170, 1,
             B().Add(StatType.Attack, 84).Add(StatType.Agility, 26).Add(StatType.Dexterity, 20).Add(StatType.Strength, 14), "Bleed+25");
         w.IsDualWieldPaired = true;
@@ -181,9 +170,7 @@ public static class KatanaDefinitions
     public static Weapon CreateEradicateSaber() => Make("kat_eradicate_saber", "Eradicate Saber", 5500, "Epic", 160, 55, 118, 1,
         B().Add(StatType.Attack, 54).Add(StatType.Agility, 20).Add(StatType.Speed, 10), "HolyDamage+15");
 
-    // ── SAO Lost Song Top-Tier (Katana) — Legendary F80-95 ──────────
-    // Demon Blade Muramasa — distinct from IM kat_muramasa (lower-band
-    // shop variant). This is the apex LS Muramasa drop.
+    // ── LS Top-Tier (Katana), Legendary F80-95 — Demon Blade Muramasa, apex LS drop (distinct from IM kat_muramasa shop variant).
     public static Weapon CreateDemonBladeMuramasa() => Make("kat_demon_blade_muramasa", "Demon Blade Muramasa", 20500, "Legendary", 225, 86, 160, 1,
         B().Add(StatType.Attack, 82).Add(StatType.Agility, 26).Add(StatType.Dexterity, 14), "Bleed+30");
 

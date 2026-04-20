@@ -2,15 +2,10 @@ using SAOTRPG.Entities;
 
 namespace SAOTRPG.Map;
 
-// Creates the floor boss for each floor. Every floor has a unique named boss
-// sourced from SAO canon (light novels, Progressive, Hollow Fragment, Integral
-// Factor) or original designs fitting the floor's era theme.
-// Floor 100 is special: a mirror clone of the player character.
+// Floor boss factory. Canon sources (LN/Progressive/HF/IF) + era-themed originals. F100 = player clone.
 public static class BossFactory
 {
-    // Full 100-floor boss roster. Index = floor - 1.
-    // Canon sources: SAO Wiki, Progressive LNs, Hollow Fragment, Integral Factor, CBR rankings.
-    // Fields: (Name, Title).
+    // 100-floor roster (index = floor-1); sources: SAO Wiki, Progressive LNs, HF, IF, CBR.
     private static readonly (string Name, string Title)[] BossRoster =
     {
         // ── Verdant Era (Floors 1-5) — nature, beasts, kobolds ──────
@@ -154,16 +149,14 @@ public static class BossFactory
         ("???",                           "The Final Trial"),                  // F100 — player clone
     };
 
-    // Create the boss for a given floor. Every floor has a unique name.
-    // Floor 100 is handled separately as a player clone.
+    // Floor 100 handled separately (player clone).
     public static Boss CreateFloorBoss(int floor)
     {
         if (floor < 1) floor = 1;
         int idx = Math.Clamp(floor - 1, 0, BossRoster.Length - 1);
         var (name, title) = BossRoster[idx];
 
-        // Stat curve: exponential growth so early bosses are beatable
-        // and late bosses are genuinely threatening.
+        // Stat curve: exponential — early bosses beatable, late bosses threatening.
         int level = 10 + floor * 2;
         int atk   = 8  + (int)(floor * 1.8 + floor * floor * 0.02);
         int def   = 6  + (int)(floor * 1.2 + floor * floor * 0.015);
@@ -262,8 +255,7 @@ public static class BossFactory
         return list.ToArray();
     }
 
-    // Floor 100 special: create a boss that mirrors the player's stats.
-    // Called from PopulateFloor when floor == 100.
+    // F100 special: mirrors player stats. Called from PopulateFloor when floor == 100.
     public static Boss CreatePlayerClone(Entities.Player player)
     {
         var clone = new GenericBoss

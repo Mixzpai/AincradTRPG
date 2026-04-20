@@ -10,16 +10,14 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Main gameplay screen — assembles the map, minimap, stats, message log,
-// and action bar. Borderless panels with inline title labels for a
-// streamlined look; the outer window frame is the only container border.
+// Main gameplay screen — assembles map, minimap, stats, log, action bar.
+// Borderless panels + inline titles; the outer window frame is the only container border.
 public static partial class GameScreen
 {
     private const int AnimationIntervalMs = 750, AutoExploreStepMs = 80;
     private const int HpBarWidth = 16, XpBarWidth = 10;
 
-    // Fixed sidebar geometry — the right panel is always exactly this many
-    // columns regardless of terminal width, so the stats layout is stable.
+    // Fixed sidebar width so stats layout is stable across terminal widths.
     private const int SidebarWidth  = 56;
     private const int SidebarInner  = 54;   // SidebarWidth - 2 for L/R padding
     private const int MinimapHeight = 10;
@@ -48,8 +46,7 @@ public static partial class GameScreen
         SaveData? saveData, int saveSlot)
     {
         mainWindow.RemoveAll();
-        // Unhook menu-screen Esc handlers so they don't shadow MapView's
-        // Esc → PauseRequested routing once we enter gameplay.
+        // Unhook menu-screen Esc handlers so they don't shadow MapView's PauseRequested routing.
         DifficultyScreen.UnhookEscHandler(mainWindow);
         CharacterCreationScreen.UnhookEscHandler(mainWindow);
         var sw = DebugLogger.StartTimer("GameScreen.Show");
@@ -77,10 +74,7 @@ public static partial class GameScreen
         var (map, rooms) = MapGenerator.GenerateFloor(startFloor);
         DebugLogger.LogGame("GAME", $"Map generated: {map.Width}x{map.Height}, {rooms.Count} rooms");
 
-        // ── Right column container ────────────────────────────────────
-        // Fixed 50-col width anchored to the right edge — guarantees the
-        // stats text always fits in its column and never depends on the
-        // terminal's absolute width.
+        // ── Right column container ── Fixed-width, right-anchored; stats never depend on terminal width.
         var rightPanel = new View
         {
             X = Pos.AnchorEnd(SidebarWidth), Y = 0,
@@ -193,8 +187,7 @@ public static partial class GameScreen
 
         foreach (var entity in map.Entities) entity.SetLog(gameLog);
 
-        // ── Map area (left) ──────────────────────────────────────────
-        // Fills all width except the fixed-width sidebar on the right.
+        // ── Map area (left) ── Fills width minus right sidebar.
         var camera = new Camera();
         var mapArea = new View
         {
@@ -236,6 +229,9 @@ public static partial class GameScreen
         var hotbarLabel = new Label { Text = "", X = 1, Y = 2, ColorScheme = ColorSchemes.Body };
         var skillBarLabel = new Label { Text = "", X = Pos.AnchorEnd(58), Y = 2, Width = 56, ColorScheme = ColorSchemes.Gold };
         actionBar.Add(hpLabel, inventoryBtn, infoLabel, hotbarLabel, skillBarLabel);
+
+        // Seed session bestiary from lifetime store — completion counter spans all runs.
+        SAOTRPG.Systems.Bestiary.LoadFromLifetimeStats();
 
         var turnManager = saveData != null
             ? TurnManager.LoadFromSave(saveData, map, player, gameLog)

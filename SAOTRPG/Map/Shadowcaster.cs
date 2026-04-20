@@ -1,8 +1,7 @@
 namespace SAOTRPG.Map;
 
-// Symmetric recursive shadowcasting — Albert Ford's algorithm
-// (https://www.albertford.com/shadowcasting/). Properties it guarantees:
-// Used for both the player's FOV and per-light-source propagation.
+// Symmetric recursive shadowcasting (Albert Ford — albertford.com/shadowcasting/).
+// Used for player FOV and per-light-source propagation.
 public static class Shadowcaster
 {
     public delegate bool BlockingPredicate(int x, int y);
@@ -22,9 +21,7 @@ public static class Shadowcaster
         }
     }
 
-    // Mutable struct passed by ref — StartSlope is rewritten when a wall→floor
-    // transition happens inside the loop, narrowing the visible sector for
-    // the rest of that row and the recursive sub-scans.
+    // Mutable struct passed by ref — StartSlope is rewritten on wall→floor transition to narrow the sector.
     private struct Row
     {
         public int Depth;
@@ -90,9 +87,7 @@ public static class Shadowcaster
         => col >= row.Depth * row.StartSlope
         && col <= row.Depth * row.EndSlope;
 
-    // Banker-style rounding variants used by Albert Ford to bound columns:
-    //   round_ties_up(n)   = floor(n + 0.5)
-    //   round_ties_down(n) = ceil(n - 0.5)
+    // Banker rounding for column bounds: up = floor(n+0.5), down = ceil(n-0.5).
     private static int RoundTiesUp(double n)   => (int)Math.Floor(n + 0.5);
     private static int RoundTiesDown(double n) => (int)Math.Ceiling(n - 0.5);
 }

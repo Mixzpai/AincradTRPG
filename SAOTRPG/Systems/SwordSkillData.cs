@@ -1,9 +1,7 @@
 namespace SAOTRPG.Systems;
 
-// SAO-style Sword Skills — active combat abilities tied to weapon type.
-// Each skill has a hit count, damage multiplier, cooldown, post-motion
-// delay (vulnerability window), and a proficiency kill threshold to unlock.
-// Canonical names sourced from SAO light novels, anime, and game adaptations.
+// Sword Skills: hit count, dmg mult, cooldown, post-motion window, unlock threshold.
+// Canon names from SAO LN/anime/games.
 
 public enum SkillType { Power, Rush, AoE, Combo, Counter, Projectile }
 

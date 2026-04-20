@@ -48,8 +48,7 @@ public static class RapierDefinitions
     public static Weapon CreateLambentLight() => Make("lambent_light", "Lambent Light", 8000, "Legendary", 180, 40, 70,
         B().Add(StatType.Attack, 42).Add(StatType.Speed, 20).Add(StatType.Dexterity, 15), "CritRate+20");
 
-    // ── Hollow Realization Evolution Chain (Rapier) ─────────────────
-    // Prima Sabre -> Pentagramme -> Charadrios -> Hexagramme.
+    // ── HR Rapier Chain: Prima Sabre → Pentagramme → Charadrios → Hexagramme.
 
     // Prima Sabre, duellist's first true blade — geometry in steel. T1 of the Hexagramme chain.
     public static Weapon CreatePrimaSabre() => Make("prima_sabre", "Prima Sabre", 1700, "Rare", 120, 15, 55,
@@ -75,16 +74,13 @@ public static class RapierDefinitions
     public static Weapon CreateMothersRosario() => Make("mothers_rosario", "Mother's Rosario", 32000, "Legendary", 280, 90, 175,
         B().Add(StatType.Attack, 85).Add(StatType.Dexterity, 30).Add(StatType.Speed, 26).Add(StatType.Agility, 18), "ComboBonus+50");
 
-    // ── Divine Objects ──────────────────────────────────────────────
-    // Above Legendary. Hand-placed only. Unbreakable. Bypass block rolls.
+    // ── Divine Objects — above Legendary, hand-placed, unbreakable, bypass block rolls.
 
-    // Fanatio Synthesis Two's Divine Object. Fires concentrated beams of light
-    // that pierce nearly anything. Extended reach (Range 2) over normal rapiers.
+    // Fanatio Synthesis Two — concentrated piercing light beams. Extended Range 2.
     public static Weapon CreateHeavenPiercingBlade() => Make("heaven_piercing_blade", "Heaven-Piercing Blade", 42000, "Divine", 999, 82, 165,
         B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 30).Add(StatType.Speed, 22).Add(StatType.Agility, 12), "PiercingBeam+30", range: 2);
 
-    // F43 Undine the Water Maiden drops (Alicization Lycoris Divine Beast tier).
-    // Rainfall rapier. Slows on hit — freezing droplets.
+    // F43 Undine Water Maiden drop (AL Divine Beast tier). Rainfall rapier, freeze-on-hit.
     public static Weapon CreateMidnightRain() => Make("midnight_rain", "Midnight Rain", 14500, "Legendary", 200, 42, 118,
         B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 25).Add(StatType.Speed, 18).Add(StatType.Agility, 10), "Freeze+15");
 
@@ -154,9 +150,7 @@ public static class RapierDefinitions
     public static Weapon CreateHolyFlowerRapier() => Make("rap_holy_flower_rapier", "Holy Flower Rapier", 2700, "Rare", 120, 30, 67,
         B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 12).Add(StatType.Speed, 6), "HolyDamage+10");
 
-    // MD Rare. Classic mithril-light duellist's foil. DefId differs from
-    // the existing `mythril_rapier` (Rare Tier 3 generic); display name
-    // preserved per MD canon spelling (Mithril vs Mythril).
+    // MD Rare. Classic mithril-light foil. DefId `rap_mithril_rapier` differs from generic `mythril_rapier` (Mithril vs Mythril canon).
     public static Weapon CreateMithrilRapier() => Make("rap_mithril_rapier", "Mithril Rapier", 2500, "Rare", 115, 28, 65,
         B().Add(StatType.Attack, 30).Add(StatType.Dexterity, 14).Add(StatType.Speed, 6), "CritRate+8");
 

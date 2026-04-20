@@ -3,18 +3,8 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// Single source of truth for all difficulty tier data — names, descriptions,
-// theme colors, and gameplay multipliers. Used by both DifficultyScreen (UI)
-// and TurnManager (gameplay).
-// Scaling philosophy:
-//   - MobStatPercent scales enemy HP/ATK/DEF as a percentage of base (100 = normal).
-//     Story (40%) through Unwinnable (300%) creates a ~7.5× difficulty spread.
-//   - XpPercent inversely correlates — easier tiers reward more XP to accelerate
-//     progression, while harder tiers slow it down to extend the challenge.
-//   - RegenInterval controls passive HP recovery frequency. Lower = faster healing.
-//     Zero disables passive regen entirely (Unwinnable).
-//   - ColStreakBonus stacks per kill streak tier, rewarding aggressive play more
-//     on easier difficulties (8% Story vs 1% Unwinnable).
+// Difficulty tier data. MobStatPercent 40-300% (~7.5× spread). XpPercent inverse.
+// RegenInterval: lower=faster, 0=off. ColStreakBonus: per kill-streak tier (8% Story → 1% Unwinnable).
 public static class DifficultyData
 {
     // All properties that define a difficulty tier.

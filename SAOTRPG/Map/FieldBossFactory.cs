@@ -3,10 +3,7 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Map;
 
-// Named field bosses that spawn in the wilderness of specific floors.
-// Distinct from floor bosses (labyrinth room) — these are roaming elites with
-// canon drops (Crystallite Ingot, Mammoth Tusk, Divine Stone of Returning Soul).
-// Stats are softer than labyrinth bosses: 2.0-3.0x mob HP, 1.3-1.6x mob ATK.
+// Named wilderness field bosses with canon drops. Softer than labyrinth bosses (2.0-3.0x mob HP, 1.3-1.6x ATK).
 public static class FieldBossFactory
 {
     private record FieldBossEntry(
@@ -40,10 +37,7 @@ public static class FieldBossFactory
             "Jingling bells echo through the dead pines. A hulking red-coated giant waits beneath the fir tree.",
             IsSeasonal: true, SeasonalEventId: "christmas"),
 
-        // ── Divine Object couriers ────────────────────────────────────
-        // Canon-themed field bosses that guarantee-drop Divine Objects.
-        // Stronger HP/ATK scaling than normal field bosses — they're meant
-        // to be memorable encounters that the player prepares for.
+        // ── Divine Object couriers — guaranteed-drop canon bosses, stronger HP/ATK scaling.
 
         // F40 — Deusolbert Synthesis Seven's Divine Object (Conflagrant Flame Bow).
         new("phoenix_of_smolder_peak_f40", "Phoenix of the Smolder Peak", "Guardian of the Flame Bow",
@@ -59,10 +53,7 @@ public static class FieldBossFactory
             95, 4.5f, 1.8f, 'W', Color.BrightCyan, "time_piercing_sword",
             "A warden in ancient armor stands beneath a clock that has stopped. Time feels heavier here."),
 
-        // ── Hollow Fragment canon NM/HNM field bosses ──────────────────
-        // Canon-accurate placements for HF endgame Legendary weapons.
-        // NM = Named Monster (free spawn), HNM = Hollow Named Monster
-        // (promoted to field boss tier for "worldboss" feel).
+        // ── HF canon NM/HNM — NM=Named Monster, HNM=Hollow NM (promoted to field-boss tier).
 
         // F77 NM Goblin Leader drops Mace of Asclepius (HF canon).
         new("goblin_leader_f77",    "Goblin Leader",    "Warchief of the Kobold Host", 77, 3.0f, 1.5f, 'G', Color.Green,        "mace_of_asclepius",
@@ -96,16 +87,13 @@ public static class FieldBossFactory
         new("blaze_armor_f98",      "Blaze Armor",      "Living Armor of the Hollow Forge",98, 5.2f, 2.0f, 'A', Color.BrightRed,  "yato_masamune",
             "Empty armor glowing with inner flame. The soul inside remembers every sword it has wielded."),
 
-        // ── Hollow Fragment Implement System field bosses (5) ─────────
-        // Canon HF F80-F99 "Implement" slots that drop via roaming HNM bosses.
+        // ── HF Implement System (5): F80-F99 Implement slots dropped by roaming HNM.
 
         // F80 — drops Arcaneblade: Soul Binder.
         new("soul_binder_f80",      "Soul Binder",      "Wraith of the Gathered Hymns",    80, 3.8f, 1.65f, 'S', Color.BrightMagenta,"sci_arcaneblade_soul_binder",
             "A figure of layered voices stands in the corridor, scimitar humming with bound soul-tones."),
 
-        // F83 — drops Fellblade: Ruinous Doom (replaces Arboreal Fear slot? No — both F83 possible; arboreal already occupies. Moved to F84 slot for clarity).
-        // Actually F83 is Arboreal Fear for Gae Bolg. Fellblade Ruinous Doom is Legendary-scale — place on F83 alongside.
-        // But placement table says field boss F83 for Fellblade. Add a second F83 boss.
+        // F83 co-resident with Arboreal Fear — drops Fellblade: Ruinous Doom (Legendary-scale).
         new("ruinous_herald_f83",   "Ruinous Herald",   "Doom-Prophet of the Falling Tower",83, 3.9f, 1.7f, 'R', Color.BrightRed,   "sci_fellblade_ruinous_doom",
             "A scimitar-wielder cloaked in unmaking. Every step erases the one before."),
 
@@ -117,15 +105,9 @@ public static class FieldBossFactory
         new("banishing_ray_f93",    "Banishing Ray",    "Sentinel of the White Horizon",   93, 4.3f, 1.75f, 'B', Color.BrightYellow,"rap_glimmerblade_banishing_ray",
             "A rapier-duellist in searing white mail. Its thrust seems to erase what it pierces."),
 
-        // ── Integral Factor series field bosses (IF canon) ─────────────
-        // Each boss guarantees one signature series weapon. The matching
-        // series shield drops as a secondary via LootGenerator.FieldBossSecondaryDrops.
-        // The remaining series weapons appear in the floor-banded Epic loot
-        // pool (LootGenerator.FloorBandedRegisteredLoot).
+        // ── IF-series field bosses: each guarantees a signature weapon; matching shield via LootGenerator.FieldBossSecondaryDrops.
 
-        // F14 — Integral Series (first IF endgame tier). Canon F14 shield
-        // is Fermat; canon F14 weapons include Arc Angel, Radgrid, Gusion,
-        // After Glow.
+        // F14 — Integral Series (IF endgame tier 1). Canon shield Fermat; weapons: Arc Angel, Radgrid, Gusion, After Glow.
         new("starlight_sentinel_f14", "Starlight Sentinel", "Guardian of the Integral Dawn", 14, 3.0f, 1.5f, 'S', Color.BrightYellow, "bow_integral_arc_angel",
             "A luminous figure paces the ridge, a bow of starlight drawn across its back."),
 
@@ -137,8 +119,7 @@ public static class FieldBossFactory
         new("crimson_forneus_f61",   "Crimson Forneus",   "Demon of the Scarlet Depths",      61, 4.0f, 1.7f, 'F', Color.BrightRed, "ohs_rosso_forneus",
             "The air reddens. A demon-knight in crimson plate levels a heavy sword and advances."),
 
-        // F87 — Yasha Series (moved from F85 to avoid Silent Edge + Abased
-        // Beast collision).
+        // F87 — Yasha Series (moved from F85 to avoid Silent Edge + Abased Beast collision).
         new("yasha_night_demon_f87", "Yasha the Night Demon", "Demon-Warrior of the Moonless Path", 87, 4.2f, 1.75f, 'Y', Color.BrightMagenta, "ohs_yasha_astaroth",
             "A horned silhouette waits at the corridor's end. Its blade drinks the moonlight."),
 
@@ -146,13 +127,7 @@ public static class FieldBossFactory
         new("gaou_ox_king_f90",      "Gaou the Ox-King",  "Demon-King of the Horned Vanguard", 90, 4.5f, 1.85f, 'G', Color.BrightYellow, "ohs_gaou_reginleifr",
             "A towering ox-headed king stamps the stone. The ground splits beneath its hooves."),
 
-        // ── Fractured Daydream Character Core canon field bosses (7) ───
-        // Moves FD canon weapons out of FloorBandedRegisteredLoot onto
-        // dedicated boss drops so wielder lore reaches the player through
-        // memorable encounters instead of random chests. Admin's Regent
-        // bumped from F95→F97 because F95 already hosts Warden of Stopped
-        // Hours (Time Piercing) + Gaia Breaker (Arondight) — adding Red
-        // Rose + Admin would make F95 a 4-field-boss floor. F97 was free.
+        // ── FD Character Core canon (7) — dedicated boss drops for wielder lore. Admin's Regent bumped F95→F97 (F95 crowding).
 
         // F60 — Klein canon. Spirit Sword Kagutsuchi wielder.
         new("kagutsuchi_samurai_f60", "Kagutsuchi the Fire Samurai", "Ember-Wielder of the Sixtieth Summit",
@@ -174,29 +149,23 @@ public static class FieldBossFactory
             85, 4.0f, 1.75f, 'Y', Color.BrightMagenta, "rap_macafitel",
             "A violet-haired shade lifts a rapier in salute. The air hums with a thousand remembered strikes."),
 
-        // F95 — Kirito canon (Red Rose Sword — pair to Night Sky). Additive
-        // alongside existing F95 Warden of Stopped Hours + Gaia Breaker.
+        // F95 — Kirito canon Red Rose Sword (paired with Night Sky); additive alongside Warden of Stopped Hours + Gaia Breaker.
         new("warden_blooming_rose_f95", "Warden of the Blooming Rose", "Petal-Wreathed Sentinel of the Ninety-Fifth",
             95, 4.3f, 1.8f, 'W', Color.BrightMagenta, "ohs_red_rose_sword",
             "A knight crowned in red petals stands watch at a trellised arch. The roses drip a slow, dark bloom."),
 
-        // F97 — Administrator canon. Silvery Ruler wielder. Bumped from
-        // F95 to F97 per scope rule 4 (F95 crowding). F97 had no prior
-        // field boss; a clean home for Pontifex flavor.
+        // F97 — Administrator canon Silvery Ruler wielder. Bumped from F95 (crowding) to previously-empty F97.
         new("administrators_regent_f97", "Administrator's Regent", "Pontifex Echo of the Ninety-Seventh Cathedral",
             97, 4.2f, 1.8f, 'R', Color.White, "ohs_silvery_ruler",
             "A silver-robed figure descends a broken staircase, longsword flickering with cathedral light."),
 
-        // F98 — Kirito canon. Elucidator Rouge wielder. Co-resides with
-        // existing Blaze Armor HNM on F98 (already canon HF precedent).
+        // F98 — Kirito canon Elucidator Rouge; co-resides with Blaze Armor HNM (canon HF precedent).
         new("ashen_kirito_simulacrum_f98", "Ashen Kirito Simulacrum", "Red-Edge Echo of the Ninety-Eighth",
             98, 4.5f, 1.85f, 'K', Color.BrightRed, "ohs_elucidator_rouge",
             "A black-clad echo of the Black Swordsman steps out of the ash. His off-hand edge burns crimson."),
     };
 
-    // Returns all field bosses that should spawn on this floor right now.
-    // Skips seasonal bosses when their event isn't active, and skips bosses
-    // already defeated in this run.
+    // Field bosses eligible this floor right now — skips inactive seasonal and already-defeated bosses.
     public static IEnumerable<FieldBoss> GetActiveForFloor(int floor, HashSet<string> defeatedIds,
         Systems.SeasonalEvent activeEvent)
     {
@@ -222,8 +191,7 @@ public static class FieldBossFactory
 
     private static FieldBoss Build(FieldBossEntry e, int floor)
     {
-        // Scale off the floor mob's baseline rather than the labyrinth boss
-        // curve: softer than a floor boss, tougher than a normal mob.
+        // Scaled off the mob baseline (not labyrinth-boss curve) — softer than floor boss, tougher than mob.
         int level = 8 + floor * 2;
         int mobHp = 15 + floor * 10;
         int mobAtk = 3 + floor * 2;

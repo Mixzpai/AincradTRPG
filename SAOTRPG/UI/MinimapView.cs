@@ -5,17 +5,9 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Scaled-down overview of the dungeon floor shown in the top-right panel.
-// Each minimap cell represents a region of map tiles.
-//
-// Performance notes:
-//   * SampleRegion collapses what used to be three sequential full passes
-//     over the region (explored/visible check, then entities/items, then
-//     terrain landmarks) into a single pass that gathers every signal.
-//   * The per-cell output (glyph + color + revealed flag) is cached and
-//     only resampled when the player moves, new tiles are revealed, or
-//     the viewport resizes. Frames with no NewlyRevealed entries reuse
-//     last frame's pixel buffer.
+// Scaled overview of dungeon floor (top-right). Each cell = region of map tiles.
+// Perf: SampleRegion is single-pass; per-cell buffer cached and only resampled on
+// move, new reveal, or viewport resize (frames with no reveals reuse last buffer).
 public class MinimapView : View
 {
     private GameMap _map;
@@ -56,9 +48,7 @@ public class MinimapView : View
         int scaleY = Math.Max(1, (_map.Height + viewH - 1) / viewH);
         int playerMx = _player.X / scaleX, playerMy = _player.Y / scaleY;
 
-        // Resize / rebuild the cache on first draw, resolution change, or player
-        // crossing a cell boundary. Otherwise, if nothing was newly revealed we
-        // can skip the resample entirely and reuse last frame's buffer.
+        // Rebuild cache on first draw / resize / player cell change; else reuse last buffer if no reveals.
         bool geomChanged = _cache == null || _cacheW != viewW || _cacheH != viewH
                            || _cacheScaleX != scaleX || _cacheScaleY != scaleY;
         bool playerCellChanged = playerMx != _cachePlayerMx || playerMy != _cachePlayerMy;
@@ -125,12 +115,8 @@ public class MinimapView : View
         }
     }
 
-    // Single-pass region sampler. Walks the sub-rectangle once, collecting:
-    //   * the FIRST visible entity/item (identical first-match semantics to
-    //     the original 3-pass implementation — iteration order x-then-y),
-    //   * the FIRST explored landmark tile (stairs/door/shrine/…),
-    //   * whether the region has any explored / any visible tile.
-    // Priority at the end: entity/item > landmark > center-tile terrain.
+    // Single-pass sampler: first visible entity/item (x-then-y), first explored landmark,
+    // any-explored/any-visible flags. Priority: entity/item > landmark > center-tile terrain.
     private (char ch, Color fg) SampleRegion(int startX, int startY, int width, int height)
     {
         bool anyExplored = false, anyVisible = false;

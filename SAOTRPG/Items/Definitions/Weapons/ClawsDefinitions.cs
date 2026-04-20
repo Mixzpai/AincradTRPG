@@ -2,10 +2,7 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
-// Static registry of all claw weapons.
-// Claws: dual-fisted slashing weapons. Low per-hit damage but very fast
-// attacks, agility-scaling. Canon in SAO Lost Song (Salamander/Gnome/Cait Sith
-// martial style). Natural Agility + lower Durability than traditional weapons.
+// Claws registry. Dual-fisted, fast, low per-hit, AGI-scaling. LS martial canon (Salamander/Gnome/Cait Sith).
 public static class ClawsDefinitions
 {
     private static Weapon Make(string id, string name, int value, string rarity, int durability,

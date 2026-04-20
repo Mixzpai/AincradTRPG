@@ -41,7 +41,7 @@ public static partial class MapGenerator
             if (x == sx + w - cutW - 1 && y < sy + cutH) edge = false; // keep floor
             map.Tiles[x, y].Type = edge ? TileType.Wall : TileType.Floor;
         }
-        // Fix: ensure the cut quadrant interior corners are walls
+        // Fix cut-quadrant interior corners as walls.
         for (int x = sx + w - cutW; x < sx + w; x++)
         for (int y = sy; y < sy + cutH; y++)
             if (map.InBounds(x, y)) map.Tiles[x, y].Type = TileType.Wall;

@@ -1,20 +1,14 @@
 namespace SAOTRPG.Map;
 
-// BSP-based labyrinth generator for Aincrad floor dungeons. Each floor's
-// labyrinth is a separate map (smaller and denser than the overworld)
-// filled with wall by default, then carved into rooms connected by
-// L-shaped corridors via recursive binary space partitioning.
-// The southernmost room is the entrance (contains a LabyrinthEntrance tile
-// to exit back to the overworld). The northernmost room is the boss room
-// (contains StairsUp, guarded by the floor boss).
+// BSP labyrinth: separate denser-than-overworld map, wall-filled, carved into rooms + L-corridors.
+// Southmost room = LabyrinthEntrance (exit); Northmost = boss room with StairsUp.
 public static partial class MapGenerator
 {
     private const int LabWidth  = 80;
     private const int LabHeight = 60;
     private const int MinLeaf   = 10;
 
-    // Generate a labyrinth dungeon for the given floor. Returns the map
-    // and a room list (first room = entrance, last room = boss room).
+    // Returns (map, rooms) with rooms[0]=entrance, rooms[^1]=boss room.
     public static (GameMap Map, List<Room> Rooms) GenerateLabyrinth(int floor)
     {
         var map = new GameMap(LabWidth, LabHeight);

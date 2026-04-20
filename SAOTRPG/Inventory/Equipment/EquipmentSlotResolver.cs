@@ -13,13 +13,8 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterDefaultMappings();
     }
 
-    // True if the item is a legal OffHand occupant. Shields are always
-    // legal; one-handed swords become legal once Dual Blades is unlocked;
-    // canon FD "Paired" weapons (IsDualWieldPaired=true) are always legal
-    // regardless of WeaponType and regardless of DualBlades unlock — these
-    // are pre-tuned for dual-wield per Systems.DualWieldPairs.
-    // Inventory.Equip handles the actual auto-routing; this predicate lets
-    // UI / validation code ask the same question without duplicating logic.
+    // Legal OffHand: shields always; 1H swords only after Dual Blades unlock; IsDualWieldPaired always (FD pre-tuned).
+    // Mirrors Inventory.Equip auto-route logic so UI/validation can ask without duplication.
     public bool CanGoInOffHand(EquipmentBase equipment)
     {
         var resolved = ResolveSlot(equipment);

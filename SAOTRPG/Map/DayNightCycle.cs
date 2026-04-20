@@ -1,27 +1,17 @@
 namespace SAOTRPG.Map;
 
-// Global day/night clock driven by the player's turn counter.
-// Sun elevation follows a smooth cosine from noon → midnight → noon,
-// looping every CycleLength turns. SunLevel
-// is the normalized elevation in [0, 1] and drives both the ambient
-// light color in LightingSystem and the effective player
-// FOV radius used by GameMap.UpdateVisibility.
-// The player always starts at noon (turn 0) so a new run opens in
-// bright daylight, then gradually darkens as turns accumulate.
+// Day/night clock driven by turn counter. Cosine noon→midnight→noon loop of CycleLength turns.
+// SunLevel ∈ [0,1] drives LightingSystem ambient + GameMap FOV radius. Runs start at noon (turn 0).
 public static class DayNightCycle
 {
     // Total turns per full day→night→day cycle.
     public const int CycleLength = 400;
 
-    // Total game turns elapsed. TurnManager pushes this each turn so
-    // lighting and visibility radius can react without taking a
-    // parameter through the whole call chain.
+    // Total turns elapsed. TurnManager pushes each turn so lighting/FOV react without threading through calls.
     public static int CurrentTurn { get; set; }
 
-    // Smooth sun elevation in [0, 1]. 1 = noon, 0 = midnight.
-    // Uses a half-amplitude cosine so the transitions at dusk/dawn
-    // are gentler than the plateaus at noon/midnight.
-    // FB-564 StarlessNight modifier forces perpetual deep night.
+    // Sun elevation in [0,1]: 1=noon, 0=midnight. Half-amplitude cosine → gentle dusk/dawn, plateaus at noon/midnight.
+    // StarlessNight modifier forces perpetual deep night.
     public static float SunLevel
     {
         get
@@ -32,8 +22,7 @@ public static class DayNightCycle
         }
     }
 
-    // Ambient RGB for the LightingSystem — lerped between deep
-    // midnight blue and warm daylight based on SunLevel.
+    // Ambient RGB — lerped midnight blue → warm daylight by SunLevel.
     public static (float R, float G, float B) Ambient
     {
         get
@@ -47,18 +36,15 @@ public static class DayNightCycle
         }
     }
 
-    // Viewport half-diagonal — set each frame by MapView so the FOV
-    // can scale to the actual screen size.
+    // Viewport half-diagonal — set each frame by MapView so FOV scales to screen.
     public static int ViewportRadius { get; set; } = 80;
 
-    // Night shrinks vision to a torch bubble; day opens it to the full
-    // viewport. The minimum is large enough to still feel playable.
+    // Night → torch bubble, Day → full viewport. Min kept playable.
     public const int MinVisibility = 18;
     public static int VisibilityRadius =>
         (int)Math.Round(Lerp(MinVisibility, ViewportRadius, SunLevel));
 
-    // Short human-readable phase: "Day", "Dusk", "Night", or "Dawn".
-    // Checks sun level plus direction of change within the cycle.
+    // "Day", "Dusk", "Night", or "Dawn" — sun level + direction within cycle.
     public static string PhaseName
     {
         get

@@ -26,6 +26,7 @@ public partial class MapView
             case KeyCode.I:     return FireEvent(InventoryRequested,   keyEvent);
             case KeyCode.G:     return FireEvent(PickupRequested,      keyEvent);
             case KeyCode.X:     return FireEvent(AutoExploreRequested, keyEvent);
+            case KeyCode.Y:     return FireEvent(BestiaryRequested,    keyEvent);
             case KeyCode.P:     return FireEvent(StatsRequested,       keyEvent);
             case KeyCode.H:     return FireEvent(HelpRequested,        keyEvent);
             case KeyCode.B:     return FireEvent(PlayerGuideRequested, keyEvent);

@@ -3,35 +3,26 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Log message categories — determines base color when no keyword match is found.
+// Log category → base color when no keyword rule matches.
 public enum LogCategory { General, Combat, System, Loot, Healing }
 
-// Custom Terminal.Gui view that renders game log messages with per-line coloring.
-// Color priority:
-//   1. Keyword rules (checked first — content-specific overrides)
-//   2. Category color (fallback based on LogCategory)
-// Supports tab-based filtering: set a category filter to show only matching entries.
-// Supports scrolling with Up/Down/PageUp/PageDown when focused.
-// Auto-scrolls to bottom on new entries.
+// Terminal.Gui view rendering per-line colored log. Priority: keyword rule > category color.
+// Tab filter narrows to one category; Up/Down/PageUp/PageDown scroll; auto-scrolls on AddEntry.
 public class ColoredLogView : View
 {
-    // ── Log entry storage ────────────────────────────────────────────
+    // ── Log entry storage ──
     private readonly List<(string Text, LogCategory Category, int Count)> _entries = new();
     private int _scrollOffset;
-    private const int MaxEntries = 500; // cap to prevent memory growth
+    private const int MaxEntries = 500;
 
-    // ── Tab filtering ────────────────────────────────────────────────
-    private LogCategory? _filter;  // null = show all
+    // ── Tab filtering ── null = show all.
+    private LogCategory? _filter;
 
-    // ── Wrapped-row cache ────────────────────────────────────────────
-    // Invalidated on AddEntry, SetFilter, or viewport width change so
-    // scroll + render don't rebuild the entire wrapped list per frame.
+    // Wrapped-row cache invalidated on AddEntry/SetFilter/width change.
     private List<(string Text, Color Color)>? _wrappedCache;
     private int _wrappedCacheWidth;
 
-    // ── Keyword → color rules (see LogColorRules.cs for definitions) ──
-
-    // ── Category → fallback color ────────────────────────────────────
+    // ── Category → fallback color (keyword rules in LogColorRules.cs) ──
     private static readonly Dictionary<LogCategory, Color> CategoryColors = new()
     {
         { LogCategory.Combat,  Color.BrightRed },
@@ -41,9 +32,8 @@ public class ColoredLogView : View
         { LogCategory.General, Color.White },
     };
 
-    // ── Public API ───────────────────────────────────────────────────
-
-    // Returns the last N log entries (most recent last, unfiltered). Used by death recap.
+    // ── Public API ──
+    // Last N entries (most recent last, unfiltered). Used by death recap.
     public List<string> GetRecentEntries(int count)
     {
         int start = Math.Max(0, _entries.Count - count);
@@ -56,8 +46,7 @@ public class ColoredLogView : View
         return result;
     }
 
-    // Add a new log entry with deduplication. If the same message repeats
-    // consecutively, increment the count instead of adding a new line.
+    // Add entry; consecutive dupes increment Count instead of adding a new line.
     public void AddEntry(string text, LogCategory category)
     {
         if (_entries.Count > 0)
@@ -79,7 +68,6 @@ public class ColoredLogView : View
         SetNeedsDraw();
     }
 
-    // Set the category filter. Null shows all entries.
     public void SetFilter(LogCategory? category)
     {
         _filter = category;
@@ -88,9 +76,7 @@ public class ColoredLogView : View
         SetNeedsDraw();
     }
 
-    // ── Filtered entry access ────────────────────────────────────────
-
-    // Returns entries matching the current filter with count suffix.
+    // ── Filtered entries with count suffix ──
     private List<(string Text, LogCategory Category)> GetVisibleEntries()
     {
         var source = _filter == null
@@ -101,9 +87,7 @@ public class ColoredLogView : View
         ).ToList();
     }
 
-    // ── Scrolling ────────────────────────────────────────────────────
-
-    // Scroll the view to show the most recent entries.
+    // ── Scrolling ──
     public void ScrollToEnd()
     {
         int visibleLines = Math.Max(1, Viewport.Height);
@@ -111,7 +95,6 @@ public class ColoredLogView : View
         _scrollOffset = Math.Max(0, totalRows - visibleLines);
     }
 
-    // Scroll up by one page.
     public void ScrollPageUp()
     {
         int visibleLines = Math.Max(1, Viewport.Height);
@@ -119,7 +102,6 @@ public class ColoredLogView : View
         SetNeedsDraw();
     }
 
-    // Scroll down by one page.
     public void ScrollPageDown()
     {
         int visibleLines = Math.Max(1, Viewport.Height);
@@ -129,10 +111,8 @@ public class ColoredLogView : View
         SetNeedsDraw();
     }
 
-    // ── Word-wrapping ────────────────────────────────────────────────
-
-    // Returns the cached wrapped-row list, rebuilding it only when entries,
-    // filter, or viewport width have changed since the last call.
+    // ── Word-wrapping ──
+    // Cached wrapped rows; rebuilds only on entry/filter/width change.
     private List<(string Text, Color Color)> GetWrappedRows(int width)
     {
         if (_wrappedCache != null && _wrappedCacheWidth == width) return _wrappedCache;
@@ -177,9 +157,7 @@ public class ColoredLogView : View
         }
     }
 
-    // ── Rendering ────────────────────────────────────────────────────
-
-    // Custom render: draws each visible log row (post-wrap) with its resolved color.
+    // ── Rendering ── Draws each visible wrapped row with its resolved color.
     protected override bool OnDrawingContent()
     {
         var vp = Viewport;
@@ -202,8 +180,7 @@ public class ColoredLogView : View
             for (int c = 0; c < vp.Width; c++)
             {
                 char ch = c < text.Length ? text[c] : ' ';
-                // Skip surrogate pairs (multi-byte emoji) — replace with '?'
-                if (char.IsSurrogate(ch)) ch = '?';
+                if (char.IsSurrogate(ch)) ch = '?';  // surrogate pair → '?'
                 Driver!.AddRune(new System.Text.Rune(ch));
             }
         }
@@ -211,7 +188,6 @@ public class ColoredLogView : View
         return true;
     }
 
-    // Fill a row with blank space.
     private void RenderBlankRow(int row, int width)
     {
         Driver!.SetAttribute(Gfx.Attr(Color.DarkGray, Color.Black));
@@ -220,32 +196,22 @@ public class ColoredLogView : View
             Driver!.AddRune(new System.Text.Rune(' '));
     }
 
-    // ── Color resolution ─────────────────────────────────────────────
-
-    // Determine the foreground color for a log line.
-    // Priority chain:
-    //   1. Keyword rules from LogColorRules (first match wins, case-insensitive)
-    //   2. Reward pattern: lines containing '+' with 'EXP' or 'Col' → BrightYellow
-    //   3. Category fallback color from CategoryColors
+    // ── Color resolution ──
+    // 1) LogColorRules keyword (first match wins, case-insensitive)
+    // 2) reward pattern ("+X EXP" / "+X Col") → BrightYellow, 3) CategoryColors fallback.
     private static Color ResolveColor(string text, LogCategory category)
     {
-        // 1. Keyword rules (most specific)
         foreach (var (keyword, color) in LogColorRules.Rules)
         {
             if (text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 return color;
         }
-
-        // 2. Reward lines ("+X EXP" or "+X Col")
         if (text.Contains('+') && (text.Contains("EXP") || text.Contains("Col")))
             return Color.BrightYellow;
-
         return CategoryColors.GetValueOrDefault(category, Color.White);
     }
 
-    // ── Scroll input handling ────────────────────────────────────────
-
-    // Handles Up/Down/PageUp/PageDown keys for manual scrolling when the log view has focus.
+    // ── Scroll input ── Up/Down/PgUp/PgDn when focused.
     protected override bool OnKeyDown(Key keyEvent)
     {
         int visibleLines = Math.Max(1, Viewport.Height);

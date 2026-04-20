@@ -1,31 +1,15 @@
 namespace SAOTRPG.Map;
 
-// Aincrad's inverted-cone geometry: Floor 1 is the massive base (~10 km
-// across in lore), each floor above is progressively smaller, until
-// Floor 100 is the tiny Ruby Palace — just a castle with a throne room.
-//
-// All map dimensions, feature counts, and population densities derive
-// from this single scaling table so the feel changes naturally as the
-// player climbs.
+// Aincrad's inverted-cone: F1 is the ~10km base, shrinking to F100 Ruby Palace (throne room only).
+// Single scaling source for map dimensions, feature counts, and population densities.
 public static class FloorScale
 {
-    // ── Dimension curve ──────────────────────────────────────────────
-    // Floor  1: 500 x 250  (vast wilderness + Town of Beginnings)
-    // Floor  5: 440 x 220
-    // Floor 10: 390 x 195
-    // Floor 25: 290 x 145  (large mid-game)
-    // Floor 50: 200 x 100
-    // Floor 75: 120 x  60
-    // Floor 90:  80 x  40
-    // Floor 99:  50 x  28
-    // Floor 100: special — tiny castle, handled separately
-    //
-    // Uses a power-curve: size = max * (1 - t)^exp + min
+    // ── Dimension curve: size = max * (1 - t)^exp + min
+    // F1 500x250, F25 290x145, F50 200x100, F75 120x60, F99 50x28; F100 special (Ruby Palace).
 
     private const int MaxW = 500, MaxH = 250;
     private const int MinW = 50,  MinH = 28;
-    // Exponent < 1 gives a concave curve: early floors shrink slowly,
-    // upper floors shrink rapidly -- matches Aincrad's inverted cone shape.
+    // Exponent < 1 → concave curve: slow shrink early, rapid shrink at top (matches inverted cone).
     private const double Exponent = 0.55;
 
     public static (int Width, int Height) GetDimensions(int floor)
@@ -41,10 +25,7 @@ public static class FloorScale
         return (w, h);
     }
 
-    // ── Feature scaling ──────────────────────────────────────────────
-    // Returns a multiplier (0.0 – 1.0+) for how many terrain features,
-    // mobs, chests etc. to place. Floor 1 = 1.0, scales down with area.
-    // Reference area = Floor 1 (500*250 = 125000).
+    // ── Feature scaling: multiplier (F1=1.0, down with area). Reference = F1 (500*250 = 125000).
     private const double ReferenceArea = MaxW * (double)MaxH;
 
     public static double AreaRatio(int floor)
@@ -57,9 +38,7 @@ public static class FloorScale
     public static int Scale(int baseCount, int floor) =>
         Math.Max(1, (int)(baseCount * AreaRatio(floor) + 0.5));
 
-    // ── Feature counts ───────────────────────────────────────────────
-    // Base counts are tuned for the Floor 1 (500x250) reference area.
-    // Everything auto-scales down for smaller upper floors.
+    // ── Feature counts, tuned to F1 ref area; auto-scales down for upper floors.
     public static int TreeClusters(int floor) => Scale(55, floor) + Random.Shared.Next(0, 8);
     public static int RockClusters(int floor) => Scale(12, floor) + Random.Shared.Next(0, 4);
     public static int LakeCount(int floor)    => Math.Max(0, Scale(6, floor) - 1) + Random.Shared.Next(0, 2);

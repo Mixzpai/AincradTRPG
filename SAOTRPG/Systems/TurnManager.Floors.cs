@@ -115,24 +115,15 @@ public partial class TurnManager
         Story.StorySystem.TryFire(Story.StoryTrigger.FloorEntry,
             new Story.StoryContext(CurrentFloor, KillCount, _player));
 
-        // FB-058 — Survivor title: reaching F50 in a live run. Since all
-        // deaths delete the save (universal permadeath), any player still
-        // alive at F50 entry is by definition un-died, so simply crossing
-        // F50 is the unlock signal. Strict "no-death-this-run" gating
-        // isn't needed when death is already permanent.
+        // FB-058 Survivor title: F50 crossing (permadeath makes this equivalent
+        // to "no-death-this-run").
         TitleSystem.CheckFloor50Survivor(_player, CurrentFloor);
 
-        // FB-063 Moonlit Black Cats fate-sealed dissolution. Only fires
-        // when the player entered F27 as an active Moonlit Black Cat. Force-
-        // leaves the guild, -5 karma, unlocks Survivor title. Save still
-        // loads cleanly in either direction — the check is idempotent.
+        // FB-063 Black Cats dissolve at F27 (idempotent). Force-leave + -5 karma.
         GuildSystem.CheckBlackCatsFate(_player, CurrentFloor, _log);
 
-        // FB-063 Moonlit Black Cats "One More Floor" signature quest —
-        // auto-advances to Complete on F25 entry. Players turn it in by
-        // talking to Keita back on F10 (or get credit if they stop over
-        // on the way up). The quest tracks a sentinel target so the
-        // standard OnMobKilled hook cannot auto-advance it.
+        // FB-063 "One More Floor" — auto-complete on F25 entry. Sentinel target
+        // prevents OnMobKilled auto-advance; turn in at Keita on F10.
         var catsSig = QuestSystem.GetQuest("guild_sig_cats_one_more_floor");
         if (catsSig != null && catsSig.Status == QuestStatus.Active && CurrentFloor >= 25)
         {

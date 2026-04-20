@@ -3,21 +3,8 @@ using SAOTRPG.Items;
 
 namespace SAOTRPG.Map;
 
-// 2D tile grid representing one floor of the dungeon. Manages entity placement,
-// fog-of-war visibility, line-of-sight raycasting, and exploration tracking.
-//
-// Performance caches (maintained as invariants, must stay in sync with Tiles):
-//   _wallGlyphCache : per-tile connected-wall glyph, lazily computed, invalidated
-//                     on wall/CrackedWall/Mountain transitions and on their neighbors.
-//   _emissiveTiles  : list of tiles whose TileType emits light (campfire, fountain, …).
-//                     Refreshed when the cache is invalidated by SetTileType /
-//                     InvalidateEmissive.
-//   _itemTiles      : set of coordinates that currently hold ground items. Maintained
-//                     by AddItem / RemoveItem. HasItems(x,y) is O(1).
-//   _bosses/_monsters/_npcs/_allies : typed entity lists, maintained in
-//                     PlaceEntity / RemoveEntity so callers avoid .OfType<T>() scans.
-//   _walkableCount / _exploredCount : maintained by map gen + SetExplored /
-//                     MarkVisible so GetExplorationPercent is O(1).
+// 2D tile grid for one dungeon floor: entity placement, fog-of-war, LOS, exploration.
+// Caches (wallGlyph/emissive/itemTiles/typed-entities/walkableCount) kept in sync via SetTileType + Add/Remove helpers.
 public class GameMap
 {
     private static readonly Tile OutOfBounds = new(TileType.Wall);
@@ -31,8 +18,7 @@ public class GameMap
     public int ExploredTileCount { get; private set; }
     public LightingSystem Lighting { get; }
 
-    // Optional sanctuary rectangle — monsters, traps, chests, dens and
-    // danger zones are not placed inside this rect during population.
+    // Sanctuary rect — no monsters/traps/chests/dens/danger zones placed inside.
     // Set by Town of Beginnings on Floor 1; null elsewhere.
     public Room? SafeZone { get; set; }
 
@@ -41,29 +27,22 @@ public class GameMap
     private readonly int[,] _visitCounts;
     private readonly int[,] _lastSeenTurn;
 
-    // Wall-glyph cache. '\0' means "not yet computed". Non-null read-through
-    // cache: callers should invalidate via InvalidateWallGlyph(x,y) whenever
-    // a wall-like tile is created or destroyed.
+    // Wall-glyph cache; '\0' = uncomputed. Invalidate via InvalidateWallGlyph when wall-like tiles change.
     private readonly char[,] _wallGlyphCache;
 
-    // Transition-border cache for land tiles that sit next to water or lava.
-    // 0 = not computed, 1 = no border, 2 = water border (',', Color.Blue),
-    // 3 = lava border (',', Color.Red). Keeps the rendering fast path from
-    // doing a 3x3 neighbor scan every frame.
+    // Transition-border cache for land tiles adjacent to water/lava.
+    // 0=uncomputed, 1=none, 2=water (',', Blue), 3=lava (',', Red). Avoids per-frame 3x3 neighbor scans.
     private readonly byte[,] _transitionCache;
     public const byte TransitionUncomputed = 0;
     public const byte TransitionNone       = 1;
     public const byte TransitionWater      = 2;
     public const byte TransitionLava       = 3;
 
-    // Emissive tile list. Lazily built on first access; rebuilt on invalidation.
-    // Rendering / lighting iterates this small list (<~100 entries per floor)
-    // instead of scanning the whole map.
+    // Emissive tile list — lazily built, small (<~100/floor). Avoids full-map scans per frame.
     private List<(int X, int Y, TileType Type)>? _emissiveTiles;
 
-    // Item-tile index. Kept in lockstep with Tile.Items via AddItem/RemoveItem.
-    // NOTE: direct tile.Items.Add / tile.Items.Remove calls bypass this index.
-    // All game code routes through the helpers on this type — see TurnManager.Loot.cs.
+    // Item-tile index, kept in lockstep with Tile.Items via AddItem/RemoveItem.
+    // Direct tile.Items.Add/Remove bypasses this index — always go through these helpers.
     private readonly HashSet<(int X, int Y)> _itemTiles = new();
 
     // Typed entity buckets. Maintained in PlaceEntity / RemoveEntity.
@@ -72,9 +51,7 @@ public class GameMap
     public List<NPC> Npcs { get; } = new();
     public List<Ally> Allies { get; } = new();
 
-    // Exploration counts. _walkableCount is initialized once via
-    // RecountWalkableTiles (called by MapGenerator after terrain is final).
-    // _exploredCount is incremented in SetExplored / MarkVisible.
+    // Exploration counts. _walkableCount seeded by RecountWalkableTiles after mapgen; _exploredCount in SetExplored/MarkVisible.
     private int _walkableCount;
     private int _exploredCount;
 
@@ -114,8 +91,7 @@ public class GameMap
         }
     }
 
-    // Called by MapGenerator after all terrain is placed, and refreshed any time
-    // a Wall/Mountain tile turns walkable at runtime (e.g. CrackedWall destruction).
+    // Called by MapGenerator after terrain placement; refreshed on runtime walkability changes (e.g. CrackedWall destroy).
     public void RecountWalkableTiles()
     {
         _walkableCount = 0;
@@ -141,8 +117,7 @@ public class GameMap
 
     public void UpdateVisibility(int playerX, int playerY, int radius = 80)
     {
-        // Only clear visibility in the region the player can see — not the whole map.
-        // On a 500x250 map this avoids clearing 125K bools every turn.
+        // Clear visibility only in the player's visible region (avoids 125K bool clear on 500x250 map).
         int clearR = radius + 2;
         int x0 = Math.Max(0, playerX - clearR), x1 = Math.Min(Width, playerX + clearR + 1);
         int y0 = Math.Max(0, playerY - clearR), y1 = Math.Min(Height, playerY + clearR + 1);
@@ -182,11 +157,8 @@ public class GameMap
         return false;
     }
 
-    // ------------------------------------------------------------------
-    // Entity placement
-    // ------------------------------------------------------------------
+    // --- Entity placement ---
 
-    // Place an entity on the map at (x, y) and register it in the entity list.
     public void PlaceEntity(Entity entity, int x, int y)
     {
         entity.X = x; entity.Y = y;
@@ -199,7 +171,6 @@ public class GameMap
         if (entity is Mob mob) { mob.SpawnX = x; mob.SpawnY = y; }
     }
 
-    // Relocate an entity from its current tile to (newX, newY).
     public void MoveEntity(Entity entity, int newX, int newY)
     {
         if (InBounds(entity.X, entity.Y)) Tiles[entity.X, entity.Y].Occupant = null;
@@ -207,7 +178,6 @@ public class GameMap
         Tiles[newX, newY].Occupant = entity;
     }
 
-    // Remove an entity from its tile and the entity list.
     public void RemoveEntity(Entity entity)
     {
         if (InBounds(entity.X, entity.Y)) Tiles[entity.X, entity.Y].Occupant = null;
@@ -218,10 +188,7 @@ public class GameMap
     {
         switch (entity)
         {
-            // Boss is a Monster subclass; bucket it as Boss AND as Monster so
-            // boss-alive checks and monster iteration both see it (preserves
-            // previous semantics where a lone Boss satisfied .OfType<Monster>()
-            // as well as `e is Boss` checks).
+            // Boss is a Monster subclass — bucket into both so boss-alive checks and monster iteration see it.
             case Boss b:     Bosses.Add(b);   Monsters.Add(b); break;
             case Monster m:  Monsters.Add(m); break;
             case NPC n:      Npcs.Add(n);     break;
@@ -240,12 +207,9 @@ public class GameMap
         }
     }
 
-    // ------------------------------------------------------------------
-    // Item-tile index
-    // ------------------------------------------------------------------
+    // --- Item-tile index ---
 
-    // Add a ground item at (x, y). Preferred over direct tile.Items.Add because
-    // this keeps _itemTiles in sync so HasItems(x,y) is O(1).
+    // Preferred over direct tile.Items.Add — keeps _itemTiles in sync so HasItems is O(1).
     public void AddItem(int x, int y, BaseItem item)
     {
         if (!InBounds(x, y)) return;
@@ -253,7 +217,6 @@ public class GameMap
         _itemTiles.Add((x, y));
     }
 
-    // Remove a ground item; mirrors AddItem. Returns true if removed.
     public bool RemoveItem(int x, int y, BaseItem item)
     {
         if (!InBounds(x, y)) return false;
@@ -263,20 +226,14 @@ public class GameMap
         return removed;
     }
 
-    // O(1) query — replaces tile.HasItems in render hot paths.
+    // O(1) render-hot-path query.
     public bool HasItemsAt(int x, int y) =>
         InBounds(x, y) && _itemTiles.Contains((x, y));
 
-    // ------------------------------------------------------------------
-    // Tile-type mutation + wall / emissive cache invalidation
-    // ------------------------------------------------------------------
+    // --- Tile mutation + cache invalidation ---
 
-    // Centralized tile-type setter. Callers that use this get automatic wall
-    // and emissive cache invalidation. Direct `map.Tiles[x,y].Type = ...` is
-    // still allowed (map generation does this ~100K times before any render),
-    // but runtime mutations (trap spring, destroy cracked wall, lever-door
-    // toggle, …) MUST go through SetTileType OR call the Invalidate* helpers
-    // explicitly — otherwise the caches go stale.
+    // Centralized setter with auto wall/emissive invalidation. Direct Tiles[x,y].Type = ... is allowed in mapgen,
+    // but runtime mutations MUST use this OR call Invalidate* helpers or caches go stale.
     public void SetTileType(int x, int y, TileType newType)
     {
         if (!InBounds(x, y)) return;
@@ -286,28 +243,23 @@ public class GameMap
         OnTileTypeChanged(x, y, oldType, newType);
     }
 
-    // Public hook for code that mutates Tile.Type directly (legacy path).
-    // Invalidates the wall glyph at (x,y) + its 4 cardinal neighbors, rebuilds
-    // the emissive list if the change crossed the emission boundary, and
-    // updates walkable count if walkability for exploration changed.
+    // Hook for direct Tile.Type mutations: invalidates wall glyph + 4 cardinals, rebuilds emissive if boundary crossed,
+    // updates walkable count on walkability change.
     public void OnTileTypeChanged(int x, int y, TileType oldType, TileType newType)
     {
         bool wasWallLike = IsWallLikeType(oldType);
         bool isWallLike  = IsWallLikeType(newType);
         if (wasWallLike != isWallLike || wasWallLike || isWallLike)
         {
-            // Any wall-like boundary change requires invalidating this tile and
-            // its cardinal neighbors (the connected-wall glyph reads them).
+            // Wall boundary change — invalidate this tile + cardinals (connected-glyph reads neighbors).
             InvalidateWallGlyph(x, y);
         }
 
-        // Emissive list: rebuild lazily on next access if either side was emissive.
+        // Emissive list rebuilds lazily on next access.
         if (IsEmissiveType(oldType) || IsEmissiveType(newType))
             _emissiveTiles = null;
 
-        // Transition borders: a water/lava tile gaining or losing a land neighbor
-        // (or a land tile flipping to a cared-about type) may change the border
-        // of the 3x3 neighborhood.
+        // Transition borders in 3x3 neighborhood may shift on land/water/lava boundary changes.
         if (IsTransitionRelevant(oldType) || IsTransitionRelevant(newType))
             InvalidateTransition(x, y);
 
@@ -338,8 +290,7 @@ public class GameMap
         if (InBounds(x, y + 1))     _wallGlyphCache[x, y + 1] = '\0';
     }
 
-    // Used by rendering. Returns the connected box-drawing glyph for a wall
-    // or cracked-wall tile, computing + memoizing on first access.
+    // Returns connected box-drawing glyph for a wall/cracked-wall, memoized on first access.
     public char GetWallGlyph(int x, int y)
     {
         if (!InBounds(x, y)) return '\u25CB';
@@ -376,9 +327,7 @@ public class GameMap
     private bool IsWallLikeAt(int x, int y) =>
         InBounds(x, y) && IsWallLikeType(Tiles[x, y].Type);
 
-    // Compute (and memoize) the transition-border code for (x,y). Returns
-    // one of the Transition* constants. Non-land tiles always return
-    // TransitionNone. Caller translates the code back into (glyph, color).
+    // Compute + memoize transition-border code at (x,y). Non-land tiles return TransitionNone.
     public byte GetTransitionCode(int x, int y)
     {
         if (!InBounds(x, y)) return TransitionNone;
@@ -408,8 +357,7 @@ public class GameMap
         return result;
     }
 
-    // Invalidates the transition border at (x,y) and its 3x3 neighborhood —
-    // any of those tiles may now have gained or lost a water/lava neighbor.
+    // Invalidates transition cache at (x,y) + 3x3 neighborhood.
     public void InvalidateTransition(int x, int y)
     {
         for (int dx = -1; dx <= 1; dx++)
@@ -423,8 +371,7 @@ public class GameMap
     private static bool IsWallLikeType(TileType t) =>
         t is TileType.Wall or TileType.CrackedWall or TileType.Mountain;
 
-    // Emissive tile accessor. Lazy-built from a full-map scan, then reused
-    // until invalidated by OnTileTypeChanged.
+    // Lazy-built from full-map scan, reused until invalidated by OnTileTypeChanged.
     public IReadOnlyList<(int X, int Y, TileType Type)> EmissiveTiles
     {
         get
@@ -442,8 +389,7 @@ public class GameMap
         }
     }
 
-    // Tile types whose presence affects the transition-border cache: land
-    // types that can *show* a border, plus water/lava that *are* the border.
+    // Types that affect transition-border cache: land types that show a border + water/lava that are the border.
     private static bool IsTransitionRelevant(TileType t) => t switch
     {
         TileType.Floor or TileType.Path or TileType.Grass
@@ -452,8 +398,7 @@ public class GameMap
         _ => false,
     };
 
-    // Mirror of LightingSystem.GetEmission's key set. Kept in sync — if a new
-    // emissive TileType is added, add it here and to LightingSystem.GetEmission.
+    // Mirrors LightingSystem.GetEmission — add new emissives here AND there.
     private static bool IsEmissiveType(TileType t) => t switch
     {
         TileType.Campfire          => true,

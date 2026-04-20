@@ -1,25 +1,20 @@
 namespace SAOTRPG.Entities;
 
-// Named roaming elite that spawns in the wilderness, not the labyrinth boss
-// room. Field bosses drop a canonical guaranteed item on death, never respawn
-// in the same run, and may be event-gated (Nicholas only appears at Christmas).
+// Named wilderness elite with 100% guaranteed canon drop. Never respawns in-run; may be event-gated (Nicholas=Christmas).
 public class FieldBoss : Boss
 {
-    // Unique identifier for persistence. E.g. "frost_dragon_f48", "nicholas_f49".
     public string FieldBossId { get; set; } = "";
-
-    // DefinitionId of the guaranteed drop on kill — dropped 100% of the time.
+    // 100% drop DefinitionId on kill.
     public string? GuaranteedDropId { get; set; }
 
-    // Flavor line emitted on floor entry when this boss is present.
+    // Flavor line on floor entry when present.
     public string EncounterFlavor { get; set; } = "";
 
-    // Seasonal / conditional gating (date-driven). If true, spawn only when
-    // SeasonalEvents active state matches SeasonalEventId.
+    // Seasonal gate — spawn only when SeasonalEvents active state matches SeasonalEventId.
     public bool IsSeasonal { get; set; }
     public string? SeasonalEventId { get; set; }
 
-    // Public setters mirroring GenericBoss pattern so factory can customize glyph.
+    // Factory glyph/color customization (mirrors GenericBoss).
     public void SetBossTitle(string title) => BossTitle = title;
     public void SetSymbol(char sym) => Symbol = sym;
     public void SetColor(Terminal.Gui.Color col) => SymbolColor = col;

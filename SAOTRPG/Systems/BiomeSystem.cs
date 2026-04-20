@@ -1,9 +1,7 @@
 namespace SAOTRPG.Systems;
 
-// Floor biome system -- maps each floor to a biome type that applies
-// passive gameplay effects. Based on SAO canon floor themes where known,
-// with original designs filling the gaps.
-// Effects are checked per-turn in TurnManager and on floor entry.
+// Floor→biome map with passive effects. SAO canon themes + originals.
+// Effects apply per-turn + on floor entry.
 
 public enum BiomeType
 {
@@ -37,8 +35,7 @@ public static class BiomeSystem
     // Current floor's biome. Set on floor entry.
     public static BiomeType Current { get; private set; } = BiomeType.Grassland;
 
-    // All per-biome data in one table. To add a field, extend BiomeConfig
-    // and populate it here -- no new switches required.
+    // All per-biome data in one table. Add a field via BiomeConfig extension.
     private static readonly Dictionary<BiomeType, BiomeConfig> _configs = new()
     {
         [BiomeType.Grassland] = new("Grassland",       0, 0,  0, (0, 0),   0,  0, "A gentle breeze carries the scent of grass and wildflowers."),
@@ -54,8 +51,7 @@ public static class BiomeSystem
         [BiomeType.Void]      = new("The Void",        1, 0,  0, (1, 10),  0,  0, "Reality warps around you. Nothing here follows natural law."),
     };
 
-    // Fallback used when a BiomeType has no entry (shouldn't happen, but
-    // preserves the original switch defaults for safety).
+    // Fallback for unmapped BiomeType (defensive — should not hit).
     private static readonly BiomeConfig _fallback = new(
         DisplayName: "Unknown",
         SatietyDrainBonus: 0,

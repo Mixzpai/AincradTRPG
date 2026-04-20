@@ -2,17 +2,11 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
-// Static registry of all shield items.
-// Shields are Armor (OffHand slot) with BlockChance.
-// Defense/Vitality-oriented.
+// Shield registry. Armor (OffHand) with BlockChance; Defense/Vitality-oriented.
+// Armor has no SpecialEffect — IF shield flavor (DamageReflect/HPRegen/Barrier/CritImmune) is comments only.
 public static class ShieldDefinitions
 {
-    // Mirror the 1H-sword Make() pattern for consistency with the rest of the
-    // weapon definition files. Shields are Armor subtype; slot = "Shield".
-    //
-    // NOTE: Armor has no SpecialEffect field (only Weapon does). IF shields' canon-flavor
-    // effects (DamageReflect, HPRegen, Barrier, CritImmune) are annotated in comments
-    // only — they are flavor-only in the current parser.
+    // Shields are Armor subtype; slot = "Shield".
     private static Armor Make(string id, string name, int value, string rarity, int durability,
         int level, int baseDefense, int weight, int blockChance,
         StatModifierCollection bonuses)
@@ -64,38 +58,32 @@ public static class ShieldDefinitions
 
     // ── Integral Factor Series Shields ──────────────────────────────
 
-    // F14 Integral Series shield. Fermat — endgame-shield of the Integral series.
-    // Canon (wiki-confirmed). Epic rarity, defense+block all-rounder.
+    // F14 Integral Series shield. Fermat — canon endgame shield, Epic def+block all-rounder.
     public static Armor CreateFermat() => Make("shd_fermat", "Fermat", 4800, "Epic",
         150, 14, 18, 14, 28,
         B().Add(StatType.Defense, 12).Add(StatType.Vitality, 8));
 
-    // F25 Nox Series shield. Nox Fermat — Underground Labyrinth B5F shadow-forged counterpart.
-    // Canon (wiki + IF Facebook announce). Epic rarity; flavor: DamageReflect+5.
+    // F25 Nox Fermat — B5F shadow-forged canon counterpart; Epic, flavor DamageReflect+5.
     public static Armor CreateNoxFermat() => Make("shd_nox_fermat", "Nox Fermat", 7500, "Epic",
         170, 25, 22, 18, 32,
         B().Add(StatType.Defense, 18).Add(StatType.Vitality, 10));
 
-    // F61 Rosso Series shield. [INVENTED] — Italian "red" + Greek aegis. Legendary.
-    // Flavor: CritImmune+5.
+    // F61 Rosso Aegis [INVENTED — Italian "red" + Greek aegis]. Legendary, flavor CritImmune+5.
     public static Armor CreateRossoAegis() => Make("shd_rosso_aegis", "Rosso Aegis", 14000, "Legendary",
         210, 55, 32, 22, 38,
         B().Add(StatType.Defense, 30).Add(StatType.Vitality, 14));
 
-    // F87 Yasha Series shield. [INVENTED] — Sanskrit armor-word "kavacha". Legendary.
-    // Flavor: HPRegen+3.
+    // F87 Yasha Kavacha [INVENTED — Sanskrit "kavacha"]. Legendary, flavor HPRegen+3.
     public static Armor CreateYashaKavacha() => Make("shd_yasha_kavacha", "Yasha Kavacha", 19500, "Legendary",
         230, 78, 38, 26, 42,
         B().Add(StatType.Defense, 38).Add(StatType.Vitality, 18));
 
-    // F90+ Gaou Series shield. [INVENTED] — Japanese "curse" + demon-king. Legendary.
-    // Flavor: Barrier+10.
+    // F90+ Gaou Tatari [INVENTED — Japanese "curse" + demon-king]. Legendary, flavor Barrier+10.
     public static Armor CreateGaouTatari() => Make("shd_gaou_tatari", "Gaou Tatari", 28000, "Legendary",
         255, 88, 46, 30, 46,
         B().Add(StatType.Defense, 45).Add(StatType.Vitality, 22));
 
-    // ── SAO Lost Song Mythological (Shield) — Legendary F75-99 ────────
-    // Ancile — Roman sacred shield, block-biased.
+    // ── LS Mythological (Shield), Legendary F75-99 — Ancile, Roman sacred shield, block-biased.
     public static Armor CreateAncile() => Make("shd_ancile", "Ancile", 22000, "Legendary",
         240, 82, 40, 28, 50,
         B().Add(StatType.Defense, 40).Add(StatType.Vitality, 20));

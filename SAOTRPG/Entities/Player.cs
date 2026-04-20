@@ -12,8 +12,7 @@ using EquipmentSlot = SAOTRPG.Inventory.Core.EquipmentSlot;
 
 namespace SAOTRPG.Entities
 {
-    // The player character — extends Entity with identity, currency, inventory,
-    // experience/leveling, skill point allocation, and equipment-aware combat stats.
+    // Player: Entity + identity, currency, inventory, XP/level, SP, equipment-aware stats.
     public partial class Player : Entity
     {
         public override char Symbol { get; protected set; } = '@';
@@ -28,39 +27,29 @@ namespace SAOTRPG.Entities
         public int ExperienceRequired => (BaseExperienceRequired + (BaseExperienceRequired * Level));
         public int BaseExperienceRequired { get; set; } = 100;
 
-        // Max HP derived from Vitality: 100 + Vitality * 10. Plus Sleep
-        // life-skill milestone bonus (FB-050/051) which folds in here so
-        // every call-site (rest healing, recap, Death screen) picks it up
-        // without touching each read path.
+        // MaxHP = 100 + Vit*10 + Sleep life-skill milestone bonus (read-path wide, one source of truth).
         public new int MaxHealth => 100 + (Vitality * 10) + LifeSkills.SleepMaxHpBonus();
 
         public int ColOnHand { get; set; }
         public int SkillPoints { get; set; }
 
-        // Player's inventory — backpack items and equipped gear.
+        // Backpack + equipped gear.
         public PlayerInventory Inventory { get; private set; } = null!;
 
-        // FB-050 Life Skills — per-skill level/XP, milestone bonuses fold
-        // into Player stats below. Instantiated eagerly so stat reads never
-        // null-check. Save/load roundtrips this via SaveData.LifeSkills.
+        // Life Skills — per-skill level/XP with milestone bonuses folded into stats. Eager-init so reads skip null checks.
         public LifeSkillSystem LifeSkills { get; private set; } = new();
 
-        // FB-058 Titles — unlocked set + active id. SetActiveTitle applies
-        // bonuses via base-stat pokes; unequip reverses.
+        // Titles — SetActiveTitle applies bonuses via base-stat pokes; unequip reverses.
         public HashSet<string> UnlockedTitleIds { get; set; } = new();
         public string? ActiveTitleId { get; set; }
 
-        // FB-063 Karma — signed integer in [-100, +100], default 0 (Neutral).
-        // Adjusted via KarmaSystem.Adjust. Thresholds drive NPC dialogue,
-        // shop price multipliers, and the F1 Town Guard outlaw spawn.
+        // Karma ∈ [-100,+100], default 0. Adjusted via KarmaSystem.Adjust; drives NPC dialogue, shop prices, TOB guard patrol.
         public int Karma { get; set; }
 
-        // FB-063 Guild System — active guild id. None = not in any guild.
-        // Single-guild membership (joining a new one forces leaving current).
+        // Active guild; single-membership (joining forces leaving current).
         public Systems.Story.Faction ActiveGuildId { get; set; } = Systems.Story.Faction.None;
 
-        // Player-founded guild — custom name + perk preset index. Only
-        // meaningful when ActiveGuildId == Faction.PlayerGuild.
+        // Player-founded guild — only meaningful when ActiveGuildId == Faction.PlayerGuild.
         public string? FoundedGuildName { get; set; }
         public int FoundedGuildPerk { get; set; }
 
@@ -73,7 +62,7 @@ namespace SAOTRPG.Entities
             + LifeSkills.RunningSpeedBonus();
         public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
 
-        // Creates a new player with starting gear (Iron Sword + Health Potion) and full HP.
+        // New player: Iron Sword + Health Potion, full HP.
         public static Player CreateNewPlayer(string firstName, string lastName, string gender, IGameLog log, IInventoryLogger? inventoryLogger = null)
         {
             var player = new Player
@@ -128,9 +117,7 @@ namespace SAOTRPG.Entities
                 }
             }
 
-            // FB-050 Life Skills — hydrate each skill's Level + CurrentXp
-            // from the save. Missing entries keep the default L1/0, so
-            // legacy saves pre-FB-050 load cleanly without crashing.
+            // Life Skills: hydrate Level + CurrentXp; missing entries keep default L1/0 (legacy saves load cleanly).
             if (save.LifeSkills != null)
             {
                 foreach (var kvp in save.LifeSkills)
@@ -144,26 +131,17 @@ namespace SAOTRPG.Entities
                 }
             }
 
-            // FB-058 Titles — rebuild unlocked set, then (re)apply the
-            // active title's stat bonus via SetActiveTitle so the loaded
-            // base stats reflect the saved Active title exactly.
+            // Titles: rebuild unlocked set; base stats already include prior session's active title bonus.
             if (save.UnlockedTitleIds != null)
                 player.UnlockedTitleIds = new HashSet<string>(save.UnlockedTitleIds);
             if (!string.IsNullOrEmpty(save.ActiveTitleId)
                 && player.UnlockedTitleIds.Contains(save.ActiveTitleId))
             {
-                // The SaveData.BaseAttack etc. already contain the baked-in
-                // title bonus from the previous session (SetActiveTitle
-                // mutated base stats when the player equipped). To avoid
-                // double-applying, we store the ActiveTitleId directly and
-                // DO NOT reapply the bonus — the base stats already have it.
+                // Base stats already contain baked-in title bonus — storing the id only avoids double-apply.
                 player.ActiveTitleId = save.ActiveTitleId;
             }
 
-            // FB-063 Karma + Guild — hydrate. Missing/unparseable values
-            // default to 0 karma / no guild (legacy save behavior). Guild
-            // ID accepts the legacy "AincradLiberationSquad" name and
-            // migrates it to AincradLiberationForce on the fly.
+            // Karma+Guild hydration; "AincradLiberationSquad" migrates to AincradLiberationForce.
             player.Karma = Math.Clamp(save.Karma, Systems.KarmaSystem.Min, Systems.KarmaSystem.Max);
             string guildName = save.ActiveGuildId ?? "None";
             if (guildName == "AincradLiberationSquad") guildName = "AincradLiberationForce";
@@ -173,9 +151,7 @@ namespace SAOTRPG.Entities
                 player.ActiveGuildId = Systems.Story.Faction.None;
             player.FoundedGuildName = save.FoundedGuildName;
             player.FoundedGuildPerk = save.FoundedGuildPerk;
-            // Player's BaseAttack/Vitality/etc. already contain any guild perk
-            // that was baked in at Join-time in the prior session, so we do
-            // NOT re-apply here (matches the Title hydration rule above).
+            // Guild perk already baked in at prior-session Join-time; no re-apply (mirrors Title hydration).
 
             return player;
         }
@@ -184,12 +160,7 @@ namespace SAOTRPG.Entities
         public bool UnequipItem(EquipmentSlot slot) => Inventory.Unequip(slot, this);
         public void UseItem(Consumable consumable) => Inventory.UseConsumable(consumable, this);
 
-        // Compact identity + base stat block for the gameplay sidebar.
-        // Formatted to fit inside a 48-column panel without wrapping.
-        // Additional sections (progress, equipment, status effects, bounty)
-        // are appended by GameScreen.RefreshHud.
-        // Prefers the active FB-058 title display name when set; falls back
-        // to the legacy Player.Title string (e.g. "Adventurer") otherwise.
+        // Active-title display name (fallback to Player.Title). Sidebar HUD formatted for 48-col panel.
         public string EffectiveTitleName()
         {
             if (ActiveTitleId != null

@@ -4,8 +4,8 @@ using SAOTRPG.Map;
 
 namespace SAOTRPG.Systems;
 
-// Player movement processing — rest, sprint, stealth, normal movement,
-// occupant interactions, stairs discovery, and sound cues.
+// Player movement: rest, sprint, stealth, normal moves, occupant interactions,
+// stairs discovery, sound cues.
 public partial class TurnManager
 {
     public void ProcessRest()
@@ -39,8 +39,7 @@ public partial class TurnManager
         _restCounter = 0;
         _fatiguedWarned = false;
         _exhaustedWarned = false;
-        // FB-051 — Sleep skill XP for resting. One grant per rest action
-        // (not per heal tick) so the log/curve stays clean.
+        // FB-051 — Sleep XP: one grant per rest action (not per heal tick).
         GrantRestSleepXp();
         _log.LogSystem($"You feel refreshed. (+{totalHealed} HP)");
         UpdateVisibility();
@@ -126,9 +125,7 @@ public partial class TurnManager
 
         TutorialSystem.ShowTip(_log, "first_move");
 
-        // FB-077 — Swimming gate. If this is a water tile the player would
-        // otherwise be blocked on, check their Swimming level. Pass → allow
-        // entry (below), block → regular BlocksMovement path.
+        // FB-077 — Swimming gate: level check bypasses water BlocksMovement.
         bool swimmingBypass = false;
         bool swimSlowPenalty = false;
         if (tile.RequiresSwimmingLevel > 0)
@@ -138,9 +135,7 @@ public partial class TurnManager
             if (swimLvl >= req)
             {
                 swimmingBypass = true;
-                // Slow penalty window: shallow water slow below L10, deep
-                // water slow below L50. Each slow swim step consumes an
-                // extra turn tick (ProcessSwimSlowTick below).
+                // Slow below L10 (shallow) / L50 (deep); each slow step = extra tick.
                 if (tile.Type == TileType.Water && swimLvl < 10) swimSlowPenalty = true;
                 else if (tile.Type == TileType.WaterDeep && swimLvl < 50) swimSlowPenalty = true;
             }
@@ -177,10 +172,7 @@ public partial class TurnManager
 
         _map.MoveEntity(_player, tx, ty);
         _map.IncrementVisit(tx, ty);
-        // FB-077 — Swimming XP per water tile entered. +2 for shallow, +3
-        // for deep. Runs INSTEAD of walking XP since the player isn't on
-        // land for this step. Deep water requires L25 gate (already enforced
-        // above), so both branches are reachable only after skill-up.
+        // FB-077 — Swim XP: +2 shallow / +3 deep. Replaces walking XP.
         if (swimmingBypass)
         {
             int swimXp = tile.Type == TileType.WaterDeep ? 3 : 2;
@@ -188,10 +180,7 @@ public partial class TurnManager
             if (swimSlowPenalty)
                 _log.Log("You struggle through the water…");
         }
-        // FB-052 — Walking skill XP per normal-step tile. Excludes sprint
-        // (which has its own hook in ProcessSprint) and stealth (which may
-        // be wired to its own future Stealth skill). +1 XP per tile.
-        // Water-step moves skip walking XP (swim XP above covers them).
+        // FB-052 — Walking XP +1/tile (excludes sprint, stealth, water).
         else if (!_stealthActive && !_lastMoveWasStealth && (dx != 0 || dy != 0))
             GrantWalkingXp();
 
@@ -270,9 +259,7 @@ public partial class TurnManager
         TickPoison(); TickBleed(); TickSlow();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
-        // FB-077 — Swim slow penalty. Player enters water at low skill and
-        // the step costs 2 actions: one extra turn tick + an extra entity
-        // turn round. Mobs get a free turn while the player wades through.
+        // FB-077 — Swim slow penalty: extra tick + entity round (mobs get free turn).
         if (swimSlowPenalty && !_player.IsDefeated)
         {
             TurnCount++;
@@ -288,10 +275,8 @@ public partial class TurnManager
         TurnCompleted?.Invoke();
     }
 
-    // Extra Skill: Search — scans a 3-tile radius around the player and unhides
-    // any trap tiles. Only active when UniqueSkill.ExtraSearch is unlocked.
-    // Logs once per floor on the first reveal; subsequent reveals are silent
-    // so the log doesn't spam as the player sweeps a corridor.
+    // Extra Skill: Search — unhides traps in r-tile radius (ExtraSearch unlocked).
+    // Logs only on first reveal per floor to avoid corridor-sweep spam.
     private void RevealNearbyTraps()
     {
         if (!Skills.UniqueSkillSystem.Has(Skills.UniqueSkill.ExtraSearch)) return;
@@ -318,8 +303,7 @@ public partial class TurnManager
         }
     }
 
-    // Returns true if Ran the Brawler handled the quest flow (so no generic
-    // random-quest offer is layered on top of his canonical trial).
+    // Returns true if the Brawler handled the quest flow (skip generic random-quest).
     private bool HandleRanTheBrawler(Entities.NPC npc)
     {
         if (npc.Name != "Ran the Brawler") return false;
@@ -356,9 +340,8 @@ public partial class TurnManager
         if (existing.Status == QuestStatus.Complete)
         {
             _log.LogSystem($"{npc.Name}: \"You passed. Now feel what your body is capable of.\"");
-            // Guard against double-banner: the 30-unarmed-kill milestone route may have
-            // already unlocked Martial Arts. TryUnlock returns false in that case; only
-            // fire the banner when this call is actually the one doing the unlocking.
+            // Guard against double-banner: 30-unarmed-kill milestone may have unlocked
+            // first; TryUnlock returns false and suppresses the banner.
             if (Skills.UniqueSkillSystem.TryUnlock(Skills.UniqueSkill.MartialArts))
                 NotifyUniqueSkillUnlock(Skills.UniqueSkill.MartialArts);
             existing.Status = QuestStatus.TurnedIn;
@@ -374,11 +357,9 @@ public partial class TurnManager
         return true;
     }
 
-    // Shared Divine-Object quest handler used by Sister Azariya (F50, Heaven-
-    // Piercing Blade) and Selka the Novice (F65, Fragrant Olive Sword).
-    // Flow: first-talk offers a Kill quest scoped to the current floor; on return
-    // with quest complete, grants the Divine into inventory (or drops it at the
-    // player's feet if inventory is full). Status 'TurnedIn' prevents re-grant.
+    // Shared Divine-Object quest handler (Azariya F50, Selka F65, Dorothy F78, HF NPCs).
+    // First-talk offers floor-kill quest; complete grants Divine (drops if inv full).
+    // TurnedIn status prevents re-grant.
     private bool HandleDivineQuest(Entities.NPC npc, string questId, string questTitle,
         string openingLine, int killCount, string divineDefId, string handOverLine,
         string inProgressLine, string postCompleteLine, int rewardCol, int rewardXp)
@@ -464,8 +445,7 @@ public partial class TurnManager
             rewardXp:         400);
     }
 
-    // Dorothy — F78 Starlight Banner (8th Divine Object) giver.
-    // SAO Last Recollection canon (Underworld purification-scythe wielder).
+    // Dorothy — F78 Starlight Banner (8th Divine). SAO Last Recollection canon.
     private bool HandleDorothy(Entities.NPC npc)
     {
         if (npc.Name != "Dorothy") return false;
@@ -482,23 +462,15 @@ public partial class TurnManager
             rewardXp:         550);
     }
 
-    // Selka the Novice — F65 Fragrant Olive Sword giver, with a chained
-    // "Unfolding Truth" awakening quest offered once the base Fragrant
-    // Olive quest is turned in. Quest order:
-    //   1. First talk → base Fragrant Olive kill quest.
-    //   2. Base complete + turned in → "The Sword's Awakening" (30 kills
-    //      on F65+, rewards ohs_unfolding_truth_fragrant_olive).
-    //   3. Awakening turned in → locked; Selka flavor only.
-    // Legacy saves with the base quest already in TurnedIn state trigger
-    // the Awakening quest on next talk — HandleDivineQuest uses
-    // QuestSystem.GetQuest which reads both active and completed lists.
+    // Selka — F65 Fragrant Olive + chained "Unfolding Truth" (30 kills F65+,
+    // rewards ohs_unfolding_truth_fragrant_olive). GetQuest reads completed list
+    // so legacy TurnedIn saves still trigger the chain.
     private bool HandleSelka(Entities.NPC npc)
     {
         if (npc.Name != "Selka the Novice") return false;
 
         var baseQuest = QuestSystem.GetQuest("divine_fragrant_olive");
-        // Base quest still pending (not yet turned in) — keep the first-quest
-        // flow. This covers first-talk (null) and in-progress states.
+        // Base quest pending — first-quest flow (covers null + in-progress).
         if (baseQuest == null || baseQuest.Status != QuestStatus.TurnedIn)
         {
             return HandleDivineQuest(npc,
@@ -529,9 +501,7 @@ public partial class TurnManager
     }
 
     // ── Hollow Fragment Hollow Mission questgivers (9 HNM weapons) ────
-    // Canon-accurate placement for HF Legendary weapons gated behind NPC
-    // quests. Spec: (questId, title, opening, kills, defId, handover,
-    // in-progress, post-complete, col, xp).
+    // HF Legendary weapons gated behind NPC quests. See HollowWeaponQuest.
     private record HollowWeaponQuest(string QuestId, string Title, string Opening,
         int KillCount, string RewardDefId, string HandOver, string InProgress,
         string PostComplete, int Col, int Xp);
@@ -593,8 +563,7 @@ public partial class TurnManager
             "The line still bleeds.", "Odin's spear rests with you now.",
             800, 600),
 
-        // ── HF Endgame Expansion Implement System questgivers (4) ──
-        // F84, F85, F92, F99 — quest-only Implement System weapons.
+        // ── HF Endgame Implement System questgivers (F84, F85, F92, F99) ──
         ["Spiralist Vey"] = new("hf_spiralblade_rendering_fail", "The Spiral That Fails",
             "Ten break the pattern. The rapier answers only the spiral that fails.",
             10, "rap_spiralblade_rendering_fail",
@@ -620,9 +589,8 @@ public partial class TurnManager
             "The pact is not yet written.", "The hollow-blade answers no other now.",
             900, 700),
 
-        // FD Canon Field-Boss Wiring pass — F55 Agil apprentice NPC, the
-        // lone quest-NPC entry added to pull axe_ground_gorge off the
-        // floor-banded pool and onto a dedicated canon source.
+        // FD F55 Agil's Apprentice — moves axe_ground_gorge off floor-banded pool
+        // onto a dedicated canon source.
         ["Agil's Apprentice"] = new("fd_agils_apprentice_ground_gorge", "The Apprentice's Ground Gorge",
             "Fifteen felled on this floor, and Agil says I can let the axe go. Show me fifteen.",
             15, "axe_ground_gorge",
@@ -651,17 +619,8 @@ public partial class TurnManager
     }
 
     // ── FB-063 Guild Recruiter dispatcher ────────────────────────────────
-    // Recruitment flow:
-    //   1. First talk → offer "Prove yourself" quest (10 kills).
-    //   2. Quest complete + turn in → induct into guild, seed +10 rep,
-    //      apply flat perk. If player already in THIS guild, offer the
-    //      signature quest. If in a DIFFERENT guild, warn (join requires
-    //      leaving the current one, which is done automatically via Join).
-    //   3. Signature quest post-join: kill-count themed quest from
-    //      GuildSystem.SignatureQuests. Turn in → +rep / +col / +xp.
-    //
-    // Laughing Coffin's Herald is a special case: it refuses to deal until
-    // the player's karma is Outlaw (≤-50).
+    // Flow: trial quest (10 kills) → induct + rep + perk → signature quest.
+    // Laughing Coffin: gated behind karma ≤-50 (Outlaw).
     private bool HandleGuildRecruiter(Entities.NPC npc)
     {
         if (npc.Name == null) return false;
@@ -788,9 +747,7 @@ public partial class TurnManager
             _player.GainExperience(existing.RewardXp);
             if (_player.Level > lvlBefore) LeveledUp?.Invoke();
             Story.StorySystem.AdjustRep(def.Id, 30);
-            // FB-063 — signature quest karma. LC's Crimson Letter is
-            // intentionally excluded from the +3 bonus (the 5 NPC kills it
-            // demands already drained -100 karma; no +3 redemption).
+            // FB-063 — LC Crimson Letter excluded (its 5 NPC kills already took -100).
             if (def.Id != Story.Faction.LaughingCoffin)
                 KarmaSystem.Adjust(_player, KarmaSystem.DeltaQuestComplete, $"{def.DisplayName} signature quest", _log);
             _log.LogSystem($"  [QUEST] '{sig.Title}' turned in! +30 {def.DisplayName} rep, +{existing.RewardCol} Col, +{existing.RewardXp} XP.");
@@ -806,10 +763,8 @@ public partial class TurnManager
         return true;
     }
 
-    // Lisbeth at Lindarth (F48) — opens the Rarity 6 craft dialog in place
-    // of the generic NPC dialog/quest flow. Only fires when we're on the
-    // canon Lindarth floor so the Town-of-Beginnings Lisbeth still greets
-    // the player normally on F1.
+    // Lisbeth at Lindarth (F48) — Rarity 6 craft dialog in place of generic flow.
+    // Gated on floor 48 so Town-of-Beginnings Lisbeth (F1) stays normal.
     private bool HandleLisbethLindarth(Entities.NPC npc)
     {
         if (npc.Name != "Lisbeth") return false;
@@ -866,26 +821,17 @@ public partial class TurnManager
         {
             TutorialSystem.ShowTip(_log, "first_npc_talk");
 
-            // Ran the Brawler: Martial Arts trial (Progressive canon F2 quest).
             bool handledByRan = HandleRanTheBrawler(npc);
-            // Sister Azariya (F50): Heaven-Piercing Blade quest.
             bool handledByAzariya = HandleSisterAzariya(npc);
-            // Selka the Novice (F65): Fragrant Olive Sword quest.
             bool handledBySelka = HandleSelka(npc);
-            // Dorothy (F78): Starlight Banner (8th Divine) quest.
             bool handledByDorothy = HandleDorothy(npc);
-            // Hollow Fragment HNM quests (9 NPCs F79-F98).
             bool handledByHollowNpc = HandleHollowWeaponNpc(npc);
-            // Lisbeth at Lindarth (F48) — opens Rarity 6 craft dialog.
             bool handledByLisbeth = HandleLisbethLindarth(npc);
-            // FB-063 Guild recruiters — 8 canon guild recruitment NPCs.
             bool handledByGuildRecruiter = HandleGuildRecruiter(npc);
             bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByDorothy || handledByHollowNpc || handledByLisbeth || handledByGuildRecruiter;
 
-            // Turn in completed quests
             QuestSystem.OnNpcTalk(_log);
-            // Count how many will turn in so FB-063 karma grants scale with
-            // the actual number of completions (each completed quest = +3 karma).
+            // FB-063 — karma scales with completion count (+3 per turn-in).
             int turnInCount = QuestSystem.ActiveQuests.Count(q => q.Status == QuestStatus.Complete);
             var (qCol, qXp) = QuestSystem.TurnInCompleted();
             if (qCol > 0 || qXp > 0)
@@ -901,8 +847,7 @@ public partial class TurnManager
                     KarmaSystem.Adjust(_player, KarmaSystem.DeltaQuestComplete, "quest complete", _log);
             }
 
-            // Offer a new quest if the player has room — Divine-quest NPCs never
-            // give random quests layered on top of their canonical handler.
+            // Offer random quest if room — Divine-quest NPCs skip (no layering).
             if (!handledByDivineNpc
                 && QuestSystem.ActiveQuests.Count < QuestSystem.MaxActiveQuests
                 && npc.CanInteract && Random.Shared.Next(3) == 0)
@@ -914,9 +859,8 @@ public partial class TurnManager
                 _log.Log($"  Reward: {quest.RewardCol} Col, {quest.RewardXp} XP");
             }
 
-            // Lisbeth at Lindarth already opens the craft dialog and logs her
-            // line; skip the generic dialogue + recruitment offer to avoid
-            // layering an "offer to join party" over the forge UI.
+            // Lindarth Lisbeth: skip generic dialog + recruitment (avoids layering
+            // "join party" over the forge UI).
             if (!handledByLisbeth)
             {
                 if (npc.DialogueLines != null && npc.DialogueLines.Length > 0)
@@ -1007,12 +951,11 @@ public partial class TurnManager
 
     private void PushNpcAside(NPC npc, int playerTargetX, int playerTargetY)
     {
-        // Try to move the NPC to a walkable tile adjacent to its current position,
-        // preferring the direction away from the player.
+        // Walk to adjacent walkable, preferring away-from-player direction.
         int awayX = Math.Sign(npc.X - _player.X);
         int awayY = Math.Sign(npc.Y - _player.Y);
 
-        // Ordered candidates: away direction first, then perpendiculars, then others.
+        // Candidates: away first, perpendiculars, then others.
         Span<(int dx, int dy)> dirs = stackalloc (int, int)[]
         {
             (awayX, awayY), (awayX, 0), (0, awayY),

@@ -32,17 +32,12 @@ public static class ShopDialog
                 "Leave");
             return;
         }
-        // FB-072 — Bargaining skill multiplier stacks MULTIPLICATIVELY on the
-        // karma multiplier. A L99 Bargainer with Honorable karma stacks to
-        // 0.90 × 0.85 = 0.765 (23.5% off).
+        // Bargaining stacks multiplicatively on karma multiplier (L99 × Honorable = 0.90×0.85 = 0.765).
         float bargainMul = LifeSkillSystem.BargainingDiscount(player);
         int BuyPrice(BaseItem it) => Math.Max(1, (int)Math.Round(it.Value * karmaMul * bargainMul));
 
-        // IM Dynamic Shop Tiering — before rendering, fold any newly-unlocked
-        // tier items into the vendor stock. This is additive; duplicate DefIds
-        // are suppressed so repeat visits don't stack copies. A snapshot of
-        // DefIds NEW to this visit is captured here so the render loop can
-        // flag them — and then MarkSeen is called so the flag clears next time.
+        // Dynamic tiering: fold newly-unlocked items (dedup by DefId). NEW-to-this-visit set
+        // lets the render loop flag them; MarkSeen clears the flag next visit.
         var newFlags = new HashSet<string>();
         var existingDefIds = new HashSet<string>(
             vendor.ShopStock
@@ -65,9 +60,7 @@ public static class ShopDialog
             foreach (var defId in newFlags) ShopTierSystem.MarkSeen(defId);
         }
 
-        // FB-072 — Per-vendor invested stock. Adds items from tiers beyond
-        // the globally unlocked band, scoped to THIS vendor only. Duplicates
-        // from the global tier are suppressed via existingDefIds.
+        // Per-vendor invested stock — tiers beyond the global band, scoped to THIS vendor.
         foreach (var item in VendorInvestmentSystem.BuildVendorExtraStock(vendor))
         {
             if (!string.IsNullOrEmpty(item.DefinitionId)
@@ -398,10 +391,8 @@ public static class ShopDialog
             }
         };
 
-        // FB-072 — Invest in Shop. Opens a MessageBox with preset tiers of
-        // Col to deposit. Clamps against player ColOnHand and the per-vendor
-        // 20,000 Col cap. Results (tier-up + running total) pipe into the
-        // supplied game log so the player sees them in the main HUD.
+        // Invest prompt: preset Col tiers, clamped by ColOnHand and 20,000 per-vendor cap.
+        // Tier-up + running total piped into the game log.
         investBtn.Accepting += (s, e) =>
         {
             e.Cancel = true;
@@ -462,13 +453,8 @@ public static class ShopDialog
     private static string BuildComparison(BaseItem shopItem, Player player) =>
         shopItem is not EquipmentBase eq ? "" : EquipmentComparer.BuildComparison(player, eq);
 
-    // Calculates the sell price for an item, factoring in floor bonus.
-    // When `player` is non-null, applies a symmetric karma-based multiplier:
-    // Honorable NPCs pay 10% more, Shady NPCs pay 10% less. Mirrors the
-    // buy-side multiplier (Honorable buy -10%, Shady buy +10%) so karma
-    // rewards / punishes consistently on both sides of the transaction.
-    // Outlaw (karma ≤ -50) is blocked at the ShopDialog entry point so no
-    // sell pricing is needed here.
+    // Sell price w/ floor bonus. With `player`: symmetric karma mult (Honorable +10%, Shady -10%).
+    // Outlaw (karma ≤ -50) already blocked at entry.
     public static int CalcSellPrice(BaseItem item, int floor = 1, Player? player = null)
     {
         int basePrice = Math.Max(1, item.Value / 2);
@@ -478,10 +464,7 @@ public static class ShopDialog
         float buyMul = KarmaSystem.ShopPriceMultiplier(player.Karma);
         if (buyMul < 0) return raw;  // Outlaw — caller already blocked entry
         float sellMul = 2f - buyMul;
-        // FB-072 — Bargaining sell bonus. Mirrors the buy-side inversion:
-        // bargainBuy=0.85 → sellBargain=1.15 (+15% at L99 cap). Stacks
-        // multiplicatively on top of the karma sell multiplier for parity
-        // with BuyPrice's karma × bargain chain.
+        // Bargaining sell = 2 − buyMul (e.g. 0.85 → 1.15, +15% at L99 cap); stacks × karma sell mult.
         float bargainBuy = LifeSkillSystem.BargainingDiscount(player);
         float sellBargain = 2f - bargainBuy;
         return Math.Max(1, (int)Math.Round(raw * sellMul * sellBargain));
@@ -495,10 +478,8 @@ public static class ShopDialog
         _ => ""
     };
 
-    // Shallow clone via MemberwiseClone (reflection — protected on object).
-    // Bonuses/Effects remain aliased to the shop template, matching the
-    // pre-refactor behavior. Resets Quantity to 1 for stackable consumables
-    // so the buyer receives a single unit.
+    // Shallow clone via MemberwiseClone reflection; Bonuses/Effects stay aliased to template.
+    // Quantity resets to 1 for stackable consumables so the buyer gets a single unit.
     private static readonly System.Reflection.MethodInfo _memberwiseClone =
         typeof(object).GetMethod("MemberwiseClone",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;

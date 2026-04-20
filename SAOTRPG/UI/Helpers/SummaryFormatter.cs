@@ -1,13 +1,9 @@
 namespace SAOTRPG.UI.Helpers;
 
-// Shared formatting helpers for boxed run summary cards.
-// Used by both SAOTRPG.UI.DeathScreen and SAOTRPG.UI.VictoryScreen
-// to keep stat row formatting consistent.
+// Shared boxed run-summary card formatters (DeathScreen + VictoryScreen).
 public static class SummaryFormatter
 {
-    // ── Box dimensions ────────────────────────────────────────────────
-    // Inner box width = 37 chars (including left/right padding).
-    // Label column = 17 chars left-aligned, value column = 5 chars right-aligned.
+    // Inner box 37 cols; label 17 left, value 5 right.
     private const int LabelWidth = 17;
     private const int ValueWidth = 5;
 
@@ -21,9 +17,7 @@ public static class SummaryFormatter
     public static string StatRow(string label, string value) =>
         $"  |  {label + ":",-LabelWidth}{value,ValueWidth}            |\n";
 
-    // Formats a play time TimeSpan as a compact string.
-    // Examples: "5h 03m", "12m", "&lt;1 min".
-    // Shared between VictoryScreen and SaveSlotDialog.
+    // Compact TimeSpan → "5h 03m" / "12m" / "<1 min" (shared with SaveSlotDialog).
     public static string FormatPlayTime(TimeSpan time)
     {
         if (time.TotalHours >= 1)

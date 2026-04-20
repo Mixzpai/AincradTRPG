@@ -18,8 +18,7 @@ public static partial class MapGenerator
         // Player at spawn clearing
         map.PlaceEntity(player, rooms[0].CenterX, rooms[0].CenterY);
 
-        // Floor 1 is the Town of Beginnings — use a dedicated NPC + mob
-        // layout and skip the random den/chest showering.
+        // F1 TOB — dedicated NPC/mob layout; skips random den/chest scatter.
         if (floor == 1)
         {
             PopulateTownOfBeginnings(map, player, floor, statScale);
@@ -60,9 +59,7 @@ public static partial class MapGenerator
             map.PlaceEntity(boss, bossRoom.CenterX, bossRoom.CenterY);
         }
 
-        // Field bosses — roaming named elites in the wilderness (not labyrinth).
-        // Skipped if already defeated this run, seasonal event inactive, or
-        // the caller is populating a labyrinth (skipFieldBosses=true).
+        // Field bosses — wilderness named elites. Skipped when defeated this run, seasonal inactive, or skipFieldBosses=true.
         if (!skipFieldBosses)
         {
             var defeatedSet = defeatedFieldBosses ?? new HashSet<string>();
@@ -106,9 +103,7 @@ public static partial class MapGenerator
             }
         }
 
-        // Progressive-canon named NPCs (Ran the Brawler, Klein, Argo) — each
-        // gated by floor + room count, placed in a room by index range. Order
-        // in FloorNpcSpawns must match original RNG consumption order.
+        // Progressive-canon NPCs (Ran/Klein/Argo): gated by floor + room count. Order must match RNG consumption order.
         PlaceNpcsFromTable(map, rooms, floor);
 
         // Monster dens — scaled to floor area
@@ -154,13 +149,10 @@ public static partial class MapGenerator
                 map.Tiles[cx, cy].Type = TileType.Chest;
         }
 
-        // Priority 5 Phase B: Secret Shrines — one per listed floor, placed in
-        // a random non-spawn room. Each hosts a T1 chain weapon that the
-        // player collects on step-on (handled in TurnManager.Tiles).
+        // Secret Shrines — one per listed floor in a non-spawn room. Hosts T1 chain weapon collected on step-on.
         if (rooms.Count > 3 && Systems.WeaponEvolutionChains.SecretShrineByFloor.ContainsKey(floor))
         {
-            // Pick a room with index > 2 so the shrine is never in the spawn
-            // area or immediately adjacent corridors.
+            // Room index > 2 — shrine avoids spawn area and adjacent corridors.
             int shrineRoomIdx = Random.Shared.Next(3, rooms.Count);
             var shrineRoom = rooms[shrineRoomIdx];
             var (sx, sy) = FindOpenSpot(map, shrineRoom);
@@ -169,8 +161,7 @@ public static partial class MapGenerator
         }
     }
 
-    // Floor 1 populator: places the town NPCs + shopkeeper relative to
-    // the player's spawn position and seeds wilderness mobs outside the walls.
+    // F1 populator: town NPCs + shopkeeper relative to spawn; wilderness mobs outside the walls.
     private static void PopulateTownOfBeginnings(GameMap map, Player player, int floor, int statScale)
     {
         int sx = player.X, sy = player.Y;
@@ -181,8 +172,7 @@ public static partial class MapGenerator
             ShopName = "Agil's General Store",
         };
         vendor.GenerateStock(floor);
-        // IF canon: Anneal Blade is the iconic starter 1H sword Kirito buys
-        // on Floor 1. Agil always carries one in stock (with vendor markup).
+        // IF canon: Anneal Blade — iconic starter 1H sword; Agil always stocks one (with markup).
         var anneal = ItemRegistry.Create("anneal_blade");
         if (anneal != null)
         {
@@ -257,8 +247,7 @@ public static partial class MapGenerator
         };
         TryPlaceEntityNear(map, smith, sx - 15, sy - 2);
 
-        // Townspeople — wandering NPCs with short flavor dialogue that
-        // make the streets feel inhabited.
+        // Townspeople — wandering flavor NPCs.
         (string Name, char Symbol, Color Color, string Line)[] townfolk =
         {
             ("Lisbeth",  'L', Color.BrightMagenta, "If you find any rare ores out there, bring them to me!"),
@@ -273,10 +262,7 @@ public static partial class MapGenerator
                 sy + Random.Shared.Next(-10, 11));
         }
 
-        // FB-063 Guild recruitment NPCs: Kibaou (ALF) on F1 TOB. Other
-        // recruiters live on their guild's HQ floor and are spawned via
-        // FloorNpcSpawns (see below). Low-bar guild, placed inside the
-        // plaza so players meet him early.
+        // Guild recruitment: Kibaou (ALF) on F1 TOB plaza; others live on HQ floor via FloorNpcSpawns.
         var kibaou = new WorldSpawn('K', Color.BrightYellow)
         {
             Name = "Kibaou",
@@ -284,8 +270,7 @@ public static partial class MapGenerator
         };
         TryPlaceEntityNear(map, kibaou, sx + 6, sy + 6);
 
-        // Campfire rest point in the wilderness just north of the gate —
-        // a landmark that signals "the wilds start here."
+        // Campfire landmark just north of the gate — signals "wilds start here".
         if (map.InBounds(sx, sy - TownHalfH - 4))
             map.Tiles[sx, sy - TownHalfH - 4].Type = TileType.Campfire;
 
@@ -299,11 +284,7 @@ public static partial class MapGenerator
             map.PlaceEntity(mob, wx, wy);
         }
 
-        // FB-063 Town Guard outlaw spawn — plaza patrol activates if player
-        // karma <= -50. 3-5 guards stationed near the spawn point. If the
-        // player's karma rises out of Outlaw tier on a later TOB visit, the
-        // gate above is false and no new guards spawn (existing ones from a
-        // prior visit live/die normally; map is regenerated on each entry).
+        // Town Guard outlaw patrol: activates at karma <= -50; 3-5 guards near spawn. Map regen per entry, so no carryover.
         if (player.Karma <= -50)
         {
             int guardCount = 3 + Random.Shared.Next(0, 3);
@@ -318,8 +299,7 @@ public static partial class MapGenerator
     }
 
 
-    // Named NPC spawns on non-town floors. Iteration order = RNG call order.
-    // Entry: (gate, Next() lower bound, Next() upper bound [exclusive], factory).
+    // Named NPC spawns on non-town floors. Iteration = RNG call order. Entry: (gate, idxMin, idxMaxExcl, factory).
     private static readonly (Func<int, List<Room>, bool> Gate,
         Func<int, List<Room>, int> IdxMin,
         Func<int, List<Room>, int> IdxMax,
@@ -362,8 +342,7 @@ public static partial class MapGenerator
              Dialogue = "Information is power, friend. Want to know what lurks ahead?",
          }),
 
-        // Sister Azariya — F50 Divine Object questline. Former Fanatio apprentice
-        // who left the order, now guards the Heaven-Piercing Blade until worthy.
+        // Sister Azariya — F50 Divine Object questline; former Fanatio apprentice, guards Heaven-Piercing Blade.
         ((f, r) => f == 50 && r.Count > 2,
          (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('A', Color.BrightCyan)
@@ -372,10 +351,7 @@ public static partial class MapGenerator
              Dialogue = "The light does not answer to unsteady hands. Prove yourself and I will entrust it to you.",
          }),
 
-        // Selka the Novice — F65 Divine Object questline. Alice's younger sister
-        // (canon), keeps the Fragrant Olive Sword until one proves worthy of its legacy.
-        // Also hosts the chained "Unfolding Truth" awakening quest after the
-        // first Fragrant Olive quest is turned in (see HandleSelka).
+        // Selka the Novice — F65 Divine Object (Fragrant Olive Sword); also hosts chained "Unfolding Truth" awakening quest.
         ((f, r) => f == 65 && r.Count > 2,
          (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('S', Color.White)
@@ -384,9 +360,7 @@ public static partial class MapGenerator
              Dialogue = "My sister's blade waits for a worthy wielder. Show me you can honor her memory.",
          }),
 
-        // Agil's Apprentice — F55 FD Canon Field-Boss Wiring pass. Gates
-        // axe_ground_gorge behind a 15-kill quest (canon source replaces
-        // the old floor-banded pool drop). G glyph, BrightYellow.
+        // Agil's Apprentice — F55 gates axe_ground_gorge behind a 15-kill quest (replaces old floor-banded pool drop).
         ((f, r) => f == 55 && r.Count > 2,
          (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('G', Color.BrightYellow)
@@ -395,10 +369,7 @@ public static partial class MapGenerator
              Dialogue = "Agil sent me up with a two-hander he swears cleaves the ground. Prove you can swing it.",
          }),
 
-        // Dorothy — F78 Divine Object questline (Starlight Banner, 8th Divine).
-        // Canon Underworld character (SAO Last Recollection, purification scythe
-        // wielder). Offers "Purify the Darkness" quest on F78: 20 kills on the
-        // current floor returns the Starlight Banner Divine Object.
+        // Dorothy — F78 Divine Object (Starlight Banner); "Purify the Darkness" 20-kill quest.
         ((f, r) => f == 78 && r.Count > 2,
          (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('D', Color.BrightCyan)
@@ -407,9 +378,7 @@ public static partial class MapGenerator
              Dialogue = "Shadow gathers thick on this floor. I need a blade that cleaves darkness, not flesh — are you that blade?",
          }),
 
-        // ── Hollow Fragment Hollow Mission questgivers (9 NPCs) ────────
-        // Each gates a canon HNM weapon behind a kill-count quest. NPC names
-        // are original but thematically match the weapon/region.
+        // ── HF Hollow Mission questgivers (9): each gates a canon HNM weapon behind a kill-count quest.
 
         ((f, r) => f == 79 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('E', Color.BrightMagenta) { Name = "Scholar Ellroy",
@@ -439,15 +408,12 @@ public static partial class MapGenerator
          () => new WorldSpawn('C', Color.Gray) { Name = "Sentinel Captain",
              Dialogue = "The guardians have fallen, one by one. Hold their line and Gungnir is yours." }),
 
-        // ── HF Endgame Expansion — Lisbeth (F48 Lindarth blacksmith) ─
-        // Canon: Lindarth on F48 is Lisbeth's smithing hub. Opens the
-        // Lisbeth Rarity 6 craft dialog on interact (TurnManager wiring).
+        // Lisbeth (F48 Lindarth) — canon smithing hub; opens Rarity 6 craft dialog.
         ((f, r) => f == 48 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
          () => new WorldSpawn('L', Color.BrightMagenta) { Name = "Lisbeth",
              Dialogue = "Lindarth's the heart of my forge. Got Col and rare materials? I'll craft you something the labyrinth won't forget." }),
 
-        // ── HF Endgame Expansion Implement System questgivers (4) ───
-        // F84 Spiralblade, F85 Crusher, F92 Aurumbrand, F99 Deathglutton.
+        // ── HF Implement System questgivers (4): F84 Spiralblade, F85 Crusher, F92 Aurumbrand, F99 Deathglutton.
         ((f, r) => f == 84 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('V', Color.BrightCyan) { Name = "Spiralist Vey",
              Dialogue = "Geometry broke here. Ten failed spirals and the rapier answers." }),
@@ -461,12 +427,9 @@ public static partial class MapGenerator
          () => new WorldSpawn('X', Color.BrightRed) { Name = "Last Herald Xiv",
              Dialogue = "The pact demands twenty. Feed Epetamu, and it will feed your climb." }),
 
-        // ── FB-063 Guild recruiters ─────────────────────────────────────
-        // Kibaou (ALF) is placed directly inside TOB F1 by PopulateTownOfBeginnings.
-        // The remaining 7 recruiters spawn on each guild's HQ floor.
+        // ── Guild recruiters — Kibaou (ALF) lives in TOB F1; the remaining 7 spawn on their guild HQ floor.
 
-        // Keita — Moonlit Black Cats (F10). BrightCyan K — distinct from
-        // Kibaou's BrightYellow. Fate-sealed guild.
+        // Keita — Moonlit Black Cats (F10). BrightCyan K (distinct from Kibaou).
         ((f, r) => f == 10 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
          () => new WorldSpawn('K', Color.BrightCyan) { Name = "Keita",
              Dialogue = "The Cats are a small family. If you've got a warm heart and a steady blade, we'll make room." }),
@@ -496,9 +459,7 @@ public static partial class MapGenerator
          () => new WorldSpawn('Y', Color.BrightMagenta) { Name = "Siune",
              Dialogue = "Yuuki left one condition: only the worthy. Show us resolve and we'll show you a family." }),
 
-        // PoH's Herald — Laughing Coffin (F75 hidden). Only meaningful when
-        // the player's karma is <= -50; the dispatcher shows a generic
-        // fallback line otherwise so the encounter doesn't spoil the guild.
+        // PoH's Herald — Laughing Coffin (F75 hidden); only meaningful at karma <= -50 (otherwise generic fallback line).
         ((f, r) => f == 75 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('P', Color.Red) { Name = "PoH's Herald",
              Dialogue = "PoH is always listening. When you have earned enough crimson, come back — we'll be watching." }),
@@ -516,8 +477,7 @@ public static partial class MapGenerator
         }
     }
 
-    // Try to place an entity at (x, y); if the tile is occupied or not
-    // walkable, walk outward in a small spiral for the nearest valid cell.
+    // Place at (x,y); if blocked, spiral outward for nearest valid cell.
     private static bool TryPlaceEntityNear(GameMap map, Entity entity, int x, int y)
     {
         for (int r = 0; r <= 4; r++)
@@ -606,9 +566,7 @@ public static partial class MapGenerator
         SetPathTile(map, x2, y2);
     }
 
-    // Bresenham line carve — no jitter, no side branches. Used for main
-    // roads (spawn-to-plaza, spawn-to-boss) so they read as intentional.
-    // Also clears trees/bushes in the way so the road isn't broken.
+    // Bresenham line carve (no jitter) for main roads; clears trees/bushes in the way.
     internal static void CarveStraightPath(GameMap map, int x1, int y1, int x2, int y2)
     {
         int dx = Math.Abs(x2 - x1), sx = x1 < x2 ? 1 : -1;
@@ -633,8 +591,7 @@ public static partial class MapGenerator
             map.Tiles[x, y].Type = TileType.Path;
     }
 
-    // Road-tile setter that also clears trees/rocks so a main
-    // road cuts cleanly through terrain.
+    // Road-tile setter; clears trees/rocks so a main road cuts cleanly through terrain.
     private static void SetRoadTile(GameMap map, int x, int y)
     {
         if (!map.InBounds(x, y)) return;

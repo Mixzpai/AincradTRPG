@@ -45,11 +45,7 @@ public static class BowDefinitions
     public static Weapon CreateTiasLongbow() => Make("tias_longbow", "Tia's Longbow", 900, "Rare", 90, 25, 32, 2, 4,
         B().Add(StatType.Attack, 22).Add(StatType.Dexterity, 12));
 
-    // ── Infinity Moment Last-Attack Bonus bows (non-enhanceable) ──────
-    // Both drop as guaranteed extras via FloorBossLastAttackDrops on the
-    // player's killing-blow against the floor boss. Non-enhanceable, so
-    // base stats run slightly higher than a comparable Legendary to
-    // compensate for losing the +1..+10 progression.
+    // ── IM Last-Attack Bonus bows — guaranteed on floor-boss killing blow. Non-enhanceable; higher base vs Legendary.
 
     // IM F85 floor-boss LAB reward. Wind-sheared hunting bow.
     public static Weapon CreateZephyros()
@@ -61,8 +57,7 @@ public static class BowDefinitions
         return w;
     }
 
-    // IM F99 floor-boss LAB reward (paired with Night Sky Sword Divine drop).
-    // Piercing moon-touched bow of the huntress.
+    // IM F99 LAB reward (paired with Night Sky Divine drop). Piercing moon-touched huntress bow.
     public static Weapon CreateArtemis()
     {
         var w = Make("bow_artemis", "Artemis", 32000, "Legendary", 260, 92, 188, 1, 5,
@@ -72,16 +67,13 @@ public static class BowDefinitions
         return w;
     }
 
-    // ── Divine Objects ──────────────────────────────────────────────
-    // Above Legendary. Hand-placed only. Unbreakable. Bypass block rolls.
+    // ── Divine Objects — above Legendary, hand-placed, unbreakable, bypass block rolls.
 
-    // Deusolbert Synthesis Seven's Divine Object. Created from a phoenix that
-    // lived in a volcano. Canon: fires unlimited flaming arrows via Full Control Art.
+    // Deusolbert Synthesis Seven — phoenix-forged; Full Control Art fires unlimited flame arrows.
     public static Weapon CreateConflagrantFlameBow() => Make("conflagrant_flame_bow", "Conflagrant Flame Bow", 42000, "Divine", 999, 82, 155, 2, 4,
         B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Strength, 18), "Burn+30");
 
-    // F11 Felos the Ember Drake drops (Alicization Lycoris Divine Beast tier).
-    // Celestial bow — hits from cosmic distance. Crit-oriented.
+    // F11 Felos Ember Drake drop (AL Divine Beast tier). Cosmic-range crit bow.
     public static Weapon CreateStarfall() => Make("starfall", "Starfall", 8500, "Legendary", 170, 18, 85, 1, 4,
         B().Add(StatType.Attack, 42).Add(StatType.Dexterity, 20).Add(StatType.Agility, 10), "CritRate+20");
 

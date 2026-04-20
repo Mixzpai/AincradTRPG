@@ -5,18 +5,13 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Pause menu — opens on Esc from the map view. Four vertical actions:
-// Save / Load / Options / Exit. Each destructive choice gates behind a
-// MessageBox confirmation so a mis-press never wipes progress. Esc on
-// the menu closes back to the map (DialogHelper.CloseOnEscape).
+// Pause menu (Esc from map): Save / Load / Options / Exit. Destructive choices MessageBox-gated.
+// Esc here resumes (DialogHelper.CloseOnEscape).
 public static class PauseMenuDialog
 {
     private const int DialogWidth = 44, DialogHeight = 14;
 
-    // The map view wires a single PauseRequested handler that routes here.
-    // `saveFlash` is the shared frame-counter array GameScreen uses to
-    // briefly tint the save indicator after a successful save — we pulse
-    // it on save so the player gets the same feedback as F5 quick-save.
+    // `saveFlash` is GameScreen's shared frame counter — we pulse it on save for F5-like feedback.
     public static void Show(Window mainWindow, Player player, TurnManager turnManager,
         int saveSlot, GameLogView gameLog, int[] saveFlash)
     {
@@ -82,12 +77,7 @@ public static class PauseMenuDialog
         optionsBtn.Accepting += (s, e) =>
         {
             e.Cancel = true;
-            // OptionsScreen RemoveAlls and rebuilds mainWindow, so we must
-            // close the pause dialog first AND give Options a way back to
-            // the live run. Strategy: auto-save before opening Options so
-            // the in-memory run is preserved on disk, then pass an onBack
-            // callback that reloads that save. The player sees a brief
-            // [Auto-saved] log line and returns to their run on Back.
+            // OptionsScreen rebuilds mainWindow → auto-save first, reload via onBack callback.
             SaveManager.SaveGame(player, turnManager, saveSlot);
             gameLog.LogSystem("[Auto-saved for Options]");
             saveFlash[0] = 5;
@@ -110,10 +100,7 @@ public static class PauseMenuDialog
             Application.RequestStop();
         };
 
-        // Up/Down arrows between the four menu buttons. Terminal.Gui's
-        // default Tab order handles left/right but Up/Down on buttons is
-        // not wired — attach key handling to the buttons themselves
-        // (children), not the Dialog, so presses land.
+        // Up/Down isn't wired by default on buttons — attach to buttons (not Dialog) so presses land.
         NavigationHelper.WireUpDown(saveBtn, exitBtn, loadBtn);
         NavigationHelper.WireUpDown(loadBtn, saveBtn, optionsBtn);
         NavigationHelper.WireUpDown(optionsBtn, loadBtn, exitBtn);
@@ -124,8 +111,7 @@ public static class PauseMenuDialog
         saveBtn.SetFocus();
         DialogHelper.RunModal(dialog);
 
-        // Post-close handling — done after the dialog exits so any lingering
-        // modal state is torn down first.
+        // Post-close: runs after dialog exits so modal state is torn down first.
         if (exitRequested)
         {
             Application.RequestStop();
@@ -140,9 +126,7 @@ public static class PauseMenuDialog
         }
     }
 
-    // Uses the shared CreateMenuButton helper for the ► label ◄ focus
-    // marker — consistent with TitleScreen / DifficultyScreen / TalentPick
-    // / ProficiencyFork selection visuals across the app.
+    // Shared CreateMenuButton ► label ◄ marker — consistent with TitleScreen/DifficultyScreen/etc.
     private static Button MakeMenuButton(string text, int y, bool isDefault = false)
     {
         var btn = DialogHelper.CreateMenuButton(text, isDefault);

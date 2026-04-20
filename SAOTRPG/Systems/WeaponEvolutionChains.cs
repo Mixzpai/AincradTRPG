@@ -1,13 +1,7 @@
 namespace SAOTRPG.Systems;
 
-// Weapon evolution chain lookup table.
-// 9 chains × 4 tiers = 36 entries. Each entry ties a weapon DefId to its
-// current tier, the next weapon in the chain, and the materials required to
-// perform the upgrade. T4 entries are apex — NextDefId is null and the
-// crafting dialog rejects the evolve action.
-//
-// Material quantities: T1→T2 = 3, T2→T3 = 8, T3→T4 = 20 (+ peak extra).
-// At T3 only, a rare chain-flavored "peak" material is also required.
+// Weapon evolution chains: 9 × 4 tiers. T4 apex (NextDefId=null).
+// Mat qty: T1→T2=3, T2→T3=8, T3→T4=20 + peak-extra rare mat.
 
 public enum ChainTier { T1, T2, T3, T4 }
 
@@ -22,13 +16,9 @@ public record ChainStep(
 
 public static class WeaponEvolutionChains
 {
-    // Maps a weapon DefId → its step in the chain. Missing entries = not in a chain.
-    //
-    // NOTE on PeakExtraMatId substitutions: several intended material DefIds
-    // (crystal_core, soul_dust, gear_fragment, wing_fragment, venom_sac,
-    // flame_essence) are not yet registered in MobDropDefinitions. Each
-    // substitute below is an already-registered material in ItemRegistry.cs
-    // (see IngredientDefinitions / MobDropDefinitions).
+    // Weapon DefId → ChainStep. Missing = not in a chain.
+    // PeakExtraMatId substitutes: crystal_core/soul_dust/gear_fragment/wing_fragment/
+    // venom_sac/flame_essence unreg'd → use already-registered proxies below.
     public static readonly Dictionary<string, ChainStep> Chains = new()
     {
         // ── 1H Sword chain: Final Espada → Asmodeus → Final Avalanche → Tyrfing

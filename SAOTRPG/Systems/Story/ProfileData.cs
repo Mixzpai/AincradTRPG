@@ -2,9 +2,8 @@ using System.Text.Json;
 
 namespace SAOTRPG.Systems.Story;
 
-// Permanent per-installation data that survives new-game resets.
-// Currently: ever-seen event IDs so repeat runs can fast-forward cutscenes
-// the player has already read. Stored at %LocalAppData%/AincradTRPG/profile.json.
+// Per-installation data (survives new-game). Ever-seen events for cutscene
+// fast-forward. Stored at %LocalAppData%/AincradTRPG/profile.json.
 public static class ProfileData
 {
     private static readonly string ProfileDir = Path.Combine(
@@ -17,11 +16,8 @@ public static class ProfileData
     // Set on first F100 clear. Gates Run Modifiers UI (FB-564).
     public static bool HasCompletedGame { get; private set; }
 
-    // ── Player Guide persistence ──────────────────────────────────────
-    // Keys are "{Category}|{Title}". Lists round-trip cleanly through
-    // System.Text.Json; runtime uses the ordered List<string> for Bookmarks
-    // and RecentlyViewed (order matters — newest-first recency, user-ordered
-    // bookmarks) and HashSet<string> for the gating sets.
+    // ── Player Guide persistence ─────────
+    // Keys "{Category}|{Title}". Lists preserve order; HashSets for gating.
 
     // User-pinned topics (unlimited).
     public static List<string> GuideBookmarks { get; private set; } = new();
@@ -34,9 +30,7 @@ public static class ProfileData
     // "unread" marker decoration.
     public static HashSet<string> GuideVisitedTopics { get; private set; } = new();
 
-    // Topics unlocked via gameplay (boss kills, area entry, etc.). Populated
-    // at session start + on discovery events, and used to mask unseen
-    // entries as "???" via the TreeView AspectGetter.
+    // Gameplay-unlocked topics. Masks unseen entries as ??? in TreeView.
     public static HashSet<string> GuideKnownTopics { get; private set; } = new();
 
     private const int RecentlyViewedCap = 10;

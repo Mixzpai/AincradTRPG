@@ -2,31 +2,22 @@ using SAOTRPG.Items;
 
 namespace SAOTRPG.Systems;
 
-// FB-050 Skill-by-Use Leveling framework. Per-player instance holds one
-// LifeSkillState per LifeSkillType. XP curves and milestone bonuses are
-// static. Hooked from TurnManager.Movement (rest/sprint/walk) and the
-// Inventory ConsumableUsed event (food). Milestone stat bonuses fold into
-// Player via Player.LifeSkillHpBonus / LifeSkillSpeedBonus / etc. properties
-// which the Player stat pipeline reads additively, similar to how
-// proficiency and refinement fold into the existing stat totals.
+// FB-050 Skill-by-Use Leveling: per-player LifeSkillState by LifeSkillType.
+// XP hooks in TurnManager.Movement + Inventory.ConsumableUsed.
+// Milestones fold into Player.LifeSkill*Bonus (additive in stat pipeline).
 public enum LifeSkillType
 {
     Sleep,
     Walking,
     Running,
     Eating,
-    // FB-072 — shopkeep haggling. XP per shop transaction (buy or sell).
-    // Milestone bonus is a buy-discount / sell-bonus multiplier that stacks
-    // multiplicatively on top of the karma shop price multiplier.
+    // FB-072 — haggling: XP per shop txn; buy-discount/sell-bonus mult
+    // stacks multiplicatively over karma shop mult.
     Bargaining,
-    // FB-077 — aquatic traversal. XP per water tile stepped. Level gates
-    // shallow vs. deep water passability; below the upper threshold each
-    // water step costs an extra turn tick (slow penalty).
+    // FB-077 — swim: XP per water tile; gates shallow/deep; slow below threshold.
     Swimming,
-    // (Extensible — add Fishing/Mining/Cooking here in later passes.)
 }
 
-// Mutable per-skill state: current level (1-99) and XP toward the next level.
 public record LifeSkillState
 {
     public int Level { get; set; } = 1;
@@ -37,8 +28,7 @@ public class LifeSkillSystem
 {
     public const int MaxLevel = 99;
 
-    // Fires when a skill hits a milestone level (10/25/50/99 only).
-    // Signature: (skill type, new level).
+    // Fires on milestone crossings (10/25/50/99): (skill, newLevel).
     public event Action<LifeSkillType, int>? LifeSkillMilestoneReached;
 
     public Dictionary<LifeSkillType, LifeSkillState> Skills { get; set; } = new();
@@ -49,27 +39,18 @@ public class LifeSkillSystem
             Skills[t] = new LifeSkillState();
     }
 
-    // Geometric XP curve. Anchor points:
-    //   L1    → 0      (implicit)
-    //   L5    → 10
-    //   L10   → 100
-    //   L25   → 1000
-    //   L50   → 5000
-    //   L99   → 50000
-    // Piecewise-linear between anchors so the curve is monotonic and tunable.
+    // Piecewise-linear XP curve. Anchors: L1→0, L5→10, L10→100, L25→1k, L50→5k, L99→50k.
     private static readonly (int Level, int Xp)[] Anchors =
     {
         (1, 0), (5, 10), (10, 100), (25, 1000), (50, 5000), (99, 50000),
     };
 
-    // Total XP required to reach a given level from L1. For L≤1 returns 0;
-    // for L>99 clamps to the L99 anchor.
+    // Total XP from L1 to reach `level`. L≤1→0; L>99 clamps to L99 anchor.
     public static int GetXpForLevel(int level)
     {
         if (level <= 1) return 0;
         if (level >= MaxLevel) return Anchors[^1].Xp;
 
-        // Find the bracket containing `level`.
         for (int i = 0; i < Anchors.Length - 1; i++)
         {
             var (la, xa) = Anchors[i];
@@ -77,7 +58,6 @@ public class LifeSkillSystem
             if (level >= la && level <= lb)
             {
                 if (la == lb) return xa;
-                // Linear interpolation inside the bracket.
                 double t = (double)(level - la) / (lb - la);
                 return (int)Math.Round(xa + t * (xb - xa));
             }
@@ -88,9 +68,7 @@ public class LifeSkillSystem
     public int GetLevel(LifeSkillType skill) => Skills[skill].Level;
     public int GetXp(LifeSkillType skill) => Skills[skill].CurrentXp;
 
-    // Returns (current level XP, next level XP) so the UI can render a
-    // progress bar within the current level. At max level returns
-    // (MaxLevelXp, MaxLevelXp) so the bar renders full.
+    // (XP into level, XP span to next) for progress bar. At max, both = full.
     public (int Current, int Next) GetLevelProgress(LifeSkillType skill)
     {
         var s = Skills[skill];
@@ -101,9 +79,7 @@ public class LifeSkillSystem
         return (s.CurrentXp - cur, nxt - cur);
     }
 
-    // Grants XP to a skill and rolls up levels as thresholds are met.
-    // Fires LifeSkillMilestoneReached exactly once per milestone crossed
-    // at L10, L25, L50, L99.
+    // Grants XP, rolls up levels, fires MilestoneReached per 10/25/50/99 crossing.
     public void GrantXp(LifeSkillType skill, int amount)
     {
         if (amount <= 0) return;
@@ -113,15 +89,13 @@ public class LifeSkillSystem
         s.CurrentXp += amount;
         int oldLevel = s.Level;
 
-        // Roll forward through any level thresholds we cross. Each
-        // iteration advances exactly one level so we don't miss milestone
-        // bands on a very large single grant.
+        // One-level-per-iter so large grants don't skip milestone bands.
         while (s.Level < MaxLevel && s.CurrentXp >= GetXpForLevel(s.Level + 1))
         {
             s.Level++;
         }
 
-        // Fire milestone notifications for any crossings in the 10/25/50/99 set.
+        // Fire milestone events for any crossings in 10/25/50/99.
         if (s.Level > oldLevel)
         {
             foreach (int ms in new[] { 10, 25, 50, MaxLevel })
@@ -132,12 +106,8 @@ public class LifeSkillSystem
         }
     }
 
-    // Milestone stat bonus at a given level. Returns the CUMULATIVE bonus
-    // the player currently has for `skill` at `level`. (Tiers stack — e.g.
-    // a L60 Sleep player gets L10+L25+L50 Sleep bonuses.)
-    // Returns a list of (StatType, flatValue) tuples. Multiplier-style
-    // bonuses (Running sprint stamina, Eating food potency) are surfaced
-    // via EatingFoodMultiplierPercent / RunningSprintStaminaReductionPercent.
+    // Cumulative flat bonuses at current level — tiers stack (L60 Sleep = L10+L25+L50).
+    // Multiplier bonuses (Eating potency, Running stamina) live in separate helpers.
     public IEnumerable<(StatType Stat, int Value)> GetFlatStatBonuses(LifeSkillType skill)
     {
         int lvl = Skills[skill].Level;
@@ -161,25 +131,14 @@ public class LifeSkillSystem
                 if (lvl >= 50) yield return (StatType.Speed, 10);
                 if (lvl >= 99) yield return (StatType.Speed, 20);
                 break;
-            case LifeSkillType.Eating:
-                // Eating's bonus is a multiplier — no flat stat bonus here.
-                break;
-            case LifeSkillType.Bargaining:
-                // Bargaining's bonus is a price multiplier — see BargainingDiscount().
-                break;
-            case LifeSkillType.Swimming:
-                // Swimming is purely a traversal gate — no flat stat bonus.
-                break;
+            case LifeSkillType.Eating:      break; // multiplier-only
+            case LifeSkillType.Bargaining:  break; // price-mult only (BargainingDiscount)
+            case LifeSkillType.Swimming:    break; // traversal gate only
         }
     }
 
-    // FB-072 — Bargaining buy-price multiplier (< 1.0 = discount).
-    //   L10  0.97   (−3%)
-    //   L25  0.94   (−6%)
-    //   L50  0.90  (−10%)
-    //   L99  0.85  (−15% cap)
-    // Returns 1.0 at L<10 (no effect). Stacks multiplicatively on top of
-    // the karma shop price multiplier at the ShopDialog call sites.
+    // FB-072 — buy multiplier: L10=0.97, L25=0.94, L50=0.90, L99=0.85 (cap).
+    // Stacks multiplicatively with karma shop mult in ShopDialog.
     public float BargainingBuyMultiplier()
     {
         int lvl = Skills[LifeSkillType.Bargaining].Level;
@@ -190,17 +149,13 @@ public class LifeSkillSystem
         return 1.0f;
     }
 
-    // Convenience helper for callers that have a Player reference. Null-safe
-    // so early boot paths (character creation, test harnesses) can't crash.
+    // Null-safe helper — safe from boot paths (character creation, test harnesses).
     public static float BargainingDiscount(SAOTRPG.Entities.Player? player)
         => player?.LifeSkills.BargainingBuyMultiplier() ?? 1.0f;
 
-    // FB-077 — Swimming level. Water (shallow) passable at L1+; WaterDeep
-    // passable at L25+. Below the upper threshold the move costs an extra
-    // turn tick (L<10 slow on shallow, L<50 slow on deep).
+    // FB-077 — Swimming level. Shallow L1+, Deep L25+. Slow tick L<10/L<50.
     public int SwimmingLevel => Skills[LifeSkillType.Swimming].Level;
 
-    // Cumulative flat MaxHP bonus from Sleep skill tiers.
     public int SleepMaxHpBonus()
     {
         int total = 0;
@@ -209,7 +164,6 @@ public class LifeSkillSystem
         return total;
     }
 
-    // Cumulative flat Endurance bonus from Walking skill tiers.
     public int WalkingEnduranceBonus()
     {
         int total = 0;
@@ -218,7 +172,6 @@ public class LifeSkillSystem
         return total;
     }
 
-    // Cumulative flat Speed bonus from Running skill tiers.
     public int RunningSpeedBonus()
     {
         int total = 0;
@@ -227,12 +180,7 @@ public class LifeSkillSystem
         return total;
     }
 
-    // Eating multiplier — food heal/duration scales by (100 + bonus) / 100.
-    //   L10  +10%
-    //   L25  +25% (replaces L10 — i.e. +25 total, not +35)
-    //   L50  +50%
-    //   L99 +100% duration
-    // Returns 0 at L<10.
+    // Eating mult: L10=+10%, L25=+25%, L50=+50%, L99=+100% duration. Tiers replace (not stack).
     public int EatingFoodPotencyPercent()
     {
         int lvl = Skills[LifeSkillType.Eating].Level;
@@ -243,18 +191,14 @@ public class LifeSkillSystem
         return 0;
     }
 
-    // Running L99 capstone: sprint stamina cost reduced by 30%. Since
-    // sprint doesn't currently cost stamina in the codebase, this is a
-    // display-only bonus for now. Wire it up when stamina lands.
+    // Running L99: -30% sprint stamina. Display-only until stamina system lands.
     public bool RunningSprintStaminaReduced =>
         Skills[LifeSkillType.Running].Level >= MaxLevel;
 
-    // Sleep L99 capstone: faster HP regen. Consumed by TurnManager passive
-    // regen logic to tick the regen-every-N-turns counter more often.
+    // Sleep L99: faster passive regen counter in TurnManager.PassiveRegen.
     public bool SleepFasterRegen =>
         Skills[LifeSkillType.Sleep].Level >= MaxLevel;
 
-    // Pretty label for UI rendering.
     public static string Label(LifeSkillType skill) => skill switch
     {
         LifeSkillType.Sleep      => "Sleep",
@@ -266,7 +210,6 @@ public class LifeSkillSystem
         _                        => skill.ToString(),
     };
 
-    // One-line milestone description for the log banner.
     public static string MilestoneBonusDescription(LifeSkillType skill, int level) => (skill, level) switch
     {
         (LifeSkillType.Sleep,   10) => "+5 MaxHP",

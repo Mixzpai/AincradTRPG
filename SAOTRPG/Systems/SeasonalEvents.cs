@@ -1,9 +1,7 @@
 namespace SAOTRPG.Systems;
 
-// Real-world date → seasonal event mapping. Drives field boss seasonal spawns
-// (Nicholas at Christmas), special event mobs, and cosmetic overlays.
-// Canon priority: Christmas (LN Vol 2). All other events are stubs for future
-// fill — see DEFERRED.md for the full seasonal roadmap.
+// Date → seasonal event: field boss spawns (Nicholas/Christmas canon LN Vol 2).
+// Other events stubbed — see DEFERRED.md.
 public enum SeasonalEvent
 {
     None,

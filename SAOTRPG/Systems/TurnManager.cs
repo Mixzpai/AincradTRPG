@@ -375,15 +375,9 @@ public partial class TurnManager
         }
     }
 
-    // Corruption Stone handler. Canon corruption mechanic from Hollow Fragment.
-    // Our F100 ends the game, so the post-F100 boss that canonically grants
-    // Corrupted Elucidator/Dark Repulser is unreachable — the stone is an
-    // inventory consumable that transforms the matching base weapon instead.
-    //
-    // Searches inventory (items + equipped weapon/offhand slot) for the
-    // target DefId, removes it, and grants the Corrupted variant. Preserves
-    // the target's enhancement level + refinement slots (both live on
-    // EquipmentBase and survive the DefId swap by direct field copy).
+    // Corruption Stone (HF canon workaround: F100 ends game, post-F100 boss unreachable).
+    // Inventory consumable: swaps target weapon → Corrupted variant. Preserves
+    // EnhancementLevel + RefinementSlots via direct field copy + bonus replay.
     private void HandleCorruptionStone(SAOTRPG.Items.Consumables.CorruptionStone stone)
     {
         if (string.IsNullOrEmpty(stone.TargetWeaponDefId) || string.IsNullOrEmpty(stone.CorruptedWeaponDefId))
@@ -392,8 +386,7 @@ public partial class TurnManager
             return;
         }
 
-        // Search for the target weapon in inventory and in the Weapon/OffHand
-        // equip slots. Prefer an equipped target if both present (rare).
+        // Search inventory + Weapon/OffHand slots; prefer equipped.
         SAOTRPG.Items.Equipment.Weapon? target = null;
         SAOTRPG.Inventory.Core.EquipmentSlot? equippedSlot = null;
 
@@ -428,9 +421,7 @@ public partial class TurnManager
 
         if (target == null)
         {
-            // No target in inventory — surface the failure loudly per project
-            // "fail loud" policy. The stone is NOT consumed (ConsumableUsed
-            // already decremented Quantity, so re-add one charge).
+            // Fail-loud: surface error; refund charge (ConsumableUsed already decremented).
             string needName = Items.ItemRegistry.Create(stone.TargetWeaponDefId)?.Name ?? stone.TargetWeaponDefId;
             _log.Log($"The corruption stone finds nothing to corrupt. You need {needName} in your inventory or equipped.");
             stone.Quantity++;
@@ -452,10 +443,8 @@ public partial class TurnManager
         for (int i = 0; i < SAOTRPG.Items.Equipment.EquipmentBase.RefinementSlotCount; i++)
             corrupted.RefinementSlots[i] = target.RefinementSlots[i];
 
-        // Replay enhancement-level ore stat bonuses onto the corrupted variant.
-        // Mirrors SaveManager.DeserializeItem: each ore in EnhancementOreHistory
-        // contributed +3 Attack/Agility/etc. per level; those live in Bonuses
-        // but Create() returned a fresh Bonuses collection, so we rebuild.
+        // Replay ore bonuses (fresh Bonuses from Create). Mirrors SaveManager.DeserializeItem:
+        // each ore in EnhancementOreHistory = +3 to its stat per level.
         if (corrupted.EnhancementLevel > 0)
         {
             const int weaponLevelBonus = 3;
@@ -468,10 +457,7 @@ public partial class TurnManager
                 corrupted.Bonuses.Add(stat, weaponLevelBonus);
             }
         }
-        // Replay refinement ingot bonuses for any socketed slot. Refinement
-        // stores slot DefIds on the item but folds the actual stat bonuses
-        // into Bonuses at socket time — Create() produced a fresh Bonuses
-        // collection, so we rehydrate here (same helper SaveManager uses).
+        // Replay ingot bonuses (Create gave fresh Bonuses). Same helper as SaveManager.
         Refinement.RehydrateBonuses(corrupted);
 
         // Remove the target and grant the corrupted variant.

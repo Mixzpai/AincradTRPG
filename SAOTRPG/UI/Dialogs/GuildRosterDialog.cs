@@ -7,11 +7,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// FB-063 Guild Roster. Read-only browser for the 8 SAO-canon guilds +
-// a "Found Your Own Guild" action at the bottom. Accessible from
-// StatsDialog. Active guild is highlighted; locked guilds show the
-// failing requirement. Joining itself happens via the recruiter NPC on
-// each guild's HQ floor — this dialog only surfaces the info.
+// Guild Roster (from StatsDialog): read-only browser for 8 SAO-canon guilds + "Found Your Own".
+// Active guild highlighted; locked guilds show failing req. Actual join = recruiter NPC on HQ floor.
 public static class GuildRosterDialog
 {
     private const int DialogWidth = 78;
@@ -116,11 +113,8 @@ public static class GuildRosterDialog
             player.FoundedGuildName = name!.Trim();
             player.FoundedGuildPerk = preset;
             var silentLog = new StringGameLog(new System.Text.StringBuilder());
-            // Leave current guild quietly first (Join does this, but we route
-            // via a throwaway string log so the player doesn't see the old-
-            // guild -10 rep / -3 karma log lines in a channel they can't see
-            // (the modal intercepts the game-log). Actual leave-penalty is
-            // still applied to state — only the log output is discarded.
+            // Leave quietly via throwaway log — penalty still applied, but old-guild -10 rep/-3 karma
+            // lines are swallowed since the modal intercepts the game log.
             GuildSystem.Join(player, Faction.PlayerGuild, silentLog);
             MessageBox.Query("Guild Founded",
                 $"{name} is born!\nPerk: {GuildSystem.FoundedPresets[preset].Flavor}\nCost: {GuildSystem.PlayerGuildFoundCost} Col",
@@ -130,12 +124,8 @@ public static class GuildRosterDialog
 
         dialog.Add(header, listView, detail, reqLabel, foundBtn);
 
-        // Dissolve button — visible only when player leads a founded guild.
-        // Calls GuildSystem.Leave (which has a clean PlayerGuild branch:
-        // removes perk, clears ActiveGuildId, no karma/rep penalty since
-        // there's nothing for the player to betray by disbanding their
-        // own crew). Clears the stored guild name so the player can re-
-        // found later with a fresh name.
+        // Dissolve (shown only when player leads a founded guild): GuildSystem.Leave's PlayerGuild
+        // branch drops perk + clears ActiveGuildId, no penalty. Also clears name for re-founding.
         if (player.ActiveGuildId == Faction.PlayerGuild)
         {
             var dissolveBtn = DialogHelper.CreateButton("Dissolve Guild");
@@ -165,9 +155,7 @@ public static class GuildRosterDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // Simple modal text prompt for the founded-guild name. Enforces 1..20
-    // chars, alphanumeric + space only (per FB-063 rule 7). Returns null on
-    // cancel or invalid input.
+    // Modal name prompt: 1..20 chars, alphanumeric + space; null on cancel/invalid.
     private static string? PromptForName()
     {
         var d = DialogHelper.Create("Name Your Guild", 52, 9);

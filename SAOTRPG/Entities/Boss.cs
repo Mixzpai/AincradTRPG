@@ -2,9 +2,7 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Entities
 {
-    // Floor boss entity -- multi-phase fight with unique abilities.
-    // Phase transitions at HP thresholds (75%, 50%, 25%).
-    // Each boss can have up to 3 special abilities that activate per phase.
+    // Floor boss: multi-phase at 75/50/25% HP, up to 3 per-phase abilities.
     public class Boss : Monster
     {
         public override char Symbol { get; protected set; } = 'B';
@@ -12,8 +10,7 @@ namespace SAOTRPG.Entities
 
         public string BossTitle { get; protected set; } = string.Empty;
 
-        // Phase system: bosses have up to 4 phases based on HP%.
-        // Phase 1: 100-75%, Phase 2: 75-50%, Phase 3: 50-25%, Phase 4: 25-0% (enrage).
+        // Phase: 1=100-75%, 2=75-50%, 3=50-25%, 4=25-0% (enrage).
         public int CurrentPhase => MaxHealth <= 0 ? 1 : CurrentHealth switch
         {
             var hp when hp > MaxHealth * 0.75 => 1,

@@ -95,10 +95,8 @@ public partial class TurnManager
         int baseAtk = _player.Attack + profBonus + _shrineBuff + _levelUpBuff + SatietyAtkBonus + FatigueAtkPenalty;
         int totalDamage = (int)(baseAtk * skill.DamageMultiplier);
 
-        // SkillDamage (Int * 2 + gear bonus) — flat bonus added after the
-        // DamageMultiplier so gear like Scholar's Pendant reliably contributes
-        // to every sword skill, not just multi-hit ones. Multi-hit combos get
-        // the bonus once per additional hit to preserve the old scaling.
+        // SkillDamage flat bonus (post-multiplier) so gear contributes to all skills.
+        // Multi-hit: /4 per extra hit to preserve old scaling.
         totalDamage += _player.SkillDamage;
         if (skill.Hits > 1)
             totalDamage += _player.SkillDamage * (skill.Hits - 1) / 4;
@@ -252,17 +250,12 @@ public partial class TurnManager
         }
     }
 
-    // Per-weapon cache of parsed SpecialEffect key->value pairs.
-    // Populated lazily on first query per weapon; SpecialEffect strings don't
-    // change at runtime (durability/enchant don't touch them), so entries are
-    // stable for the lifetime of the Weapon instance. ConditionalWeakTable
-    // lets entries be collected along with the weapon itself.
+    // Per-weapon cache of parsed SpecialEffect key->value. Lazy populate.
+    // ConditionalWeakTable = entries GC'd with the weapon.
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Weapon, Dictionary<string, int>>
         _specialFxCache = new();
 
-    // Parse a weapon's SpecialEffect string for a named integer value.
-    // Format: "SkillCooldown-1", "CritRate+20", "Bleed+20", "PostMotion-1"
-    // Returns the numeric value (including sign) or 0 if not found.
+    // Parse SpecialEffect: "SkillCooldown-1", "CritRate+20" → signed int. 0 if missing.
     internal static int GetSpecialEffectValue(Weapon? wpn, string effectName)
     {
         if (wpn?.SpecialEffect == null) return 0;

@@ -7,31 +7,20 @@ using SAOTRPG.Items.Equipment;
 namespace SAOTRPG.Systems;
 
 // Centralized loot tables, rarity scaling, and equipment creation.
-// All static data and pure-logic methods live here to keep TurnManager focused on orchestration.
+// Static data + pure logic; TurnManager handles orchestration.
 public static class LootGenerator
 {
     // ── Rarity roll thresholds (cumulative %) ──────────────────────────
-    // Roll below this → Common (60% chance).
+    // Common 60%, Uncommon 25%, Rare 11%, Epic 4%.
     private const int RarityCommonCeiling = 60;
-    // Roll below this (but ≥ CommonCeiling) → Uncommon (25% chance).
     private const int RarityUncommonCeiling = 85;
-    // Roll below this (but ≥ UncommonCeiling) → Rare (11% chance).
     private const int RarityRareCeiling = 96;
-    // Remaining 4% → Epic
 
-    // Number of equipment type slots in the random equipment roll.
     // 0-11 = weapon types, 12-15 = armor/shield, 16 = accessory fallback.
     private const int EquipmentTypeCount = 17;
 
-    // ── Mob loot tables — themed drops by LootTag ─────────────────────
-    // Themed drop tables keyed by mob LootTag. Each entry maps to an array
-    // of (item name, Col value) tuples. Add new tags/items freely.
-    //
-    // The 9 chain catalyst materials are woven into the themed tables. When
-    // TurnManager.DropLoot picks a tuple whose Name matches an entry in
-    // ChainMaterialByName, the drop is routed through ItemRegistry.Create so
-    // the player receives a real registered item with a proper DefinitionId
-    // (required for the Anvil Evolve flow to see it).
+    // ── Mob loot tables by LootTag → (name, Col) ─────────────────────
+    // ChainMaterialByName names route through ItemRegistry.Create for Anvil Evolve.
     public static readonly Dictionary<string, (string Name, int Value)[]> MobLootTable = new()
     {
         { "beast",     new[] { ("Raw Hide",        8), ("Beast Fang",     12), ("Sinew",         6) } },
@@ -45,16 +34,12 @@ public static class LootGenerator
         { "dragon",    new[] { ("Dragon Scale",   30), ("Flame Essence",  25), ("Dragon Claw",   20), ("Infernal Gem",     3), ("Nidhogg Scale",    3) } },
         { "elemental", new[] { ("Fire Crystal",   22), ("Essence Wisp",   18), ("Elemental Ash",  12), ("Trishula Tip",     3) } },
         { "aquatic",   new[] { ("Water Core",     15), ("Fish Scale",      8), ("Murky Pearl",   18) } },
-        // Hollow / corrupted / celestial — F76+ endgame mobs (Hollow Mutated
-        // Wolf, Cardinal Error, Immortal Echo, Void Seraph). Flavoured toward
-        // Ash White ore + hollow-themed mats.
+        // Hollow/corrupted/celestial — F76+ endgame mobs. Ash White ore themed.
         { "hollow",    new[] { ("Hollow Essence", 22), ("Corrupted Shard", 18), ("Void Particle", 14), ("Ectoplasm",       8) } },
     };
 
-    // Chain catalyst display name → ItemRegistry DefId. When the themed-drop
-    // roll picks a name that lives in this map, DropLoot routes the drop
-    // through ItemRegistry.Create so the resulting item has a DefinitionId
-    // (so the Anvil "Evolve Weapon" flow can find + consume it).
+    // Chain catalyst name → ItemRegistry DefId. Matches route through
+    // ItemRegistry.Create so Anvil Evolve flow can find/consume them.
     public static readonly Dictionary<string, string> ChainMaterialByName = new()
     {
         ["Demonic Sigil"]    = "demonic_sigil",
@@ -68,17 +53,9 @@ public static class LootGenerator
         ["Trishula Tip"]     = "trishula_tip",
     };
 
-    // Floor-boss guaranteed drops — Divine Objects AND Legendary hand-placed
-    // rewards. When a floor boss is defeated on one of these floors, the
-    // matching item is guaranteed-dropped alongside usual boss rewards.
-    // DropItem() auto-formats Divine rarity with the bespoke ◈ log line;
-    // Legendary rarity uses the standard [Legendary] format. Field boss
-    // divines live in FieldBossFactory. Quest-rewarded items are handled
-    // inline by their NPC dialogue handlers and not listed here.
-    //
-    // P4 Alicization Lycoris Divine Beast drops (F1-F50) are placed on
-    // NON-CANON floor bosses (no Progressive/novel/Hollow Fragment sources)
-    // so canonical floor bosses keep their existing drop-table behaviour.
+    // Floor-boss guaranteed drops — Divine Objects + Legendary hand-placed rewards.
+    // Divine uses ◈ log format; Legendary uses [Legendary]. Field-boss divines
+    // live in FieldBossFactory; quest rewards handled by NPC dialogue inline.
     public static readonly Dictionary<int, string> FloorBossGuaranteedDrops = new()
     {
         // ── Priority 4 Alicization Lycoris Divine Beast drops ──────
@@ -97,12 +74,8 @@ public static class LootGenerator
     };
 
     // ── Infinity Moment Last-Attack Bonus (Floor Bosses) ───────────
-    // When the PLAYER lands the killing blow on a floor boss at one of
-    // these floors, the matching weapon drops at 100% rate IN ADDITION to
-    // any FloorBossGuaranteedDrops entry for the same floor (e.g. F99
-    // drops both Night Sky Sword Divine AND Artemis). All 8 entries are
-    // non-enhanceable Legendaries — canon IM tradeoff. Wired in
-    // TurnManager.Combat.HandleMonsterKill → Boss branch.
+    // Player last-hit on these floors → weapon drops at 100% in addition to
+    // FloorBossGuaranteedDrops. Non-enhanceable Legendaries (canon IM tradeoff).
     public static readonly Dictionary<int, string> FloorBossLastAttackDrops = new()
     {
         [85] = "bow_zephyros",
@@ -116,10 +89,8 @@ public static class LootGenerator
     };
 
     // ── Hollow Fragment Last-Attack Bonus (Avatar Weapons) ─────────
-    // When a field boss F70+ is killed, if the killer's weapon type matches
-    // an Avatar Weapon type, roll the drop chance. 2% for regular F70+ field
-    // bosses; 10% for canon HNM bosses listed in CanonHnmBosses. OHS doesn't
-    // have a canon Avatar, so OHS kills don't trigger.
+    // F70+ field boss kill + matching weapon type → 2% drop (10% for CanonHnmBosses).
+    // OHS has no canon Avatar, so OHS kills don't trigger.
     public static readonly Dictionary<string, string> AvatarWeaponByWeaponType = new()
     {
         ["Rapier"]            = "rap_ishvalca_avatar",
@@ -142,10 +113,8 @@ public static class LootGenerator
         "eternal_dragon_f96",
     };
 
-    // Field-boss secondary guaranteed drops — paired with the primary
-    // GuaranteedDropId in FieldBossFactory. Used for series that drop both
-    // a signature weapon AND a series shield (IF canon: each series has
-    // its matching Fermat-style shield). Keyed by FieldBoss.FieldBossId.
+    // Field-boss secondary drops — paired with FieldBossFactory.GuaranteedDropId
+    // for series dropping both weapon + matching shield. Keyed by FieldBossId.
     public static readonly Dictionary<string, string> FieldBossSecondaryDrops = new()
     {
         // IF Integral Series — F14, canon shield Fermat.
@@ -160,12 +129,9 @@ public static class LootGenerator
         ["gaou_ox_king_f90"]       = "shd_gaou_tatari",
     };
 
-    // Floor-banded registered-item loot pool. When RollChestItem picks the
-    // "registered loot" branch (~5% of equipment rolls), a DefId is chosen
-    // from the pool whose (minFloor, maxFloor) band contains CurrentFloor.
-    // This is how the IF Anneal line (F1-10) and non-guaranteed series
-    // weapons reach the player — they are drop-table items that would
-    // otherwise only be reachable via the series field boss.
+    // Floor-banded registered loot pool. RollChestItem ~5% picks a DefId whose
+    // (minFloor, maxFloor) band contains CurrentFloor. Wires IF Anneal line +
+    // non-guaranteed series weapons into chests.
     public static readonly (int MinFloor, int MaxFloor, string DefId)[] FloorBandedRegisteredLoot =
     {
         // Anneal line — Sachi/Kirito-era starter OHS (IF canon, F1-10).
@@ -197,8 +163,7 @@ public static class LootGenerator
         // IF Gaou Series secondaries (primary = Gaou Reginleifr via F90 boss).
         (88, 99, "kat_gaou_oratorio"),
 
-        // ── Hollow Fragment Hollow Area Uniques (5) — rare chest drops ─
-        // Spread across floor bands per scope doc. NOT guaranteed.
+        // ── Hollow Fragment Hollow Area Uniques (5) — rare, not guaranteed ─
         (30, 40, "ohs_traitorblade_argute_brand"), // F35
         (50, 60, "bow_shroudbow_star_stitcher"),   // F55
         (65, 75, "scy_reaper_scythe"),             // F70
@@ -206,9 +171,7 @@ public static class LootGenerator
         (92, 99, "ths_saintblade_ragnarok"),       // F95
 
         // ── Infinity Moment Shop weapons — fallback drop paths ─────
-        // These also rotate into F50+ dynamic shop tiers (ShopTierSystem),
-        // but are added here so they can still reach the player via the
-        // chest/drop-table path when a shop isn't reachable.
+        // Also in F50+ shop tiers; chest path used when shop unreachable.
         (76, 85, "rap_edelweiss"),                  // Epic band
         (86, 99, "rap_noctis_strasse"),             // Legendary band
         (76, 85, "ths_fasislawine"),                // Epic band
@@ -223,10 +186,6 @@ public static class LootGenerator
         (86, 99, "dag_rue_feuille"),                // Legendary band
 
         // ── Memory Defrag + Fractured Daydream expansion ────────────
-        // Placement notes: MD Originals distributed per rarity band.
-        // FD character canon weapons placed at flavor-appropriate floors.
-        // FD elemental variants all go into F50+ rare/epic pool per spec.
-
         // MD Originals — Rare F25-50, Epic F50-75, Legendary F75-99.
         (28, 50, "ohs_cobalt_tristan"),             // MD Rare
         (28, 50, "ohs_atlantis_sword"),             // MD Rare
@@ -252,13 +211,9 @@ public static class LootGenerator
         // ohs_red_rose_sword — relocated to F95 field boss
         //   (Warden of the Blooming Rose, FieldBossFactory).
 
-        // FD Character Core Canon — Legendary-band rare drops per spec.
-        // Several entries relocated to dedicated field bosses / quest NPCs
-        // per Canon Field Boss Wiring pass:
-        //   ohs_elucidator_rouge → F98 Ashen Kirito Simulacrum
-        //   ths_flame_lord       → F80 Pyre Lord of Heathcliff
-        //   ohs_silvery_ruler    → F97 Administrator's Regent
-        //   rap_macafitel        → F85 Yuuki's Echo
+        // FD Character Core Canon — Legendary-band rare drops.
+        // Relocated to field bosses/NPCs: elucidator_rouge→F98, flame_lord→F80,
+        // silvery_ruler→F97, macafitel→F85.
         (85, 99, "ohs_chaos_raider_dual"),          // Kirito dual F85+
         (88, 99, "kat_murasama_g4_dual"),           // Kirito F90+
         (85, 99, "axe_naz"),                        // Agil F85+
@@ -276,51 +231,50 @@ public static class LootGenerator
         // kat_spirit_kagutsuchi — relocated to F60 Kagutsuchi the Fire Samurai.
         // kat_spirit_susanoo    — relocated to F70 Susanoo the Storm Blade.
 
-        // FD Elemental Variants — ALL F50+ rare/epic pool per spec.
-        // Rare (no-element-prefix) band: F50-75; Epic band: F60-85.
-        (50, 75, "ohs_sword_of_the_gentle_breeze"), // Alice wind Rare
-        (50, 75, "ohs_purple_bellflower_sword"),    // Alice dark Rare
-        (50, 75, "ohs_arc_order"),                  // Heathcliff water Rare
-        (50, 75, "ohs_abyss_keeper"),               // Heathcliff dark Rare
-        (50, 75, "rap_ray_grace"),                  // Asuna water Rare
-        (50, 75, "rap_shadow_grace"),               // Asuna dark Rare
-        (50, 75, "kat_futari_shizuka"),             // Klein dark Rare
-        (50, 75, "kat_icicle_blade"),               // Leafa water Rare
-        (50, 75, "dag_defeza"),                     // Silica water Rare
-        (50, 75, "dag_hermit_fang"),                // Argo wind Rare
-        (60, 85, "ohs_flare_pulsar"),               // Kirito fire Epic
-        (60, 85, "ohs_lightning_divider_dual"),     // Kirito thunder Epic
-        (60, 85, "ohs_red_peony_sword"),            // Alice fire Epic
-        (60, 85, "ohs_thunderclap_sword"),          // Alice thunder Epic
-        (60, 85, "ohs_topaz_edge"),                 // Heathcliff thunder Epic
-        (60, 85, "ohs_saint_guarder"),              // Heathcliff light Epic
-        (60, 85, "ohs_excalibur_oberon"),           // Oberon light Epic
-        (60, 85, "ohs_bloodthirst"),                // Oberon fire Epic
-        (60, 85, "rap_volt_rapier"),                // Asuna thunder Epic
-        (60, 85, "rap_dazzling_blink"),             // Asuna light Epic
-        (60, 85, "kat_white_plum_blade"),           // Klein light Epic
-        (60, 85, "kat_eradicate_saber"),            // Leafa light Epic
-        (60, 85, "axe_ignite_bardiche"),            // Agil fire Epic
-        (60, 85, "axe_tyrant_fall"),                // Agil water Epic
-        (60, 85, "axe_sturm_welt"),                 // Agil wind Epic
-        (60, 85, "mce_blazing_torch"),              // Lisbeth fire Epic
-        (60, 85, "mce_elemental_hammer"),           // Lisbeth light Epic
+        // FD Elemental Variants — staggered F15-F90 so mid floors get variants
+        // instead of all 27 crammed into F50-85.
+        // Rare tier (10 items): 2 sub-bands across F15-F60.
+        (15, 35, "ohs_sword_of_the_gentle_breeze"), // Alice wind Rare
+        (15, 35, "ohs_purple_bellflower_sword"),    // Alice dark Rare
+        (15, 35, "ohs_arc_order"),                  // Heathcliff water Rare
+        (15, 35, "ohs_abyss_keeper"),               // Heathcliff dark Rare
+        (15, 35, "rap_ray_grace"),                  // Asuna water Rare
+        (35, 60, "rap_shadow_grace"),               // Asuna dark Rare
+        (35, 60, "kat_futari_shizuka"),             // Klein dark Rare
+        (35, 60, "kat_icicle_blade"),               // Leafa water Rare
+        (35, 60, "dag_defeza"),                     // Silica water Rare
+        (35, 60, "dag_hermit_fang"),                // Argo wind Rare
+        // Epic tier (17 items): 5 sub-bands across F30-F90.
+        (30, 50, "ohs_flare_pulsar"),               // Kirito fire Epic
+        (30, 50, "ohs_lightning_divider_dual"),     // Kirito thunder Epic
+        (30, 50, "ohs_red_peony_sword"),            // Alice fire Epic
+        (30, 50, "ohs_thunderclap_sword"),          // Alice thunder Epic
+        (40, 60, "ohs_topaz_edge"),                 // Heathcliff thunder Epic
+        (40, 60, "ohs_saint_guarder"),              // Heathcliff light Epic
+        (40, 60, "ohs_excalibur_oberon"),           // Oberon light Epic
+        (40, 60, "ohs_bloodthirst"),                // Oberon fire Epic
+        (50, 70, "rap_volt_rapier"),                // Asuna thunder Epic
+        (50, 70, "rap_dazzling_blink"),             // Asuna light Epic
+        (50, 70, "kat_white_plum_blade"),           // Klein light Epic
+        (60, 80, "kat_eradicate_saber"),            // Leafa light Epic
+        (60, 80, "axe_ignite_bardiche"),            // Agil fire Epic
+        (60, 80, "axe_tyrant_fall"),                // Agil water Epic
+        (70, 90, "axe_sturm_welt"),                 // Agil wind Epic
+        (70, 90, "mce_blazing_torch"),              // Lisbeth fire Epic
+        (70, 90, "mce_elemental_hammer"),           // Lisbeth light Epic
 
         // ── Cross-Game Sweep (AL / Lost Song / Last Recollection) ──────
-        // Final cross-game weapon pass: 55 weapons placed across the F50-99
-        // endgame bands. Starlight Banner (Dorothy's Divine) + Corrupted
-        // variants are NOT in this pool — quest-reward + stone-transform
-        // respectively. Corruption Stones drop via field-boss F95+ path
-        // wired in TurnManager.Combat.
+        // 55 weapons F50-99. Starlight Banner + Corrupted variants excluded
+        // (quest-reward + stone-transform). Corruption Stones drop F95+.
 
-        // Group 1 — AL Normal Raid (Epic F70-85)
-        (70, 85, "axe_skyrend"),
-        (70, 85, "rap_timestream"),
-        (70, 85, "dag_veinshredder"),
-        (70, 85, "ohs_dragonstar"),
-        (70, 85, "spr_heavenstriker"),
-        (70, 85, "ohs_superior_blade"),
-        (70, 85, "ths_sacred_inferno"),
+        // Group 1 — AL Normal Raid (Epic F55-75) — surfaces raid drops earlier.
+        (55, 75, "axe_skyrend"),
+        (55, 75, "rap_timestream"),
+        (55, 75, "dag_veinshredder"),
+        (55, 75, "ohs_dragonstar"),
+        (55, 75, "spr_heavenstriker"),
+        (55, 75, "ohs_superior_blade"),
+        (55, 75, "ths_sacred_inferno"),
 
         // Group 2 — AL Extreme Raid (Legendary F85-95)
         (85, 95, "ohs_blade_of_the_lightwolf"),
@@ -387,31 +341,21 @@ public static class LootGenerator
     };
 
     // ── IM Enhancement Ore themed drops ──────────────────────────────
-    // Mob LootTag → ore DefId. When a matching mob dies, TurnManager rolls
-    // OreDropChancePercent for the themed ore. If no tag matches, no ore
-    // drops via this path — rare-boss drops still fire from a separate path.
+    // Mob LootTag → ore DefId, rolled at OreDropChancePercent. No-match = no drop
+    // via this path (rare-boss drops use separate path).
     public static readonly Dictionary<string, string> OreByLootTag = new()
     {
-        // Crimson Flame — fire/demon/volcanic themes (dragon+elemental proxy).
-        ["dragon"]    = "ore_crimson_flame",
+        ["dragon"]    = "ore_crimson_flame",   // fire/demon/volcanic
         ["elemental"] = "ore_crimson_flame",
-        // Adamant — armored/construct/golem themes.
-        ["construct"] = "ore_adamant",
-        // Crust — earth/giant/undead themes.
-        ["undead"]    = "ore_crust",
+        ["construct"] = "ore_adamant",         // armored/golem
+        ["undead"]    = "ore_crust",           // earth/giant/undead
         ["reptile"]   = "ore_crust",
-        // Sharp Blade — humanoid/bandit/PK themes.
-        ["humanoid"]  = "ore_sharp_blade",
+        ["humanoid"]  = "ore_sharp_blade",     // humanoid/bandit/PK
         ["kobold"]    = "ore_sharp_blade",
-        // Flowing Water — aquatic/ice themes.
-        ["aquatic"]   = "ore_flowing_water",
-        // Wind Flower — insect/beast/flying themes.
-        ["insect"]    = "ore_wind_flower",
+        ["aquatic"]   = "ore_flowing_water",   // aquatic/ice
+        ["insect"]    = "ore_wind_flower",     // insect/beast/flying
         ["beast"]     = "ore_wind_flower",
-        // Ash White — hollow/corrupted/celestial F76+ endgame mobs. The
-        // "hollow" LootTag covers Hollow Mutated Wolf, Cardinal Error,
-        // Immortal Echo, Void Seraph.
-        ["hollow"]    = "ore_ash_white",
+        ["hollow"]    = "ore_ash_white",       // hollow/corrupted F76+
     };
 
     // 4% themed ore drop chance per tagged mob kill. Tunable from one spot.
@@ -427,9 +371,8 @@ public static class LootGenerator
         return ids[Random.Shared.Next(ids.Length)];
     }
 
-    // Pick a floor-banded registered loot DefId for the current floor, or
-    // null if no entries cover this floor. Used by RollChestItem to wire
-    // IF canon weapons (Anneal line + series secondaries) into chests.
+    // Pick a floor-banded registered loot DefId, or null if no band covers floor.
+    // Used by RollChestItem to wire IF canon weapons into chests.
     public static string? PickFloorBandedRegisteredDefId(int floor)
     {
         var pool = new List<string>();
@@ -439,9 +382,8 @@ public static class LootGenerator
         return pool[Random.Shared.Next(pool.Count)];
     }
 
-    // Canon-named mob → (DefinitionId, dropChance 0-1) overrides. Checked
-    // BEFORE the generic LootTag roll so named mobs drop their iconic items
-    // at the rate canon/game sources indicate. Multiple entries per mob = multi-roll.
+    // Canon-named mob → (DefId, dropChance 0-1) overrides. Rolled BEFORE generic
+    // LootTag so iconic drops fire at canon rates. Multiple entries = multi-roll.
     public static readonly Dictionary<string, (string DefId, float Chance)[]> NamedMobDrops = new()
     {
         ["Frenzy Boar"]            = new[] { ("boar_meat", 0.7f), ("boar_hide", 0.5f), ("boar_tusk", 0.2f) },
@@ -480,9 +422,8 @@ public static class LootGenerator
         ["Immortal Echo"]          = new[] { ("immortal_fragment", 0.1f) },
     };
 
-    // ── Rarity stat multipliers ───────────────────────────────────────
-    // Per-rarity scaling: (StatMultiplier%, DurabilityBonus, ValueMultiplier%).
-    // Indexed by RarityIndex (0=Common, 1=Uncommon, 2=Rare, 3=Epic).
+    // ── Rarity stat multipliers — (StatMul%, DurBonus, ValMul%) ──
+    // Indexed by RarityIndex: 0=Common, 1=Uncommon, 2=Rare, 3=Epic.
     private static readonly (int StatMul, int DurBonus, int ValMul)[] RarityScaling =
     {
         (100, 0,  100),  // Common
@@ -491,7 +432,6 @@ public static class LootGenerator
         (200, 50, 400),  // Epic     — 2x stats, +50 durability
     };
 
-    // Map a rarity string to its RarityScaling index.
     private static int RarityIndex(string rarity) => rarity switch
     {
         "Uncommon" => 1, "Rare" => 2, "Epic" => 3, _ => 0
@@ -541,7 +481,6 @@ public static class LootGenerator
     private static string PickShieldName() =>
         $"{ArmorPrefixes[Random.Shared.Next(ArmorPrefixes.Length)]} {ShieldNouns[Random.Shared.Next(ShieldNouns.Length)]}";
 
-    // Roll a random rarity tier: Common 60%, Uncommon 25%, Rare 11%, Epic 4%.
     public static string PickRarity()
     {
         int r = Random.Shared.Next(100);
@@ -551,8 +490,7 @@ public static class LootGenerator
              : "Epic";
     }
 
-    // Creates a random equipment piece scaled to the given floor number.
-    // All 12 weapon types can drop. Returns null on the fallback roll.
+    // Random equipment scaled to floor. All 12 weapon types; null on fallback.
     public static BaseItem? CreateRandomEquipment(int currentFloor)
     {
         string rarity = PickRarity();
@@ -591,7 +529,7 @@ public static class LootGenerator
         };
     }
 
-    // Procedural weapon factory — creates any weapon type with floor-scaled stats.
+    // Procedural weapon factory with floor-scaled stats.
     private static Weapon MakeWeapon(string weaponType, int floor, string rarity,
         (int StatMul, int DurBonus, int ValMul) scale, double dmgFactor, int atkSpeed, int range,
         StatType secondaryStat)
@@ -637,7 +575,6 @@ public static class LootGenerator
     private static int ScaleDef(int floor, (int StatMul, int DurBonus, int ValMul) scale, double factor) =>
         Math.Max(1, (int)((2 + floor * 1.5 + Random.Shared.Next(0, 3)) * factor) * scale.StatMul / 100);
 
-    // Pick a random accessory from the pool and scale its value/durability to the floor.
     private static Accessory CreateRandomAccessory(int currentFloor, string rarity,
         (int StatMul, int DurBonus, int ValMul) scale, int durBonus)
     {

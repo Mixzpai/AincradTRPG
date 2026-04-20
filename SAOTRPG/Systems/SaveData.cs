@@ -117,37 +117,25 @@ public class SaveData
     // Active Run Modifiers (FB-564) — set at run start, fixed per run
     public List<string> ActiveRunModifiers { get; set; } = [];
 
-    // IM Dynamic Shop Tiering (System 4) — highest floor whose BOSS has
-    // been cleared. 0 = tier system inactive (base shop stock only).
-    // Missing in legacy saves; deserialization defaults to 0 so existing
-    // runs see unchanged inventories until their next F50+ clear.
+    // IM Shop Tiering — highest boss-cleared floor. 0 = base stock only.
     public int HighestFloorBossCleared { get; set; }
 
-    // FB-050 Life Skills — per-skill Level + CurrentXp, keyed by enum name
-    // so adding new skills (Fishing, Mining, etc.) is additive. Missing
-    // entries default to L1/0.
+    // FB-050 Life Skills — Level + CurrentXp by enum name. Missing = L1/0.
     public Dictionary<string, LifeSkillStateSave> LifeSkills { get; set; } = new();
 
-    // FB-058 Titles — unlocked IDs + currently-active ID (nullable). Empty
-    // / null on legacy saves so the player sees no equipped title until
-    // they visit the Monument of Swordsmen.
+    // FB-058 Titles — unlocked IDs + active. Null/empty until Monument visit.
     public List<string> UnlockedTitleIds { get; set; } = new();
     public string? ActiveTitleId { get; set; }
 
-    // FB-063 Karma + Guild — new fields default to neutral/empty so legacy
-    // saves load cleanly. Karma in [-100, +100]; 0 = Neutral tier. Guild
-    // id is serialized as the Faction enum name (string) via SaveManager;
-    // "None" means no active guild. Founded-guild name/perk apply only
-    // when ActiveGuildId == "PlayerGuild".
+    // FB-063 Karma/Guild. Karma [-100,+100]; ActiveGuildId = Faction enum name,
+    // "None" = no guild. Founded fields apply only when ActiveGuildId=="PlayerGuild".
     public int Karma { get; set; }
     public string ActiveGuildId { get; set; } = "None";
     public string? FoundedGuildName { get; set; }
     public int FoundedGuildPerk { get; set; }
 
-    // FB-072 Investing — per-vendor Col deposit totals, keyed by vendor
-    // ShopName (or fallback id). Empty on legacy saves; VendorInvestmentSystem
-    // clamps each value to [0, MaxInvestmentPerVendor] on load so corrupt
-    // entries can't cascade. Serializes cleanly via System.Text.Json.
+    // FB-072 Investing — per-vendor Col totals by ShopName.
+    // VendorInvestmentSystem clamps to [0, MaxInvestmentPerVendor] on load.
     public Dictionary<string, int> VendorInvestments { get; set; } = new();
 }
 
@@ -174,11 +162,8 @@ public class ItemSaveData
     // Saved only when at least one slot is non-null to keep legacy saves clean.
     public List<string?>? RefinementSlots { get; set; }
 
-    // IM Enhancement Ore history (System 3). Parallel to EnhancementLevel —
-    // entry i is the ore DefId consumed for the (i+1)th level. Length SHOULD
-    // equal EnhancementLevel when present. Null / missing on legacy saves, in
-    // which case SaveManager.DeserializeItem auto-populates with N × Crimson
-    // Flame so stat totals match the pre-ore flat-Attack implementation.
+    // IM Enhancement Ore history (parallel to EnhancementLevel; entry i = ore
+    // for level i+1). Null on legacy → auto-fill N × Crimson Flame.
     public List<string>? EnhancementOreHistory { get; set; }
 }
 

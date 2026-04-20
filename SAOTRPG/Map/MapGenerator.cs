@@ -6,8 +6,7 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.Map;
 
-// Floor generation -- terrain layout, structures, and decoration.
-// Population (entities, chests) is in MapGenerator.Population.cs.
+// Floor terrain/structure/decoration. Entity + chest population lives in MapGenerator.Population.cs.
 public static partial class MapGenerator
 {
     public static (GameMap Map, List<Room> Rooms) GenerateFloor(int floorNumber, int width = 0, int height = 0)
@@ -69,18 +68,14 @@ public static partial class MapGenerator
         // Winding river — skip on tiny floors.
         if (width >= 80) GenerateRiver(map, floorNumber % 2 == 0);
 
-        // Biome blending — smooths hard edges between terrain types so
-        // forests fade through tall grass, rocks fade through sparse grass,
-        // and lake shores have a beach-like fringe.
+        // Biome blending — smooths edges: forests→tall grass, rocks→sparse grass, lake shores→beach fringe.
         BlendBiomes(map);
 
         int spawnX = width / 2, spawnY = height / 2;
 
         if (floorNumber == 1)
         {
-            // Floor 1: Town of Beginnings — a walled city embedded in the
-            // normal wilderness map. Clearings, boss room, paths etc. all
-            // generate around it via the normal pipeline + overlap checks.
+            // F1: Town of Beginnings — walled city in wilderness; other features route around via overlap checks.
             var townRect = BuildTownOfBeginnings(map, rooms, spawnX, spawnY);
             map.SafeZone = townRect;
             rooms.Insert(0, new Room(spawnX - 4, spawnY - 4, 9, 9));
@@ -97,8 +92,7 @@ public static partial class MapGenerator
             BuildTown(map, spawnX, spawnY, rooms);
         }
 
-        // Quadrant-based clearing distribution: 2 per quadrant guarantees
-        // rooms spread across the whole map instead of random clustering.
+        // Quadrant-based clearings — N per quadrant keeps rooms spread instead of clustered.
         var clearings = new List<(int x, int y)> { (spawnX, spawnY) };
         var quadrants = new (int xMin, int xMax, int yMin, int yMax)[]
         {
@@ -113,8 +107,7 @@ public static partial class MapGenerator
             int countInQuad = FloorScale.ClearingsPerQuad(floorNumber);
             for (int i = 0; i < countInQuad; i++)
             {
-                // Try up to 6 candidate positions before giving up — avoids
-                // room overlap and keeps layouts clean.
+                // Up to 6 candidate positions — avoids room overlap.
                 for (int attempt = 0; attempt < 6; attempt++)
                 {
                     int cx = Random.Shared.Next(q.xMin, q.xMax);
@@ -129,9 +122,7 @@ public static partial class MapGenerator
         if (clearings.Count > 2)
             CarvePath(map, clearings[^1].x, clearings[^1].y, clearings[0].x, clearings[0].y);
 
-        // Boss room — rotates through the 4 corners by floor number so every
-        // run feels different and the map isn't always skewed to bottom-right.
-        // Sizes shrink on smaller floors to fit within the map.
+        // Boss room rotates through 4 corners by floor; sizes shrink on smaller maps.
         int bossW = Math.Min(13, width / 4);
         int bossH = Math.Min(11, height / 4);
         int bossQuadrant = (floorNumber - 1) % 4;
@@ -160,13 +151,11 @@ public static partial class MapGenerator
         }
         // Quadrants 2/3 (boss north of spawn): default south door from BuildStructure is already correct
         rooms.Add(new Room(bossX, bossY, bossW, bossH));
-        // Labyrinth entrance — the player must enter this to reach the
-        // floor boss and the actual stairs to the next Aincrad floor.
+        // Labyrinth entrance — gate to floor boss and next-floor stairs.
         map.Tiles[bossX + bossW / 2, bossY + bossH / 2].Type = TileType.LabyrinthEntrance;
         CarveStraightPath(map, spawnX, spawnY, bossX + bossW / 2, bossY + bossH / 2);
 
-        // Scatter trees/bushes EARLY so later feature placement (which only
-        // targets grass) can't be overwritten. Excludes spawn area and path tiles.
+        // Scatter foliage EARLY so later grass-targeted features don't overwrite it. Excludes spawn + paths.
         ScatterGrassFoliage(map, spawnX, spawnY,
             FloorScale.ScatteredTrees(floorNumber),
             FloorScale.ScatteredBushes(floorNumber));
@@ -296,15 +285,12 @@ public static partial class MapGenerator
 
         UI.DebugLogger.EndTimer($"GenerateFloor({floorNumber})", genSw);
         UI.DebugLogger.LogGame("MAPGEN", $"  {rooms.Count} rooms, {clearings.Count} clearings");
-        // Freeze the initial walkable count for GetExplorationPercent — no
-        // runtime tile is counted at map-gen time because _explored is all false.
+        // Freeze initial walkable count for GetExplorationPercent (no _explored tiles at mapgen time).
         map.RecountWalkableTiles();
         return (map, rooms);
     }
 
-    // Floor 100 — The Ruby Palace. A small castle layout: entrance hall,
-    // corridors, side chambers, and a grand throne room where the final
-    // boss awaits. No wilderness, no mountain border, all stone.
+    // F100 Ruby Palace: entrance hall, corridor, side chambers, throne room. All stone, no wilderness border.
     private static (GameMap Map, List<Room> Rooms) GenerateRubyPalace(int floor, int width, int height)
     {
         var map = new GameMap(width, height);
@@ -397,8 +383,7 @@ public static partial class MapGenerator
         return (map, rooms);
     }
 
-    // Re-stamps wall tiles around every floor tile that borders non-floor/non-door.
-    // Used by Ruby Palace to give carved rooms proper wall outlines.
+    // Re-stamps walls around every floor tile bordering non-floor/non-door (Ruby Palace room outlines).
     private static void StampWallBorders(GameMap map)
     {
         int w = map.Width, h = map.Height;
@@ -427,9 +412,7 @@ public static partial class MapGenerator
             }
     }
 
-    // Attempts to place a room shape (plain/circular/L/cross) at (cx, cy)
-    // with a 2-tile spacing buffer against existing rooms. Returns false
-    // (no-op) if the area overlaps an existing room.
+    // Place a room shape (plain/circular/L/cross) at (cx,cy) with 2-tile buffer. No-op on overlap.
     private static bool PlaceClearing(GameMap map, List<Room> rooms,
         List<(int x, int y)> clearings, int cx, int cy)
     {
@@ -481,9 +464,7 @@ public static partial class MapGenerator
         return true;
     }
 
-    // Mountain perimeter with drifting thickness along each edge — a single
-    // walker is invoked four times with different coord mappers so every
-    // edge feels like a natural mountain range rather than a ruled line.
+    // Mountain perimeter: single walker invoked 4x with different coord mappers — drifting thickness per edge.
     private static void BuildJaggedMountainBorder(GameMap map)
     {
         int w = map.Width, h = map.Height;
@@ -509,10 +490,7 @@ public static partial class MapGenerator
         }
     }
 
-    // 5x5 walled town building: reuses BuildStructure for the walls/floor,
-    // then rewrites the default south door into the requested side and
-    // stamps the feature tile at the exact center.
-    // doorSide: 0=N, 1=E, 2=S, 3=W.
+    // 5x5 walled building via BuildStructure; rewrites default south door to requested side. doorSide: 0=N,1=E,2=S,3=W.
     private static void BuildTownBuilding(GameMap map, int cx, int cy, TileType feature, int doorSide)
     {
         int sx = cx - 2, sy = cy - 2;
@@ -532,8 +510,7 @@ public static partial class MapGenerator
         if (map.InBounds(cx, cy)) map.Tiles[cx, cy].Type = feature;
     }
 
-    // Cardinal building layout: offset from spawn, feature tile, and which
-    // wall the door sits on (0=N, 1=E, 2=S, 3=W, facing the central plaza).
+    // Cardinal building layout: spawn offset, feature tile, door side (0=N,1=E,2=S,3=W, facing plaza).
     private static readonly (int Dx, int Dy, TileType Feature, int DoorSide)[] TownBuildings =
     {
         ( 0, -8, TileType.BountyBoard, 2),
@@ -542,10 +519,7 @@ public static partial class MapGenerator
         (-8,  0, TileType.Anvil,       1),
     };
 
-    // Lay out the spawn-town prefab — four 5x5 walled buildings in a cardinal
-    // cross around spawn, each with a door facing the central plaza and
-    // connected via a straight path. Four boundary campfires mark the
-    // town edge as a visual frame.
+    // Spawn-town prefab: 4 cardinal buildings around spawn, connected by straight paths, 4 boundary campfires frame the edge.
     private static void BuildTown(GameMap map, int spawnX, int spawnY, List<Room> rooms)
     {
         foreach (var (dx, dy, feature, door) in TownBuildings)
@@ -562,8 +536,7 @@ public static partial class MapGenerator
                 map.Tiles[spawnX + dx, spawnY + dy].Type = TileType.Campfire;
     }
 
-    // Scatters individual trees and bushes over open grass, skipping the
-    // spawn clearing and path tiles to avoid obliterating structured areas.
+    // Scatters trees/bushes over grass; skips spawn clearing + paths to preserve structured areas.
     private static void ScatterGrassFoliage(GameMap map, int spawnX, int spawnY, int trees, int bushes)
     {
         int w = map.Width, h = map.Height;
@@ -627,10 +600,8 @@ public static partial class MapGenerator
         }
     }
 
-    // BFS flood-fill from spawn over walkable tiles. Carves rescue paths to
-    // any unreachable clearing OR room center so no region is ever orphaned.
-    // Walled rooms count as reachable as long as their door is — the BFS
-    // walks through Door tiles, so the interior is automatically included.
+    // BFS from spawn; carves rescue paths to any unreachable clearing/room center.
+    // BFS walks through Doors, so walled-room interiors are reached via their door.
     private static void EnsureConnectivity(GameMap map, List<Room> rooms,
         List<(int x, int y)> clearings)
     {

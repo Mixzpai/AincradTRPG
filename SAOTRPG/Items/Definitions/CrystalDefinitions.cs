@@ -2,9 +2,7 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.Items.Definitions;
 
-// SAO-iconic instant crystals. Each has a CrystalType string that drives the
-// dispatch in TurnManager when consumed. Destination is used by Teleport
-// crystals only.
+// SAO-iconic instant crystals; CrystalType drives TurnManager dispatch. Destination used by Teleport only.
 public static class CrystalDefinitions
 {
     private static Crystal Make(string id, string name, int value, string rarity,

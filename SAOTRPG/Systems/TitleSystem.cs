@@ -3,22 +3,12 @@ using SAOTRPG.Items;
 
 namespace SAOTRPG.Systems;
 
-// FB-058 Title System. Titles are passive nameplates the player unlocks
-// by kill milestones (Bestiary-driven) or progression flags. Exactly one
-// title can be active at a time — equip applies its flat stat bonus to
-// Player base stats, unequip removes it. Bonuses are flat and simple so
-// save/load is trivial (only the IDs persist; the registry holds the
-// numbers).
-//
-// Unlock hook: TurnManager calls CheckTitleUnlocks after every kill —
-// any newly-matching milestone fires TitleUnlocked so the UI can banner.
+// FB-058 Titles — passive nameplates unlocked via Bestiary kills + flags.
+// One active at a time; equip = flat base-stat delta. Save persists IDs only.
+// TurnManager.CheckTitleUnlocks runs post-kill; TitleUnlocked banner fires.
 public static class TitleSystem
 {
-    // Flat passive title. If Tag is set the bonus is conceptually
-    // "vs Tag" (e.g. +5% Attack vs beast) — surfaced in the description
-    // and reserved for future conditional-damage wiring. Storage-wise we
-    // apply the flat stat as a base-stat delta at equip time so existing
-    // saves/stat pipelines don't need to know about tag gating.
+    // Flat passive. VsTag = "vs Tag" conditional (reserved; currently applied flat).
     public record TitleDef(
         string Id,
         string DisplayName,

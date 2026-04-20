@@ -3,42 +3,30 @@ using SAOTRPG.Items;
 
 namespace SAOTRPG.Map;
 
-// Single map cell — holds terrain type, an optional entity occupant, and ground items.
-// Movement checks and rendering both read from Tile properties.
+// Single map cell: terrain, optional occupant, ground items. Movement + rendering read from Tile props.
 public class Tile
 {
-    // Terrain type that determines rendering, passability, and LOS blocking.
     public TileType Type { get; set; }
-    // Entity standing on this tile, or null if empty.
     public Entity? Occupant { get; set; }
-    // Items lying on the ground at this tile (picked up on walk-over).
     public List<BaseItem> Items { get; } = new();
 
-    // True if this terrain type blocks entity movement.
-    // Note: Water + WaterDeep are "blocking" at the tile level — the player
-    // bypasses via FB-077 Swimming skill (checked in TurnManager.Movement),
-    // and aquatic mobs bypass via Monster.CanSwim (checked in TurnManager.AI).
+    // Water + WaterDeep block at tile-level; player bypasses via Swimming skill, aquatic mobs via Monster.CanSwim.
     public bool BlocksMovement => Type is TileType.Wall or TileType.CrackedWall or TileType.Water
                                     or TileType.WaterDeep or TileType.Mountain or TileType.Tree
                                     or TileType.TreePine or TileType.Rock;
-    // True if the tile is passable and unoccupied.
     public bool IsWalkable => !BlocksMovement && Occupant == null;
 
-    // FB-077 — Minimum Swimming life-skill level required for the player to
-    // enter this tile. -1 for non-water terrain (Swimming is irrelevant),
-    // 1 for shallow Water, 25 for deep WaterDeep. TurnManager checks this
-    // before treating Water/WaterDeep as a hard block for the player.
+    // Min Swimming life-skill level to enter: -1 non-water, 1 shallow Water, 25 deep WaterDeep.
     public int RequiresSwimmingLevel => Type switch
     {
         TileType.Water     => 1,
         TileType.WaterDeep => 25,
         _                  => -1,
     };
-    // True if one or more items are on the ground here.
     public bool HasItems => Items.Count > 0;
-    // If true, this trap tile renders as Floor until revealed by DEX check or triggering.
+    // Trap tiles render as Floor until revealed by DEX check or trigger.
     public bool TrapHidden { get; set; } = true;
-    // For levers/pressure plates: position of the door they toggle. Null if not linked.
+    // Lever/pressure plate → linked door (null if unlinked).
     public (int X, int Y)? LinkedDoor { get; set; }
 
     public Tile(TileType type)

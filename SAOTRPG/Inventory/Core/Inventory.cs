@@ -20,19 +20,13 @@ public class Inventory
 
     public InventoryEvents Events { get; } = new();
 
-    // Replace the inventory logger at runtime (e.g. when switching to game log).
     public void SetLogger(IInventoryLogger logger) => _logger = logger;
 
-    // Read-only view of backpack contents.
     public IReadOnlyList<BaseItem> Items => _items.AsReadOnly();
-    // Current number of items in the backpack.
     public int ItemCount => _items.Count;
-    // Maximum backpack capacity.
     public int MaxSlots => _maxSlots;
-    // True when the backpack has no remaining slots.
     public bool IsFull => _items.Count >= _maxSlots;
 
-    // Create a new inventory with the given capacity and optional services.
     public Inventory(
         int maxSlots = 20,
         IInventoryLogger? logger = null,
@@ -114,7 +108,7 @@ public class Inventory
             return false;
         }
 
-        // FB-564 Naked Ingress — no armor equippable (any slot except weapon/offhand).
+        // Naked Ingress: no armor (any slot except weapon/offhand).
         if (SAOTRPG.Systems.RunModifiers.IsActive(SAOTRPG.Systems.RunModifier.NakedIngress)
             && equipment is SAOTRPG.Items.Equipment.Armor
             && slot.Value != EquipmentSlot.Weapon && slot.Value != EquipmentSlot.OffHand)
@@ -122,7 +116,7 @@ public class Inventory
             _logger.LogError($"Naked Ingress modifier: cannot equip armor '{equipment.Name}'.");
             return false;
         }
-        // FB-564 Sword Art Only — weapons restricted to One-Handed Sword.
+        // Sword Art Only: weapons restricted to One-Handed Sword.
         if (SAOTRPG.Systems.RunModifiers.IsActive(SAOTRPG.Systems.RunModifier.SwordArtOnly)
             && equipment is SAOTRPG.Items.Equipment.Weapon w
             && w.WeaponType != "One-Handed Sword")
@@ -131,14 +125,8 @@ public class Inventory
             return false;
         }
 
-        // Dual Blades / FD Paired auto-route: if the main Weapon slot is
-        // occupied and the OffHand is empty, route a second incoming weapon
-        // into the OffHand when either:
-        //  (a) the player has unlocked Dual Blades AND the incoming is a
-        //      1H sword (classic Dual Blades flow), OR
-        //  (b) the incoming weapon is flagged IsDualWieldPaired (FD canon
-        //      "Dual" weapons — pre-tuned for dual-wield, no unlock needed).
-        // The resolver predicate CanGoInOffHand mirrors this logic.
+        // Dual Blades / FD Paired auto-route: occupied Weapon + empty OffHand routes second weapon to OffHand when
+        // (a) Dual Blades unlocked AND incoming is 1H sword, OR (b) IsDualWieldPaired (no unlock needed).
         if (slot == EquipmentSlot.Weapon
             && _equippedItems[EquipmentSlot.Weapon] != null
             && _equippedItems[EquipmentSlot.OffHand] == null
@@ -194,8 +182,7 @@ public class Inventory
 
     public EquipmentBase? GetEquipped(EquipmentSlot slot) => _equippedItems[slot];
 
-    // Place equipment directly into a slot WITHOUT applying stat bonuses.
-    // Used by save/load — saved base stats already include equipment bonuses.
+    // Save/load path: saved base stats already include equipment bonuses, so skip re-applying.
     public void ForceEquipForLoad(EquipmentSlot slot, EquipmentBase equipment)
     {
         _equippedItems[slot] = equipment;
@@ -235,16 +222,11 @@ public class Inventory
         return true;
     }
 
-    // Cached aggregate of equipment stat bonuses, indexed by StatType.
-    // Invalidated on Equip/Unequip/ForceEquipForLoad/DestroyEquipped and by
-    // external callers (e.g. durability degrade, repair, enhancement) via
-    // InvalidateStatCache(). Computed lazily on first access after invalidation.
+    // Cached aggregate stat bonuses (by StatType). Invalidated on Equip/Unequip/ForceEquip/Destroy + external via InvalidateStatCache.
     private int[]? _statBonusCache;
     private static readonly int StatTypeCount = Enum.GetValues<StatType>().Length;
 
-    // Drop the cached aggregate — next GetTotalEquipmentBonus call rebuilds it.
-    // Call this whenever an equipped item's effective bonuses change without
-    // going through Equip/Unequip (durability, enhancement, etc.).
+    // Invalidate after durability/enhancement/repair changes that bypass Equip/Unequip.
     public void InvalidateStatCache() => _statBonusCache = null;
 
     public int GetTotalEquipmentBonus(StatType statType)
@@ -266,8 +248,7 @@ public class Inventory
         return cache[(int)statType];
     }
 
-    // Total count of an item across all stacks, matched by DefinitionId.
-    // Used by the cooking/crafting systems to check ingredient availability.
+    // Count by DefinitionId across stacks — used by cooking/crafting.
     public int CountByDefinitionId(string definitionId)
     {
         int total = 0;
@@ -279,8 +260,7 @@ public class Inventory
         return total;
     }
 
-    // Consume N of an item by DefinitionId. Returns true if all N consumed,
-    // false if inventory didn't hold enough (no partial consumption).
+    // Consume N by DefinitionId. Returns true on full consume; false if short (no partial consume).
     public bool ConsumeByDefinitionId(string definitionId, int count)
     {
         if (CountByDefinitionId(definitionId) < count) return false;

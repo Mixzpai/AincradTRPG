@@ -1,13 +1,9 @@
 namespace SAOTRPG.UI.Dialogs;
 
-// Static content for the in-game Player Guide (hotkey B).
-// Organized as a flat list of (Category, Title, Body) entries.
-// The dialog renders the category headers inline and shows one body at a time.
+// Static Player Guide content (hotkey B) — flat (Category, Title, Body) list.
 public static class PlayerGuideContent
 {
-    // Tags enable polyhierarchy — a topic appears under its primary Category
-    // plus a virtual "Tag: <name>" root for each tag (see PlayerGuideDialog).
-    // Default [] keeps existing call sites valid. Use `with { Tags = [...] }` to add.
+    // Tags enable polyhierarchy — topic shows under its Category + each "Tag:" root.
     public record GuideEntry(string Category, string Title, string Body)
     {
         public string[] Tags { get; init; } = System.Array.Empty<string>();
@@ -15,9 +11,7 @@ public static class PlayerGuideContent
 
     public static readonly GuideEntry[] Entries =
     {
-        // ═══════════════════════════════════════════════════════════════
-        // ── 1. Combat & Rarity ─────────────────────────────────────────
-        // ═══════════════════════════════════════════════════════════════
+        // ── 1. Combat & Rarity ──
 
         new("Combat & Rarity", "Damage Formula",
             "┌─ Combat & Rarity\n" +
@@ -659,9 +653,60 @@ public static class PlayerGuideContent
             "in the game. Stance shines when a boss telegraphs Winding Up\n" +
             "and you can't reposition.\n\n" +
             "SEE ALSO\n" +
-            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV]")
+            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV] · [Bestiary — Monster Compendium]")
         {
             Tags = new[] { "combat", "vision", "controls" }
+        },
+
+        new("Combat & Rarity", "Bestiary — Monster Compendium",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Bestiary — Monster Compendium\n" +
+            "│ Hotkey: Y (closes with Y or Esc)\n" +
+            "│ Scope: Every monster you've ever encountered\n" +
+            "│ Persistence: Survives permadeath via lifetime_stats.json\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A browsable compendium of every mob you've fought or even just\n" +
+            "glimpsed, cross-referenced with kill counts, drop hints, threat\n" +
+            "rating, and canon SAO flavor lore. Entries unlock on first\n" +
+            "sighting and persist permanently across runs — permadeath\n" +
+            "wipes the save, not the Bestiary.\n\n" +
+            "USAGE\n" +
+            "Press Y on the map to open. Navigate with:\n" +
+            "  Up / Down         Select entry in the left-hand list\n" +
+            "  Tab               Cycle detail sub-tabs (Stats / Drops /\n" +
+            "                    Lore / Records)\n" +
+            "  S                 Cycle sort (Name -> Kills -> Floor ->\n" +
+            "                    Threat -> First Seen)\n" +
+            "  F                 Cycle filter mode\n" +
+            "  /                 Type-ahead search by name\n" +
+            "  B                 Toggle boss-only view\n" +
+            "  U                 Toggle show-undiscovered placeholders\n" +
+            "  C                 Clear all filters and search\n" +
+            "  Y / Esc           Close\n\n" +
+            "EFFECTS\n" +
+            "Each entry tracks:\n" +
+            "  - Floor range where the mob appears\n" +
+            "  - Lifetime kills and total encounters\n" +
+            "  - Cross-run deaths-caused (how often this mob has killed\n" +
+            "    a character of yours)\n" +
+            "  - Known drops and their rarity tiers (as you observe them)\n" +
+            "  - Threat rating vs. your current level\n" +
+            "  - Canon SAO lore flavor text (unlocked with the sighting)\n\n" +
+            "COSTS\n" +
+            "None. The Bestiary is a pause-style overlay — no turns pass\n" +
+            "while it is open.\n\n" +
+            "TIPS\n" +
+            "Sort by kills to see your favorite targets at a glance.\n" +
+            "Boss-only filter shows your canon SAO bosses — useful for\n" +
+            "canon completion hunting and planning floor-by-floor pushes.\n" +
+            "Bestiary knowledge persists across runs — you keep what\n" +
+            "you've seen even through permadeath, so every run chips\n" +
+            "away at the undiscovered list.\n\n" +
+            "SEE ALSO\n" +
+            "[Look Mode & Counter Stance] · [Controls & Keybindings] · [Permadeath & Save Deletion] · [Floor Boss Roster] · [Field Bosses]")
+        {
+            Tags = new[] { "combat", "knowledge", "controls", "persistence" }
         },
 
         new("Combat & Rarity", "Permadeath & Save Deletion",
@@ -694,14 +739,12 @@ public static class PlayerGuideContent
             "labyrinth pushes, and F5 quick-save before a boss pull so the\n" +
             "auto-save on ascend doesn't overwrite a bad position.\n\n" +
             "SEE ALSO\n" +
-            "[Save System] · [Pause Menu (Esc)] · [Potions, Crystals & Throwables] · [Safe Rooms & Mechanics]")
+            "[Save System] · [Pause Menu (Esc)] · [Potions, Crystals & Throwables] · [Safe Rooms & Mechanics] · [Bestiary — Monster Compendium]")
         {
             Tags = new[] { "combat", "permadeath", "save" }
         },
 
-        // ═══════════════════════════════════════════════════════════════
-        // ── 2. Character Progression ───────────────────────────────────
-        // ═══════════════════════════════════════════════════════════════
+        // ── 2. Character Progression ──
 
         new("Progression", "Experience & Leveling",
             "┌─ Progression\n" +
@@ -1386,9 +1429,7 @@ public static class PlayerGuideContent
             Tags = new[] { "proficiency", "skills", "weapons" }
         },
 
-        // ═══════════════════════════════════════════════════════════════
-        // ── 3. World & Exploration ─────────────────────────────────────
-        // ═══════════════════════════════════════════════════════════════
+        // ── 3. World & Exploration ──
 
         new("World", "Aincrad's 100 Floors & Eras",
             "┌─ World\n" +
@@ -2263,9 +2304,7 @@ public static class PlayerGuideContent
             Tags = new[] { "world", "progression", "xp" }
         },
 
-        // ═══════════════════════════════════════════════════════════════
-        // ── 4. Items & Weapons ─────────────────────────────────────────
-        // ═══════════════════════════════════════════════════════════════
+        // ── 4. Items & Weapons ──
 
         new("Items", "Weapon Types Overview",
             "┌─ Items\n" +
@@ -3747,9 +3786,7 @@ public static class PlayerGuideContent
             Tags = new[] { "corruption-stone", "corrupted-weapon", "weapons" }
         },
 
-        // ═══════════════════════════════════════════════════════════════
-        // ── 5. Quests, NPCs & Economy ──────────────────────────────────
-        // ═══════════════════════════════════════════════════════════════
+        // ── 5. Quests, NPCs & Economy ──
 
         new("Quests & NPCs", "Quest Types & Rewards",
             "┌─ Quests & NPCs\n" +
@@ -4875,6 +4912,7 @@ public static class PlayerGuideContent
             "  P                 Player stats\n" +
             "  J                 Quest log\n" +
             "  K                 Kill stats\n" +
+            "  Y                 Bestiary (monster compendium)\n" +
             "  B                 Player Guide (this dialog)\n" +
             "  H                 Quick help overlay\n" +
             "  PageUp / PageDown Scroll the combat log\n\n" +
@@ -4897,7 +4935,7 @@ public static class PlayerGuideContent
             "F5 before any risky pull; the Pause Menu's Load is your only\n" +
             "roll-back if you haven't saved since.\n\n" +
             "SEE ALSO\n" +
-            "[Pause Menu (Esc)] · [Save System] · [Sprint & Stealth Move] · [Look Mode & Counter Stance] · [Quick-Use Slots (1-5)] · [Sword Skills — Unlock & Use]")
+            "[Pause Menu (Esc)] · [Save System] · [Sprint & Stealth Move] · [Look Mode & Counter Stance] · [Quick-Use Slots (1-5)] · [Sword Skills — Unlock & Use] · [Bestiary — Monster Compendium]")
         {
             Tags = new[] { "controls", "keybindings", "ui" }
         },

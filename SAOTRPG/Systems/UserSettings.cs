@@ -3,13 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace SAOTRPG.Systems;
 
-// Global user settings — persisted to %LocalAppData%/AincradTRPG/settings.json.
-// Separate from save slots (settings are shared across all playthroughs).
-// Adding a new setting:
-//   1. Add a property with a default value below
-//   2. Add a UI control in OptionsScreen.cs
-//   3. Wire it into the relevant system (TurnManager, MapView, etc.)
-//   4. Call UserSettings.Save() when the value changes
+// Global settings at %LocalAppData%/AincradTRPG/settings.json (not per-save).
+// Add: property + OptionsScreen control + system wiring + Save() on change.
 public class UserSettings
 {
     // ── Versioning ───────────────────────────────────────────────────

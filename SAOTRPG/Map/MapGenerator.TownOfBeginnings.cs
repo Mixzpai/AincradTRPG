@@ -1,30 +1,16 @@
 namespace SAOTRPG.Map;
 
-// Floor 1 — Town of Beginnings, embedded inside the normal world map.
-// A walled safe-zone city centered on the player spawn. The normal
-// procgen pipeline (clearings, boss room, paths, mobs) runs around it
-// via overlap checks and the GameMap.SafeZone filter.
-// Design notes (informed by roguelike town best practices):
-//   • Cross-streets connect the N-S boulevard to the shop rows so the
-//     interior reads as a street grid, not a hollow box.
-//   • Campfire "lamps" line major streets — with the RGB lighting system
-//     they cast warm pools that illuminate the roads at night.
-//   • Small residential houses fill the corners between the shops and
-//     the perimeter wall so the town looks inhabited.
-//   • A grass park near the church gives visual breathing room.
-//   • Two gates (north + south) provide multiple exits.
+// F1 Town of Beginnings — walled safe-zone city around spawn, embedded in worldmap.
+// Procgen pipeline routes around via overlap + GameMap.SafeZone. Grid feel: cross-streets, campfire lamps, corner houses, park, N+S gates.
 public static partial class MapGenerator
 {
-    // Town rectangle — moderate enough to coexist with normal quadrant
-    // clearings and boss rooms around it.
+    // Town rect — moderate size so quadrant clearings/boss rooms coexist.
     private const int TownHalfW = 25;
     private const int TownHalfH = 14;
     private const int TownFullW = TownHalfW * 2 + 1;
     private const int TownFullH = TownHalfH * 2 + 1;
 
-    // Builds the Town of Beginnings centered on (,
-    // ) and returns the bounding rect so the caller
-    // can set GameMap.SafeZone.
+    // Builds the town centered on (sx,sy); returns bounding rect for GameMap.SafeZone.
     internal static Room BuildTownOfBeginnings(GameMap map, List<Room> rooms, int sx, int sy)
     {
         int tx = sx - TownHalfW;   // town left edge
@@ -78,9 +64,7 @@ public static partial class MapGenerator
         map.Tiles[sx, chY + chH / 2].Type = TileType.Shrine;
         rooms.Add(new Room(chX, chY, chW, chH));
 
-        // ── 8. Small residential houses in the corners ───────────────
-        // Fills the space between the shops and the town wall so the
-        // interior doesn't feel like a hollow box.
+        // ── 8. Corner houses — fill space between shops and town wall.
         BuildHouse(map, rooms, tx + 2,           ty + 2);          // NW corner
         BuildHouse(map, rooms, tx + TownFullW - 7, ty + 2);       // NE corner
         BuildHouse(map, rooms, tx + 2,           ty + TownFullH - 7); // SW corner
@@ -92,14 +76,11 @@ public static partial class MapGenerator
         PaveVertical(map, sx, sy + 1, chY);             // plaza → church
         PaveVertical(map, sx, chY + chH, ty + TownFullH - 1); // church → S gate
 
-        // ── 10. E-W cross-streets at the shop rows ──────────────────
-        // Creates a grid feel: two horizontal roads connecting the
-        // boulevard to the shop entrances on both sides.
+        // ── 10. E-W cross-streets — 2 horizontal roads linking boulevard to shop entrances on both sides.
         PaveHorizontal(map, tx + 1, tx + TownFullW - 1, sy - 2);  // upper shop row
         PaveHorizontal(map, tx + 1, tx + TownFullW - 1, sy + 6);  // lower shop row
 
-        // ── 11. Street lamps (campfires along major streets) ─────────
-        // With the RGB lighting system these cast warm orange pools.
+        // ── 11. Street lamps (campfires) — RGB lighting casts warm orange pools.
         PlaceStreetLamps(map, sx, ty, TownFullW, TownFullH, sy);
 
         // ── 12. Grass park — small garden between church and south wall
@@ -112,10 +93,7 @@ public static partial class MapGenerator
             map.Tiles[px, py].Type = (dx + dy) % 2 == 0 ? TileType.Grass : TileType.Flowers;
         }
 
-        // ── 13. FB-057 Monument of Swordsmen ─────────────────────────
-        // Canon TOB placement — stands in the plaza grass park, west side,
-        // two tiles off the boulevard so the player passes it on the way
-        // to the south gate. Flanked by pillars to read as a civic feature.
+        // ── 13. Monument of Swordsmen — canon TOB placement: plaza park west side, 2 tiles off boulevard, pillar-flanked.
         int swmX = sx - 4, swmY = parkCy;
         if (map.InBounds(swmX, swmY))
         {

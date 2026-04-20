@@ -306,11 +306,8 @@ public static class SaveManager
             item.ItemDurability = save.Durability;
             if (item is StackableItem stackable && save.Quantity.HasValue)
                 stackable.Quantity = save.Quantity.Value;
-            // Restore enhancement level and re-apply bonus stats. For
-            // weapons, IM System 3 maps each level's bonus to the stat biased
-            // by the ore consumed at that level. Legacy saves (no ore history)
-            // auto-migrate to N × Crimson Flame (Attack) so pre-IM enhanced
-            // weapons keep the exact +Attack bonus they had before.
+            // Restore enhancement. Weapons: per-level bonus biased by ore consumed.
+            // Legacy saves (no ore history) → N × Crimson Flame (Attack) migration.
             if (item is EquipmentBase eq && save.EnhancementLevel > 0)
             {
                 eq.EnhancementLevel = save.EnhancementLevel;
@@ -430,10 +427,8 @@ public static class SaveManager
         return a;
     }
 
-    // Restore RefinementSlots from procedural FullItemJson. Bonuses from the
-    // ingots are ALREADY present in the serialized Bonuses collection, so we
-    // do NOT re-fold — we just rehydrate the slot DefIds for the UI and for
-    // future override-socketing logic.
+    // Hydrate RefinementSlots only — ingot bonuses already in serialized Bonuses.
+    // Slot DefIds restored for UI + future override-socketing.
     private static void HydrateRefinementSlots(EquipmentBase eq, JsonElement root)
     {
         if (!root.TryGetProperty("RefinementSlots", out var slots)) return;

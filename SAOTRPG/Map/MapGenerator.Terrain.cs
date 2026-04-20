@@ -1,18 +1,11 @@
 namespace SAOTRPG.Map;
 
-// Terrain generation helpers: organic lakes (cellular automata), winding
-// rivers (drunk-walk with drift), and biome blending (neighbor-counting
-// smoothing pass). All methods operate on an existing GameMap
-// and stamp terrain tiles without disturbing structures or features.
+// Terrain helpers: CA lakes, drunk-walk rivers, neighbor-smoothing biome blend.
+// Stamp terrain onto existing GameMap without disturbing structures or features.
 public static partial class MapGenerator
 {
-    // ── River generation ─────────────────────────────────────────────
-    // A "drunk walk with drift" from one map edge to the opposite.
-    // The river meanders laterally but always progresses toward the far
-    // edge, producing a natural winding path 1-2 tiles wide.
-
-    // Carve a winding river across the map.
-    // = true flows left→right, false flows top→bottom.
+    // ── River: drunk-walk with drift from source edge to opposite, meanders laterally but always progresses.
+    // horizontal=true → L→R, false → T→B.
     internal static void GenerateRiver(GameMap map, bool horizontal)
     {
         int w = map.Width, h = map.Height;
@@ -50,8 +43,7 @@ public static partial class MapGenerator
         }
     }
 
-    // Returns true for any tile type that water (rivers, lakes) should
-    // never overwrite — structures, features, paths, mountains.
+    // Tiles water must never overwrite — structures, features, paths, mountains.
     private static bool IsProtectedFromWater(TileType t) =>
         t is TileType.Wall or TileType.Floor or TileType.Door
         or TileType.StairsUp or TileType.StairsDown or TileType.LabyrinthEntrance
@@ -68,13 +60,7 @@ public static partial class MapGenerator
         map.Tiles[x, y].Type = TileType.Water;
     }
 
-    // ── Lake generation ──────────────────────────────────────────────
-    // Cellular automata: start with random noise in a circular region,
-    // smooth 4 iterations with the 5-neighbor rule → organic contiguous
-    // lake shapes with natural irregular shores.
-
-    // Generate an organic lake centered at (cx, cy) with approximate
-    // . Interior tiles become WaterDeep.
+    // ── Lake: CA noise → 4x 5-neighbor smoothing → organic contiguous shape. Interior tiles → WaterDeep.
     internal static void GenerateLake(GameMap map, int cx, int cy, int radius)
     {
         int d = radius * 2 + 1;
@@ -120,13 +106,8 @@ public static partial class MapGenerator
         }
     }
 
-    // ── Biome blending ───────────────────────────────────────────────
-    // A single post-pass that softens hard edges between terrain types
-    // by inserting transitional tiles (GrassTall near forests, GrassSparse
-    // near rocks/water). Run after all clusters, rivers, and lakes.
-
-    // Smooth terrain transitions so biomes fade into each other instead
-    // of having sharp 1-tile edges.
+    // ── Biome blend: post-pass that softens edges (GrassTall near forests, GrassSparse near rocks/water).
+    // Runs after clusters/rivers/lakes.
     internal static void BlendBiomes(GameMap map)
     {
         int w = map.Width, h = map.Height;

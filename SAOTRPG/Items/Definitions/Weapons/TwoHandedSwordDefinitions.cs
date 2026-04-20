@@ -37,8 +37,7 @@ public static class TwoHandedSwordDefinitions
     public static Weapon CreateTyrantDragon() => Make("tyrant_dragon", "Tyrant Dragon", 1500, "Epic", 110, 30, 55,
         B().Add(StatType.Attack, 30).Add(StatType.Strength, 14), "PostMotion-1");
 
-    // ── Hollow Realization Evolution Chain (2H Sword) ───────────────
-    // Matter Dissolver -> Titan's Blade -> Ifrit -> Ascalon.
+    // ── HR 2H Chain: Matter Dissolver → Titan's Blade → Ifrit → Ascalon.
 
     // Matter Dissolver, greatsword said to thin the air it cleaves. T1 of the Ascalon chain.
     public static Weapon CreateMatterDissolver() => Make("matter_dissolver", "Matter Dissolver", 2200, "Rare", 120, 15, 70,
@@ -74,8 +73,7 @@ public static class TwoHandedSwordDefinitions
     public static Weapon CreateDemonbladeGram() => Make("demonblade_gram", "Demonblade: Gram", 30000, "Legendary", 260, 93, 180,
         B().Add(StatType.Attack, 100).Add(StatType.Strength, 35).Add(StatType.Dexterity, 15), "TrueStrike+15");
 
-    // F40 Dracoflame the Elder Wyrm drops (Alicization Lycoris Divine Beast tier).
-    // Blood-stream greatsword. Bleed on every swing.
+    // F40 Dracoflame Elder Wyrm drop (AL Divine Beast tier). Blood-stream greatsword, bleed on swing.
     public static Weapon CreateDemonbladeCrimsonStream() => Make("demonblade_crimson_stream", "Demonblade: Crimson Stream", 16500, "Legendary", 220, 45, 142,
         B().Add(StatType.Attack, 72).Add(StatType.Strength, 28).Add(StatType.Dexterity, 10), "Bleed+30");
 
@@ -161,12 +159,9 @@ public static class TwoHandedSwordDefinitions
     public static Weapon CreateBlazewyrmGreatsword() => Make("ths_blazewyrm_greatsword", "Blazewyrm Greatsword", 19500, "Legendary", 228, 85, 160,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 26).Add(StatType.Vitality, 10), "Burn+30");
 
-    // ── Alicization Lycoris Relic Boss Drops (2H Sword) — Legendary F80-95 ─
+    // ── AL Relic Drops (2H) Legendary F80-95 — covered under Object Eraser below, no additional entries.
 
-    // Object Relic note: AL Relic F80-95 band drops 2H entry.
-    // (None additional — AL Relic 2H covered under Group 6 Object Eraser.)
-
-    // ── Alicization Lycoris DLC (2H Sword) — Legendary F85-99 ───────
+    // ── AL DLC (2H) Legendary F85-99 ─
 
     // Purgatorial Greatsword — penitential flame-bound DLC greatsword.
     public static Weapon CreatePurgatorialGreatsword() => Make("ths_purgatorial_greatsword", "Purgatorial Greatsword", 20200, "Legendary", 232, 87, 165,

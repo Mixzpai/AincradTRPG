@@ -7,16 +7,12 @@ using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;
 
 namespace SAOTRPG.Systems;
 
-// IF-canon Refinement helper. Public API consumed by the UI layer
-// (CraftingDialog.ShowRefineMenu) and by the damage-calc pipeline via
-// Equipment.Bonuses folding. Override-only: socketing into an occupied slot
-// destroys the previous ingot's effect and consumes one new ingot from
-// inventory. Divine-rarity equipment cannot be refined (sealed endgame gear).
+// IF-canon Refinement. API for CraftingDialog.ShowRefineMenu + damage calc
+// (via Equipment.Bonuses). Override-only: occupied slot destroys old ingot.
+// Divine rarity cannot be refined (sealed endgame).
 public static class Refinement
 {
-    // Per-rarity refinement material (Red Hot Ore) cost to socket ONE ingot.
-    // Divine is intentionally 0 because Divine gear is sealed — Socket()
-    // early-returns on Divine, so this cost is never paid.
+    // Red Hot Ore cost per socket by rarity. Divine=0 (Socket early-returns).
     public static int CostForRarity(string? rarity) => rarity switch
     {
         "Common"    => 1,
@@ -28,17 +24,9 @@ public static class Refinement
         _           => 1,
     };
 
-    // Socket an ingot into the given refinement slot. Returns true on success.
-    //   - Divine equipment cannot be refined (sealed endgame).
-    //   - slotIdx must be 0..2.
-    //   - If the slot is already occupied, the old ingot's bonuses are removed
-    //     and destroyed (override-only — no return-to-inventory).
-    //   - Consumes ONE ingot of ingotDefId from inv. Red Hot Ore mat cost is
-    //     handled by the caller (CraftingDialog) via ConsumeByDefinitionId.
-    //   - If `target` is non-null and `eq` is currently equipped on target,
-    //     the helper Unequip/Re-Equips around the Bonuses mutation so the
-    //     player's BaseAttack/BaseDefense stay consistent with Bonuses
-    //     (same pattern CraftingDialog.ApplyEnhancementDelta uses).
+    // Socket ingot into slot 0..2. Divine forbidden; occupied slots override.
+    // Consumes 1 ingot; caller handles Red Hot Ore cost. If equipped on target,
+    // Unequip/Re-Equip around Bonuses mutation (matches ApplyEnhancementDelta).
     public static bool Socket(EquipmentBase eq, int slotIdx, string ingotDefId,
                               PlayerInventory inv, IStatModifiable? target = null)
     {
@@ -47,19 +35,16 @@ public static class Refinement
         if (slotIdx < 0 || slotIdx >= EquipmentBase.RefinementSlotCount) return false;
         if (string.IsNullOrEmpty(ingotDefId)) return false;
 
-        // Verify the ingot exists in inventory and is actually an Ingot.
         if (inv.CountByDefinitionId(ingotDefId) < 1) return false;
         if (ItemRegistry.Create(ingotDefId) is not Ingot template) return false;
 
-        // If target is supplied and the equipment is worn on them, match the
-        // enhancement pattern: Unequip before mutating Bonuses, re-Equip after.
+        // Mirror enhancement pattern: Unequip before Bonuses mutation, re-Equip after.
         bool wasEquippedOnTarget = target != null && IsEquippedOn(eq, inv);
         if (wasEquippedOnTarget) eq.Unequip(target!);
 
-        // Remove the old ingot's bonuses (if any) from the equipment.
         UnapplySlot(eq, slotIdx);
 
-        // Consume 1 ingot from inventory and write the new slot.
+        // Consume ingot; on failure, re-equip and bail.
         if (!inv.ConsumeByDefinitionId(ingotDefId, 1))
         {
             if (wasEquippedOnTarget) eq.Equip(target!);
@@ -70,8 +55,7 @@ public static class Refinement
 
         if (wasEquippedOnTarget) eq.Equip(target!);
 
-        // Invalidate the cached equipment-bonus aggregate so Player.Attack
-        // etc. see the new socket immediately.
+        // Invalidate cache so Player.Attack picks up the new socket.
         inv.InvalidateStatCache();
         return true;
     }
@@ -84,9 +68,8 @@ public static class Refinement
         return false;
     }
 
-    // Public summary for the preview UI. Returns the flat list of
-    // (StatType, potency) tuples contributed by all currently-socketed ingots
-    // on `eq`, plus a display string like "Attack +25, Defense -5".
+    // Preview summary: flat (StatType, potency) list + display string like
+    // "Attack +25, Defense -5".
     public static (List<(StatType Stat, int Value)> Stats, string DisplayText)
         GetBonusSummary(EquipmentBase eq)
     {
@@ -110,11 +93,8 @@ public static class Refinement
         return (list, display);
     }
 
-    // Sum socketed ingot bonuses across all equipped slots (weapon, offhand,
-    // armor pieces, accessories). Exposed for debug/telemetry. The normal
-    // damage-calc path does NOT call this — ingot bonuses are folded into
-    // each EquipmentBase.Bonuses directly (see ApplyIngotBonuses) so
-    // Inventory.GetTotalEquipmentBonus picks them up automatically.
+    // Debug/telemetry: sum ingot bonuses across equipped slots.
+    // Damage-calc path uses EquipmentBase.Bonuses folding instead.
     public static Dictionary<StatType, int> SumEquipmentBonuses(PlayerInventory inv)
     {
         var totals = new Dictionary<StatType, int>();
@@ -131,9 +111,7 @@ public static class Refinement
 
     // ── Re-hydration helpers used by SaveManager on load ─────────────────
 
-    // Re-apply all slotted ingots' bonuses to an equipment after it has been
-    // reconstructed from save data. Call this ONCE per equipment after
-    // EnhancementLevel has been replayed.
+    // Re-apply slotted ingot bonuses post-load. Call ONCE after EnhancementLevel replay.
     internal static void RehydrateBonuses(EquipmentBase eq)
     {
         for (int i = 0; i < EquipmentBase.RefinementSlotCount; i++)
@@ -143,7 +121,6 @@ public static class Refinement
         }
     }
 
-    // Look up the Ingot template object for the DefId stored in a slot.
     internal static Ingot? GetSlotIngot(EquipmentBase eq, int slotIdx)
     {
         if (eq == null) return null;
@@ -163,8 +140,7 @@ public static class Refinement
         if (ingot.FourthStat.HasValue) eq.Bonuses.Add(ingot.FourthStat.Value, ingot.FourthBonus);
     }
 
-    // Remove the currently-socketed ingot's bonuses from eq.Bonuses. Used when
-    // overriding an occupied slot. Mutates eq.RefinementSlots[slotIdx] → null.
+    // Remove socketed ingot's bonuses; sets slot = null. Used on override.
     private static void UnapplySlot(EquipmentBase eq, int slotIdx)
     {
         var oldIngot = GetSlotIngot(eq, slotIdx);
@@ -182,10 +158,8 @@ public static class Refinement
         eq.RefinementSlots[slotIdx] = null;
     }
 
-    // Remove the first StatEffect matching (type, potency) from a collection.
-    // This pairs with ApplyIngotBonuses' StatModifierCollection.Add calls so
-    // that we undo exactly what we added without touching base equipment
-    // bonuses or enhancement-level bonuses.
+    // Remove first StatEffect matching (type, potency). Undoes exactly what
+    // ApplyIngotBonuses added without touching base/enhancement bonuses.
     private static void RemoveFirst(StatModifierCollection coll, StatType type, int potency)
     {
         for (int i = 0; i < coll.Effects.Count; i++)

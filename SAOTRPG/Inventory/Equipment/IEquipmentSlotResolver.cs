@@ -10,8 +10,6 @@ public interface IEquipmentSlotResolver
     EquipmentSlot? ResolveSlot(EquipmentBase equipment);          // Returns null if type is unknown
     void RegisterMapping(string equipmentType, EquipmentSlot slot); // Add custom type → slot mappings at runtime
 
-    // True if the given equipment is legal in the OffHand slot. Shields and
-    // bucklers always qualify. One-handed swords qualify when the player
-    // has unlocked Dual Blades.
+    // Legal OffHand: shields/bucklers always; 1H swords only with Dual Blades unlocked.
     bool CanGoInOffHand(EquipmentBase equipment);
 }

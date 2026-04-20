@@ -4,20 +4,9 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Lifetime Records dialog — opened from the TitleScreen "Records" menu.
-// Replaces the old MessageBox.Query text dump with a structured 80x30
-// Terminal.Gui Dialog. Three main blocks:
-//   1. Header banner + two-column Summary / Achievement panels + two
-//      progress bars (Floor / Win Rate). Always visible.
-//   2. Tabbed table area — Tab / Left-Right arrows cycle between:
-//        • Recent Runs (last 10 of any outcome — death or victory)
-//        • Victory Leaderboard (ONLY completed victories, sortable)
-//   3. Close button at bottom.
-//
-// Leaderboard sort keys cycle via `[` / `]` or the "Sort by: X" button.
-// Sortable on: Col, Turns, Level, Kills, PlayTime, Date, Grade. Keeps
-// all-time victory records since a victory means the 100-floor climb
-// is done and worth preserving.
+// Lifetime Records (TitleScreen → Records). 80x30 dialog: banner + Summary/Achievement panels +
+// Floor/Win bars, tabbed table (Recent Runs | Victory Leaderboard), Close. Tab or ←/→ cycle tabs;
+// Leaderboard sort via [/] or Sort button — keys: Col/Turns/Level/Kills/PlayTime/Date/Grade.
 public static class RecordsDialog
 {
     private const int DialogWidth = 80;
@@ -127,6 +116,7 @@ public static class RecordsDialog
         // AnchorEnd(18) gives 2 cols clearance from the dialog's right border
         // so the widest Sort label ("Sort: PlayTime" + button padding) doesn't
         // clip the frame edge.
+        // AnchorEnd(18) gives 2-col clearance — "Sort: PlayTime" + padding won't clip frame.
         sortBtn.X = Pos.AnchorEnd(18); sortBtn.Y = tabRowY;
         sortBtn.Visible = false;  // hidden until leaderboard tab active
 
@@ -201,9 +191,7 @@ public static class RecordsDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // Render 10-wide horizontal block bar — filled chars proportional to
-    // (value/max), remainder as dim shaded blocks. Width param controls
-    // on-screen cell count; filled uses `█`, empty uses `░`.
+    // Horizontal block bar: filled = ⌊value·width/max⌋ cells of █, rest ░.
     private static string MakeBar(int value, int max, int width)
     {
         if (max <= 0) max = 1;
@@ -218,11 +206,8 @@ public static class RecordsDialog
         return $"{totalSeconds / 60}m";
     }
 
-    // ── Recent Runs table ──────────────────────────────────────────────
-    // Columns: # / Date / Name / Floor / Lv / Kills / Grade / Time
-    // Fate column dropped — if a run is in this table it ended (victory
-    // or death); the death case is implied. Victories naturally show at
-    // F100 with a top-grade entry.
+    // ── Recent Runs table ──
+    // Cols: # / Date / Name / Floor / Lv / Kills / Grade / Time. Fate implied (row exists → run ended).
     private static string BuildRecentTable(List<LifetimeStats.RunEntry> runs)
     {
         if (runs.Count == 0) return "\n  No recent runs yet.";
@@ -240,25 +225,20 @@ public static class RecordsDialog
         return sb.ToString();
     }
 
-    // Map legacy-default "Unknown" placeholder (from RunEntry saved before
-    // the PlayerName field was added) to an em-dash so stale rows read as
-    // "data predates this field" instead of an error state. Truncates any
-    // name longer than 15 chars for column alignment.
+    // Legacy "Unknown" (pre-PlayerName saves) → em-dash; truncates >15 chars for column width.
     private static string DisplayName(string name)
     {
         if (string.IsNullOrWhiteSpace(name) || name == "Unknown") return "—";
         return name.Length > 15 ? name[..15] : name;
     }
 
-    // ── Victory Leaderboard table ──────────────────────────────────────
-    // ONLY victories. Sort order set by `sortKey`. Shows top 10.
+    // ── Victory Leaderboard ── Victories only; top 10 per `sortKey`.
     private static string BuildLeaderboardTable(List<LifetimeStats.RunEntry> runs, SortKey key)
     {
         if (runs.Count == 0)
             return "\n  No victory runs yet.\n\n  Beat the game to record your first entry on the leaderboard.";
 
-        // Apply sort — leaderboard best-first (higher Col/Level/Kills better,
-        // lower Turns/PlayTime better, newer Date better, higher Grade better).
+        // Best-first: Col/Level/Kills desc, Turns/PlayTime asc, Date/Grade desc.
         IEnumerable<LifetimeStats.RunEntry> sorted = key switch
         {
             SortKey.Col      => runs.OrderByDescending(r => r.ColEarned),

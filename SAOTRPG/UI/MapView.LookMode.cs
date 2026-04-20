@@ -5,17 +5,13 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Interactive look mode -- press L to highlight visible monsters,
-// Tab/arrows to cycle, shows stat overlay for the selected monster.
-// A right-side Target List Panel (FB-462) shows all visible hostiles
-// sorted by Dist / HP / Threat / Level / Index; T cycles sort, 1-9
-// jump to numbered target. Panel is gated on viewport width >= 60 so
-// small terminals fall back to cursor-only mode.
+// Look mode (L): highlight visible monsters, Tab/arrows cycle, stat overlay on selected.
+// Right-side Target List Panel sorts by Dist/HP/Threat/Level/Index (T cycles, 1-9 jump).
+// Panel gated on vpWidth ≥ 60; narrower terminals fall back to cursor-only.
 public partial class MapView
 {
-    // ── Target List Panel layout ──────────────────────────────────
-    // Sidebar width sized to fit: 15-char name + 2 cursor/index + 4
-    // mini-HP-bar + 2 dist + 3 column gutters = 22 cols incl. borders.
+    // ── Target List Panel layout ──
+    // 22 cols = 15 name + 2 cursor/index + 4 mini-HP + 2 dist + 3 gutters, incl borders.
     private const int LookPanelW       = 22;
     private const int LookPanelMinVpW  = 60;
     private const int LookNameMaxLen   = 15;
@@ -37,25 +33,14 @@ public partial class MapView
         _lookTargets = targets;
         _lookIndex = 0;
         _lookModeActive = true;
-        // Apply default sort on entry so the first target under the
-        // cursor is the closest one, not whatever iteration order
-        // GetVisibleMonsters happened to return.
+        // Default sort on entry → closest under cursor, not GetVisibleMonsters order.
         ApplySort(preserveSelection: false);
         LookModeChanged?.Invoke(true);
         SetNeedsDraw();
     }
 
-    // Sort the target list in-place. When preserveSelection is true
-    // we re-find the currently-selected monster post-sort so Tab
-    // cycling position stays anchored to the same target after the
-    // user presses T. On EnterLookMode we skip preservation and snap
-    // to index 0.
-    //
-    // Each sort uses strong tie-breaking (ThenBy chains) so that
-    // homogeneous mob groups (e.g. 4 fresh F1 Kobolds all at 100% HP,
-    // same level) still produce a visibly distinct order per sort
-    // mode. Without tie-breaking, OrderBy's stable sort would leave
-    // the list untouched and the feature would read as "doesn't work."
+    // Sort in-place. preserveSelection re-anchors cursor after T; EnterLookMode snaps to 0.
+    // Strong ThenBy tie-breaking ensures homogeneous mob groups reorder visibly per mode.
     private void ApplySort(bool preserveSelection)
     {
         if (_lookTargets.Count == 0) return;
@@ -63,41 +48,35 @@ public partial class MapView
 
         _lookTargets = _lookSort switch
         {
-            // Dist: closest first, then weakest among ties
-            // (lower-level mobs surface first when equidistant).
+            // Dist asc, weakest-among-ties (lower level surfaces when equidistant).
             LookSort.Dist => _lookTargets
                 .OrderBy(m => Chebyshev(m))
                 .ThenBy(m => m.Level)
                 .ThenBy(m => m.Name, StringComparer.Ordinal)
                 .ToList(),
 
-            // HP %: lowest first (finish-off priority). Tie-break by
-            // distance so nearby stragglers surface over distant ones.
+            // HP% asc (finish-off); tie-break on distance.
             LookSort.HP => _lookTargets
                 .OrderBy(m => HpPct(m))
                 .ThenBy(m => Chebyshev(m))
                 .ThenBy(m => m.Name, StringComparer.Ordinal)
                 .ToList(),
 
-            // Threat: deadliest first (highest level-diff vs player).
-            // Tie-break by distance (closer = more immediate threat).
+            // Threat desc (level-diff); tie-break on distance then HP%.
             LookSort.Threat => _lookTargets
                 .OrderByDescending(m => m.Level - _player.Level)
                 .ThenBy(m => Chebyshev(m))
                 .ThenBy(m => HpPct(m))
                 .ToList(),
 
-            // Level: absolute level desc. Tie-break by HP % asc so
-            // low-HP high-level mobs surface (best gank targets).
+            // Level desc; tie-break HP% asc (low-HP high-level = gank target).
             LookSort.Level => _lookTargets
                 .OrderByDescending(m => m.Level)
                 .ThenBy(m => HpPct(m))
                 .ThenBy(m => Chebyshev(m))
                 .ToList(),
 
-            // Index: as GetVisibleMonsters returned them (no sort).
-            // This is the one mode where we preserve the caller's
-            // natural iteration order — acts as an "unsorted" reset.
+            // Index: preserve GetVisibleMonsters order ("unsorted" reset).
             LookSort.Index => _lookTargets,
 
             _ => _lookTargets,
@@ -111,10 +90,7 @@ public partial class MapView
         else _lookIndex = 0;
     }
 
-    // HP % helper used by sort keys. Defined once here to guarantee
-    // identical behavior across Dist/HP/Threat/Level tie-breakers and
-    // the mini-bar render (prevents drift bugs where one call site
-    // rounds differently than another).
+    // Single HP% source — sort keys and mini-bar share the exact rounding.
     private static int HpPct(Monster m) =>
         m.MaxHealth > 0 ? m.CurrentHealth * 100 / m.MaxHealth : 100;
 
@@ -125,9 +101,7 @@ public partial class MapView
         SetNeedsDraw();
     }
 
-    // Jump directly to numbered target (1-based). Silent no-op if
-    // the target number is out of range (user pressed 5 but there
-    // are only 3 targets), so presses don't surprise-exit look mode.
+    // 1-based jump. Silent no-op on out-of-range so we don't surprise-exit look mode.
     private void JumpToTarget(int oneBasedIdx)
     {
         int zeroIdx = oneBasedIdx - 1;
@@ -136,9 +110,7 @@ public partial class MapView
         SetNeedsDraw();
     }
 
-    // Chebyshev (king-move) distance — matches the inline calc in
-    // BuildStatLines so the sidebar's Dist column stays consistent
-    // with the floating stat panel's Dist:N readout.
+    // Chebyshev (king-move) — matches BuildStatLines's inline Dist:N.
     private int Chebyshev(Monster m) =>
         Math.Max(Math.Abs(m.X - _player.X), Math.Abs(m.Y - _player.Y));
 
@@ -192,19 +164,12 @@ public partial class MapView
                 LookPrev();
                 keyEvent.Handled = true;
                 return true;
-            // T cycles sort mode (Dist → HP → Threat → Level → Index).
-            // Outside look mode, T is bound to EquipmentRequested in
-            // MapView.Input.cs — that binding is untouched because
-            // HandleLookModeKey runs first and consumes the key here.
+            // T cycles sort (Dist→HP→Threat→Level→Index); shadows MapView.Input.cs EquipmentRequested while active.
             case KeyCode.T:
                 CycleSort();
                 keyEvent.Handled = true;
                 return true;
-            // Numeric jump 1-9 → target by index. Outside look mode,
-            // D1-D5 trigger QuickUseRequested (consumables hotbar) —
-            // that binding is likewise shadowed only while look mode
-            // is active. Out-of-range indices are silent no-ops so
-            // the player doesn't get kicked out of look mode.
+            // 1-9 jump; shadows QuickUseRequested hotbar. Out-of-range = silent no-op.
             case KeyCode.D1: JumpToTarget(1); keyEvent.Handled = true; return true;
             case KeyCode.D2: JumpToTarget(2); keyEvent.Handled = true; return true;
             case KeyCode.D3: JumpToTarget(3); keyEvent.Handled = true; return true;
@@ -255,18 +220,14 @@ public partial class MapView
             Driver!.AddRune(new System.Text.Rune(']'));
         }
 
-        // When the Target List sidebar is visible, shrink the width
-        // the floating stat panel can use so it prefers left-of-target
-        // placement and doesn't overdraw the sidebar.
+        // Sidebar visible → shrink stat-panel width so it prefers left-of-target and skips overdraw.
         bool sidebarVisible = vpWidth >= LookPanelMinVpW && _lookTargets.Count > 0;
         int effectiveVpW = sidebarVisible ? vpWidth - LookPanelW - 1 : vpWidth;
         RenderStatPanel(selected, sx, sy, effectiveVpW, vpHeight);
 
         if (sidebarVisible) RenderTargetListPanel(vpWidth, vpHeight);
 
-        // Hint line reflects capabilities — multi-target shows sort
-        // cycle + jump hints; single-target strips them since T/1-9
-        // would be silent no-ops with one entry.
+        // Multi-target shows T/1-9; single-target strips them (would be no-ops).
         string hint = _lookTargets.Count > 1
             ? $"[{_lookIndex + 1}/{_lookTargets.Count}] Tab/Arrows cycle  T sort  1-9 jump  L/Esc exit"
             : "[1/1] L/Esc exit";
@@ -275,17 +236,12 @@ public partial class MapView
             Gfx.Attr(Color.DarkGray, Color.Black), vpWidth, vpHeight);
     }
 
-    // FB-462 Target List Panel — 22-col right-side overview of all
-    // visible hostiles. Rows render with threat-tier color, cursor
-    // arrow on the selected target, mini 4-cell HP bar, and Chebyshev
-    // distance. Footer shows active sort + key hints.
+    // Target List Panel — 22-col right sidebar: threat-colored rows, cursor, mini HP, dist.
+    // Footer shows active sort + key legend. Data rows scroll to keep _lookIndex visible.
     private void RenderTargetListPanel(int vpWidth, int vpHeight)
     {
         int panelX = vpWidth - LookPanelW - 1;
         int panelY = 1;
-        // Reserve 3 rows for header + 2 footer rows ("Sort: ..." + key
-        // legend). Data rows scroll to keep _lookIndex visible so a
-        // 20-target dungeon doesn't clip the selected row off-screen.
         int reservedChrome = 3 + 2;                              // header top + sort row + hint row
         int maxDataRows = Math.Max(3, vpHeight - reservedChrome - panelY - 2);
         int dataRows = Math.Min(_lookTargets.Count, maxDataRows);
@@ -308,8 +264,7 @@ public partial class MapView
             }
         }
 
-        // Top border + title (minimal — "Targets" only). Count and sort
-        // mode live in the footer readout below so the header stays clean.
+        // Top border + "Targets" title; count + sort live in footer row.
         DrawHLine(panelX, panelY, LookPanelW, '─', borderAt);
         DrawTextAtView(panelX + 1, panelY, " Targets ", headerAt, vpWidth, vpHeight);
 
@@ -336,8 +291,7 @@ public partial class MapView
             if (!isSelected) rowAttr = Gfx.Attr(ExtractFg(rowAttr), bg);
 
             char cursor = isSelected ? '▶' : ' ';
-            // Show the 1-based index so the user can map visible rows
-            // to the 1-9 jump keys directly.
+            // 1-based index maps directly to 1-9 jump keys.
             int displayNum = idx + 1;
             string numStr = displayNum <= 9 ? displayNum.ToString() : " ";
             string name = TruncName(m.Name, LookNameMaxLen);
@@ -345,9 +299,8 @@ public partial class MapView
             int dist = Chebyshev(m);
             string distStr = dist > 99 ? "99" : dist.ToString();
 
-            // Row layout: cursor + num + name(15) + hpBar(4) + dist(2)
-            // = 1 + 1 + 15 + 4 + 2 + gutters — fits in 22 cols:
-            //   "▶1 Ruin Kobold  ▓▓░░ 3"
+            // Row: cursor + num + name(15) + hpBar(4) + dist(2) + gutters = 22 cols.
+            // Example: "▶1 Ruin Kobold  ▓▓░░ 3"
             string row = $"{cursor}{numStr} {name,-15} {hpMini} {distStr,2}";
             if (row.Length > LookPanelW - 2) row = row[..(LookPanelW - 2)];
             DrawTextAtView(panelX + 1, rowY, row, rowAttr, vpWidth, vpHeight);
@@ -357,9 +310,7 @@ public partial class MapView
         int footerY = panelY + 1 + dataRows;
         if (footerY < vpHeight) DrawHLine(panelX, footerY, LookPanelW, '─', borderAt);
 
-        // Footer row: count + total targets as a fallback readout, so
-        // even on narrow panels where the title truncates, the user
-        // has a second confirmation the sort cycled.
+        // Count + sort readout — second confirmation when title truncates.
         int countRowY = footerY + 1;
         if (countRowY < vpHeight)
         {
@@ -377,10 +328,7 @@ public partial class MapView
         }
     }
 
-    // Short, readable sort-mode label for the header + footer readouts.
-    // Using explicit strings (not enum ToString) so we can shorten or
-    // decorate later without changing the enum values, which are also
-    // saved implicitly in the sort cycle order.
+    // Explicit labels (not enum ToString) so we can shorten/decorate without touching enum order.
     private static string SortLabel(LookSort s) => s switch
     {
         LookSort.Dist   => "Dist",
@@ -391,16 +339,12 @@ public partial class MapView
         _               => "?",
     };
 
-    // Cosmetic: build a 4-cell HP bar without brackets, using the
-    // same █/░ convention as the stat panel gradient bar. We need
-    // a bracket-free variant because the sidebar column is tight.
+    // Bracket-free █/░ 4-cell bar for the tight sidebar column.
     private static string BuildMiniHpBar(int cur, int max, int width)
     {
         if (max <= 0 || width <= 0) return new string('░', Math.Max(0, width));
         int filled = Math.Clamp(cur * width / max, 0, width);
-        // Guarantee at least 1 filled cell if the monster is alive —
-        // otherwise 1% HP reads as identical to dead.
-        if (cur > 0 && filled == 0) filled = 1;
+        if (cur > 0 && filled == 0) filled = 1;  // ≥1 filled while alive; else 1% ≈ dead
         return new string('█', filled) + new string('░', width - filled);
     }
 
@@ -410,9 +354,7 @@ public partial class MapView
         return name.Length > max ? name[..max] : name;
     }
 
-    // Pull the foreground Color out of a Terminal.Gui Attribute so we
-    // can re-pair it with the dimmer panel bg for non-selected rows.
-    // Uses the public Foreground/Background record accessors.
+    // Pull fg Color so we can re-pair it with the dim panel bg for unselected rows.
     private static Color ExtractFg(Terminal.Gui.Attribute a) => a.Foreground;
 
     private void RenderStatPanel(Monster monster, int sx, int sy, int vpWidth, int vpHeight)

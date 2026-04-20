@@ -11,9 +11,8 @@ public record CutsceneScript(
     bool IsReplay = false
 );
 
-// One line (or narration block) within a cutscene.
-// PortraitKey indexes into AsciiPortraits; null means narration-only.
-// Letterbox=true draws top/bottom black bars for non-diegetic world events.
+// Cutscene line. PortraitKey → AsciiPortraits (null=narration).
+// Letterbox=true = top/bottom bars for non-diegetic world events.
 public record CutsceneBeat(
     string? Speaker,
     string? PortraitKey,

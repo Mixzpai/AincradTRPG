@@ -48,8 +48,7 @@ public static class SpearDefinitions
     public static Weapon CreateAnubisSpear() => Make("anubis_spear", "Anubis Spear", 1400, "Rare", 110, 35, 50,
         B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 10));
 
-    // ── Hollow Realization Evolution Chain (Spear) ──────────────────
-    // Heart Piercer -> Trishula -> Vijaya -> Caladbolg.
+    // ── HR Spear Chain: Heart Piercer → Trishula → Vijaya → Caladbolg.
 
     // Heart Piercer, a pikeman's long-point — unerring thrust at range. T1 of the Caladbolg chain.
     public static Weapon CreateHeartPiercer() => Make("heart_piercer", "Heart Piercer", 1800, "Rare", 120, 15, 58,
@@ -143,8 +142,7 @@ public static class SpearDefinitions
     public static Weapon CreateFrostpeak() => Make("spr_frostpeak", "Frostpeak", 18500, "Legendary", 218, 82, 152,
         B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 22).Add(StatType.Strength, 14), "Freeze+25");
 
-    // ── SAO Lost Song Top-Tier (Spear) — Legendary F80-95 ──────────
-    // Brave Song — heroic-call polearm, combo-extender.
+    // ── LS Top-Tier (Spear), Legendary F80-95 — Brave Song heroic-call polearm, combo-extender.
     public static Weapon CreateBraveSong() => Make("spr_brave_song", "Brave Song", 19500, "Legendary", 225, 84, 158,
         B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Strength, 14), "ComboBonus+40");
 

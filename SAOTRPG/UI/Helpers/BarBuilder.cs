@@ -1,24 +1,15 @@
 namespace SAOTRPG.UI.Helpers;
 
-// Builds Unicode progress bars for HUD display.
-// Used for HP, XP, satiety, and any future stat gauges.
-// Gradient mode uses █▓▒░ block elements for a smooth analog-meter feel:
-//   Full cells = █, trailing edge = ▓/▒/░ based on fractional fill.
-// Flat mode uses simple fill/empty characters (legacy).
+// Unicode HUD progress bars (HP/XP/satiety). Gradient = █ + ▓/▒/░ trailing edge; flat = fill/empty.
 public static class BarBuilder
 {
-    // ── Gradient trailing-edge thresholds ──────────────────────────────
-    // These define the fractional fill cutoffs for block-element selection
-    // in the trailing cell of a gradient bar.
-
-    // Minimum fractional fill to show ▓ (three-quarter block).
+    // ── Gradient trailing-edge cutoffs (block-element selection for the trailing cell) ──
+    // ▓ ≥0.75, ▒ ≥0.50, ░ ≥0.25.
     private const double GradientHigh   = 0.75;
-    // Minimum fractional fill to show ▒ (half block).
     private const double GradientMid    = 0.50;
-    // Minimum fractional fill to show ░ (quarter block).
     private const double GradientLow    = 0.25;
-    // Renders a flat progress bar: [||||........].
-    // Simpler alternative to BuildGradient when block elements aren't needed.
+
+    // Flat bar: [||||........]. Simpler than BuildGradient when block elements aren't needed.
     public static string Build(int current, int max, int width = 16, char fillChar = '|', char emptyChar = '.')
     {
         if (max <= 0) return "[" + new string(emptyChar, width) + "]";
@@ -29,15 +20,7 @@ public static class BarBuilder
         return "[" + new string(fillChar, filled) + new string(emptyChar, width - filled) + "]";
     }
 
-    // Renders a gradient bar using █▓▒░ block elements.
-    // The filled portion uses solid blocks, with a smooth trailing edge.
-    // Visual examples (width=10):
-    //   100% → [██████████]
-    //    75% → [███████▓··]
-    //    50% → [█████·····]
-    //    25% → [██▒·······]
-    //     5% → [░·········]
-    //     0% → [··········]
+    // Gradient █▓▒░ bar; visual examples (w=10): 100%→[██████████], 50%→[█████·····], 5%→[░·········].
     public static string BuildGradient(int current, int max, int width = 16)
     {
         if (width <= 0) width = 16; // Guard against invalid width

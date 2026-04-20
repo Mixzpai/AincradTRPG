@@ -2,11 +2,8 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.Items.Definitions;
 
-// IF Refinement Ingots — 12 canon-flavored ingots across Common/Rare/Epic/Legendary.
-// StatType enum lacks CritRate/AttackSpeed/BlockChance/HPRegen/SkillCooldown/Durability,
-// so flavor names are remapped onto existing entries (Dexterity for crit-like, Speed for
-// attack-speed / durability tradeoff, Vitality for HPRegen/block, Intelligence for
-// skill-cooldown effects).
+// IF Refinement Ingots — 12 canon ingots across Common/Rare/Epic/Legendary.
+// Flavor stats lacking from StatType remapped: DEX=crit, SPD=attack-speed/durability, VIT=HPRegen/block, INT=skill-CD.
 public static class IngotDefinitions
 {
     private static Ingot Make(

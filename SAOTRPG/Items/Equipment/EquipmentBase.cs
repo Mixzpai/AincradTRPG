@@ -19,12 +19,7 @@ public abstract class EquipmentBase : BaseItem
     // Display name with enhancement suffix: "Iron Sword +3"
     public string EnhancedName => EnhancementLevel > 0 ? $"{Name} +{EnhancementLevel}" : Name ?? "";
 
-    // ── IF Refinement ────────────────────────────────────────────────────
-    // Three refinement slots. Each entry is either null (empty) or the
-    // DefinitionId of a socketed Ingot. Use Systems.Refinement.Socket() to
-    // mutate — do NOT write directly, because the helper also folds the
-    // ingot's stat bonuses into Bonuses and destroys the prior ingot on
-    // override. Divine-rarity equipment cannot be refined.
+    // ── IF Refinement — 3 Ingot DefId slots; mutate ONLY via Refinement.Socket (direct writes skip stat-folding + prior-ingot destruction). Divine cannot refine.
     public const int RefinementSlotCount = 3;
     public string?[] RefinementSlots { get; set; } = new string?[RefinementSlotCount];
 

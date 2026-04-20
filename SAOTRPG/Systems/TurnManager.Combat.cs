@@ -7,9 +7,7 @@ namespace SAOTRPG.Systems;
 
 public partial class TurnManager
 {
-    // Encounter-scoped set of monster IDs for which we've already logged
-    // the Pair Resonance banner. Reset when the combo target flips, so
-    // switching targets shows the banner again on the first strike.
+    // Monster IDs with Pair Resonance banner already shown. Clears on target swap.
     private readonly HashSet<int> _pairResonanceLogged = new();
 
     private void HandleCombat(Monster monster, int hpBefore)
@@ -31,10 +29,8 @@ public partial class TurnManager
         bool backstab = !_aggroAlerted.Contains(monster.Id);
         var (baseDmg, playerCrit) = _player.AttackMonster(monster);
 
-        // FD Pair Resonance: if MainHand + OffHand form a canonical pair
-        // (Systems.DualWieldPairs), apply +10% total damage on the combined
-        // swings and a +5% CritRate re-roll bump when the base swing did
-        // not crit. First hit of the encounter logs a banner.
+        // FD Pair Resonance: canonical MH+OH pair → +10% total dmg, +5% crit
+        // re-roll on non-crit. Banner on first hit of encounter.
         var offHandWeapon = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Weapon;
         bool pairResonance = wpn != null && offHandWeapon != null
             && DualWieldPairs.IsCanonicalPair(wpn.DefinitionId, offHandWeapon.DefinitionId);
@@ -46,16 +42,14 @@ public partial class TurnManager
         int damage = baseDmg + profBonus + comboBonus + _shrineBuff + _levelUpBuff
             + SatietyAtkBonus + FatigueAtkPenalty + BiomeSystem.AttackModifier;
 
-        // FB-063 Guild combat bonuses — Fuurinkazan: +10 ATK w/ Katana equipped.
-        // Legend Braves: +15 ATK vs Laughing Coffin PKer mobs.
+        // FB-063 Guild combat — Fuurinkazan: +10 ATK (Katana); LB: +15 vs LC PKers.
         damage += GuildSystem.KatanaAttackBonus(_player, wpnType);
         damage += GuildSystem.LegendBravesVsLcBonus(_player, monster.Name);
         if (pairResonance)
             damage = damage * 110 / 100;
 
-        // Unique-skill passive damage modifiers.
-        // A Dual-Blades second sword in the OffHand slot is NOT a shield —
-        // Holy Sword's shield-gated bonus should only apply for true shields.
+        // Unique-skill passive dmg mods. Dual-Blades OH sword is NOT a shield —
+        // Holy Sword's shield bonus only applies for true shields.
         var offHandItem = _player.Inventory.GetEquipped(Inventory.Core.EquipmentSlot.OffHand);
         bool hasShield = offHandItem != null && offHandItem is not Weapon;
         int uniqueBonusPct = Skills.UniqueSkillSystem.DamageBonusPercent(wpnType, hasShield)
@@ -105,12 +99,8 @@ public partial class TurnManager
         }
         DegradeEquipment(EquipmentSlot.Weapon);
 
-        // Dual Blades / FD Paired offhand swing: if the OffHand holds a
-        // weapon (not a shield) AND either Dual Blades is unlocked OR the
-        // offhand weapon is an FD canon Paired weapon, land a bonus strike
-        // at 60% damage. Paired weapons bypass the DualBlades unlock — they
-        // are pre-tuned for dual-wield. Pair Resonance grants +10% on the
-        // offhand swing as well. Skipped when the target is already dead.
+        // Dual Blades / FD Paired OH swing at 60% dmg. Paired weapons bypass
+        // DualBlades unlock. Pair Resonance +10% applies to OH too.
         if (!monster.IsDefeated
             && _player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Weapon offhand
             && (Skills.UniqueSkillSystem.HasDualBlades() || offhand.IsDualWieldPaired))
@@ -160,10 +150,8 @@ public partial class TurnManager
         Bestiary.RecordKill(monster.Name);
         QuestSystem.OnMobKilled(monster.Name, _log, wpnType);
 
-        // FB-063 Karma — adjust on kill. PKer human mobs gain karma; peaceful
-        // mob kills drain it; hostile non-human mobs are neutral. Town Guard
-        // kills additionally seed +20 Laughing Coffin rep so LC members
-        // earn standing with every outlaw encounter cleared.
+        // FB-063 Karma — PKer humans +, peaceful -, hostile non-human neutral.
+        // Town Guard kills also grant +20 LC rep.
         string lootTag = monster is Mob mob ? mob.LootTag : "generic";
         int karmaDelta = KarmaSystem.DeltaForMobKill(monster.Name, lootTag);
         if (karmaDelta != 0)
@@ -173,12 +161,9 @@ public partial class TurnManager
             Story.StorySystem.AdjustRep(Story.Faction.LaughingCoffin, 20);
             _log.Log("  Laughing Coffin notes your handiwork. (+20 LC rep)");
         }
-        // FB-058 Title System — check unlocks after each kill so the
-        // banner fires immediately on milestone crossings.
+        // FB-058 Title — check unlocks per kill for immediate milestone banner.
         CheckTitleUnlocksAfterKill(monster);
-        // Player Guide known/unknown gating — record kill so the
-        // corresponding "Monster: <name>" / "Boss: ..." / "Field Boss: ..."
-        // guide entry unlocks from the "??? (Unknown)" mask.
+        // Player Guide: unmask "Monster/Boss/Field Boss: <name>" entry.
         if (monster is FieldBoss fb)
             Story.PlayerGuideKnowledge.MarkKnown("Field Boss: " + fb.Name);
         else if (monster is Boss b)
@@ -225,8 +210,7 @@ public partial class TurnManager
                 if (flavor.Length > 0) _log.LogSystem($"  \"{flavor}\"");
             }
         }
-        // Log plain numeric level-ups between cosmetic rank thresholds
-        // (only when the level actually ticked and no rank message fired).
+        // Numeric level-ups between cosmetic rank thresholds.
         if (profLvlAfter > profLvlBefore
             && !ProficiencyRanks.Any(r => r.Kills == wk))
         {
@@ -235,8 +219,7 @@ public partial class TurnManager
         // Fork threshold crossing (L25/50/75/100) — fires the picker event.
         CheckForkThresholdOnKill(wpnType, profLvlBefore, profLvlAfter);
 
-        // Check for newly unlocked sword skills at this kill count.
-        // FB-564 Hollow Ingress modifier doubles required kills.
+        // Sword skill unlocks at this kill count. FB-564 Hollow Ingress doubles reqs.
         int killMult = RunModifiers.IsActive(RunModifier.HollowIngress) ? 2 : 1;
         foreach (var skill in SwordSkillDatabase.ForWeapon(wpnType))
         {
@@ -312,8 +295,7 @@ public partial class TurnManager
                     _log.LogLoot($"  {fieldBoss.Name} drops: {drop.Name}!");
                 }
             }
-            // Secondary guaranteed drop — IF series bosses drop their
-            // matching series shield alongside the primary weapon.
+            // IF series field bosses drop matching series shield alongside primary.
             if (!string.IsNullOrEmpty(fieldBoss.FieldBossId)
                 && LootGenerator.FieldBossSecondaryDrops.TryGetValue(fieldBoss.FieldBossId, out var secondaryId))
             {
@@ -324,9 +306,8 @@ public partial class TurnManager
                     _log.LogLoot($"  {fieldBoss.Name} also drops: {secondary.Name}!");
                 }
             }
-            // HF Last-Attack Bonus — F70+ field bosses have a small chance
-            // to drop the Avatar Weapon matching the killer's weapon type.
-            // 2% base rate, 10% on canon HNM bosses. OHS has no canon Avatar.
+            // HF Last-Attack Bonus — F70+ field boss, matching weapon type:
+            // 2% base / 10% on canon HNM. OHS has no canon Avatar.
             if (CurrentFloor >= 70
                 && LootGenerator.AvatarWeaponByWeaponType.TryGetValue(wpnType, out var avatarDefId))
             {
@@ -343,18 +324,14 @@ public partial class TurnManager
                     }
                 }
             }
-            // Seasonal one-shot marker: Nicholas beaten → mark the year's flag.
+            // Nicholas beaten → mark this year's seasonal flag.
             if (fieldBoss.IsSeasonal && fieldBoss.SeasonalEventId == "christmas")
                 Story.ProfileData.MarkSeen($"nicholas_christmas_{DateTime.Now.Year}");
 
-            // IM rare-boss ore drop — field boss has a chance to drop 1-2 random ores.
             RollBossOreDrops(fieldBoss.X, fieldBoss.Y, fieldBoss.Name);
 
-            // Corruption Stone drop — F95+ field bosses have a 10% chance to
-            // drop one of the two Corruption Stones. Canon workaround: Hollow
-            // Fragment distributes Corrupted Elucidator/Dark Repulser via the
-            // post-F100 boss which our F100 ending forecloses, so we route
-            // the corruption mechanic through rare endgame stones instead.
+            // F95+ field boss: 10% chance to drop a Corruption Stone (HF
+            // workaround — post-F100 boss unavailable, stones route corruption).
             if (CurrentFloor >= 95 && Random.Shared.Next(100) < 10)
             {
                 string stoneId = Random.Shared.Next(2) == 0
@@ -380,23 +357,17 @@ public partial class TurnManager
             Story.StorySystem.TryFire(Story.StoryTrigger.BossDefeat,
                 new Story.StoryContext(CurrentFloor, KillCount, _player, boss));
 
-            // Guaranteed floor-boss drop (Divine Objects + P4 Alicization
-            // Lycoris Divine Beast rewards on non-canon floor bosses).
-            // DropItem formats Divine with the bespoke ◈ line, Legendary with
-            // the standard [Legendary] format.
+            // Guaranteed drop (Divine + P4 AL Divine Beast on non-canon bosses).
+            // DropItem formats Divine with ◈ line; Legendary with [Legendary].
             if (LootGenerator.FloorBossGuaranteedDrops.TryGetValue(CurrentFloor, out var dropId))
             {
                 var drop = Items.ItemRegistry.Create(dropId);
                 if (drop != null) DropItem(boss.X, boss.Y, drop, boss.Name);
             }
 
-            // IM Last-Attack Bonus floor-boss drops. F85/F92-F96/F98/F99 each
-            // drop a guaranteed non-enhanceable Legendary on the player's
-            // killing blow. Both this AND the FloorBossGuaranteedDrops entry
-            // fire — e.g. F99 drops Night Sky Sword (Divine) AND Artemis (LAB).
-            // Kill-credit assumption: HandleMonsterKill only runs after the
-            // player's attack resolves, so any boss reaching this branch had
-            // its killing blow from the player.
+            // IM Last-Attack Bonus — F85/F92-F96/F98/F99 guaranteed non-enhanceable
+            // Legendary on player's killing blow. Stacks with FloorBossGuaranteedDrops.
+            // (Kill-credit: HandleMonsterKill only runs post-player attack.)
             if (LootGenerator.FloorBossLastAttackDrops.TryGetValue(CurrentFloor, out var labDropId))
             {
                 var labDrop = Items.ItemRegistry.Create(labDropId);
@@ -407,15 +378,12 @@ public partial class TurnManager
                 }
             }
 
-            // ShopTierSystem: floor-boss clear at F50+ unlocks the next tier
-            // of late-game stock for all shops. Additive only — never shrinks.
+            // F50+ boss clear → next ShopTierSystem tier. Additive only.
             ShopTierSystem.RegisterFloorBossClear(CurrentFloor, _log);
 
-            // IM rare-boss ore drop — floor boss has a chance to drop 1-2
-            // random enhancement ores.
             RollBossOreDrops(boss.X, boss.Y, boss.Name);
 
-            // Boss-kill unique-skill unlocks (Darkness Blade at Night, Blazing/Frozen by biome).
+            // Boss-kill unique skills (Darkness Blade at Night, Blazing/Frozen by biome).
             var bossUnlock = Skills.UniqueSkillSystem.CheckBossKillUnlock(BiomeSystem.DisplayName);
             if (bossUnlock != null) NotifyUniqueSkillUnlock(bossUnlock.Value);
         }
@@ -428,7 +396,6 @@ public partial class TurnManager
         CleanupMobStatus(monster.Id);
         _map.RemoveEntity(monster);
 
-        // Check achievements
         foreach (var ach in Achievements.CheckCombat(this, _player, monster))
         {
             _player.ColOnHand += ach.ColReward;
@@ -486,7 +453,7 @@ public partial class TurnManager
         if (streakMsg != null) _log.LogCombat($"*** {streakMsg} ***");
     }
 
-    // Each weapon type has a signature swing color for visual identity.
+    // Signature swing color per weapon type.
     private static Color GetSwingColor(Weapon? wpn, bool crit)
     {
         if (crit) return Color.BrightCyan;

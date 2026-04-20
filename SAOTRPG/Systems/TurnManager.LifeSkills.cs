@@ -84,22 +84,15 @@ public partial class TurnManager
         _player.LifeSkills.GrantXp(LifeSkillType.Eating, 10);
     }
 
-    // Hooked from TurnManager.Combat.HandleMonsterKill after Bestiary
-    // records the kill. Recomputes the tag-kill count for the slain mob's
-    // loot tag and feeds both species- and tag-kill state into the Title
-    // System for unlock evaluation.
+    // Post-kill hook (after Bestiary.RecordKill): refresh tag counts + TitleSystem.
     public void CheckTitleUnlocksAfterKill(Monster monster)
     {
-        // Tag kills: if this mob has a loot tag, bump the local counter.
-        // Field bosses and named bosses use "generic" by default — they
-        // still contribute to the TOTAL kill count but no tag bucket.
+        // Tag kills. Field/named bosses default "generic" (TOTAL only, no tag bucket).
         string tag = monster is Mob mob ? mob.LootTag : "generic";
         if (!string.IsNullOrEmpty(tag))
             _tagKills[tag] = _tagKills.GetValueOrDefault(tag) + 1;
 
-        // Species kills pulled from the Bestiary — it's authoritative
-        // and already handles Elite/Champion prefix stripping via the
-        // raw Name key the kill was recorded with.
+        // Bestiary = authoritative species (handles Elite/Champion prefix).
         var speciesKills = Bestiary.GetAll()
             .ToDictionary(e => e.Name, e => e.TimesKilled);
 
@@ -110,12 +103,8 @@ public partial class TurnManager
             tagKills: _tagKills);
     }
 
-    // Rebuild the _tagKills cache from the current Bestiary after
-    // LoadFromSave. MobFactory's template LootTag data doesn't live on
-    // Bestiary entries, so we approximate via a species→tag map: any
-    // species whose name matches a known mob template adopts that tag.
-    // Missing species default to "generic" and don't count toward tag
-    // milestones.
+    // Post-load _tagKills rebuild. Approximates via MobFactory species→tag
+    // (Bestiary doesn't persist LootTag). Missing species = "generic".
     public void RebuildTagKillsFromBestiary()
     {
         _tagKills.Clear();

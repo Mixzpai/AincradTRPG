@@ -4,12 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Character creation — single-screen flow: identity at top, per-stat +/-
-// allocation in the middle, live combat preview, and Continue/Back.
-//
-// Navigation: Tab cycles identity fields → stat +/- buttons → footer.
-// Within the stat section, Up/Down moves between stat rows so you can
-// quickly allocate without Tab-jumping through 12 individual buttons.
+// Character creation — identity + per-stat +/- allocation + live combat preview + Continue/Back.
+// Tab cycles identity → stat buttons → footer; Up/Down moves between stat rows for fast allocation.
 public static class CharacterCreationScreen
 {
     private const int MaxNameLength = 15;
@@ -28,10 +24,7 @@ public static class CharacterCreationScreen
 
     private static readonly string[] GenderOptions = { "Male", "Female" };
 
-    // Unhook this screen's Esc handler from mainWindow. Called by screens
-    // that transition AWAY from CharacterCreationScreen so the static
-    // handler doesn't leak its "Esc → DifficultyScreen" behavior into
-    // GameScreen, etc.
+    // Unhook before transitioning AWAY so Esc→DifficultyScreen doesn't leak into GameScreen.
     public static void UnhookEscHandler(Window mainWindow)
     {
         if (_escHandler != null) { mainWindow.KeyDown -= _escHandler; _escHandler = null; }
@@ -51,9 +44,8 @@ public static class CharacterCreationScreen
         // ── Header ───────────────────────────────────────────────────
         var (header, headerRule) = ScreenHeader.Create("Create Your Character", 1, 24);
 
-        // ── Identity section (centered) ──────────────────────────────
-        // Label (width 14) right-aligned, 3-char gap, then TextField.
-        // inputCol is anchored to label right edge + gap so they never overlap.
+        // ── Identity section (centered) ── Label(14) right-aligned, 3-gap, TextField.
+        // inputCol anchors to label right + gap → no overlap at any width.
         int labelW = 14, gap = 3, inputW = 22;
         Pos leftCol = Pos.Center() - (labelW + gap + inputW) / 2;
 

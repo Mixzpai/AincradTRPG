@@ -2,9 +2,8 @@ using SAOTRPG.Entities;
 
 namespace SAOTRPG.Systems.Story;
 
-// Central registry + dispatcher for scripted story events.
-// State (flags, faction rep, fired IDs) is static so it piggybacks on the
-// existing SaveData serialization pattern used by Achievements/TutorialSystem.
+// Scripted story events registry + dispatcher. Static state (matches
+// Achievements/TutorialSystem SaveData pattern).
 public static class StorySystem
 {
     public static HashSet<string> FiredEventIds { get; set; } = new();

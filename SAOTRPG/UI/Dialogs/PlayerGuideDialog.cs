@@ -7,24 +7,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Player Guide — opened with the B key (mnemonic: "Book").
-//
-// Layout: left column stacks a TreeView (categories + topics + tag roots) over
-// a Recent panel and a Bookmarks panel; right column shows the selected topic.
-//
-// Navigation:
-//   ↑/↓            move tree selection (body updates live)
-//   ← / →          collapse / expand a category node
-//   Enter (tree)   jump into the first [Bracketed] reference in the body,
-//                  or activate the topic
-//   Enter (body)   same jump — uses the body's visible text
-//   Backspace /    pop the SEE ALSO jump stack (previous topic)
-//    Ctrl+O
-//   1–5            jump to category N
-//   /              open live fuzzy-filter TextField
-//   b              (on tree) toggle bookmark for the selected topic
-//   Tab            cycle focus: Tree → Recent → Bookmarks → Body → Tree
-//   Esc            close the guide (or cancel an active search)
+// Player Guide — opened with B ("Book"). Left column: TreeView over Recent/Bookmarks panels; right: topic body.
+// Keys: ↑↓ select, ←→ collapse/expand, Enter jump via first [bracket], Bksp/Ctrl+O pop stack, 1–5 category, / search, b bookmark, Tab cycle, Esc close.
 //
 // Key-handling gotcha: ListView/TreeView widgets consume many keys internally
 // (digit type-ahead, letter nav, Enter activation). Shortcuts MUST be wired
@@ -35,24 +19,18 @@ public static class PlayerGuideDialog
 {
     private const int MinWidth = 96, MinHeight = 32;
     private const int LeftPaneWidth = 44;
-    // Hard body-wrap column — matches man-page convention and stays
-    // readable regardless of dialog width.
+    // Hard body-wrap column — man-page convention, width-independent.
     private const int BodyWrapCols = 72;
 
-    // Session-only state. Cleared at Show(); the persistent mirrors live in
-    // ProfileData.GuideVisitedTopics and ProfileData.GuideBookmarks.
-    // Static so the static TreeAspect/TreeColor stubs can read them.
+    // Session-only; persistent mirrors in ProfileData.GuideVisitedTopics/Bookmarks.
     private static readonly HashSet<string> _visitedThisSession = new();
     private static readonly HashSet<(string topic, string block)> _expanded = new();
 
-    // Captured by Show() so the static TreeAspect/TreeColor can see the
-    // current run context (for stat-dump only). Null when the guide is
-    // opened outside an active run (main menu → guide).
+    // Captured by Show() for stat-dump; null when opened outside an active run.
     private static TurnManager? _activeTm;
     private static Player? _activePlayer;
 
-    // Footer hint segments. Rendered with " · " joiner so appending extras
-    // (e.g. "?: help", "e: export") stays a non-conflicting string op.
+    // Footer hint segments, joined with " · " so extras append cleanly.
     private static readonly string[] FooterHint =
     {
         "↑↓: select",
@@ -75,10 +53,8 @@ public static class PlayerGuideDialog
         _                  => ColorSchemes.Gold,
     };
 
-    // ── Node model ────────────────────────────────────────────────────
-    // Small discriminated hierarchy for the TreeView. CategoryNode is a
-    // root with children; TagNode is a virtual polyhierarchy root; TopicNode
-    // is a leaf that points at a GuideEntry by index into Entries.
+    // ── Node model ──
+    // CategoryNode: root+children. TagNode: polyhierarchy root. TopicNode: leaf → GuideEntry by index.
     private abstract record GuideNode;
     private sealed record CategoryNode(string Name, List<TopicNode> Children) : GuideNode;
     private sealed record TagNode(string Tag, List<TopicNode> Children) : GuideNode;
@@ -86,12 +62,10 @@ public static class PlayerGuideDialog
 
     private static string TopicKey(PlayerGuideContent.GuideEntry e) => $"{e.Category}|{e.Title}";
 
-    // Regex for SEE ALSO jump-stack tokens: "[Topic Title]".
-    // Note: non-greedy, no nested brackets — titles don't contain ']'.
+    // SEE ALSO token regex "[Topic Title]". Non-greedy; titles lack ']'.
     private static readonly Regex BracketRegex = new(@"\[([^\]]+)\]", RegexOptions.Compiled);
 
-    // Receives run context for the stat-dump export. Both params nullable
-    // so main-menu callers (no active run) still compile.
+    // Both params nullable for main-menu callers (no active run).
     public static void Show(TurnManager? turnManager = null, Player? player = null)
     {
         ProfileData.EnsureLoaded();
@@ -106,11 +80,9 @@ public static class PlayerGuideDialog
 
         var entries = PlayerGuideContent.Entries;
 
-        // ── Build node roots ──────────────────────────────────────────
-        // Primary category roots preserve declaration order from Entries.
-        // Tag roots come after, alphabetized by tag name. Topics with no
-        // tags only appear under their category; topics with tags appear
-        // under their category AND every "Tag: <name>" root (polyhierarchy).
+        // ── Build node roots ──
+        // Category roots in Entries order; Tag roots after, alphabetized.
+        // Tagged topics appear under both their category and each Tag root (polyhierarchy).
         var categoryRoots = new List<CategoryNode>();
         var categoryByName = new Dictionary<string, CategoryNode>();
         var topicByKey = new Dictionary<string, TopicNode>(StringComparer.OrdinalIgnoreCase);
@@ -128,9 +100,7 @@ public static class PlayerGuideDialog
             var topic = new TopicNode(i, e);
             cat.Children.Add(topic);
             topicByKey[TopicKey(e)] = topic;
-            // Title-only map for [Bracketed] jumps. Duplicate titles would
-            // collide here; the guide currently has unique titles, but
-            // defensively prefer the first-seen to match declaration order.
+            // Title-only map for [Bracket] jumps; first-seen wins on collision.
             topicByTitle.TryAdd(e.Title, topic);
         }
 
@@ -158,23 +128,14 @@ public static class PlayerGuideDialog
         allRoots.AddRange(categoryRoots);
         allRoots.AddRange(tagRoots);
 
-        // ── Tree widget ───────────────────────────────────────────────
+        // ── Tree widget ──
         var listHeader = new Label
         {
             Text = "Topics", X = 1, Y = 0, Width = LeftPaneWidth,
             ColorScheme = ColorSchemes.Gold,
         };
 
-        // Split the left column: tree on top (gets most of it), then a small
-        // Recent panel, then Bookmarks. Dim.Fill(N) reserves N lines at the
-        // bottom for the search field + hint + close footer.
-        // Layout math (from bottom):
-        //   1: close footer hint
-        //   1: hint label
-        //   2: search label/field when visible (always reserves 2)
-        //   1: bookmarks header + 4 rows = 5
-        //   1: recent header + 4 rows = 5
-        // Tree fills the rest.
+        // Layout from bottom: 1 close-footer + 1 hint + 2 search + 5 bookmarks + 5 recent; tree fills rest.
         const int RecentRows = 4;
         const int BookmarkRows = 4;
         const int PanelBlockHeight = RecentRows + BookmarkRows + 2;  // headers
@@ -203,10 +164,8 @@ public static class PlayerGuideDialog
         foreach (var root in categoryRoots)
             tree.Expand(root);
 
-        // ── Recent / Bookmarks panels ────────────────────────────────
-        // Anchored to bottom: the 4-row tail leaves room for search/hint/footer;
-        // above it sit the two stacked panels (bookmarks on the bottom, recent
-        // on top). Pos.AnchorEnd offsets are measured from the dialog bottom.
+        // ── Recent / Bookmarks panels ──
+        // Anchored above the 4-row search/hint/footer tail; Pos.AnchorEnd offsets are from dialog bottom.
         var recentLabel = new Label
         {
             Text = "Recent", X = 1, Y = Pos.AnchorEnd(4 + BookmarkRows + RecentRows + 2),
@@ -247,9 +206,7 @@ public static class PlayerGuideDialog
             X = LeftPaneWidth + 2, Y = 2,
             Width = Dim.Fill(2), Height = Dim.Fill(4),
             ColorScheme = ColorSchemes.Body,
-            // Bodies are pre-wrapped to BodyWrapCols via WrapTo() so the
-            // TextView's auto-wrap is disabled — gives consistent 72-col
-            // layout regardless of dialog width and preserves [bracket] tokens.
+            // Pre-wrapped via WrapTo(BodyWrapCols); auto-wrap off preserves [bracket] tokens.
             ReadOnly = true, WordWrap = false,
         };
 
@@ -274,9 +231,7 @@ public static class PlayerGuideDialog
             ColorScheme = ColorSchemes.Dim,
         };
 
-        // Transient footer flash used by stat-dump (copy confirm) and any
-        // other status message. Hidden until Flash() shows it for 3s.
-        // Anchored above the hint bar.
+        // Transient footer flash for stat-dump copy confirm etc. Shown 3s via Flash().
         var footerFlash = new Label
         {
             Text = "", X = LeftPaneWidth + 2, Y = Pos.AnchorEnd(2),
@@ -332,8 +287,7 @@ public static class PlayerGuideDialog
             var node = tree.SelectedObject;
             if (node is TopicNode t)
             {
-                // Gated monster/boss topics stay masked until
-                // PlayerGuideKnowledge.MarkKnown fires at kill time.
+                // Gated monster/boss topics masked until PlayerGuideKnowledge.MarkKnown fires.
                 bool known = !IsGatedTitle(t.Entry.Title)
                           || ProfileData.GuideKnownTopics.Contains(t.Entry.Title);
                 if (!known)
@@ -349,12 +303,10 @@ public static class PlayerGuideDialog
                 }
                 bodyHeader.Text = $"{t.Entry.Category} › {t.Entry.Title}";
                 bodyHeader.ColorScheme = CategoryColor(t.Entry.Category);
-                // Render <details:TITLE>...</details> per expansion state,
-                // then hard-wrap to BodyWrapCols.
+                // Render <details:TITLE>…</details> per expansion state, then wrap.
                 string rendered = RenderBodyWithDetails(TopicKey(t.Entry), t.Entry.Body);
                 bodyText.Text = WrapTo(rendered, BodyWrapCols);
-                // Session visited set — clears the "· " unread dot.
-                _visitedThisSession.Add(TopicKey(t.Entry));
+                _visitedThisSession.Add(TopicKey(t.Entry));  // clears "· " unread dot
             }
             else if (node is CategoryNode c)
             {
@@ -398,8 +350,7 @@ public static class PlayerGuideDialog
             var oldNode = tree.SelectedObject;
             if (pushStack && oldNode is TopicNode oldTopic)
                 navStack.Push(TopicKey(oldTopic.Entry));
-            // Make sure the containing category is expanded so the topic is
-            // in the visible line map before we select it.
+            // Expand containing category so topic is visible before select.
             foreach (var cat in categoryRoots)
                 if (cat.Children.Contains(topic)) { tree.Expand(cat); break; }
             tree.SelectedObject = topic;
@@ -444,12 +395,9 @@ public static class PlayerGuideDialog
             return false;
         }
 
-        // ── Fuzzy filter ──────────────────────────────────────────────
-        // Scored substring match: characters of query must appear in order
-        // in the target with gaps. +3 per consecutive streak char, -1 per
-        // gap char, +5 for matching at start. Returns null if no match.
-        // Titles are scored at 3x weight vs. body; we take the max of the
-        // two when sorting.
+        // ── Fuzzy filter ──
+        // Subseq match: +3·streak per run, -1 per gap break, +5 prefix. Null = no match.
+        // Title weighted 3x vs body; sort by max of the two.
         static int? FuzzyScore(string text, string query)
         {
             if (string.IsNullOrEmpty(query)) return 0;
@@ -479,10 +427,8 @@ public static class PlayerGuideDialog
             return score;
         }
 
-        // Implemented against the TreeView<T>.Filter hook. Category/Tag roots
-        // stay visible if any child matches (otherwise expanding them shows
-        // an empty list). Topics match if their fuzzy score against title
-        // (primary) or body (fallback) is non-null.
+        // TreeView<T>.Filter hook: Category/Tag roots visible if any child matches;
+        // topics match on non-null fuzzy score (title primary, body fallback).
         var filter = new GuideFilter(FuzzyScore);
         tree.Filter = filter;
 
@@ -491,9 +437,8 @@ public static class PlayerGuideDialog
             filter.Query = query ?? "";
             if (!string.IsNullOrWhiteSpace(query))
             {
-                // Rebuild order so highest-scoring topics appear first.
-                // Scout flagged the defensive reselect pattern for the
-                // TreeView empty-objects crash — cover it here too.
+                // Score topics; snap selection to top scorer (can't reorder tree itself).
+                // Defensive reselect below covers TreeView empty-objects crash.
                 var scored = new List<(TopicNode topic, int score)>();
                 foreach (var cat in categoryRoots)
                     foreach (var topic in cat.Children)
@@ -502,18 +447,16 @@ public static class PlayerGuideDialog
                         if (s.HasValue) scored.Add((topic, s.Value));
                     }
                 scored.Sort((a, b) => b.score.CompareTo(a.score));
-                // We can't reorder the tree itself, but we can snap selection
-                // to the top scorer so the body updates meaningfully.
                 if (scored.Count > 0)
                 {
-                    // Ensure its category is expanded so it's visible.
+                    // Expand its category so the row is visible.
                     foreach (var cat in categoryRoots)
                         if (cat.Children.Contains(scored[0].topic)) { tree.Expand(cat); break; }
                     tree.SelectedObject = scored[0].topic;
                 }
             }
             tree.RebuildTree();
-            // Defensive — if filter cleared the selection, reselect a root.
+            // Defensive reselect if filter cleared selection.
             if (tree.SelectedObject == null && categoryRoots.Count > 0)
                 tree.SelectedObject = categoryRoots[0];
             tree.SetNeedsDraw();
@@ -541,17 +484,15 @@ public static class PlayerGuideDialog
             else if (e.KeyCode == KeyCode.Enter) { EndSearch(keepResults: true); e.Handled = true; }
         };
 
-        // ── Category jump ─────────────────────────────────────────────
+        // ── Category jump ──
         string[] categoryOrder = { "Combat & Rarity", "Progression", "World", "Items", "Quests & NPCs" };
         void JumpToCategory(int n)
         {
             if (n < 1 || n > categoryOrder.Length) return;
             string cat = categoryOrder[n - 1];
             if (!categoryByName.TryGetValue(cat, out var node)) return;
-            // If filter is active, clear it so the category is visible.
-            if (!string.IsNullOrWhiteSpace(filter.Query)) ApplyFilter("");
+            if (!string.IsNullOrWhiteSpace(filter.Query)) ApplyFilter("");  // clear filter
             tree.Expand(node);
-            // Select the first child topic for immediate body display.
             tree.SelectedObject = node.Children.Count > 0 ? node.Children[0] : (GuideNode)node;
         }
 
@@ -577,9 +518,8 @@ public static class PlayerGuideDialog
             else tree.SetFocus();
         }
 
-        // ── Central key dispatch ──────────────────────────────────────
-        // Returns true if the key was handled. Overlay hooks (`?`, `e`,
-        // stat-dump) inject here.
+        // ── Central key dispatch ──
+        // Returns true if handled. Overlay hooks (?, e, stat-dump) inject here.
         bool HandleGuideKey(KeyCode key, System.Text.Rune rune)
         {
             switch (key)
@@ -620,8 +560,7 @@ public static class PlayerGuideDialog
                     if (PopNavStack()) { e.Handled = true; return; }
                     break;
                 case KeyCode.Enter:
-                    // Enter on a TopicNode = try jump; on category = default
-                    // expand/collapse behavior (let the tree handle it).
+                    // Topic: try bracket jump. Category: let tree handle expand/collapse.
                     if (tree.SelectedObject is TopicNode &&
                         JumpToFirstBracketedReference())
                     { e.Handled = true; return; }
@@ -650,9 +589,7 @@ public static class PlayerGuideDialog
                     if (PopNavStack()) { e.Handled = true; return; }
                     break;
                 case KeyCode.Enter:
-                    // If the cursor line has a [Topic] xref, the SEE ALSO
-                    // jump wins; otherwise a ▸/▾ marker on that line toggles
-                    // the progressive-disclosure block.
+                    // [Topic] xref on cursor line wins; else ▸/▾ toggles progressive-disclosure block.
                     if (tree.SelectedObject is TopicNode currentTopic)
                     {
                         string cursorLine = GetCursorLine(bodyText);
@@ -699,7 +636,7 @@ public static class PlayerGuideDialog
         }
         HookPanel(recentList, idx =>
         {
-            // sessionRecent is oldest-first; display is newest-first.
+            // sessionRecent oldest-first; display newest-first.
             if (idx < 0 || idx >= sessionRecent.Count) return null;
             return sessionRecent[sessionRecent.Count - 1 - idx];
         });
@@ -727,10 +664,8 @@ public static class PlayerGuideDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // ── Tree row rendering ────────────────────────────────────────────
-
-    // Visited-marker "· " prefix for unread topics, "??? (Unknown)" masking
-    // for gated monster/boss entries, trailing "*" for bookmarked rows.
+    // ── Tree row rendering ──
+    // "· " prefix = unread, "??? (Unknown)" = gated monster/boss, trailing "*" = bookmarked.
     private static string TreeAspect(object? node)
     {
         switch (node)
@@ -756,8 +691,7 @@ public static class PlayerGuideDialog
         }
     }
 
-    // Dim unread and gated rows; brighten bookmarks (Gold).
-    // Categories/tags keep the baseline tinting.
+    // Dim unread/gated; bookmarks Gold; categories/tags keep baseline tint.
     private static ColorScheme? TreeColor(object? node)
     {
         switch (node)
@@ -773,10 +707,7 @@ public static class PlayerGuideDialog
                 if (ProfileData.GuideBookmarks.Contains(key)) return ColorSchemes.Gold;
                 if (IsGatedTitle(e.Title) && !ProfileData.GuideKnownTopics.Contains(e.Title))
                     return ColorSchemes.Dim;
-                // Subtle dim for topics not yet visited this session OR ever.
-                bool everVisited = ProfileData.GuideVisitedTopics.Contains(key);
-                if (!everVisited && !_visitedThisSession.Contains(key))
-                    return null; // leading "· " prefix is the primary signal
+                // Leading "· " prefix is the primary unread signal — no extra tint.
                 return null;
             }
             default:
@@ -784,18 +715,14 @@ public static class PlayerGuideDialog
         }
     }
 
-    // ── ??? gating helper ─────────────────────────────────────────────
-    // Title prefixes mirror PlayerGuideKnowledge.MarkKnown conventions.
+    // ── ??? gating helper ──
+    // Prefixes mirror PlayerGuideKnowledge.MarkKnown conventions.
     private static bool IsGatedTitle(string title) =>
         title.StartsWith("Monster: ") || title.StartsWith("Boss: ") || title.StartsWith("Field Boss: ");
 
-    // ── Progressive disclosure ────────────────────────────────────────
-    //
-    // Content markers: <details:TITLE>...</details> embedded in a body.
-    // Collapsed: "▸ TITLE (Enter to expand)"
-    // Expanded:  "▾ TITLE" + inner block.
-    // Session state lives in _expanded, keyed by (topicKey, block title).
-
+    // ── Progressive disclosure ──
+    // <details:TITLE>…</details> markers; collapsed "▸ TITLE (Enter to expand)", expanded "▾ TITLE" + inner.
+    // Session state in _expanded, keyed by (topicKey, block title).
     private static string RenderBodyWithDetails(string topicKey, string body)
     {
         if (string.IsNullOrEmpty(body)) return body;
@@ -833,7 +760,7 @@ public static class PlayerGuideDialog
             var lines = all.Split('\n');
             if (row >= 0 && row < lines.Length) return lines[row];
         }
-        catch { /* defensive: any Terminal.Gui internal quirk returns empty */ }
+        catch { /* Terminal.Gui internal quirk → empty */ }
         return "";
     }
 
@@ -853,8 +780,7 @@ public static class PlayerGuideDialog
         return false;
     }
 
-    // Fallback: if the cursor isn't on a ▸/▾ line, toggle the first still-
-    // collapsed block. Keeps Enter useful when the cursor is at file start.
+    // Fallback (cursor not on ▸/▾ line): toggle first collapsed block.
     private static bool ToggleFirstCollapsed(string topicKey, string body)
     {
         if (string.IsNullOrEmpty(body)) return false;
@@ -878,11 +804,8 @@ public static class PlayerGuideDialog
         return false;
     }
 
-    // ── 72-col paragraph-preserving wrap ──────────────────────────────
-    //
-    // Blank-line-separated paragraphs wrap independently. Leading whitespace
-    // on the first line of a paragraph is repeated on continuation lines so
-    // bullet lists and indented blocks keep their visual shape.
+    // ── 72-col paragraph-preserving wrap ──
+    // Blank-line-separated paragraphs wrap independently; leading whitespace repeated on continuation lines.
     // [bracketed-links] are atomic — never broken across lines.
     private static string WrapTo(string text, int cols)
     {
@@ -946,7 +869,7 @@ public static class PlayerGuideDialog
                 int close = s.IndexOf(']', i);
                 if (close >= 0)
                 {
-                    // Absorb trailing punctuation to keep sentence flow intact.
+                    // Absorb trailing punctuation to preserve sentence flow.
                     int end = close + 1;
                     while (end < s.Length && ".,;:!?".IndexOf(s[end]) >= 0) end++;
                     result.Add(s.Substring(i, end - i));
@@ -962,9 +885,7 @@ public static class PlayerGuideDialog
         return result;
     }
 
-    // ── ? contextual keybindings overlay ──────────────────────────────
-    // Modal 60x20, centered. Any key dismisses. Grouped Nav / Search /
-    // Actions / Exit.
+    // ── ? keybindings overlay ── Modal 60x20; any key dismisses.
     private static void ShowKeybindOverlay()
     {
         const int W = 60, H = 20;
@@ -1022,9 +943,8 @@ public static class PlayerGuideDialog
         overlay.Dispose();
     }
 
-    // ── Cogmind-style run-summary clipboard dump ──────────────────────
-    // Pulls live data from the TurnManager + Player captured by Show().
-    // If null (main-menu invocation), flashes "No active run".
+    // ── Run-summary clipboard dump ──
+    // Pulls from TurnManager+Player captured by Show(); flashes "No active run" when null.
     private static void ShowStatDump(Action<string, ColorScheme?> flash)
     {
         var tm = _activeTm;
@@ -1044,9 +964,7 @@ public static class PlayerGuideDialog
             .ToList();
         string skillList = skills.Count == 0 ? "None" : string.Join(", ", skills);
 
-        // Divine objects (1H sword / rapier / dagger / bow / etc. Divine-rarity).
-        // Counted from inventory + equipped slots. "N/7" matches the canonical
-        // 7-divine-object goal referenced in lore.
+        // Divine objects from inventory + equipped slots; "N/7" matches lore's 7-object goal.
         var divineNames = new List<string>();
         foreach (var it in p.Inventory.Items)
             if (it.Rarity == "Divine" && !string.IsNullOrEmpty(it.Name))
@@ -1101,10 +1019,9 @@ public static class PlayerGuideDialog
         }
     }
 
-    // ── Filter implementation ─────────────────────────────────────────
-    // Accepts category/tag roots when any child matches; accepts topics
-    // when fuzzy score is non-null. Title scored; body scored at half
-    // weight as a fallback so body-only hits still surface.
+    // ── Filter implementation ──
+    // Roots match if any child matches; topics match on non-null score.
+    // Title full-weight; body half-weight as fallback for body-only hits.
     private sealed class GuideFilter : ITreeViewFilter<GuideNode>
     {
         private readonly Func<string, string, int?> _scoreFn;

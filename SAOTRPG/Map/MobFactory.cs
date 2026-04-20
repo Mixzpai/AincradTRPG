@@ -3,22 +3,18 @@ using SAOTRPG.Entities;
 
 namespace SAOTRPG.Map;
 
-// Creates floor-appropriate mobs with difficulty scaling and variant rolls.
-// Mob templates are organized by floor tier (0-indexed).
-// Variant system: 10% Elite (1.5× stats), 3% Champion (2× stats).
+// Floor-appropriate mobs with scaling + variant rolls. Templates by 0-indexed tier.
+// Variants: 10% Elite (1.5x stats), 3% Champion (2x stats).
 public static class MobFactory
 {
-    // Per-mob template record. LootTag maps to themed drops in TurnManager.GetMobLoot().
-    // Set Poison/Bleed to true for status-inflicting mobs.
+    // LootTag → themed drops in TurnManager.GetMobLoot(). Poison/Bleed etc. for status-inflicters.
     private record MobTemplate(string Name, char Symbol, Color Color, int Aggro,
         bool Poison = false, bool Bleed = false, bool Stun = false, bool Slow = false,
         string LootTag = "generic", int Range = 1, string? Ability = null,
         bool Swim = false);
 
-    // Floor-tiered mob template table. Index mapped via FloorToTier() so lower
-    // floors (F1-F5) each get a dedicated canon-named roster, and later floors
-    // share broader era-pools. All names sourced from SAO canon (Progressive,
-    // anime, Integral Factor, Hollow Fragment) where possible.
+    // Floor-tier mob table via FloorToTier(); F1-F5 dedicated canon rosters, later floors share era pools.
+    // Names sourced from SAO canon (Progressive, anime, IF, HF) where possible.
     private static readonly MobTemplate[][] FloorMobs =
     {
         // Tier 0 — Floor 1: Town of Beginnings wilderness (Progressive Vol 1)
@@ -52,9 +48,7 @@ public static class MobFactory
             new MobTemplate("Cave Bat",               'v', Color.DarkGray,      8, LootTag: "insect", Ability: "Leap"),
             new MobTemplate("Toadstool Walker",       'f', Color.BrightMagenta, 4, Poison: true, LootTag: "plant"),
         },
-        // Tier 3 — Floor 4: Rovia flooded (Progressive Vol 4). FB-077 — all
-        // five F4 mobs carry CanSwim so water tiles aren't a free choke for
-        // the player on a flood-themed floor.
+        // Tier 3 — F4 Rovia flooded (Prog Vol 4). All 5 mobs CanSwim — water isn't a free choke on a flood floor.
         new[]
         {
             new MobTemplate("Water Drake",            'd', Color.BrightBlue,    6, LootTag: "dragon", Range: 3, Swim: true),
@@ -131,8 +125,7 @@ public static class MobFactory
         },
     };
 
-    // Map a floor number to a tier index. F1-F5 each get a dedicated canon
-    // roster; F6-10, F11-25, F26-50, F51-75, F76-100 share broader era pools.
+    // F1-5 dedicated tiers; F6-10, F11-25, F26-50, F51-75, F76-100 share era pools.
     private static int FloorToTier(int floor)
     {
         if (floor <= 5)  return floor - 1;
@@ -150,29 +143,22 @@ public static class MobFactory
         return FloorMobs[tier].Select(t => t.Name).ToArray();
     }
 
-    // FB-058 Title System support: resolve a species Name (as recorded by
-    // Bestiary, which may carry Elite/Champion/Affix prefixes stripped by
-    // callers) back to its template LootTag. Walks every tier so species
-    // shared across tiers resolve against the first-seen entry. Returns
-    // null for unrecognized names so callers can default to "generic".
+    // Species name → LootTag (walks every tier, first-seen wins). Returns null → caller defaults to "generic".
     public static string? GetLootTagForName(string? name)
     {
         if (string.IsNullOrEmpty(name)) return null;
-        // Try exact match first.
+        // Exact match first.
         foreach (var tier in FloorMobs)
             foreach (var t in tier)
                 if (t.Name == name) return t.LootTag;
-        // Fall back to suffix match so "Elite Frenzy Boar" still resolves
-        // if the caller forgot to strip the prefix.
+        // Suffix match so "Elite Frenzy Boar" still resolves when prefix wasn't stripped.
         foreach (var tier in FloorMobs)
             foreach (var t in tier)
                 if (name.EndsWith(t.Name)) return t.LootTag;
         return null;
     }
 
-    // Creates a floor-appropriate mob with difficulty scaling.
-    // Picks a random template from the floor's tier, applies stat scaling,
-    // then rolls for Elite/Champion variant.
+    // Picks a random tier template, applies stat scaling, rolls Elite/Champion variant.
     public static Mob CreateFloorMob(int floor, int statScale = 100)
     {
         int tier = FloorToTier(Math.Max(1, floor));
@@ -211,8 +197,7 @@ public static class MobFactory
         mob.SpecialAbility = template.Ability;
         mob.CanSwim = template.Swim;
 
-        // Variant roll — 10% Elite (1.5x stats/2x rewards), 3% Champion (2x stats/3x rewards)
-        // Add new variants by extending this block.
+        // Variant: 10% Elite (1.5x stats/2x reward), 3% Champion (2x stats/3x reward).
         int variantRoll = Random.Shared.Next(100);
         if (variantRoll < 3)
         {
@@ -248,9 +233,7 @@ public static class MobFactory
         return mob;
     }
 
-    // FB-063 Town Guard — spawns in F1 Town of Beginnings plaza when the
-    // player's karma is <= -50 (Outlaw tier). Not a random-roster mob;
-    // placed directly by PopulateTownOfBeginnings. Mid-tier stats at Lv20.
+    // Town Guard — F1 TOB plaza patrol at karma <= -50. Direct-placed by PopulateTownOfBeginnings; mid-tier Lv20.
     public static Mob CreateTownGuard()
     {
         var guard = new Mob

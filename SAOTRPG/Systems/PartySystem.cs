@@ -5,9 +5,7 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Systems;
 
-// Manages the player's party of up to 2 AI allies.
-// Allies follow the player, attack nearby enemies, and can be recruited
-// by talking to specific named NPCs on each floor.
+// Up to 2 AI allies. Follow + auto-attack; recruited via named NPC dialog.
 public static class PartySystem
 {
     public static List<Ally> Members { get; set; } = new();

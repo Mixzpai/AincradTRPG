@@ -240,16 +240,12 @@ public partial class TurnManager
         _map.SetTileType(tx, ty, TileType.Floor);
     }
 
-    // Secret Shrine tile. One-shot weapon discovery — when the player steps
-    // on a shrine, they receive the T1 chain weapon associated with the
-    // current floor and the tile reverts to plain Floor. No dialog, no
-    // confirmation — walk, gain, continue.
+    // Secret Shrine: one-shot T1 chain weapon grant; tile reverts to Floor.
     private void HandleSecretShrine(Tile tile, int tx, int ty)
     {
         if (!WeaponEvolutionChains.SecretShrineByFloor.TryGetValue(CurrentFloor, out var defId))
         {
-            // Shouldn't happen — shrine was placed on an unlisted floor somehow.
-            // Convert to floor silently rather than hand out nothing.
+            // Shrine on unlisted floor — defensively convert silently.
             _map.SetTileType(tx, ty, TileType.Floor);
             return;
         }

@@ -10,9 +10,7 @@ namespace SAOTRPG.Systems;
 // status application, aggro/flee alerts, and movement.
 public partial class TurnManager
 {
-    // Reusable snapshot buffer so each turn's iteration doesn't allocate a
-    // fresh List. Cleared + refilled every call; sized to the entity count
-    // automatically by List<T>.Add growth.
+    // Reused snapshot buffer (avoids per-turn List alloc).
     private readonly List<Entity> _entityTurnBuffer = new();
 
     private void ProcessEntityTurns()
@@ -431,7 +429,21 @@ public partial class TurnManager
         // Only warn for genuinely dangerous high-level mobs.
         if (newDist < oldDist && _aggroAlerted.Add(monster.Id))
         {
-            Bestiary.RecordEncounter(monster.Name, monster.Level, monster.MaxHealth, monster.BaseAttack);
+            string lootTag = monster is Mob mb ? mb.LootTag : "generic";
+            bool isBoss      = monster is Boss && monster is not FieldBoss;
+            bool isFieldBoss = monster is FieldBoss;
+            bool isElite     = monster is Mob me && (me.Variant == "Elite" || me.Variant == "Champion");
+            bool pz = monster is Mob mpz && mpz.CanPoison;
+            bool bl = monster is Mob mbl && mbl.CanBleed;
+            bool st = monster is Mob mst && mst.CanStun;
+            bool sl = monster is Mob msl && msl.CanSlow;
+            Bestiary.RecordEncounter(
+                monster.Name, monster.Level, monster.MaxHealth, monster.BaseAttack,
+                floor: CurrentFloor,
+                lootTag: lootTag,
+                glyph: monster.Symbol, glyphColor: monster.SymbolColor,
+                isBoss: isBoss, isFieldBoss: isFieldBoss, isElite: isElite,
+                canPoison: pz, canBleed: bl, canStun: st, canSlow: sl);
             if (monster.Level >= _player.Level + 3 && _dangerWarned.Add(monster.Id))
             {
                 int diff = monster.Level - _player.Level;
@@ -444,9 +456,7 @@ public partial class TurnManager
             _map.MoveEntity(monster, newX, newY);
     }
 
-    // FB-077 — Monster-specific passability. Land-bound mobs fall back to
-    // Tile.IsWalkable (water blocks). Aquatic mobs (CanSwim) also accept
-    // Water + WaterDeep tiles, provided the tile isn't otherwise occupied.
+    // FB-077 — Mob passability. Land uses Tile.IsWalkable; CanSwim adds Water/WaterDeep.
     private bool IsMonsterWalkable(Monster monster, int x, int y)
     {
         var tile = _map.GetTile(x, y);

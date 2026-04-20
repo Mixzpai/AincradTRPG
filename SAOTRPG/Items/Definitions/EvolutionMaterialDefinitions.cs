@@ -2,9 +2,7 @@ using SAOTRPG.Items.Materials;
 
 namespace SAOTRPG.Items.Definitions;
 
-// Chain-specific materials for Priority 5 weapon evolution.
-// Each chain has ONE unique material; quantities for each T1->T2->T3->T4
-// upgrade step will be defined in the Phase B crafting recipes.
+// Chain-specific weapon evolution materials — one unique per chain; T1→T4 step qtys in crafting recipes.
 public static class EvolutionMaterialDefinitions
 {
     // Tyrfing chain (One-Handed Sword).

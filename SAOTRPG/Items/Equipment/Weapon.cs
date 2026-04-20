@@ -15,22 +15,13 @@ public class Weapon : EquipmentBase
     // Examples: "SkillCooldown-1", "CritHeal+5", "ParryChance+10", "Bleed+20"
     public string? SpecialEffect { get; set; }
 
-    // IM canon: a small set of Last-Attack-Bonus floor-boss weapons trade
-    // enhance-ability for higher flat stats. When false, CraftingDialog Enhance
-    // is blocked on this weapon.
+    // IM Last-Attack-Bonus weapons trade enhance-ability for higher flat stats; false blocks CraftingDialog Enhance.
     public bool IsEnhanceable { get; set; } = true;
 
-    // IM Enhancement Ores (System 3): parallel history of which ore defId
-    // contributed each enhance level (length == EnhancementLevel). On legacy
-    // saves where the history is missing, SaveManager.DeserializeItem
-    // auto-populates with Crimson Flame (Attack) so existing +N still reads
-    // as +N Attack — no retroactive stat change.
+    // IM Enhancement Ores (System 3): per-level ore DefId history (len == EnhancementLevel).
+    // Legacy saves auto-populate with Crimson Flame (Attack) so existing +N still reads +N Attack.
     public List<string> EnhancementOreHistory { get; set; } = new();
 
-    // FD Paired Dual-Wield flag. When true, this weapon is pre-tuned for
-    // dual-wield and may occupy the OffHand slot WITHOUT requiring the
-    // Dual Blades unique skill unlock. See Systems.DualWieldPairs for the
-    // canonical partner registry — when both a MainHand and OffHand weapon
-    // form a registered pair, combat applies a Pair Resonance synergy.
+    // FD Paired — pre-tuned dual-wield, OffHand without DualBlades unlock. Systems.DualWieldPairs lists canon partners → Pair Resonance synergy.
     public bool IsDualWieldPaired { get; set; } = false;
 }

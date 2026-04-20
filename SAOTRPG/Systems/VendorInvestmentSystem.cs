@@ -4,34 +4,14 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// FB-072 Part B — per-vendor stock-tier investment.
-//
-// Players can deposit Col into a specific vendor to boost ONLY that vendor's
-// available stock tier. This layers on top of the global ShopTierSystem (which
-// unlocks tiers run-wide when floor bosses are cleared at F50+). Each vendor
-// tracks its own cumulative deposit total; tier bonuses are derived from
-// thresholds and capped to prevent runaway scaling.
-//
-// Thresholds (cumulative):
-//   •    1,000 Col → +1 tier
-//   •    5,000 Col → +2 tiers
-//   •   20,000 Col → +3 tiers (CAP)
-//
-// Keyed by vendor identity — defaults to ShopName when the vendor has no
-// persistent Id. Fine for this pass since each floor's vendors have distinct
-// ShopName strings. Re-keying to a stable GUID would be the migration path
-// if two vendors ever share a ShopName.
-//
-// Legacy saves: VendorInvestments defaults to an empty dict → zero invested
-// tiers everywhere → no behavior change until the player opens the shop
-// dialog and uses the Invest button.
+// FB-072 Part B — per-vendor stock-tier investment. Layers on ShopTierSystem.
+// Thresholds (cumulative): 1k=+1, 5k=+2, 20k=+3 (cap).
+// Keyed by ShopName (distinct per floor; GUID-migrate if collisions appear).
 public static class VendorInvestmentSystem
 {
-    // Maximum cumulative deposit per vendor. Beyond this, Invest() clamps.
     public const int MaxInvestmentPerVendor = 20000;
 
-    // Tier thresholds in ascending order: (MinDeposit, BonusTiers).
-    // The lookup walks this from highest to lowest and returns the first hit.
+    // (MinDeposit, BonusTiers) — walked highest-first; first hit wins.
     private static readonly (int MinDeposit, int BonusTiers)[] Thresholds =
     {
         (20000, 3),
@@ -39,26 +19,20 @@ public static class VendorInvestmentSystem
         ( 1000, 1),
     };
 
-    // Cumulative deposits keyed by vendor id (or ShopName fallback).
-    // SaveData roundtrips this dict so mid-run investment survives a reload.
+    // Cumulative deposits by vendor key. Roundtripped via SaveData.
     public static Dictionary<string, int> Investments { get; } = new();
 
-    // Resolve the key used to look up / write a vendor's investment total.
-    // Vendor currently has no dedicated Id — ShopName is guaranteed non-null
-    // and distinct across the run's vendor roster in practice.
+    // Key = ShopName (fallback "{Name}#{Id}"). Vendor has no stable Id yet.
     public static string KeyFor(Vendor vendor) =>
         !string.IsNullOrEmpty(vendor.ShopName) ? vendor.ShopName
             : $"{vendor.Name ?? "vendor"}#{vendor.Id}";
 
-    // Total Col currently deposited at this vendor (0 if never invested).
     public static int GetInvested(string vendorKey) =>
         Investments.TryGetValue(vendorKey, out var total) ? total : 0;
 
     public static int GetInvested(Vendor vendor) => GetInvested(KeyFor(vendor));
 
-    // Number of BONUS stock tiers this vendor has unlocked via investment.
-    // 0..3. Stacks with ShopTierSystem.CurrentTierCount() — those are global,
-    // this one is scoped to the vendor being queried.
+    // Bonus tiers (0..3) unlocked via investment. Stacks with ShopTier global.
     public static int GetInvestedTiers(string vendorKey)
     {
         int total = GetInvested(vendorKey);
@@ -69,8 +43,7 @@ public static class VendorInvestmentSystem
 
     public static int GetInvestedTiers(Vendor vendor) => GetInvestedTiers(KeyFor(vendor));
 
-    // Col required to reach the NEXT tier from the current deposit total.
-    // Returns 0 once the player is at MaxInvestmentPerVendor (no next tier).
+    // Col needed to reach next tier; 0 at MaxInvestmentPerVendor.
     public static int NextTierCost(string vendorKey)
     {
         int total = GetInvested(vendorKey);
@@ -82,10 +55,8 @@ public static class VendorInvestmentSystem
 
     public static int NextTierCost(Vendor vendor) => NextTierCost(KeyFor(vendor));
 
-    // Attempt to invest `amount` Col into a vendor. The deposit is clamped
-    // to not exceed MaxInvestmentPerVendor cumulatively. Returns the actual
-    // Col transferred (0 if the player couldn't afford anything or the
-    // vendor is already at cap). Logs a one-line result when log != null.
+    // Invest `amount` Col; clamps to MaxInvestmentPerVendor + player balance.
+    // Returns actual transferred (0 if cap or broke). Logs one line if log != null.
     public static int Invest(Vendor vendor, Player player, int amount, IGameLog? log = null)
     {
         if (amount <= 0) return 0;
@@ -120,11 +91,8 @@ public static class VendorInvestmentSystem
         return actual;
     }
 
-    // Build extra stock entries unlocked by this vendor's investment tier.
-    // Walks ShopTierSystem's tier list beyond the run's current global tier
-    // and pulls the NEXT N tiers (where N = investment bonus) into this
-    // vendor's stock. If no extra global tiers remain (all unlocked), the
-    // investment provides no visible stock — documented in the UI label.
+    // Extra stock from investment: next N tiers beyond global unlock.
+    // If all tiers already globally unlocked, no visible extra stock (UI documents).
     public static List<BaseItem> BuildVendorExtraStock(Vendor vendor)
     {
         int bonusTiers = GetInvestedTiers(vendor);
@@ -132,8 +100,7 @@ public static class VendorInvestmentSystem
 
         var list = new List<BaseItem>();
         int granted = 0;
-        // Walk the registered tier floors in ascending order, skipping ones
-        // already globally unlocked. Take the next `bonusTiers` unlock lists.
+        // Walk tiers ascending, skip globally-unlocked, take next `bonusTiers`.
         foreach (var (floor, defIds) in ShopTierSystem.EnumerateAllTiers())
         {
             if (floor <= ShopTierSystem.HighestFloorBossCleared) continue;
@@ -150,8 +117,7 @@ public static class VendorInvestmentSystem
         return list;
     }
 
-    // Reset from a loaded save. Replaces in-memory state with the persisted
-    // dict (or empties if null). Called from SaveManager on load.
+    // Replace state from saved dict (null = clear). Called by SaveManager.
     public static void SetForLoad(Dictionary<string, int>? saved)
     {
         Investments.Clear();
@@ -161,10 +127,8 @@ public static class VendorInvestmentSystem
                 Investments[kvp.Key] = Math.Clamp(kvp.Value, 0, MaxInvestmentPerVendor);
     }
 
-    // Snapshot for saving. Returns a shallow copy so the save-writer owns
-    // the dict it hands to the JSON serializer.
+    // Shallow copy for save-writer ownership.
     public static Dictionary<string, int> Snapshot() => new(Investments);
 
-    // Reset between runs (new game). Mirrors ShopTierSystem.SetForLoad(0).
     public static void Clear() => Investments.Clear();
 }

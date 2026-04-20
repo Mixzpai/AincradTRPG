@@ -2,9 +2,7 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Systems.Skills;
 
-// State + dispatcher for Unique Skills. All skills stack — the player
-// can accumulate every unique skill across a long run. Passive effects
-// apply at combat time based on current equipment and conditions.
+// Unique Skills state + dispatcher. All skills stack; passives apply in combat.
 public static class UniqueSkillSystem
 {
     public static HashSet<UniqueSkill> Unlocked { get; set; } = new();
@@ -152,8 +150,7 @@ public static class UniqueSkillSystem
 
     // ── Unlock-check hooks (called from TurnManager at relevant events) ──
 
-    // Weapon-kill milestones. KatanaMastery at 100; Dual Blades / Holy Sword
-    // fallbacks for players who skip the narrative routes.
+    // Weapon-kill milestones: KatanaMastery@100; Dual/Holy fallbacks for non-narrative paths.
     public static UniqueSkill? CheckWeaponKillMilestone(string wpnType, int weaponKills)
     {
         if (wpnType == "Katana" && weaponKills == 100 && TryUnlock(UniqueSkill.KatanaMastery))

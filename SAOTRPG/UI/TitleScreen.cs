@@ -72,9 +72,7 @@ public static class TitleScreen
             Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim,
         };
 
-        // Menu buttons — bracket-free. The diamond markers `► … ►` toggle on
-        // focus via HasFocusChanged below so the highlighted option is
-        // spatially obvious without framing chrome around idle rows.
+        // Menu buttons (bracket-free). ► … ► markers toggle on focus via HasFocusChanged below.
         int menuY = 18;
         var newGameBtn  = MakeBtn("New Game",  menuY,     true);
         var loadGameBtn = MakeBtn("Load Game", menuY + 2, false);
@@ -94,12 +92,8 @@ public static class TitleScreen
             };
         }
 
-        // Focus highlight wiring — wrap focused row in `► Label ◄` (mirror
-        // pair, triangles point INTO the word like framing brackets). Strip
-        // markers on blur. Text is pre-padded with 2 spaces either side when
-        // idle so horizontal alignment stays stable when focus moves. Also
-        // keeps IsDefault synced with focus so Enter always activates the
-        // currently-highlighted row.
+        // Focus wiring: wrap focused row in ► Label ◄, strip on blur, pad idle rows 2 spaces each side.
+        // IsDefault stays synced so Enter activates the currently-highlighted row.
         foreach (var btn in new[] { newGameBtn, loadGameBtn, recordsBtn, optionsBtn, exitBtn })
         {
             btn.HasFocusChanged += (s, e) =>
@@ -200,11 +194,7 @@ public static class TitleScreen
         NoDecorations = true, NoPadding = true,
     };
 
-    // Remove existing markers (triangles + surrounding spaces) before
-    // re-applying a new state. Idempotent — safe to call on any button
-    // text regardless of current focus state. Handles both the mirror
-    // pair (► … ◄) and any legacy single-direction pair from prior
-    // iterations so swapping marker styles doesn't leave stale glyphs.
+    // Strip triangles + surrounding spaces (idempotent); handles ► … ◄ mirror + legacy variants.
     private static string StripMarkers(string text)
     {
         var s = text.Trim();
@@ -232,9 +222,6 @@ public static class TitleScreen
         catch { return ""; }
     }
 
-    // Routes to RecordsDialog: structured 80x30 dialog showing summary,
-    // achievement panels, progress bars, recent runs (10), and a
-    // tab-switchable victory leaderboard sortable by Col / Turns / Level /
-    // Kills / PlayTime / Date / Grade.
+    // Routes to RecordsDialog — 80x30 summary + achievements + recent runs + leaderboard.
     private static void ShowRecords() => Dialogs.RecordsDialog.Show();
 }

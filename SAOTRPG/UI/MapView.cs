@@ -216,6 +216,8 @@ public partial class MapView : View
     public event Action<int>? SwordSkillRequested;
     public event Action? SwordSkillMenuRequested;
     public event Action? QuestLogRequested;
+    // Opens the Bestiary dialog (Y key).
+    public event Action? BestiaryRequested;
     // Fired on Esc from the map view — opens the pause menu.
     public event Action? PauseRequested;
 

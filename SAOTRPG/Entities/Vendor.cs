@@ -7,23 +7,16 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.Entities
 {
-    // Shop NPC — sells potions, food, and floor-scaled equipment.
-    // Rendered as 'V' in green. Stock is regenerated per floor via GenerateStock.
+    // Shop NPC — potions/food + floor-scaled gear. Stock regenerates per floor via GenerateStock.
     public class Vendor : NPC
     {
         public override char Symbol { get; protected set; } = 'V';
         public override Color SymbolColor { get; protected set; } = Color.BrightGreen;
 
-        /****************************************************************************************/
-        // Vendor-Specific Properties
-
-        // Shop display name shown in the shop dialog title bar.
         public string ShopName { get; set; } = string.Empty;
-        // Current item stock available for purchase.
         public List<BaseItem> ShopStock { get; set; } = new();
 
-        // Generate floor-appropriate shop inventory. Clears existing stock
-        // and adds consumables + floor-scaled weapon and armor.
+        // Floor-appropriate inventory: consumables + scaled weapon/armor.
         public void GenerateStock(int floor)
         {
             ShopStock.Clear();

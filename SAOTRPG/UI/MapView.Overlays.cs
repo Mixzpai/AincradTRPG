@@ -28,8 +28,7 @@ public partial class MapView
         RenderSkillFlashes(w, h);
         RenderKillStreakFlash(w, h);
         RenderLevelUpFlash(w, h);
-        // Low-HP pulse is the background state; border flash is momentary
-        // and higher-priority, so it must draw LAST to win the cell.
+        // Border flash draws LAST to win the cell over the low-HP background pulse.
         RenderWeatherOverlay(w, h);
         RenderAllyIndicators(w, h);
         RenderBossEntrance(w, h);
@@ -98,8 +97,7 @@ public partial class MapView
         for (int i = _damageFlashes.Count - 1; i >= 0; i--)
         {
             var (fx, fy, text, color, framesLeft, isCrit) = _damageFlashes[i];
-            // Only draw if the tile is still visible — prevents flashes from
-            // leaking through shroud after the player walks out of sight.
+            // Visible-only — prevents shroud leak after the player walks out of sight.
             if (_map.InBounds(fx, fy) && _map.IsVisible(fx, fy))
             {
                 int vx = MapToVx(fx), vy = MapToVy(fy - 1);
@@ -340,9 +338,7 @@ public partial class MapView
         Color c = weather == Systems.WeatherType.Rain ? Color.Cyan : Color.DarkGray;
         var attr = Gfx.Attr(c, Color.Black);
 
-        // Rain/fog is decorative noise — use the shared RNG to avoid a
-        // per-frame allocation. Particle count and style are unchanged;
-        // only the scatter pattern no longer reseeds from turn count.
+        // Decorative noise → shared RNG; scatter no longer reseeds from turn count.
         var rng = Random.Shared;
         for (int i = 0; i < count; i++)
         {
@@ -445,8 +441,7 @@ public partial class MapView
         if (phase != "Night" && phase != "Dusk" && phase != "Dawn") return;
         int starCount = phase == "Night" ? 12 : 5;
 
-        // Twinkling stars are decorative noise — the shared RNG avoids a
-        // per-frame allocation. Star count is still phase-gated above.
+        // Twinkling = decorative noise → shared RNG (star count still phase-gated above).
         var rng = Random.Shared;
         var attr = Gfx.Attr(Color.White, Color.Black);
         var dimAttr = Gfx.Attr(Color.DarkGray, Color.Black);
@@ -454,8 +449,7 @@ public partial class MapView
         {
             int vx = rng.Next(0, w), vy = rng.Next(0, h / 2); // top half of viewport
             int mx = VxToMap(vx), my = VyToMap(vy);
-            // Only draw on cells that are outside explored area — not on
-            // currently-visible terrain, not on remembered rooms.
+            // Unexplored cells only (not visible, not remembered rooms).
             if (_map.InBounds(mx, my) && _map.IsExplored(mx, my)) continue;
             bool bright = rng.Next(3) == 0;
             DrawGlyph_View(vx, vy, bright ? '*' : '·', bright ? attr : dimAttr);
@@ -473,8 +467,7 @@ public partial class MapView
     private void RenderBossEntrance(int w, int h)
     {
         if (_bossEntranceFrames <= 0 || string.IsNullOrEmpty(_bossEntranceName)) return;
-        // Banner text (with ToUpper + brackets) was precomputed in
-        // TriggerBossEntrance so this per-frame draw allocates nothing.
+        // Banner text pre-built in TriggerBossEntrance → per-frame draw allocates nothing.
         bool bright = (_bossEntranceFrames & 1) == 0;
         Color c = bright ? Color.BrightRed : Color.BrightYellow;
         DrawCenteredBanner(_bossEntranceBanner, Math.Max(2, h / 2 - 2), Gfx.Attr(c, Color.Black), w);

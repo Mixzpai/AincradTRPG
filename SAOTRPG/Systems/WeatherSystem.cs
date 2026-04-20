@@ -1,8 +1,6 @@
 namespace SAOTRPG.Systems;
 
-// Per-floor weather state. Randomly assigned on floor generation.
-// Each type has a gameplay effect: Clear = +1 regen, Rain = −3 crit,
-// Fog = reduced visibility, Wind = +5 throwable damage.
+// Per-floor weather. Effects: Clear=+1 regen, Rain=-3 crit, Fog=-vision, Wind=+5 throwable.
 public enum WeatherType
 {
     // Pleasant conditions — +1 passive HP regen bonus.
@@ -22,9 +20,7 @@ public static class WeatherSystem
     // Current floor weather state.
     public static WeatherType Current { get; private set; } = WeatherType.Clear;
 
-    // Per-weather configuration: label, gameplay modifiers, flavor text.
-    // Public API funnels through this table — adding a new weather type means
-    // adding one row here instead of touching six switch statements.
+    // Per-weather config (label, modifiers, flavor). Single table, no switches.
     private readonly record struct WeatherConfig(
         string Label,
         int Weight,
@@ -42,9 +38,7 @@ public static class WeatherSystem
         [WeatherType.Wind]  = new("Windy", 20,  0, 0,   0, 0, "A strong wind sweeps through the corridors."),
     };
 
-    // Roll a new random weather for the given floor.
-    // Called once during floor generation. The floor parameter is reserved
-    // for future biome-specific weather tables.
+    // Roll weather for floor. Floor param reserved for biome-specific tables.
     public static void RollWeather(int floor)
     {
         int total = 0;

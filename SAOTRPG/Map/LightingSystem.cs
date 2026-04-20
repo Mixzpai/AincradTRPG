@@ -1,10 +1,7 @@
 namespace SAOTRPG.Map;
 
-// Per-tile RGB light accumulation. Each emissive tile (and the player's
-// personal torch) casts a Shadowcaster-driven FOV; contributions are
-// summed per channel with a linear falloff and clamped to [0, 255].
-// Usage: one instance owned by GameMap, recomputed whenever
-// GameMap.UpdateVisibility runs.
+// Per-tile RGB light. Shadowcaster-driven FOV per emissive tile (+ player torch);
+// linear falloff, summed per channel, clamped to [0,255]. Owned by GameMap; recomputed on UpdateVisibility.
 public sealed class LightingSystem
 {
     // Accumulated light at a tile, stored as float RGB to allow clean summation.
@@ -17,14 +14,7 @@ public sealed class LightingSystem
     public int Width { get; }
     public int Height { get; }
 
-    // Baseline light in every tile — now driven by DayNightCycle so the
-    // world brightens at noon and darkens toward midnight. See
-    // DayNightCycle.Ambient for the per-frame RGB.
-
-    // Player-carried torch — warm white, moderately bright so nearby
-    // feature lights (campfires, shrines) can still show their own
-    // color over the torch's glow instead of being drowned out.
-    // Torch flickers: radius oscillates 11-13, color shifts warm/cool per turn.
+    // Ambient via DayNightCycle.Ambient. Player torch: warm white, flickers (radius 11-13, color warm/cool per turn).
     private static LightRgb TorchColor()
     {
         int phase = DayNightCycle.CurrentTurn % 4;
@@ -40,9 +30,7 @@ public sealed class LightingSystem
 
     private readonly LightRgb[,] _light;
 
-    // Emissive tile coordinates are owned by GameMap (GameMap.EmissiveTiles).
-    // We only cache the per-type (color, radius) lookup to skip the switch
-    // on every frame.
+    // Emissive coords owned by GameMap.EmissiveTiles; we only cache per-type (color, radius).
 
     public LightingSystem(int width, int height)
     {
@@ -63,8 +51,7 @@ public sealed class LightingSystem
     // Fast path for render loops that have already done a bounds check.
     public LightRgb GetLightUnchecked(int x, int y) => _light[x, y];
 
-    // Region-of-interest radius — matches the viewport FOV so all visible
-    // tiles are lit. Updated dynamically from DayNightCycle.ViewportRadius.
+    // ROI radius matches viewport FOV so all visible tiles are lit.
     private static int LightingRoiRadius => DayNightCycle.ViewportRadius + 10;
 
     public void Update(GameMap map, int playerX, int playerY)
@@ -73,8 +60,7 @@ public sealed class LightingSystem
         AddSource(map, playerX, playerY, TorchRadius(), TorchColor());
 
         int roiSq = LightingRoiRadius * LightingRoiRadius;
-        // Shrine/Fountain radius breathes ±1 tile on a slow sine so the
-        // colored pool on the floor expands and contracts.
+        // Shrine/Fountain radius breathes ±1 on a slow sine (colored pool expands/contracts).
         double pulsePhase = (DayNightCycle.CurrentTurn % 12) / 12.0 * Math.PI * 2.0;
         int pulseDelta = (int)Math.Round(Math.Sin(pulsePhase));
         foreach (var (sx, sy, stype) in map.EmissiveTiles)
@@ -104,12 +90,10 @@ public sealed class LightingSystem
             _light[x, y] = ambient;
     }
 
-    // Scratch buffer to track per-source contributions so diagonal tiles
-    // (visited by two shadowcaster quadrants) don't get double-lit.
+    // Scratch per-source — diagonals visited by two quadrants don't double-light.
     private float[]? _scratchR, _scratchG, _scratchB;
 
-    // Cached delegates and per-source state for shadowcasting — reused across
-    // every AddSource call so we don't allocate 20-40 closures per turn.
+    // Cached delegates + per-source state reused across AddSource calls to avoid 20-40 closures/turn.
     private GameMap? _srcMap;
     private int _srcSx, _srcSy, _srcRadius;
     private float _srcColorR, _srcColorG, _srcColorB;
@@ -147,24 +131,20 @@ public sealed class LightingSystem
             _scratchB = new float[len];
         }
 
-        // Lazy-cache the delegates once. Method-group conversions to instance
-        // methods allocate one delegate up front and are reused forever after.
+        // Method-group delegates allocate once and reuse.
         _blockingPred ??= IsSourceBlocking;
         _revealCb ??= RevealSourceTile;
 
-        // Stash per-source context into fields so the cached delegates can
-        // read them without captures.
+        // Stash per-source context so cached delegates read without captures.
         _srcMap = map;
         _srcSx = sx; _srcSy = sy; _srcRadius = radius;
         _srcColorR = color.R; _srcColorG = color.G; _srcColorB = color.B;
         _srcInvRadius = radius > 0 ? 1f / radius : 0f;
 
-        // Collect per-source contribution into scratch, taking MAX per tile
-        // so overlapping quadrant boundaries don't double-add.
+        // Scratch takes MAX per tile — overlapping quadrant boundaries don't double-add.
         Shadowcaster.Compute(sx, sy, radius, _blockingPred, _revealCb);
 
-        // Merge scratch into the light grid (additive across different sources)
-        // then clear scratch for next source.
+        // Additively merge scratch into grid, then clear scratch.
         int x0 = Math.Max(0, sx - radius), x1 = Math.Min(Width, sx + radius + 1);
         int y0 = Math.Max(0, sy - radius), y1 = Math.Min(Height, sy + radius + 1);
         for (int y = y0; y < y1; y++)
@@ -182,10 +162,7 @@ public sealed class LightingSystem
         }
     }
 
-    // Precomputed sqrt LUT for small integer distance-squared values used by
-    // the light falloff. Covers d^2 up to (maxRadius)^2 — max light radius in
-    // GetEmission is ~13 (torch) so (13+3)^2 = 256 comfortably covers it.
-    // Values beyond the table fall back to Math.Sqrt (rare at runtime).
+    // sqrt LUT for integer d²; covers torch radius 13 → (13+3)²=256. Fallback to Math.Sqrt beyond.
     private const int SqrtLutSize = 400;
     private static readonly float[] SqrtLut = BuildSqrtLut();
     private static float[] BuildSqrtLut()
@@ -200,10 +177,7 @@ public sealed class LightingSystem
         return (float)Math.Sqrt(d2);
     }
 
-    // Tiles that emit light and the RGB tint + reach of each. All radii are
-    // Euclidean and shadowcasted, so walls block propagation naturally.
-    // Radii are generous enough that the colored pools overlap with the
-    // player torch, producing visible warm/cool blends on the ground.
+    // Emissive tiles: RGB tint + Euclidean shadowcasted radius. Generous overlap with torch for warm/cool blends.
     private static (LightRgb Color, int Radius)? GetEmission(TileType type) => type switch
     {
         TileType.Campfire      => (LightRgb.Of(255, 180,  80), 8),   // warm orange

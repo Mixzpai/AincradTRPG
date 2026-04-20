@@ -11,11 +11,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Anvil crafting dialog -- Repair equipment, Enhance it (+1 to +10),
-// or Evolve a chain weapon to its next tier (Priority 5 Phase B).
-// Enhancement costs Col + materials and has a success rate that drops
-// at higher levels, following SAO canon mechanics. Evolution consumes
-// chain-specific catalysts and swaps the equipped weapon for its apex tier.
+// Anvil dialog: Repair, Enhance (+1..+10), Evolve chain weapons, Refine sockets.
+// Enhancement costs Col+mats, success rate drops after +4 (SAO canon); evolution swaps to next-tier.
 public static class CraftingDialog
 {
     private const int DialogWidth = 72, DialogHeight = 26;
@@ -100,8 +97,7 @@ public static class CraftingDialog
                 int maxDur = 50 + floor * 10 + eq.EnhancementLevel * 5;
                 if (eq.ItemDurability < maxDur) { eq.ItemDurability = maxDur; repaired++; }
             }
-            // Broken gear contributes 0 bonuses; repairing restores them, so
-            // the cached aggregate must be rebuilt on next read.
+            // Broken gear gives 0 bonuses; repair restores → cached aggregate must rebuild.
             if (repaired > 0) player.Inventory.InvalidateStatCache();
             if (repaired == 0)
             {
@@ -186,8 +182,7 @@ public static class CraftingDialog
 
         var (chosenSlot, chosenItem) = candidates[choice];
 
-        // IM Non-enhanceable check (System 2): LAB floor-boss weapons are
-        // sealed — canon IM tradeoff for their higher flat stats.
+        // LAB floor-boss weapons sealed — canon IM tradeoff for higher flat stats.
         if (chosenItem is Weapon weaponCheck && !weaponCheck.IsEnhanceable)
         {
             resultLabel.Text = $"{weaponCheck.EnhancedName} cannot be enhanced.\n" +
@@ -215,10 +210,8 @@ public static class CraftingDialog
             return;
         }
 
-        // IM System 3: for weapons, require the player to pick an
-        // enhancement ore up front. Ore identity decides which stat gets
-        // this level's bonus. Armor/accessories skip the ore picker and
-        // use the legacy flat-Defense/-Attack path.
+        // Weapons: ore picker up front — ore identity biases this level's stat.
+        // Armor/accessories skip picker, use legacy flat Defense/Attack path.
         string? chosenOreDefId = null;
         if (chosenItem is Weapon)
         {
@@ -237,9 +230,7 @@ public static class CraftingDialog
 
         if (success)
         {
-            // Unequip to remove old bonuses, enhance, re-equip with new bonuses.
-            // Weapon path threads the ore DefId through so the per-level bonus
-            // is biased to the ore's stat instead of flat Attack.
+            // Weapon path threads oreDefId so per-level bonus biases to ore's stat.
             ApplyEnhancementDelta(player, chosenItem, +1, chosenOreDefId);
 
             string biasMsg = "";
@@ -255,12 +246,9 @@ public static class CraftingDialog
         }
         else
         {
-            // Failure: materials consumed, Col spent, no improvement.
-            // On +7 or higher, risk of losing a level (SAO canon).
+            // +7 and above: 30% risk of losing a level (SAO canon). Pops last ore for -1 inverse.
             if (chosenItem.EnhancementLevel >= 7 && Random.Shared.Next(100) < 30)
             {
-                // On level loss we pop the last ore from history (if any) and
-                // remove the stat it contributed, matching the +1 inverse.
                 ApplyEnhancementDelta(player, chosenItem, -1, null);
 
                 resultLabel.Text = $"FAILURE! Enhancement dropped to +{chosenItem.EnhancementLevel}!\n" +
@@ -278,10 +266,8 @@ public static class CraftingDialog
         header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
     }
 
-    // IM System 3: list all enhancement ores the player holds (grouped by
-    // DefId, counts shown) and return the chosen DefId — or null if the
-    // player has no ores or cancels. Writes a hint into resultLabel on the
-    // no-ore path so the Anvil UI reflects why the flow aborted.
+    // List ores grouped by DefId; return picked DefId or null (cancel / none owned).
+    // No-ore path writes hint to resultLabel so the Anvil UI explains the abort.
     private static string? PickEnhancementOre(Player player, Label resultLabel)
     {
         var oreStacks = player.Inventory.Items
@@ -314,10 +300,8 @@ public static class CraftingDialog
         return oreStacks[which].DefId;
     }
 
-    // Shared enhance/de-enhance: unequip, adjust level and stat bonus by ±1,
-    // re-equip. Weapon bonuses route through the ore-biased stat (IM System 3)
-    // — oreDefId names the ore consumed for +1, and is pulled from history on
-    // -1. Armor/accessories keep legacy flat-Defense/-Attack behavior.
+    // Shared enhance/de-enhance: unequip, adjust level by ±1, re-equip.
+    // Weapons route through ore-biased stat; armor/accessories keep flat DEF/ATK.
     private static void ApplyEnhancementDelta(Player player, EquipmentBase item, int delta, string? oreDefId)
     {
         item.Unequip(player);
@@ -333,9 +317,7 @@ public static class CraftingDialog
                 var stat = EnhancementOreDefinitions.OreDefIdToStat
                     .TryGetValue(ore, out var s) ? s : StatType.Attack;
                 weapon.Bonuses.Add(stat, bonus);
-                // Adamant flavour: ores may carry a one-off ItemDurability
-                // reinforcement on socket. Read via ItemRegistry prototype
-                // to avoid hard-coded ore defId lookups here.
+                // Ores may carry one-off durability reinforcement (Adamant flavor); read via prototype.
                 int durBump = GetOreDurabilityBonus(ore);
                 if (durBump != 0) weapon.ItemDurability += durBump;
             }
@@ -367,13 +349,10 @@ public static class CraftingDialog
 
         item.EnhancementLevel += delta;
         item.Equip(player);
-        // Bonuses list was mutated on a still-equipped item — drop cache.
-        player.Inventory.InvalidateStatCache();
+        player.Inventory.InvalidateStatCache();  // Bonuses mutated on equipped item
     }
 
-    // Look up an ore's DurabilityBonus by instantiating its prototype from
-    // ItemRegistry. Returns 0 for any ore that doesn't define one (default).
-    // Adamant Ore is the only ore with a non-zero value today (+10/level).
+    // Ore DurabilityBonus via prototype. Only Adamant Ore is non-zero today (+10/level).
     private static int GetOreDurabilityBonus(string oreDefId)
     {
         if (ItemRegistry.Create(oreDefId) is EnhancementOre ore)
@@ -381,10 +360,9 @@ public static class CraftingDialog
         return 0;
     }
 
-    // ── Evolve (Priority 5 Phase B) ───────────────────────────────────
-    // Consumes chain-specific catalysts (+ peak extra at T3) and swaps the
-    // equipped weapon for its next-tier incarnation. Preserves enhancement
-    // level. T4 apex weapons cannot evolve further.
+    // ── Evolve ──
+    // Consumes chain catalysts (+ peak extra at T3), swaps weapon for next tier.
+    // Preserves enhancement level; T4 apex cannot evolve further.
     private static void TryEvolveWeapon(Player player, Label resultLabel, Label header)
     {
         var equipped = player.Inventory.GetEquipped(EquipmentSlot.Weapon);
@@ -461,25 +439,18 @@ public static class CraftingDialog
         if (step.PeakExtraMatId != null)
             ConsumeMaterialByDefId(player, step.PeakExtraMatId, 1);
 
-        // Preserve enhancement. The enhance bonuses live in Bonuses; we bake
-        // the equivalent of the existing level into the new weapon, then swap.
+        // Preserve enhancement: bake existing-level bonuses into the new weapon then swap.
         int oldEnhLevel = weapon.EnhancementLevel;
         string oldName = weapon.EnhancedName;
 
-        // Unequip old weapon (removes its stat bonuses from the player).
-        weapon.Unequip(player);
+        weapon.Unequip(player);  // removes old stat bonuses from player
 
-        // If the old weapon was +N, fold those bonuses into the new weapon so
-        // the displayed +N is real. IM System 3: preserve per-level ore
-        // biases from the old weapon's history so the stat distribution
-        // follows the player's prior investment (not a flat +Attack rebake).
+        // Fold old +N bonuses into new weapon, preserving per-level ore biases (not flat rebake).
         if (oldEnhLevel > 0)
         {
             int bonusPerLevel = BonusPerLevel(nextWeapon);
             nextWeapon.EnhancementLevel = oldEnhLevel;
-            // Copy ore history 1:1 (length == oldEnhLevel on any save-migrated
-            // or natively-forged weapon). Fallback to Crimson Flame if the
-            // count mismatch sneaks through.
+            // Copy ore history 1:1; fallback to Crimson Flame on count mismatch.
             nextWeapon.EnhancementOreHistory = new List<string>(weapon.EnhancementOreHistory);
             while (nextWeapon.EnhancementOreHistory.Count < oldEnhLevel)
                 nextWeapon.EnhancementOreHistory.Add("ore_crimson_flame");
@@ -492,21 +463,15 @@ public static class CraftingDialog
             }
         }
 
-        // Put the old weapon back in the backpack (inventory list) so the
-        // player can verify the swap / sell the previous tier. The Equip call
-        // below will auto-remove the old one from the equipped slot anyway.
+        // Return old weapon to backpack so player can verify/sell.
         player.Inventory.AddItem(weapon);
 
-        // Equip the new weapon. Inventory.Equip will also pull it off the
-        // backpack list if present; since we just created it, we add first
-        // then equip to route through the normal flow.
+        // Add-then-Equip routes through normal flow; Equip pulls off backpack list.
         player.Inventory.AddItem(nextWeapon);
         player.Inventory.Equip(nextWeapon, player);
         player.Inventory.InvalidateStatCache();
 
-        // Log with gold + magenta emphasis. The ◈ prefix triggers
-        // LogColorRules.Rules to render the line in BrightRed as a heavy
-        // accent for the transformation, matching the Divine Object log style.
+        // ◈ prefix triggers LogColorRules BrightRed accent (Divine Object style).
         resultLabel.Text =
             $"◈ Your {oldName} evolves into {nextWeapon.EnhancedName}!\n" +
             $"Consumed {step.MaterialQty}x {matName}" +
@@ -516,8 +481,7 @@ public static class CraftingDialog
         header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
     }
 
-    // Resolves the display name of a material from its DefId via a throwaway
-    // ItemRegistry.Create lookup. Falls back to the DefId if unknown.
+    // Material display name via throwaway ItemRegistry.Create; falls back to DefId.
     private static string MaterialDisplayName(string defId)
     {
         var item = ItemRegistry.Create(defId);
@@ -531,8 +495,7 @@ public static class CraftingDialog
             .Where(m => m.DefinitionId == defId)
             .Sum(m => m.Quantity);
 
-    // Decrement `count` units of the material matching `defId` across stacks.
-    // Removes empty stacks from the inventory. No-op if insufficient.
+    // Decrement `count` units matching `defId` across stacks; removes empties. No-op if insufficient.
     private static void ConsumeMaterialByDefId(Player player, string defId, int count)
     {
         int remaining = count;
@@ -556,16 +519,12 @@ public static class CraftingDialog
             player.Inventory.RemoveItem(item);
     }
 
-    // ── Refine ───────────────────────────────────────────────────────────
-    // Socket an Ingot into one of the 3 Refinement slots on the currently
-    // equipped weapon or shield (OffHand). Override-only: replacing an
-    // occupied slot destroys the old ingot. Divine-rarity gear is sealed
-    // and cannot be refined (handled here + in Refinement.Socket).
+    // ── Refine ──
+    // Socket an Ingot into one of 3 slots on equipped weapon/shield.
+    // Override destroys the old ingot. Divine = sealed (also enforced in Refinement.Socket).
     private static void ShowRefineMenu(Player player, Label resultLabel, Label header)
     {
-        // Collect refinable equipment: Weapon slot + OffHand if it's a shield
-        // (Armor but NOT a Weapon — dual-blade offhands are not refinable via
-        // this flow either since they compete with the weapon branch).
+        // Refinable: Weapon slot + OffHand shield (dual-blade offhands skipped — weapon-branch conflict).
         var candidates = new List<(EquipmentSlot Slot, EquipmentBase Item, string Label)>();
         var weapon = player.Inventory.GetEquipped(EquipmentSlot.Weapon);
         if (weapon is EquipmentBase wEq) candidates.Add((EquipmentSlot.Weapon, wEq, "Weapon"));
@@ -643,8 +602,7 @@ public static class CraftingDialog
             return;
         }
 
-        // Build a choice list. MessageBox.Query gets cramped with 12+
-        // buttons — truncate to the first 10 owned ingots, cheapest first.
+        // MessageBox.Query gets cramped past 12 buttons — truncate to 10 cheapest.
         var shown = ingotStacks.Take(10).ToList();
         var ingotLabels = shown
             .Select(t =>
@@ -686,10 +644,7 @@ public static class CraftingDialog
             "Confirm", "Cancel");
         if (confirm != 0) return;
 
-        // Refinement.Socket consumes exactly 1 ingot from the inventory.
-        // Any "rarity tax" beyond that (CostForRarity - 1) is consumed here
-        // as additional matching ingots. This mirrors the scout's intent
-        // (higher-tier ingots demand more stock to attempt the socket).
+        // Refinement.Socket takes 1; extra (cost-1) is consumed here as rarity tax.
         int extra = Math.Max(0, cost - 1);
         if (extra > 0)
         {

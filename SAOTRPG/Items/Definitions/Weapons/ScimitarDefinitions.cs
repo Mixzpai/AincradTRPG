@@ -2,10 +2,8 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
-// Static registry of all scimitar (curved blade) weapons.
-// Scimitars: fast slashing curved blades. Distinct from 1H swords — trade
-// block chance for attack speed, and have a natural bleed affinity.
-// Canon across SAO Hollow Realization, Hollow Fragment, Infinity Moment.
+// Scimitar registry. Fast curved slashers: trade block chance for attack speed, natural bleed affinity.
+// Canon: HR, HF, IM.
 public static class ScimitarDefinitions
 {
     private static Weapon Make(string id, string name, int value, string rarity, int durability,
@@ -36,8 +34,7 @@ public static class ScimitarDefinitions
     public static Weapon CreateCelestialScimitar() => Make("celestial_scimitar", "Celestial Scimitar", 6000, "Legendary", 200, 75, 118,
         B().Add(StatType.Attack, 62).Add(StatType.Dexterity, 18).Add(StatType.Agility, 12));
 
-    // ── Hollow Realization Evolution Chain (Scimitar) ───────────────
-    // Moonstruck Saber -> Diablo Esperanza -> Iblis -> Satanachia.
+    // ── HR Scimitar Chain: Moonstruck Saber → Diablo Esperanza → Iblis → Satanachia.
 
     // Moonstruck Saber, lunar-tempered curved blade. T1 of the Satanachia chain.
     public static Weapon CreateMoonstruckSaber() => Make("moonstruck_saber", "Moonstruck Saber", 1800, "Rare", 120, 15, 62,
@@ -51,13 +48,11 @@ public static class ScimitarDefinitions
     public static Weapon CreateIblis() => Make("iblis", "Iblis", 12000, "Legendary", 210, 60, 145,
         B().Add(StatType.Attack, 75).Add(StatType.Dexterity, 22).Add(StatType.Agility, 14), "Bleed+20");
 
-    // T4 Divine — Scimitar evolution chain apex.
-    // No existing Legendary Scimitar peer; this creates the Scimitar chain endpoint.
+    // T4 Divine — Scimitar chain apex (no prior Legendary peer).
     public static Weapon CreateSatanachia() => Make("satanachia", "Satanachia", 40000, "Divine", 999, 80, 165,
         B().Add(StatType.Attack, 85).Add(StatType.Dexterity, 26).Add(StatType.Agility, 18).Add(StatType.Strength, 14), "Bleed+25");
 
-    // ── Hollow Fragment Implement System (Scimitar) ────────────────
-    // Canon HF F80-F99 implements filling the Scimitar gaps.
+    // ── HF Implement System (Scimitar) — F80-F99 implements filling Scimitar gaps.
 
     // HF F80 implement. Arcaneblade — soul-binder curve edge; SP gain on hit (flavor).
     public static Weapon CreateArcanebladeSoulBinder() => Make("sci_arcaneblade_soul_binder", "Arcaneblade: Soul Binder", 15000, "Legendary", 195, 76, 140,

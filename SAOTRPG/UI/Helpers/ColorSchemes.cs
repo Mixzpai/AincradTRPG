@@ -8,10 +8,7 @@ public static class ColorSchemes
 {
     // ── Core UI palettes ─────────────────────────────────────────────
 
-    // Standard button style: gray text, white-on-dark when focused.
-    // All interactive buttons: gray idle, bright gold on focus.
-    // Unified with MenuButton so every button in the game highlights
-    // the same way — no more white vs yellow inconsistency.
+    // Standard button: gray idle, BrightYellow focus — unified with MenuButton for consistency.
     public static readonly ColorScheme Button = new()
     {
         Normal   = Gfx.Attr(Color.Gray,         Color.Black),
@@ -117,8 +114,7 @@ public static class ColorSchemes
 
     // ── Selection palettes ────────────────────────────────────────────
 
-    // Tier / radio selection: white idle, black-on-gold when focused
-    // so the highlighted option is always clearly visible.
+    // Tier / radio: white idle, black-on-gold focus so highlight is unmissable.
     public static readonly ColorScheme TierRadio = new()
     {
         Normal    = Gfx.Attr(Color.White,        Color.Black),
@@ -128,9 +124,8 @@ public static class ColorSchemes
         Disabled  = Gfx.Attr(Color.DarkGray,     Color.Black),
     };
 
-    // ListView selection: dim gray rows, bright-inverted row under the cursor.
-    // Used by the Player Guide topic list and any vertically-scrolling picker
-    // where the player must immediately see which row they're on.
+    // ListView selection: dim gray rows, bright-inverted under cursor.
+    // Used by Player Guide topic list + any vertically-scrolling picker.
     public static readonly ColorScheme ListSelection = new()
     {
         Normal    = Gfx.Attr(Color.Gray,         Color.Black),
@@ -142,8 +137,7 @@ public static class ColorSchemes
 
     // ── Dynamic palette helpers ─────────────────────────────────────
 
-    // Creates a non-interactive scheme with the given foreground on black.
-    // Useful for one-off labels where a predefined scheme doesn't exist.
+    // Non-interactive scheme with `fg` on black — for one-off labels.
     public static ColorScheme FromColor(Color fg) => new()
     {
         Normal    = Gfx.Attr(fg,             Color.Black),

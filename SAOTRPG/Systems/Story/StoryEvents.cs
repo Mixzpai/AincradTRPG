@@ -2,9 +2,8 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Systems.Story;
 
-// Ten authored milestone events for the SAO 100-floor arc. Each is a pure
-// data entry: trigger + fire predicate + cutscene builder. StorySystem
-// owns firing, persistence, and replay-shortcutting.
+// 10 milestone events for SAO 100F arc: trigger + predicate + cutscene.
+// StorySystem owns firing/persistence/replay.
 public static class StoryEvents
 {
     // Color palette for speakers.

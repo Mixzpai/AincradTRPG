@@ -2,9 +2,8 @@ using System.Text.Json;
 
 namespace SAOTRPG.Systems;
 
-// Persistent lifetime statistics tracked across all runs.
-// Saved to %LocalAppData%/AincradTRPG/lifetime_stats.json.
-// Updated on death and victory — never resets.
+// Lifetime stats across runs at %LocalAppData%/AincradTRPG/lifetime_stats.json.
+// Updated on death/victory; never resets.
 public static class LifetimeStats
 {
     private static readonly string FilePath =
@@ -30,6 +29,19 @@ public static class LifetimeStats
         public int TurnCount { get; set; }
     }
 
+    // Per-mob knowledge carried across runs. Survives permadeath so the
+    // player's bestiary is cumulative. Populated by Bestiary.SaveToLifetimeStats.
+    public class BestiaryKnowledge
+    {
+        public string Name { get; set; } = "";
+        public int Kills { get; set; }
+        public int Encounters { get; set; }
+        public int FirstFloor { get; set; }
+        public int LastFloor { get; set; }
+        public int DeathsCaused { get; set; }
+        public string LastSeenDate { get; set; } = "";
+    }
+
     public class Data
     {
         public int TotalRuns { get; set; }
@@ -44,10 +56,11 @@ public static class LifetimeStats
         // RecentRuns = last N completed runs regardless of outcome (death
         // or victory). Cap is 10.
         public List<RunEntry> RecentRuns { get; set; } = new();
-        // VictoryRuns = ONLY completed victories. Uncapped — the leaderboard
-        // view can sort these by any field. Legacy saves start with an
-        // empty list and get populated on the next victory.
+        // Victory-only list, uncapped (leaderboard sorts at display time).
         public List<RunEntry> VictoryRuns { get; set; } = new();
+        // Cross-run bestiary knowledge, keyed by mob Name. Legacy saves
+        // start empty and get populated the first time Bestiary.Save runs.
+        public Dictionary<string, BestiaryKnowledge> BestiaryKnown { get; set; } = new();
     }
 
     // Load stats from disk. Returns empty stats if file missing or corrupt.
@@ -88,9 +101,7 @@ public static class LifetimeStats
         _ => 1,
     };
 
-    // Record a completed run (death or victory). Victories are also
-    // appended to the VictoryRuns list (uncapped) for the leaderboard view.
-    // RecentRuns holds the last 10 of any outcome.
+    // Record run. Victories append to VictoryRuns (uncapped); RecentRuns caps at 10.
     public static void RecordRun(int kills, int floor, int level, string grade,
         TimeSpan playTime, int colEarned, bool victory,
         string playerName = "Unknown", int turnCount = 0)
@@ -119,11 +130,12 @@ public static class LifetimeStats
         if (data.RecentRuns.Count > 10)
             data.RecentRuns.RemoveRange(10, data.RecentRuns.Count - 10);
 
-        // VictoryRuns: ONLY completed victories. Uncapped (Aincrad-climb
-        // achievements are permanent brag-worthy). Leaderboard sort is
-        // done at display time — stored in insertion order.
+        // Victory-only, uncapped. Stored insertion-order; sort at display.
         if (victory) data.VictoryRuns.Add(entry);
 
         Save(data);
+
+        // Durable Bestiary write even without manual saves.
+        Bestiary.SaveToLifetimeStats();
     }
 }

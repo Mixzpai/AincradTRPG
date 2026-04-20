@@ -2,15 +2,8 @@ using SAOTRPG.Items.Materials;
 
 namespace SAOTRPG.Items.Consumables;
 
-// IF-canon Refinement Ingot. Stackable, socketable "consumable" — consumed by
-// being socketed into one of an equipment's 3 RefinementSlots (see
-// Refinement.Socket). Unlike Potion/Crystal it is never Use()'d directly — the
-// refinement helper reads the primary/secondary/third stat bonuses below and
-// folds them into the target equipment's Bonuses collection.
-//
-// Extends Material (not Consumable) because ingots have no per-use effect
-// dispatch — they are raw crafting-stat inputs, similar to EvolutionMaterial
-// but routed through the Refinement system instead of Evolve recipes.
+// IF Refinement Ingot — socketable into equipment's 3 RefinementSlots via Refinement.Socket (never Use()'d).
+// Extends Material (not Consumable) — raw crafting-stat input, routed through Refinement vs Evolve.
 public class Ingot : Material
 {
     // Positive effect (what the player wants).

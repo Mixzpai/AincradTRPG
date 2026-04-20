@@ -177,10 +177,7 @@ public partial class TurnManager
         };
     }
 
-    // 15% of chest equipment rolls pull from the floor-banded registered
-    // loot pool (IF canon Anneal line + series secondary weapons). Falls
-    // back to the procedural generator if the pool is empty for this floor
-    // or the DefId fails to resolve.
+    // 15% chance to pull from floor-banded registered pool; else procedural.
     private BaseItem? RollEquipmentWithRegisteredPool()
     {
         if (Random.Shared.Next(100) < 15)

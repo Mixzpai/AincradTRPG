@@ -1,9 +1,6 @@
 namespace SAOTRPG.Systems;
 
-// Quest system -- procedurally generated NPC quests with four SAO-canon types:
-// Kill (elimination), Collect (fetch materials), Explore (discover a tile/area),
-// and Deliver (bring an item to an NPC). Quests are given by NPCs on each floor,
-// tracked in a quest log, and reward Col + XP on completion.
+// Procedural NPC quests: Kill/Collect/Explore/Deliver. Reward Col + XP.
 
 public enum QuestType { Kill, Collect, Explore, Deliver }
 public enum QuestStatus { Active, Complete, TurnedIn }

@@ -3,15 +3,11 @@ using SAOTRPG.Map;
 
 namespace SAOTRPG.Systems;
 
-// Simple state-based monster AI. Each monster decides one action per turn:
-// flee (below 20% HP), attack (adjacent), chase (within aggro), or wander (idle).
-// Movement uses Chebyshev distance for 8-directional grids.
-// Aggro range is per-mob (Mob.AggroRange); stealth halves detection range.
-// Leash mechanic returns mobs to spawn if they chase too far.
+// Simple state AI: flee (<20% HP), attack (adj), chase (in aggro), wander.
+// Chebyshev dist, 8-dir. Stealth halves aggro; leash returns to spawn.
 public static class SimpleAI
 {
-    // ── 8-direction offsets (N, S, W, E, NW, NE, SW, SE) ──────────
-    // All 8 movement directions for wander shuffling.
+    // ── 8-direction offsets ──────────
     private static readonly (int dx, int dy)[] Directions =
     {
         ( 0, -1), ( 0, 1), (-1, 0), ( 1, 0),

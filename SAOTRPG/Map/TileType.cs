@@ -42,8 +42,7 @@ public enum TileType
 
     // Environmental
     LoreStone,
-    // FB-057 Monument of Swordsmen — F1 Town of Beginnings monument
-    // that opens the MonumentDialog (species kill log + title browser).
+    // F1 TOB monument — opens MonumentDialog (species kill log + title browser).
     MonumentOfSwordsmen,
     DangerZone,
 
@@ -51,9 +50,7 @@ public enum TileType
     Anvil,
     BountyBoard,
     EnchantShrine,
-    // Priority 5 Phase B: one-shot weapon-discovery tile. On floors listed in
-    // WeaponEvolutionChains.SecretShrineByFloor, exactly one shrine is placed
-    // in a random non-spawn room and grants a T1 chain weapon on step-on.
+    // One-shot weapon-discovery tile (WeaponEvolutionChains.SecretShrineByFloor). Grants T1 chain weapon on step-on.
     SecretShrine,
 
     // Mechanical

@@ -9,9 +9,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Split-pane inventory dialog — equipment slots on left, scrollable item
-// list on right. Press Enter on a selected item to open a context-action
-// popup (Use / Equip / Drop). Arrow keys navigate; Tab switches panes.
+// Split-pane inventory: equipment slots left, scrollable item list right.
+// Enter on item → context-action popup (Use / Equip / Drop); arrows navigate, Tab switches panes.
 public static class InventoryDialog
 {
     private const int DialogWidth = 90, DialogHeight = 28;
@@ -155,9 +154,7 @@ public static class InventoryDialog
             slotView.SetNeedsDraw();
         }
 
-        // ── Context action popup — the "select then act" pattern ─────
-        // When the user presses Enter on a selected item, a small popup
-        // shows only the actions that apply to that item type.
+        // ── Context action popup ── Enter on item → small popup with only applicable actions.
         void ActOnSelectedItem()
         {
             var item = GetSelectedItem();
@@ -188,10 +185,8 @@ public static class InventoryDialog
             RefreshAfterChange();
         }
 
-        // ── Event wiring ─────────────────────────────────────────────
-        // Enter on a list item → open the context action popup.
-        // Note: OpenSelectedItem is correct for Terminal.Gui 2.0.0.
-        // If upgrading past v2.2, migrate to the Accepting event.
+        // ── Event wiring ── Enter → context popup.
+        // OpenSelectedItem is the Terminal.Gui 2.0.0 hook; migrate to Accepting past v2.2.
         listView.OpenSelectedItem += (s, e) =>
         {
             // Defer so the Enter keypress that triggered OpenSelectedItem

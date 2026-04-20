@@ -5,20 +5,13 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// FB-063 Guild System. Eight SAO-canon guilds + one player-founded guild.
-// Each guild has a canon leader, HQ floor, join requirements (level + karma
-// window), and a flat passive bonus applied at join-time via Player base
-// stat pokes (mirroring TitleSystem). Membership is single-guild — joining
-// a new guild forces leaving the current one with a karma + rep penalty.
-//
-// Recruitment NPCs on guild HQ floors gate the "Prove yourself" quest. On
-// successful turn-in the player is inducted (bonus applied, active id set,
-// rep seeded at +10). Signature quests become available post-join.
+// FB-063 Guilds — 8 SAO-canon + 1 player-founded. Single-guild membership.
+// Join applies flat stat perk (TitleSystem pattern); swap applies karma+rep penalty.
+// HQ recruitment NPCs gate the Prove-Yourself quest; signature quests post-join.
 public static class GuildSystem
 {
-    // Stat bonus entry applied by ApplyGuildPerk. Weapon-conditional bonuses
-    // are represented as a separate WeaponTypeBonus tuple so apply-time can
-    // skip them (the combat hook inspects ActiveGuildId instead).
+    // Stat bonus applied by ApplyGuildPerk. Weapon-conditional via WeaponTypeBonus
+    // (combat hook checks ActiveGuildId instead).
     public record GuildDef(
         Faction Id,
         string DisplayName,
@@ -264,9 +257,7 @@ public static class GuildSystem
         log.Log($"  Perk: {def.PerkFlavor}");
     }
 
-    // Leave the currently-active guild. Applies the -10 rep / -3 karma penalty
-    // unless silent=true (used during Moonlit Black Cats force-dissolve, which
-    // has its own flavor-specific karma hit).
+    // Leave active guild: -10 rep, -3 karma unless silent=true (Black Cats path).
     public static void Leave(Player player, IGameLog log, bool silent = false)
     {
         var cur = player.ActiveGuildId;
@@ -307,9 +298,7 @@ public static class GuildSystem
     }
 
     // ── Moonlit Black Cats force-dissolve (F27 entry) ───────────────────
-    // Called from TurnManager.AscendFloor after CurrentFloor advances.
-    // Only fires once — removes the guild, pays out the Sachi-flavored line,
-    // -5 karma, and a thematic "Survivor" title unlock hint.
+    // Fires once: removes guild, -5 karma, Survivor title unlock.
     public static void CheckBlackCatsFate(Player player, int newFloor, IGameLog log)
     {
         if (newFloor != 27) return;
@@ -320,13 +309,11 @@ public static class GuildSystem
         log.Log("  The chest was a mimic. The trap took them all. Only you walk out.");
         log.LogSystem("══════════════════════════════════════");
 
-        // Silent leave (skip generic -10 rep / -3 karma), then apply the
-        // canon -5 karma and drop the active guild.
+        // Silent leave (skip generic penalty), apply canon -5 karma.
         Leave(player, log, silent: true);
         KarmaSystem.Adjust(player, KarmaSystem.DeltaBlackCatsFall, "Moonlit Black Cats fell on F27", log);
 
-        // Survivor title — matches TitleSystem.CheckFloor50Survivor but fires
-        // early on this specific dissolution path.
+        // Survivor title — early unlock on this path (vs TitleSystem.CheckFloor50).
         TitleSystem.TryUnlock(player, "title_survivor");
     }
 
@@ -352,9 +339,7 @@ public static class GuildSystem
         return Guilds.TryGetValue(player.ActiveGuildId, out var def) ? def.PerkFlavor : "";
     }
 
-    // Combat hook: Fuurinkazan grants +10 Attack when the player has a Katana
-    // equipped. TurnManager.Combat calls this to fold the bonus into the
-    // damage calc. Returns 0 for non-Katana or non-Fuurinkazan players.
+    // Fuurinkazan: +10 ATK with Katana. Used in combat damage calc.
     public static int KatanaAttackBonus(Player player, string? weaponType)
     {
         if (player.ActiveGuildId != Faction.Fuurinkazan) return 0;
