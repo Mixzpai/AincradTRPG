@@ -7,6 +7,7 @@ using Story = SAOTRPG.Systems.Story;
 using Skills = SAOTRPG.Systems.Skills;
 using SAOTRPG.UI.Dialogs;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI;
 
@@ -99,9 +100,16 @@ public static partial class GameScreen
             ColorScheme = ColorSchemes.Dim,
         };
 
-        int ruleAY       = MinimapHeight + 2;
-        int statsTitleY  = MinimapHeight + 3;
-        int statsTextY   = MinimapHeight + 4;
+        // FB-474 quest tracker — anchored 2-row gap below minimap legend so
+        // 80×24 terminals keep map breathing room. Widget hides at empty state.
+        int trackerY    = MinimapHeight + 3;
+        var questTracker = new QuestTrackerWidget
+        { X = 1, Y = trackerY };
+
+        // Stats block shifts down by tracker block (height 2 + trailing row).
+        int ruleAY       = MinimapHeight + 6;
+        int statsTitleY  = MinimapHeight + 7;
+        int statsTextY   = MinimapHeight + 8;
 
         var ruleA = new Label
         {
@@ -129,7 +137,8 @@ public static partial class GameScreen
         var tabDefs = new (string Label, LogCategory? Filter)[]
         {
             ("All", null), ("Combat", LogCategory.Combat),
-            ("System", LogCategory.System), ("Loot", LogCategory.Loot),
+            ("System", LogCategory.System), ("Item", LogCategory.Item),
+            ("Dialog", LogCategory.Dialog),
         };
 
         var messagesTitleLabel = new Label
@@ -165,12 +174,18 @@ public static partial class GameScreen
             {
                 e.Cancel = true;
                 coloredLog.SetFilter(tabDefs[idx].Filter);
-                for (int j = 0; j < tabButtons.Length; j++)
-                    tabButtons[j].ColorScheme = j == idx ? ColorSchemes.Gold : ColorSchemes.Dim;
             };
         }
 
-        rightPanel.Add(minimapTitleLabel, minimapView, minimapLegend,
+        // Keep tab-button colors in sync whether filter changed via click or Tab-key cycling.
+        coloredLog.FilterChanged += (filter) =>
+        {
+            for (int j = 0; j < tabButtons.Length; j++)
+                tabButtons[j].ColorScheme = tabDefs[j].Filter.Equals(filter)
+                    ? ColorSchemes.Gold : ColorSchemes.Dim;
+        };
+
+        rightPanel.Add(minimapTitleLabel, minimapView, minimapLegend, questTracker,
             ruleA, statsTitleLabel, playerStatsText, ruleB, messagesTitleLabel);
         foreach (var tb in tabButtons) rightPanel.Add(tb);
         rightPanel.Add(coloredLog);
@@ -220,14 +235,15 @@ public static partial class GameScreen
             CanFocus = true,
         };
         // Row 0: HP/XP/Status bars + Inventory button (right)
-        var hpLabel = new Label { Text = "", X = 1, Y = 0, ColorScheme = ColorSchemes.Body };
+        var hpLabel = new Label { Text = "", X = 1, Y = 0, Width = 62, ColorScheme = ColorSchemes.Body };
         var inventoryBtn = new Button
         { Text = " Inventory ", X = Pos.AnchorEnd(16), Y = 0, ColorScheme = ColorSchemes.Button };
         // Row 1: Floor info + weapon + context
-        var infoLabel = new Label { Text = "", X = 1, Y = 1, ColorScheme = ColorSchemes.Dim };
-        // Row 2: Consumable hotbar (left) + Skill hotbar (right)
-        var hotbarLabel = new Label { Text = "", X = 1, Y = 2, ColorScheme = ColorSchemes.Body };
-        var skillBarLabel = new Label { Text = "", X = Pos.AnchorEnd(58), Y = 2, Width = 56, ColorScheme = ColorSchemes.Gold };
+        var infoLabel = new Label { Text = "", X = 1, Y = 1, Width = 62, ColorScheme = ColorSchemes.Dim };
+        // Row 2: Consumable quickbar (left, 29 cols) + sword-skill indicator
+        // (right, ~32 cols with F1-F4 shrunk to [FN]). See research §3 budget.
+        var hotbarLabel = new Label { Text = "", X = 1, Y = 2, Width = 30, ColorScheme = ColorSchemes.Body };
+        var skillBarLabel = new Label { Text = "", X = Pos.AnchorEnd(34), Y = 2, Width = 32, ColorScheme = ColorSchemes.Gold };
         actionBar.Add(hpLabel, inventoryBtn, infoLabel, hotbarLabel, skillBarLabel);
 
         // Seed session bestiary from lifetime store — completion counter spans all runs.
@@ -239,6 +255,14 @@ public static partial class GameScreen
         turnManager.ActiveSaveSlot = saveSlot;
         mainWindow.Title = $"Aincrad TRPG — Floor {turnManager.CurrentFloor}";
         int[] saveFlash = { 0 };
+
+        // FB-479 status tray — starts col 64 (right of HP bars), 2-row tall.
+        // Second-row wrap handled inside the widget when col budget exceeded.
+        var statusTray = new StatusTrayWidget(turnManager, player)
+        { X = 64, Y = 0, Width = Dim.Fill(18), Height = 2 };
+        actionBar.Add(statusTray);
+        // Shift+S toggles verbose labels (session-local; research §6 says don't persist).
+        mapView.StatusTrayVerboseToggleRequested += () => statusTray.ToggleVerbose();
 
         void RefreshHud()
         {
@@ -346,41 +370,42 @@ public static partial class GameScreen
                              $" | T{turnManager.TurnCount}" +
                              hintTag;
 
-            // Single-pass hotbar count: walk the inventory once instead of
-            // running FirstOrDefault five times per HUD refresh.
-            var hotbarCounts = new int[5];
-            foreach (var item in player.Inventory.Items)
+            // Row 2 left: 10-slot quickbar. "N G" pairs separated by 1-col
+            // gutter per research §3 (29 cols for 10 slots). Slot number
+            // dim-gray, glyph bright when filled / `·` dim when empty.
+            var qb = new System.Text.StringBuilder();
+            for (int qs = 0; qs < QuickbarState.SlotCount; qs++)
             {
-                if (item is not SAOTRPG.Items.Consumables.Consumable cons) continue;
-                int slot = cons.Name switch
-                {
-                    "Health Potion"         => 0,
-                    "Greater Health Potion" => 1,
-                    "Antidote"              => 2,
-                    "Battle Elixir"         => 3,
-                    "Escape Rope"           => 4,
-                    _                       => -1,
-                };
-                if (slot >= 0) hotbarCounts[slot] += cons.Quantity;
+                var (glyph, filled, _) = player.Quickbar.SlotDisplay(qs, player);
+                // Slot number: 1..9 then 0 for slot 10.
+                char slotDigit = qs == 9 ? '0' : (char)('1' + qs);
+                if (qs > 0) qb.Append(' ');
+                qb.Append(slotDigit); qb.Append(glyph);
+                _ = filled; // glyph already encodes state (· when empty)
             }
-            hotbarLabel.Text = $"[1]Heal:{hotbarCounts[0]}  [2]G.Heal:{hotbarCounts[1]}  [3]Antid:{hotbarCounts[2]}  [4]Elix:{hotbarCounts[3]}  [5]Rope:{hotbarCounts[4]}";
+            hotbarLabel.Text = qb.ToString();
 
-            // Row 2 right: Sword skill hotbar
+            // Row 2 right: F1-F4 shrunk to 4-cell [FN] labels so quickbar fits.
+            // Full skill name surfaces in the game log on use; cooldown turns
+            // sit as a trailing ( N ) marker only when non-zero.
             var sb = new System.Text.StringBuilder();
             for (int si = 0; si < turnManager.EquippedSkills.Length; si++)
             {
                 var sk = turnManager.EquippedSkills[si];
-                if (sk == null) { sb.Append($"[F{si + 1}]---  "); continue; }
+                if (sk == null) { sb.Append($"[F{si + 1}]·   "); continue; }
                 int cd = turnManager.GetSkillCooldown(sk.Id);
-                string tag = cd > 0 ? $"({cd})" : "[OK]";
-                sb.Append($"[F{si + 1}]{sk.Name} {tag}  ");
+                string tag = cd > 0 ? $"({cd})" : "   ";
+                sb.Append($"[F{si + 1}]{tag} ");
             }
-            if (turnManager.PostMotionDelay > 0) sb.Append($"!! DELAY {turnManager.PostMotionDelay}T");
+            if (turnManager.PostMotionDelay > 0) sb.Append($"!DLY{turnManager.PostMotionDelay}");
             skillBarLabel.Text = sb.ToString();
 
             inventoryBtn.Text = $" Inventory ({player.Inventory.Items.Count}) ";
             int explored = turnManager.Map.GetExplorationPercent();
             minimapTitleLabel.Text = $"Minimap — F{turnManager.CurrentFloor} ({explored}%)";
+            // FB-474/FB-479 widgets repaint every HUD refresh tick.
+            questTracker.SetNeedsDraw();
+            statusTray.SetNeedsDraw();
             mapView.SetNeedsDraw();
         }
 

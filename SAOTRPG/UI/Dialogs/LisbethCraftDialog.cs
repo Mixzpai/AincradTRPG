@@ -9,10 +9,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Lisbeth Rarity 6 crafting dialog — F48 Lindarth blacksmith hub.
-// Lists 18 canon HF craft recipes, shows availability status, and
-// consumes materials + 3M Col per craft. Recipes are not once-per-run
-// (the canon cost is steep enough to self-gate).
+// Lisbeth R6 crafting (F48 Lindarth). 18 canon HF recipes, availability status, consumes mats + 3M Col.
+// Not once-per-run — the canon cost self-gates.
 public static class LisbethCraftDialog
 {
     private const int DialogWidth = 86, DialogHeight = 26;
@@ -21,10 +19,23 @@ public static class LisbethCraftDialog
     {
         var dialog = DialogHelper.Create(" Lisbeth — Lindarth Forge (Rarity 6) ", DialogWidth, DialogHeight);
 
+        // Lisbeth portrait anchored top-left — pink/magenta hair marker.
+        var lisbethPortrait = AsciiPortraits.Get("lisbeth");
+        if (lisbethPortrait.Length > 0)
+        {
+            var portraitLabel = new Label
+            {
+                Text = string.Join("\n", lisbethPortrait),
+                X = 0, Y = 0, Width = 9, Height = lisbethPortrait.Length,
+                ColorScheme = ColorSchemes.FromColor(Terminal.Gui.Color.BrightMagenta),
+            };
+            dialog.Add(portraitLabel);
+        }
+
         var header = new Label
         {
             Text = $"Col: {player.ColOnHand}    Inventory: {player.Inventory.ItemCount}/{player.Inventory.MaxSlots}",
-            X = 2, Y = 0, Width = Dim.Fill(2),
+            X = 10, Y = 0, Width = Dim.Fill(2),
             ColorScheme = ColorSchemes.Gold,
         };
 
@@ -194,10 +205,7 @@ public static class LisbethCraftDialog
             detailLabel.Text = $"◈ {crafted.Name} crafted, but your pack is full. " +
                 "Make room and talk to Lisbeth to take it.";
             detailLabel.ColorScheme = ColorSchemes.Danger;
-            // Refund flow would be safer — for now, Lisbeth holds it. We simplify:
-            // treat the craft as completed and give the item back via log only on
-            // next interaction. To fail loud: if AddItem fails, refund materials.
-            // Since Lisbeth's doesn't support pickup-later persistence, refund.
+            // No pickup-later persistence, so refund materials if AddItem fails (fail-loud path).
             foreach (var mat in recipe.Materials)
             {
                 var matItem = ItemRegistry.Create(mat.DefId);

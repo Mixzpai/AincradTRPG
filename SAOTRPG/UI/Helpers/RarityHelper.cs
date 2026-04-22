@@ -4,11 +4,8 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Centralized rarity utilities — tag formatting, sort order, color, abbreviation, log tags.
-// Used by InventoryDialog, EquipmentSlotView, ShopDialog, TurnManager, and loot displays.
-// Tier order (lowest → highest):
-//   Common (C, Gray) → Uncommon (U, Green) → Rare (R, Cyan) → Epic (E, Magenta)
-//   → Legendary (L, Yellow) → Divine (◈, BrightRed) — top tier, SAO canon Priority / Divine Object
+// Rarity utilities — tags, sort, color, abbrev, log tags. Used by InventoryDialog/EquipmentSlotView/ShopDialog/TurnManager/loot.
+// Tiers (low→high): Common(C,Gray), Uncommon(U,Green), Rare(R,Cyan), Epic(E,Magenta), Legendary(L,Yellow), Divine(◈,BrightRed — SAO Priority/Divine Object).
 public static class RarityHelper
 {
     // Formats a complete item line for list display: "[R] Iron Sword x1 (R)"

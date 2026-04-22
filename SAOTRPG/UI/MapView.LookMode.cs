@@ -5,8 +5,7 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Look mode (L): highlight visible monsters, Tab/arrows cycle, stat overlay on selected.
-// Right-side Target List Panel sorts by Dist/HP/Threat/Level/Index (T cycles, 1-9 jump).
+// Look mode (L): highlight visible monsters, Tab/arrows cycle, selected stat overlay. Right Target List sorts Dist/HP/Threat/Level/Index (T cycles, 1-9 jump).
 // Panel gated on vpWidth ≥ 60; narrower terminals fall back to cursor-only.
 public partial class MapView
 {

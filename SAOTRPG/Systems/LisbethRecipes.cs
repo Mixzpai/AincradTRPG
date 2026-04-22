@@ -14,9 +14,8 @@ public static class LisbethRecipes
     // Canon 3M Col per craft.
     private const int CanonColCost = 3_000_000;
 
-    // All 18 Lisbeth Rarity 6 recipes. Each uses a mix of the existing
-    // rare-tier mob drops in MobDropDefinitions so crafting feels
-    // distinct and sends the player to multiple sources per recipe.
+    // 18 Lisbeth Rarity 6 recipes, each mixing rare-tier mob drops from
+    // MobDropDefinitions so crafting routes through multiple sources.
     public static readonly Recipe[] All =
     {
         // 1H Sword (3)

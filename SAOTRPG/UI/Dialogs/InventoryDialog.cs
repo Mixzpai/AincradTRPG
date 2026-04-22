@@ -112,7 +112,7 @@ public static class InventoryDialog
 
         var hintLabel = new Label
         {
-            Text = "Enter: act on item  |  S: sort  |  Tab: switch pane  |  Esc: close",
+            Text = "Enter: act  |  Shift+N: bind to slot N  |  Tab: switch pane  |  Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
         };
 
@@ -212,11 +212,14 @@ public static class InventoryDialog
 
             if (item is EquipmentBase eqItem)
             {
-                compareLabel.Text = EquipmentComparer.BuildComparison(player, eqItem);
+                // GearCompare returns a compact diff ("DMG +6  ATK +2  DEX -1"
+                // or a "(weapon type mismatch)" banner). Color inherits from
+                // the net verdict so upgrade/downgrade reads at a glance.
+                compareLabel.Text = GearCompare.BuildDiffForPlayer(player, eqItem);
                 var verdict = EquipmentComparer.GetVerdict(player, eqItem);
                 compareLabel.ColorScheme = verdict switch
                 {
-                    EquipmentComparer.CompareResult.Upgrade => ColorSchemes.Gold,
+                    EquipmentComparer.CompareResult.Upgrade => ColorSchemes.Success,
                     EquipmentComparer.CompareResult.Downgrade => ColorSchemes.Danger,
                     _ => ColorSchemes.Dim,
                 };
@@ -239,6 +242,34 @@ public static class InventoryDialog
             e.Cancel = true;
             currentSort = (SortMode)(((int)currentSort + 1) % SortLabels.Length);
             RefreshAfterChange();
+        };
+
+        // Shift+N on the item list binds the selected consumable to quickbar
+        // slot N (Shift+0 = slot 10). Non-consumable selections are ignored.
+        listView.KeyDown += (s, e) =>
+        {
+            if (!e.IsShift) return;
+            int slot = e.KeyCode switch
+            {
+                KeyCode.D1 => 1, KeyCode.D2 => 2, KeyCode.D3 => 3,
+                KeyCode.D4 => 4, KeyCode.D5 => 5, KeyCode.D6 => 6,
+                KeyCode.D7 => 7, KeyCode.D8 => 8, KeyCode.D9 => 9,
+                KeyCode.D0 => 10,
+                _ => 0,
+            };
+            if (slot == 0) return;
+            var selected = GetSelectedItem();
+            if (selected is not Consumable cons || string.IsNullOrEmpty(cons.DefinitionId))
+            {
+                detailLabel.Text = "Only consumables with a definition can be bound.";
+                detailLabel.ColorScheme = ColorSchemes.Danger;
+                e.Handled = true;
+                return;
+            }
+            player.Quickbar.Bind(slot - 1, cons.DefinitionId);
+            detailLabel.Text = $"Bound {cons.Name} to quickbar slot {(slot == 10 ? "0" : slot.ToString())}.";
+            detailLabel.ColorScheme = ColorSchemes.Success;
+            e.Handled = true;
         };
 
         // ── Assemble ─────────────────────────────────────────────────

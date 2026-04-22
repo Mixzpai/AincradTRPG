@@ -258,9 +258,8 @@ public partial class TurnManager
             return;
         }
 
-        // Try to add to inventory. If full, drop on the ground so it can be
-        // picked up after clearing a slot. The ◈ prefix triggers the
-        // LogColorRules BrightRed rule, matching the Divine Object cadence.
+        // Add to inventory; if full, drop to ground for later pickup. The ◈ prefix
+        // triggers LogColorRules BrightRed (Divine Object cadence).
         if (_player.Inventory.AddItem(weapon))
         {
             _log.LogLoot($"  ◈ A Secret Shrine hums. You receive {weapon.Name}.");
@@ -290,9 +289,8 @@ public partial class TurnManager
         }
     }
 
-    // FB-057 — opens the Monument of Swordsmen dialog. One-shot hit per
-    // step; the tile does not consume itself so the player can check
-    // progress repeatedly.
+    // Opens the Monument of Swordsmen dialog. Tile does not consume itself so
+    // the player can check progress repeatedly.
     private void HandleMonumentOfSwordsmen()
     {
         _log.Log("You stand before the Monument of Swordsmen...");

@@ -337,10 +337,16 @@ public partial class TurnManager
         _dodgeStreak = 0;
         int blocked = rawDamage - finalDamage;
         string critTag = monsterCrit ? " CRITICAL HIT!" : "";
-        _log.LogCombat($"{monster.Name} hits you for {finalDamage} damage!{critTag}" +
-            (blocked > 0 ? $" ({blocked} blocked)" : ""));
+        string incomingLine = $"{monster.Name} hits you for {finalDamage} damage!{critTag}" +
+            (blocked > 0 ? $" ({blocked} blocked)" : "");
+        string incomingTag = BuildIncomingDamageTag(monster.Name);
+        _log.LogCombat(ApplyDamageTag(incomingLine, incomingTag));
         _player.TakeDamage(finalDamage);
         DamageDealt?.Invoke(_player.X, _player.Y, finalDamage, true, monsterCrit);
+        // Shake when the player eats ≥20% max-HP in one blow. Mob attacks are
+        // tier-1 — boss specials escalate to tier-2 in BossAI.
+        if (_player.MaxHealth > 0 && finalDamage * 5 >= _player.MaxHealth)
+            MapViewShakeRequested?.Invoke(1);
         if (monsterCrit) CombatTextEvent?.Invoke(_player.X, _player.Y, "CRIT!", Color.BrightRed);
         _floorDamageTaken += finalDamage;
         DegradeEquipment(EquipmentSlot.Chest);

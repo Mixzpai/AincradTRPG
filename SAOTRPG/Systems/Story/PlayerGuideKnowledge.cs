@@ -1,8 +1,7 @@
 namespace SAOTRPG.Systems.Story;
 
-// Wraps ProfileData.GuideKnownTopics. MarkKnown on kill → lifts ??? mask.
-// Title convention: "Monster: <name>" / "Boss: <name>" / "Field Boss: <name>".
-// Must match PlayerGuideContent.GuideEntry.Title verbatim.
+// Wraps ProfileData.GuideKnownTopics. MarkKnown on kill lifts ??? mask; Title
+// convention "Monster: <name>" / "Boss: <name>" (must match GuideEntry.Title verbatim).
 public static class PlayerGuideKnowledge
 {
     // Record a discovery. Idempotent; persists on first write.
@@ -12,9 +11,8 @@ public static class PlayerGuideKnowledge
         ProfileData.MarkKnown(topicTitle);
     }
 
-    // Strip elite/champion affix from a monster display name so "Elite Wolf"
-    // and "Champion Wolf" both unlock the single "Monster: Wolf" topic.
-    // Mirrors Mob.Variant = "Elite" | "Champion" | "" convention.
+    // Strip Elite/Champion affix so variant prefixes unlock the base "Monster: <name>"
+    // topic. Mirrors Mob.Variant = "Elite" | "Champion" | "".
     public static string StripAffix(string rawName)
     {
         if (string.IsNullOrEmpty(rawName)) return rawName;

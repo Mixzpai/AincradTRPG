@@ -6,10 +6,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Quest Journal -- full-screen quest management with active/completed tabs,
-// progress tracking, detail panel, and reward preview.
-// Inspired by: Cogmind's bifurcated help pages, modern RPG quest logs with
-// left-list / right-detail split, and clean bracket-header sections.
+// Quest Journal — full-screen with active/completed tabs, progress, detail panel, reward preview.
+// Layout: left-list / right-detail split with bracket-header sections.
 public static class QuestLogDialog
 {
     private const int DialogWidth = 76, DialogHeight = 26;
@@ -85,7 +83,7 @@ public static class QuestLogDialog
 
         var hint = new Label
         {
-            Text = "Tab: switch tabs | Up/Down: browse | Talk to NPCs for quests | Esc: close",
+            Text = "Tab: switch | P: pin/unpin tracker | Talk to NPCs for quests | Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
         };
 
@@ -117,7 +115,9 @@ public static class QuestLogDialog
                     QuestType.Deliver => "DLVR",
                     _ => "    ",
                 };
-                names.Add($"{status} {typeTag} {TextHelpers.Truncate(q.Title, 22)}");
+                // Pin marker prefixes tracked quest so players can see at a glance.
+                string pinTag = (!showCompleted && QuestSystem.PinnedQuestId == q.Id) ? "* " : "  ";
+                names.Add($"{pinTag}{status} {typeTag} {TextHelpers.Truncate(q.Title, 20)}");
             }
             listView.Source = new ListWrapper<string>(names);
             countLabel.Text = showCompleted
@@ -180,7 +180,7 @@ public static class QuestLogDialog
             listView.SetFocus();
         };
 
-        // Tab key switches between active/completed
+        // Tab key switches between active/completed; P toggles tracker pin.
         listView.KeyDown += (s, e) =>
         {
             if (e.KeyCode == KeyCode.Tab)
@@ -189,6 +189,18 @@ public static class QuestLogDialog
                 activeTab.ColorScheme = showCompleted ? ColorSchemes.Dim : ColorSchemes.Gold;
                 completedTab.ColorScheme = showCompleted ? ColorSchemes.Gold : ColorSchemes.Dim;
                 RefreshList();
+                e.Handled = true;
+            }
+            else if ((e.KeyCode & ~KeyCode.ShiftMask) == KeyCode.P && !showCompleted)
+            {
+                var src = QuestSystem.ActiveQuests;
+                int idx = listView.SelectedItem;
+                if (idx >= 0 && idx < src.Count)
+                {
+                    QuestSystem.TogglePin(src[idx].Id);
+                    RefreshList();
+                    listView.SelectedItem = idx;
+                }
                 e.Handled = true;
             }
         };

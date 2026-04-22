@@ -3,13 +3,11 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Keybinding reference and game guide -- opened with H key.
-// Two-column layout: controls on the left, legend on the right.
-// Cogmind-inspired: essential commands first, advanced below.
-// Scrollable content area for all sections.
+// Keybinding reference (H). Two-column: controls left, legend right. Cogmind-style essentials first, advanced below.
+// Scrollable content.
 public static class HelpDialog
 {
-    private const int DialogWidth = 78, DialogHeight = 35;
+    private const int DialogWidth = 78, DialogHeight = 40;
 
     // Left column: controls (40 chars). Right column: legend (34 chars).
     private const string Content = @"
@@ -26,7 +24,10 @@ public static class HelpDialog
                                        [ Items on Ground ]
   Bump enemy ..... Basic attack
   F1-F4 ......... Sword Skills          .  Common        o  Uncommon
-  V .............. Counter stance       +  Rare          *  Legendary
+  0-9 ............ Use quickbar slot    +  Rare          *  Legendary
+  Shift+0-9 ...... Bind consumable
+                   (in inventory)
+  V .............. Counter stance
   Shift+Dir ...... Sprint (2 tiles)
   Ctrl+Dir ....... Stealth move        [ Mob Symbols ]
   Combos ......... 5-hit = x2 dmg
@@ -36,15 +37,18 @@ public static class HelpDialog
   F .............. Sword Skills
   J .............. Quest Journal       [ Status Tags ]
   P .............. Stats / Levels
-  T .............. Equipment            !PSN  Poison     !BLD  Bleed
-  K .............. Kill Stats           !STN  Stun       vSLW  Slow
-  Y .............. Bestiary
-  H .............. This help            +SRG  Surge      +BLS  Shrine
-  R .............. Rest (3 turns)       +FED  Well Fed   ~FTG  Fatigue
-  X .............. Auto-explore
-  L .............. Look mode           [ Crafting ]
+  P (Quest Log) .. Pin / unpin quest    !PSN  Poison     !BLD  Bleed
+  T .............. Equipment            !STN  Stun       vSLW  Slow
+  K .............. Kill Stats
+  Y .............. Bestiary             +SRG  Surge      +BLS  Shrine
+  H .............. This help            +FED  Well Fed   ~FTG  Fatigue
+  R .............. Rest (3 turns)
+  X .............. Auto-explore        Shift+S toggles status-tray
+  L .............. Look mode           verbose labels (session only).
   F5 ............. Save game
-  1-5 ............ Quick-use item       Step on Anvil to repair or
+  1-5 ............ Quick-use item      [ Crafting ]
+  Tab ............ Cycle log tabs
+                                        Step on Anvil to repair or
                                         enhance equipment (+1 to +10).
  [ Tips ]                               Materials come from mob drops.
 

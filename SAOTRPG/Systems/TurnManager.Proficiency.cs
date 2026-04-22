@@ -1,9 +1,8 @@
 namespace SAOTRPG.Systems;
 
-// Weapon proficiency — per-type kills grant passive dmg + rank titles.
-// Kill-count anchors L1=0, L25=25, L50=100, L75=500, L100=2000, L110=10000;
-// geometric interpolation. At L25/50/75/100 player picks 1-of-2 fork passive.
-// Forks use the FloorLevelUp modal pattern (GameScreen.Events.TalentPickRequested).
+// Weapon proficiency — per-type kills grant passive dmg + rank titles. Anchors
+// L1=0, L25=25, L50=100, L75=500, L100=2000, L110=10000 (geometric interp).
+// L25/50/75/100 = 1-of-2 fork pick (FloorLevelUp modal pattern).
 public partial class TurnManager
 {
     // ── Legacy 15-tier rank ladder (display only) ─────────────────────

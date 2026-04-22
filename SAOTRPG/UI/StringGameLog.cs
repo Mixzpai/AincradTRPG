@@ -2,9 +2,8 @@ using System.Text;
 
 namespace SAOTRPG.UI;
 
-// Lightweight log sink that writes to a StringBuilder.
-// Used during character creation where no Terminal.Gui log panel exists yet.
-// All categories write plain text — no coloring or prefixes needed.
+// StringBuilder log sink — used during character creation (no live Terminal.Gui panel yet).
+// All categories write plain text; no coloring or prefixes.
 internal class StringGameLog : IGameLog
 {
     private readonly StringBuilder _sb;

@@ -2,14 +2,12 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Systems;
 
-// Tracks monster encounters and kills. Data is collected silently during
-// gameplay, viewable via the Bestiary dialog (Y). Knowledge persists across
-// runs via LifetimeStats — the bestiary survives permadeath.
+// Tracks monster encounters/kills. Viewable via Bestiary dialog (Y); persists
+// across runs via LifetimeStats (survives permadeath).
 public static class Bestiary
 {
-    // Expanded entry surface. Glyph/GlyphColor are re-derived from the map
-    // renderer per session (not serialized). DeathsCausedAcrossRuns is
-    // populated from LifetimeStats at load time.
+    // Glyph/GlyphColor re-derive from renderer per session (not serialized).
+    // DeathsCausedAcrossRuns comes from LifetimeStats at load.
     public record Entry(
         string Name,
         int Level,
@@ -59,10 +57,8 @@ public static class Bestiary
 
     private static readonly Dictionary<string, Row> _entries = new();
 
-    // ── Dialog-session memory ─────────────────────────────────────────────
-    // Persists across dialog opens within a single game run so reopening
-    // the Bestiary snaps back to the last-read entry, sort, and tab.
-
+    // Dialog-session memory: persists across dialog opens within a run so
+    // reopening snaps back to last-read entry, sort, and tab.
     public static string SessionSort = "A";            // A/L/K/R/F
     public static string? SessionSelectedName;
     public static string SessionActiveTab = "Overview"; // Overview/Combat/Lore/History
@@ -145,13 +141,15 @@ public static class Bestiary
     public static Entry? Get(string name) =>
         _entries.TryGetValue(name, out var r) ? ToEntry(name, r) : null;
 
+    // Lifetime-only rows arrive with GlyphColor == default (Color.Black),
+    // which is invisible on dark terminals — fall back to Gray so the row renders.
     private static Entry ToEntry(string name, Row r) => new(
         name, r.Level, r.MaxHp, r.Atk,
         r.Killed, r.Encountered,
         r.FirstFloor, r.LastFloor,
         r.LootTag ?? "generic",
         r.Glyph == default ? '?' : r.Glyph,
-        r.GlyphColor,
+        r.GlyphColor == default ? Color.Gray : r.GlyphColor,
         r.IsBoss, r.IsFieldBoss, r.IsElite,
         r.DeathsCausedAcrossRuns,
         r.CanPoison, r.CanBleed, r.CanStun, r.CanSlow,
@@ -175,8 +173,7 @@ public static class Bestiary
             known.FirstFloor  = known.FirstFloor == 0 ? r.FirstFloor
                                 : Math.Min(known.FirstFloor, r.FirstFloor);
             known.LastFloor   = Math.Max(known.LastFloor,   r.LastFloor);
-            // DeathsCaused is owned by LifetimeStats (updated via
-            // RecordDeathCause). Don't overwrite from the session row.
+            // DeathsCaused owned by LifetimeStats (RecordDeathCause); don't overwrite.
             known.LastSeenDate = string.IsNullOrEmpty(r.LastSeenDate)
                 ? known.LastSeenDate : r.LastSeenDate;
 
@@ -185,9 +182,8 @@ public static class Bestiary
         LifetimeStats.Save(data);
     }
 
-    // Seed the session dictionary with the lifetime-known counts so the
-    // "47/182 discovered" number reflects every mob ever seen. Called at
-    // game start / new-run init.
+    // Seed session dict with lifetime-known counts so "discovered" totals reflect
+    // every mob ever seen. Called at game start / new-run init.
     public static void LoadFromLifetimeStats()
     {
         var data = LifetimeStats.Load();
@@ -210,9 +206,8 @@ public static class Bestiary
         }
     }
 
-    // Record a kill that caused the player's death — tallies into the
-    // lifetime record so the Bestiary detail pane can show "You've died
-    // to this 3 times" across runs. Called from the death pipeline.
+    // Tally death-cause into lifetime record so detail pane can show
+    // "You've died to this N times" across runs.
     public static void RecordDeathCause(string killerName)
     {
         if (string.IsNullOrWhiteSpace(killerName)) return;
@@ -228,7 +223,8 @@ public static class Bestiary
     // ── Totals for the completion counter ─────────────────────────────────
     public static int DiscoveredCount() => _entries.Count;
 
-    // Lazy total roster count: MobFactory + BossFactory + FieldBoss entries.
+    // Total roster: MobFactory + BossFactory + FieldBoss (exact registry lengths,
+    // not the old 100/30 stand-ins) so completion meter matches reality.
     public static int TotalRosterCount()
     {
         int total = 0;
@@ -236,8 +232,8 @@ public static class Bestiary
         {
             try { total += Map.MobFactory.GetFloorMobNames(tier).Length; } catch { }
         }
-        total += 100;  // floor bosses (BossFactory roster length — F1..F100)
-        total += 30;   // approximate field boss roster count
+        try { total += Map.BossFactory.RosterCount; } catch { total += 100; }
+        try { total += Map.FieldBossFactory.RosterCount; } catch { total += 30; }
         return Math.Max(total, _entries.Count);  // never show < discovered
     }
 }

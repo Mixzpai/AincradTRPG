@@ -4,8 +4,7 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// FB-564 — Run Modifier picker. Checkbox grid grouped by tier. Live score
-// multiplier preview. Writes directly to RunModifiers.Active on Apply.
+// Run Modifier picker — tier-grouped checkbox grid, live score multiplier preview, writes RunModifiers.Active on Apply.
 // Post-F100 canon unlock; currently TESTING_ALWAYS_ON.
 public static class ModifierSelectScreen
 {
@@ -25,9 +24,7 @@ public static class ModifierSelectScreen
         };
 
         // ── Build checkbox grid, grouped by tier ─────────────────────
-        // Compact label on checkbox itself; full description shown in a
-        // detail panel below when the item is focused (so long text never
-        // overflows the fixed checkbox width on narrow terminals).
+        // Compact label on checkbox; full desc in focus-driven detail panel (avoids overflow on narrow terminals).
         var checkboxes = new Dictionary<RunModifier, CheckBox>();
         var defsByCheckbox = new Dictionary<CheckBox, ModifierDef>();
         int y = 4;

@@ -9,17 +9,15 @@ public static partial class MapEffects
 {
     private const int AggroIndicatorRange = 6, AmbientSoundRadius = 3, LargeWaterBodyThreshold = 10;
 
-    // Thin wrapper that delegates to GameMap's cached wall-glyph lookup.
-    // GameMap owns the cache + invalidation, so we never recompute neighbor
-    // scans per render frame once a wall has been drawn.
+    // Delegates to GameMap's cached wall-glyph lookup (GameMap owns cache + invalidation).
+    // Avoids per-frame neighbor scans once a wall has been drawn.
     public static char GetConnectedWallGlyph(GameMap map, int x, int y) =>
         map.GetWallGlyph(x, y);
 
     public static (char Glyph, Color Color)? GetTransitionBorder(GameMap map, int x, int y, TileType type)
     {
-        // `type` is redundant with map.Tiles[x,y].Type but we keep the
-        // signature so callers don't change. The cached code already bakes
-        // in the land-type check.
+        // `type` is redundant with map.Tiles[x,y].Type; kept for caller stability.
+        // Cached code already bakes in the land-type check.
         _ = type;
         return map.GetTransitionCode(x, y) switch
         {

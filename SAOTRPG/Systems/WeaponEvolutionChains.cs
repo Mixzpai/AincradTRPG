@@ -16,9 +16,8 @@ public record ChainStep(
 
 public static class WeaponEvolutionChains
 {
-    // Weapon DefId → ChainStep. Missing = not in a chain.
-    // PeakExtraMatId substitutes: crystal_core/soul_dust/gear_fragment/wing_fragment/
-    // venom_sac/flame_essence unreg'd → use already-registered proxies below.
+    // Weapon DefId → ChainStep (missing = not in a chain). PeakExtraMatId
+    // substitutes use registered proxies below (unreg'd reagents → proxy DefId).
     public static readonly Dictionary<string, ChainStep> Chains = new()
     {
         // ── 1H Sword chain: Final Espada → Asmodeus → Final Avalanche → Tyrfing

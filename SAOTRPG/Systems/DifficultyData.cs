@@ -17,10 +17,8 @@ public static class DifficultyData
         int RegenInterval,      // Turns between 1 HP regen (0 = no regen)
         int ColStreakBonus);    // % Col bonus per kill streak tier
 
-    // ── Tier definitions ─────────────────────────────────────────────
-    // Index: 0=Story, 1=VeryEasy, 2=Easy, 3=Normal, 4=Hard,
-    //        5=VeryHard, 6=Masochist, 7=Unwinnable, 8=Debug
-
+    // Tier index: 0=Story, 1=VeryEasy, 2=Easy, 3=Normal, 4=Hard,
+    //             5=VeryHard, 6=Masochist, 7=Unwinnable, 8=Debug
     private static readonly DifficultyTier[] BaseTiers =
     {
         new("Story",      "Sit back and enjoy the tale of Aincrad. Combat is an afterthought.",
@@ -70,9 +68,7 @@ public static class DifficultyData
         return tiers[Math.Clamp(index, 0, tiers.Length - 1)];
     }
 
-    // Convenience method — returns just the tier name for a given index.
-    // Used by SaveManager slot summaries and anywhere a display name is needed
-    // without the full tier record.
+    // Tier name for index (SaveManager slot summaries etc.).
     public static string GetName(int index) => Get(index).Name;
 
     // Formatted stat breakdown for the [?] tooltip dialog.

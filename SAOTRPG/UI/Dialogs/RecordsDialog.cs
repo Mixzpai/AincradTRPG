@@ -4,9 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Lifetime Records (TitleScreen → Records). 80x30 dialog: banner + Summary/Achievement panels +
-// Floor/Win bars, tabbed table (Recent Runs | Victory Leaderboard), Close. Tab or ←/→ cycle tabs;
-// Leaderboard sort via [/] or Sort button — keys: Col/Turns/Level/Kills/PlayTime/Date/Grade.
+// Lifetime Records (TitleScreen → Records). 80x30: banner + Summary/Achievement panels + Floor/Win bars, tabbed table (Recent Runs | Victory Leaderboard), Close.
+// Tab or ←/→ cycle tabs; leaderboard sort via [/] or Sort button (Col/Turns/Level/Kills/PlayTime/Date/Grade).
 public static class RecordsDialog
 {
     private const int DialogWidth = 80;
@@ -113,9 +112,6 @@ public static class RecordsDialog
         var leaderTab = DialogHelper.CreateMenuButton("Victory Leaderboard");
         leaderTab.X = Pos.Right(recentTab) + 2; leaderTab.Y = tabRowY;
         var sortBtn = DialogHelper.CreateButton($"Sort: {sortKey}");
-        // AnchorEnd(18) gives 2 cols clearance from the dialog's right border
-        // so the widest Sort label ("Sort: PlayTime" + button padding) doesn't
-        // clip the frame edge.
         // AnchorEnd(18) gives 2-col clearance — "Sort: PlayTime" + padding won't clip frame.
         sortBtn.X = Pos.AnchorEnd(18); sortBtn.Y = tabRowY;
         sortBtn.Visible = false;  // hidden until leaderboard tab active

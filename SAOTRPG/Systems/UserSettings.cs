@@ -3,6 +3,19 @@ using System.Text.Json.Serialization;
 
 namespace SAOTRPG.Systems;
 
+// Combat log breakdown mode — cycled via OptionsScreen, consumed in
+// TurnManager.Combat.FormatHitLog. Order matches OptionsScreen radio.
+public enum DamageBreakdownMode { Off = 0, Concise = 1, Medium = 2, Verbose = 3 }
+
+// FB-450 particle density. Off=disabled; Pronounced=default (5-10 particles, 800ms).
+public enum ParticleDensity { Off = 0, Subtle = 1, Moderate = 2, Pronounced = 3 }
+
+// FB-452 damage tag position in log lines. Prefix = default, reads best dense.
+public enum DamageTagPosition { Prefix = 0, Suffix = 1, Inline = 2 }
+
+// FB-452 damage tag bracket style. Brackets = default, Bare strips, Chip wraps ◆.
+public enum DamageTagStyle { Brackets = 0, Bare = 1, Chip = 2 }
+
 // Global settings at %LocalAppData%/AincradTRPG/settings.json (not per-save).
 // Add: property + OptionsScreen control + system wiring + Save() on change.
 public class UserSettings
@@ -24,9 +37,23 @@ public class UserSettings
     // Show screen flash effect when taking damage.
     public bool ShowDamageFlash { get; set; } = true;
 
-    // ══════════════════════════════════════════════════════════════════
-    //  PERSISTENCE — singleton + atomic JSON save/load
-    // ══════════════════════════════════════════════════════════════════
+    // ── Accessibility ────────────────────────────────────────────────
+    // Brief viewport jitter on crits / heavy hits / quakes. Disable if motion sensitive.
+    public bool ScreenShakeEnabled { get; set; } = true;
+
+    // Combat-log breakdown verbosity for player-initiated hits.
+    public DamageBreakdownMode DamageBreakdownMode { get; set; } = DamageBreakdownMode.Off;
+
+    // FB-450 particle density. Default Pronounced (5-10 particles @ 800ms).
+    public ParticleDensity ParticleDensity { get; set; } = ParticleDensity.Pronounced;
+
+    // FB-452 damage tag position — Prefix reads best in dense combat logs.
+    public DamageTagPosition DamageTagPosition { get; set; } = DamageTagPosition.Prefix;
+
+    // FB-452 damage tag bracket style — default [BRACKETS] for visual anchor.
+    public DamageTagStyle DamageTagStyle { get; set; } = DamageTagStyle.Brackets;
+
+    // Persistence: singleton + atomic JSON save/load.
 
     private static readonly string SettingsDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AincradTRPG");

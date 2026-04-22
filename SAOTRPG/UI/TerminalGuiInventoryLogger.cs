@@ -6,12 +6,8 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.UI;
 
-// Bridges the inventory logging system into the Terminal.Gui game log panel.
-// Translates IInventoryLogger callbacks (item added, equipped, used, etc.)
-// into human-readable messages routed through IGameLog.
-// Adding new inventory events:
-//   1. Add the method to IInventoryLogger
-//   2. Implement it here with an appropriate log message
+// IInventoryLogger → IGameLog bridge. Translates callbacks (added/equipped/used/etc.) to game-log messages.
+// New event: add to IInventoryLogger, implement here.
 public class TerminalGuiInventoryLogger : IInventoryLogger
 {
     private readonly IGameLog _log;

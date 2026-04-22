@@ -32,8 +32,7 @@ public partial class TurnManager
         {
             var entry = lootTable[Random.Shared.Next(lootTable.Length)];
 
-            // Chain catalyst materials must arrive as real registered items
-            // (DefinitionId set) so the Anvil Evolve flow can find them. Route
+            // Chain catalysts need DefinitionId set (for Anvil Evolve) — route
             // via ItemRegistry when the drop name matches.
             BaseItem? lootItem;
             if (LootGenerator.ChainMaterialByName.TryGetValue(entry.Name, out var chainDefId))
@@ -77,9 +76,8 @@ public partial class TurnManager
             if (gear != null) DropItem(mx, my, gear, monster.Name);
         }
 
-        // IM Enhancement Ores — themed mob drops. Fires once per kill on mobs
-        // whose LootTag maps to an ore theme. Rare-boss drops use a separate
-        // path in TurnManager.Combat (RollBossOreDrops).
+        // IM Enhancement Ores — themed mob drops, once per kill. Rare-boss
+        // drops use RollBossOreDrops in TurnManager.Combat.
         if (monster is Mob mob2
             && LootGenerator.OreByLootTag.TryGetValue(mob2.LootTag, out var oreDefId)
             && Random.Shared.Next(100) < LootGenerator.OreDropChancePercent)
@@ -89,9 +87,8 @@ public partial class TurnManager
         }
     }
 
-    // IM Enhancement Ore drop for field/floor bosses — 20% chance to drop
-    // a small stack of 1-2 ores. Ore identity is rolled independently per
-    // drop so a boss can yield mixed types.
+    // Field/floor boss ore drops — 20% chance of 1-2 ores; each rolled
+    // independently so a boss can yield mixed types.
     private void RollBossOreDrops(int bx, int by, string sourceName)
     {
         if (Random.Shared.Next(100) >= LootGenerator.BossOreDropChancePercent) return;
@@ -148,6 +145,14 @@ public partial class TurnManager
                 _log.LogLoot($"  ◈ The chest holds {item.Name} — Divine Object.");
             else
                 _log.LogLoot($"  {RarityHelper.LogTag(item.Rarity)}Found {item.Name}!");
+            // Chest-peek compare line: only surfaces for equipment whose slot
+            // has something equipped. Single-row summary so it reads in log.
+            if (item is SAOTRPG.Items.Equipment.EquipmentBase)
+            {
+                string diff = UI.Helpers.GearCompare.BuildDiffForPlayer(_player, item);
+                if (!string.IsNullOrEmpty(diff) && diff != "(new)" && diff != "(no change)")
+                    _log.Log($"    vs. equipped: {diff}");
+            }
         }
         _floorItemsFound += rolls;
     }
@@ -245,6 +250,7 @@ public partial class TurnManager
         }
 
         var picked = new List<BaseItem>();
+        bool emittedPickup = false;
         foreach (var item in tile.Items.ToList())
         {
             if (_player.Inventory.AddItem(item))
@@ -253,6 +259,11 @@ public partial class TurnManager
                 _floorItemsFound++;
                 _map.RemoveItem(px, py, item);
                 QuestSystem.OnItemPickup(item.Name ?? "", _log);
+                if (!emittedPickup)
+                {
+                    ParticleQueue.Emit(ParticleEvent.ItemPickup, px, py);
+                    emittedPickup = true;
+                }
                 if (item.Rarity == "Divine")
                 {
                     _log.LogLoot($"  ◈ You receive {item.Name} — Divine Object.");

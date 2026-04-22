@@ -133,8 +133,40 @@ public partial class TurnManager
 
             WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y,
                 GetSwingColor(wpn, anyCrit));
-            DamageDealt?.Invoke(monster.X, monster.Y, dmg, false, anyCrit);
-            if (anyCrit) CombatTextEvent?.Invoke(monster.X, monster.Y, "CRIT!", Color.BrightRed);
+            // Multi-hit cascade (Starburst Stream 16 / Eclipse 27 / MR 11):
+            // emit MultiHitStream-flagged popups at 40ms stagger so they
+            // bypass the 3-per-tile coalesce and register as a visible storm.
+            if (skill.Hits >= 4)
+            {
+                int perHitDmg = Math.Max(1, dmg / skill.Hits);
+                int lastHitDelay = 0;
+                for (int h = 0; h < skill.Hits; h++)
+                {
+                    int delay = h * 40;
+                    lastHitDelay = delay;
+                    MultiHitStreamRequested?.Invoke(monster.X, monster.Y, perHitDmg, h, delay);
+                }
+                // Aggregate "×N = total" lands 400ms after the last hit.
+                MultiHitAggregateRequested?.Invoke(monster.X, monster.Y, skill.Hits, dmg, lastHitDelay + 400);
+                // Fire MultiHitDamageDealt so hit-flash/scorch/border still
+                // trigger — but the popup is routed through the cascade, not
+                // the single-aggregate path.
+                MultiHitDamageDealt?.Invoke(monster.X, monster.Y, dmg, false, anyCrit);
+            }
+            else
+            {
+                DamageDealt?.Invoke(monster.X, monster.Y, dmg, false, anyCrit);
+            }
+            // Sword-arc projectile for ranged or rush skills (player→target).
+            if (skill.Range > 1 || skill.Type == SkillType.Projectile || skill.Type == SkillType.Rush)
+                ProjectileRequested?.Invoke(_player.X, _player.Y, monster.X, monster.Y,
+                    skill.Type == SkillType.Projectile ? '·' : '◇',
+                    skillColor, 30, false);
+            if (anyCrit)
+            {
+                CombatTextEvent?.Invoke(monster.X, monster.Y, "CRIT!", Color.BrightRed);
+                MapViewShakeRequested?.Invoke(1);
+            }
 
             // Status effect application
             if (skill.StatusEffect != null && skill.StatusChance > 0
@@ -186,9 +218,8 @@ public partial class TurnManager
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
 
-        // If counter triggered, the riposte damage was already applied
-        // with the default 1.5x. Override to skill multiplier via the
-        // counter stance flag (handled in ProcessMonsterAttack).
+        // Counter riposte applied 1.5x default; skill multiplier override
+        // handled in ProcessMonsterAttack via _counterStance flag.
         _counterStance = false;
         PassiveRegen();
         TurnCompleted?.Invoke();
@@ -265,9 +296,7 @@ public partial class TurnManager
         return table.TryGetValue(effectName, out int val) ? val : 0;
     }
 
-    // Scan the SpecialEffect string once and extract every "KeyN" / "Key+N" /
-    // "Key-N" pair. Keys are identifier chars (letters); the value is the
-    // signed integer that follows. Matches the historical ad-hoc parse.
+    // Parse SpecialEffect once: "KeyN"/"Key+N"/"Key-N" pairs (letter key, signed int value).
     private static Dictionary<string, int> BuildSpecialFxTable(Weapon wpn)
     {
         var dict = new Dictionary<string, int>();

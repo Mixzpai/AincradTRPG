@@ -13,6 +13,8 @@ public partial class MapView
         var vp = Viewport;
         _camera.ViewWidth = vp.Width;
         _camera.ViewHeight = vp.Height;
+        // CenterOn → then bolt the shake offset onto the coord mapper so every
+        // MapToVx/VxToMap call picks up the jitter uniformly across layers.
         _camera.CenterOn(_player.X, _player.Y);
 
         // FOV radius from smaller viewport dim — terminal chars ~2:1 aspect → height limits.

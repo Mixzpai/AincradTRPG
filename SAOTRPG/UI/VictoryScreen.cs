@@ -5,24 +5,13 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Victory screen — displayed when the player clears Floor 100 of Aincrad.
-// Shows a triumphant banner, the player's final title and identity,
-// a boxed run summary with key stats, and a return-to-title button.
-// Layout (vertical, centered):
-//   ╔══ AINCRAD CLEARED ══╗  ← Gold banner
-//   Player Name             ← White identity line
-//   ┌─ Final Summary ─┐    ← Stats card
-//   [ Return ]              ← Button
+// Victory screen — shown on Floor 100 clear. Gold banner, identity line, boxed summary card, Return button.
 public static class VictoryScreen
 {
     // ── Layout constants ────────────────────────────────────────────
-
-    // Y position where the "AINCRAD CLEARED" banner art starts.
-    private const int BannerY     = 2;
-    // Y position of the player name / identity line.
-    private const int NameY       = 14;
-    // Y position of the boxed final summary card.
-    private const int SummaryY    = 16;
+    private const int BannerY     = 2;   // banner art top
+    private const int NameY       = 14;  // identity line
+    private const int SummaryY    = 16;  // summary card top
 
     // ── Victory banner art ──────────────────────────────────────────
     private const string VictoryArt = @"

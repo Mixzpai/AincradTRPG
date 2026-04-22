@@ -4,9 +4,8 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// FB-072 Part B — per-vendor stock-tier investment. Layers on ShopTierSystem.
-// Thresholds (cumulative): 1k=+1, 5k=+2, 20k=+3 (cap).
-// Keyed by ShopName (distinct per floor; GUID-migrate if collisions appear).
+// Per-vendor stock-tier investment (layers on ShopTierSystem). Cumulative
+// thresholds 1k=+1, 5k=+2, 20k=+3 (cap). Keyed by ShopName (distinct per floor).
 public static class VendorInvestmentSystem
 {
     public const int MaxInvestmentPerVendor = 20000;

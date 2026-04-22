@@ -39,7 +39,7 @@ public static class PlayerGuideContent
             "(gear). Keep proficiency high — it feeds both the sum and the\n" +
             "rank bonuses.\n\n" +
             "SEE ALSO\n" +
-            "[Critical Hits] · [Combo Attacks] · [Weapon Proficiency Ranks] · [Rarity Colors & Glyphs]")
+            "[Critical Hits] · [Combo Attacks] · [Weapon Proficiency Ranks] · [Rarity Colors & Glyphs] · [Damage & Toast Feedback] · [Damage Breakdown Format] · [Combat Visual Feedback] · [Damage Type Tags] · [Status Icon Tray] · [Particle Effects]")
         {
             Tags = new[] { "combat", "stats" }
         },
@@ -581,9 +581,355 @@ public static class PlayerGuideContent
             "if empty. Battle Elixir (slot 4) on a boss fight almost always\n" +
             "outperforms saving it.\n\n" +
             "SEE ALSO\n" +
-            "[Controls & Keybindings] · [Potions, Crystals & Throwables] · [Status: Bleed & Poison] · [Run Modifiers (12 Optional Challenges)]")
+            "[Quickbar & Consumables] · [Controls & Keybindings] · [Potions, Crystals & Throwables] · [Status: Bleed & Poison] · [Run Modifiers (12 Optional Challenges)] · [Categorized Combat Log]")
         {
             Tags = new[] { "combat", "potions", "controls" }
+        },
+
+        new("Combat & Rarity", "Quickbar & Consumables",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Quickbar & Consumables\n" +
+            "│ Slots: 10 hotbar slots rendered in the bottom HUD row\n" +
+            "│ Keys: 0-9 use · Shift+0-9 bind (in inventory)\n" +
+            "│ Trigger: Direct consume, no menu\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "The quickbar is a ten-slot consumable hotbar rendered inline on\n" +
+            "the bottom HUD row, sitting alongside the F1-F4 sword-skill\n" +
+            "slots. Digit keys 0-9 use the bound consumable directly; no\n" +
+            "menu, no turn drop-in, no inventory round-trip.\n\n" +
+            "USAGE\n" +
+            "Number keys 0-9 fire the bound slot mid-combat. One stock is\n" +
+            "consumed from your pack if available; nothing happens if empty.\n" +
+            "Slots auto-fill on first pickup of a new consumable type, so a\n" +
+            "fresh character with an empty bar fills out organically as you\n" +
+            "pick drops up. To rebind a slot manually, open the inventory\n" +
+            "(I), highlight the consumable you want, and press Shift+N — the\n" +
+            "dialog prompts for a slot 0-9. Chest peeks show the pickup\n" +
+            "destination slot inline so you can see where a picked-up item\n" +
+            "will land before you grab it.\n\n" +
+            "EFFECTS\n" +
+            "The bottom HUD row lays out like this:\n" +
+            "  [F1][F2][F3][F4]  [0][1][2][3][4][5][6][7][8][9]\n" +
+            "   sword skills      consumable quickbar\n" +
+            "F1-F4 are sword-skill slots; 0-9 are consumable slots. The two\n" +
+            "groups are never overloaded — no key does double duty. Empty\n" +
+            "slots render dim with no glyph; filled slots show the item\n" +
+            "glyph and a stock count. The active quickbar persists across\n" +
+            "saves, so rebinds carry between sessions of the same run.\n\n" +
+            "COSTS\n" +
+            "Quickbar use consumes one stock per press — same as using the\n" +
+            "item from the inventory dialog. The Anti-Crystal Tyranny run\n" +
+            "modifier still disables Crystal-based consumables; bound slots\n" +
+            "for those items flash a brief \"blocked\" tint on press.\n\n" +
+            "TIPS\n" +
+            "Auto-fill picks the first empty slot, so the order you pick\n" +
+            "items up becomes your muscle-memory order by default. For a\n" +
+            "tight boss loadout, bind Shift+N: healing to 0-2, buffs to 3-5,\n" +
+            "utility/escape to 6-9 — that way the most-used keys are closest\n" +
+            "to the resting position. A Crystal on the top row is cheap\n" +
+            "insurance; forgetting to bind one is the #1 avoidable death.\n\n" +
+            "SEE ALSO\n" +
+            "[Quick-Use Slots (1-5)] · [Potions, Crystals & Throwables] · [Controls & Keybindings] · [Damage & Toast Feedback] · [Gear Compare]")
+        {
+            Tags = new[] { "combat", "potions", "controls", "ui" }
+        },
+
+        new("Combat & Rarity", "Damage & Toast Feedback",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Damage & Toast Feedback\n" +
+            "│ Popups: 0.4s fade, 1-cell travel, element tint\n" +
+            "│ Toasts: Center banner, 3s TTL, 1 at a time\n" +
+            "│ Trigger: Every hit · milestone events\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Two subtle visual layers keep combat legible without cluttering\n" +
+            "the map. Damage popups float a single cell upward and fade in\n" +
+            "0.4s at the hit tile, tinted by element. Toast banners appear\n" +
+            "center-screen for 3 seconds on milestone events (level ups,\n" +
+            "titles, achievements, etc).\n\n" +
+            "USAGE\n" +
+            "Both are automatic — nothing to bind. Popups show on every\n" +
+            "meaningful swing (yours and theirs); toasts fire on the milestone\n" +
+            "trigger list below. Only one toast is on-screen at a time; a new\n" +
+            "toast of the same category within 500ms merges into the current\n" +
+            "banner instead of queueing behind it.\n\n" +
+            "EFFECTS\n" +
+            "ELEMENT COLOR KEY (popup tint):\n" +
+            "  Physical   White        baseline melee/ranged\n" +
+            "  Fire       Red          burn, flame, ember hits\n" +
+            "  Thunder    Yellow       shock, lightning, storm\n" +
+            "  Water      Blue         ice, frost, tidal\n" +
+            "  Holy       Gold         divine, sacred, Integrity\n" +
+            "  Dark       Magenta      shadow, void, corruption\n" +
+            "CRIT DIFFERENTIATOR:\n" +
+            "  A crit keeps its element tint but brightens one shade AND\n" +
+            "  prefixes the number with a diamond glyph: ◇123 instead of\n" +
+            "  the plain 123. You see the colour shift from across the map.\n" +
+            "SUPPRESSION (reduces visual noise):\n" +
+            "  - Tiny chip damage (< 1% of the defender's max HP) is\n" +
+            "    omitted entirely — no popup fires.\n" +
+            "  - DoT effects (Bleed / Poison / Burn) show ONLY the\n" +
+            "    first-tick popup per application; subsequent ticks are\n" +
+            "    silent.\n" +
+            "TOAST CATEGORIES (center-screen banner triggers):\n" +
+            "  - Level up\n" +
+            "  - Title earned / equipped\n" +
+            "  - Stat-up milestone\n" +
+            "  - Sword skill unlock\n" +
+            "  - Achievement unlocked\n" +
+            "  - Quest complete\n" +
+            "  - Floor boss cleared\n" +
+            "  - Shop tier unlocked (F50+)\n" +
+            "  - Bestiary species-first sighting\n\n" +
+            "COSTS\n" +
+            "Zero gameplay cost — both layers are presentation only. No\n" +
+            "turns pass for either popup or toast; they animate in parallel\n" +
+            "with the normal turn clock.\n\n" +
+            "TIPS\n" +
+            "Use the element tint as a quick sanity check that your weapon's\n" +
+            "element is actually applying — if a fire-enchant sword draws\n" +
+            "white numbers, something stripped the element (wet biome, water\n" +
+            "immunity, etc.). The diamond crit glyph is the fastest read for\n" +
+            "\"was that swing actually a crit?\" without scrolling the log.\n\n" +
+            "SEE ALSO\n" +
+            "[Critical Hits] · [Damage Formula] · [Combo Attacks] · [Quickbar & Consumables] · [Gear Compare] · [Achievements] · [Look Mode & Counter Stance] · [Combat Visual Feedback] · [Damage Breakdown Format]")
+        {
+            Tags = new[] { "combat", "ui", "crit", "toast" }
+        },
+
+        new("Combat & Rarity", "Combat Visual Feedback",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Combat Visual Feedback\n" +
+            "│ Shake: 100ms / 3 frames on high-impact hits\n" +
+            "│ Projectiles: Arrows · skill arcs · status trails\n" +
+            "│ Multi-hit: Per-hit popups + aggregate summary\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A trio of layered effects sells the weight of a swing without\n" +
+            "slowing the turn clock. Screen shake punches crits, boss heavy\n" +
+            "attacks, explosions, and floor-quakes. Animated projectiles\n" +
+            "trace arrows, multi-hit sword-skill arcs, and status trails\n" +
+            "across the map. Multi-hit cascades (e.g. Starburst Stream's 16\n" +
+            "hits) fire a fast per-popup stream plus a single aggregate\n" +
+            "damage summary at the end.\n\n" +
+            "USAGE\n" +
+            "All three layers are automatic. Each one can be toggled\n" +
+            "independently in Options > Accessibility if motion sensitivity\n" +
+            "or visual noise is a concern.\n\n" +
+            "EFFECTS\n" +
+            "SCREEN SHAKE (trigger list):\n" +
+            "  - Critical hits (yours or theirs)\n" +
+            "  - Boss heavy attacks (winding-up release)\n" +
+            "  - Explosion tiles and fire-bomb detonations\n" +
+            "  - Floor-wide quake events (labyrinth collapse, boss phase)\n" +
+            "PROJECTILE ANIMATIONS:\n" +
+            "  - Arrows trace a single-frame glyph tile-to-tile\n" +
+            "  - Sword-skill arcs sweep along the hit path\n" +
+            "  - Status trails (poison mist, burn wisps) dot the route of\n" +
+            "    any status-inflicting swing\n" +
+            "MULTI-HIT CASCADE:\n" +
+            "  - Each hit of a multi-hit skill fires its own damage popup\n" +
+            "  - A single bolder aggregate summary prints at the end so the\n" +
+            "    total is legible at a glance\n\n" +
+            "COSTS\n" +
+            "Zero gameplay cost — presentation only. Screen shake is bounded\n" +
+            "to 100ms / 3 frames to stay under motion-sickness thresholds.\n\n" +
+            "TIPS\n" +
+            "Turn shake off in Options > Accessibility if it causes\n" +
+            "discomfort; the same menu hosts projectile and trail toggles.\n" +
+            "Watching the arc color of a multi-hit skill is the fastest way\n" +
+            "to confirm which element actually landed.\n\n" +
+            "SEE ALSO\n" +
+            "[Damage & Toast Feedback] · [Critical Hits] · [Heavy Attacks (Winding Up)] · [Sword Skills — Unlock & Use] · [Damage Breakdown Format] · [Controls & Keybindings] · [Particle Effects]")
+        {
+            Tags = new[] { "combat", "ui", "accessibility" }
+        },
+
+        new("Combat & Rarity", "Damage Breakdown Format",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Damage Breakdown Format\n" +
+            "│ Modes: Off · Concise · Medium · Verbose\n" +
+            "│ Default: Concise\n" +
+            "│ Set via: Options > Accessibility (or Gameplay)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A four-mode toggle controls how much math the log shows after\n" +
+            "each hit. Off hides the breakdown entirely; Concise shows only\n" +
+            "the final number; Medium adds the major components; Verbose\n" +
+            "exposes every multiplier for theory-crafting.\n\n" +
+            "USAGE\n" +
+            "Cycle the mode in Options > Accessibility or Gameplay. The\n" +
+            "selected format renders in the combat log immediately — no\n" +
+            "restart needed. A live preview of each format sits next to the\n" +
+            "toggle so you can compare before committing.\n\n" +
+            "EFFECTS\n" +
+            "SAMPLE OUTPUT (same 87-damage swing in each mode):\n" +
+            "  Off      — no breakdown line, just the kill/hit message\n" +
+            "  Concise  — \"87 dmg\"\n" +
+            "  Medium   — \"87 dmg (ATK 42 + prof 12 + combo 8, x1.3 crit)\"\n" +
+            "  Verbose  — \"87 dmg = (ATK 42 + prof 12 + combo 8 + shrine 4\n" +
+            "             + surge 3) x 1.3 crit x 1.15 biome x 1.0 unique\"\n\n" +
+            "COSTS\n" +
+            "None — log verbosity does not affect combat math. Verbose mode\n" +
+            "does push more log lines per swing, which is the main trade-off.\n\n" +
+            "TIPS\n" +
+            "Concise is ideal for fast casual play — the number is all you\n" +
+            "need. Medium is the best default for learning the combat system\n" +
+            "without drowning in digits. Verbose is the theory-crafting mode:\n" +
+            "leave it on when testing gear, stat allocations, or biome\n" +
+            "synergies so you can trace exactly which multiplier moved.\n\n" +
+            "SEE ALSO\n" +
+            "[Damage Formula] · [Damage & Toast Feedback] · [Combat Visual Feedback] · [Critical Hits] · [The Six Attributes] · [Damage Type Tags]")
+        {
+            Tags = new[] { "combat", "ui", "accessibility", "log" }
+        },
+
+        new("Combat & Rarity", "Damage Type Tags",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Damage Type Tags\n" +
+            "│ Physical: SLASH · THRUST · BLUNT · PIERCE · CUT\n" +
+            "│ Elemental: FIRE · ICE · THUNDER · HOLY · DARK · POISON · BLEED\n" +
+            "│ Gate: Breakdown mode ≠ Off\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Every combat-log line can tag which damage channel a hit used,\n" +
+            "so [SLASH] reads differently from [PIERCE] and [FIRE] stands out\n" +
+            "from [HOLY]. Tags appear only while Damage Breakdown Format is\n" +
+            "something other than Off.\n\n" +
+            "USAGE\n" +
+            "The tag renders in color next to the damage number — position\n" +
+            "(before vs after the number) and style (bracketed [SLASH] vs\n" +
+            "bare SLASH) are both toggleable in Options. Turn Breakdown Format\n" +
+            "back to Off to hide the tags entirely.\n\n" +
+            "EFFECTS\n" +
+            "PHYSICAL SUBTYPES (derived from weapon class):\n" +
+            "  SLASH   White       longswords, sabers, katana cuts\n" +
+            "  THRUST  Light-gray  rapiers, spears, estoc\n" +
+            "  BLUNT   Dark-gray   maces, warhammers, brawler strikes\n" +
+            "  PIERCE  White       arrows, crossbow bolts, daggers\n" +
+            "  CUT     White       twin-blade reverse edges, hollow tears\n" +
+            "ELEMENTAL KEY:\n" +
+            "  FIRE    Red         burn, flame, ember hits\n" +
+            "  ICE     Blue        frost, freeze, chill\n" +
+            "  THUNDER Yellow      shock, lightning, storm\n" +
+            "  HOLY    Gold        divine, sacred, Integrity Knights\n" +
+            "  DARK    Magenta     shadow, void, corrupted weapons\n" +
+            "  POISON  Green       toxin, venom, spore DoT\n" +
+            "  BLEED   DarkRed     laceration DoT\n\n" +
+            "COSTS\n" +
+            "Presentation only — tags do not alter damage math. Verbose\n" +
+            "breakdown with tags enabled is the densest log mode; switch to\n" +
+            "Concise if the log feels noisy.\n\n" +
+            "TIPS\n" +
+            "Tags are the fastest sanity check that a weapon enchant is\n" +
+            "landing — a fire-enchanted katana should show [SLASH][FIRE];\n" +
+            "only [SLASH] means the element was stripped by immunity or\n" +
+            "biome. Flip position to after-the-number if your eye tracks the\n" +
+            "damage digits first.\n\n" +
+            "SEE ALSO\n" +
+            "[Damage Formula] · [Damage Breakdown Format] · [Damage & Toast Feedback] · [Status: Bleed & Poison] · [Weapon Types Overview] · [Elemental Weapon Variants]")
+        {
+            Tags = new[] { "combat", "ui", "log", "accessibility" }
+        },
+
+        new("Combat & Rarity", "Status Icon Tray",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Status Icon Tray\n" +
+            "│ Location: Bottom HUD row, below HP bar\n" +
+            "│ Format: Letter + color, stack×duration (P×3:4)\n" +
+            "│ Verbose toggle: Shift+S (session-local)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A compact tray beneath the HP bar aggregates every active\n" +
+            "status source — debuffs, buffs, and passive stances — into\n" +
+            "one-letter color-coded icons. Stacks and remaining duration\n" +
+            "render as `P×3:4` meaning 3 poison stacks with 4 turns left.\n\n" +
+            "USAGE\n" +
+            "Automatic — icons appear/expire with their underlying effects.\n" +
+            "Shift+S toggles verbose mode, which swaps the single letters\n" +
+            "for short labels (POISON·3 4t) until you reload the save.\n" +
+            "Ordering is debuff-first severity, so the scariest effect sits\n" +
+            "leftmost and can't hide behind a cosmetic buff.\n\n" +
+            "EFFECTS\n" +
+            "ICON KEY (letter · color · source):\n" +
+            "  P  Green      Poison DoT\n" +
+            "  B  Red        Bleed DoT\n" +
+            "  S  Yellow     Stun (skip turn)\n" +
+            "  L  Cyan       Slow (halves dodge)\n" +
+            "  Z  LightBlue  Freeze (immobilize)\n" +
+            "  X  Magenta    Blind (miss chance)\n" +
+            "  F  Gold       Well Fed\n" +
+            "  H  Gray       Hunger\n" +
+            "  E  Cyan       Pair Resonance (dual-wield)\n" +
+            "  K  Bronze     Counter Stance (queued parry)\n" +
+            "  W  LightBlue  Winter weather affinity\n" +
+            "  V  Red        Volcano biome affinity\n" +
+            "  G  Green      Toxic biome affinity\n" +
+            "  R  Green      Regen tick buff\n" +
+            "  C  Yellow     Crit-Up buff\n" +
+            "  D  Cyan       Dodge-Up buff\n\n" +
+            "COSTS\n" +
+            "None — display only. The tray never hides behind popups or\n" +
+            "projectiles; it updates in-line each frame.\n\n" +
+            "TIPS\n" +
+            "Turn verbose on with Shift+S the first few runs to memorize the\n" +
+            "single-letter key; flip back to compact once the shapes read at\n" +
+            "a glance. If the tray fills, the leftmost slot is always the\n" +
+            "thing about to kill you — clear that first.\n\n" +
+            "SEE ALSO\n" +
+            "[Status: Bleed & Poison] · [Status: Stun & Slow] · [Hunger, Satiety & Fatigue] · [Look Mode & Counter Stance] · [Paired Dual-Wield Weapons] · [Controls & Keybindings]")
+        {
+            Tags = new[] { "combat", "ui", "status", "accessibility" }
+        },
+
+        new("Combat & Rarity", "Particle Effects",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Particle Effects\n" +
+            "│ Events: 10 combat / world triggers\n" +
+            "│ Density: Off · Subtle · Moderate · Pronounced\n" +
+            "│ Default: Pronounced\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Short-lived tile particles punctuate combat and world events —\n" +
+            "sparks on metal-on-metal parries, blood specks on a cut, embers\n" +
+            "off a fire hit. Ten event types are wired up; the density slider\n" +
+            "in Options > Accessibility scales how many particles each event\n" +
+            "spawns, or disables them outright.\n\n" +
+            "USAGE\n" +
+            "Automatic. Adjust the slider to taste — Pronounced is the\n" +
+            "default; Moderate trims counts ~40%; Subtle is near-silent;\n" +
+            "Off skips spawning entirely. The setting hot-applies with no\n" +
+            "restart needed.\n\n" +
+            "EFFECTS\n" +
+            "TEN TRIGGER EVENTS:\n" +
+            "  1. Critical-hit spark burst\n" +
+            "  2. Block / parry spark trail\n" +
+            "  3. Cut / bleed blood specks\n" +
+            "  4. Fire hit ember puff\n" +
+            "  5. Ice hit frost shards\n" +
+            "  6. Thunder hit static arcs\n" +
+            "  7. Mob death dust plume\n" +
+            "  8. Level-up rising motes\n" +
+            "  9. Biome ambient drift (volcano ash, winter flakes)\n" +
+            " 10. Item-pickup sparkle\n" +
+            "Z-ORDER (bottom to top):\n" +
+            "  tile glyphs → particles → projectiles → damage popups →\n" +
+            "  toast banner. Particles always yield to the popup stream and\n" +
+            "  projectiles so damage numbers stay legible.\n\n" +
+            "COSTS\n" +
+            "Zero gameplay cost. Motion-sensitive players should drop the\n" +
+            "slider to Subtle or Off — particle motion is the first layer to\n" +
+            "strip before touching screen shake.\n\n" +
+            "TIPS\n" +
+            "Pronounced is tuned to read clearly on a 24x80 viewport; on\n" +
+            "very dense maps (labyrinth interiors, boss rooms) Moderate is\n" +
+            "easier on the eye without losing the feedback. Biome drift is\n" +
+            "the one category you can mute by standing under roofed tiles.\n\n" +
+            "SEE ALSO\n" +
+            "[Combat Visual Feedback] · [Damage & Toast Feedback] · [Critical Hits] · [Biomes] · [Weather] · [Controls & Keybindings]")
+        {
+            Tags = new[] { "combat", "ui", "accessibility", "particles" }
         },
 
         new("Combat & Rarity", "Vision & FOV",
@@ -613,7 +959,7 @@ public static class PlayerGuideContent
             "Forest biomes; the extra radius can reveal traps before you\n" +
             "step on them.\n\n" +
             "SEE ALSO\n" +
-            "[Look Mode & Counter Stance] · [Traps & Hazards] · [Biomes]")
+            "[Look Mode & Counter Stance] · [Traps & Hazards] · [Biomes] · [Ambient World Animation]")
         {
             Tags = new[] { "combat", "vision" }
         },
@@ -653,7 +999,7 @@ public static class PlayerGuideContent
             "in the game. Stance shines when a boss telegraphs Winding Up\n" +
             "and you can't reposition.\n\n" +
             "SEE ALSO\n" +
-            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV] · [Bestiary — Monster Compendium]")
+            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Defense — Block, Parry, Dodge] · [Vision & FOV] · [Bestiary — Monster Compendium] · [Damage & Toast Feedback] · [Combat Visual Feedback]")
         {
             Tags = new[] { "combat", "vision", "controls" }
         },
@@ -1532,9 +1878,59 @@ public static class PlayerGuideContent
             "engaging — below the threshold the slow tax on water tiles\n" +
             "compounds the -3 ATK biome debuff.\n\n" +
             "SEE ALSO\n" +
-            "[Weather] · [Vision & FOV] · [Traps & Hazards] · [Swimming (Life Skill)] · [River Crossing & Aquatic Mobs] · [Unique Skill: Blazing & Frozen Edge]")
+            "[Weather] · [Vision & FOV] · [Traps & Hazards] · [Swimming (Life Skill)] · [River Crossing & Aquatic Mobs] · [Unique Skill: Blazing & Frozen Edge] · [Ambient World Animation]")
         {
             Tags = new[] { "world", "biomes", "floors" }
+        },
+
+        new("World", "Ambient World Animation",
+            "┌─ World\n" +
+            "│ Topic: Ambient World Animation\n" +
+            "│ Tiles: Vents · terminals · fans · hearths · torches\n" +
+            "│        · water ripples · door creaks · chest sparkles\n" +
+            "│ Density cap: Max 3 concurrent ambient tiles\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Select world tiles animate subtly to give the map a heartbeat.\n" +
+            "Each animation is an environmental cue — vents mean airflow,\n" +
+            "sparkling chests mean unlooted treasure, and torches gutter when\n" +
+            "the floor has an active draft or quake event.\n\n" +
+            "USAGE\n" +
+            "Ambient animation runs automatically when tiles enter your FOV.\n" +
+            "Tiles outside the current field-of-view never animate — they\n" +
+            "only come alive when you can actually see them.\n\n" +
+            "EFFECTS\n" +
+            "ANIMATED TILE CATALOGUE:\n" +
+            "  Vents          steam plume every few frames\n" +
+            "  Terminals      cursor blink / glyph cycle\n" +
+            "  Fans           rotating blade glyph\n" +
+            "  Hearths        flame flicker (pulses brighter in wind)\n" +
+            "  Torches        flame flicker (same palette as hearths)\n" +
+            "  Water ripples  surface tiles cycle a ~ glyph\n" +
+            "  Door creaks    one-shot when you pass adjacent\n" +
+            "  Chest sparkles unlooted chests shimmer gold\n" +
+            "FOV GATING:\n" +
+            "  Nothing animates outside your vision cone — ambient never\n" +
+            "  reveals mob position or hidden tiles.\n" +
+            "DENSITY CAP:\n" +
+            "  Engine hard-caps the map at 3 concurrent ambient tiles so\n" +
+            "  busy floors never flood the eye with motion.\n" +
+            "COMBAT SUPPRESSION:\n" +
+            "  Hearth and torch flames auto-disable while combat is active\n" +
+            "  so the flicker does not compete with damage popups.\n\n" +
+            "COSTS\n" +
+            "Zero gameplay cost. Ambient animation is presentation only and\n" +
+            "never changes mob AI, FOV radius, or trap-detection rolls.\n\n" +
+            "TIPS\n" +
+            "Read ambient motion as a scouting layer: a sparkling chest means\n" +
+            "unlooted, a fluttering torch means the floor has active weather\n" +
+            "or a nearby vent draft, and a steam plume pinpoints the vent\n" +
+            "tile itself in a Darkness biome when the base glyph is hard to\n" +
+            "read. Disable in Options if animation distracts you.\n\n" +
+            "SEE ALSO\n" +
+            "[Biomes] · [Vision & FOV] · [Mechanical Tiles] · [Labyrinth System] · [Weather] · [Campfires — Rest & Sleep XP] · [Combat Visual Feedback]")
+        {
+            Tags = new[] { "world", "ui", "accessibility" }
         },
 
         new("World", "Weather",
@@ -1597,7 +1993,7 @@ public static class PlayerGuideContent
             "only exist outside. Enter the labyrinth fully rested, at 100%\n" +
             "durability, with escape consumables in quick slots.\n\n" +
             "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Ascending a Floor] · [Mechanical Tiles]")
+            "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Ascending a Floor] · [Mechanical Tiles] · [Ambient World Animation]")
         {
             Tags = new[] { "world", "floors", "bosses" }
         },
@@ -3071,9 +3467,65 @@ public static class PlayerGuideContent
             "canon weapon early, you can start dual-wielding before the\n" +
             "Dual Blades grind completes.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System] · [Accessories]")
+            "[Gear Compare] · [Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System] · [Accessories]")
         {
             Tags = new[] { "equipment", "weapons", "refinement" }
+        },
+
+        new("Items", "Gear Compare",
+            "┌─ Items\n" +
+            "│ Topic: Gear Compare\n" +
+            "│ Tier: Any equippable item\n" +
+            "│ Weapon type: All slots\n" +
+            "│ Source: Inventory, Shop, Chest peek\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A side-by-side stat diff that appears whenever you hover an\n" +
+            "equippable item. The panel shows the hovered item next to what\n" +
+            "you currently have in the matching slot, with green +N gains\n" +
+            "and red -N losses per stat line — no mental math required.\n\n" +
+            "USAGE\n" +
+            "The diff shows up automatically in three places:\n" +
+            "  - Inventory (I): hover any weapon, armor, or accessory\n" +
+            "  - Shop dialog: hover any stocked item before buying\n" +
+            "  - Chest peek: hover the chest contents before picking up\n" +
+            "Your currently-equipped item is shown on the left; the hovered\n" +
+            "candidate is shown on the right. If you're dual-wielding, the\n" +
+            "panel compares against the main-hand slot by default — press\n" +
+            "the slot-swap key shown at the bottom of the panel to compare\n" +
+            "against the off-hand instead.\n\n" +
+            "EFFECTS\n" +
+            "Per-stat deltas are color-coded:\n" +
+            "  Green  +N     strict upgrade on that line\n" +
+            "  Red    -N     strict downgrade on that line\n" +
+            "  Gray    =     no change\n" +
+            "Overall \"is this better\" is not summarised into a single\n" +
+            "number — two builds can read the same diff differently (Atk\n" +
+            "vs CritRate, DEF vs weight). Shown stats include Attack,\n" +
+            "Defense, CritRate, CritDmg, durability, and any unique\n" +
+            "modifiers (Holy, elemental, ComboBonus, refinement bonuses).\n" +
+            "WEAPON-TYPE MISMATCH BANNER:\n" +
+            "When the hovered weapon is a different class than your current\n" +
+            "(1H Sword vs Katana, etc.) the panel flashes a banner:\n" +
+            "  \"Different weapon class — proficiency will not transfer\"\n" +
+            "This is a WARNING only — you can still equip it, but your\n" +
+            "weapon-proficiency rank resets the clock on the new class.\n\n" +
+            "COSTS\n" +
+            "Pure presentation — no cost, no turn consumed, no side effect.\n" +
+            "The panel simply appears while an item is hovered.\n\n" +
+            "TIPS\n" +
+            "In the shop, the diff is your best defense against overpaying:\n" +
+            "a Rare stock weapon often reads as flat sidegrade vs the drop\n" +
+            "you picked up twenty turns ago, and the vendor's +20% markup\n" +
+            "makes the sidegrade a losing trade. Use the chest-peek diff to\n" +
+            "decide BEFORE you pick up — picking up a strictly-worse item\n" +
+            "just to stash it still eats an inventory slot. The weapon-type\n" +
+            "mismatch banner matters most mid-run: resetting proficiency for\n" +
+            "a +3 Attack sidegrade almost never pays back the kills lost.\n\n" +
+            "SEE ALSO\n" +
+            "[Equipment Slots & Dual Wield] · [Weapon Proficiency Ranks] · [Rarity Tiers & Drop Rates] · [Dynamic Shop Tiering (F50+)] · [Damage & Toast Feedback] · [Quickbar & Consumables]")
+        {
+            Tags = new[] { "equipment", "weapons", "ui", "shop" }
         },
 
         new("Items", "Paired Dual-Wield Weapons",
@@ -3429,7 +3881,7 @@ public static class PlayerGuideContent
             "badge doesn't lock you out — the item remains in stock — but\n" +
             "the badge is the best way to spot the new drop quickly.\n\n" +
             "SEE ALSO\n" +
-            "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Vendor Investing] · [Ascending a Floor] · [Floor Boss Roster — Canon Highlights]")
+            "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Vendor Investing] · [Ascending a Floor] · [Floor Boss Roster — Canon Highlights] · [Gear Compare]")
         {
             Tags = new[] { "shop-tiering", "infinity-moment", "economy" }
         },
@@ -3853,9 +4305,49 @@ public static class PlayerGuideContent
             "Keep a Town NPC in reach during long farming runs — turn in\n" +
             "between waves so overflow XP isn't eaten by a level-up mid-quest.\n\n" +
             "SEE ALSO\n" +
-            "[Quest Types & Rewards] · [Town of Beginnings NPCs (F1)] · [Vendors — Rotating Stock] · [Save System]")
+            "[Quest Types & Rewards] · [Town of Beginnings NPCs (F1)] · [Vendors — Rotating Stock] · [Save System] · [Quest Tracker]")
         {
             Tags = new[] { "quests", "npcs", "economy" }
+        },
+
+        new("Quests & NPCs", "Quest Tracker",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: N/A (HUD widget)\n" +
+            "│ Floor: All\n" +
+            "│ Quest: Pinned-quest progress readout\n" +
+            "│ Reward: Always-visible objective + turn-in hint\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A small HUD widget parked top-right (directly below the minimap)\n" +
+            "that shows your currently pinned quest: title, short objective,\n" +
+            "and live progress counter. On completion it flips to a green\n" +
+            "accent and prints \"COMPLETE → return to NPC\".\n\n" +
+            "USAGE\n" +
+            "The first quest you accept is auto-pinned. Open the Quest Log\n" +
+            "(J) and press P on any other quest to pin/unpin it manually —\n" +
+            "only one quest is pinned at a time, so pinning a new one\n" +
+            "replaces the previous. The widget hides itself when no quest\n" +
+            "is pinned.\n\n" +
+            "EFFECTS\n" +
+            "Widget layout (top-right, below minimap):\n" +
+            "  line 1 — quest title (truncated to fit)\n" +
+            "  line 2 — objective text\n" +
+            "  line 3 — progress counter or COMPLETE banner\n" +
+            "On completion the entire frame takes a green accent so peripheral\n" +
+            "vision catches the state change without having to read the text.\n\n" +
+            "COSTS\n" +
+            "None — the widget reserves ~4 rows of the right margin and is\n" +
+            "skipped when empty. It never steals input; P only binds inside\n" +
+            "the Quest Log dialog.\n\n" +
+            "TIPS\n" +
+            "Pin the quest whose progress you actually want to track at a\n" +
+            "glance — usually a Kill or Collect quest on the current floor.\n" +
+            "Leave the auto-pin alone if you only ever keep one quest at a\n" +
+            "time; unpin to reclaim the HUD space for a big-map session.\n\n" +
+            "SEE ALSO\n" +
+            "[Accepting & Completing Quests] · [Quest Types & Rewards] · [Town of Beginnings NPCs (F1)] · [Controls & Keybindings]")
+        {
+            Tags = new[] { "quests", "ui", "hud" }
         },
 
         new("Quests & NPCs", "Ran the Brawler (F2)",
@@ -4781,7 +5273,7 @@ public static class PlayerGuideContent
             "Poison hemorrhage burst; pack an Antidote Crystal on biomes\n" +
             "that proc both.\n\n" +
             "SEE ALSO\n" +
-            "[Kill Streaks] · [Status: Bleed & Poison] · [Lore, Journals & Enchant Shrines] · [Col Economy — How You Earn]")
+            "[Kill Streaks] · [Status: Bleed & Poison] · [Lore, Journals & Enchant Shrines] · [Col Economy — How You Earn] · [Damage & Toast Feedback]")
         {
             Tags = new[] { "economy", "progression", "xp" }
         },
@@ -4820,9 +5312,55 @@ public static class PlayerGuideContent
             "roll-back when you mispicked a Passive Talent on level-up\n" +
             "and haven't saved since.\n\n" +
             "SEE ALSO\n" +
-            "[Controls & Keybindings] · [Save System] · [Permadeath & Save Deletion] · [Passive Talents (Level-Up Perks)]")
+            "[Controls & Keybindings] · [Save System] · [Permadeath & Save Deletion] · [Passive Talents (Level-Up Perks)] · [Categorized Combat Log]")
         {
             Tags = new[] { "save", "pause-menu", "controls" }
+        },
+
+        new("Quests & NPCs", "Categorized Combat Log",
+            "┌─ Quests & NPCs\n" +
+            "│ Topic: Categorized Combat Log\n" +
+            "│ Tabs: All · Combat · System · Item · Dialog\n" +
+            "│ Cycle: Tab key (when log focused)\n" +
+            "│ History: 500-entry ring buffer (preserved across turns)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "The combat log splits its feed into five filtered tabs so you\n" +
+            "can read just the slice you care about. Color per category keeps\n" +
+            "the All view scannable, and a 500-entry ring buffer preserves\n" +
+            "recent history across turns, floor changes, and dialog opens.\n\n" +
+            "USAGE\n" +
+            "Focus the log pane, then press Tab to cycle forward through the\n" +
+            "tabs. Focus returns to the map with Tab or Esc. PageUp/PageDown\n" +
+            "scroll history within the active tab.\n\n" +
+            "EFFECTS\n" +
+            "TAB CONTENTS:\n" +
+            "  All      Every message, uncategorized, original colors\n" +
+            "  Combat   Hits, crits, dodges, parries, status applications\n" +
+            "  System   Saves, level-ups, floor changes, game state events\n" +
+            "  Item     Pickups, drops, vendor trades, crafting, equipment\n" +
+            "  Dialog   NPC barks, boss lines, quest text, scripted scenes\n" +
+            "COLOR KEY (same hue in All as in its home tab):\n" +
+            "  Combat   red/yellow damage tones\n" +
+            "  System   muted gray/gold for meta events\n" +
+            "  Item     cyan/green loot tones\n" +
+            "  Dialog   magenta for character voice\n" +
+            "HISTORY BUFFER:\n" +
+            "  Ring-buffer of the most recent 500 entries; older entries drop\n" +
+            "  off silently so the scroll stays responsive even on long runs.\n\n" +
+            "COSTS\n" +
+            "No gameplay impact — the log never swallows turns, and category\n" +
+            "filtering is pure presentation. Dialogs still pause the game as\n" +
+            "normal when opened.\n\n" +
+            "TIPS\n" +
+            "Flip to Combat when auditing a boss fight and to Item after\n" +
+            "clearing a vault — the noise-to-signal ratio is dramatically\n" +
+            "better than the All view. Dialog tab doubles as a quick recap\n" +
+            "of the last NPC you talked to if you missed a quest hook.\n\n" +
+            "SEE ALSO\n" +
+            "[Damage & Toast Feedback] · [Damage Breakdown Format] · [Controls & Keybindings] · [Quick-Use Slots (1-5)] · [Achievements]")
+        {
+            Tags = new[] { "ui", "log", "controls" }
         },
 
         new("Quests & NPCs", "Save System",
@@ -4915,7 +5453,10 @@ public static class PlayerGuideContent
             "  Y                 Bestiary (monster compendium)\n" +
             "  B                 Player Guide (this dialog)\n" +
             "  H                 Quick help overlay\n" +
-            "  PageUp / PageDown Scroll the combat log\n\n" +
+            "  P (in Quest Log)  Pin / unpin the selected quest\n" +
+            "  Shift+S           Toggle status-tray verbose labels\n" +
+            "  PageUp / PageDown Scroll the combat log\n" +
+            "  Tab               Cycle log category tabs (log focused)\n\n" +
             "SYSTEM\n" +
             "  F5                Quick-save (no prompt)\n" +
             "  Esc               Close dialog — or open Pause Menu from map\n\n" +
@@ -4935,7 +5476,7 @@ public static class PlayerGuideContent
             "F5 before any risky pull; the Pause Menu's Load is your only\n" +
             "roll-back if you haven't saved since.\n\n" +
             "SEE ALSO\n" +
-            "[Pause Menu (Esc)] · [Save System] · [Sprint & Stealth Move] · [Look Mode & Counter Stance] · [Quick-Use Slots (1-5)] · [Sword Skills — Unlock & Use] · [Bestiary — Monster Compendium]")
+            "[Pause Menu (Esc)] · [Save System] · [Sprint & Stealth Move] · [Look Mode & Counter Stance] · [Quick-Use Slots (1-5)] · [Quickbar & Consumables] · [Sword Skills — Unlock & Use] · [Bestiary — Monster Compendium] · [Damage & Toast Feedback] · [Gear Compare] · [Combat Visual Feedback] · [Damage Breakdown Format] · [Ambient World Animation] · [Categorized Combat Log] · [Quest Tracker] · [Status Icon Tray] · [Particle Effects] · [Damage Type Tags]")
         {
             Tags = new[] { "controls", "keybindings", "ui" }
         },

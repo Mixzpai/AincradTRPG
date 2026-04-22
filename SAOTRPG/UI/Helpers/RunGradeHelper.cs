@@ -4,12 +4,8 @@ namespace SAOTRPG.UI.Helpers;
 // Score formula: (floor × 20) + (kills × 3) + efficiency bonus (50 − turns/10).
 public static class RunGradeHelper
 {
-    // Grade thresholds checked in descending order — first match wins.
-    // Score formula: (floor × 20) + (kills × 3) + max(0, 50 − turns/10).
-    // Reference scores for a typical run:
-    //   Floor 5, 15 kills, 100 turns → 185 (A)
-    //   Floor 3, 8 kills, 150 turns  → 119 (B)
-    //   Floor 1, 3 kills, 50 turns   →  74 (B)
+    // Descending thresholds, first match wins. Score = floor·20 + kills·3 + max(0, 50 − turns/10).
+    // Ref: F5/15k/100t→185 (A), F3/8k/150t→119 (B), F1/3k/50t→74 (B).
     private static readonly (int MinScore, string Grade, string Comment)[] RunGrades =
     {
         (200, "S", "Legendary!"),   // Deep floors + high kills + efficient

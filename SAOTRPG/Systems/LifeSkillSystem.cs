@@ -2,9 +2,8 @@ using SAOTRPG.Items;
 
 namespace SAOTRPG.Systems;
 
-// FB-050 Skill-by-Use Leveling: per-player LifeSkillState by LifeSkillType.
-// XP hooks in TurnManager.Movement + Inventory.ConsumableUsed.
-// Milestones fold into Player.LifeSkill*Bonus (additive in stat pipeline).
+// Skill-by-use leveling (per-player LifeSkillState by type). XP hooks in
+// TurnManager.Movement + Inventory.ConsumableUsed; milestones additive via LifeSkill*Bonus.
 public enum LifeSkillType
 {
     Sleep,

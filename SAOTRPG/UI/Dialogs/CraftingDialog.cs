@@ -360,8 +360,7 @@ public static class CraftingDialog
         return 0;
     }
 
-    // ── Evolve ──
-    // Consumes chain catalysts (+ peak extra at T3), swaps weapon for next tier.
+    // ── Evolve ── Consumes chain catalysts (+peak extra at T3), swaps weapon for next tier.
     // Preserves enhancement level; T4 apex cannot evolve further.
     private static void TryEvolveWeapon(Player player, Label resultLabel, Label header)
     {
@@ -519,9 +518,8 @@ public static class CraftingDialog
             player.Inventory.RemoveItem(item);
     }
 
-    // ── Refine ──
-    // Socket an Ingot into one of 3 slots on equipped weapon/shield.
-    // Override destroys the old ingot. Divine = sealed (also enforced in Refinement.Socket).
+    // ── Refine ── Socket an Ingot into one of 3 slots on equipped weapon/shield.
+    // Override destroys old ingot. Divine = sealed (also enforced in Refinement.Socket).
     private static void ShowRefineMenu(Player player, Label resultLabel, Label header)
     {
         // Refinable: Weapon slot + OffHand shield (dual-blade offhands skipped — weapon-branch conflict).

@@ -3,9 +3,8 @@ using SAOTRPG.Items;
 
 namespace SAOTRPG.Systems;
 
-// FB-058 Titles — passive nameplates unlocked via Bestiary kills + flags.
-// One active at a time; equip = flat base-stat delta. Save persists IDs only.
-// TurnManager.CheckTitleUnlocks runs post-kill; TitleUnlocked banner fires.
+// Passive nameplates unlocked via Bestiary kills + flags. One active; equip =
+// flat base-stat delta. Save persists IDs only. TurnManager runs post-kill.
 public static class TitleSystem
 {
     // Flat passive. VsTag = "vs Tag" conditional (reserved; currently applied flat).
@@ -100,9 +99,8 @@ public static class TitleSystem
     // Banner fires when a new title is unlocked so the UI/log can log it.
     public static event Action<TitleDef>? TitleUnlocked;
 
-    // Applies a title's flat stat bonus to the player. Mirrors the pattern
-    // used by the enchant-shrine — it pokes BaseAttack / BaseDefense / etc.
-    // so the bonus threads through every derived stat automatically.
+    // Flat stat bonus via Base* fields (mirrors enchant-shrine) so the bonus
+    // threads through derived stats automatically.
     public static void ApplyTitleBonus(Player player, TitleDef title, int sign = +1)
     {
         int v = title.BonusValue * sign;
@@ -119,16 +117,14 @@ public static class TitleSystem
             case StatType.Agility:      player.Agility += v; break;
             case StatType.Intelligence: player.Intelligence += v; break;
             case StatType.Health:
-                // Flat MaxHP is derived from Vitality, so grant +1 Vit per
-                // 10 HP requested and round up. For +10 HP → +1 Vit.
+                // MaxHP derives from Vitality → +1 Vit per 10 HP (round up). +10 HP = +1 Vit.
                 player.Vitality += Math.Max(1, v / 10);
                 player.CurrentHealth = Math.Min(player.CurrentHealth + v, player.MaxHealth);
                 break;
         }
 
-        // Beginner Slayer flavor bonus: +1 to the other five attributes
-        // on top of the registered +1 Strength. Keeps the definition a
-        // single StatType while delivering the "all stats" promise.
+        // Beginner Slayer: +1 to the other five attributes atop the registered
+        // +1 Strength, keeping the def a single StatType.
         if (title.Id == "title_beginner_slayer")
         {
             player.Vitality    += sign;
@@ -170,9 +166,8 @@ public static class TitleSystem
         return true;
     }
 
-    // Bestiary-driven unlock check. Called after every kill — walks the
-    // registry, evaluating each title's requirement against the current
-    // Bestiary / total-kill state. Cheap (N titles × 1 lookup each).
+    // Post-kill unlock check: walks the registry, evaluating each title against
+    // current Bestiary / total-kill state. Cheap (N titles × 1 lookup).
     public static void CheckKillUnlocks(Player player, int totalKillCount,
         IReadOnlyDictionary<string, int> speciesKills,
         IReadOnlyDictionary<string, int> tagKills)

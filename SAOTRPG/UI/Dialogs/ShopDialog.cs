@@ -73,6 +73,20 @@ public static class ShopDialog
 
         var dialog = DialogHelper.Create(vendor.ShopName ?? "Shop", DialogWidth, DialogHeight);
 
+        // Vendor portrait (Agil / Lisbeth / etc.) — anchored top-left, non-interactive.
+        string? vendorPortraitKey = AsciiPortraits.KeyForName(vendor.Name);
+        string[] vendorPortrait = vendorPortraitKey != null ? AsciiPortraits.Get(vendorPortraitKey) : Array.Empty<string>();
+        if (vendorPortrait.Length > 0)
+        {
+            var portraitLabel = new Label
+            {
+                Text = string.Join("\n", vendorPortrait),
+                X = 0, Y = 0, Width = 9, Height = vendorPortrait.Length,
+                ColorScheme = ColorSchemes.FromColor(vendor.SymbolColor),
+            };
+            dialog.Add(portraitLabel);
+        }
+
         var colLabel = new Label { Text = $"Your Col: {player.ColOnHand}", X = Pos.Center(), Y = 0 };
         string tierInfo = ShopTierSystem.HighestFloorBossCleared >= 50
             ? $"   Tier {ShopTierSystem.CurrentTierCount()}/{ShopTierSystem.TotalTiers} unlocked"
@@ -451,7 +465,7 @@ public static class ShopDialog
     }
 
     private static string BuildComparison(BaseItem shopItem, Player player) =>
-        shopItem is not EquipmentBase eq ? "" : EquipmentComparer.BuildComparison(player, eq);
+        shopItem is not EquipmentBase eq ? "" : GearCompare.BuildDiffForPlayer(player, eq);
 
     // Sell price w/ floor bonus. With `player`: symmetric karma mult (Honorable +10%, Shady -10%).
     // Outlaw (karma ≤ -50) already blocked at entry.

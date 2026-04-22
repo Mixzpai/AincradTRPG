@@ -9,10 +9,8 @@ namespace SAOTRPG.UI.Helpers;
 // Used in the inventory dialog to show what you'd gain/lose by equipping an item.
 public static class EquipmentComparer
 {
-    // Compares an inventory equipment item against whatever is currently
-    // equipped in the matching slot. Returns a string like "ATK: 5→12 (+7)  DEF: 3→2 (-1)".
-    // Appends ▲ UPGRADE / ▼ DOWNGRADE verdict based on net stat diff.
-    // Returns empty string if no comparison is possible.
+    // Inventory item vs currently-equipped in matching slot → "ATK: 5→12 (+7)  DEF: 3→2 (-1)".
+    // Appends ▲ UPGRADE / ▼ DOWNGRADE by net diff. Empty when no comparison possible.
     public static string BuildComparison(Player player, EquipmentBase item)
     {
         var slot = ResolveSlot(item);

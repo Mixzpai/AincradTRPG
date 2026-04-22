@@ -160,10 +160,8 @@ public partial class MapView : View
         _doorFlashes.Add((x, y, DoorFlashFrames));
     }
 
-    // Brief red background flash on a tile that just took damage.
-    // Paired structures: the list tracks per-entry frame counters (needed for
-    // independent tick-down) while the HashSet powers O(1) membership tests
-    // from the per-tile rendering hot path (thousands of lookups/frame).
+    // Red flash on damaged tile. Paired: List tracks per-entry frame counters (independent tick-down),
+    // HashSet gives O(1) membership for the per-tile render hot path.
     private readonly List<(int X, int Y, int FramesLeft)> _hitFlashes = new();
     private readonly HashSet<(int X, int Y)> _hitFlashSet = new();
     private const int HitFlashFrames = 2;
@@ -220,6 +218,11 @@ public partial class MapView : View
     public event Action? BestiaryRequested;
     // Fired on Esc from the map view — opens the pause menu.
     public event Action? PauseRequested;
+    // FB-479 Shift+S — flips the status tray between compact / verbose labels.
+    public event Action? StatusTrayVerboseToggleRequested;
+
+    // Partial method hook implemented in MapView.TileAnimations.cs.
+    partial void RenderAmbientTiles(int vpWidth, int vpHeight);
 
     public void SetMap(GameMap map)
     {
@@ -243,6 +246,7 @@ public partial class MapView : View
         _critScreenFlashFrames = 0;
         _bossesSeen.Clear();
         _bossEntranceFrames = 0;
+        SAOTRPG.Systems.ParticleQueue.Clear();
     }
 
     public MapView(GameMap map, Camera camera, Player player)

@@ -5,9 +5,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Scaled overview of dungeon floor (top-right). Each cell = region of map tiles.
-// Perf: SampleRegion is single-pass; per-cell buffer cached and only resampled on
-// move, new reveal, or viewport resize (frames with no reveals reuse last buffer).
+// Top-right scaled floor overview; each cell = region of tiles.
+// Perf: single-pass SampleRegion, buffer cached and only resampled on move/reveal/resize.
 public class MinimapView : View
 {
     private GameMap _map;

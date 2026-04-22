@@ -318,7 +318,7 @@ public partial class TurnManager
         var existing = QuestSystem.GetQuest(QuestId);
         if (existing == null)
         {
-            QuestSystem.ActiveQuests.Add(new Quest
+            QuestSystem.AddQuest(new Quest
             {
                 Id = QuestId,
                 Title = "Ran's Trial",
@@ -358,8 +358,7 @@ public partial class TurnManager
     }
 
     // Shared Divine-Object quest handler (Azariya F50, Selka F65, Dorothy F78, HF NPCs).
-    // First-talk offers floor-kill quest; complete grants Divine (drops if inv full).
-    // TurnedIn status prevents re-grant.
+    // First-talk offers floor-kill quest; complete grants Divine; TurnedIn prevents re-grant.
     private bool HandleDivineQuest(Entities.NPC npc, string questId, string questTitle,
         string openingLine, int killCount, string divineDefId, string handOverLine,
         string inProgressLine, string postCompleteLine, int rewardCol, int rewardXp)
@@ -371,7 +370,7 @@ public partial class TurnManager
         // First talk — offer the trial.
         if (existing == null)
         {
-            QuestSystem.ActiveQuests.Add(new Quest
+            QuestSystem.AddQuest(new Quest
             {
                 Id = questId,
                 Title = questTitle,
@@ -462,9 +461,8 @@ public partial class TurnManager
             rewardXp:         550);
     }
 
-    // Selka — F65 Fragrant Olive + chained "Unfolding Truth" (30 kills F65+,
-    // rewards ohs_unfolding_truth_fragrant_olive). GetQuest reads completed list
-    // so legacy TurnedIn saves still trigger the chain.
+    // Selka — F65 Fragrant Olive + chained "Unfolding Truth" (30 kills F65+).
+    // GetQuest reads completed list so legacy TurnedIn saves still trigger the chain.
     private bool HandleSelka(Entities.NPC npc)
     {
         if (npc.Name != "Selka the Novice") return false;
@@ -618,9 +616,8 @@ public partial class TurnManager
             rewardXp:         q.Xp);
     }
 
-    // ── FB-063 Guild Recruiter dispatcher ────────────────────────────────
-    // Flow: trial quest (10 kills) → induct + rep + perk → signature quest.
-    // Laughing Coffin: gated behind karma ≤-50 (Outlaw).
+    // Guild Recruiter: trial (10 kills) → induct + rep + perk → signature quest.
+    // Laughing Coffin gated behind karma ≤-50 (Outlaw).
     private bool HandleGuildRecruiter(Entities.NPC npc)
     {
         if (npc.Name == null) return false;
@@ -658,7 +655,7 @@ public partial class TurnManager
                 _log.Log($"{npc.Name}: \"You already wear another guild's colors. Finish our trial and we'll sort that out.\"");
             }
 
-            QuestSystem.ActiveQuests.Add(new Quest
+            QuestSystem.AddQuest(new Quest
             {
                 Id = questId,
                 Title = $"Prove yourself to {def.DisplayName}",
@@ -717,7 +714,7 @@ public partial class TurnManager
         // First talk while a member — offer signature quest.
         if (existing == null)
         {
-            QuestSystem.ActiveQuests.Add(new Quest
+            QuestSystem.AddQuest(new Quest
             {
                 Id = sig.QuestId,
                 Title = sig.Title,
@@ -853,7 +850,7 @@ public partial class TurnManager
                 && npc.CanInteract && Random.Shared.Next(3) == 0)
             {
                 var quest = QuestSystem.GenerateQuest(CurrentFloor, npc.Name);
-                QuestSystem.ActiveQuests.Add(quest);
+                QuestSystem.AddQuest(quest);
                 _log.LogSystem($"  [QUEST] New quest from {npc.Name}: '{quest.Title}'");
                 _log.Log($"  {quest.Description}");
                 _log.Log($"  Reward: {quest.RewardCol} Col, {quest.RewardXp} XP");

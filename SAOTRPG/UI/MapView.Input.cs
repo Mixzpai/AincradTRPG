@@ -12,6 +12,16 @@ public partial class MapView
         int dx = 0, dy = 0;
         var bareKey = keyEvent.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
 
+        // Shift+S — FB-479 status tray verbose toggle. Captured before directional
+        // dispatch so Shift+S-as-sprint-south is preserved via Shift+Down arrow.
+        if (bareKey == KeyCode.S && keyEvent.IsShift
+            && (keyEvent.KeyCode & KeyCode.CtrlMask) == 0)
+        {
+            StatusTrayVerboseToggleRequested?.Invoke();
+            keyEvent.Handled = true;
+            return true;
+        }
+
         switch (bareKey)
         {
             case KeyCode.W: case KeyCode.CursorUp:    dy = -1; break;
@@ -47,12 +57,15 @@ public partial class MapView
             case KeyCode.D3: QuickUseRequested?.Invoke(3); keyEvent.Handled = true; return true;
             case KeyCode.D4: QuickUseRequested?.Invoke(4); keyEvent.Handled = true; return true;
             case KeyCode.D5: QuickUseRequested?.Invoke(5); keyEvent.Handled = true; return true;
+            case KeyCode.D6: QuickUseRequested?.Invoke(6); keyEvent.Handled = true; return true;
+            case KeyCode.D7: QuickUseRequested?.Invoke(7); keyEvent.Handled = true; return true;
+            case KeyCode.D8: QuickUseRequested?.Invoke(8); keyEvent.Handled = true; return true;
+            case KeyCode.D9: QuickUseRequested?.Invoke(9); keyEvent.Handled = true; return true;
+            case KeyCode.D0: QuickUseRequested?.Invoke(10); keyEvent.Handled = true; return true;
             case KeyCode.PageUp:   return FireEvent(LogScrollUpRequested,   keyEvent);
             case KeyCode.PageDown: return FireEvent(LogScrollDownRequested, keyEvent);
-            // Esc from map focus opens the pause menu. When a dialog is on
-            // top, Terminal.Gui routes KeyDown to the focused dialog first
-            // (see DialogHelper.CloseOnEscape) so this only fires from the
-            // map itself, never doubling up with dialog close handlers.
+            // Esc → pause menu. Dialog-on-top case: Terminal.Gui routes KeyDown to focused dialog first
+            // (DialogHelper.CloseOnEscape), so this only fires from map focus — no double-close.
             case KeyCode.Esc:      return FireEvent(PauseRequested,          keyEvent);
             default: return base.OnKeyDown(keyEvent);
         }

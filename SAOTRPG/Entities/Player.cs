@@ -46,6 +46,10 @@ namespace SAOTRPG.Entities
         // Karma ∈ [-100,+100], default 0. Adjusted via KarmaSystem.Adjust; drives NPC dialogue, shop prices, TOB guard patrol.
         public int Karma { get; set; }
 
+        // 10-slot consumable quickbar bound to keys 1-0 (D1..D0). Per-player,
+        // persisted via SaveData. Manual bind via Shift+N; auto-fill on pickup.
+        public Systems.QuickbarState Quickbar { get; set; } = new();
+
         // Active guild; single-membership (joining forces leaving current).
         public Systems.Story.Faction ActiveGuildId { get; set; } = Systems.Story.Faction.None;
 
@@ -73,6 +77,8 @@ namespace SAOTRPG.Entities
             };
             player._log = log;
             player.Inventory = new PlayerInventory(logger: inventoryLogger);
+            // Auto-fill quickbar on every new pickup of a consumable type.
+            player.Inventory.Events.ItemAdded += (_, e) => player.Quickbar.TryAutoBind(e.Item);
             player.CurrentHealth = player.MaxHealth;
             player.Inventory.AddItem(OneHandedSwordDefinitions.CreateIronSword());
             player.Inventory.AddItem(PotionDefinitions.CreateHealthPotion());
@@ -100,6 +106,7 @@ namespace SAOTRPG.Entities
             };
             player._log = log;
             player.Inventory = new PlayerInventory(logger: inventoryLogger);
+            player.Inventory.Events.ItemAdded += (_, e) => player.Quickbar.TryAutoBind(e.Item);
 
             foreach (var itemData in save.InventoryItems)
             {
@@ -152,6 +159,17 @@ namespace SAOTRPG.Entities
             player.FoundedGuildName = save.FoundedGuildName;
             player.FoundedGuildPerk = save.FoundedGuildPerk;
             // Guild perk already baked in at prior-session Join-time; no re-apply (mirrors Title hydration).
+
+            // FB-466 Quickbar — hydrate 10-slot DefinitionId array. Legacy
+            // saves with empty list stay at defaults (all null = empty).
+            if (save.QuickbarSlotDefIds != null)
+            {
+                for (int qi = 0; qi < Systems.QuickbarState.SlotCount
+                    && qi < save.QuickbarSlotDefIds.Count; qi++)
+                {
+                    player.Quickbar.SlotItemDefIds[qi] = save.QuickbarSlotDefIds[qi];
+                }
+            }
 
             return player;
         }

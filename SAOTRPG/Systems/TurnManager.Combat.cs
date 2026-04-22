@@ -10,6 +10,145 @@ public partial class TurnManager
     // Monster IDs with Pair Resonance banner already shown. Clears on target swap.
     private readonly HashSet<int> _pairResonanceLogged = new();
 
+    // Shake request event. int tier: 1 = light (crit/20%+ HP hit),
+    // 2 = heavy (boss special / floor-quake). MapView consumes.
+    public event Action<int>? MapViewShakeRequested;
+
+    // Animated projectile request: (sx, sy, ex, ey, glyph, color, msPerCell, isArrow).
+    // isArrow flag picks the directional arrow glyph in MapView; non-arrow
+    // uses the caller-supplied glyph for sword-arc / bolt variants.
+    public event Action<int, int, int, int, char, Color, int, bool>? ProjectileRequested;
+
+    // Status-mote trail request: (x, y, kind). kind: "bleed" | "poison" | "burn".
+    public event Action<int, int, string>? StatusTrailRequested;
+
+    // Multi-hit cascade popup per hit — (mx, my, damage, hitIndex, delayMs).
+    public event Action<int, int, int, int, int>? MultiHitStreamRequested;
+
+    // Multi-hit final aggregate — (mx, my, totalHits, totalDamage, delayMs).
+    public event Action<int, int, int, int, int>? MultiHitAggregateRequested;
+
+    // Mirror of DamageDealt for multi-hit skills — fires side-effect flashes
+    // (scorch, hit-flash, border) WITHOUT the popup enqueue (cascade owns popups).
+    public event Action<int, int, int, bool, bool>? MultiHitDamageDealt;
+
+    // Formats the "You hit X for Y" line per the active DamageBreakdownMode.
+    // raw = pre-mitigation, defShown = estimated armor/def absorbed,
+    // resistShown = elemental resist (0 when N/A).
+    private static string FormatPlayerHitLog(string monsterName, string weaponName,
+        int final, int raw, int defShown, int resistShown)
+    {
+        return UserSettings.Current.DamageBreakdownMode switch
+        {
+            DamageBreakdownMode.Concise =>
+                $"You hit {monsterName} for {final} dmg ({raw} - {defShown} armor)",
+            DamageBreakdownMode.Medium =>
+                $"You hit {monsterName}: {raw} raw - {defShown} armor = {final}",
+            DamageBreakdownMode.Verbose =>
+                $"You hit {monsterName} for {final} dmg ({raw} atk - {defShown} def + {resistShown} resist)",
+            _ =>
+                $"You hit {monsterName} with {weaponName} for {final} damage!",
+        };
+    }
+
+    // Builds a damage-type tag string based on weapon type + SpecialEffect.
+    // Returns empty when DamageBreakdownMode == Off OR the weapon is bare
+    // physical with no clear subtype (generic "hit"). Q26=b rule.
+    internal static string BuildDamageTypeTag(Weapon? weapon)
+    {
+        if (UserSettings.Current.DamageBreakdownMode == DamageBreakdownMode.Off) return "";
+
+        string? tag = InferElementalTag(weapon?.SpecialEffect)
+                      ?? InferPhysicalTag(weapon?.WeaponType);
+        if (string.IsNullOrEmpty(tag)) return "";
+
+        return UserSettings.Current.DamageTagStyle switch
+        {
+            DamageTagStyle.Bare => tag,
+            DamageTagStyle.Chip => $"◆{tag}◆",
+            _ => $"[{tag}]",
+        };
+    }
+
+    // Builds tag for monster→player incoming damage (Q23=a). Source derived
+    // from the monster name keywords — wraith/skeleton=DARK, fire/flame=FIRE, etc.
+    internal static string BuildIncomingDamageTag(string? monsterName)
+    {
+        if (UserSettings.Current.DamageBreakdownMode == DamageBreakdownMode.Off) return "";
+        string? tag = InferMonsterDamageTag(monsterName);
+        if (string.IsNullOrEmpty(tag)) return "";
+        return UserSettings.Current.DamageTagStyle switch
+        {
+            DamageTagStyle.Bare => tag,
+            DamageTagStyle.Chip => $"◆{tag}◆",
+            _ => $"[{tag}]",
+        };
+    }
+
+    private static string? InferElementalTag(string? specialEffect)
+    {
+        if (string.IsNullOrEmpty(specialEffect)) return null;
+        if (specialEffect.Contains("Burn", StringComparison.OrdinalIgnoreCase)
+            || specialEffect.Contains("Fire", StringComparison.OrdinalIgnoreCase)) return "FIRE";
+        if (specialEffect.Contains("Freeze", StringComparison.OrdinalIgnoreCase)
+            || specialEffect.Contains("Ice", StringComparison.OrdinalIgnoreCase)) return "ICE";
+        if (specialEffect.Contains("Shock", StringComparison.OrdinalIgnoreCase)
+            || specialEffect.Contains("Thunder", StringComparison.OrdinalIgnoreCase)) return "THUNDER";
+        if (specialEffect.Contains("Holy", StringComparison.OrdinalIgnoreCase)) return "HOLY";
+        if (specialEffect.Contains("Dark", StringComparison.OrdinalIgnoreCase)) return "DARK";
+        if (specialEffect.Contains("Poison", StringComparison.OrdinalIgnoreCase)) return "POISON";
+        if (specialEffect.Contains("Bleed", StringComparison.OrdinalIgnoreCase)) return "BLEED";
+        return null;
+    }
+
+    private static string? InferPhysicalTag(string? weaponType) => weaponType switch
+    {
+        "One-Handed Sword" or "Two-Handed Sword" or "Scimitar" or "Katana" or "Claws" => "SLASH",
+        "Rapier" or "Spear" => "THRUST",
+        "Mace" => "BLUNT",
+        "Dagger" or "Bow" => "PIERCE",
+        "Scythe" => "CUT",
+        _ => null,
+    };
+
+    private static string? InferMonsterDamageTag(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        string n = name.ToLowerInvariant();
+        if (n.Contains("wraith") || n.Contains("shadow") || n.Contains("dark")) return "DARK";
+        if (n.Contains("flame") || n.Contains("fire") || n.Contains("lava")
+            || n.Contains("drake") || n.Contains("dragon")) return "FIRE";
+        if (n.Contains("frost") || n.Contains("ice") || n.Contains("snow")) return "ICE";
+        if (n.Contains("thunder") || n.Contains("spark") || n.Contains("storm")) return "THUNDER";
+        if (n.Contains("holy") || n.Contains("angel") || n.Contains("light")) return "HOLY";
+        if (n.Contains("spider") || n.Contains("serpent") || n.Contains("wasp")) return "POISON";
+        if (n.Contains("skeleton") || n.Contains("zombie")) return "DARK";
+        if (n.Contains("wolf") || n.Contains("beast") || n.Contains("bear")) return "SLASH";
+        return null;
+    }
+
+    // Glues a damage-type tag onto a log line in the configured position.
+    internal static string ApplyDamageTag(string baseLine, string tag)
+    {
+        if (string.IsNullOrEmpty(tag)) return baseLine;
+        return UserSettings.Current.DamageTagPosition switch
+        {
+            DamageTagPosition.Suffix => $"{baseLine} {tag}",
+            DamageTagPosition.Inline => InlineInsert(baseLine, tag),
+            _ => $"{tag} {baseLine}",
+        };
+    }
+
+    // Inline insertion: before the final "damage"/"dmg" word so the tag reads
+    // "…for 8 [SLASH] dmg" per the research spec.
+    private static string InlineInsert(string line, string tag)
+    {
+        int idx = line.LastIndexOf(" dmg", StringComparison.Ordinal);
+        if (idx < 0) idx = line.LastIndexOf(" damage", StringComparison.Ordinal);
+        if (idx < 0) return $"{line} {tag}";
+        return line.Substring(0, idx) + " " + tag + line.Substring(idx);
+    }
+
     private void HandleCombat(Monster monster, int hpBefore)
     {
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
@@ -89,9 +228,27 @@ public partial class TurnManager
         string critTag = playerCrit ? " CRITICAL!" : "";
         if (pairResonance && _pairResonanceLogged.Add(monster.Id))
             _log.LogCombat($"  ◆ Pair Resonance! {wpn!.Name} and {offHandWeapon!.Name} sing together (+10% damage, +5% crit).");
-        _log.LogCombat($"You hit {monster.Name} with {wpnName} for {damage} damage!{critTag}");
+        // Damage breakdown (FB-463): Off/Concise/Medium/Verbose chosen in Options.
+        // Raw = pre-defense; defShown = monster.Defense mitigation estimate.
+        int rawDmg = baseDmg + profBonus + comboBonus + _shrineBuff + _levelUpBuff + SatietyAtkBonus;
+        int defShown = Math.Max(0, rawDmg - damage);
+        string hitLine = FormatPlayerHitLog(monster.Name, wpnName, damage, rawDmg, defShown, 0);
+        string tag = BuildDamageTypeTag(wpn);
+        hitLine = ApplyDamageTag(hitLine, tag);
+        _log.LogCombat(hitLine + critTag);
         WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(wpn, playerCrit));
+        // Bow/ranged: emit animated arrow projectile from player→target.
+        if (wpnType == "Bow")
+            ProjectileRequested?.Invoke(_player.X, _player.Y, monster.X, monster.Y,
+                '·', Color.BrightYellow, 40, true);
+        // FB-450 sword slash particles — 3-arc spray in the swing direction.
+        int dxSwing = Math.Sign(monster.X - _player.X);
+        int dySwing = Math.Sign(monster.Y - _player.Y);
+        ParticleQueue.Emit(ParticleEvent.SwordSlash, monster.X, monster.Y, dxSwing, dySwing);
+        if (playerCrit) ParticleQueue.Emit(ParticleEvent.CritShatter, monster.X, monster.Y);
         DamageDealt?.Invoke(monster.X, monster.Y, damage, false, playerCrit);
+        // Screen shake (FB-453): crit = tier 1, boss heavies handled in BossAI.
+        if (playerCrit) MapViewShakeRequested?.Invoke(1);
         if (playerCrit)
         {
             CombatTextEvent?.Invoke(monster.X, monster.Y, "CRIT!", Color.BrightRed);
@@ -147,7 +304,11 @@ public partial class TurnManager
 
     private void HandleMonsterKill(Monster monster, Monster.DefeatReward reward, string wpnType, int hpBefore)
     {
+        // Bestiary read BEFORE RecordKill so TimesKilled==0 identifies a
+        // species first-kill. Post-record fire routes to the toast queue.
+        bool speciesFirst = Bestiary.Get(monster.Name)?.TimesKilled == 0;
         Bestiary.RecordKill(monster.Name);
+        if (speciesFirst) SpeciesFirstKilled?.Invoke(monster.Name);
         QuestSystem.OnMobKilled(monster.Name, _log, wpnType);
 
         // FB-063 Karma — PKer humans +, peaceful -, hostile non-human neutral.
@@ -228,6 +389,7 @@ public partial class TurnManager
                 _log.LogSystem($"  **Sword Skill Unlocked: {skill.Name}! Press F to equip it.");
                 TutorialSystem.ShowTip(_log, "first_skill_unlock");
                 CombatTextEvent?.Invoke(_player.X, _player.Y, $"NEW SKILL!", Color.BrightCyan);
+                ToastQueue.EnqueueSwordSkill(skill.Name);
                 // Auto-equip to first empty slot
                 for (int i = 0; i < EquippedSkills.Length; i++)
                 {
@@ -366,8 +528,7 @@ public partial class TurnManager
             }
 
             // IM Last-Attack Bonus — F85/F92-F96/F98/F99 guaranteed non-enhanceable
-            // Legendary on player's killing blow. Stacks with FloorBossGuaranteedDrops.
-            // (Kill-credit: HandleMonsterKill only runs post-player attack.)
+            // Legendary on player's killing blow; stacks with FloorBossGuaranteedDrops.
             if (LootGenerator.FloorBossLastAttackDrops.TryGetValue(CurrentFloor, out var labDropId))
             {
                 var labDrop = Items.ItemRegistry.Create(labDropId);
@@ -379,7 +540,9 @@ public partial class TurnManager
             }
 
             // F50+ boss clear → next ShopTierSystem tier. Additive only.
-            ShopTierSystem.RegisterFloorBossClear(CurrentFloor, _log);
+            int tiersGained = ShopTierSystem.RegisterFloorBossClear(CurrentFloor, _log);
+            if (tiersGained > 0) ToastQueue.EnqueueShopTier(tiersGained);
+            FloorBossCleared?.Invoke(boss.Name);
 
             RollBossOreDrops(boss.X, boss.Y, boss.Name);
 
@@ -392,6 +555,9 @@ public partial class TurnManager
             new Story.StoryContext(CurrentFloor, KillCount, _player, monster));
 
         DropLoot(monster);
+        // FB-450 supplementary polygon ring — fires alongside the existing
+        // shatter burst. Count scales via ParticleDensity.
+        ParticleQueue.Emit(ParticleEvent.MonsterDeath, monster.X, monster.Y);
         MonsterKilled?.Invoke(monster.X, monster.Y);
         CleanupMobStatus(monster.Id);
         _map.RemoveEntity(monster);
@@ -401,6 +567,7 @@ public partial class TurnManager
             _player.ColOnHand += ach.ColReward;
             TotalColEarned += ach.ColReward;
             _log.LogSystem($"  **ACHIEVEMENT: {ach.Name} — {ach.Description} (+{ach.ColReward} Col)");
+            ToastQueue.EnqueueAchievement(ach.Name);
         }
 
         if (GetMonsterCount() == 0)

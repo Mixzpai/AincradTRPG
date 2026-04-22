@@ -1,13 +1,10 @@
 namespace SAOTRPG.Systems;
 
 // Bestiary flavor. Keyed by mob base Name (strip Elite/Champion affixes).
-// Canon: SAO Wiki/Progressive/HF/IF. Non-canon → GenerateGenericBlurb
-// (LootTag + floor band).
+// Non-canon → GenerateGenericBlurb (LootTag + floor band).
 public static class BestiaryFlavor
 {
-    // Strip Elite/Champion/affix prefixes to hit the canonical key.
-    // Matches MobFactory's naming convention so Bestiary Names with
-    // variant/affix prefixes still resolve to base canon flavor.
+    // Strip Elite/Champion/affix prefixes to hit canonical key; matches MobFactory naming.
     public static string Lookup(string name, string? lootTag = null,
         int minFloor = 1, int maxFloor = 100)
     {
@@ -62,9 +59,8 @@ public static class BestiaryFlavor
         return $"{tagLine} Seen on {band}.";
     }
 
-    // Canon SAO monster flavor. Keys must match MobFactory and BossFactory
-    // Name fields exactly. Adding a new canon mob? Drop a 3-5 sentence entry
-    // here and it appears automatically in the Bestiary Lore tab.
+    // Canon SAO monster flavor. Keys must match MobFactory/BossFactory Name
+    // fields exactly — new entries auto-appear in the Bestiary Lore tab.
     public static readonly Dictionary<string, string> ByMobName = new()
     {
         // ── Floor 1 mobs (Progressive Vol 1) ─────────────────────────────

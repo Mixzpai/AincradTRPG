@@ -2,19 +2,44 @@ using Terminal.Gui;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Centralized keyword → color rules for the game log.
-// Checked in order by ColoredLogView — first match wins (case-insensitive).
-// Add new rules to the appropriate category section below.
+// Keyword → color rules for the game log. ColoredLogView checks in order; first case-insensitive match wins.
+// Category palette (research §5): Combat BrightRed, System BrightCyan, Item Gold, Dialog White, General DimGray.
 public static class LogColorRules
 {
     // Ordered keyword → color pairs. Each log line is tested against these in sequence;
     // the first keyword found in the line determines the line's color.
     public static readonly (string Keyword, Color Color)[] Rules =
     {
-        // ── Divine Objects (top rarity) ─────────────────────────────
-        // Any log line containing the ◈ diamond renders BrightRed.
-        // Matches bespoke Divine drop/pickup/chest lines.
+        // ── Divine Objects ── ◈ diamond → BrightRed (drop/pickup/chest lines).
         ("◈",               Color.BrightRed),
+
+        // ── FB-452 damage-type tags ── matched before generic rules so the log
+        // line picks up the tag color. Covers brackets + chip styles; bare style
+        // (unbracketed word at sentence start) is caught by ordering too.
+        ("[FIRE]",          Color.BrightRed),
+        ("[ICE]",           Color.BrightCyan),
+        ("[THUNDER]",       Color.BrightYellow),
+        ("[HOLY]",          Color.BrightYellow),
+        ("[DARK]",          Color.BrightMagenta),
+        ("[POISON]",        Color.Green),
+        ("[BLEED]",         Color.White),
+        ("[SLASH]",         Color.Gray),
+        ("[THRUST]",        Color.Gray),
+        ("[BLUNT]",         Color.DarkGray),
+        ("[PIERCE]",        Color.White),
+        ("[CUT]",           Color.Cyan),
+        ("◆FIRE◆",          Color.BrightRed),
+        ("◆ICE◆",           Color.BrightCyan),
+        ("◆THUNDER◆",       Color.BrightYellow),
+        ("◆HOLY◆",          Color.BrightYellow),
+        ("◆DARK◆",          Color.BrightMagenta),
+        ("◆POISON◆",        Color.Green),
+        ("◆BLEED◆",         Color.White),
+        ("◆SLASH◆",         Color.Gray),
+        ("◆THRUST◆",        Color.Gray),
+        ("◆BLUNT◆",         Color.DarkGray),
+        ("◆PIERCE◆",        Color.White),
+        ("◆CUT◆",           Color.Cyan),
 
         // ── Critical / special moments ──────────────────────────────
         ("CRITICAL HIT",    Color.BrightMagenta),

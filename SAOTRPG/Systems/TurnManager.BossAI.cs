@@ -84,6 +84,7 @@ public partial class TurnManager
         CombatTextEvent?.Invoke(boss.X, boss.Y, ability.Name, Color.BrightRed);
         _player.TakeDamage(finalDmg);
         DamageDealt?.Invoke(_player.X, _player.Y, finalDmg, true, false);
+        MapViewShakeRequested?.Invoke(2);
         _floorDamageTaken += finalDmg;
     }
 
@@ -91,6 +92,7 @@ public partial class TurnManager
     {
         _log.LogCombat($"!! {boss.Name} uses {ability.Name} -- ground shakes!");
         CombatTextEvent?.Invoke(boss.X, boss.Y, ability.Name, Color.BrightRed);
+        MapViewShakeRequested?.Invoke(2);
 
         int baseDmg = (int)(CalcMonsterDamage(boss) * ability.DamageMultiplier * 0.7);
         int dist = Math.Max(Math.Abs(_player.X - boss.X), Math.Abs(_player.Y - boss.Y));
@@ -176,6 +178,7 @@ public partial class TurnManager
         CombatTextEvent?.Invoke(boss.X, boss.Y, "CHARGE!", Color.BrightRed);
         _player.TakeDamage(finalDmg);
         DamageDealt?.Invoke(_player.X, _player.Y, finalDmg, true, false);
+        MapViewShakeRequested?.Invoke(2);
         _floorDamageTaken += finalDmg;
     }
 

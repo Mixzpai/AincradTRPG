@@ -16,6 +16,17 @@ public partial class TurnManager
         string suffix = turnsLeft > 0 ? $" ({turnsLeft} turns left)" : $" ({endMsg})";
         _log.LogCombat($"{label} deals {damage} damage!{suffix}");
         CombatTextEvent?.Invoke(_player.X, _player.Y, $"{tag} -{damage}", color);
+        // Status mote on the affected tile — bleed uses ◇ shatter per SAO theme.
+        string kind = tag switch { "PSN" => "poison", "BLD" => "bleed", _ => "burn" };
+        StatusTrailRequested?.Invoke(_player.X, _player.Y, kind);
+        // FB-450 status-inflict particle puff alongside the trail glyph.
+        ParticleEvent pev = kind switch
+        {
+            "poison" => ParticleEvent.PoisonInflict,
+            "bleed" => ParticleEvent.BleedInflict,
+            _ => ParticleEvent.BurnInflict,
+        };
+        ParticleQueue.Emit(pev, _player.X, _player.Y);
         CheckDotDeath(killerName);
         return true;
     }
@@ -168,6 +179,8 @@ public partial class TurnManager
 
         int regenAmount = 1 + _player.Vitality / 3 + WeatherSystem.GetRegenBonus();
         _player.CurrentHealth = Math.Min(_player.CurrentHealth + regenAmount, _player.MaxHealth);
+        // FB-450 healing tick sparkle — subtle +/· pair at player tile.
+        ParticleQueue.Emit(ParticleEvent.HealingTick, _player.X, _player.Y);
 
         if (Random.Shared.Next(100) < 30)
             _log.Log(FlavorText.RegenFlavors[Random.Shared.Next(FlavorText.RegenFlavors.Length)]);

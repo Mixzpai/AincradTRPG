@@ -7,6 +7,8 @@ public partial class TurnManager
 {
     public void AscendFloor()
     {
+        // FB-450 stairs ascent sparkle — emits before map swap so the tile is valid.
+        ParticleQueue.Emit(ParticleEvent.FloorTransition, _player.X, _player.Y);
         int elapsed = TurnCount - _floorStartTurn;
         int par = FloorParTurns[Math.Min(CurrentFloor - 1, FloorParTurns.Length - 1)];
         if (elapsed <= par)

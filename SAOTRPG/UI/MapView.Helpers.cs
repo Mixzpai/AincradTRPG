@@ -3,24 +3,25 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Coordinate conversion and low-level drawing helpers for the dungeon map.
-// DrawGlyph and DrawTextAtView route through Gfx.PutCell so a future
-// Terminal.Gui upgrade only needs to update Gfx.cs, not every overlay.
+// Dungeon-map coord conversion + low-level draw helpers. DrawGlyph/DrawTextAtView route via Gfx.PutCell
+// so a future Terminal.Gui upgrade only touches Gfx.cs, not every overlay.
 public partial class MapView
 {
     // ── Coordinate conversion ──────────────────────────────────────────
+    // Shake offset added to every mapping so the whole viewport jitters
+    // together (popups, overlays, tiles all shift in lockstep).
 
     // Map tile X → viewport column.
-    private int MapToVx(int mx) => mx - _camera.OffsetX;
+    private int MapToVx(int mx) => mx - _camera.OffsetX + ShakeOffsetX;
 
     // Map tile Y → viewport row.
-    private int MapToVy(int my) => my - _camera.OffsetY;
+    private int MapToVy(int my) => my - _camera.OffsetY + ShakeOffsetY;
 
     // Viewport column → map tile X.
-    private int VxToMap(int vx) => vx + _camera.OffsetX;
+    private int VxToMap(int vx) => vx + _camera.OffsetX - ShakeOffsetX;
 
     // Viewport row → map tile Y.
-    private int VyToMap(int vy) => vy + _camera.OffsetY;
+    private int VyToMap(int vy) => vy + _camera.OffsetY - ShakeOffsetY;
 
     // ── Drawing helpers ────────────────────────────────────────────────
 

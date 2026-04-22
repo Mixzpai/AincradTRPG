@@ -4,11 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Small modal shown when a weapon type crosses a fork threshold (L25/50/75/100).
-// Player picks one of two passive bonuses that will apply for this save only.
-// Return value: 1 or 2 for the picked option, 0 if cancelled (should rarely
-// happen — the dialog has no cancel affordance beyond Esc, which just closes
-// leaving the fork pending for the next StatsDialog open).
+// Fork picker at weapon L25/50/75/100 — player picks 1 of 2 save-local passives. Returns 1/2 for choice, 0 if Esc-cancelled.
+// Esc leaves fork pending for next StatsDialog open (no cancel button).
 public static class ProficiencyForkDialog
 {
     public static int Show(string weaponType, int forkLevel,

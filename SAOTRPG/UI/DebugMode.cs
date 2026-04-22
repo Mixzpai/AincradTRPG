@@ -1,8 +1,7 @@
 namespace SAOTRPG.UI;
 
-// Developer-only mode activated via the --debug launch flag.
-// When enabled, the Debug difficulty tier is appended to Systems.DifficultyData.GetTiers,
-// and DebugLogger starts writing to debug.log.
+// Dev-only mode via --debug flag. When on: Debug difficulty tier is appended to DifficultyData.GetTiers,
+// and DebugLogger starts writing debug.log.
 public static class DebugMode
 {
     // True when the game was launched with --debug.

@@ -2,9 +2,8 @@ using Terminal.Gui;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Shared construction helpers for pre-game and dialog screens:
-// top-level title + rule, "── Section ──" labels, and right-aligned
-// form labels. Keeps the visual vocabulary consistent across screens.
+// Shared pre-game/dialog construction helpers — title+rule, "── Section ──" labels, right-aligned form labels.
+// Unifies visual vocabulary across screens.
 public static class ScreenHeader
 {
     // Top-of-screen title label plus a thin dim rule underneath.

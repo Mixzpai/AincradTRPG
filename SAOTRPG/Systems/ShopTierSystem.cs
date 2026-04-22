@@ -3,10 +3,8 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Systems;
 
-// IM Dynamic Shop Tiering (System 4). Floor-boss clear at F50+ unlocks new
-// shop stock for the run. Additive — shops never lose stock.
+// Dynamic Shop Tiering: F50+ boss clear unlocks stock (additive, never loses).
 // Flow: HandleMonsterKill(Boss) → RegisterFloorBossClear → ShopDialog query.
-// Persisted on SaveData.HighestFloorBossCleared; legacy saves default to 0.
 public static class ShopTierSystem
 {
     // Highest floor whose boss cleared. 0 = none. Persists via SaveData.

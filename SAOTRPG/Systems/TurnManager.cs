@@ -134,6 +134,11 @@ public partial class TurnManager
         TimeSpan RealTime = default);
     public FloorRecapData? LastFloorRecap { get; private set; }
 
+    // FB-469 — center-screen toast hooks. Fires from HandleMonsterKill so
+    // GameScreen.Events can route to ToastQueue without reaching into combat.
+    public event Action<string>? FloorBossCleared;
+    public event Action<string>? SpeciesFirstKilled;
+
     public event Action? TurnCompleted;
     public event Action? PlayerDied;
     public event Action<int>? FloorChanged;
@@ -238,16 +243,13 @@ public partial class TurnManager
         _diffTier = DifficultyData.Get(difficulty);
         _floorColStart = _player.ColOnHand;
 
-        // IM Shop Tiering — statics live across runs, so reset to 0 on
-        // construct. LoadFromSave will overwrite with the saved value if
-        // this is a load path (see SetForLoad below in LoadSaveData).
+        // Shop/Invest statics live across runs; reset on construct,
+        // LoadFromSave overwrites below if this is a load path.
         ShopTierSystem.SetForLoad(0);
-        // FB-072 Investing — same reset cadence. Load path overwrites below.
         VendorInvestmentSystem.Clear();
 
-        // FB-050..054 + FB-058 — subscribe Life Skill + Title hooks before
-        // any gameplay systems fire so the first rest/walk/sprint/food grant
-        // and the first kill of the run are observed.
+        // Wire Life Skill + Title hooks before gameplay systems fire so the
+        // first rest/walk/sprint/food grant and first kill are observed.
         WireLifeSkillHooks();
 
         player.Inventory.Events.ConsumableUsed += (_, e) =>
@@ -274,9 +276,7 @@ public partial class TurnManager
                 HandleCorruptionStone(stone);
             if (e.Consumable is Food food)
             {
-                // FB-054 — Eating skill scales satiety gain by its current
-                // milestone multiplier (L10 +10%, L25 +25%, L50 +50%,
-                // L99 +100%). Flat integer math so curves stay predictable.
+                // Eating skill scales satiety: L10 +10%, L25 +25%, L50 +50%, L99 +100%.
                 int baseGain = food.RegenerationDuration * 2;
                 int bonusPct = _player.LifeSkills.EatingFoodPotencyPercent();
                 int scaledGain = baseGain + (baseGain * bonusPct / 100);
@@ -376,8 +376,7 @@ public partial class TurnManager
     }
 
     // Corruption Stone (HF canon workaround: F100 ends game, post-F100 boss unreachable).
-    // Inventory consumable: swaps target weapon → Corrupted variant. Preserves
-    // EnhancementLevel + RefinementSlots via direct field copy + bonus replay.
+    // Swaps target weapon → Corrupted variant, preserving EnhancementLevel + RefinementSlots.
     private void HandleCorruptionStone(SAOTRPG.Items.Consumables.CorruptionStone stone)
     {
         if (string.IsNullOrEmpty(stone.TargetWeaponDefId) || string.IsNullOrEmpty(stone.CorruptedWeaponDefId))
@@ -512,6 +511,7 @@ public partial class TurnManager
         if (save.SeenTutorialTips != null) TutorialSystem.SeenTips = new HashSet<string>(save.SeenTutorialTips);
         if (save.ActiveQuests != null) QuestSystem.ActiveQuests = new List<Quest>(save.ActiveQuests);
         if (save.CompletedQuests != null) QuestSystem.CompletedQuests = new List<Quest>(save.CompletedQuests);
+        QuestSystem.PinnedQuestId = save.PinnedQuestId;
         if (save.FiredStoryEventIds != null)
             Story.StorySystem.FiredEventIds = new HashSet<string>(save.FiredStoryEventIds);
         if (save.StoryFlags != null)
@@ -542,12 +542,10 @@ public partial class TurnManager
         if (save.DefeatedFieldBosses != null)
             tm.DefeatedFieldBosses = new HashSet<string>(save.DefeatedFieldBosses);
         RunModifiers.LoadFromSave(save.ActiveRunModifiers);
-        // IM Shop Tiering — hydrate cross-save progress so post-update runs
-        // regain their unlocks on reload. Legacy saves lack the field and
-        // default to 0 (no tiered stock until the next F50+ clear).
+        // Shop Tiering hydrates cross-save progress; legacy saves default to 0
+        // (no tiered stock until the next F50+ clear).
         ShopTierSystem.SetForLoad(save.HighestFloorBossCleared);
-        // FB-072 Investing — hydrate per-vendor deposits. Legacy saves lack
-        // the dict → cleared state (no bonus tiers until first Invest call).
+        // Investments hydrate per-vendor; legacy saves = cleared state.
         VendorInvestmentSystem.SetForLoad(save.VendorInvestments);
 
         // Restore party members
@@ -576,9 +574,8 @@ public partial class TurnManager
         if (save.SkillCooldowns != null)
             foreach (var kvp in save.SkillCooldowns) tm._skillCooldowns[kvp.Key] = kvp.Value;
         tm._priorPlayTime = TimeSpan.FromSeconds(save.PlayTimeSeconds);
-        // FB-058 — rebuild tag-kill cache from the loaded Bestiary so Title
-        // System tag-milestone unlocks (beast 100/1000, dragon, insect, etc.)
-        // stay consistent across sessions without persisting a parallel dict.
+        // Rebuild tag-kill cache from Bestiary so Title tag-milestones stay
+        // consistent across sessions without a parallel persisted dict.
         tm.RebuildTagKillsFromBestiary();
         return tm;
     }
@@ -589,6 +586,7 @@ public partial class TurnManager
         // effective FOV both read from DayNightCycle.
         SAOTRPG.Map.DayNightCycle.CurrentTurn = TurnCount;
         UI.Helpers.MapEffects.AnimationTurn = TurnCount;
+        SAOTRPG.Map.TileAnimator.CombatActive = TurnCount - _lastCombatTurn <= 5;
         int visRadius = Math.Max(8, SAOTRPG.Map.DayNightCycle.VisibilityRadius + BiomeSystem.VisionModifier);
         _map.UpdateVisibility(_player.X, _player.Y, visRadius);
     }

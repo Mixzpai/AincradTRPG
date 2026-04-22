@@ -4,9 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Modal cutscene dialog with typewriter text + optional ASCII portrait.
-// Space or Enter finishes the current line; subsequent Enter advances.
-// Choices appear after the line completes. Esc skips (unless Unskippable).
+// Modal cutscene — typewriter text + optional portrait. Space/Enter finishes current line, next Enter advances.
+// Choices appear after line completes. Esc skips unless Unskippable.
 public static class CutsceneDialog
 {
     private const int DialogWidth  = 74;
@@ -30,12 +29,12 @@ public static class CutsceneDialog
 
         var portraitLabel = new Label
         {
-            X = 2, Y = 1, Width = 10, Height = 5,
+            X = 2, Y = 1, Width = 10, Height = 7,
             Text = "", ColorScheme = ColorSchemes.Body
         };
         var speakerLabel = new Label
         {
-            X = 2, Y = 6, Width = 12, Height = 1,
+            X = 2, Y = 8, Width = 12, Height = 1,
             Text = "", ColorScheme = ColorSchemes.Body
         };
         var textLabel = new Label

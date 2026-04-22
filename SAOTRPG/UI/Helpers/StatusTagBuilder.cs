@@ -8,9 +8,8 @@ public static class StatusTagBuilder
 {
     private const int CombatRecencyWindow = 2;
 
-    // Builds the HUD status tag string from current game state.
-    // Returns empty string when no effects are active.
-    // Example output: "  [!PSN:3|!BLD:2|xSTK:5]  [!WPN:5]"
+    // HUD status tag string from game state; empty when no effects active.
+    // Example: "  [!PSN:3|!BLD:2|xSTK:5]  [!WPN:5]"
     public static string Build(TurnManager tm, string durWarnings = "")
     {
         var tags = new List<string>();

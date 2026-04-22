@@ -22,6 +22,11 @@ public static partial class GameScreen
             mapView.AddHitFlash(x, y);
             // Player crits trigger a single-frame screen-wide brightness boost.
             if (isCrit && !isPlayer) mapView.TriggerCritScreenFlash();
+
+            // Subtle tween popup (research §1): dim element tint, crit = bright+◇.
+            int maxHp = ResolveMaxHpAt(turnManager, turnManager.Player, x, y);
+            Color tint = ResolveDamageTint(turnManager, turnManager.Player, isPlayer);
+            mapView.EnqueueDamagePopup(x, y, dmg, isCrit, tint, maxHp);
         };
         turnManager.WeaponSwing += (fx, fy, tx, ty, c) => mapView.AddWeaponSwing(fx, fy, tx, ty, c);
         turnManager.CombatTextEvent += (x, y, text, color) => mapView.AddTextFlash(x, y, text, color);
@@ -31,6 +36,9 @@ public static partial class GameScreen
             mapView.FlashBorder(Color.BrightYellow, 6);
             PartySystem.ScaleToPlayer(turnManager.Player.Level);
             turnManager.RequestTalentPick();
+            ToastQueue.EnqueueLevelUp(turnManager.Player.Level);
+            // FB-450 rising column of sparkles from player tile.
+            ParticleQueue.Emit(ParticleEvent.LevelUp, turnManager.Player.X, turnManager.Player.Y);
         };
         turnManager.MonsterKilled += (x, y) =>
         {
@@ -40,10 +48,51 @@ public static partial class GameScreen
             if (turnManager.KillStreak >= 2)
                 mapView.TriggerKillStreakFlash(turnManager.KillStreak);
         };
+        // Floor-boss cleared toast — the TurnManager side logs the banner,
+        // we mirror it into the toast channel for the center-screen readout.
+        turnManager.FloorBossCleared += (name) =>
+            ToastQueue.EnqueueFloorBoss(name);
+        // Species first-kill toast. Bestiary is a static — the TurnManager
+        // event fires post-RecordKill so we can read TimesKilled==1.
+        turnManager.SpeciesFirstKilled += (name) =>
+            ToastQueue.EnqueueBestiaryFirst(name);
         turnManager.SkillActivated += (x, y, color) =>
         {
             mapView.AddSkillFlash(x, y, color);
             mapView.FlashBorder(color, 1);
+            // FB-450 skill-cast ring of particles at the caster tile.
+            ParticleQueue.Emit(ParticleEvent.SkillCastStart, x, y, tint: color);
+        };
+        // FB-453 shake + FB-454 projectiles/status motes.
+        turnManager.MapViewShakeRequested += tier => mapView.RequestShake(tier);
+        turnManager.ProjectileRequested += (sx, sy, ex, ey, glyph, color, msPerCell, isArrow) =>
+        {
+            if (isArrow) mapView.EnqueueArrow(sx, sy, ex, ey, color);
+            else mapView.EnqueueProjectile(sx, sy, ex, ey, glyph, color, msPerCell);
+        };
+        turnManager.StatusTrailRequested += (x, y, kind) =>
+        {
+            // SAO-theme bleed: ◇ shatter glyph in BrightCyan — NO red blood.
+            switch (kind)
+            {
+                case "bleed":
+                    mapView.EnqueueStatusTrail(x, y, new[] { '◇', '·', ' ' }, Color.BrightCyan); break;
+                case "poison":
+                    mapView.EnqueueStatusTrail(x, y, new[] { '░', '·', ' ' }, Color.BrightGreen); break;
+                case "burn":
+                    mapView.EnqueueStatusTrail(x, y, new[] { '¤', '*', ' ' }, Color.BrightRed); break;
+            }
+        };
+        turnManager.MultiHitStreamRequested += (x, y, damage, hitIndex, delayMs) =>
+            mapView.EnqueueMultiHitPopup(x, y, damage, hitIndex, delayMs);
+        turnManager.MultiHitAggregateRequested += (x, y, hits, total, delayMs) =>
+            mapView.EnqueueCascadeAggregate(x, y, hits, total, delayMs);
+        turnManager.MultiHitDamageDealt += (x, y, dmg, isPlayer, isCrit) =>
+        {
+            // Multi-hit side effects only — NO EnqueueDamagePopup (cascade owns it).
+            mapView.AddHitFlash(x, y);
+            mapView.AddScorchMark(x, y);
+            if (isCrit) mapView.FlashBorder(Color.BrightCyan, 4);
         };
     }
 
@@ -54,13 +103,19 @@ public static partial class GameScreen
         int[] saveFlash, int saveSlot, Action refreshHud)
     {
         void InvokeDialog(Action action, bool refresh = true) =>
-            Application.Invoke(() => { action(); if (refresh) refreshHud(); });
+            Application.Invoke(() =>
+            {
+                // Modal dialog opening: flush any in-flight damage popup so
+                // the overlay layer doesn't leak past the dialog's z-order.
+                mapView.ClearDamagePopups();
+                action();
+                if (refresh) refreshHud();
+            });
 
         turnManager.PlayerDied += () =>
         {
-            // Universal permadeath (post-Hardcore-removal) — delete the save
-            // slot immediately, before the death screen renders, so the slot
-            // is already gone by the time the player dismisses the summary.
+            // Universal permadeath — delete the save slot before DeathScreen renders,
+            // so it's already gone when the player dismisses the summary.
             SaveManager.DeleteSave(saveSlot);
             InvokeDialog(() => DeathScreen.Show(
                 mainWindow, player, turnManager.CurrentFloor,
@@ -69,8 +124,11 @@ public static partial class GameScreen
         };
 
         mapView.PauseRequested += () =>
+        {
+            mapView.ClearDamagePopups();
             InvokeDialog(() => Dialogs.PauseMenuDialog.Show(
                 mainWindow, player, turnManager, saveSlot, gameLog, saveFlash), false);
+        };
 
         turnManager.GameWon += () =>
         {
@@ -126,9 +184,8 @@ public static partial class GameScreen
                 }
             });
 
-        // Proficiency fork — fires when a weapon type crosses L25/50/75/100.
-        // Dialog modal picks 1 of 2 passives. Esc leaves the fork pending;
-        // the player can resolve it later from StatsDialog.
+        // Proficiency fork — fires at weapon L25/50/75/100. Modal picks 1 of 2 passives;
+        // Esc leaves it pending, resolvable later from StatsDialog.
         turnManager.ProficiencyForkRequested += (weaponType, forkLevel, opt1, opt2) =>
             InvokeDialog(() =>
             {
@@ -207,14 +264,14 @@ public static partial class GameScreen
         };
 
         mapView.WaitRequested += () => { turnManager.ProcessPlayerMove(0, 0); refreshHud(); };
-        inventoryBtn.Accepting += (s, e) => { InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); e.Cancel = true; };
-        mapView.InventoryRequested += () => { InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); };
-        mapView.StatsRequested += () => { StatsDialog.Show(player, turnManager); refreshHud(); };
-        mapView.HelpRequested += () => HelpDialog.Show();
-        mapView.PlayerGuideRequested += () => PlayerGuideDialog.Show(turnManager, player);
-        mapView.KillStatsRequested += () => { KillStatsDialog.Show(player, turnManager); };
-        mapView.BestiaryRequested += () => { BestiaryDialog.Show(player, turnManager); };
-        mapView.EquipmentRequested += () => { EquipmentDialog.Show(player); refreshHud(); };
+        inventoryBtn.Accepting += (s, e) => { mapView.ClearDamagePopups(); InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); e.Cancel = true; };
+        mapView.InventoryRequested += () => { mapView.ClearDamagePopups(); InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); };
+        mapView.StatsRequested += () => { mapView.ClearDamagePopups(); StatsDialog.Show(player, turnManager); refreshHud(); };
+        mapView.HelpRequested += () => { mapView.ClearDamagePopups(); HelpDialog.Show(); };
+        mapView.PlayerGuideRequested += () => { mapView.ClearDamagePopups(); PlayerGuideDialog.Show(turnManager, player); };
+        mapView.KillStatsRequested += () => { mapView.ClearDamagePopups(); KillStatsDialog.Show(player, turnManager); };
+        mapView.BestiaryRequested += () => { mapView.ClearDamagePopups(); BestiaryDialog.Show(player, turnManager); };
+        mapView.EquipmentRequested += () => { mapView.ClearDamagePopups(); EquipmentDialog.Show(player); refreshHud(); };
         mapView.PickupRequested += () => { turnManager.PickupItems(); refreshHud(); };
         mapView.RestRequested += () => { turnManager.ProcessRest(); refreshHud(); };
         mapView.CounterRequested += () => { turnManager.EnterCounterStance(); refreshHud(); };
@@ -237,18 +294,26 @@ public static partial class GameScreen
             else gameLog.LogSystem("[Save failed!]");
         };
 
-        mapView.QuickUseRequested += (slot) =>
+        mapView.QuickUseRequested += (slotKey) =>
         {
-            string targetName = slot switch
+            // slotKey is the pressed digit (1..9 then 0→10). Quickbar indices 0-9.
+            int slotIdx = slotKey - 1;
+            var item = player.Quickbar.ResolveItem(slotIdx, player);
+            if (item != null)
             {
-                1 => "Health Potion", 2 => "Greater Health Potion",
-                3 => "Antidote", 4 => "Battle Elixir", 5 => "Escape Rope", _ => ""
-            };
-            var item = player.Inventory.Items
-                .OfType<SAOTRPG.Items.Consumables.Consumable>()
-                .FirstOrDefault(c => c.Name == targetName && c.Quantity > 0);
-            if (item != null) { player.UseItem(item); gameLog.Log($"Used {item.Name}."); refreshHud(); }
-            else gameLog.Log($"No {targetName} in inventory.");
+                player.UseItem(item);
+                gameLog.Log($"Used {item.Name}.");
+                refreshHud();
+            }
+            else
+            {
+                string bound = slotIdx >= 0 && slotIdx < SAOTRPG.Systems.QuickbarState.SlotCount
+                    ? player.Quickbar.SlotItemDefIds[slotIdx] ?? "" : "";
+                if (!string.IsNullOrEmpty(bound))
+                    gameLog.Log($"Slot {slotKey} bind has no matching item in inventory.");
+                else
+                    gameLog.Log($"Slot {slotKey} is empty. Bind a consumable with Shift+{(slotKey == 10 ? "0" : slotKey.ToString())} in Inventory.");
+            }
         };
 
         mapView.LogScrollUpRequested += () => coloredLog.ScrollPageUp();
@@ -314,5 +379,39 @@ public static partial class GameScreen
             mapView.SetNeedsDraw();
             return true;
         });
+
+        // Fast 50ms ticker redraws while a popup or toast is active. Keeps
+        // the 750ms base cadence quiet when nothing's animating.
+        Application.AddTimeout(TimeSpan.FromMilliseconds(50), () =>
+        {
+            if (SAOTRPG.Systems.ToastQueue.Peek() != null || mapView.HasActivePopups)
+                mapView.SetNeedsDraw();
+            return true;
+        });
+    }
+
+    // Finds the max-HP of whatever entity currently stands on (x,y) so the
+    // popup helper can apply the 2% chip-damage suppression rule. Falls back
+    // to player max HP when no monster occupies the tile (self-damage).
+    private static int ResolveMaxHpAt(TurnManager tm, Player player, int x, int y)
+    {
+        if (x == player.X && y == player.Y) return player.MaxHealth;
+        foreach (var entity in tm.Map.Entities)
+        {
+            if (entity is Entities.Monster m && !m.IsDefeated && m.X == x && m.Y == y)
+                return m.MaxHealth;
+        }
+        return 0;
+    }
+
+    // Resolves dim element tint for the popup. Player-taking-damage paints
+    // white; player-dealing-damage uses weapon SpecialEffect -> element map.
+    private static Color ResolveDamageTint(TurnManager tm, Player player, bool isPlayerTookDamage)
+    {
+        if (isPlayerTookDamage) return Color.White;
+        var wpn = player.Inventory.GetEquipped(
+            SAOTRPG.Inventory.Core.EquipmentSlot.Weapon)
+            as SAOTRPG.Items.Equipment.Weapon;
+        return MapView.ResolveElementalTint(wpn?.SpecialEffect);
     }
 }

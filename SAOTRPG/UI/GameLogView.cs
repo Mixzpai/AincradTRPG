@@ -1,18 +1,13 @@
 namespace SAOTRPG.UI;
 
-// Live game log — pipes all messages into a ColoredLogView
-// with per-line coloring based on category and keyword rules.
-// Each category gets a prefix tag for easy scanning:
-//   General → (no prefix)
-//   Combat  → [!]
-//   System  → [*]
+// Live game log → ColoredLogView with per-line category/keyword coloring. Prefixes: General (none), Combat [!], System [*], Item [$], Dialog (none).
 // Also forwards to DebugLogger for file-based debug output.
 public class GameLogView : IGameLog
 {
     // ── Prefix tags ─────────────────────────────────────────────────
     private const string CombatPrefix = "[!] ";
     private const string SystemPrefix = "[*] ";
-    private const string LootPrefix   = "[$] ";
+    private const string ItemPrefix   = "[$] ";
 
     private readonly ColoredLogView _logView;
 
@@ -44,10 +39,17 @@ public class GameLogView : IGameLog
         _logView.AddEntry($"{SystemPrefix}{message}", LogCategory.System);
     }
 
-    // Log a loot message prefixed with [$].
+    // Log an item / economy message prefixed with [$].
     public void LogLoot(string message)
     {
-        DebugLogger.LogGame("LOOT", message);
-        _logView.AddEntry($"{LootPrefix}{message}", LogCategory.Loot);
+        DebugLogger.LogGame("ITEM", message);
+        _logView.AddEntry($"{ItemPrefix}{message}", LogCategory.Item);
+    }
+
+    // Log NPC dialogue — category=Dialog so it filters into the Dialog tab.
+    public void LogDialog(string message)
+    {
+        DebugLogger.LogGame("DIALOG", message);
+        _logView.AddEntry(message, LogCategory.Dialog);
     }
 }

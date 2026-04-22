@@ -10,8 +10,7 @@ namespace SAOTRPG.Systems;
 // Static data + pure logic; TurnManager handles orchestration.
 public static class LootGenerator
 {
-    // ── Rarity roll thresholds (cumulative %) ──────────────────────────
-    // Common 60%, Uncommon 25%, Rare 11%, Epic 4%.
+    // Rarity roll cumulative %: Common 60, Uncommon 25, Rare 11, Epic 4.
     private const int RarityCommonCeiling = 60;
     private const int RarityUncommonCeiling = 85;
     private const int RarityRareCeiling = 96;
@@ -19,8 +18,7 @@ public static class LootGenerator
     // 0-11 = weapon types, 12-15 = armor/shield, 16 = accessory fallback.
     private const int EquipmentTypeCount = 17;
 
-    // ── Mob loot tables by LootTag → (name, Col) ─────────────────────
-    // ChainMaterialByName names route through ItemRegistry.Create for Anvil Evolve.
+    // Mob loot tables by LootTag → (name, Col). ChainMaterialByName routes through ItemRegistry.Create for Anvil Evolve.
     public static readonly Dictionary<string, (string Name, int Value)[]> MobLootTable = new()
     {
         { "beast",     new[] { ("Raw Hide",        8), ("Beast Fang",     12), ("Sinew",         6) } },
@@ -53,12 +51,11 @@ public static class LootGenerator
         ["Trishula Tip"]     = "trishula_tip",
     };
 
-    // Floor-boss guaranteed drops — Divine Objects + Legendary hand-placed rewards.
-    // Divine uses ◈ log format; Legendary uses [Legendary]. Field-boss divines
-    // live in FieldBossFactory; quest rewards handled by NPC dialogue inline.
+    // Floor-boss guaranteed drops — Divine Objects + Legendary rewards. Divine uses
+    // ◈ log format; Legendary uses [Legendary]. Field-boss divines live in FieldBossFactory.
     public static readonly Dictionary<int, string> FloorBossGuaranteedDrops = new()
     {
-        // ── Priority 4 Alicization Lycoris Divine Beast drops ──────
+        // Alicization Lycoris Divine Beast drops
         [11] = "starfall",                    // F11 Felos the Ember Drake (invented)
         [17] = "savage_squall",               // F17 Gelidus the Frozen Colossus (invented)
         [24] = "phantasmagoria",              // F24 Grimhollow the Phantom (invented)
@@ -68,14 +65,13 @@ public static class LootGenerator
         [43] = "midnight_rain",               // F43 Undine the Water Maiden (invented)
         [49] = "midnight_sun",                // F49 Shadowstep Assassin (invented)
 
-        // ── Divine Objects (canon Integrity Knight weapons) ────────
+        // Divine Objects (canon Integrity Knight weapons)
         [20] = "blue_rose_sword",             // Absolut the Winter Monarch — ice theme, Eugeo canon
         [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito canon
     };
 
-    // ── Infinity Moment Last-Attack Bonus (Floor Bosses) ───────────
-    // Player last-hit on these floors → weapon drops at 100% in addition to
-    // FloorBossGuaranteedDrops. Non-enhanceable Legendaries (canon IM tradeoff).
+    // IM Last-Attack Bonus: player last-hit → 100% drop alongside FloorBossGuaranteedDrops.
+    // Non-enhanceable Legendaries (canon IM tradeoff).
     public static readonly Dictionary<int, string> FloorBossLastAttackDrops = new()
     {
         [85] = "bow_zephyros",
@@ -88,8 +84,7 @@ public static class LootGenerator
         [99] = "bow_artemis",           // additional drop alongside Night Sky Sword
     };
 
-    // ── Hollow Fragment Last-Attack Bonus (Avatar Weapons) ─────────
-    // F70+ field boss kill + matching weapon type → 2% drop (10% for CanonHnmBosses).
+    // HF Avatar Weapons: F70+ field boss + matching weapon → 2% (10% for CanonHnmBosses).
     // OHS has no canon Avatar, so OHS kills don't trigger.
     public static readonly Dictionary<string, string> AvatarWeaponByWeaponType = new()
     {
@@ -130,8 +125,7 @@ public static class LootGenerator
     };
 
     // Floor-banded registered loot pool. RollChestItem ~5% picks a DefId whose
-    // (minFloor, maxFloor) band contains CurrentFloor. Wires IF Anneal line +
-    // non-guaranteed series weapons into chests.
+    // (minFloor, maxFloor) band contains CurrentFloor.
     public static readonly (int MinFloor, int MaxFloor, string DefId)[] FloorBandedRegisteredLoot =
     {
         // Anneal line — Sachi/Kirito-era starter OHS (IF canon, F1-10).
@@ -170,8 +164,7 @@ public static class LootGenerator
         (78, 88, "ohs_velocious_brain"),           // F82
         (92, 99, "ths_saintblade_ragnarok"),       // F95
 
-        // ── Infinity Moment Shop weapons — fallback drop paths ─────
-        // Also in F50+ shop tiers; chest path used when shop unreachable.
+        // IM Shop weapons — fallback drop paths (also in F50+ shop tiers).
         (76, 85, "rap_edelweiss"),                  // Epic band
         (86, 99, "rap_noctis_strasse"),             // Legendary band
         (76, 85, "ths_fasislawine"),                // Epic band
@@ -185,8 +178,7 @@ public static class LootGenerator
         (76, 85, "dag_flyheight_fang"),             // Epic band
         (86, 99, "dag_rue_feuille"),                // Legendary band
 
-        // ── Memory Defrag + Fractured Daydream expansion ────────────
-        // MD Originals — Rare F25-50, Epic F50-75, Legendary F75-99.
+        // MD Originals: Rare F25-50, Epic F50-75, Legendary F75-99.
         (28, 50, "ohs_cobalt_tristan"),             // MD Rare
         (28, 50, "ohs_atlantis_sword"),             // MD Rare
         (28, 50, "rap_venus_heart"),                // MD Rare
@@ -211,9 +203,8 @@ public static class LootGenerator
         // ohs_red_rose_sword — relocated to F95 field boss
         //   (Warden of the Blooming Rose, FieldBossFactory).
 
-        // FD Character Core Canon — Legendary-band rare drops.
-        // Relocated to field bosses/NPCs: elucidator_rouge→F98, flame_lord→F80,
-        // silvery_ruler→F97, macafitel→F85.
+        // FD Character Core Canon — Legendary-band rare drops. Relocated to field
+        // bosses/NPCs: elucidator_rouge→F98, flame_lord→F80, silvery_ruler→F97, macafitel→F85.
         (85, 99, "ohs_chaos_raider_dual"),          // Kirito dual F85+
         (88, 99, "kat_murasama_g4_dual"),           // Kirito F90+
         (85, 99, "axe_naz"),                        // Agil F85+
@@ -231,8 +222,7 @@ public static class LootGenerator
         // kat_spirit_kagutsuchi — relocated to F60 Kagutsuchi the Fire Samurai.
         // kat_spirit_susanoo    — relocated to F70 Susanoo the Storm Blade.
 
-        // FD Elemental Variants — staggered F15-F90 so mid floors get variants
-        // instead of all 27 crammed into F50-85.
+        // FD Elemental Variants — 27 staggered F15-F90.
         // Rare tier (10 items): 2 sub-bands across F15-F60.
         (15, 35, "ohs_sword_of_the_gentle_breeze"), // Alice wind Rare
         (15, 35, "ohs_purple_bellflower_sword"),    // Alice dark Rare
@@ -263,9 +253,8 @@ public static class LootGenerator
         (70, 90, "mce_blazing_torch"),              // Lisbeth fire Epic
         (70, 90, "mce_elemental_hammer"),           // Lisbeth light Epic
 
-        // ── Cross-Game Sweep (AL / Lost Song / Last Recollection) ──────
-        // 55 weapons F50-99. Starlight Banner + Corrupted variants excluded
-        // (quest-reward + stone-transform). Corruption Stones drop F95+.
+        // Cross-Game Sweep (AL / Lost Song / Last Recollection): 55 weapons F50-99.
+        // Starlight Banner + Corrupted variants excluded (quest-reward + stone-transform).
 
         // Group 1 — AL Normal Raid (Epic F55-75) — surfaces raid drops earlier.
         (55, 75, "axe_skyrend"),
@@ -340,9 +329,8 @@ public static class LootGenerator
         (60, 80, "ohs_aetherial_glow"),              // Aetherial Glow Epic
     };
 
-    // ── IM Enhancement Ore themed drops ──────────────────────────────
-    // Mob LootTag → ore DefId, rolled at OreDropChancePercent. No-match = no drop
-    // via this path (rare-boss drops use separate path).
+    // IM Enhancement Ore themed drops: Mob LootTag → ore DefId at OreDropChancePercent.
+    // No-match = no drop via this path (rare-boss drops use separate path).
     public static readonly Dictionary<string, string> OreByLootTag = new()
     {
         ["dragon"]    = "ore_crimson_flame",   // fire/demon/volcanic
@@ -422,8 +410,7 @@ public static class LootGenerator
         ["Immortal Echo"]          = new[] { ("immortal_fragment", 0.1f) },
     };
 
-    // ── Rarity stat multipliers — (StatMul%, DurBonus, ValMul%) ──
-    // Indexed by RarityIndex: 0=Common, 1=Uncommon, 2=Rare, 3=Epic.
+    // Rarity stat multipliers (StatMul%, DurBonus, ValMul%), indexed 0=Common..3=Epic.
     private static readonly (int StatMul, int DurBonus, int ValMul)[] RarityScaling =
     {
         (100, 0,  100),  // Common

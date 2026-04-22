@@ -7,9 +7,8 @@ using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;
 
 namespace SAOTRPG.Systems;
 
-// IF-canon Refinement. API for CraftingDialog.ShowRefineMenu + damage calc
-// (via Equipment.Bonuses). Override-only: occupied slot destroys old ingot.
-// Divine rarity cannot be refined (sealed endgame).
+// IF-canon Refinement. API for CraftingDialog.ShowRefineMenu + damage calc via
+// Equipment.Bonuses. Override-only (occupied = destroy old); Divine cannot refine.
 public static class Refinement
 {
     // Red Hot Ore cost per socket by rarity. Divine=0 (Socket early-returns).
@@ -24,9 +23,8 @@ public static class Refinement
         _           => 1,
     };
 
-    // Socket ingot into slot 0..2. Divine forbidden; occupied slots override.
-    // Consumes 1 ingot; caller handles Red Hot Ore cost. If equipped on target,
-    // Unequip/Re-Equip around Bonuses mutation (matches ApplyEnhancementDelta).
+    // Socket ingot into slot 0..2 (override; Divine forbidden). Consumes 1 ingot;
+    // if equipped, Unequip/Re-Equip around Bonuses (matches ApplyEnhancementDelta).
     public static bool Socket(EquipmentBase eq, int slotIdx, string ingotDefId,
                               PlayerInventory inv, IStatModifiable? target = null)
     {

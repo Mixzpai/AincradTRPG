@@ -2,14 +2,8 @@ using Terminal.Gui;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Thin abstraction over Terminal.Gui rendering primitives.
-// When Terminal.Gui upgrades, update ONLY this file — the rest of the
-// codebase calls Gfx.Attr and Gfx.PutCell which delegate here.
-//
-// Note: Driver is a static property (View.Driver / Application.Driver).
-// Move is an instance method on View (positions cursor in view-relative
-// coordinates). Both are wrapped here so a future Driver→DrawContext
-// migration only touches this file.
+// Terminal.Gui rendering shim: Gfx.Attr/PutCell delegate to Driver (static) and View.Move (instance, view-relative).
+// Upgrade-isolation point — a future Driver→DrawContext migration only touches this file.
 public static class Gfx
 {
     // Create a color attribute from foreground + background colors.

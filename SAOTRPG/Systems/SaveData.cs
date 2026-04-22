@@ -56,9 +56,8 @@ public class SaveData
     public int KillStreak { get; set; }
     public Dictionary<string, int> WeaponKills { get; set; } = [];
 
-    // IF Proficiency — per-weapon fork picks at L25/50/75/100.
-    // Each int[] is length-4: 0 = unpicked, 1 or 2 = chosen option. Empty /
-    // null on legacy saves; TurnManager defaults to no picks on load.
+    // Per-weapon fork picks at L25/50/75/100. int[] length-4: 0=unpicked,
+    // 1|2=chosen option. Empty/null on legacy saves.
     public Dictionary<string, int[]> WeaponProficiencyForks { get; set; } = [];
 
     // Turns since last rest (exhaustion counter).
@@ -98,6 +97,7 @@ public class SaveData
     // Quests
     public List<Quest> ActiveQuests { get; set; } = [];
     public List<Quest> CompletedQuests { get; set; } = [];
+    public string? PinnedQuestId { get; set; }
 
     // Party members
     public List<AllySaveData> PartyMembers { get; set; } = [];
@@ -137,6 +137,11 @@ public class SaveData
     // FB-072 Investing — per-vendor Col totals by ShopName.
     // VendorInvestmentSystem clamps to [0, MaxInvestmentPerVendor] on load.
     public Dictionary<string, int> VendorInvestments { get; set; } = new();
+
+    // FB-466 — 10 consumable-quickbar slots (keys 1-0), DefinitionId per index.
+    // Null entries = empty. Legacy saves deserialize as nulls and auto-fill
+    // from the first pickup thereafter.
+    public List<string?> QuickbarSlotDefIds { get; set; } = new();
 }
 
 // FB-050 — serialized form of a single life skill's live state.
@@ -157,9 +162,8 @@ public class ItemSaveData
     // Enhancement level for equipment (+0 to +10). Persisted so enhanced
     // definition items don't lose their upgrades on reload.
     public int EnhancementLevel { get; set; }
-    // IF Refinement — 3 slots of socketed Ingot DefIds, or null.
-    // Null array means "no refinement data saved" (legacy saves).
-    // Saved only when at least one slot is non-null to keep legacy saves clean.
+    // 3 slots of socketed Ingot DefIds. Null array = no refinement data (legacy);
+    // only saved when a slot is non-null to keep legacy saves clean.
     public List<string?>? RefinementSlots { get; set; }
 
     // IM Enhancement Ore history (parallel to EnhancementLevel; entry i = ore

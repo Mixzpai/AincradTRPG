@@ -153,6 +153,7 @@ public static class SaveManager
         SeenTutorialTips = TutorialSystem.SeenTips.ToList(),
         ActiveQuests = new List<Quest>(QuestSystem.ActiveQuests),
         CompletedQuests = new List<Quest>(QuestSystem.CompletedQuests),
+        PinnedQuestId = QuestSystem.PinnedQuestId,
         PartyMembers = PartySystem.Members.Select(a => new AllySaveData
         {
             Name = a.Name, Symbol = a.Symbol, SymbolColor = (int)a.SymbolColor,
@@ -201,6 +202,8 @@ public static class SaveManager
         // FB-072 Investing — snapshot the per-vendor deposit dict. Legacy saves
         // simply omit it; VendorInvestmentSystem.SetForLoad(null) clears state.
         VendorInvestments = VendorInvestmentSystem.Snapshot(),
+        // FB-466 — 10-slot consumable quickbar DefinitionIds.
+        QuickbarSlotDefIds = player.Quickbar.SlotItemDefIds.ToList(),
     };
 
     // Item serialization.
@@ -216,9 +219,8 @@ public static class SaveManager
             if (eq.HasAnyRefinement)
                 save.RefinementSlots = eq.RefinementSlots.ToList();
         }
-        // IM Enhancement Ore history (System 3): persist the per-level ore
-        // DefIds so ore-biased stat bonuses restore exactly on reload.
-        // Null/empty on unenhanced weapons to keep the save clean.
+        // Per-level ore DefIds so ore-biased stat bonuses restore exactly.
+        // Null/empty on unenhanced weapons to keep saves clean.
         if (item is Weapon weaponSave && weaponSave.EnhancementOreHistory.Count > 0)
             save.EnhancementOreHistory = new List<string>(weaponSave.EnhancementOreHistory);
         if (item.DefinitionId == null) save.FullItemJson = SerializeFullItem(item);

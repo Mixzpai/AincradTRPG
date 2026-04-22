@@ -2,11 +2,8 @@ using SAOTRPG.Inventory.Core;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Centralized durability display utilities for the HUD and Look command.
-// Replaces duplicated equipment-slot loops in GameScreen.
-// Two display modes:
-//   Warning tags (HUD) — "[!WPN:5]" shown when durability drops below threshold (default 10).
-//   Snapshot (Look)    — "Wpn:45  Hd:30" compact overview of all equipped item durability.
+// Durability display helpers for HUD + Look. Modes: Warning tags "[!WPN:5]" (below threshold, default 10),
+// Snapshot "Wpn:45  Hd:30" (compact all-equipped overview).
 public static class DurabilityHelper
 {
     // Per-slot abbreviation pairs: (HUD warning tag, Look snapshot tag).

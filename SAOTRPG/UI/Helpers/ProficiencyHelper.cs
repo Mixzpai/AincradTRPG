@@ -2,12 +2,8 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Shared weapon proficiency display formatting used by DeathScreen,
-// VictoryScreen, KillStatsDialog, and StatsDialog.
-// Three output formats:
-//   BoxRow          — fits inside a ┌┐ summary card (DeathScreen/VictoryScreen)
-//   DetailLine      — compact progress: "Sword  Adept  +4 dmg  [12/20]"
-//   DetailExpanded  — with next-rank preview: "Sword  Adept  +4 dmg  (12/20 → Expert)"
+// Weapon proficiency formatting — DeathScreen/VictoryScreen/KillStatsDialog/StatsDialog.
+// Formats: BoxRow (summary card), DetailLine ("Sword Adept +4 dmg [12/20]"), DetailExpanded (+next-rank preview).
 public static class ProficiencyHelper
 {
     // Returns box-formatted proficiency lines for summary cards.

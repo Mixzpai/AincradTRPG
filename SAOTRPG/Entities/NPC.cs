@@ -14,5 +14,8 @@ namespace SAOTRPG.Entities
 
         // Non-null → bump opens dialog instead of logging Dialogue.
         public DialogueLine[]? DialogueLines { get; set; }
+
+        // Optional AsciiPortraits key. Null/unknown → auto-resolve from Name.
+        public string? PortraitKey { get; set; }
     }
 }

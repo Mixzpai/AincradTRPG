@@ -24,6 +24,8 @@ public partial class MapView
         RenderScorchMarks(w, h);
         RenderMobTrails(w, h);
         RenderAggroIndicators(w, h);
+        // Ambient tile layer (implemented by TileAnimations partial — stub here).
+        RenderAmbientTiles(w, h);
         RenderShatterParticles(w, h);
         RenderSkillFlashes(w, h);
         RenderKillStreakFlash(w, h);
@@ -35,6 +37,28 @@ public partial class MapView
         RenderLowHpPulse(w, h);
         RenderBorderFlash(w, h);
         RenderLookMode(w, h);
+        // Popups + toasts ride above all tile/FX layers. Tick from the last
+        // frame time so tween timing stays independent of the 750ms refresh.
+        int dtMs = TickFrameClock();
+        TickShake(dtMs);
+        // Particles draw BELOW projectiles + popups so later passes overwrite.
+        RenderParticles(w, h, dtMs);
+        RenderProjectiles(w, h, dtMs);
+        RenderDamagePopups(w, h, dtMs);
+        RenderToasts(w, h);
+    }
+
+    // Monotonic clock for sub-frame popup timing. AnimationIntervalMs (750)
+    // would be too coarse for a 400ms tween — we tick real ms since the last
+    // render instead.
+    private long _lastFrameTicks;
+    private int TickFrameClock()
+    {
+        long now = System.Environment.TickCount64;
+        if (_lastFrameTicks == 0) { _lastFrameTicks = now; return 16; }
+        int dt = (int)Math.Min(500, now - _lastFrameTicks);
+        _lastFrameTicks = now;
+        return dt;
     }
 
     private void RenderFootstepTrail(int w, int h)
@@ -463,14 +487,26 @@ public partial class MapView
         Driver!.AddRune(new System.Text.Rune(glyph));
     }
 
-    // Centered banner announcing a newly-sighted boss.
+    // Centered banner announcing a newly-sighted boss. Renders a portrait above
+    // the banner when the boss name matches a registered AsciiPortraits entry.
     private void RenderBossEntrance(int w, int h)
     {
         if (_bossEntranceFrames <= 0 || string.IsNullOrEmpty(_bossEntranceName)) return;
-        // Banner text pre-built in TriggerBossEntrance → per-frame draw allocates nothing.
         bool bright = (_bossEntranceFrames & 1) == 0;
         Color c = bright ? Color.BrightRed : Color.BrightYellow;
-        DrawCenteredBanner(_bossEntranceBanner, Math.Max(2, h / 2 - 2), Gfx.Attr(c, Color.Black), w);
+        string? key = AsciiPortraits.KeyForName(_bossEntranceName);
+        int baseRow = Math.Max(2, h / 2 - 2);
+        if (key != null)
+        {
+            var portrait = AsciiPortraits.Get(key);
+            int portraitH = portrait.Length;
+            int startCol = Math.Max(0, (w - 8) / 2);
+            int portraitRow = Math.Max(1, baseRow - portraitH - 1);
+            Color pc = key == "fatal_scythe" ? Color.DarkGray : c;
+            for (int i = 0; i < portraitH; i++)
+                DrawTextAtView(startCol, portraitRow + i, portrait[i], Gfx.Attr(pc, Color.Black), w, h);
+        }
+        DrawCenteredBanner(_bossEntranceBanner, baseRow, Gfx.Attr(c, Color.Black), w);
     }
 
     private void RenderLowHpPulse(int w, int h)

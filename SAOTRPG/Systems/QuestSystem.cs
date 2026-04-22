@@ -56,6 +56,29 @@ public static class QuestSystem
     public static List<Quest> CompletedQuests { get; set; } = new();
     public const int MaxActiveQuests = 5;
 
+    // FB-474 HUD tracker pin. Null = no pinned quest (widget hidden).
+    // Auto-pins on first accept; stays pinned through completion until turn-in.
+    public static string? PinnedQuestId { get; set; }
+
+    // Adds a quest to ActiveQuests; auto-pins if nothing is currently pinned.
+    public static void AddQuest(Quest q)
+    {
+        ActiveQuests.Add(q);
+        if (PinnedQuestId == null) PinnedQuestId = q.Id;
+    }
+
+    public static Quest? PinnedQuest()
+    {
+        if (string.IsNullOrEmpty(PinnedQuestId)) return null;
+        return ActiveQuests.FirstOrDefault(q => q.Id == PinnedQuestId);
+    }
+
+    public static void TogglePin(string questId)
+    {
+        if (PinnedQuestId == questId) PinnedQuestId = null;
+        else PinnedQuestId = questId;
+    }
+
     // Generate floor-appropriate quests. Called when entering a new floor
     // or talking to quest-giving NPCs.
     public static Quest GenerateQuest(int floor, string giverName)
@@ -192,6 +215,7 @@ public static class QuestSystem
                 {
                     q.Status = QuestStatus.Complete;
                     log.LogSystem($"  [QUEST] '{q.Title}' complete! Return to the quest giver to claim your reward.");
+                    ToastQueue.EnqueueQuest(q.Title);
                 }
             }
         }
@@ -224,6 +248,7 @@ public static class QuestSystem
             {
                 q.Status = QuestStatus.Complete;
                 log.LogSystem($"  [QUEST] '{q.Title}' complete! Return to any NPC to claim your reward.");
+                ToastQueue.EnqueueQuest(q.Title);
             }
         }
     }
@@ -237,6 +262,7 @@ public static class QuestSystem
             q.CurrentCount = 1;
             q.Status = QuestStatus.Complete;
             log.LogSystem($"  [QUEST] '{q.Title}' delivered!");
+            ToastQueue.EnqueueQuest(q.Title);
         }
     }
 
@@ -257,7 +283,11 @@ public static class QuestSystem
         {
             ActiveQuests.Remove(q);
             CompletedQuests.Add(q);
+            if (PinnedQuestId == q.Id) PinnedQuestId = null;
         }
+        // Auto-repin to next active quest if we lost our pin.
+        if (PinnedQuestId == null && ActiveQuests.Count > 0)
+            PinnedQuestId = ActiveQuests[0].Id;
         return (col, xp);
     }
 

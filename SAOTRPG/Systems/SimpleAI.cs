@@ -144,9 +144,8 @@ public static class SimpleAI
         return (0, 0);
     }
 
-    // Checks if a tile is in-bounds, walkable, and unoccupied.
-    // FB-077 — aquatic mobs (Monster.CanSwim) accept Water + WaterDeep
-    // tiles in addition to normal walkable floor.
+    // In-bounds + walkable + unoccupied. Aquatic mobs (Monster.CanSwim) also
+    // accept Water + WaterDeep tiles.
     private static bool CanMoveTo(GameMap map, Monster monster, int x, int y)
     {
         if (!map.InBounds(x, y)) return false;

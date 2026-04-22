@@ -4,14 +4,8 @@ using SAOTRPG.Inventory.Core;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Custom view that renders equipment slots with individually colored icons.
-// Handles up/down navigation and selection highlighting.
-// Shared between EquipmentDialog (T key) and InventoryDialog (I key).
-// Each row: [icon] SlotLabel    ItemName (R)
-//   - Icon is color-coded per slot type
-//   - Item name is color-coded by rarity
-//   - Rarity shown as single-letter abbreviation: (C)ommon, (U)ncommon, etc.
-//   - Selected row gets a dark gray highlight background
+// Equipment slot view — colored icons, ↑↓ nav, selection highlight. Shared by EquipmentDialog (T) and InventoryDialog (I).
+// Row: [icon] SlotLabel  ItemName (R). Icon color by slot, name by rarity, rarity as single letter, selection on dark gray.
 public class EquipmentSlotView : View
 {
     // ── Constants ─────────────────────────────────────────────────────

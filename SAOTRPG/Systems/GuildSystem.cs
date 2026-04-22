@@ -5,9 +5,8 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// FB-063 Guilds — 8 SAO-canon + 1 player-founded. Single-guild membership.
-// Join applies flat stat perk (TitleSystem pattern); swap applies karma+rep penalty.
-// HQ recruitment NPCs gate the Prove-Yourself quest; signature quests post-join.
+// Guilds: 8 SAO-canon + 1 player-founded. Single-guild membership; join = flat
+// stat perk; swap = karma+rep penalty. HQ NPCs gate Prove-Yourself + signature quests.
 public static class GuildSystem
 {
     // Stat bonus applied by ApplyGuildPerk. Weapon-conditional via WeaponTypeBonus
@@ -230,9 +229,8 @@ public static class GuildSystem
         }
     }
 
-    // Join a guild. Assumes requirements already checked by the caller.
-    // Removes any existing guild first (with penalty), then applies the new
-    // perk and seeds rep at +10.
+    // Caller must pre-check requirements. Removes existing guild (with penalty),
+    // applies new perk, seeds rep at +10.
     public static void Join(Player player, Faction newGuild, IGameLog log)
     {
         if (player.ActiveGuildId == newGuild) return;

@@ -3,9 +3,8 @@ using Terminal.Gui;
 
 namespace SAOTRPG.UI;
 
-// File-based debug logger. Timestamped lines into debug.log with category tags:
-// SESSION/INPUT/SCREEN/COMBAT/SYSTEM/LOG/STATE/PERF/ERROR. Init() once at startup;
-// AttachKeyLogger() after Application.Init(); Shutdown() on exit. No-op until Init() runs.
+// File-based debug log. Timestamped lines → debug.log with category tags (SESSION/INPUT/SCREEN/COMBAT/SYSTEM/LOG/STATE/PERF/ERROR).
+// Lifecycle: Init() at startup, AttachKeyLogger() after Application.Init(), Shutdown() on exit. No-op until Init().
 public static class DebugLogger
 {
     private static StreamWriter? _writer;

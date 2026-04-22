@@ -1,8 +1,7 @@
 namespace SAOTRPG.Systems;
 
-// FB-564 — Run Modifiers. Optional run-start toggles that alter gameplay.
-// Unlocked canonically after first F100 clear; currently TESTING_ALWAYS_ON.
-// Stackable; score multiplier is multiplicative.
+// Run Modifiers: run-start toggles that alter gameplay (stackable, score mul is
+// multiplicative). Canonically unlocked after F100 clear; currently TESTING_ALWAYS_ON.
 public enum RunModifier
 {
     StarlessNight,        // Easy   — perpetual night, +spawn density

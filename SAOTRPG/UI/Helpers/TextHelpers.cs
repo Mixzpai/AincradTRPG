@@ -4,9 +4,8 @@ namespace SAOTRPG.UI.Helpers;
 // inside fixed-width column budgets.
 public static class TextHelpers
 {
-    // Truncate a string to  characters, adding
-    // an ellipsis "…" if it was shortened. Returns the string unchanged
-    // when it already fits (or when  ≤ 1).
+    // Truncate to maxLen chars, appending "…" if shortened.
+    // Returns string unchanged when it fits (or when maxLen ≤ 1).
     public static string Truncate(string? s, int maxLen)
     {
         if (string.IsNullOrEmpty(s) || s.Length <= maxLen) return s ?? "";

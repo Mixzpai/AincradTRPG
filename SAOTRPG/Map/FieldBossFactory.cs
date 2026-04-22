@@ -21,6 +21,7 @@ public static class FieldBossFactory
         string? SeasonalEventId = null
     );
 
+    public static int RosterCount => Roster.Length;
     private static readonly FieldBossEntry[] Roster =
     {
         new("bullbous_bow_f2",      "Bullbous Bow",      "Armored Terror of the Plains",  2,  2.0f, 1.3f, 'O', Color.Red,           "bullbous_horn",

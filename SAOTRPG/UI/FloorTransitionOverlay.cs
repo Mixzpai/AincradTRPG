@@ -13,9 +13,7 @@ public static class FloorTransitionOverlay
     // Dialog height — enough for floor title, recap stats, and buttons.
     private const int OverlayHeight = 21;
 
-    // Aincrad region names by floor range — displayed as the floor subtitle.
-    // Sorted ascending; first match whose MaxFloor >= nextFloor wins.
-    // Add new regions here when expanding the floor count.
+    // Aincrad region names by floor range (floor subtitle). Sorted ascending; first MaxFloor >= nextFloor wins.
     private static readonly (int MaxFloor, string Region)[] FloorRegions =
     {
         (5,   "The Outer Reaches"),

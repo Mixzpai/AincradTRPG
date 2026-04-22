@@ -6,6 +6,7 @@ namespace SAOTRPG.Map;
 public static class BossFactory
 {
     // 100-floor roster (index = floor-1); sources: SAO Wiki, Progressive LNs, HF, IF, CBR.
+    public static int RosterCount => BossRoster.Length;
     private static readonly (string Name, string Title)[] BossRoster =
     {
         // ── Verdant Era (Floors 1-5) — nature, beasts, kobolds ──────

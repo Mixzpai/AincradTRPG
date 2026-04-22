@@ -5,9 +5,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Modal conversation dialog for NPCs with branching dialogue.
-// Shows a colored NPC name header, bordered dialogue text,
-// optional player choice buttons, and a continue/goodbye button.
+// Modal NPC conversation with branching dialogue — colored name header, bordered text,
+// optional choice buttons, continue/goodbye button.
 public static class NpcDialogDialog
 {
     private const int DialogWidth  = 56;
@@ -48,11 +47,25 @@ public static class NpcDialogDialog
             ColorScheme = ColorSchemes.Dim
         };
 
+        // ── Optional ASCII portrait (Klein/Asuna/Silica/Argo/etc.) ──
+        string? portraitKey = npc.PortraitKey ?? AsciiPortraits.KeyForName(npc.Name);
+        string[] portrait = portraitKey != null ? AsciiPortraits.Get(portraitKey) : Array.Empty<string>();
+        bool hasPortrait = portrait.Length > 0;
+        var portraitLabel = new Label
+        {
+            Text = hasPortrait ? string.Join("\n", portrait) : "",
+            X = 2, Y = 2, Width = 10, Height = hasPortrait ? portrait.Length : 0,
+            ColorScheme = ColorSchemes.FromColor(npc.SymbolColor),
+            Visible = hasPortrait,
+        };
+
         // ── NPC dialogue text area ──────────────────────────────────
+        // Shift right when a portrait is shown so text doesn't overlap.
+        int textX = hasPortrait ? 12 : 2;
         var npcText = new Label
         {
             Text = "",
-            X = 2, Y = 2,
+            X = textX, Y = 2,
             Width = Dim.Fill(2),
             Height = 4,
             ColorScheme = ColorSchemes.Body
@@ -131,7 +144,7 @@ public static class NpcDialogDialog
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
         };
 
-        dialog.Add(nameHeader, separator, npcText, choiceArea, continueBtn, hintLabel);
+        dialog.Add(nameHeader, separator, portraitLabel, npcText, choiceArea, continueBtn, hintLabel);
         DialogHelper.CloseOnEscape(dialog);
         ShowLine(0);
         DialogHelper.RunModal(dialog);

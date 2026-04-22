@@ -6,11 +6,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// FB-057 Monument of Swordsmen — kill milestones and title unlocks browser.
-// Left pane: every species the player has fought, with kill counts and
-// milestone checkpoints (10 / 100 / 1000). Right pane: currently-selected
-// title's description, requirement, and Equip/Unequip action. The player
-// picks a title to wear via the title list below the species list.
+// Monument of Swordsmen — kill milestones + title unlocks. Left: fought species w/ kill counts and 10/100/1000 checkpoints.
+// Right: selected title desc, requirement, Equip/Unequip. Title worn via title list below species list.
 public static class MonumentDialog
 {
     private const int DialogWidth  = 92;

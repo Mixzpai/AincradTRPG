@@ -4,19 +4,14 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.Systems;
 
-// FB-050..054 + FB-057 + FB-058 integration glue — hooks the Life Skill
-// XP grants to the existing movement/rest/food pipelines and runs the
-// Title unlock checks on every kill via the Bestiary.
+// Life Skill XP grants hooked to movement/rest/food pipelines; Title unlock
+// checks run on every kill via the Bestiary.
 public partial class TurnManager
 {
-    // Running tag-kill counter for Title System unlock checks. Recomputed
-    // lazily the first time a title check fires in a session (or after
-    // LoadFromSave sets it from the Bestiary snapshot).
+    // Tag-kill counter for Title unlocks. Rebuilt lazily from Bestiary on load.
     private readonly Dictionary<string, int> _tagKills = new();
 
-    // Wires the life-skill milestone banner + hooks the food grant off the
-    // existing Inventory.Events.ConsumableUsed subscription that was already
-    // being re-used for Satiety, crystals, etc. Called from TurnManager ctor.
+    // Wires life-skill milestone banner + food XP grant via ConsumableUsed.
     private void WireLifeSkillHooks()
     {
         _player.LifeSkills.LifeSkillMilestoneReached += (skill, level) =>
@@ -28,28 +23,25 @@ public partial class TurnManager
             _log.LogSystem("══════════════════════════════════════");
         };
 
-        // Title unlock banner — reuses the Unique-Skill cadence so both
-        // feel alike in the log.
+        // Title unlock banner — reuses Unique-Skill cadence.
         TitleSystem.TitleUnlocked += def =>
         {
             _log.LogSystem("══════════════════════════════════════");
             _log.LogSystem($"  ★ Title unlocked: {def.DisplayName}");
             _log.LogSystem($"    {def.Description}");
             _log.LogSystem("══════════════════════════════════════");
+            ToastQueue.EnqueueTitle(def.DisplayName);
         };
 
-        // Food consumption XP — subscribe in addition to the existing
-        // ConsumableUsed handler so we don't disturb its logic. This fires
-        // per consumable use regardless of food subtype.
+        // Food XP — separate ConsumableUsed sub so ctor handler is untouched.
         _player.Inventory.Events.ConsumableUsed += (_, e) =>
         {
             if (e.Consumable is Food) GrantEatingXp();
         };
     }
 
-    // Called from ProcessRest — awards Sleep XP per rest action. A full
-    // rest triggers 3 heal ticks (see ProcessRest loop) and a single grant
-    // here keeps the log clean and the curve tunable.
+    // Called from ProcessRest — awards Sleep XP per rest action (one grant
+    // covers the 3 heal ticks so the curve stays tunable).
     public void GrantRestSleepXp()
     {
         _player.LifeSkills.GrantXp(LifeSkillType.Sleep, 20);
@@ -69,16 +61,13 @@ public partial class TurnManager
         _player.LifeSkills.GrantXp(LifeSkillType.Walking, 1);
     }
 
-    // Called from ProcessSprint. +2 XP per sprint step (2 tiles covered
-    // per action — matches the canonical 2x-speed risk curve).
+    // ProcessSprint: +2 XP per sprint step (2 tiles covered; canon 2x-speed).
     public void GrantSprintRunningXp()
     {
         _player.LifeSkills.GrantXp(LifeSkillType.Running, 2);
     }
 
-    // Called when any Food consumable is used. Wired via ConsumableUsed
-    // in WireLifeSkillHooks so it fires automatically — call sites don't
-    // need to remember it.
+    // Auto-fires via WireLifeSkillHooks ConsumableUsed → Food sub.
     public void GrantEatingXp()
     {
         _player.LifeSkills.GrantXp(LifeSkillType.Eating, 10);

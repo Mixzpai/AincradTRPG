@@ -10,9 +10,8 @@ public static class NavigationHelper
     // Kept for backward compatibility with screens that reference it directly.
     public static ColorScheme ButtonScheme => ColorSchemes.Button;
 
-    // Enables W/S and arrow key focus navigation on a container view.
-    // Used by TitleScreen, DifficultyScreen, and other menu screens.
-    // Respects RadioGroup — lets arrow keys control selection inside radio groups.
+    // W/S + arrow focus navigation on a container (TitleScreen, DifficultyScreen, other menus).
+    // Respects RadioGroup — arrow keys change selection inside radio groups.
     public static void EnableGameNavigation(View container)
     {
         container.KeyDown += (s, e) =>

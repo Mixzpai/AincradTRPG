@@ -3,9 +3,8 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// FB-063 Karma — signed int [-100, +100] gating NPC dialog, shop pricing,
-// guild entry, F1 Town Guard spawn. State on Player.Karma; this = central
-// adjust/query so call-sites log uniformly and tier-cross banner fires once.
+// Karma: signed int [-100,+100] gating NPC dialog, shop pricing, guild entry,
+// F1 Guard spawn. Centralizes adjust/query so tier-cross banner fires once.
 public static class KarmaSystem
 {
     public const int Min = -100;

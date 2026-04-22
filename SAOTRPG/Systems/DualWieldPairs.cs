@@ -1,8 +1,7 @@
 namespace SAOTRPG.Systems;
 
 // FD Paired Dual-Wield registry. Both halves equipped → Pair Resonance:
-// +10% combined dmg, +5% crit re-roll. First proc per encounter logs banner.
-// Solo "Dual" weapons use Weapon.IsDualWieldPaired (offhand-legal, no synergy).
+// +10% combined dmg, +5% crit re-roll. Solo "Dual" weapons use IsDualWieldPaired.
 public static class DualWieldPairs
 {
     // Symmetric pairs (both directions stored). Checked by HandleCombat.

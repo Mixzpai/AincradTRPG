@@ -21,9 +21,8 @@ public static class DeathScreen
     ║                                      ║
     ╚══════════════════════════════════════╝";
 
-    // Renders the death screen with banner, summary, recap, and return button.
-    // Universal permadeath — save slot is already deleted by the caller before
-    // this screen renders, so there are no resource-loss penalties to apply.
+    // Renders banner + summary + recap + return button. Universal permadeath —
+    // caller deletes the save slot before this runs, so no in-screen penalty logic.
     public static void Show(Window mainWindow, Player player, int floor = 1,
         int kills = 0, int turns = 0, string? killedBy = null,
         TurnManager? turnManager = null, ColoredLogView? logView = null)

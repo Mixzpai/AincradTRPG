@@ -80,8 +80,7 @@ public static class PlayerGuideDialog
 
         var entries = PlayerGuideContent.Entries;
 
-        // ── Build node roots ──
-        // Category roots in Entries order; Tag roots after, alphabetized.
+        // ── Build node roots ── Category roots in Entries order, then alphabetized Tag roots.
         // Tagged topics appear under both their category and each Tag root (polyhierarchy).
         var categoryRoots = new List<CategoryNode>();
         var categoryByName = new Dictionary<string, CategoryNode>();
@@ -395,8 +394,7 @@ public static class PlayerGuideDialog
             return false;
         }
 
-        // ── Fuzzy filter ──
-        // Subseq match: +3·streak per run, -1 per gap break, +5 prefix. Null = no match.
+        // ── Fuzzy filter ── Subseq match: +3·streak/run, −1/gap, +5 prefix. Null = no match.
         // Title weighted 3x vs body; sort by max of the two.
         static int? FuzzyScore(string text, string query)
         {
@@ -720,8 +718,7 @@ public static class PlayerGuideDialog
     private static bool IsGatedTitle(string title) =>
         title.StartsWith("Monster: ") || title.StartsWith("Boss: ") || title.StartsWith("Field Boss: ");
 
-    // ── Progressive disclosure ──
-    // <details:TITLE>…</details> markers; collapsed "▸ TITLE (Enter to expand)", expanded "▾ TITLE" + inner.
+    // ── Progressive disclosure ── <details:TITLE>…</details>; collapsed "▸ TITLE (Enter)", expanded "▾ TITLE" + inner.
     // Session state in _expanded, keyed by (topicKey, block title).
     private static string RenderBodyWithDetails(string topicKey, string body)
     {
@@ -804,8 +801,7 @@ public static class PlayerGuideDialog
         return false;
     }
 
-    // ── 72-col paragraph-preserving wrap ──
-    // Blank-line-separated paragraphs wrap independently; leading whitespace repeated on continuation lines.
+    // ── 72-col paragraph-preserving wrap ── Blank-line-separated paragraphs wrap independently; leading whitespace repeats on continuation.
     // [bracketed-links] are atomic — never broken across lines.
     private static string WrapTo(string text, int cols)
     {
@@ -1019,9 +1015,8 @@ public static class PlayerGuideDialog
         }
     }
 
-    // ── Filter implementation ──
-    // Roots match if any child matches; topics match on non-null score.
-    // Title full-weight; body half-weight as fallback for body-only hits.
+    // ── Filter impl ── Roots match if any child matches; topics match on non-null score.
+    // Title full-weight, body half-weight as fallback for body-only hits.
     private sealed class GuideFilter : ITreeViewFilter<GuideNode>
     {
         private readonly Func<string, string, int?> _scoreFn;
