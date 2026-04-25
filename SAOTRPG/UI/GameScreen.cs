@@ -63,6 +63,10 @@ public static partial class GameScreen
             Story.StorySystem.Reset();
             Skills.UniqueSkillSystem.Reset();
             Skills.UniqueSkillSystem.TrapsDisarmed = 0;
+            // Bundle 7: fresh run → zero out per-prefab MAX_PER_GAME counts.
+            MapGenerator.SetPrefabUseCounts(null);
+            // Bundle 8: fresh run → clear Divine one-per-run gate.
+            LootGenerator.DivineObtainedThisRun = false;
         }
         else
         {
@@ -121,16 +125,20 @@ public static partial class GameScreen
             Text = "Status", X = 1, Y = statsTitleY, Width = Dim.Fill(1), Height = 1,
             ColorScheme = ColorSchemes.Gold,
         };
+        // Bundle 11: shrink stats text by 2 rows to make room for the status
+        // icon row underneath (instantiated after turnManager exists below).
+        // The [Effects] sidebar section now renders only when icon row hides.
+        const int IconRowHeight = 2;
         var playerStatsText = new TextView
         {
-            X = 1, Y = statsTextY, Width = Dim.Fill(1), Height = StatsHeight,
+            X = 1, Y = statsTextY, Width = Dim.Fill(1), Height = StatsHeight - IconRowHeight,
             ReadOnly = true, Text = player.GetStatsDisplay(),
             ColorScheme = ColorSchemes.Body,
         };
 
         var ruleB = new Label
         {
-            Text = RuleLine, X = 1, Y = Pos.Bottom(playerStatsText),
+            Text = RuleLine, X = 1, Y = Pos.Bottom(playerStatsText) + IconRowHeight,
             Width = Dim.Fill(1), Height = 1, ColorScheme = ColorSchemes.Dim,
         };
 
@@ -261,8 +269,37 @@ public static partial class GameScreen
         var statusTray = new StatusTrayWidget(turnManager, player)
         { X = 64, Y = 0, Width = Dim.Fill(18), Height = 2 };
         actionBar.Add(statusTray);
+
+        // Bundle 11 — sidebar status icon row, slotted between Status text and
+        // ruleB. 2 rows: glyph row + countdown row. Hides on sidebar < 12 cols.
+        var statusIconRow = new StatusIconRowWidget(turnManager)
+        {
+            X = 1, Y = Pos.Bottom(playerStatsText),
+            Width = Dim.Fill(1), Height = IconRowHeight,
+        };
+        rightPanel.Add(statusIconRow);
         // Shift+S toggles verbose labels (session-local; research §6 says don't persist).
         mapView.StatusTrayVerboseToggleRequested += () => statusTray.ToggleVerbose();
+
+        // F9 — biome JSON hot-reload. Re-reads Content/Biomes/*.json, regenerates
+        // the current floor, and re-rolls mobs/loot via PopulateFloor.
+        mapView.BiomeReloadRequested += () =>
+        {
+            SAOTRPG.Map.Generation.BiomeGenConfigLoader.Invalidate();
+            var (reMap, reRooms) = MapGenerator.GenerateFloor(turnManager.CurrentFloor);
+            MapGenerator.PopulateFloor(reMap, reRooms, player, turnManager.CurrentFloor,
+                activeDifficulty >= 0 && activeDifficulty <= 8
+                    ? new[] { 40, 60, 80, 100, 130, 170, 220, 300, 50 }[activeDifficulty] : 100);
+            // Refresh CurrentGenConfig + tree glyph before MapSwapped fires so
+            // the tint/ambient handlers pick up updated JSON values.
+            BiomeSystem.SetFloor(turnManager.CurrentFloor);
+            // ReplaceMap fires MapSwapped which already rewires mapView/minimapView
+            // and updates titles via GameScreen.Events.cs — do not double-call SetMap.
+            turnManager.ReplaceMap(reMap, player);
+            mapTitleLabel.Text = $"Floor {turnManager.CurrentFloor} — Aincrad";
+            mapTitleLabel.ColorScheme = FloorThemeColor(turnManager.CurrentFloor);
+            ToastQueue.Enqueue($"Biomes reloaded — {BiomeSystem.DisplayName}", Color.BrightCyan, ToastCategory.StatUp);
+        };
 
         void RefreshHud()
         {
@@ -294,21 +331,15 @@ public static partial class GameScreen
             sidebar.Append($"\n  Kills:{floorKills}  Expl:{explPct}%  {SAOTRPG.Map.DayNightCycle.PhaseName}");
             sidebar.Append($"\n  T{turnManager.FloorTurns}/{par}  {turnManager.GetFloorDangerLabel()}");
 
-            // Active effects (only when present)
-            var fx = new List<string>();
-            if (turnManager.IsPoisoned)            fx.Add($"PSN:{turnManager.PoisonTurnsLeft}");
-            if (turnManager.IsBleeding)            fx.Add($"BLD:{turnManager.BleedTurnsLeft}");
-            if (turnManager.StunTurnsLeft > 0)     fx.Add($"STN:{turnManager.StunTurnsLeft}");
-            if (turnManager.SlowTurnsLeft > 0)     fx.Add($"SLW:{turnManager.SlowTurnsLeft}");
-            if (turnManager.ShrineBuffTurns > 0)   fx.Add($"+SHR:{turnManager.ShrineBuffTurns}");
-            if (turnManager.LevelUpBuffTurns > 0)  fx.Add($"+SRG:{turnManager.LevelUpBuffTurns}");
-            if (turnManager.RestCounter >= 250)    fx.Add("EXHAUSTED");
-            else if (turnManager.RestCounter >= 150) fx.Add("FATIGUED");
-            if (fx.Count > 0)
-            {
-                sidebar.Append("\n\n[ Effects ]");
-                sidebar.Append($"\n  {string.Join("  ", fx)}");
-            }
+            // Bundle 11 — Effects text moved to StatusIconRowWidget (rendered
+            // beneath this sidebar block). Exhaustion/Fatigue stay as text since
+            // they have no per-glyph icon mapping in StatusIconMap.
+            if (turnManager.RestCounter >= 250)
+                sidebar.Append("\n\n[ Effects ]\n  EXHAUSTED");
+            else if (turnManager.RestCounter >= 150)
+                sidebar.Append("\n\n[ Effects ]\n  FATIGUED");
+            // Trigger icon-row repaint each HUD tick so countdowns tick down.
+            statusIconRow.SetNeedsDraw();
 
             // Bounty (only when active)
             if (turnManager.BountyTarget != null)
@@ -333,9 +364,12 @@ public static partial class GameScreen
 
             playerStatsText.Text = sidebar.ToString();
 
-            string hpBar = BarBuilder.BuildHp(player.CurrentHealth, player.MaxHealth, HpBarWidth);
-            string xpBar = BarBuilder.BuildXp(player.CurrentExperience, player.ExperienceRequired, XpBarWidth);
-            string satBar = BarBuilder.Build(turnManager.Satiety, TurnManager.MaxSatiety, 6, '█', '░');
+            // Bundle 11: eighth-block stat bar resolution (8x ASCII), with green/
+            // yellow/red zones via StatBarHelper.ZoneColor. Width unchanged so the
+            // sidebar layout stays stable.
+            string hpBar = StatBarHelper.Build(player.CurrentHealth, player.MaxHealth, HpBarWidth);
+            string xpBar = StatBarHelper.Build(player.CurrentExperience, player.ExperienceRequired, XpBarWidth);
+            string satBar = StatBarHelper.Build(turnManager.Satiety, TurnManager.MaxSatiety, 6);
             string durWarns = DurabilityHelper.BuildWarningTags(player.Inventory);
             string statusTags = StatusTagBuilder.Build(turnManager, durWarns);
             string saveTag = saveFlash[0] > 0 ? "  [Saved]" : "";
@@ -347,8 +381,12 @@ public static partial class GameScreen
             hpLabel.Text = $"HP {hpBar} {player.CurrentHealth}/{player.MaxHealth}" +
                            $" | XP {xpBar} Lv{player.Level}" +
                            $" | SAT {satBar}" + statusTags + weatherTag + saveTag;
-            bool lowHp = player.CurrentHealth <= player.MaxHealth / 4;
-            hpLabel.ColorScheme = lowHp ? ColorSchemes.Danger : ColorSchemes.Body;
+            // HP zone color drives the row tint. Critical (<25%) escalates to
+            // ColorSchemes.Danger so the existing low-HP redline behavior persists.
+            var hpZone = StatBarHelper.ZoneColor(player.CurrentHealth, player.MaxHealth);
+            hpLabel.ColorScheme = hpZone == Color.BrightRed
+                ? ColorSchemes.Danger
+                : (hpZone == Color.BrightYellow ? ColorSchemes.FromColor(Color.BrightYellow) : ColorSchemes.Body);
 
             // Row 1: Floor context line
             var wpn = player.Inventory.GetEquipped(SAOTRPG.Inventory.Core.EquipmentSlot.Weapon);
@@ -438,6 +476,10 @@ public static partial class GameScreen
         BiomeSystem.SetFloor(startFloor);
         if (saveData == null)
             gameLog.Log($"Biome: {BiomeSystem.DisplayName} -- {BiomeSystem.GetEntryMessage(startFloor)}");
+        // Per-biome flavor toast on fresh entry; overrides the generic entry line.
+        var startCfg = BiomeSystem.CurrentGenConfig;
+        if (saveData == null && !string.IsNullOrEmpty(startCfg?.FloorEntryText))
+            ToastQueue.Enqueue(startCfg!.FloorEntryText!, Color.BrightCyan, ToastCategory.Info);
         if (WeatherSystem.Current != WeatherType.Clear)
         {
             gameLog.Log($"Weather: {WeatherSystem.GetLabel()}");

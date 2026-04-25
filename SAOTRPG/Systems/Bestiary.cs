@@ -1,3 +1,4 @@
+using SAOTRPG.Entities;
 using Terminal.Gui;
 
 namespace SAOTRPG.Systems;
@@ -120,6 +121,27 @@ public static class Bestiary
         }
     }
 
+    // Bundle 10 (B8) — type-aware adapter; lifts boss/elite/status-flag boilerplate
+    // out of call sites so insta-kill paths capture without duplicating AI.cs.
+    public static void RecordMonsterEncounter(Monster monster, int floor)
+    {
+        if (monster == null) return;
+        string lootTag = monster is Mob mb ? mb.LootTag : "generic";
+        bool isBoss      = monster is Boss && monster is not FieldBoss;
+        bool isFieldBoss = monster is FieldBoss;
+        bool isElite     = monster is Mob me && (me.Variant == "Elite" || me.Variant == "Champion");
+        bool pz = monster is Mob mpz && mpz.CanPoison;
+        bool bl = monster is Mob mbl && mbl.CanBleed;
+        bool st = monster is Mob mst && mst.CanStun;
+        bool sl = monster is Mob msl && msl.CanSlow;
+        RecordEncounter(
+            monster.Name, monster.Level, monster.MaxHealth, monster.BaseAttack,
+            floor: floor, lootTag: lootTag,
+            glyph: monster.Symbol, glyphColor: monster.SymbolColor,
+            isBoss: isBoss, isFieldBoss: isFieldBoss, isElite: isElite,
+            canPoison: pz, canBleed: bl, canStun: st, canSlow: sl);
+    }
+
     public static void RecordKill(string name)
     {
         if (_entries.TryGetValue(name, out var r))
@@ -176,6 +198,9 @@ public static class Bestiary
             // DeathsCaused owned by LifetimeStats (RecordDeathCause); don't overwrite.
             known.LastSeenDate = string.IsNullOrEmpty(r.LastSeenDate)
                 ? known.LastSeenDate : r.LastSeenDate;
+            // Bundle 10 (B9) — persist loot tag so cross-run reload preserves it.
+            if (!string.IsNullOrEmpty(r.LootTag) && r.LootTag != "generic")
+                known.LootTag = r.LootTag;
 
             data.BestiaryKnown[name] = known;
         }
@@ -190,6 +215,11 @@ public static class Bestiary
         foreach (var (name, k) in data.BestiaryKnown)
         {
             if (_entries.ContainsKey(name)) continue;  // session beats lifetime
+            // Bundle 10 (B9) — restore persisted loot tag; fall back to runtime
+            // MobFactory lookup, finally "generic" for unknown species names.
+            string lootTag = k.LootTag
+                ?? Map.MobFactory.GetLootTagForName(name)
+                ?? "generic";
             _entries[name] = new Row
             {
                 Level = 0, MaxHp = 0, Atk = 0,
@@ -197,7 +227,7 @@ public static class Bestiary
                 Encountered = k.Encounters,
                 FirstFloor = k.FirstFloor,
                 LastFloor = k.LastFloor,
-                LootTag = "generic",
+                LootTag = lootTag,
                 Glyph = '?',
                 GlyphColor = default,
                 DeathsCausedAcrossRuns = k.DeathsCaused,
@@ -223,8 +253,9 @@ public static class Bestiary
     // ── Totals for the completion counter ─────────────────────────────────
     public static int DiscoveredCount() => _entries.Count;
 
-    // Total roster: MobFactory + BossFactory + FieldBoss (exact registry lengths,
-    // not the old 100/30 stand-ins) so completion meter matches reality.
+    // Total roster: MobFactory + BossFactory + FieldBoss (exact registry lengths)
+    // so completion meter matches reality. RosterCount props back true counts;
+    // catch fallbacks mirror current registry size (100 bosses, 33 field bosses).
     public static int TotalRosterCount()
     {
         int total = 0;
@@ -233,7 +264,7 @@ public static class Bestiary
             try { total += Map.MobFactory.GetFloorMobNames(tier).Length; } catch { }
         }
         try { total += Map.BossFactory.RosterCount; } catch { total += 100; }
-        try { total += Map.FieldBossFactory.RosterCount; } catch { total += 30; }
+        try { total += Map.FieldBossFactory.RosterCount; } catch { total += 33; }
         return Math.Max(total, _entries.Count);  // never show < discovered
     }
 }

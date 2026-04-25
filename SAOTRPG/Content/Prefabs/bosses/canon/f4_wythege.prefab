@@ -1,0 +1,33 @@
+NAME:          f4_wythege
+DESC:          Flooded colonnade in Rovia where Wythege the Hippocampus surges between island platforms and deep water.
+TAGS:          boss canon wythege_the_hippocampus aquatic f4
+FLOORS:        4
+BIOME:         aquatic any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#########################
+#~~~~~~~~~~~~~~~~~~~~~~~#
+#~P~~~~~~~~~~~~~~~~~~~P~#
+#~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~..........~~~~~~~~~#
+#~~~~..........~~~~~~P~~#
+#~~P~...........~~~~~~~~#
+#~~~~.....X.....~~~~~~~~#
+#~~P~...........~~~~~~~~#
+#~~~~..........~~~~~~P~~#
+#~~~~..........~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~#
+#~P~~~~~~~~~~~~~~~~~~~P~#
+#~~~~~~~~~~~~~~~~~~~~~~~#
+############+############
+#########################
+ENDMAP

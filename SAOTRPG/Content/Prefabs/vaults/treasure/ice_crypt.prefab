@@ -1,0 +1,21 @@
+NAME:          treasure_ice_crypt
+DESC:          Two chests on a floor of fractured ice — step gently, the cracks are live.
+TAGS:          vault treasure ice crypt
+FLOORS:        16-80
+BIOME:         ice any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#.....#
+#.$.$.#
+#.....#
+#.?.?.#
+#.....#
+#.....#
+###+###
+ENDMAP

@@ -1,0 +1,25 @@
+NAME:          gas_vent_corridor
+DESC:          Four gas vents spaced along a narrow passage wheeze sulfurous steam.
+TAGS:          trap corridor gas vent
+FLOORS:        6-99
+BIOME:         any
+WEIGHT:        22
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+MAP
+###
+#G#
+#.#
+#G#
+#.#
+#G#
+#.#
+#G#
+#.#
+#.#
+#.#
+###
+ENDMAP

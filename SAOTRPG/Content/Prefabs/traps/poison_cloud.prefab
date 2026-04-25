@@ -1,0 +1,22 @@
+NAME:          poison_cloud
+DESC:          A cluster of gas vents fills this short corridor with choking haze; a poison trap waits at the exit.
+TAGS:          trap corridor poison gas
+FLOORS:        6-99
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: g = TrapPoison
+
+MAP
+#####
+#.G.#
+#G.G#
+#.G.#
+#...#
+#.g.#
+#...#
+ENDMAP

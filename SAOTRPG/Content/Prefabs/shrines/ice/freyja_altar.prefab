@@ -1,0 +1,22 @@
+NAME:          freyja_altar
+DESC:          Frozen altar ringed by upthrust ice spikes; cold mist rises from a faint offering crack.
+TAGS:          shrine ice freyja
+FLOORS:        16-75
+BIOME:         ice any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: A = Shrine
+KFEAT: ^ = TrapSpike
+
+MAP
+#######
+#.^.^.#
+#.....#
+#.^A^.#
+#.....#
+#.^.^.#
+###+###
+ENDMAP

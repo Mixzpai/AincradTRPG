@@ -69,5 +69,25 @@ public enum TileType
     Bush,
     Mountain,
     Rock,
-    Flowers
+    Flowers,
+
+    // Nature (Bundle 5 biome-native — APPEND ONLY to preserve int save-compat)
+    Sand,
+    DuneSand,
+    Snow,
+    Ice,
+    CrackedIce,
+    Basalt,
+    Ash,
+    Mud,
+    BogWater,
+    Reeds,
+
+    // Bundle 10 — ore veins (mineable; depleted variant walkable). Append-only.
+    OreVeinIron,
+    OreVeinIronDepleted,
+    OreVeinMithril,
+    OreVeinMithrilDepleted,
+    OreVeinDivine,
+    OreVeinDivineDepleted
 }

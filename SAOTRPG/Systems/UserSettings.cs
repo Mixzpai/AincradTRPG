@@ -53,6 +53,10 @@ public class UserSettings
     // FB-452 damage tag bracket style — default [BRACKETS] for visual anchor.
     public DamageTagStyle DamageTagStyle { get; set; } = DamageTagStyle.Brackets;
 
+    // Bundle 11 — fall back to ASCII stat bars if the terminal font renders
+    // eighth-block unicode (█▉▊▋▌▍▎▏) incorrectly. Default false → unicode.
+    public bool UseAsciiStatBars { get; set; } = false;
+
     // Persistence: singleton + atomic JSON save/load.
 
     private static readonly string SettingsDir =

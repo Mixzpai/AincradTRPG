@@ -22,6 +22,17 @@ public partial class MapView
             return true;
         }
 
+        // Shift+G — toggle heightmap debug overlay. Captured before switch so
+        // bare G (pickup) stays intact.
+        if (bareKey == KeyCode.G && keyEvent.IsShift
+            && (keyEvent.KeyCode & KeyCode.CtrlMask) == 0)
+        {
+            SAOTRPG.UI.MapView.HeightmapDebugEnabled = !SAOTRPG.UI.MapView.HeightmapDebugEnabled;
+            SetNeedsDraw();
+            keyEvent.Handled = true;
+            return true;
+        }
+
         switch (bareKey)
         {
             case KeyCode.W: case KeyCode.CursorUp:    dy = -1; break;
@@ -52,6 +63,7 @@ public partial class MapView
             case KeyCode.F3: SwordSkillRequested?.Invoke(2); keyEvent.Handled = true; return true;
             case KeyCode.F4: SwordSkillRequested?.Invoke(3); keyEvent.Handled = true; return true;
             case KeyCode.F5:    return FireEvent(SaveRequested,        keyEvent);
+            case KeyCode.F9:    return FireEvent(BiomeReloadRequested, keyEvent);
             case KeyCode.D1: QuickUseRequested?.Invoke(1); keyEvent.Handled = true; return true;
             case KeyCode.D2: QuickUseRequested?.Invoke(2); keyEvent.Handled = true; return true;
             case KeyCode.D3: QuickUseRequested?.Invoke(3); keyEvent.Handled = true; return true;

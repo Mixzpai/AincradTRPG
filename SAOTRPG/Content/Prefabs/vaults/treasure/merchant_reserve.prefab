@@ -1,0 +1,19 @@
+NAME:          treasure_merchant_reserve
+DESC:          A merchant's back room — two bounty boards and a locked chest watched by a clerk.
+TAGS:          vault treasure merchant reserve
+FLOORS:        *
+BIOME:         any
+WEIGHT:        16
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#.B.B.#
+#.....#
+#.1.$.#
+#.....#
+###+###
+ENDMAP

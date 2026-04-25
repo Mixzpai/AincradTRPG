@@ -1,0 +1,35 @@
+NAME:          f1_illfang
+DESC:          Black Iron Palace throne arena of Illfang the Kobold Lord, torches, pillars, raised dais.
+TAGS:          boss canon illfang_the_kobold_lord grassland urban f1
+FLOORS:        1
+BIOME:         grassland urban any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        false
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: F = Campfire
+KFEAT: A = Shrine
+KFEAT: P = Pillar
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#########################
+#F.....................F#
+#.#####################.#
+#.#...................#.#
+#.#..P.............P..#.#
+#.#....#####A#####....#.#
+#.#....#.........#....#.#
+#.#....#....X....#....#.#
+#.#....#.........#....#.#
+#.#....###########....#.#
+#.#..P.............P..#.#
+#.#...................#.#
+#.#####################.#
+#F.....................F#
+############+############
+#########################
+ENDMAP

@@ -45,7 +45,7 @@ public static class StatsDialog
         {
             foreach (var (wpnType, forkLevel) in turnManager.EnumeratePendingForks())
             {
-                var (o1, o2) = TurnManager.GetForkOptions(forkLevel);
+                var (o1, o2) = TurnManager.GetForkOptions(forkLevel, wpnType);
                 int pick = ProficiencyForkDialog.Show(wpnType, forkLevel, o1, o2);
                 if (pick == 1 || pick == 2)
                     turnManager.ApplyProficiencyFork(wpnType, forkLevel, pick);

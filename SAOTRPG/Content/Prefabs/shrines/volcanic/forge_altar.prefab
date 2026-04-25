@@ -1,0 +1,21 @@
+NAME:          forge_altar
+DESC:          Smith's altar paired with a working anvil atop basalt flagstones — sparks of devotion.
+TAGS:          shrine volcanic forge
+FLOORS:        13-95
+BIOME:         volcanic any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: A = Shrine
+
+MAP
+#########
+#.......#
+#.V...A.#
+#.......#
+#.V...A.#
+#.......#
+####+####
+ENDMAP

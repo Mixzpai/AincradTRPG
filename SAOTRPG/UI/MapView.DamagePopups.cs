@@ -3,9 +3,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Subtle damage popups: floats 1 cell up over ~400ms, fades in last 150ms.
-// Dim-first palette per research — crits add brightness bump + polygon glyph.
-// Frame-coalesce + DoT suppression + tiny-chip filter keep the channel quiet.
+// Subtle damage popups: float 1 cell up over ~400ms, fade in last 150ms.
+// Dim-first palette (crits add brightness + polygon glyph); frame-coalesce + DoT + chip filters keep it quiet.
 public partial class MapView
 {
     private sealed class DamagePopup
@@ -35,9 +34,8 @@ public partial class MapView
     private readonly List<DamagePopup> _popups = new();
     private readonly HashSet<int> _dotTickFirstSeen = new();
 
-    // Called by TurnManager.Combat via the DamageDealt event. Damage targeting
-    // is caller-driven (monster tile for player hits). maxTargetHp lets the
-    // helper apply the <2% chip-damage suppression.
+    // Called by TurnManager.Combat via the DamageDealt event. Caller-driven targeting
+    // (monster tile for player hits); maxTargetHp drives <2% chip-damage suppression.
     public void EnqueueDamagePopup(int mx, int my, int damage, bool isCrit,
         Color tintColor, int maxTargetHp)
     {
@@ -75,8 +73,7 @@ public partial class MapView
     }
 
     // Multi-hit cascade popup (Starburst Stream, Eclipse, Mother's Rosario).
-    // MultiHitStream=true bypasses PopupMaxPerTile coalesce; ±1 cell x-jitter
-    // prevents a single-column stack; delayMs staggers spawn per hitIndex.
+    // Bypasses coalesce; ±1 cell x-jitter prevents single-column stack; delayMs staggers per hitIndex.
     public void EnqueueMultiHitPopup(int mx, int my, int damage, int hitIndex, int delayMs)
     {
         if (damage <= 0) return;

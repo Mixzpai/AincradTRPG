@@ -86,6 +86,14 @@ public partial class TurnManager
     private int _levelUpBuff, _levelUpBuffTurns;
     public int LevelUpBuffTurns => _levelUpBuffTurns;
 
+    // Bundle 10 (B1) — active food regen buff. Set when Food with RegenerationRate>0
+    // is consumed; consumed in PassiveRegen each tick. 0 = inactive (legacy default).
+    private int _foodRegenRate, _foodRegenTurnsLeft;
+    public int FoodRegenRate => _foodRegenRate;
+    public int FoodRegenTurnsLeft => _foodRegenTurnsLeft;
+    private void ApplyFoodRegenBuff(int rate, int turns)
+    { _foodRegenRate = Math.Max(_foodRegenRate, rate); _foodRegenTurnsLeft = Math.Max(_foodRegenTurnsLeft, turns); }
+
     // Counterattack stance — player presses V, next incoming attack triggers riposte
     private bool _counterStance;
     public bool IsCounterStance => _counterStance;
@@ -93,10 +101,21 @@ public partial class TurnManager
     private int _poisonTurnsLeft, _poisonDamagePerTick = 2;
     private int _bleedTurnsLeft, _bleedDamagePerTick = 1;
     private int _stunTurnsLeft, _slowTurnsLeft;
+    // Weapon Barrier+N SpecialEffect: damage pool absorbed before HP hit.
+    // Resets to wpn Barrier value on floor change (ReplaceMap / new floor).
+    private int _barrierRemaining;
+    // Invisibility+N SpecialEffect: set on crit, ticks down in AdvanceTurn.
+    // Non-zero suppresses monster aggro via SimpleAI's playerStealthed hook.
+    private int _invisibilityTurnsLeft;
     public int StunTurnsLeft => _stunTurnsLeft;
     public int SlowTurnsLeft => _slowTurnsLeft;
+    public bool IsInvisible => _invisibilityTurnsLeft > 0;
 
     private readonly Dictionary<int, int> _blindedMobs = new(), _stunnedMobs = new();
+    // Lunacy+N per-mob confusion counter: value = turns of random-wander AI left.
+    private readonly Dictionary<int, int> _confusedMobs = new();
+    // Bundle 10 (B11) — SlowOnHit per-mob slow counter: value = turns of every-other-turn skip left.
+    private readonly Dictionary<int, int> _slowedMobs = new();
     private readonly Dictionary<int, (int turns, int dmg)> _burningMobs = new(), _poisonedMobs = new();
     // Telegraphed attacks — monster winds up for 1 turn, then deals heavy damage
     private readonly Dictionary<int, int> _telegraphedAttacks = new(); // mobId → damage queued
@@ -105,14 +124,16 @@ public partial class TurnManager
     {
         _blindedMobs.Remove(mobId); _stunnedMobs.Remove(mobId);
         _burningMobs.Remove(mobId); _poisonedMobs.Remove(mobId);
-        _telegraphedAttacks.Remove(mobId);
+        _telegraphedAttacks.Remove(mobId); _confusedMobs.Remove(mobId);
+        _slowedMobs.Remove(mobId);
     }
 
     private void ClearAllMobStatuses()
     {
         _blindedMobs.Clear(); _stunnedMobs.Clear();
         _burningMobs.Clear(); _poisonedMobs.Clear();
-        _telegraphedAttacks.Clear();
+        _telegraphedAttacks.Clear(); _confusedMobs.Clear();
+        _slowedMobs.Clear();
     }
 
     private int _lastSoundCueTurn = -99;
@@ -157,6 +178,12 @@ public partial class TurnManager
 
     // Fires when the active map swaps (enter/exit labyrinth). UI refreshes map references.
     public event Action? MapSwapped;
+    // Bundle 8: fires once per run when a Divine Object enters inventory (boss drop or quest).
+    // GameScreen.Events subscribes to trigger DivineObtainBanner + border flash + toast.
+    public event Action<Items.Equipment.Weapon>? DivineObtained;
+    // Bundle 9: Selka awakening dialog request. GameScreen.Events subscribes to open
+    // DivineAwakeningDialog modal. Fires each time Selka is engaged while carrying a Divine.
+    public event Action<Entities.Player>? DivineAwakeningRequested;
     // Fires when the player steps on an Anvil. UI opens CraftingDialog.
     public event Action? AnvilInteraction;
     public event Action? CookingInteraction;
@@ -225,6 +252,34 @@ public partial class TurnManager
         TurnCompleted?.Invoke();
     }
 
+    // F9 biome hot-reload helper: swap the active overworld map in place.
+    // Caller is responsible for player placement (typically PopulateFloor did it).
+    // No-op while _inLabyrinth — F9 during labyrinth would orphan the overworld.
+    public void ReplaceMap(GameMap newMap, Player player)
+    {
+        if (_inLabyrinth) return;
+        _map = newMap;
+        // F9 hot-reload mirrors fresh floor entry: reset per-floor flags so the
+        // player doesn't inherit stairs-revealed state or stale kill/damage
+        // counters from the pre-regen floor.
+        _stairsDiscovered = false;
+        _floorStartTurn = TurnCount;
+        _floorKillsStart = KillCount;
+        _floorDamageTaken = 0;
+        _floorItemsFound = 0;
+        _floorFullyExplored = false;
+        // Barrier+N regenerates fully each floor from the equipped weapon.
+        _barrierRemaining = GetBarrierCapacity();
+        // Extended per-floor state resets — stale latches would mask regen on F9.
+        Story.StorySystem.ClearPerFloorTriggers();
+        ParticleQueue.ClearAmbient();
+        TutorialSystem.ClearPerFloorLatches();
+        _log.Clear();
+        UI.DebugLogger.LogGame("RELOAD", "Cleared per-floor latches");
+        UpdateVisibility();
+        MapSwapped?.Invoke();
+    }
+
     public void RequestTalentPick()
     {
         var choices = PassiveTalents.RollChoices();
@@ -232,6 +287,15 @@ public partial class TurnManager
     }
 
     public void ApplyTalent(PassiveTalents.Perk perk) => perk.Apply(_player);
+
+    // Bundle 8: call after a Divine enters inventory (boss drop or quest reward).
+    // Sets one-per-run gate + fires event for the banner. No-op if already set.
+    private void NotifyDivineObtained(Items.Equipment.Weapon divine)
+    {
+        if (LootGenerator.DivineObtainedThisRun) return;
+        LootGenerator.DivineObtainedThisRun = true;
+        DivineObtained?.Invoke(divine);
+    }
 
     public TurnManager(GameMap map, Player player, IGameLog log, int floor = 1,
         int difficulty = 3)
@@ -251,6 +315,10 @@ public partial class TurnManager
         // Wire Life Skill + Title hooks before gameplay systems fire so the
         // first rest/walk/sprint/food grant and first kill are observed.
         WireLifeSkillHooks();
+
+        // Barrier+N per-floor pool — seed from starting weapon so fresh runs
+        // have the pool ready before the first hit. Refilled on floor entry.
+        _barrierRemaining = GetBarrierCapacity();
 
         player.Inventory.Events.ConsumableUsed += (_, e) =>
         {
@@ -284,6 +352,11 @@ public partial class TurnManager
                 string bonusTag = bonusPct > 0 ? $" [+{bonusPct}% Eating]" : "";
                 _log.Log($"You feel sated. (Satiety: {Satiety}/{MaxSatiety}){bonusTag}");
                 _starvingWarned = false;
+                // Bundle 10 (B1) — RegenerationRate buff: tick HP regen for RegenerationDuration turns.
+                // Eating bonusPct scales the regen rate (L99 → +100% rate). 0 = inert.
+                int scaledRate = food.RegenerationRate + (food.RegenerationRate * bonusPct / 100);
+                if (scaledRate > 0 && food.RegenerationDuration > 0)
+                    ApplyFoodRegenBuff(scaledRate, food.RegenerationDuration);
             }
             if (e.Consumable is DamageItem dmgItem) HandleThrowable(dmgItem);
         };
@@ -498,6 +571,8 @@ public partial class TurnManager
         tm._poisonTurnsLeft = save.PoisonTurnsLeft; tm._bleedTurnsLeft = save.BleedTurnsLeft;
         tm._stunTurnsLeft = save.StunTurnsLeft; tm._slowTurnsLeft = save.SlowTurnsLeft;
         tm._shrineBuffTurns = save.ShrineBuffTurns; tm._levelUpBuffTurns = save.LevelUpBuffTurns;
+        // Bundle 10 (B1) — restore food regen buff. 0 = inactive on legacy saves.
+        tm._foodRegenRate = save.FoodRegenRate; tm._foodRegenTurnsLeft = save.FoodRegenTurnsLeft;
         tm._floorStartTurn = save.TurnCount; tm._floorStartRealTime = DateTime.Now;
         tm._floorKillsStart = save.KillCount; tm._restCounter = save.RestCounter;
         tm._bountyTarget = save.BountyTarget; tm._bountyKillsNeeded = save.BountyKillsNeeded;

@@ -108,6 +108,16 @@ public partial class TurnManager
         TileType.DangerZone    => "Corrupted ground — standing here hurts!",
         TileType.Anvil         => "A repair anvil (step on to repair gear for Col)",
         TileType.BountyBoard   => "A bounty board (step on for a kill contract)",
+        TileType.Sand          => "Loose sand — easy footing, still hot.",
+        TileType.DuneSand      => "Wind-carved dune — the ridge shifts underfoot.",
+        TileType.Snow          => "Fresh snow — your steps leave a print.",
+        TileType.Ice           => "Smooth ice — slick but solid.",
+        TileType.CrackedIce    => "Cracked ice — may slip (Stun) on entry!",
+        TileType.Basalt        => "Cooled basalt — dark volcanic rock.",
+        TileType.Ash           => "Volcanic ash — warm, soft, drifts with each step.",
+        TileType.Mud           => "Thick mud — slows your steps (Slow on entry).",
+        TileType.BogWater      => "Fetid bogwater — requires Swimming 1; poisons on entry!",
+        TileType.Reeds         => "Tall reeds — marsh fringe, easy to push through.",
         _                      => "Unknown terrain"
     };
 

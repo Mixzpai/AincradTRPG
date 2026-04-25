@@ -1,0 +1,27 @@
+NAME:          aquatic_stepping_isles
+DESC:          Five small islands joined by stepping-stones across a shallow aquamarine pool.
+TAGS:          signature aquatic islands stepping
+FLOORS:        4-60
+BIOME:         aquatic any
+WEIGHT:        25
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: _ = Path
+
+MAP
+~~~~~~~~~~~~
+~...~~~~...~
+~...~~~~...~
+~...__._...~
+~~~~~~~~~~~~
+~~~.__.~~~~~
+~~~....~~~~~
+~~~.__.~~~~~
+~~~~~~~~~~~~
+~...._._...~
+~...~~~~...~
+~...~~~~...~
+~~~~~~~~~~~~
+ENDMAP

@@ -148,4 +148,37 @@ public static class EvolutionMaterialDefinitions
         DropRate = 0.1f,
         IsBossDrop = true,
     };
+
+    // Bundle 9 — Divine Awakening catalysts.
+    // F75+ canon boss ~5% drop. Used for Divine Awakening Lv1→Lv2.
+    public static MobDrop CreateDivineFragment() => new()
+    {
+        DefinitionId = "divine_fragment",
+        Name = "Divine Fragment",
+        Value = 1500,
+        Rarity = "Epic",
+        Quantity = 1,
+        MaxStacks = 10,
+        MaterialType = "Divine Catalyst",
+        CraftingTier = 5,
+        SourceMonster = "F75+ Floor Boss",
+        DropRate = 0.05f,
+        IsBossDrop = true,
+    };
+
+    // F100 Ruby Palace clone kill — one-per-run guaranteed. Used for Divine Awakening Lv2→Lv3.
+    public static MobDrop CreatePrimordialShard() => new()
+    {
+        DefinitionId = "primordial_shard",
+        Name = "Primordial Shard",
+        Value = 5000,
+        Rarity = "Legendary",
+        Quantity = 1,
+        MaxStacks = 3,
+        MaterialType = "Divine Catalyst",
+        CraftingTier = 5,
+        SourceMonster = "Your Shadow (F100)",
+        DropRate = 1.0f,
+        IsBossDrop = true,
+    };
 }

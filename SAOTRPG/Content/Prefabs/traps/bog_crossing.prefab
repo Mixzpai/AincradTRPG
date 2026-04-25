@@ -1,0 +1,20 @@
+NAME:          bog_crossing
+DESC:          Bog water laced with poison traps hidden among the dry tussocks.
+TAGS:          trap bog swamp poison
+FLOORS:        6-60
+BIOME:         swamp any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: g = TrapPoison
+
+MAP
+#########
+#~~~~~~~#
+#.~.g.~.#
+#~~~~~~~#
+#~g~~~~.#
+ENDMAP

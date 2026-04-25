@@ -1,0 +1,23 @@
+NAME:          fountain_garden
+DESC:          Small garden built around a clear fountain, ringed with flowers — a travelers' respite.
+TAGS:          altar fountain garden any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: f = Flowers
+
+MAP
+#########
+#.......#
+#.f.f.f.#
+#..f.f..#
+#...!...#
+#..f.f..#
+#.f.f.f.#
+#.......#
+####+####
+ENDMAP

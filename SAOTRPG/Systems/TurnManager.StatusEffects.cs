@@ -110,6 +110,8 @@ public partial class TurnManager
     {
         TurnCount++;
         TickSkillCooldowns();
+        TickInvisibility();
+        TickConfusedMobs();
 
         if (TurnCount > 0 && TurnCount % FlavorText.MilestoneInterval == 0)
         {
@@ -175,15 +177,59 @@ public partial class TurnManager
         // FB-051 Sleep L99: regen cadence halves (interval/2) → ~2x heal outside rest.
         if (_player.LifeSkills.SleepFasterRegen && interval > 1) interval = Math.Max(1, interval / 2);
         if (TurnCount % interval != 0) return;
-        if (_player.CurrentHealth >= _player.MaxHealth) return;
 
-        int regenAmount = 1 + _player.Vitality / 3 + WeatherSystem.GetRegenBonus();
-        _player.CurrentHealth = Math.Min(_player.CurrentHealth + regenAmount, _player.MaxHealth);
-        // FB-450 healing tick sparkle — subtle +/· pair at player tile.
-        ParticleQueue.Emit(ParticleEvent.HealingTick, _player.X, _player.Y);
+        // SpecialEffect regen stacks on top of native regen.
+        // Bundle 10 (B14): HPRegen + SPRegen sum across ALL equipped slots (armor pieces stack).
+        var regenWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Items.Equipment.Weapon;
+        int hpBonus = GetEffectSumAllSlots("HPRegen");
+        int spBonus = GetEffectSumAllSlots("SPRegen");
 
-        if (Random.Shared.Next(100) < 30)
-            _log.Log(FlavorText.RegenFlavors[Random.Shared.Next(FlavorText.RegenFlavors.Length)]);
+        // Bundle 10 (B1) — active food regen buff folds into the same tick.
+        // Consumed once per regen interval; expires when turns reach 0.
+        int foodBonus = 0;
+        if (_foodRegenTurnsLeft > 0)
+        {
+            foodBonus = _foodRegenRate;
+            _foodRegenTurnsLeft--;
+            if (_foodRegenTurnsLeft == 0) { _foodRegenRate = 0; _log.Log("The meal's restorative warmth fades."); }
+        }
+
+        if (_player.CurrentHealth < _player.MaxHealth)
+        {
+            int regenAmount = 1 + _player.Vitality / 3 + WeatherSystem.GetRegenBonus() + hpBonus + foodBonus;
+            _player.CurrentHealth = Math.Min(_player.CurrentHealth + regenAmount, _player.MaxHealth);
+            // FB-450 healing tick sparkle — subtle +/· pair at player tile.
+            ParticleQueue.Emit(ParticleEvent.HealingTick, _player.X, _player.Y);
+            if (Random.Shared.Next(100) < 30)
+                _log.Log(FlavorText.RegenFlavors[Random.Shared.Next(FlavorText.RegenFlavors.Length)]);
+        }
+
+        // SPRegen applies regardless of HP cap, on the same tick cadence.
+        if (spBonus > 0) _player.SkillPoints += spBonus;
+    }
+
+    // Invisibility+N tick — one turn decrement per AdvanceTurn; logs on expiry.
+    // Called from AdvanceTurn so cadence is independent of regen interval.
+    private void TickInvisibility()
+    {
+        if (_invisibilityTurnsLeft <= 0) return;
+        _invisibilityTurnsLeft--;
+        if (_invisibilityTurnsLeft == 0)
+            _log.LogCombat("The phantom veil fades. You are visible again.");
+    }
+
+    // Lunacy+N tick — decrement per-mob confusion turns, purge zeros.
+    private void TickConfusedMobs()
+    {
+        if (_confusedMobs.Count == 0) return;
+        var expired = new List<int>();
+        foreach (var kv in _confusedMobs)
+        {
+            int left = kv.Value - 1;
+            if (left <= 0) expired.Add(kv.Key);
+            else _confusedMobs[kv.Key] = left;
+        }
+        foreach (var id in expired) _confusedMobs.Remove(id);
     }
 
     private void UpdatePlayerTitle()

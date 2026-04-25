@@ -52,4 +52,7 @@ public class GameLogView : IGameLog
         DebugLogger.LogGame("DIALOG", message);
         _logView.AddEntry(message, LogCategory.Dialog);
     }
+
+    // F9 hot-reload purge — forwards to the underlying ColoredLogView buffer.
+    public void Clear() => _logView.Clear();
 }

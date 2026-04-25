@@ -1,0 +1,17 @@
+NAME:          lava_hop
+DESC:          Stepping-stone path crosses a channel of slow lava.
+TAGS:          trap lava hop volcanic
+FLOORS:        13-95
+BIOME:         volcanic any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+MAP
+#########
+#LLLLLLL#
+#._._._.#
+#LLLLLLL#
+ENDMAP

@@ -1,0 +1,20 @@
+NAME:          treasure_lorekeep
+DESC:          A scholar's cache — three chests, two lore stones and a well-kept journal.
+TAGS:          vault treasure lore scholar
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#########
+#.......#
+#.*...*.#
+#.......#
+#.$.J.$.#
+#.......#
+#...$...#
+####+####
+ENDMAP

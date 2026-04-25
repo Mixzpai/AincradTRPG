@@ -22,6 +22,14 @@ public class GameMap
     // Set by Town of Beginnings on Floor 1; null elsewhere.
     public Room? SafeZone { get; set; }
 
+    // Heightmap data for the Shift+G debug overlay. Populated by HeightmapPass
+    // on generation. UI-thread-only; not threadsafe; not serialized.
+    public float[,]? DebugHeights { get; set; }
+
+    // Bundle 10 — strikes remaining per ore tile. Seeded by OreVeinPlacementPass,
+    // decremented by mining strike handler, removed on depletion.
+    public Dictionary<(int X, int Y), int> VeinStrikesRemaining { get; } = new();
+
     private readonly bool[,] _visible;
     private readonly bool[,] _explored;
     private readonly int[,] _visitCounts;

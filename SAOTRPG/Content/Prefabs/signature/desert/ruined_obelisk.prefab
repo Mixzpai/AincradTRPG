@@ -1,0 +1,27 @@
+NAME:          desert_ruined_obelisk
+DESC:          A sand-buried obelisk leans askew amid sun-bleached bones and wind-worn stones.
+TAGS:          signature desert obelisk ruins
+FLOORS:        11-40
+BIOME:         desert any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: O = Rock
+KFEAT: P = Pillar
+KFEAT: * = LoreStone
+
+MAP
+,,,,,,,,,,,,
+,O,,,,,,,,O,
+,,,,O,,O,,,,
+,,,,,,,,,,,,
+,,O,,,P,,,O,
+,,,,,,P,,,,,
+,,,,,,*,,,,,
+,,O,,,P,,,O,
+,,,,,,,,,,,,
+,,,,O,,O,,,,
+,O,,,,,,,,O,
+ENDMAP

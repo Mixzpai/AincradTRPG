@@ -1,0 +1,17 @@
+NAME:          fishing_spot
+DESC:          A small pond with a dying campfire and the fisherman's forgotten journal.
+TAGS:          vignette narrative fishing aquatic
+FLOORS:        *
+BIOME:         aquatic swamp any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+.....
+.~~~.
+.~~..
+.F.J.
+.....
+ENDMAP

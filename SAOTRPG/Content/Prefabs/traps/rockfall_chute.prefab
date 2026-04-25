@@ -1,0 +1,22 @@
+NAME:          rockfall_chute
+DESC:          Unstable passage where rocks block retreat; the exit must be broken through.
+TAGS:          trap rockfall chute collapse
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: = = CrackedWall
+
+MAP
+###
+#.#
+#O#
+#.#
+#O#
+#.#
+#=#
+ENDMAP

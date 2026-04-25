@@ -1,0 +1,21 @@
+NAME:          ranger_camp
+DESC:          Forest ranger's outpost — a circle of trees around a modest campfire and guide.
+TAGS:          merchant forest ranger
+FLOORS:        3-60
+BIOME:         forest any
+WEIGHT:        22
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: T = Tree
+
+MAP
+,T,T,T,T,
+T,,,,,,,T
+,,,,,,,,,
+,,,1,F,,,
+,,,,,,,,,
+T,,,,,,,T
+,T,T,T,T,
+ENDMAP

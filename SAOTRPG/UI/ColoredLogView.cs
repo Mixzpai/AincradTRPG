@@ -15,6 +15,16 @@ public class ColoredLogView : View
     private int _scrollOffset;
     private const int MaxEntries = 500;
 
+    // Bundle 11 — smooth-scroll-to-end target. When AddEntry would overshoot the
+    // current view, we step _scrollOffset toward _scrollTarget by one row per
+    // frame instead of snapping. Player can read the trailing line before the
+    // next batch of combat output buries it.
+    private int _scrollTarget = -1;
+    private object? _easeToken;
+    private const int EaseStepRows = 1;
+    // ~40ms per step ≈ 25 FPS; two-step ease totals ~80ms (Bundle 11 spec).
+    private static readonly TimeSpan EaseInterval = TimeSpan.FromMilliseconds(40);
+
     // ── Tab filtering ── null = show all.
     private LogCategory? _filter;
     // Hook so GameScreen can visually sync its tab buttons with Tab-key cycling.
@@ -57,6 +67,16 @@ public class ColoredLogView : View
         return result;
     }
 
+    // Drop all entries + invalidate wrap cache. Used by F9 hot-reload.
+    public void Clear()
+    {
+        _entries.Clear();
+        _wrappedCache = null;
+        _scrollOffset = 0;
+        _scrollTarget = -1;
+        SetNeedsDraw();
+    }
+
     // Add entry; consecutive dupes increment Count instead of adding a new line.
     public void AddEntry(string text, LogCategory category)
     {
@@ -85,7 +105,9 @@ public class ColoredLogView : View
     {
         _filter = category;
         _wrappedCache = null;
-        ScrollToEnd();
+        // Filter switch should snap — animating mid-context-shift would just
+        // confuse the player about what they're looking at.
+        ScrollToEndImmediate();
         SetNeedsDraw();
         FilterChanged?.Invoke(category);
     }
@@ -112,11 +134,69 @@ public class ColoredLogView : View
 
     // ── Scrolling ── Viewport.Height is the authoritative visible row count; matches
     // the 1080p-tall panel exactly regardless of terminal-cell grid dimensions.
+    // Bundle 11: ease toward the bottom over ~2 frames so trailing lines are
+    // readable before the next batch arrives. Snap immediately if user already
+    // sees the last row (typical case — no jitter).
     public void ScrollToEnd()
     {
         int visibleLines = Math.Max(1, Viewport.Height);
         int totalRows = GetWrappedRows(Math.Max(1, Viewport.Width)).Count;
+        int target = Math.Max(0, totalRows - visibleLines);
+
+        // Within 1 row of bottom OR scrolled up manually beyond ease range → snap.
+        // Ease only when the player is already pinned near the bottom; never
+        // hijack a manual scroll-up.
+        int delta = target - _scrollOffset;
+        if (delta <= 1 || delta > visibleLines)
+        {
+            _scrollOffset = target;
+            _scrollTarget = -1;
+            return;
+        }
+
+        _scrollTarget = target;
+        StartEaseTimer();
+    }
+
+    // Snap-immediate variant — used by F9 hot-reload + filter switches where
+    // animation would feel sluggish.
+    private void ScrollToEndImmediate()
+    {
+        int visibleLines = Math.Max(1, Viewport.Height);
+        int totalRows = GetWrappedRows(Math.Max(1, Viewport.Width)).Count;
         _scrollOffset = Math.Max(0, totalRows - visibleLines);
+        _scrollTarget = -1;
+    }
+
+    // Ease driver — registers a single AddTimeout callback that steps the
+    // offset toward _scrollTarget by EaseStepRows every EaseInterval until
+    // arrival. Re-entrant safe (token guard).
+    private void StartEaseTimer()
+    {
+        if (_easeToken != null) return;
+        _easeToken = Application.AddTimeout(EaseInterval, EaseTick);
+    }
+
+    private bool EaseTick()
+    {
+        if (_scrollTarget < 0)
+        {
+            _easeToken = null;
+            return false;
+        }
+        if (_scrollOffset < _scrollTarget)
+            _scrollOffset = Math.Min(_scrollTarget, _scrollOffset + EaseStepRows);
+        else if (_scrollOffset > _scrollTarget)
+            _scrollOffset = Math.Max(_scrollTarget, _scrollOffset - EaseStepRows);
+
+        SetNeedsDraw();
+        if (_scrollOffset == _scrollTarget)
+        {
+            _scrollTarget = -1;
+            _easeToken = null;
+            return false;
+        }
+        return true;
     }
 
     public void ScrollPageUp()
@@ -187,8 +267,7 @@ public class ColoredLogView : View
     }
 
     // ── Rendering ── Draws each visible wrapped row with its resolved color.
-    // Viewport.Height drives both scroll math and the render loop — matches the
-    // actual pane height at any resolution (1080p rendering bug fix).
+    // Viewport.Height drives both scroll math and render loop (fixes 1080p rendering bug).
     protected override bool OnDrawingContent()
     {
         var vp = Viewport;

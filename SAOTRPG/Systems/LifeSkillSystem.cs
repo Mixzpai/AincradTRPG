@@ -15,6 +15,9 @@ public enum LifeSkillType
     Bargaining,
     // FB-077 — swim: XP per water tile; gates shallow/deep; slow below threshold.
     Swimming,
+    // Bundle 10 — pickaxe-strike XP. Iron=4, Mithril=9, Divine=18 per strike.
+    // Milestones at 10/25/50/99 ramp drop chance, durability damage reduction, bonus rolls.
+    Mining,
 }
 
 public record LifeSkillState
@@ -133,6 +136,7 @@ public class LifeSkillSystem
             case LifeSkillType.Eating:      break; // multiplier-only
             case LifeSkillType.Bargaining:  break; // price-mult only (BargainingDiscount)
             case LifeSkillType.Swimming:    break; // traversal gate only
+            case LifeSkillType.Mining:      break; // multiplier-only (drop chance, dur reduction)
         }
     }
 
@@ -198,6 +202,37 @@ public class LifeSkillSystem
     public bool SleepFasterRegen =>
         Skills[LifeSkillType.Sleep].Level >= MaxLevel;
 
+    // Bundle 10 — Mining tier helpers. Drop-chance bonus tiered: 0/5/10/15/25.
+    public int MiningOreDropBonusPercent()
+    {
+        int lvl = Skills[LifeSkillType.Mining].Level;
+        if (lvl >= MaxLevel) return 25;
+        if (lvl >= 50) return 15;
+        if (lvl >= 25) return 10;
+        if (lvl >= 10) return 5;
+        return 0;
+    }
+
+    // L99: durability damage halved overall (consumer rounds odd strikes up).
+    public bool MiningDurabilityHalved =>
+        Skills[LifeSkillType.Mining].Level >= MaxLevel;
+
+    // L10: skip durability tick on every other strike.
+    public bool MiningEveryOtherStrikeFree =>
+        Skills[LifeSkillType.Mining].Level >= 10;
+
+    // L25: 20% chance for an extra ore roll per vein strike.
+    public int MiningBonusOreRollPercent =>
+        Skills[LifeSkillType.Mining].Level >= 25 ? 20 : 0;
+
+    // L50: Iron veins cost one fewer strike to deplete; mining content layer reads this.
+    public bool MiningIronStrikeDiscount =>
+        Skills[LifeSkillType.Mining].Level >= 50;
+
+    // L50: Mithril vein guaranteed +1 Adamant Trace on depletion (content layer reads this).
+    public bool MiningMithrilAdamantBonus =>
+        Skills[LifeSkillType.Mining].Level >= 50;
+
     public static string Label(LifeSkillType skill) => skill switch
     {
         LifeSkillType.Sleep      => "Sleep",
@@ -206,6 +241,7 @@ public class LifeSkillSystem
         LifeSkillType.Eating     => "Eating",
         LifeSkillType.Bargaining => "Bargain",
         LifeSkillType.Swimming   => "Swim",
+        LifeSkillType.Mining     => "Mining",
         _                        => skill.ToString(),
     };
 
@@ -235,6 +271,10 @@ public class LifeSkillSystem
         (LifeSkillType.Swimming,   25) => "Deep water passable (slow)",
         (LifeSkillType.Swimming,   50) => "Deep water at full speed",
         (LifeSkillType.Swimming,   99) => "Master swimmer",
+        (LifeSkillType.Mining,     10) => "+5% ore drop chance",
+        (LifeSkillType.Mining,     25) => "+1 bonus ore roll (20%)",
+        (LifeSkillType.Mining,     50) => "Mithril +1 Adamant Trace; Iron costs -1 strike",
+        (LifeSkillType.Mining,     99) => "+20% Divine vein drops; durability damage halved",
         _                           => "",
     };
 }

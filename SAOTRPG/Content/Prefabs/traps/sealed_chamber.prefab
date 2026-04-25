@@ -1,0 +1,22 @@
+NAME:          sealed_chamber
+DESC:          A small chamber sealed by a cracked wall; spikes bristle within.
+TAGS:          trap sealed chamber spike
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: = = CrackedWall
+
+MAP
+#####
+#...#
+#.^.#
+#^.^#
+#.^.#
+#...#
+##=##
+ENDMAP

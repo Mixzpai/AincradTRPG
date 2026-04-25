@@ -144,6 +144,12 @@ public static class EquipmentDialog
             parts.Add($"DEF: {a.BaseDefense}");
             if (a.BlockChance > 0) parts.Add($"Block: {a.BlockChance}%");
         }
+        else if (eq is Pickaxe pick)
+        {
+            // Bundle 10 — pickaxe detail emphasizes mining stats; durability appended below as N/M for context.
+            if (pick.MiningPower != 0) parts.Add($"Power: +{pick.MiningPower}");
+            if (pick.OreQualityBonus != 0) parts.Add($"Quality: +{pick.OreQualityBonus}%");
+        }
 
         var bonuses = new List<string>();
         foreach (var effect in eq.Bonuses.Effects)
@@ -152,7 +158,16 @@ public static class EquipmentDialog
             bonuses.Add($"{ShortStatName(effect.Type)} {sign}{effect.Potency}");
         }
         if (bonuses.Count > 0) parts.Add(string.Join(", ", bonuses));
-        parts.Add(eq.ItemDurability <= 0 ? "DUR: BROKEN" : $"DUR: {eq.ItemDurability}");
+        // Bundle 10 — Pickaxe shows N/M with critical/low tag; other gear keeps the legacy single-number DUR.
+        if (eq is Pickaxe pickDur)
+        {
+            int max = pickDur.MaxDurability > 0 ? pickDur.MaxDurability : Math.Max(1, pickDur.ItemDurability);
+            int cur = Math.Clamp(pickDur.ItemDurability, 0, max);
+            double pct = (double)cur / max;
+            string tag = cur <= 0 ? "BROKEN" : pct < 0.25 ? "CRITICAL" : pct < 0.50 ? "Low" : "Good";
+            parts.Add(cur <= 0 ? "DUR: BROKEN" : $"DUR: {cur}/{max} ({tag})");
+        }
+        else parts.Add(eq.ItemDurability <= 0 ? "DUR: BROKEN" : $"DUR: {eq.ItemDurability}");
         return string.Join("  |  ", parts);
     }
 

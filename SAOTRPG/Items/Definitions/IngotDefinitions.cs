@@ -50,6 +50,12 @@ public static class IngotDefinitions
     private static string Fmt(StatType stat, int v) =>
         $"{stat} {(v >= 0 ? "+" : "")}{v}";
 
+    // ── Bundle 10 — Iron Ingot. Common ore drop from Iron veins (Mining content).
+    // Crafting filler / vendor sell. Mild +Defense, mild -Speed (heavy metal flavor).
+    public static Ingot CreateIronIngot() => Make(
+        "iron_ingot", "Iron Ingot", 150, "Common",
+        StatType.Defense, 4, StatType.Speed, -2);
+
     // ── Common (4) — big tradeoff, trivial mat cost (1 Red Hot Ore) ──────
     public static Ingot CreateSharpeningIngot() => Make(
         "sharpening_ingot", "Sharpening Ingot", 80, "Common",
@@ -87,6 +93,13 @@ public static class IngotDefinitions
         "spellbind_ingot", "Spellbind Ingot", 320, "Rare",
         StatType.SkillDamage, 6, StatType.Defense, -3,
         StatType.Intelligence, 3);
+
+    // Bundle 9 — Mithril Ingot. Rare refinement ingot; also used for Divine Awakening Lv1 (3x).
+    // Drops from Ruin Kobold Miner at a low rate + vendor stock (accessible, not trivial).
+    public static Ingot CreateMithrilIngot() => Make(
+        "mithril_ingot", "Mithril Ingot", 350, "Rare",
+        StatType.Attack, 8, StatType.Defense, -2,
+        StatType.Speed, 2);
 
     // ── Epic (3) — small downside (3 Red Hot Ore) ───────────────────────
     public static Ingot CreateChimericIngot() => Make(

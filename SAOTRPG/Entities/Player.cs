@@ -66,6 +66,27 @@ namespace SAOTRPG.Entities
             + LifeSkills.RunningSpeedBonus();
         public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
 
+        // Bundle 10 (B13) — derived stat readers. Equipment Bonuses fold into Base* via ApplyStat;
+        // GetTotalEquipmentBonus also tallies for display so stats stay live when gear durability hits 0.
+        public int EffectiveCritRate => BaseCriticalRate + (Dexterity / 2)
+            + Inventory.GetTotalEquipmentBonus(StatType.CritRate);
+
+        // Bundle 10 (B15) — fork passives + (eventually) weapon-mastery layers stack here.
+        public int BaseAttackSpeedBonus { get; set; }
+        public int AttackSpeedBonus => BaseAttackSpeedBonus
+            + Inventory.GetTotalEquipmentBonus(StatType.AttackSpeed);
+
+        // Bundle 10 (B15) — Katana Iaijutsu fork: +5% damage on first strike vs each new
+        // encounter. Combat layer flips on encounter start; consumer is wave-2 follow-up.
+        public bool KatanaIaijutsuActive { get; set; }
+        // Bundle 10 (B15) — Bow Marksman Eye fork: extra effective range overflow on bow shots.
+        public int BowRangeOverflow { get; set; }
+        public int BlockChanceBonus => Inventory.GetTotalEquipmentBonus(StatType.BlockChance);
+        public int HpRegenPerTick => BaseHpRegenPerTick
+            + Inventory.GetTotalEquipmentBonus(StatType.HPRegen);
+        public int EffectiveSkillCooldownReduction => SkillCooldownReduction
+            + Inventory.GetTotalEquipmentBonus(StatType.SkillCooldown);
+
         // New player: Iron Sword + Health Potion, full HP.
         public static Player CreateNewPlayer(string firstName, string lastName, string gender, IGameLog log, IInventoryLogger? inventoryLogger = null)
         {

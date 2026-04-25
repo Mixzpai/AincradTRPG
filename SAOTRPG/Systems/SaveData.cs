@@ -4,9 +4,13 @@ namespace SAOTRPG.Systems;
 public class SaveData
 {
     // Schema version — bump when save format changes to enable migration.
-    public int SaveVersion { get; set; } = 1;
+    public int SaveVersion { get; set; } = 2;
     public DateTime Timestamp { get; set; }
     public long PlayTimeSeconds { get; set; }
+
+    // Persisted master seed so F9 hot-reload regenerates the same floor deterministically.
+    // -1 sentinel for legacy saves — migration at load fills with TickCount.
+    public int GlobalSeed { get; set; } = -1;
 
     // Player identity
     public string FirstName { get; set; } = "";
@@ -79,6 +83,9 @@ public class SaveData
     public int SlowTurnsLeft { get; set; }
     public int ShrineBuffTurns { get; set; }
     public int LevelUpBuffTurns { get; set; }
+    // Bundle 10 (B1) — active food regen buff. 0 = inactive (legacy default safe).
+    public int FoodRegenRate { get; set; }
+    public int FoodRegenTurnsLeft { get; set; }
 
     // Sword Skills
     // IDs of the 4 equipped sword skills (null entries = empty slots).
@@ -142,6 +149,14 @@ public class SaveData
     // Null entries = empty. Legacy saves deserialize as nulls and auto-fill
     // from the first pickup thereafter.
     public List<string?> QuickbarSlotDefIds { get; set; } = new();
+
+    // Bundle 7: per-prefab-name placement counts this run. Enforces MAX_PER_GAME directive.
+    // Missing on legacy v2 saves → S.T.J yields empty dict (no migration needed).
+    public Dictionary<string, int> PrefabUseCounts { get; set; } = new();
+
+    // Bundle 8: Divine one-per-run cap. Set when any Divine enters inventory.
+    // LootGenerator checks before rolling a Divine boss drop; legacy saves default false.
+    public bool DivineObtainedThisRun { get; set; }
 }
 
 // FB-050 — serialized form of a single life skill's live state.
@@ -169,6 +184,22 @@ public class ItemSaveData
     // IM Enhancement Ore history (parallel to EnhancementLevel; entry i = ore
     // for level i+1). Null on legacy → auto-fill N × Crimson Flame.
     public List<string>? EnhancementOreHistory { get; set; }
+
+    // Bundle 8: FD Paired flag. Nullable → legacy saves fall back to weapon-definition value;
+    // runtime mutators (Corruption Stone transforms) round-trip via the saved flag.
+    public bool? IsDualWieldPaired { get; set; }
+
+    // Bundle 9: Divine Awakening level (◈1-◈3). Null on legacy/unawakened saves,
+    // written only when > 0. Deserialize re-folds the ATK bonus via ComputeBonusAttack.
+    public int? AwakeningLevel { get; set; }
+
+    // Bundle 10 — Pickaxe durability ceiling. Null on legacy/non-pickaxe saves;
+    // load-time fallback uses ItemDurability when null so legacy still loads cleanly.
+    public int? MaxDurability { get; set; }
+
+    // Bundle 10 (B2) — true when Bonuses already include enhancement/refinement/awakening.
+    // DefId items leave null (runtime replays); FullItemJson items set true (skip replay).
+    public bool? BonusesAlreadyBaked { get; set; }
 }
 
 // Serialized party member data.

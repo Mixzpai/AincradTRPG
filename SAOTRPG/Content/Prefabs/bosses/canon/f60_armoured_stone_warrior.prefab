@@ -1,0 +1,36 @@
+NAME:          f60_armoured_stone_warrior
+DESC:          Granite throne room where stone guardian statues watch the Armoured Stone Warrior's vigil.
+TAGS:          boss canon the_armoured_stone_warrior ruins f60
+FLOORS:        60
+BIOME:         ruins any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#######################
+#.....................#
+#.P.P.P.P.P.P.P.P.P.P.#
+#.....................#
+#.F...................#
+#.....................#
+#.P.................P.#
+#.....................#
+#.P.................P.#
+#..........X..........#
+#.P.................P.#
+#.....................#
+#.P.................P.#
+#.....................#
+#.F...................#
+#.P.P.P.P.P.P.P.P.P.P.#
+#.....................#
+###########+###########
+ENDMAP

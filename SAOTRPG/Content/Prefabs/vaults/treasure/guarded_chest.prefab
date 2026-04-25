@@ -1,0 +1,19 @@
+NAME:          treasure_guarded_chest
+DESC:          A single chest flanked by two alert guardians.
+TAGS:          vault treasure guardian
+FLOORS:        *
+BIOME:         any
+WEIGHT:        22
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#.1.1.#
+#.....#
+#..$..#
+#.....#
+###+###
+ENDMAP

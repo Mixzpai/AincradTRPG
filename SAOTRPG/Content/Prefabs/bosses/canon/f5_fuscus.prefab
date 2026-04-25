@@ -1,0 +1,35 @@
+NAME:          f5_fuscus
+DESC:          Pitch-black cathedral where Fuscus the Vacant Colossus looms; broken altar and pews, perpetual gloom.
+TAGS:          boss canon fuscus_the_vacant_colossus ruins f5
+FLOORS:        5
+BIOME:         ruins any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: A = Shrine
+KFEAT: X = LabyrinthEntrance
+KFEAT: F = Campfire
+SUBST: ; = . .:3 ;:1
+
+MAP
+#######################
+#.....................#
+#.P.................P.#
+#...###############...#
+#...#.............#...#
+#...#.P.........P.#...#
+#.F.#.............#.F.#
+#...#......X......#...#
+#.F.#.............#.F.#
+#...#.P.........P.#...#
+#...#.............#...#
+#...#######A#######...#
+#.P.................P.#
+#.....................#
+###########+###########
+ENDMAP

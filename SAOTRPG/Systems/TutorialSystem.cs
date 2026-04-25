@@ -19,6 +19,14 @@ public static class TutorialSystem
         return true;
     }
 
+    // F9 hot-reload latch reset — drops per-floor tip ids (e.g. "floor1_*").
+    public static void ClearPerFloorLatches()
+    {
+        int before = SeenTips.Count;
+        SeenTips.RemoveWhere(id => id.StartsWith("floor"));
+        DebugLogger.LogGame("RELOAD", $"TutorialSystem.ClearPerFloorLatches removed {before - SeenTips.Count}");
+    }
+
     // All tutorial tips keyed by event ID.
     private static string? GetTip(string id) => id switch
     {

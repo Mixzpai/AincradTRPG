@@ -1,0 +1,19 @@
+NAME:          treasure_swamp_cache
+DESC:          A chest on a reed-tuft island ringed by bog water — hop carefully.
+TAGS:          vault treasure swamp reeds
+FLOORS:        6-60
+BIOME:         swamp any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#~~~~~#
+#~...~#
+#~.$.~#
+#~...~#
+#~~~~~#
+###+###
+ENDMAP

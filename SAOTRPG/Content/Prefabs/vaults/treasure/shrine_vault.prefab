@@ -1,0 +1,19 @@
+NAME:          treasure_shrine_vault
+DESC:          A modest shrine paired with a single chest — a blessing and a boon together.
+TAGS:          vault treasure shrine
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#..A..#
+#.....#
+#..$..#
+#.....#
+###+###
+ENDMAP

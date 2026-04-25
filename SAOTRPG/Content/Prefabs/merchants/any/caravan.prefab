@@ -1,0 +1,20 @@
+NAME:          caravan
+DESC:          Traveling merchant's wagon camp with two traders warming themselves at a central campfire.
+TAGS:          merchant caravan any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+###########
+#.........#
+#.1.....2.#
+#.........#
+#....F....#
+#.........#
+#.........#
+#####+#####
+ENDMAP

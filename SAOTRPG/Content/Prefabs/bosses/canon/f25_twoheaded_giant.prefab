@@ -1,0 +1,35 @@
+NAME:          f25_twoheaded_giant
+DESC:          Forest-ridge colosseum where the Two-Headed Giant paces between two facing stone thrones.
+TAGS:          boss canon the_two_headed_giant forest grassland f25
+FLOORS:        25
+BIOME:         forest grassland any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: T = Tree
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#######################
+#T,,,,,,,,,,,,,,,,,,,T#
+#,,P,,,,,,,,,,,,,,,P,,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,,,,###,,,,,,,###,,,,#
+#,,,,#F#,,,,,,,#F#,,,,#
+#,,,,#.#,,,,,,,#.#,,,,#
+#T,,,#.#,,,X,,,#.#,,,T#
+#,,,,#.#,,,,,,,#.#,,,,#
+#,,,,#F#,,,,,,,#F#,,,,#
+#,,,,###,,,,,,,###,,,,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,,P,,,,,,,,,,,,,,,P,,#
+#T,,,,,,,,,,,,,,,,,,,T#
+###########+###########
+#######################
+ENDMAP

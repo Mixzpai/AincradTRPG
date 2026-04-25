@@ -16,8 +16,27 @@ public abstract class EquipmentBase : BaseItem
     // Enhancement is done at the Anvil using materials + Col.
     public int EnhancementLevel { get; set; }
 
-    // Display name with enhancement suffix: "Iron Sword +3"
-    public string EnhancedName => EnhancementLevel > 0 ? $"{Name} +{EnhancementLevel}" : Name ?? "";
+    // Display name with enhancement + awakening suffixes:
+    // "Iron Sword" → "Iron Sword +3" → "Night Sky Sword +3 ◈2" (Bundle 9).
+    public string EnhancedName
+    {
+        get
+        {
+            string core = EnhancementLevel > 0 ? $"{Name} +{EnhancementLevel}" : (Name ?? "");
+            if (this is Weapon w && w.AwakeningLevel > 0)
+                core = $"{core} ◈{w.AwakeningLevel}";
+            return core;
+        }
+    }
+
+    // Named effect string — save-format authority. Parsed by SwordSkillEngine.GetSpecialEffectValue
+    // (raw int) and EquipmentSpecialEffectRegistry (typed records, B12). Weapons + shields share
+    // since Bundle 8 (shield effects live-wired); Bundle 10 lifts armor parsing for defensive keys.
+    public string? SpecialEffect { get; set; }
+
+    // Bundle 10 (B12) — typed view of SpecialEffect. Lazy + cached per-instance via ConditionalWeakTable.
+    public IReadOnlyList<EquipmentSpecialEffect> ParsedEffects =>
+        EquipmentSpecialEffectRegistry.GetParsed(this);
 
     // ── IF Refinement — 3 Ingot DefId slots; mutate ONLY via Refinement.Socket (direct writes skip stat-folding + prior-ingot destruction). Divine cannot refine.
     public const int RefinementSlotCount = 3;

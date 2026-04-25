@@ -32,6 +32,15 @@ public static class StorySystem
         Reputation.Clear();
     }
 
+    // F9 hot-reload latch reset — drops "floor:"-prefixed fired ids so regenerated NPCs
+    // re-trigger first-meet lines. Stub filter pending a proper floor-scoped id convention.
+    public static void ClearPerFloorTriggers()
+    {
+        int before = FiredEventIds.Count;
+        FiredEventIds.RemoveWhere(id => id.StartsWith("floor:"));
+        UI.DebugLogger.LogGame("RELOAD", $"StorySystem.ClearPerFloorTriggers removed {before - FiredEventIds.Count}");
+    }
+
     public static void SetFlag(StoryFlag f) => Flags.Add(f);
     public static bool HasFlag(StoryFlag f) => Flags.Contains(f);
     public static void AdjustRep(Faction f, int delta)

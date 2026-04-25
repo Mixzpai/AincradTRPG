@@ -1,5 +1,6 @@
 using Terminal.Gui;
 using SAOTRPG.Systems;
+using SAOTRPG.Systems.Story;
 using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
@@ -102,10 +103,9 @@ public static class DifficultyScreen
             Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger,
         };
 
-        // ── Run Modifiers row (FB-564) — TESTING_ALWAYS_ON.
-        // Canonical unlock: ProfileData.HasCompletedGame after F100 clear.
+        // ── Run Modifiers row (FB-564) — unlocked after first F100 victory.
         int modY = hcY + 2;
-        bool modifiersUnlocked = true; // TESTING_ALWAYS_ON — restore: ProfileData.HasCompletedGame
+        bool modifiersUnlocked = ProfileData.HasCompletedGame;
         var modifierBtn = new Button
         {
             Text = modifiersUnlocked ? " Run Modifiers " : " Run Modifiers (locked) ",

@@ -1,0 +1,23 @@
+NAME:          sand_buried_vault
+DESC:          Chest half-buried beneath drifting dune sand, ringed by weather-worn stones.
+TAGS:          vault desert buried
+FLOORS:        11-80
+BIOME:         desert any
+WEIGHT:        22
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: O = Rock
+
+MAP
+#########
+#.......#
+#.O...O.#
+#.......#
+#...$...#
+#.......#
+#.O...O.#
+#.......#
+####+####
+ENDMAP

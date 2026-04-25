@@ -20,4 +20,10 @@ public interface IStatModifiable
     int Dexterity { get; set; }
     int Agility { get; set; }
     int Intelligence { get; set; }
+
+    // Bundle 10 (B13) — derived from CritRate / HPRegen / SkillCooldown StatType entries.
+    // Mob/Monster fall back to default 0 implementation; Player owns concrete state on Entity.
+    int BaseCriticalRate { get; set; }
+    int BaseHpRegenPerTick { get; set; }
+    int SkillCooldownReduction { get; set; }
 }

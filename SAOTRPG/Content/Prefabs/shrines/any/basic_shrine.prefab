@@ -1,0 +1,22 @@
+NAME:          basic_shrine
+DESC:          Simple altar room with four corner braziers, suitable for any biome.
+TAGS:          shrine any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        30
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: F = Campfire
+KFEAT: A = Shrine
+
+MAP
+#######
+#F...F#
+#.....#
+#..A..#
+#.....#
+#F...F#
+###+###
+ENDMAP

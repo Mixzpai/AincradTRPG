@@ -1,0 +1,19 @@
+NAME:          obelisk_cluster
+DESC:          Three weathered pillars cluster about a lore stone at a forgotten crossroads.
+TAGS:          vignette narrative obelisk cluster
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+
+MAP
+.....
+.P.P.
+..*..
+..P..
+.....
+ENDMAP

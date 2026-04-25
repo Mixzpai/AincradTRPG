@@ -164,6 +164,12 @@ public static class FieldBossFactory
         new("ashen_kirito_simulacrum_f98", "Ashen Kirito Simulacrum", "Red-Edge Echo of the Ninety-Eighth",
             98, 4.5f, 1.85f, 'K', Color.BrightRed, "ohs_elucidator_rouge",
             "A black-clad echo of the Black Swordsman steps out of the ash. His off-hand edge burns crimson."),
+
+        // F55 — LN vol 2 canon: crystal-cavern dragon whose ingot Lisbeth forges into
+        // Dark Repulser. Field-boss drop hook; pairs with the Lisbeth NPC handover.
+        new("crystal_wyrm_of_lisbeths_forge_f55", "Crystal Wyrm of Lisbeth's Forge", "Azure Dragon of the Crystallite Hollow",
+            55, 3.2f, 1.6f, 'W', Color.BrightCyan, "dark_repulser",
+            "A pale-blue wyrm coils inside a cavern of crystal spurs. Its scales chime when it breathes."),
     };
 
     // Field bosses eligible this floor right now — skips inactive seasonal and already-defeated bosses.

@@ -158,6 +158,72 @@ public static class MobFactory
         return null;
     }
 
+    // Prefab MONS → Mob; matches Name or snake-case slug ("frenzy_boar" ↔ "Frenzy Boar").
+    // RNG-threaded overload (Bundle 8) keeps F9 hot-reload deterministic via ctx.Rng.
+    public static Mob? CreateByKey(string key, int floor, int statScale, Random rng)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        string needle = key.Trim();
+        foreach (var tier in FloorMobs)
+            foreach (var t in tier)
+            {
+                if (string.Equals(t.Name, needle, StringComparison.OrdinalIgnoreCase)) return InstantiateTemplate(t, floor, statScale, rng);
+                if (string.Equals(SlugifyName(t.Name), needle, StringComparison.OrdinalIgnoreCase))
+                    return InstantiateTemplate(t, floor, statScale, rng);
+            }
+        return null;
+    }
+
+    // Legacy 3-arg overload — delegates to RNG-threaded version using Random.Shared
+    // so external callers (bounty system etc.) without ctx.Rng still work.
+    public static Mob? CreateByKey(string key, int floor, int statScale = 100)
+        => CreateByKey(key, floor, statScale, Random.Shared);
+
+    // "Frenzy Boar" → "frenzy_boar". Lowercase + non-alphanumeric collapsed to '_'.
+    private static string SlugifyName(string name)
+    {
+        var sb = new System.Text.StringBuilder(name.Length);
+        bool lastUnderscore = false;
+        foreach (char c in name.ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(c)) { sb.Append(c); lastUnderscore = false; }
+            else if (!lastUnderscore && sb.Length > 0) { sb.Append('_'); lastUnderscore = true; }
+        }
+        if (sb.Length > 0 && sb[^1] == '_') sb.Length--;
+        return sb.ToString();
+    }
+
+    // Shared mob builder — mirrors CreateFloorMob scaling but with a known template.
+    // No Elite/Champion variant roll: prefab-placed mobs stay stock so authors control spec.
+    private static Mob InstantiateTemplate(MobTemplate template, int floor, int statScale, Random rng)
+    {
+        int level = Math.Max(1, floor + rng.Next(-1, 3));
+        int Scale(int val) => Math.Max(1, val * statScale / 100);
+        var mob = new Mob
+        {
+            Name = template.Name,
+            Level = level,
+            AggroRange = template.Aggro,
+            BaseAttack = Scale(3 + floor * 2),
+            BaseDefense = Scale(2 + floor),
+            BaseSpeed = 3 + floor,
+            BaseSkillDamage = 1 + floor,
+            Strength = 1 + floor, Vitality = 1 + floor, Endurance = 1 + floor,
+            Dexterity = 1, Agility = 1 + floor, Intelligence = 1,
+            MaxHealth = Scale(15 + (floor * 10) + rng.Next(0, 10)),
+            ExperienceYield = 20 + (floor * 15),
+            ColYield = 5 + (floor * 10),
+        };
+        mob.SetAppearance(template.Symbol, template.Color);
+        mob.CanPoison = template.Poison; mob.CanBleed = template.Bleed;
+        mob.CanStun = template.Stun; mob.CanSlow = template.Slow;
+        mob.LootTag = template.LootTag; mob.AttackRange = template.Range;
+        mob.SpecialAbility = template.Ability; mob.CanSwim = template.Swim;
+        mob.CurrentHealth = mob.MaxHealth;
+        mob.Id = rng.Next(20000, 99999);
+        return mob;
+    }
+
     // Picks a random tier template, applies stat scaling, rolls Elite/Champion variant.
     public static Mob CreateFloorMob(int floor, int statScale = 100)
     {

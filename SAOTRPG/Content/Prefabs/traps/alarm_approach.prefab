@@ -1,0 +1,24 @@
+NAME:          alarm_approach
+DESC:          A short corridor preceded by alarm plates — monsters will be waiting by the time you arrive.
+TAGS:          trap corridor alarm approach
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: a = TrapAlarm
+
+MAP
+###
+#a#
+#.#
+#a#
+#.#
+#.#
+#.#
+#.#
+#.#
+ENDMAP

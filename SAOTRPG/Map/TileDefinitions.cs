@@ -9,6 +9,10 @@ public static class TileDefinitions
     public static int CurrentFloor { get; set; } = 1;
     private static int Era => Math.Min((CurrentFloor - 1) / 5, 4);
 
+    // Biome-config override for the Tree glyph; default '♣' matches pre-Bundle-5 renderer.
+    // Set by BiomeSystem.SetFloor from the active BiomeGenConfig.TreeGlyph.
+    public static char CurrentTreeGlyph { get; set; } = '♣';
+
     // RGB palette — richer base colors so lighting multiplication yields warm/cool gradients, not flat tints.
     private static readonly Color GrassGreen    = new(60, 180, 70);
     private static readonly Color GrassBright   = new(90, 220, 100);
@@ -30,6 +34,27 @@ public static class TileDefinitions
     private static readonly Color ShrineViolet  = new(200, 120, 255);
     private static readonly Color FountainCyan  = new(100, 220, 255);
     private static readonly Color GoldBright    = new(255, 220, 80);
+
+    // Bundle 5 biome-native palette additions. Raw Color values (not ColorSchemes)
+    // because tile rendering passes Color directly to GetVisual and DrawGlyph.
+    private static readonly Color SandTan        = new(210, 180, 120);
+    private static readonly Color DuneSandBright = new(230, 200, 140);
+    private static readonly Color SnowPale       = new(230, 235, 245);
+    private static readonly Color IcePaleBlue    = new(180, 210, 230);
+    private static readonly Color CrackedIceDim  = new(140, 180, 210);
+    private static readonly Color BasaltDark     = new(60, 55, 65);
+    private static readonly Color AshWarmGray    = new(110, 100, 95);
+    private static readonly Color MudBrown       = new(90, 70, 50);
+    private static readonly Color BogWaterGreen  = new(60, 80, 50);
+    private static readonly Color ReedsYellowGrn = new(120, 140, 70);
+
+    // Bundle 10 — ore vein palette. Mineable variants use a slight pulse/contrast shade.
+    private static readonly Color OreIronFg          = new(170, 170, 180);
+    private static readonly Color OreIronDepletedFg  = new(110, 110, 115);
+    private static readonly Color OreMithrilFg       = new(190, 210, 255);
+    private static readonly Color OreMithrilDepFg    = new(110, 120, 140);
+    private static readonly Color OreDivineFg        = new(255, 200, 80);
+    private static readonly Color OreDivineDepFg     = new(140, 120, 80);
 
     public static (char Glyph, Color Foreground, Color Background) GetVisual(TileType type, int x = 0, int y = 0)
     {
@@ -71,12 +96,29 @@ public static class TileDefinitions
             TileType.LabyrinthEntrance => ('Π', FountainCyan, Color.Black),
             TileType.Water     => WaterVisual(hash),
             TileType.WaterDeep => WaterDeepVisual(hash),
-            TileType.Tree      => ('♣', TreeColor(hash), Color.Black),
+            TileType.Tree      => (CurrentTreeGlyph, TreeColor(hash), Color.Black),
             TileType.TreePine  => ('▲', TreeColor(hash), Color.Black),
             TileType.Bush      => ('※', BushColor(hash), Color.Black),
             TileType.Flowers   => FlowerVisual(hash),
             TileType.Mountain  => MountainVisual(hash),
             TileType.Rock      => ('●', RockColor(hash), Color.Black),
+            TileType.Sand       => ('.',  SandTan,        Color.Black),
+            TileType.DuneSand   => ('~',  DuneSandBright, Color.Black),
+            TileType.Snow       => ((hash % 3) == 0 ? ',' : '.', SnowPale, Color.Black),
+            TileType.Ice        => ('≈',  IcePaleBlue,    Color.Black),
+            TileType.CrackedIce => ('~',  CrackedIceDim,  Color.Black),
+            TileType.Basalt     => ('.',  BasaltDark,     Color.Black),
+            TileType.Ash        => (':',  AshWarmGray,    Color.Black),
+            TileType.Mud        => ('~',  MudBrown,       Color.Black),
+            TileType.BogWater   => ('≈',  BogWaterGreen,  Color.Black),
+            TileType.Reeds      => ('|',  ReedsYellowGrn, Color.Black),
+            // Bundle 10 — ore veins. Divine pulses warm via animation phase; others static.
+            TileType.OreVeinIron            => ('◊', OreIronFg,         Color.Black),
+            TileType.OreVeinIronDepleted    => ('·', OreIronDepletedFg, Color.Black),
+            TileType.OreVeinMithril         => ('◊', OreMithrilFg,      Color.Black),
+            TileType.OreVeinMithrilDepleted => ('·', OreMithrilDepFg,   Color.Black),
+            TileType.OreVeinDivine          => DivineVeinVisual(hash),
+            TileType.OreVeinDivineDepleted  => ('·', OreDivineDepFg,    Color.Black),
             _ => ('?', Color.Magenta, Color.Black),
         };
     }
@@ -219,6 +261,15 @@ public static class TileDefinitions
         int phase = (UI.Helpers.MapEffects.AnimationTurn + hash) % 3;
         char glyph = phase == 0 ? '&' : phase == 1 ? '*' : '&';
         Color c = phase == 1 ? new Color(255, 150, 50) : FireYellow;
+        return (glyph, c, Color.Black);
+    }
+
+    // Bundle 10 — Divine vein pulses between '◈' (cool) and '◊' (warm) to telegraph rarity.
+    private static (char, Color, Color) DivineVeinVisual(int hash)
+    {
+        int phase = (UI.Helpers.MapEffects.AnimationTurn + hash) % 4;
+        char glyph = phase < 2 ? '◈' : '◊';
+        Color c = phase % 2 == 0 ? OreDivineFg : new Color(255, 230, 130);
         return (glyph, c, Color.Black);
     }
 }

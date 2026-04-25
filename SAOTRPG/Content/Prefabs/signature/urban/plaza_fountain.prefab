@@ -1,0 +1,25 @@
+NAME:          urban_plaza_fountain
+DESC:          Paved city plaza around a central fountain flanked by four lamp-post pillars.
+TAGS:          signature urban plaza fountain
+FLOORS:        10-95
+BIOME:         urban any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+
+MAP
+############
+#__________#
+#_P______P_#
+#__________#
+#__________#
+#____!_____#
+#__________#
+#__________#
+#_P______P_#
+#__________#
+####+#######
+ENDMAP

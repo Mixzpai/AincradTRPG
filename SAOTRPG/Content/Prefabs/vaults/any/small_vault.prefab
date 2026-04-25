@@ -1,0 +1,19 @@
+NAME:          small_vault
+DESC:          Sealed stone vault with a single chest and one guardian waiting in the gloom.
+TAGS:          vault small any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        25
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#..1..#
+#.....#
+#..$..#
+#.....#
+###+###
+ENDMAP

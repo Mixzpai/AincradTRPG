@@ -4,10 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Widgets;
 
-// FB-474 HUD quest tracker. 28-col × 2-line block anchored top-right below
-// the minimap. Shows ONLY the pinned quest (QuestSystem.PinnedQuestId).
-// Hides entirely when no pinned quest exists; shows "COMPLETE — return to X"
-// in green once the quest state flips to Complete, until turn-in clears pin.
+// HUD quest tracker: 28x2 block anchored top-right below minimap. Shows ONLY the pinned quest.
+// Hides when unpinned; shows green "COMPLETE — return to X" once state flips until turn-in clears pin.
 public class QuestTrackerWidget : View
 {
     public const int TrackerWidth = 28;

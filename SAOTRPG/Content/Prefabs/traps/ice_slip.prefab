@@ -1,0 +1,22 @@
+NAME:          ice_slip
+DESC:          A cracked-ice passage flanked by treacherous danger zones.
+TAGS:          trap ice slip cold
+FLOORS:        16-80
+BIOME:         ice any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+MAP
+#####
+#...#
+#?.?#
+#...#
+#?.?#
+#...#
+#?.?#
+#...#
+#...#
+ENDMAP

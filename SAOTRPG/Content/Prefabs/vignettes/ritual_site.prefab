@@ -1,0 +1,19 @@
+NAME:          ritual_site
+DESC:          Four braziers bound a shrine; an alarm trap suggests the rite is warded against intruders.
+TAGS:          vignette narrative ritual shrine
+FLOORS:        *
+BIOME:         any
+WEIGHT:        16
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: a = TrapAlarm
+
+MAP
+F...F
+.....
+..A..
+..a..
+F...F
+ENDMAP

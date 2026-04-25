@@ -1,0 +1,21 @@
+NAME:          trapped_vault
+DESC:          Three chests guarded by a cruel pattern of spike and poison traps.
+TAGS:          vault trapped any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: g = TrapPoison
+
+MAP
+#######
+#.....#
+#.$.$.#
+#.^g^.#
+#..$..#
+#.^.^.#
+###+###
+ENDMAP

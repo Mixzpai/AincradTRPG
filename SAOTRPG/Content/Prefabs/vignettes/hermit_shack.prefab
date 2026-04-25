@@ -1,0 +1,17 @@
+NAME:          hermit_shack
+DESC:          A four-wall hut with a quiet hermit tending a small fire against the wild.
+TAGS:          vignette narrative hermit
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#####
+#...#
+#.F.#
+#.1.#
+##+##
+ENDMAP

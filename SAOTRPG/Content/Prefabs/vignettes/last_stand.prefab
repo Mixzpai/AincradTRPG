@@ -1,0 +1,19 @@
+NAME:          last_stand
+DESC:          Dying embers, a fallen blade, and three crumpled huddles mark an adventurer's last watch.
+TAGS:          vignette narrative last_stand
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: b = Bush
+
+MAP
+.....
+.b.b.
+..F..
+.$.b.
+.....
+ENDMAP

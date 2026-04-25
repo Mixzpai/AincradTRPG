@@ -37,6 +37,10 @@ namespace SAOTRPG.Entities
         public int Agility { get; set; }
         public int Intelligence { get; set; }
 
+        // Bundle 10 (B13) — HPRegen / SkillCooldown StatType targets. Mobs ignore (no consumer).
+        public int BaseHpRegenPerTick { get; set; }
+        public int SkillCooldownReduction { get; set; }
+
         public bool IsDefeated { get; protected set; }
 
         protected IGameLog? _log;

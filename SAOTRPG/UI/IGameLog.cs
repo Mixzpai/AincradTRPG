@@ -21,4 +21,7 @@ public interface IGameLog
 
     // Current game turn — used by LogCombat for [T{N}] prefix.
     int CurrentTurn { get; set; }
+
+    // Drop all buffered entries — used by F9 hot-reload to purge stale lines.
+    void Clear() { }
 }

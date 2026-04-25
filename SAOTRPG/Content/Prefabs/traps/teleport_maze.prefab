@@ -1,0 +1,22 @@
+NAME:          teleport_maze
+DESC:          Three teleport traps break every straight line — patience and a map are the only ways through.
+TAGS:          trap teleport maze
+FLOORS:        10-99
+BIOME:         any
+WEIGHT:        15
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: t = TrapTeleport
+
+MAP
+#######
+#.....#
+#.t...#
+#.....#
+#...t.#
+#.t...#
+#.....#
+ENDMAP

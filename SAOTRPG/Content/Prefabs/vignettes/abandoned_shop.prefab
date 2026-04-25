@@ -1,0 +1,17 @@
+NAME:          abandoned_shop
+DESC:          An urban storefront left in a hurry — bounty board still up, chest still half-open.
+TAGS:          vignette narrative shop urban
+FLOORS:        10-95
+BIOME:         urban any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+.....
+.B...
+..$..
+...J.
+.....
+ENDMAP

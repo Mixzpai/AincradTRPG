@@ -1,0 +1,23 @@
+NAME:          dual_lever
+DESC:          Two levers open a sealed door; an alarm trap punishes the impatient.
+TAGS:          trap puzzle lever door
+FLOORS:        10-99
+BIOME:         any
+WEIGHT:        16
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: l = Lever
+KFEAT: a = TrapAlarm
+
+MAP
+#########
+#.......#
+#.l...l.#
+#.......#
+#...a...#
+#.......#
+#...+...#
+ENDMAP

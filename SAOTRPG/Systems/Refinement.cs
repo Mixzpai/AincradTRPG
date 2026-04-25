@@ -11,7 +11,8 @@ namespace SAOTRPG.Systems;
 // Equipment.Bonuses. Override-only (occupied = destroy old); Divine cannot refine.
 public static class Refinement
 {
-    // Red Hot Ore cost per socket by rarity. Divine=0 (Socket early-returns).
+    // Refinement Ingot cost per socket by rarity (caller pre-consumes N-1; Socket
+    // consumes the final 1). Divine=0 (Socket early-returns).
     public static int CostForRarity(string? rarity) => rarity switch
     {
         "Common"    => 1,

@@ -1,0 +1,18 @@
+NAME:          chained_skeleton
+DESC:          A pillar hung with chains, bones at its feet, and a prisoner's tiny cache.
+TAGS:          vignette narrative prisoner chains
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+KFEAT: b = Bush
+
+MAP
+...
+.P.
+.b$
+ENDMAP

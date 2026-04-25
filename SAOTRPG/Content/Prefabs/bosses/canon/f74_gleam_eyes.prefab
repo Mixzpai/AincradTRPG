@@ -1,0 +1,37 @@
+NAME:          f74_gleam_eyes
+DESC:          Collinia plains colosseum beneath overcast sky where the Gleam Eyes prowls between two lit braziers.
+TAGS:          boss canon the_gleam_eyes grassland dark f74
+FLOORS:        74
+BIOME:         grassland dark any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#########################
+#.......................#
+#.F...................F.#
+#.......................#
+#.P.P.P.P.P.P.P.P.P.P.P.#
+#.......................#
+#.......................#
+#.P...................P.#
+#.......................#
+#.P.........X.........P.#
+#.......................#
+#.P...................P.#
+#.......................#
+#.......................#
+#.P.P.P.P.P.P.P.P.P.P.P.#
+#.......................#
+#.F...................F.#
+#.......................#
+############+############
+ENDMAP

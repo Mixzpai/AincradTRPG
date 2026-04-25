@@ -1,0 +1,33 @@
+NAME:          f2_asterius
+DESC:          Open Taurus plain arena where Asterius the Taurus King charges; bull totems mark the cardinals.
+TAGS:          boss canon asterius_the_taurus_king grassland f2
+FLOORS:        2
+BIOME:         grassland any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#######################
+#,,,,,,,,,,,,,,,,,,,,,#
+#,F,,,,,,,,P,,,,,,,,F,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,,P,,,,,,,,,,,,,,P,,,#
+#,,,,,,,,,,X,,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,,P,,,,,,,,,,,,,,P,,,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,,,#
+#,F,,,,,,,,P,,,,,,,,F,#
+#,,,,,,,,,,,,,,,,,,,,,#
+###########+###########
+ENDMAP

@@ -1,0 +1,23 @@
+NAME:          druids_grove
+DESC:          Tree-ringed altar carpeted in wildflowers — an old druid's sanctuary in the deep woods.
+TAGS:          shrine forest druid
+FLOORS:        3-60
+BIOME:         forest any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: T = Tree
+KFEAT: A = Shrine
+KFEAT: f = Flowers
+
+MAP
+,T,T,T,T,
+T,,,,,,,T
+,,f,f,f,,
+,,f,A,f,,
+,,f,f,f,,
+T,,,,,,,T
+,T,T,T,T,
+ENDMAP

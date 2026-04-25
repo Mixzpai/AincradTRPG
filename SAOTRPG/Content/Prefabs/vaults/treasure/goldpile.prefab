@@ -1,0 +1,17 @@
+NAME:          treasure_goldpile
+DESC:          A ring of four chests surrounds a central pile — marked by a memorial lore stone.
+TAGS:          vault treasure pristine gold
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#####
+#.$.#
+#$*$#
+#.$.#
+##+##
+ENDMAP

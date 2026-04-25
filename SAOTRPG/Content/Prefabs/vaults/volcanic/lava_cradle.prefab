@@ -1,0 +1,21 @@
+NAME:          lava_cradle
+DESC:          A solitary chest cradled on an island of stone within a moat of slow-flowing lava.
+TAGS:          vault volcanic lava
+FLOORS:        13-95
+BIOME:         volcanic any
+WEIGHT:        22
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#########
+#.......#
+#.LLLLL.#
+#.L...L.#
+#.L.$.L.#
+#.L...L.#
+#.LLLLL.#
+#.......#
+####+####
+ENDMAP

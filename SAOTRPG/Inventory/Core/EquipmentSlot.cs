@@ -12,5 +12,7 @@ public enum EquipmentSlot
     LeftRing,   // Ring slot 2
     Bracelet,   // Wrist accessory
     Necklace,   // Neck accessory
-    OffHand     // Shield slot
+    OffHand,    // Shield slot
+    // Bundle 10 — pickaxe + future utility tools.
+    Tool
 }

@@ -106,8 +106,18 @@ public static class BiomeSystem
         _ => BiomeType.Grassland,
     };
 
+    // Cached BiomeGenConfig for the current floor. Populated by SetFloor so
+    // rendering + ambient particle passes can read tint/entry/tree-glyph data.
+    public static Map.Generation.BiomeGenConfig? CurrentGenConfig { get; private set; }
+
     // Set biome for current floor. Called on floor entry.
-    public static void SetFloor(int floor) => Current = GetBiome(floor);
+    public static void SetFloor(int floor)
+    {
+        Current = GetBiome(floor);
+        CurrentGenConfig = Map.Generation.BiomeGenConfigLoader.Get(Current);
+        // Per-biome tree glyph override so Forest/Swamp/Ice trees differ visibly.
+        Map.TileDefinitions.CurrentTreeGlyph = CurrentGenConfig?.TreeGlyph ?? '♣';
+    }
 
     // Display name for the biome.
     public static string DisplayName => Config.DisplayName;

@@ -1,0 +1,38 @@
+NAME:          arena_large
+DESC:          Grand hall with distant throne seat and guardian posts — large fallback arena for apex bosses.
+TAGS:          boss generic large any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+KFEAT: A = Shrine
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#########################
+#.......................#
+#.F...................F.#
+#.......................#
+#.P.P.P.P.P.P.P.P.P.P.P.#
+#.......................#
+#.......................#
+#.P...................P.#
+#.......................#
+#.P.........A.........P.#
+#...........X...........#
+#.P...................P.#
+#.......................#
+#.......................#
+#.P.P.P.P.P.P.P.P.P.P.P.#
+#.......................#
+#.F...................F.#
+#.......................#
+############+############
+ENDMAP

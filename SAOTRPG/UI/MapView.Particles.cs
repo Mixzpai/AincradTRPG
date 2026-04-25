@@ -4,9 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// FB-450 particle render layer. Renders BELOW damage popups and projectiles
-// but ABOVE base tiles / tile-animations — later passes overwrite conflicting
-// cells, giving popups/projectiles automatic z-order priority.
+// Particle render layer. Renders BELOW damage popups/projectiles but ABOVE base tiles
+// — later passes overwrite conflicting cells, giving popups/projectiles z-order priority.
 public partial class MapView
 {
     private void RenderParticles(int w, int h, int dtMs)

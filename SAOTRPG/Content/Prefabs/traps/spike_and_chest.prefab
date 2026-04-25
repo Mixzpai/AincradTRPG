@@ -1,0 +1,20 @@
+NAME:          spike_and_chest
+DESC:          A tempting chest surrounded by four spike traps — reach it if you dare.
+TAGS:          trap spike chest bait
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+MAP
+#####
+#...#
+#.^.#
+#^$^#
+#.^.#
+#...#
+##+##
+ENDMAP

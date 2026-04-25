@@ -1,0 +1,17 @@
+NAME:          drowned_merchant
+DESC:          A chest on a reed island ringed by bog water — a merchant who never made it home.
+TAGS:          vignette narrative swamp merchant
+FLOORS:        6-60
+BIOME:         swamp any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+~~~~~
+~...~
+~.$.~
+~...~
+~~~~~
+ENDMAP

@@ -1,0 +1,22 @@
+NAME:          treasure_trapped_treasury
+DESC:          Three chests, three spikes, a poison valve — greed's wages paid up front.
+TAGS:          vault treasure trapped greed
+FLOORS:        10-99
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: g = TrapPoison
+
+MAP
+#########
+#.......#
+#.$.$.$.#
+#.^.^.^.#
+#.......#
+#....g..#
+#.......#
+####+####
+ENDMAP

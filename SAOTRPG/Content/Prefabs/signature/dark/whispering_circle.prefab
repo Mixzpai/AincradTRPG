@@ -1,0 +1,26 @@
+NAME:          dark_whispering_circle
+DESC:          Seven black pillars in a ring around a sealed door and a shadow-whispering brazier.
+TAGS:          signature dark ritual circle
+FLOORS:        21-95
+BIOME:         dark any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+
+MAP
+############
+#..........#
+#....P.....#
+#..P.....P.#
+#..........#
+#.P...F...P#
+#..........#
+#..P.....P.#
+#....P.....#
+#..........#
+####+#######
+ENDMAP

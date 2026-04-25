@@ -6,11 +6,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Widgets;
 
-// FB-479 status icon tray — lives in the action bar right of the HP bar.
-// Aggregates 7 source categories: combat debuffs, combat buffs, satiety tiers,
-// biome/weather debuffs, permanent gear buffs, quickbar cooldown placeholder,
-// and active sword-skill buffs. Severity-ordered. Wraps to a second row when
-// the first-row width budget is exceeded.
+// Status icon tray in the action bar right of the HP bar. Aggregates 7 source categories
+// (debuffs/buffs/satiety/biome/gear/cooldown/skill). Severity-ordered; wraps to 2nd row over width budget.
 public class StatusTrayWidget : View
 {
     private readonly TurnManager _tm;
@@ -48,9 +45,8 @@ public class StatusTrayWidget : View
 
     public void ToggleVerbose() { VerboseMode = !VerboseMode; SetNeedsDraw(); }
 
-    // Pulls from all 7 sources, deduped by letter (first-wins). Ordering:
-    // Debuffs first in severity order, then Buffs sorted soonest-expiring,
-    // then Cooldowns last.
+    // Pulls from all 7 sources, deduped by letter (first-wins).
+    // Order: Debuffs (severity) → Buffs (soonest-expiring) → Cooldowns last.
     private List<TrayEntry> CollectEntries()
     {
         var entries = new List<TrayEntry>();

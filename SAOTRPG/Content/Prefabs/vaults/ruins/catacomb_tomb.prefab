@@ -1,0 +1,19 @@
+NAME:          catacomb_tomb
+DESC:          A sarcophagus as chest, flanked by two stone guardians in a narrow catacomb niche.
+TAGS:          vault ruins catacomb tomb
+FLOORS:        5-90
+BIOME:         ruins any
+WEIGHT:        22
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#########
+#.......#
+#.1...1.#
+#.......#
+#...$...#
+#.......#
+####+####
+ENDMAP

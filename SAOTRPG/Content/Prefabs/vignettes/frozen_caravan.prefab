@@ -1,0 +1,19 @@
+NAME:          frozen_caravan
+DESC:          A chest rimed with frost on an icy patch — an ill-fated caravan's last cargo.
+TAGS:          vignette narrative caravan ice
+FLOORS:        16-80
+BIOME:         ice any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: b = Bush
+
+MAP
+.....
+.b$b.
+.....
+.J...
+.....
+ENDMAP

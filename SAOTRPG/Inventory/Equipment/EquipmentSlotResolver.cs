@@ -104,6 +104,9 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterMany(EquipmentSlot.Bracelet, "bracelet", "bangle", "armlet");
         RegisterMany(EquipmentSlot.Necklace, "necklace", "pendant", "amulet", "chain");
         RegisterMany(EquipmentSlot.OffHand, "shield", "buckler", "kite shield", "tower shield");
+
+        // Bundle 10 — Tool slot for pickaxes (mining bump-action).
+        RegisterMapping("pickaxe", EquipmentSlot.Tool);
     }
 
     private void RegisterMany(EquipmentSlot slot, params string[] types)

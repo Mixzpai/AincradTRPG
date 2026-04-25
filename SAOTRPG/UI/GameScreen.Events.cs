@@ -56,6 +56,19 @@ public static partial class GameScreen
         // event fires post-RecordKill so we can read TimesKilled==1.
         turnManager.SpeciesFirstKilled += (name) =>
             ToastQueue.EnqueueBestiaryFirst(name);
+        // ◈ Divine weapon obtained — fires exactly once per run. Non-modal
+        // banner + gold border flash + crit screen flash + toast readout.
+        turnManager.DivineObtained += (weapon) =>
+        {
+            DivineObtainBanner.Trigger(weapon);
+            mapView.FlashBorder(Color.BrightYellow, 8);
+            mapView.TriggerCritScreenFlash();
+            string display = string.IsNullOrWhiteSpace(weapon.EnhancedName) ? (weapon.Name ?? "Divine Weapon") : weapon.EnhancedName;
+            ToastQueue.Enqueue($"◈ DIVINE: {display} ◈", Color.BrightYellow, ToastCategory.FloorBossCleared);
+        };
+        // Selka awakening dialog — modal opens when player carries Divine and engages
+        // Selka on F65 (post-base-quest, not mid-chain).
+        turnManager.DivineAwakeningRequested += (player) => DivineAwakeningDialog.Show(player);
         turnManager.SkillActivated += (x, y, color) =>
         {
             mapView.AddSkillFlash(x, y, color);
@@ -244,6 +257,13 @@ public static partial class GameScreen
                 ? $"Labyrinth — F{turnManager.CurrentFloor}"
                 : $"Minimap — F{turnManager.CurrentFloor}";
             refreshHud();
+            // Biome flavor toast on floor swap; suppressed in labyrinth runs.
+            if (!turnManager.InLabyrinth)
+            {
+                var cfg = BiomeSystem.CurrentGenConfig;
+                if (!string.IsNullOrEmpty(cfg?.FloorEntryText))
+                    ToastQueue.Enqueue(cfg!.FloorEntryText!, Color.BrightCyan, ToastCategory.Info);
+            }
         };
     }
 

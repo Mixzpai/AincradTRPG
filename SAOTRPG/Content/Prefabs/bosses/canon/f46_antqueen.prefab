@@ -1,0 +1,34 @@
+NAME:          f46_antqueen
+DESC:          Chitin-lined hive chamber where the Ant Queen broods; egg-cluster danger zones pulse between the pillars.
+TAGS:          boss canon the_ant_queen volcanic f46
+FLOORS:        46
+BIOME:         volcanic any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#######################
+#.....................#
+#..P.P.P.P.P.P.P.P.P..#
+#.....................#
+#...?.?.?.?.?.?.?.?...#
+#.....................#
+#..P..............P...#
+#.....................#
+#..P......X.......P...#
+#.....................#
+#..P..............P...#
+#.....................#
+#...?.?.?.?.?.?.?.?...#
+#.....................#
+#..P.P.P.P.P.P.P.P.P..#
+#.....................#
+###########+###########
+ENDMAP

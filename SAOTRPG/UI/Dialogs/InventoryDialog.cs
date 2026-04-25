@@ -4,6 +4,7 @@ using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Equipment;
+using SAOTRPG.Items.Materials;
 using SAOTRPG.Inventory.Core;
 using SAOTRPG.UI.Helpers;
 
@@ -19,9 +20,26 @@ public static class InventoryDialog
     private enum SortMode { Default, ByType, ByRarity, ByName, ByValue }
     private static readonly string[] SortLabels = { "Default", "Type", "Rarity", "Name", "Value" };
 
+    // Bundle 11 — category filter tabs. 1-5 cycles selection; All = default.
+    private enum FilterMode { All, Weapons, Armor, Materials, Consumables }
+    private static readonly string[] FilterLabels = { "All", "Weapons", "Armor", "Materials", "Consumables" };
+
+    // Predicate per filter — keeps the type tests in one place so the tab
+    // header text and the actual filter stay in sync.
+    private static bool MatchesFilter(BaseItem item, FilterMode mode) => mode switch
+    {
+        FilterMode.All         => true,
+        FilterMode.Weapons     => item is Weapon || item is Pickaxe,
+        FilterMode.Armor       => item is Armor || item is Accessory,
+        FilterMode.Materials   => item is Material,
+        FilterMode.Consumables => item is Consumable,
+        _ => true,
+    };
+
     public static void Show(Player player, int floor = 1)
     {
         var currentSort = SortMode.Default;
+        var currentFilter = FilterMode.All;
         var dialog = DialogHelper.Create("Inventory", DialogWidth, DialogHeight);
 
         // ── Left pane: equipped gear ─────────────────────────────────
@@ -54,13 +72,21 @@ public static class InventoryDialog
             X = Pos.AnchorEnd(18), Y = 0, Width = 17, ColorScheme = ColorSchemes.Dim,
         };
 
+        // Bundle 11 — filter tab strip on row 1. Label rebuilt on every tab
+        // switch so the active tab reads bright while the rest dim.
+        var tabLabel = new Label
+        {
+            Text = BuildTabStrip(currentFilter),
+            X = rightX, Y = 1, Width = Dim.Fill(1), ColorScheme = ColorSchemes.Body,
+        };
+
         var itemNames = new ObservableCollection<string>();
         var itemRefs = new List<BaseItem>();
 
         var emptyLabel = new Label
         {
             Text = "  Your inventory is empty.",
-            X = rightX, Y = 3, Width = Dim.Fill(), Height = 1,
+            X = rightX, Y = 4, Width = Dim.Fill(), Height = 1,
             Visible = false, ColorScheme = ColorSchemes.Dim,
         };
 
@@ -69,26 +95,31 @@ public static class InventoryDialog
         {
             itemNames.Clear();
             itemRefs.Clear();
+            var filtered = player.Inventory.Items.Where(i => MatchesFilter(i, currentFilter));
             var sorted = currentSort switch
             {
-                SortMode.ByType => player.Inventory.Items.OrderBy(i => i.GetType().Name).ThenBy(i => i.Name),
-                SortMode.ByRarity => player.Inventory.Items.OrderByDescending(i => RarityHelper.SortOrder(i.Rarity)).ThenBy(i => i.Name),
-                SortMode.ByName => player.Inventory.Items.OrderBy(i => i.Name),
-                SortMode.ByValue => player.Inventory.Items.OrderByDescending(i => i.Value).ThenBy(i => i.Name),
-                _ => player.Inventory.Items.AsEnumerable(),
+                SortMode.ByType => filtered.OrderBy(i => i.GetType().Name).ThenBy(i => i.Name),
+                SortMode.ByRarity => filtered.OrderByDescending(i => RarityHelper.SortOrder(i.Rarity)).ThenBy(i => i.Name),
+                SortMode.ByName => filtered.OrderBy(i => i.Name),
+                SortMode.ByValue => filtered.OrderByDescending(i => i.Value).ThenBy(i => i.Name),
+                _ => filtered,
             };
             foreach (var item in sorted)
             {
                 itemNames.Add(RarityHelper.FormatItemLine(item, rightWidth));
                 itemRefs.Add(item);
             }
+            string emptyMsg = currentFilter == FilterMode.All
+                ? "  Your inventory is empty."
+                : $"  No {FilterLabels[(int)currentFilter].ToLower()} in inventory.";
+            emptyLabel.Text = emptyMsg;
             emptyLabel.Visible = itemNames.Count == 0;
         }
         RefreshItemList();
 
         var listView = new ListView
         {
-            X = rightX, Y = 1, Width = Dim.Fill(1), Height = Dim.Fill(5),
+            X = rightX, Y = 2, Width = Dim.Fill(1), Height = Dim.Fill(6),
             Source = new ListWrapper<string>(itemNames),
             CanFocus = true,
         };
@@ -112,7 +143,7 @@ public static class InventoryDialog
 
         var hintLabel = new Label
         {
-            Text = "Enter: act  |  Shift+N: bind to slot N  |  Tab: switch pane  |  Esc: close",
+            Text = "Enter: act  |  L: lore  |  1-5: filter  |  Shift+N: bind slot  |  Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
         };
 
@@ -145,11 +176,21 @@ public static class InventoryDialog
             return idx >= 0 && idx < itemRefs.Count ? itemRefs[idx] : null;
         }
 
+        // Preserve selected item ref across refilter/sort so the cursor doesn't
+        // jump to row 0 every time. If the prior selection no longer matches
+        // the filter, fall back to row 0.
         void RefreshAfterChange()
         {
+            var preserved = GetSelectedItem();
             RefreshItemList();
             UpdateLabels();
+            tabLabel.Text = BuildTabStrip(currentFilter);
             listView.Source = new ListWrapper<string>(itemNames);
+            if (preserved != null)
+            {
+                int newIdx = itemRefs.IndexOf(preserved);
+                if (newIdx >= 0) listView.SelectedItem = newIdx;
+            }
             listView.SetNeedsDraw();
             slotView.SetNeedsDraw();
         }
@@ -212,9 +253,8 @@ public static class InventoryDialog
 
             if (item is EquipmentBase eqItem)
             {
-                // GearCompare returns a compact diff ("DMG +6  ATK +2  DEX -1"
-                // or a "(weapon type mismatch)" banner). Color inherits from
-                // the net verdict so upgrade/downgrade reads at a glance.
+                // GearCompare returns a compact diff ("DMG +6  ATK +2  DEX -1") or mismatch banner.
+                // Color inherits from the net verdict so upgrade/downgrade reads at a glance.
                 compareLabel.Text = GearCompare.BuildDiffForPlayer(player, eqItem);
                 var verdict = EquipmentComparer.GetVerdict(player, eqItem);
                 compareLabel.ColorScheme = verdict switch
@@ -242,6 +282,39 @@ public static class InventoryDialog
             e.Cancel = true;
             currentSort = (SortMode)(((int)currentSort + 1) % SortLabels.Length);
             RefreshAfterChange();
+        };
+
+        // Bundle 11 — bare 1-5 cycle filter category. Shift+1-5 stays as
+        // quickbar-bind (next handler), so we must reject any modifier here.
+        listView.KeyDown += (s, e) =>
+        {
+            if (e.IsShift || (e.KeyCode & KeyCode.CtrlMask) != 0
+                || (e.KeyCode & KeyCode.AltMask) != 0) return;
+            FilterMode? newFilter = e.KeyCode switch
+            {
+                KeyCode.D1 => FilterMode.Weapons,
+                KeyCode.D2 => FilterMode.Armor,
+                KeyCode.D3 => FilterMode.Materials,
+                KeyCode.D4 => FilterMode.Consumables,
+                KeyCode.D5 => FilterMode.All,
+                _ => null,
+            };
+            if (newFilter == null) return;
+            currentFilter = newFilter.Value;
+            RefreshAfterChange();
+            e.Handled = true;
+        };
+
+        // 'L' = Lore: open canon citation popup for selected item. Bundle 11.
+        // Listed before the Shift+N handler so unmodified L is captured first.
+        listView.KeyDown += (s, e) =>
+        {
+            var bare = e.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
+            if (bare != KeyCode.L || e.IsShift || (e.KeyCode & KeyCode.CtrlMask) != 0) return;
+            var sel = GetSelectedItem();
+            if (sel == null) return;
+            CanonInspectPopup.Show(sel);
+            e.Handled = true;
         };
 
         // Shift+N on the item list binds the selected consumable to quickbar
@@ -274,7 +347,7 @@ public static class InventoryDialog
 
         // ── Assemble ─────────────────────────────────────────────────
         dialog.Add(equipHeader, slotView, gearLabel,
-            itemHeader, sortLabel, listView, emptyLabel,
+            itemHeader, sortLabel, tabLabel, listView, emptyLabel,
             detailLabel, compareLabel, sortBtn, sellLabel, hintLabel);
 
         var closeBtn = DialogHelper.AddCloseFooter(dialog);
@@ -285,5 +358,20 @@ public static class InventoryDialog
         listView.SetFocus();
 
         DialogHelper.RunModal(dialog);
+    }
+
+    // Bundle 11 — render the 5-tab filter strip. Active tab uppercase + bracketed,
+    // others dimmed by surrounding spaces. Single Label so we don't fight focus.
+    private static string BuildTabStrip(FilterMode active)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < FilterLabels.Length; i++)
+        {
+            bool isActive = i == (int)active;
+            string label = FilterLabels[i];
+            sb.Append(isActive ? $"[{i + 1} {label}]" : $" {i + 1} {label} ");
+            if (i < FilterLabels.Length - 1) sb.Append(' ');
+        }
+        return sb.ToString();
     }
 }

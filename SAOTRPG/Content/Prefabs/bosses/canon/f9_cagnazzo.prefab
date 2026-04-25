@@ -1,0 +1,33 @@
+NAME:          f9_cagnazzo
+DESC:          Drowned puzzle vault beneath Stachion where Cagnazzo the Toad Demon croaks from its pressure-plate throne.
+TAGS:          boss canon cagnazzo_the_toad_demon swamp f9
+FLOORS:        9
+BIOME:         swamp any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: p = PressurePlate
+KFEAT: l = Lever
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#####################
+#...................#
+#.p...............p.#
+#...~~~~~~~~~~~~~...#
+#...~~~~~~~~~~~~~...#
+#.l.~~...~~~...~~.l.#
+#...~~.........~~...#
+#...~~....X....~~...#
+#...~~.........~~...#
+#.l.~~...~~~...~~.l.#
+#...~~~~~~~~~~~~~...#
+#...~~~~~~~~~~~~~...#
+#.p...............p.#
+#...................#
+#########+###########
+ENDMAP

@@ -68,12 +68,27 @@ public static class LootGenerator
         // Divine Objects (canon Integrity Knight weapons)
         [20] = "blue_rose_sword",             // Absolut the Winter Monarch — ice theme, Eugeo canon
         [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito canon
+
+        // Bundle 8: Divine placement — 10 orphan Divines wired to F75-F98 bosses.
+        // One-per-run cap enforced via DivineObtainedThisRun gate below.
+        [75] = "masamune",                    // Skull Reaper — canon endgame katana apex
+        [82] = "hexagramme",                  // Legacy of Grand — hex-pattern arcane rapier
+        [84] = "caladbolg",                   // Queen of Ant — Caladbolg Irish mythic spear
+        [86] = "tyrfing",                     // King of Skeleton — Tyrfing cursed sword
+        [87] = "iron_maiden_dagger",          // Radiance Eater — caged pain dagger
+        [88] = "ouroboros",                   // Rebellious Eyes — self-consuming serpent axe
+        [91] = "mjolnir",                     // Seraphiel the Fallen — thunderbolt hammer
+        [93] = "ascalon",                     // Ragnarok Final Beast — dragon-slayer 2H
+        [97] = "time_piercing_sword",         // Cardinal System Error — Bercouli clock-piercer
+        [98] = "black_lily_sword",            // Incarnation of the Radius — Sheyta severing strike
     };
 
     // IM Last-Attack Bonus: player last-hit → 100% drop alongside FloorBossGuaranteedDrops.
-    // Non-enhanceable Legendaries (canon IM tradeoff).
+    // Non-enhanceable Legendaries (canon IM tradeoff). LN-canon Elucidator at F50 is exempt.
     public static readonly Dictionary<int, string> FloorBossLastAttackDrops = new()
     {
+        // Bundle 11: LN canon — Kirito takes Elucidator from F50 boss "Tier of Sin" (LN vol 4).
+        [50] = "elucidator",
         [85] = "bow_zephyros",
         [92] = "ths_sacred_cross",
         [93] = "sci_glow_haze",
@@ -126,45 +141,59 @@ public static class LootGenerator
 
     // Floor-banded registered loot pool. RollChestItem ~5% picks a DefId whose
     // (minFloor, maxFloor) band contains CurrentFloor.
+    //
+    // Bundle 11 — Legendary chest pool redistributed per LEGENDARY_REDISTRIBUTION_PROPOSAL.md.
+    // F1=2 hard (mate_chopper + lambent_light), F100=0, peak ≤23. 70 Legendary chest entries.
+    // Per-floor Legendary chest count (chest entries only; locks add on top from boss/NPC tables):
+    //   F1-5=2  F6-7=1  F8=1  F9-11=0  F12-17=1  F18-21=1-2  F22-29=2-3  F30-37=2-3
+    //   F38-42=1  F43-55=0  F56-57=1  F58-64=5-6  F65-72=6-13  F73-79=10-15  F80=15 (peak)
+    //   F81-90=10-13  F91-94=8-12  F95-99=4-9. Adding locks, peak total ~18 (F80) — well under 23.
     public static readonly (int MinFloor, int MaxFloor, string DefId)[] FloorBandedRegisteredLoot =
     {
-        // Anneal line — Sachi/Kirito-era starter OHS (IF canon, F1-10).
+        // Anneal line — Sachi/Kirito-era starter OHS (IF canon, F1-10). Uncommon/Rare, not Legendary.
         (1,  10, "anneal_blade"),                 // Common-Uncommon; also stocked at Agil
         (4,  10, "tough_anneal_blade"),           // Rare upgrade
         (8,  12, "pitch_black_anneal_blade"),     // Rare black-steel variant
 
-        // IF Integral Series secondaries (primary = Arc Angel via F14 boss).
+        // ── Bundle 11 F1 anchors (Legendary, F1=2 hard requirement) ──────
+        (1,  5,  "mate_chopper"),                 // IF canon F1-area starter dagger
+        (1,  8,  "lambent_light"),                // LN Asuna early-tease (Q2=A)
+
+        // IF Integral Series secondaries (primary = Arc Angel via F14 boss). Epic.
         (12, 22, "ohs_integral_radgrid"),
         (12, 22, "rap_integral_gusion"),
         (12, 22, "ths_integral_after_glow"),
 
-        // IF Nox Series secondaries (primary = Nox Radgrid via F25 boss).
+        // IF Nox Series secondaries (primary = Nox Radgrid via F25 boss). Epic.
         (22, 34, "dag_nox_nocturne"),
         (22, 34, "rap_nox_gusion"),
         (22, 34, "bow_nox_arc_angel"),
         (22, 34, "ths_nox_after_glow"),
 
-        // IF Rosso Series secondaries (primary = Rosso Forneus via F61 boss).
-        (58, 72, "bow_rosso_albatross"),
-        (58, 72, "spr_rosso_sigrun"),
-        (58, 72, "rap_rosso_rhapsody"),
-        (58, 72, "axe_rosso_dominion"),
+        // IF Rosso Series secondaries (primary = Rosso Forneus via F61 boss). Tightened F58-64 per scout §5.
+        (58, 64, "bow_rosso_albatross"),
+        (58, 64, "spr_rosso_sigrun"),
+        (58, 64, "rap_rosso_rhapsody"),
+        (58, 64, "axe_rosso_dominion"),
 
-        // IF Yasha Series secondaries (primary = Yasha Astaroth via F87 boss).
-        (84, 94, "kat_yasha_oratorio"),
-        (84, 94, "dag_yasha_envy"),
+        // IF Yasha Series secondaries (primary = Yasha Astaroth via F87 boss). Tightened F85-90.
+        (85, 90, "kat_yasha_oratorio"),
+        (85, 90, "dag_yasha_envy"),
 
-        // IF Gaou Series secondaries (primary = Gaou Reginleifr via F90 boss).
-        (88, 99, "kat_gaou_oratorio"),
+        // IF Gaou Series secondaries (primary = Gaou Reginleifr via F90 boss). Tightened F88-94.
+        (88, 94, "kat_gaou_oratorio"),
 
-        // ── Hollow Fragment Hollow Area Uniques (5) — rare, not guaranteed ─
-        (30, 40, "ohs_traitorblade_argute_brand"), // F35
-        (50, 60, "bow_shroudbow_star_stitcher"),   // F55
-        (65, 75, "scy_reaper_scythe"),             // F70
-        (78, 88, "ohs_velocious_brain"),           // F82
-        (92, 99, "ths_saintblade_ragnarok"),       // F95
+        // ── Bundle 11 F56-F60 chest band: liberator (LN canon, Q3 routing) ──
+        (56, 60, "liberator"),
 
-        // IM Shop weapons — fallback drop paths (also in F50+ shop tiers).
+        // ── Hollow Fragment Hollow Area Uniques — 3 Rare/Epic + 2 Legendary ──
+        (30, 40, "ohs_traitorblade_argute_brand"), // Rare F35
+        (50, 60, "bow_shroudbow_star_stitcher"),   // Epic F55
+        (65, 75, "scy_reaper_scythe"),             // Epic F70
+        (80, 86, "ohs_velocious_brain"),           // Legendary F82 HF Hollow Area
+        (92, 98, "ths_saintblade_ragnarok"),       // Legendary F95 HF apex
+
+        // IM Shop weapons — fallback drop paths (also in F50+ shop tiers; Agent C scope, not chest census).
         (76, 85, "rap_edelweiss"),                  // Epic band
         (86, 99, "rap_noctis_strasse"),             // Legendary band
         (76, 85, "ths_fasislawine"),                // Epic band
@@ -178,7 +207,7 @@ public static class LootGenerator
         (76, 85, "dag_flyheight_fang"),             // Epic band
         (86, 99, "dag_rue_feuille"),                // Legendary band
 
-        // MD Originals: Rare F25-50, Epic F50-75, Legendary F75-99.
+        // MD Originals: Rare F25-50, Epic F50-75. Legendary lifted earlier per scout §5.
         (28, 50, "ohs_cobalt_tristan"),             // MD Rare
         (28, 50, "ohs_atlantis_sword"),             // MD Rare
         (28, 50, "rap_venus_heart"),                // MD Rare
@@ -191,38 +220,36 @@ public static class LootGenerator
         (50, 75, "ohs_eternal_promise"),            // MD Epic
         (50, 75, "bow_aqua_spread"),                // MD Epic
         (50, 75, "rap_chivalrous_rapier"),          // MD Epic
-        (75, 99, "ohs_sword_of_diva"),              // MD Legendary
-        (75, 99, "rap_espada_of_sword_dance"),      // MD Legendary
-        (75, 99, "ths_sword_of_causality"),         // MD Legendary
-        (75, 99, "kat_shining_nemesisz"),           // MD Legendary
+        // MD Legendaries — pulled mid-game per scout §5
+        (70, 76, "ohs_sword_of_diva"),              // MD Legendary (lift early)
+        (60, 66, "rap_espada_of_sword_dance"),      // MD Legendary (mid-game)
+        (62, 68, "ths_sword_of_causality"),         // MD Legendary (lift far)
+        (66, 72, "kat_shining_nemesisz"),           // MD Legendary
 
-        // MD Alicization gap weapons — quest-reward-flavored placements.
-        (65, 80, "ohs_unfolding_truth_fragrant_olive"), // MD Alice F65+ upgrade
-        (80, 99, "ohs_black_iron_dual_sword_a"),    // Underworld Kirito pair A F80+
-        (80, 99, "ohs_black_iron_dual_sword_b"),    // Underworld Kirito pair B F80+
-        // ohs_red_rose_sword — relocated to F95 field boss
-        //   (Warden of the Blooming Rose, FieldBossFactory).
+        // MD/AL Underworld pair — Kirito early Underworld arc.
+        // ohs_unfolding_truth_fragrant_olive — relocated to F65 NPC quest (Selka, Agent C).
+        (78, 84, "ohs_black_iron_dual_sword_a"),    // Underworld Kirito pair A
+        (78, 84, "ohs_black_iron_dual_sword_b"),    // Underworld Kirito pair B
+        // ohs_red_rose_sword — F95 field boss (Warden of Blooming Rose, Agent B).
 
-        // FD Character Core Canon — Legendary-band rare drops. Relocated to field
-        // bosses/NPCs: elucidator_rouge→F98, flame_lord→F80, silvery_ruler→F97, macafitel→F85.
-        (85, 99, "ohs_chaos_raider_dual"),          // Kirito dual F85+
-        (88, 99, "kat_murasama_g4_dual"),           // Kirito F90+
-        (85, 99, "axe_naz"),                        // Agil F85+
-        (75, 90, "ohs_golden_osmanthus"),           // Alice F75+
-        (85, 99, "mce_grida_replicant"),            // Lisbeth F85+
-        (70, 85, "dag_obsidian_dagger"),            // Yui F70+
-        (80, 95, "dag_thunder_gods_rift_blade"),    // Argo F80+
-        (75, 90, "ohs_tanquiem"),                   // Oberon F75+
+        // FD Character Core Canon — chest-band rare drops. Locks elsewhere:
+        // elucidator_rouge→F98, flame_lord→F80, silvery_ruler→F97, macafitel→F85, kagutsuchi→F60, susanoo→F70.
+        (76, 82, "ohs_chaos_raider_dual"),          // Kirito dual (Risk #3: pulled from 86-92)
+        (90, 96, "kat_murasama_g4_dual"),           // Kirito FD (lift to top tail F90-96)
+        (70, 76, "axe_naz"),                        // Agil FD (Risk #3: pulled from 86-92)
+        (74, 80, "ohs_golden_osmanthus"),           // Alice FD (lift early)
+        (75, 81, "mce_grida_replicant"),            // Lisbeth FD mid-game
+        (66, 72, "dag_obsidian_dagger"),            // Yui FD (lift early)
+        (78, 84, "dag_thunder_gods_rift_blade"),    // Argo FD
+        (70, 76, "ohs_tanquiem"),                   // Oberon FD (lift early)
 
-        // FD Character Canon — quest/lower-band flavor placements.
-        (40, 55, "mce_plain_mace"),                 // Lisbeth Rare craft/shop F40+
-        (45, 60, "dag_virt_katze"),                 // Argo quest-reward band F45+
-        // axe_ground_gorge — relocated to F55 NPC quest (Agil's Apprentice).
-        (50, 65, "kat_sweep_saber"),                // Leafa field-boss band F50+
-        // kat_spirit_kagutsuchi — relocated to F60 Kagutsuchi the Fire Samurai.
-        // kat_spirit_susanoo    — relocated to F70 Susanoo the Storm Blade.
+        // FD Character Canon — Epic/Rare quest/flavor placements.
+        (40, 55, "mce_plain_mace"),                 // Lisbeth Rare craft/shop
+        (45, 60, "dag_virt_katze"),                 // Argo quest-reward band
+        // axe_ground_gorge — relocated to F55 NPC quest (Agil's Apprentice, Agent C).
+        (50, 65, "kat_sweep_saber"),                // Leafa field-boss band
 
-        // FD Elemental Variants — 27 staggered F15-F90.
+        // FD Elemental Variants — 27 staggered F15-F90 (Rare/Epic).
         // Rare tier (10 items): 2 sub-bands across F15-F60.
         (15, 35, "ohs_sword_of_the_gentle_breeze"), // Alice wind Rare
         (15, 35, "ohs_purple_bellflower_sword"),    // Alice dark Rare
@@ -253,10 +280,10 @@ public static class LootGenerator
         (70, 90, "mce_blazing_torch"),              // Lisbeth fire Epic
         (70, 90, "mce_elemental_hammer"),           // Lisbeth light Epic
 
-        // Cross-Game Sweep (AL / Lost Song / Last Recollection): 55 weapons F50-99.
+        // Cross-Game Sweep (AL / Lost Song / Last Recollection): F50-99.
         // Starlight Banner + Corrupted variants excluded (quest-reward + stone-transform).
 
-        // Group 1 — AL Normal Raid (Epic F55-75) — surfaces raid drops earlier.
+        // Group 1 — AL Normal Raid (Epic F55-75).
         (55, 75, "axe_skyrend"),
         (55, 75, "rap_timestream"),
         (55, 75, "dag_veinshredder"),
@@ -265,68 +292,72 @@ public static class LootGenerator
         (55, 75, "ohs_superior_blade"),
         (55, 75, "ths_sacred_inferno"),
 
-        // Group 2 — AL Extreme Raid (Legendary F85-95)
-        (85, 95, "ohs_blade_of_the_lightwolf"),
-        (85, 95, "rap_graceful_needle"),
-        (85, 95, "dag_whitespark"),
-        (85, 95, "ths_demonslayer"),
-        (85, 95, "ths_blazewyrm_greatsword"),
-        (85, 95, "spr_arctic_pillar"),
-        (85, 95, "mce_starshatter"),
+        // Group 2 — AL Extreme Raid (Legendary core; staircased per scout §5; Risk #3 inward).
+        (77, 83, "ohs_blade_of_the_lightwolf"),     // non-canon AL Lycoris
+        (91, 97, "rap_graceful_needle"),            // non-canon (lift to tail F91-97)
+        (60, 67, "dag_whitespark"),                 // non-canon (Risk #3: pulled to mid)
+        (82, 88, "ths_demonslayer"),                // non-canon AL Lycoris
+        (66, 73, "ths_blazewyrm_greatsword"),       // non-canon (lift to mid)
+        (78, 84, "spr_arctic_pillar"),              // non-canon
+        (62, 69, "mce_starshatter"),                // non-canon (lift to mid)
 
-        // Group 3 — AL Relic Boss Drops (Legendary F80-95)
-        (80, 95, "ohs_scorching_blade"),
-        (80, 95, "mce_beasthowl"),
-        (80, 95, "ohs_double_edged_blade"),
-        (80, 95, "mce_whirlpool_hammer"),
-        (80, 95, "bow_cinder_bow"),
-        (80, 95, "ohs_dragoncrest"),
-        (80, 95, "axe_deathbringer"),
-        (80, 95, "spr_frostpeak"),
-        (80, 95, "axe_snowsunder"),
+        // Group 3 — AL Relic Boss Drops (lift early per scout §5).
+        (69, 75, "ohs_scorching_blade"),            // non-canon (lift early)
+        (70, 76, "mce_beasthowl"),                  // non-canon
+        (71, 77, "ohs_double_edged_blade"),         // non-canon
+        (80, 86, "mce_whirlpool_hammer"),           // non-canon
+        (73, 79, "bow_cinder_bow"),                 // non-canon (lift)
+        (84, 90, "ohs_dragoncrest"),                // non-canon (pull peak inward)
+        (88, 94, "axe_deathbringer"),               // non-canon
+        (84, 90, "spr_frostpeak"),                  // non-canon (pull inward)
+        (66, 72, "axe_snowsunder"),                 // non-canon (lift far)
 
-        // Group 4 — AL DLC (Legendary F85-99)
-        (85, 99, "bow_loveblight_bow"),
-        (85, 99, "ths_purgatorial_greatsword"),
-        (85, 99, "sci_savage_sandstorm"),
-        (85, 99, "ohs_illustrious_sword"),
-        (85, 99, "ths_lifestream_greatsword"),
-        (85, 99, "bow_glitzwood_bow"),
+        // Group 4 — AL DLC.
+        (80, 86, "bow_loveblight_bow"),             // non-canon
+        (91, 97, "ths_purgatorial_greatsword"),     // non-canon AL DLC (lift to tail)
+        (63, 70, "sci_savage_sandstorm"),           // non-canon (Risk #3: pulled to mid)
+        (79, 85, "ohs_illustrious_sword"),          // non-canon AL DLC
+        (92, 98, "ths_lifestream_greatsword"),      // non-canon (lift to tail)
+        (84, 90, "bow_glitzwood_bow"),              // non-canon
 
-        // Group 5 — Lost Song Top-Tier per Type (Legendary F80-95)
-        (80, 95, "ohs_blazing_sword"),
-        (80, 95, "rap_glaring_light"),
-        (80, 95, "dag_fragarach"),
-        (80, 95, "kat_demon_blade_muramasa"),
-        (80, 95, "axe_lang"),
-        (80, 95, "mce_caduceus"),
-        (80, 95, "spr_brave_song"),
-        (80, 95, "bow_silvan_bow"),
-        (80, 95, "clw_iron_fist_oguma"),
+        // Group 5 — Lost Song Top-Tier per Type (lift mid-game per scout §5).
+        (66, 72, "ohs_blazing_sword"),              // LS Salamander mid-game
+        (77, 83, "rap_glaring_light"),              // LR/LS
+        (76, 82, "dag_fragarach"),                  // LR myth Celtic
+        (65, 72, "kat_demon_blade_muramasa"),       // LS Salamander katana (lift)
+        (84, 90, "axe_lang"),                       // LR/LS
+        (72, 78, "spr_brave_song"),                 // LR/LS (lift)
+        (69, 75, "bow_silvan_bow"),                 // LR/LS Sylph (lift)
+        (77, 83, "clw_iron_fist_oguma"),            // LR/LS Salamander
 
-        // Group 6 — Lost Song Canon Mythological (Legendary F75-99)
-        (75, 99, "kat_futsu_no_mitama"),
-        (75, 99, "axe_nadr"),
-        (75, 99, "spr_divine_laevateinn"),
-        (75, 99, "spr_elders_trident"),
-        (75, 99, "bow_holy_larc_qui_ne_faut"),
-        (75, 99, "bow_artemis_fult"),
-        (75, 99, "clw_paopei"),
-        (75, 99, "ths_object_eraser"),
-        (75, 99, "dag_giardino"),
-        (75, 99, "shd_ancile"),
+        // Group 6 — LR/LS Mythological. Risk #2: 7 LR-myth pulled to F12-F42 wasteland fill.
+        (12, 18, "axe_nadr"),                       // LR myth — Risk #2 fill F12-18
+        (18, 25, "kat_futsu_no_mitama"),            // LS shinto-spirit — fill F18-25
+        (22, 29, "bow_artemis_fult"),               // LR myth — fill F22-29
+        (25, 32, "dag_giardino"),                   // LR myth — fill F25-32
+        (30, 36, "mce_caduceus"),                   // LR/LS — fill F30-36 (override scout)
+        (30, 37, "clw_paopei"),                     // LR myth — fill F30-37
+        (35, 42, "spr_elders_trident"),             // LR myth — fill F35-42
+        // LR-myth at high floors (tail-weighted to F95-99 for late-game support).
+        (93, 99, "spr_divine_laevateinn"),          // LR myth Surtr's flame (lift to apex tail)
+        (93, 99, "bow_holy_larc_qui_ne_faut"),      // LR myth (LS canon, apex tail)
+        (93, 99, "ths_object_eraser"),              // LR myth (apex armor-pierce)
+        (84, 90, "shd_ancile"),                     // LR myth shield
 
-        // Group 7 — Lost Song Easter Eggs (Epic F50-70)
+        // Group 7 — Lost Song Easter Eggs (Epic F50-70).
         (50, 70, "ohs_kagetsu_4"),
         (50, 70, "ohs_laser_sword_hg"),
 
-        // Group 8 — Last Recollection Game-Original (Epic + Legendary)
+        // Group 8 — Last Recollection Game-Original (Epic + Legendary).
         (50, 65, "scy_azuretear_scythe"),            // Dorothy's base scythe
-        (80, 95, "kat_darkness_rending_blade"),      // Eydis's shadow katana
+        (84, 90, "kat_darkness_rending_blade"),      // Eydis LR (per scout §5)
 
-        // Group 9 — Last Recollection DLC skins
-        (90, 99, "ohs_rainbow_blade_ex_eterna"),     // Rainbow Blade Ex Eterna Legendary
+        // Group 9 — Last Recollection DLC.
+        (93, 99, "ohs_rainbow_blade_ex_eterna"),     // Rainbow Blade DLC apex (lift to tail)
         (60, 80, "ohs_aetherial_glow"),              // Aetherial Glow Epic
+
+        // ── Bundle 11 LN late-game additions ──────────────────────────────
+        (88, 94, "radiant_light"),                   // LN postgame Asuna
     };
 
     // IM Enhancement Ore themed drops: Mob LootTag → ore DefId at OreDropChancePercent.
@@ -357,6 +388,24 @@ public static class LootGenerator
     {
         var ids = EnhancementOreDefinitions.AllOreDefIds;
         return ids[Random.Shared.Next(ids.Length)];
+    }
+
+    // Bundle 8: Divine one-per-run cap. Set when any Divine enters inventory;
+    // roundtripped via SaveData.DivineObtainedThisRun. Reset on new run in GameScreen.ShowInternal.
+    public static bool DivineObtainedThisRun;
+
+    // Bundle 8: resolve floor-boss drop honoring one-per-run Divine cap. Null = no entry;
+    // pass-through for Legendary; Divine slot post-cap substitutes a floor-banded Legendary.
+    public static string? ResolveFloorBossDropDefId(int floor)
+    {
+        if (!FloorBossGuaranteedDrops.TryGetValue(floor, out var dropId)) return null;
+        if (!DivineObtainedThisRun) return dropId;
+        // Cap fired — inspect the slot: if this boss's canonical drop is Divine,
+        // substitute a floor-banded Legendary fallback instead. Non-Divine slots pass through.
+        var probe = ItemRegistry.Create(dropId);
+        if (probe != null && probe.Rarity == "Divine")
+            return PickFloorBandedRegisteredDefId(floor);
+        return dropId;
     }
 
     // Pick a floor-banded registered loot DefId, or null if no band covers floor.
@@ -396,7 +445,7 @@ public static class LootGenerator
         ["Water Wight"]            = new[] { ("ectoplasm", 0.4f) },
         ["Vacant Sentinel"]        = new[] { ("obsidian_shard", 0.3f) },
         ["Alpine Wolf"]            = new[] { ("alpine_pelt", 0.5f) },
-        ["Ruin Kobold Miner"]      = new[] { ("iron_ore", 0.5f), ("mithril_trace", 0.05f) },
+        ["Ruin Kobold Miner"]      = new[] { ("iron_ore", 0.5f), ("mithril_trace", 0.05f), ("mithril_ingot", 0.02f) },
         ["Giant Spider"]           = new[] { ("spider_silk", 0.4f), ("venom_gland", 0.3f) },
         ["Snow Wolf"]              = new[] { ("frost_shard", 0.4f), ("alpine_pelt", 0.4f) },
         ["Frost Goblin"]           = new[] { ("frost_shard", 0.4f) },

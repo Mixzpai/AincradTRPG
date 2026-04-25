@@ -1,0 +1,25 @@
+NAME:          spike_gauntlet_long
+DESC:          Long alternating-spike corridor — five traps, staggered sides.
+TAGS:          trap corridor long medium
+FLOORS:        5-99
+BIOME:         any
+WEIGHT:        22
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+MAP
+###
+#.#
+#^#
+#.#
+#^#
+#.#
+#^#
+#.#
+#^#
+#.#
+#^#
+###
+ENDMAP

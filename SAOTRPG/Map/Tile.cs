@@ -11,16 +11,21 @@ public class Tile
     public List<BaseItem> Items { get; } = new();
 
     // Water + WaterDeep block at tile-level; player bypasses via Swimming skill, aquatic mobs via Monster.CanSwim.
+    // Bundle 10: ore veins block until depleted (mining bump-action diverts before this gate).
     public bool BlocksMovement => Type is TileType.Wall or TileType.CrackedWall or TileType.Water
                                     or TileType.WaterDeep or TileType.Mountain or TileType.Tree
-                                    or TileType.TreePine or TileType.Rock;
+                                    or TileType.TreePine or TileType.Rock
+                                    or TileType.BogWater
+                                    or TileType.OreVeinIron or TileType.OreVeinMithril
+                                    or TileType.OreVeinDivine;
     public bool IsWalkable => !BlocksMovement && Occupant == null;
 
-    // Min Swimming life-skill level to enter: -1 non-water, 1 shallow Water, 25 deep WaterDeep.
+    // Min Swimming life-skill level to enter: -1 non-water, 1 shallow Water/BogWater, 25 deep WaterDeep.
     public int RequiresSwimmingLevel => Type switch
     {
         TileType.Water     => 1,
         TileType.WaterDeep => 25,
+        TileType.BogWater  => 1,
         _                  => -1,
     };
     public bool HasItems => Items.Count > 0;

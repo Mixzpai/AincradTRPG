@@ -1,0 +1,27 @@
+NAME:          forest_overgrown_temple
+DESC:          Crumbling forest temple strangled by roots, with canopy gaps admitting shafts of green light.
+TAGS:          signature forest temple overgrown
+FLOORS:        3-30
+BIOME:         forest any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: T = Tree
+KFEAT: P = Pillar
+KFEAT: A = Shrine
+
+MAP
+T,,,,,,,,,,T
+,,#########,
+,,#.......#,
+,T#.P...P.#,
+,,#.......#,
+,,#...A...#,
+,,#.......#,
+,T#.P...P.#,
+,,#.......#,
+,,#########,
+T,,,,,,,,,,T
+ENDMAP

@@ -1,0 +1,19 @@
+NAME:          small_shop
+DESC:          Modest stall tended by a single merchant; bounty board posted by the counter.
+TAGS:          merchant small any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#########
+#.......#
+#.B.....#
+#.......#
+#...1...#
+#.......#
+####+####
+ENDMAP

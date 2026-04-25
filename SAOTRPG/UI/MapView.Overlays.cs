@@ -9,8 +9,14 @@ namespace SAOTRPG.UI;
 // All overlay rendering passes drawn on top of the base tile layer.
 public partial class MapView
 {
+    // Toggled by Shift+G. Renders GameMap.DebugHeights as a grayscale bg layer
+    // for visual QA. UI-thread-only; no persistence.
+    internal static bool HeightmapDebugEnabled;
+
     private void RenderOverlays(int w, int h)
     {
+        RenderHeightmapOverlay(w, h);
+        // Biome tint overlay disabled — overwrote ASCII glyph contrast. Kept method for potential revival at subtle alpha.
         if (SAOTRPG.Systems.UserSettings.Current.ShowFootsteps) RenderFootstepTrail(w, h);
         RenderBossBar(w);
         RenderCorpseMarkers(w, h);
@@ -46,11 +52,132 @@ public partial class MapView
         RenderProjectiles(w, h, dtMs);
         RenderDamagePopups(w, h, dtMs);
         RenderToasts(w, h);
+        // Divine obtain banner draws LAST — above every other overlay so the
+        // 3s celebration is unmissable; auto-dismisses via DivineObtainBanner.Tick.
+        RenderDivineObtainBanner(w, h);
     }
 
-    // Monotonic clock for sub-frame popup timing. AnimationIntervalMs (750)
-    // would be too coarse for a 400ms tween — we tick real ms since the last
-    // render instead.
+    // Non-modal Divine drop banner. Reads static state in DivineObtainBanner;
+    // renders a centered gold-bordered frame with ◈ DIVINE OBJECT OBTAINED ◈.
+    private void RenderDivineObtainBanner(int w, int h)
+    {
+        if (!DivineObtainBanner.Tick()) return;
+        float alpha = DivineObtainBanner.CurrentAlpha;
+        if (alpha <= 0f) return;
+
+        int bw = System.Math.Min(DivineObtainBanner.BannerWidth, System.Math.Max(24, w - 2));
+        int bh = System.Math.Min(DivineObtainBanner.BannerHeight, System.Math.Max(3, h - 2));
+        int x0 = System.Math.Max(0, (w - bw) / 2);
+        int y0 = System.Math.Max(1, h / 3 - bh / 2); // upper-third anchor, above toast row.
+        int x1 = x0 + bw - 1, y1 = y0 + bh - 1;
+        if (x1 >= w || y1 >= h) return;
+
+        Color goldFaded = ScaleColor(Color.BrightYellow, alpha);
+        Color whiteFaded = ScaleColor(Color.White, alpha);
+        var borderAttr = Gfx.Attr(goldFaded, Color.Black);
+        var headerAttr = Gfx.Attr(goldFaded, Color.Black);
+        var nameAttr   = Gfx.Attr(whiteFaded, Color.Black);
+
+        // ── Frame borders (double-box for weight) ────────────────────
+        Driver!.SetAttribute(borderAttr);
+        Move(x0, y0); Driver!.AddRune(new System.Text.Rune('╔'));
+        for (int x = x0 + 1; x < x1; x++) { Move(x, y0); Driver!.AddRune(new System.Text.Rune('═')); }
+        Move(x1, y0); Driver!.AddRune(new System.Text.Rune('╗'));
+        for (int y = y0 + 1; y < y1; y++)
+        {
+            Move(x0, y); Driver!.AddRune(new System.Text.Rune('║'));
+            for (int x = x0 + 1; x < x1; x++) { Move(x, y); Driver!.AddRune(new System.Text.Rune(' ')); }
+            Move(x1, y); Driver!.AddRune(new System.Text.Rune('║'));
+        }
+        Move(x0, y1); Driver!.AddRune(new System.Text.Rune('╚'));
+        for (int x = x0 + 1; x < x1; x++) { Move(x, y1); Driver!.AddRune(new System.Text.Rune('═')); }
+        Move(x1, y1); Driver!.AddRune(new System.Text.Rune('╝'));
+
+        // ── Row 1: header banner ─────────────────────────────────────
+        // Bundle 9: awakening variant swaps header + flavor; obtain variant unchanged.
+        bool awakening = DivineObtainBanner.IsAwakening;
+        string header = awakening ? "◈ DIVINE AWAKENED ◈" : "◈ DIVINE OBJECT OBTAINED ◈";
+        int hx = x0 + (bw - header.Length) / 2;
+        int hy = y0 + 1;
+        DrawTextAtView(hx, hy, header, headerAttr, w, h);
+
+        // ── Row 2: weapon name, accent-styled ────────────────────────
+        if (bh >= 4)
+        {
+            string name = DivineObtainBanner.WeaponName;
+            if (name.Length > bw - 4) name = name.Substring(0, bw - 4);
+            int nx = x0 + (bw - name.Length) / 2;
+            int ny = y0 + 2;
+            DrawTextAtView(nx, ny, name, nameAttr, w, h);
+        }
+
+        // ── Row 3: flavor, dimmed ────────────────────────────────────
+        if (bh >= 5)
+        {
+            string flavor = awakening
+                ? $"The blade unfolds further  ◈{DivineObtainBanner.AwakeningLevel}"
+                : "A legendary blade chooses its wielder.";
+            if (flavor.Length > bw - 4) flavor = flavor.Substring(0, bw - 4);
+            int fx = x0 + (bw - flavor.Length) / 2;
+            int fy = y0 + 3;
+            DrawTextAtView(fx, fy, flavor, Gfx.Attr(ScaleColor(Color.Gray, alpha), Color.Black), w, h);
+        }
+    }
+
+    // Shift+G debug: grayscale heightmap over tile layer. Reads DebugHeights
+    // populated by HeightmapPass.
+    private void RenderHeightmapOverlay(int w, int h)
+    {
+        if (!HeightmapDebugEnabled) return;
+        var heights = _map.DebugHeights;
+        if (heights == null) return;
+        int hw = heights.GetLength(0), hh = heights.GetLength(1);
+        for (int vy = 0; vy < h; vy++)
+        for (int vx = 0; vx < w; vx++)
+        {
+            int mx = VxToMap(vx), my = VyToMap(vy);
+            if (mx < 0 || my < 0 || mx >= hw || my >= hh) continue;
+            float hval = heights[mx, my];
+            Color c = hval switch
+            {
+                < 0.2f => Color.Black,
+                < 0.4f => Color.DarkGray,
+                < 0.6f => Color.Gray,
+                < 0.8f => Color.White,
+                _      => Color.BrightYellow,
+            };
+            DrawGlyph_View(vx, vy, '·', Gfx.Attr(c, Color.Black));
+        }
+    }
+
+    // Biome tint wash: per-tile RGB alpha blend bg_new = bg_old*(1-a) + tint*a
+    // so the base palette reads through at the configured alpha strength.
+    private void RenderTintOverlay(int w, int h)
+    {
+        var cfg = Systems.BiomeSystem.CurrentGenConfig;
+        if (cfg == null) return;
+        var tint = cfg.GetTintColor(out byte alpha);
+        if (tint == null || alpha == 0) return;
+        float a = alpha / 255f;
+        float ia = 1f - a;
+        byte tr = tint.Value.R, tg = tint.Value.G, tb = tint.Value.B;
+        for (int vy = 0; vy < h; vy++)
+        for (int vx = 0; vx < w; vx++)
+        {
+            int mx = VxToMap(vx), my = VyToMap(vy);
+            if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
+            var tile = _map.GetTile(mx, my);
+            var (glyph, fg, bg) = Map.TileDefinitions.GetVisual(tile.Type, mx, my);
+            var blended = new Color(
+                (byte)(bg.R * ia + tr * a),
+                (byte)(bg.G * ia + tg * a),
+                (byte)(bg.B * ia + tb * a));
+            DrawGlyph_View(vx, vy, glyph, Gfx.Attr(fg, blended));
+        }
+    }
+
+    // Monotonic clock for sub-frame popup timing. AnimationIntervalMs (750) is too coarse
+    // for 400ms tweens — we tick real ms since last render instead.
     private long _lastFrameTicks;
     private int TickFrameClock()
     {

@@ -1,0 +1,21 @@
+NAME:          witchs_circle
+DESC:          A reed-and-bog-water moat surrounds an altar rumored to heed a hedge-witch's call.
+TAGS:          shrine swamp witch
+FLOORS:        6-40
+BIOME:         swamp any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: A = Shrine
+
+MAP
+#########
+#~~~~~~~#
+#~.....~#
+#~..A..~#
+#~.....~#
+#~~~~~~~#
+####+####
+ENDMAP

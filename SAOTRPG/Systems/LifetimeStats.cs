@@ -40,6 +40,9 @@ public static class LifetimeStats
         public int LastFloor { get; set; }
         public int DeathsCaused { get; set; }
         public string LastSeenDate { get; set; } = "";
+        // Bundle 10 (B9) — encounter loot tag persisted across runs.
+        // Nullable: legacy entries → null, resolved at load via MobFactory fallback.
+        public string? LootTag { get; set; }
     }
 
     public class Data

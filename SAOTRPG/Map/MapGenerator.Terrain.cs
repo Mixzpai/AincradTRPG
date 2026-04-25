@@ -6,7 +6,7 @@ public static partial class MapGenerator
 {
     // ── River: drunk-walk with drift from source edge to opposite, meanders laterally but always progresses.
     // horizontal=true → L→R, false → T→B.
-    internal static void GenerateRiver(GameMap map, bool horizontal)
+    internal static void GenerateRiver(GameMap map, bool horizontal, Random rng)
     {
         int w = map.Width, h = map.Height;
 
@@ -15,12 +15,12 @@ public static partial class MapGenerator
         if (horizontal)
         {
             pos = 3;                                       // x starts left
-            cross = Random.Shared.Next(15, h - 15);       // y random
+            cross = rng.Next(15, h - 15);                  // y random
         }
         else
         {
             pos = 3;                                       // y starts top
-            cross = Random.Shared.Next(15, w - 15);       // x random
+            cross = rng.Next(15, w - 15);                  // x random
         }
 
         int limit = horizontal ? w - 3 : h - 3;
@@ -37,7 +37,7 @@ public static partial class MapGenerator
             pos++;
 
             // Drift along the cross axis with a slight bias.
-            int drift = Random.Shared.Next(5);
+            int drift = rng.Next(5);
             if (drift == 0)      cross = Math.Max(5, cross - 1);
             else if (drift == 1) cross = Math.Min((horizontal ? h : w) - 5, cross + 1);
         }
@@ -53,7 +53,7 @@ public static partial class MapGenerator
         or TileType.Path or TileType.Mountain or TileType.Journal
         or TileType.Lever or TileType.PressurePlate;
 
-    private static void StampRiverTile(GameMap map, int x, int y)
+    internal static void StampRiverTile(GameMap map, int x, int y)
     {
         if (!map.InBounds(x, y)) return;
         if (IsProtectedFromWater(map.Tiles[x, y].Type)) return;
@@ -61,7 +61,7 @@ public static partial class MapGenerator
     }
 
     // ── Lake: CA noise → 4x 5-neighbor smoothing → organic contiguous shape. Interior tiles → WaterDeep.
-    internal static void GenerateLake(GameMap map, int cx, int cy, int radius)
+    internal static void GenerateLake(GameMap map, int cx, int cy, int radius, Random rng)
     {
         int d = radius * 2 + 1;
         bool[,] grid = new bool[d, d];
@@ -71,7 +71,7 @@ public static partial class MapGenerator
         for (int dy = 0; dy < d; dy++)
         {
             int distSq = (dx - radius) * (dx - radius) + (dy - radius) * (dy - radius);
-            grid[dx, dy] = distSq <= radius * radius && Random.Shared.Next(100) < 45;
+            grid[dx, dy] = distSq <= radius * radius && rng.Next(100) < 45;
         }
 
         // Smooth: 4 iterations of the 5-neighbor rule.
@@ -107,8 +107,9 @@ public static partial class MapGenerator
     }
 
     // ── Biome blend: post-pass that softens edges (GrassTall near forests, GrassSparse near rocks/water).
-    // Runs after clusters/rivers/lakes.
-    internal static void BlendBiomes(GameMap map)
+    // Fringe conversion chances are biome-tuned via BiomeBlendPass (Bundle 5).
+    internal static void BlendBiomes(GameMap map, Random rng,
+        float forestFringeChance, float rockFringeChance, float shoreFringeChance)
     {
         int w = map.Width, h = map.Height;
 
@@ -136,13 +137,13 @@ public static partial class MapGenerator
             }
 
             // Forest fringe → tall grass.
-            if (trees >= 3 && Random.Shared.Next(2) == 0)
+            if (trees >= 3 && rng.NextDouble() < forestFringeChance)
                 map.Tiles[x, y].Type = TileType.GrassTall;
             // Rocky fringe → sparse grass.
-            else if (rocks >= 2 && Random.Shared.Next(2) == 0)
+            else if (rocks >= 2 && rng.NextDouble() < rockFringeChance)
                 map.Tiles[x, y].Type = TileType.GrassSparse;
             // Shoreline fringe → sparse grass (beach feel).
-            else if (water >= 2 && Random.Shared.Next(2) == 0)
+            else if (water >= 2 && rng.NextDouble() < shoreFringeChance)
                 map.Tiles[x, y].Type = TileType.GrassSparse;
         }
     }

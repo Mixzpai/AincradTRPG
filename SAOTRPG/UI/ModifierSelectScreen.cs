@@ -4,8 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Run Modifier picker — tier-grouped checkbox grid, live score multiplier preview, writes RunModifiers.Active on Apply.
-// Post-F100 canon unlock; currently TESTING_ALWAYS_ON.
+// Run Modifier picker — tier-grouped checkbox grid, live score multiplier preview,
+// writes RunModifiers.Active on Apply. Gated behind F100 clear in DifficultyScreen.
 public static class ModifierSelectScreen
 {
     public static void Show(Window mainWindow, Action onApplied)

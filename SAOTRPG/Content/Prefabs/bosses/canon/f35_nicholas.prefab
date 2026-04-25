@@ -1,0 +1,33 @@
+NAME:          f35_nicholas
+DESC:          Snowy grove on the Hill of Memories where Nicholas the Renegade guards a festive fir.
+TAGS:          boss canon nicholas_the_renegade forest ice f35
+FLOORS:        35
+BIOME:         forest ice any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: T = Tree
+KFEAT: F = Campfire
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#####################
+#...................#
+#.T.T...........T.T.#
+#...................#
+#.T.....F.....F...T.#
+#...................#
+#.........T.........#
+#........TTT........#
+#.........X.........#
+#........TTT........#
+#.........T.........#
+#.T.....F.....F...T.#
+#...................#
+#.T.T...........T.T.#
+#########+###########
+ENDMAP

@@ -1,0 +1,19 @@
+NAME:          elder_tree
+DESC:          An elder tree surrounded by a bushy ring; a lore stone sits against its roots.
+TAGS:          vignette narrative tree forest
+FLOORS:        3-60
+BIOME:         forest any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: b = Bush
+
+MAP
+.....
+.b.b.
+..T..
+.*b..
+.....
+ENDMAP

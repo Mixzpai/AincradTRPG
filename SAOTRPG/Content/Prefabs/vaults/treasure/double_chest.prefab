@@ -1,0 +1,19 @@
+NAME:          treasure_double_chest
+DESC:          Two chests behind a lightly-trapped approach — a guardian waits between them.
+TAGS:          vault treasure guardian double
+FLOORS:        *
+BIOME:         any
+WEIGHT:        22
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#.^.^.#
+#.....#
+#.$1$.#
+#.....#
+###+###
+ENDMAP

@@ -93,7 +93,13 @@ public partial class TurnManager
 
         int profBonus = GetProficiencyBonus(wtype);
         int baseAtk = _player.Attack + profBonus + _shrineBuff + _levelUpBuff + SatietyAtkBonus + FatigueAtkPenalty;
-        int totalDamage = (int)(baseAtk * skill.DamageMultiplier);
+        // ThrustDmg+N — thrust-class skill multiplier (Rapier/Spear thrusts).
+        double skillMul = skill.DamageMultiplier;
+        int thrustPct = GetSpecialEffectValue(wpn, "ThrustDmg");
+        if (thrustPct > 0 && (skill.Name.Contains("Thrust", StringComparison.OrdinalIgnoreCase)
+                              || skill.Id.StartsWith("thrust_")))
+            skillMul *= (100 + thrustPct) / 100.0;
+        int totalDamage = (int)(baseAtk * skillMul);
 
         // SkillDamage flat bonus (post-multiplier) so gear contributes to all skills.
         // Multi-hit: /4 per extra hit to preserve old scaling.
@@ -281,26 +287,27 @@ public partial class TurnManager
         }
     }
 
-    // Per-weapon cache of parsed SpecialEffect key->value. Lazy populate.
-    // ConditionalWeakTable = entries GC'd with the weapon.
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Weapon, Dictionary<string, int>>
+    // Per-equipment cache of parsed SpecialEffect key->value. Lazy populate.
+    // Bundle 8: widened from Weapon → EquipmentBase so shields also parse.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EquipmentBase, Dictionary<string, int>>
         _specialFxCache = new();
 
     // Parse SpecialEffect: "SkillCooldown-1", "CritRate+20" → signed int. 0 if missing.
-    internal static int GetSpecialEffectValue(Weapon? wpn, string effectName)
+    // AttackSpeed+N folds into Weapon.AttackSpeed directly; Invisibility+N / Lunacy+N parse but have no consumer yet.
+    internal static int GetSpecialEffectValue(EquipmentBase? eq, string effectName)
     {
-        if (wpn?.SpecialEffect == null) return 0;
+        if (eq?.SpecialEffect == null) return 0;
 
         // Fast path: look up (or build) the parsed table for this weapon.
-        var table = _specialFxCache.GetValue(wpn, BuildSpecialFxTable);
+        var table = _specialFxCache.GetValue(eq, BuildSpecialFxTable);
         return table.TryGetValue(effectName, out int val) ? val : 0;
     }
 
     // Parse SpecialEffect once: "KeyN"/"Key+N"/"Key-N" pairs (letter key, signed int value).
-    private static Dictionary<string, int> BuildSpecialFxTable(Weapon wpn)
+    private static Dictionary<string, int> BuildSpecialFxTable(EquipmentBase eq)
     {
         var dict = new Dictionary<string, int>();
-        var fx = wpn.SpecialEffect;
+        var fx = eq.SpecialEffect;
         if (string.IsNullOrEmpty(fx)) return dict;
 
         int i = 0;

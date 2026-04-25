@@ -1,0 +1,19 @@
+NAME:          treasure_hidden_cache
+DESC:          A single chest sealed behind a cracked wall — nothing more, nothing less.
+TAGS:          vault treasure hidden pristine
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: = = CrackedWall
+
+MAP
+#####
+#...#
+#.$.#
+#...#
+##=##
+ENDMAP

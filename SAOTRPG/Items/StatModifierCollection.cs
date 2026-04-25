@@ -48,6 +48,13 @@ public class StatModifierCollection
             case StatType.Dexterity: target.Dexterity += value; break;
             case StatType.Agility: target.Agility += value; break;
             case StatType.Intelligence: target.Intelligence += value; break;
+            // Bundle 10 (B13) — see scout 2.2. AttackSpeed/BlockChance resolve at weapon/shield
+            // sites in TurnManager (no-op here so collection still tallies into _statBonusCache).
+            case StatType.CritRate:       target.BaseCriticalRate += value; break;
+            case StatType.AttackSpeed:    break;
+            case StatType.BlockChance:    break;
+            case StatType.HPRegen:        target.BaseHpRegenPerTick += value; break;
+            case StatType.SkillCooldown:  target.SkillCooldownReduction += value; break;
         }
     }
 }

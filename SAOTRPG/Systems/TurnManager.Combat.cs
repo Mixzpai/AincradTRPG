@@ -149,6 +149,67 @@ public partial class TurnManager
         return line.Substring(0, idx) + " " + tag + line.Substring(idx);
     }
 
+    // Returns the Barrier+N value from the currently-equipped main weapon + OH shield.
+    // Called on floor entry + ReplaceMap to refill the per-floor pool.
+    private int GetBarrierCapacity()
+    {
+        return Math.Max(0, GetEffectSum("Barrier"));
+    }
+
+    // Bundle 8: aggregate MH weapon + OH shield SpecialEffect value.
+    // Additive by default (sums); callers use GetEffectMax for cap-like effects (CritImmune).
+    internal int GetEffectSum(string effectName)
+    {
+        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
+        int v = GetSpecialEffectValue(wpn, effectName);
+        if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
+            v += GetSpecialEffectValue(shield, effectName);
+        return v;
+    }
+
+    // Bundle 8: MH + OH cap-style effect — picks the higher of the two (non-stacking).
+    internal int GetEffectMax(string effectName)
+    {
+        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
+        int a = GetSpecialEffectValue(wpn, effectName);
+        int b = 0;
+        if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
+            b = GetSpecialEffectValue(shield, effectName);
+        return Math.Max(a, b);
+    }
+
+    // Bundle 10 (B14) — additive defensive keys (BlockChance, ParryChance, EvadeRegen, HPRegen, SPRegen)
+    // sum across every equipped slot. On-hit procs (Bleed/Stun/SlowOnHit) stay weapon-only by canon.
+    private static readonly EquipmentSlot[] _allEquippedSlots =
+    {
+        EquipmentSlot.Weapon, EquipmentSlot.OffHand, EquipmentSlot.Head, EquipmentSlot.Chest,
+        EquipmentSlot.Legs, EquipmentSlot.Feet, EquipmentSlot.RightRing, EquipmentSlot.LeftRing,
+        EquipmentSlot.Bracelet, EquipmentSlot.Necklace,
+    };
+    internal int GetEffectSumAllSlots(string effectName)
+    {
+        int total = 0;
+        foreach (var slot in _allEquippedSlots)
+        {
+            if (_player.Inventory.GetEquipped(slot) is EquipmentBase eq)
+                total += GetSpecialEffectValue(eq, effectName);
+        }
+        return total;
+    }
+
+    // DragonSlayer+N target check. True if LootTag=="dragon" or the name contains
+    // a draconic keyword (dragon/wyrm/wyvern/drake). Fatal Scythe is excluded (undead).
+    private static bool IsDragonType(Monster monster)
+    {
+        if (monster is Mob mob && mob.LootTag == "dragon") return true;
+        string n = monster.Name;
+        if (string.IsNullOrEmpty(n)) return false;
+        string lower = n.ToLowerInvariant();
+        if (lower.Contains("dragon") || lower.Contains("wyrm")
+            || lower.Contains("wyvern") || lower.Contains("drake")) return true;
+        return false;
+    }
+
     private void HandleCombat(Monster monster, int hpBefore)
     {
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
@@ -166,14 +227,28 @@ public partial class TurnManager
 
         _lastCombatTurn = TurnCount;
         bool backstab = !_aggroAlerted.Contains(monster.Id);
+        // Bundle 10 (B8) — first-hit bestiary capture (insta-kill safety) + mirror
+        // danger warning. Idempotent with AI.cs aggro-side capture.
+        if (_aggroAlerted.Add(monster.Id))
+        {
+            Bestiary.RecordMonsterEncounter(monster, CurrentFloor);
+            if (monster.Level >= _player.Level + 3 && _dangerWarned.Add(monster.Id))
+            {
+                int diff = monster.Level - _player.Level;
+                string warn = diff >= 6 ? "!! EXTREME DANGER !!" : "!! DANGER !!";
+                _log.LogCombat($"{warn} {monster.Name} (Lv{monster.Level}) -- {diff} levels above you!");
+            }
+        }
         var (baseDmg, playerCrit) = _player.AttackMonster(monster);
 
-        // FD Pair Resonance: canonical MH+OH pair → +10% total dmg, +5% crit
-        // re-roll on non-crit. Banner on first hit of encounter.
+        // FD Pair Resonance: canonical MH+OH pair → +10% total dmg (per hit), +5% crit
+        // re-roll on FIRST hit only (Bundle 8 fix: was per-hit, stacked with +10% compound).
         var offHandWeapon = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Weapon;
         bool pairResonance = wpn != null && offHandWeapon != null
             && DualWieldPairs.IsCanonicalPair(wpn.DefinitionId, offHandWeapon.DefinitionId);
-        if (pairResonance && !playerCrit && Random.Shared.Next(100) < 5)
+        // Gate the 5% re-roll by the same banner-hash-set: single-shot per encounter.
+        if (pairResonance && !playerCrit && !_pairResonanceLogged.Contains(monster.Id)
+            && Random.Shared.Next(100) < 5)
         {
             playerCrit = true;
         }
@@ -195,6 +270,41 @@ public partial class TurnManager
                            + Skills.UniqueSkillSystem.ElementalBonusPercent(monster.Name);
         if (uniqueBonusPct > 0)
             damage = damage * (100 + uniqueBonusPct) / 100;
+
+        // SpecialEffect damage multipliers — HolyDamage vs undead/demon,
+        // DragonSlayer vs dragons, FrostDamage generic elemental bonus.
+        int holyPct = GetSpecialEffectValue(wpn, "HolyDamage");
+        if (holyPct > 0 && monster is Mob hm
+            && (hm.LootTag == "undead" || hm.LootTag == "demon"))
+            damage = damage * (100 + holyPct) / 100;
+        int dragonPct = GetSpecialEffectValue(wpn, "DragonSlayer");
+        if (dragonPct > 0 && IsDragonType(monster))
+            damage = damage * (100 + dragonPct) / 100;
+        int frostPct = GetSpecialEffectValue(wpn, "FrostDamage");
+        if (frostPct > 0) damage = damage * (100 + frostPct) / 100;
+        // NightDamage+N — only applies during night (SunLevel < 0.35).
+        int nightPct = GetSpecialEffectValue(wpn, "NightDamage");
+        if (nightPct > 0 && SAOTRPG.Map.DayNightCycle.SunLevel < 0.35f)
+            damage = damage * (100 + nightPct) / 100;
+        // ArmorPierce+N — ignore N% of monster defense (bonus damage add).
+        int armorPiercePct = GetSpecialEffectValue(wpn, "ArmorPierce");
+        if (armorPiercePct > 0)
+            damage += Math.Max(0, monster.BaseDefense) * armorPiercePct / 100;
+        // PiercingShot+N — bow-only variant. Stacks with ArmorPierce on bows.
+        int piercePct = GetSpecialEffectValue(wpn, "PiercingShot");
+        if (piercePct > 0 && wpnType == "Bow")
+            damage += Math.Max(0, monster.BaseDefense) * piercePct / 100;
+        // TrueStrike+N — on proc, bypass any mitigation: raw+profBonus,
+        // crit-quality clean hit. Current engine has no monster evade on
+        // player swings, so we honor intent by ensuring no-floor damage.
+        int trueStrikeChance = GetSpecialEffectValue(wpn, "TrueStrike");
+        bool trueStrikeProc = trueStrikeChance > 0
+            && Random.Shared.Next(100) < trueStrikeChance;
+        if (trueStrikeProc)
+        {
+            damage = Math.Max(damage, baseDmg + profBonus + comboBonus);
+            _log.LogCombat($"  True Strike! {wpn?.Name ?? "Your blow"} ignores all guard.");
+        }
         if (backstab)
         {
             int backstabMul = 2 + GetSpecialEffectValue(wpn, "BackstabDmg") / 50; // +50% → x3
@@ -224,6 +334,17 @@ public partial class TurnManager
         }
 
         var reward = monster.TakeDamage(damage);
+        // ExecuteThreshold+N — if surviving HP% is below N, force-kill. Applies
+        // post-damage, pre-defeat-check so loot/xp flow through HandleMonsterKill.
+        int executePct = GetSpecialEffectValue(wpn, "ExecuteThreshold");
+        if (executePct > 0 && !monster.IsDefeated && monster.MaxHealth > 0
+            && monster.CurrentHealth * 100 / monster.MaxHealth < executePct)
+        {
+            _log.LogCombat($"  EXECUTE! {wpn?.Name ?? "Your weapon"} finishes {monster.Name}!");
+            CombatTextEvent?.Invoke(monster.X, monster.Y, "EXECUTE!", Color.BrightRed);
+            var execReward = monster.TakeDamage(monster.CurrentHealth);
+            if (execReward != null) reward = execReward;
+        }
         string wpnName = wpn?.Name ?? "Fists";
         string critTag = playerCrit ? " CRITICAL!" : "";
         if (pairResonance && _pairResonanceLogged.Add(monster.Id))
@@ -264,10 +385,17 @@ public partial class TurnManager
         {
             int offhandDmg = Math.Max(1, offhand.BaseDamage * 60 / 100 + profBonus / 2);
             if (pairResonance) offhandDmg = offhandDmg * 110 / 100;
+            // Bundle 10 (B3) — OH rolls crit independently. CriticalHitDamage adds
+            // ONCE to the OH damage component (no double-stacking with MH crit).
+            bool offhandCrit = Random.Shared.Next(100)
+                < Math.Max(0, _player.CriticalRate + WeatherSystem.GetCritModifier());
+            if (offhandCrit) offhandDmg += _player.CriticalHitDamage;
             monster.TakeDamage(offhandDmg);
-            _log.LogCombat($"You strike again with {offhand.Name} for {offhandDmg} damage!");
-            WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(offhand, false));
-            DamageDealt?.Invoke(monster.X, monster.Y, offhandDmg, false, false);
+            string ohCritTag = offhandCrit ? " CRITICAL!" : "";
+            _log.LogCombat($"You strike again with {offhand.Name} for {offhandDmg} damage!{ohCritTag}");
+            WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(offhand, offhandCrit));
+            if (offhandCrit) ParticleQueue.Emit(ParticleEvent.CritShatter, monster.X, monster.Y);
+            DamageDealt?.Invoke(monster.X, monster.Y, offhandDmg, false, offhandCrit);
             DegradeEquipment(EquipmentSlot.OffHand);
         }
 
@@ -280,12 +408,78 @@ public partial class TurnManager
             _log.LogCombat($"  {wpn!.Name} drains {heal} HP from the critical hit!");
         }
 
+        // SpecialEffect: Invisibility+N — crit conceals player for N turns.
+        // Consumed by AI.cs via _invisibilityTurnsLeft > 0 cutting aggro range.
+        int invisTurns = GetSpecialEffectValue(wpn, "Invisibility");
+        if (playerCrit && invisTurns > 0)
+        {
+            _invisibilityTurnsLeft = Math.Max(_invisibilityTurnsLeft, invisTurns);
+            _log.LogCombat($"  Phantom! {wpn!.Name} conceals you for {invisTurns} turns.");
+        }
+
         // SpecialEffect: Bleed — chance to apply bleed on normal attacks
         int bleedChance = GetSpecialEffectValue(wpn, "Bleed");
         if (bleedChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < bleedChance)
         {
             _burningMobs[monster.Id] = (3, 1 + CurrentFloor);
             _log.LogCombat($"  {monster.Name} is bleeding from {wpn!.Name}!");
+        }
+
+        // SpecialEffect: Stun+N — chance to stun on normal attacks (2-turn).
+        int stunChance = GetSpecialEffectValue(wpn, "Stun");
+        if (stunChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < stunChance)
+        {
+            _stunnedMobs[monster.Id] = 2;
+            _log.LogCombat($"  {monster.Name} is stunned by {wpn!.Name}!");
+        }
+        // SpecialEffect: Poison+N — chance to poison on hit (floor-scaled dmg).
+        int poisonChance = GetSpecialEffectValue(wpn, "Poison");
+        if (poisonChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < poisonChance)
+        {
+            _poisonedMobs[monster.Id] = (4, 1 + CurrentFloor);
+            _log.LogCombat($"  {monster.Name} is poisoned by {wpn!.Name}!");
+        }
+        // SpecialEffect: BlindOnHit+N — chance to blind on hit (halves atk).
+        int blindChance = GetSpecialEffectValue(wpn, "BlindOnHit");
+        if (blindChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < blindChance)
+        {
+            _blindedMobs[monster.Id] = 3;
+            _log.LogCombat($"  {monster.Name} is blinded by {wpn!.Name}!");
+        }
+        // SpecialEffect: Lunacy+N — N% chance to confuse target AI for 2 turns.
+        // Consumed by AI.cs: confused mobs pick a random adjacent tile.
+        int lunacyChance = GetSpecialEffectValue(wpn, "Lunacy");
+        if (lunacyChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < lunacyChance)
+        {
+            _confusedMobs[monster.Id] = 2;
+            _log.LogCombat($"  {monster.Name} reels with lunacy from {wpn!.Name}!");
+        }
+        // Bundle 10 (B11) — SlowOnHit+N: N% chance to slow target for 3 turns.
+        // Consumed by AI.cs: slowed mobs act every other turn (skip alternate turns).
+        int slowChance = GetSpecialEffectValue(wpn, "SlowOnHit");
+        if (slowChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < slowChance)
+        {
+            _slowedMobs[monster.Id] = 3;
+            _log.LogCombat($"  {monster.Name} is slowed by {wpn!.Name}!");
+        }
+        // SpecialEffect: Cleave+N — splash N% damage to up-to-2 adjacent foes.
+        int cleavePct = GetSpecialEffectValue(wpn, "Cleave");
+        if (cleavePct > 0 && damage > 0)
+        {
+            int splashDmg = Math.Max(1, damage * cleavePct / 100);
+            int splashHits = 0;
+            foreach (var e in _map.Entities)
+            {
+                if (splashHits >= 2) break;
+                if (e == monster || e == _player || e is not Monster near) continue;
+                if (near.IsDefeated) continue;
+                int d = Math.Max(Math.Abs(near.X - monster.X), Math.Abs(near.Y - monster.Y));
+                if (d != 1) continue;
+                near.TakeDamage(splashDmg);
+                _log.LogCombat($"  Cleave! {wpn!.Name} splashes {near.Name} for {splashDmg}.");
+                DamageDealt?.Invoke(near.X, near.Y, splashDmg, false, false);
+                splashHits++;
+            }
         }
 
         if (!monster.IsDefeated)
@@ -455,6 +649,9 @@ public partial class TurnManager
                 {
                     _map.AddItem(fieldBoss.X, fieldBoss.Y, drop);
                     _log.LogLoot($"  {fieldBoss.Name} drops: {drop.Name}!");
+                    // Bundle 8: field-boss Divine couriers (F40/F85/F95) also trip the cap + banner.
+                    if (drop is Items.Equipment.Weapon fbWpn && drop.Rarity == "Divine")
+                        NotifyDivineObtained(fbWpn);
                 }
             }
             // IF series field bosses drop matching series shield alongside primary.
@@ -519,12 +716,19 @@ public partial class TurnManager
             Story.StorySystem.TryFire(Story.StoryTrigger.BossDefeat,
                 new Story.StoryContext(CurrentFloor, KillCount, _player, boss));
 
-            // Guaranteed drop (Divine + P4 AL Divine Beast on non-canon bosses).
-            // DropItem formats Divine with ◈ line; Legendary with [Legendary].
-            if (LootGenerator.FloorBossGuaranteedDrops.TryGetValue(CurrentFloor, out var dropId))
+            // Guaranteed drop (Divine + P4 AL Divine Beast on non-canon bosses). DropItem formats Divine
+            // with ◈; Bundle 8: ResolveFloorBossDropDefId substitutes a Legendary fallback if cap fired.
+            var resolvedDropId = LootGenerator.ResolveFloorBossDropDefId(CurrentFloor);
+            if (resolvedDropId != null)
             {
-                var drop = Items.ItemRegistry.Create(dropId);
-                if (drop != null) DropItem(boss.X, boss.Y, drop, boss.Name);
+                var drop = Items.ItemRegistry.Create(resolvedDropId);
+                if (drop != null)
+                {
+                    DropItem(boss.X, boss.Y, drop, boss.Name);
+                    // Fire DivineObtained event + set cap when a Divine actually dropped.
+                    if (drop is Items.Equipment.Weapon divineWpn && drop.Rarity == "Divine")
+                        NotifyDivineObtained(divineWpn);
+                }
             }
 
             // IM Last-Attack Bonus — F85/F92-F96/F98/F99 guaranteed non-enhanceable
@@ -536,6 +740,29 @@ public partial class TurnManager
                 {
                     _map.AddItem(boss.X, boss.Y, labDrop);
                     _log.LogLoot($"  ◈ Last-Attack Bonus! {boss.Name} drops: {labDrop.Name}!");
+                }
+            }
+
+            // Bundle 9: Divine Fragment — F75-F99 canon boss, ~5% drop (Divine Awakening Lv2 material).
+            if (CurrentFloor >= 75 && CurrentFloor < 100 && Random.Shared.Next(100) < 5)
+            {
+                var frag = Items.ItemRegistry.Create("divine_fragment");
+                if (frag != null)
+                {
+                    _map.AddItem(boss.X, boss.Y, frag);
+                    _log.LogLoot($"  ◈ {boss.Name} drops: {frag.Name}!");
+                }
+            }
+
+            // Bundle 9: F100 Primordial Shard — guaranteed one-per-run (Divine Awakening Lv3 material).
+            // Bypasses FloorBossGuaranteedDrops to avoid the Divine-cap substitution path.
+            if (CurrentFloor >= 100)
+            {
+                var shard = Items.ItemRegistry.Create("primordial_shard");
+                if (shard != null)
+                {
+                    _map.AddItem(boss.X, boss.Y, shard);
+                    _log.LogLoot($"  ◈ {boss.Name} drops: {shard.Name}!");
                 }
             }
 

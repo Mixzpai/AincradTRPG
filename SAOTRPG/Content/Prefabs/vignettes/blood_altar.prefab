@@ -1,0 +1,15 @@
+NAME:          blood_altar
+DESC:          A shattered cult altar ringed by rusted spike traps — broken rites.
+TAGS:          vignette narrative cult altar
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+...
+^A^
+...
+ENDMAP

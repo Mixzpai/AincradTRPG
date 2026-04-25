@@ -1,0 +1,19 @@
+NAME:          treasure_martyrs_tomb
+DESC:          A martyr's tomb — chest, campfire, shrine arrayed in a single solemn line.
+TAGS:          vault treasure martyr narrative
+FLOORS:        *
+BIOME:         any
+WEIGHT:        14
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#.....#
+#$.F.A#
+#.....#
+#.....#
+###+###
+ENDMAP

@@ -13,9 +13,8 @@ public static class LogColorRules
         // ── Divine Objects ── ◈ diamond → BrightRed (drop/pickup/chest lines).
         ("◈",               Color.BrightRed),
 
-        // ── FB-452 damage-type tags ── matched before generic rules so the log
-        // line picks up the tag color. Covers brackets + chip styles; bare style
-        // (unbracketed word at sentence start) is caught by ordering too.
+        // ── Damage-type tags ── matched before generic rules so the tag color wins.
+        // Covers brackets + chip styles; bare unbracketed word at sentence start caught by ordering.
         ("[FIRE]",          Color.BrightRed),
         ("[ICE]",           Color.BrightCyan),
         ("[THUNDER]",       Color.BrightYellow),

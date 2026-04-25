@@ -8,8 +8,7 @@ namespace SAOTRPG.UI;
 public partial class MapView
 {
     // ── Coordinate conversion ──────────────────────────────────────────
-    // Shake offset added to every mapping so the whole viewport jitters
-    // together (popups, overlays, tiles all shift in lockstep).
+    // Shake offset applied to every mapping so the viewport jitters in lockstep.
 
     // Map tile X → viewport column.
     private int MapToVx(int mx) => mx - _camera.OffsetX + ShakeOffsetX;

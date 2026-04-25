@@ -1,0 +1,34 @@
+NAME:          f56_geocrawler
+DESC:          Forest cottage clearing with a collapsed mine shaft from which Geocrawler's segmented bulk emerges.
+TAGS:          boss canon geocrawler forest f56
+FLOORS:        56
+BIOME:         forest any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: T = Tree
+KFEAT: F = Campfire
+KFEAT: O = Rock
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#####################
+#,T,,,,,,,,,,,,,,,T,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,O,,,,,,,,,,#
+#,,T,,,O,,,O,,,T,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,F,,,,,,F,,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,X,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,F,,,,,,F,,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,T,,,O,,,O,,,T,,,,#
+#,T,,,,,,,,,,,,,,,T,#
+#########+###########
+ENDMAP

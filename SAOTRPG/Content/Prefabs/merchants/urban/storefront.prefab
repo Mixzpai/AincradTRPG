@@ -1,0 +1,22 @@
+NAME:          urban_storefront
+DESC:          Paved shopfront on a city street, stone pillars flanking its heavy front door.
+TAGS:          merchant urban storefront
+FLOORS:        10-95
+BIOME:         urban any
+WEIGHT:        22
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+
+MAP
+#########
+#.......#
+#.P...P.#
+#.......#
+#..1.B..#
+#.......#
+#.P...P.#
+####+####
+ENDMAP

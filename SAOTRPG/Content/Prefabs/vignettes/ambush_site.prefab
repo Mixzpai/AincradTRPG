@@ -1,0 +1,19 @@
+NAME:          ambush_site
+DESC:          Abandoned crates and a waiting chest hint at a sprung trap — something moved from the shadows.
+TAGS:          vignette narrative ambush
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: b = Bush
+
+MAP
+.....
+.1.1.
+..$..
+..b..
+.....
+ENDMAP

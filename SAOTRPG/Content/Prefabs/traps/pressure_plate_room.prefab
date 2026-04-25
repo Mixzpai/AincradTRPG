@@ -1,0 +1,23 @@
+NAME:          pressure_plate_room
+DESC:          A puzzle room — lever, pressure plate, and door must be resolved without springing the trap.
+TAGS:          trap corridor pressure puzzle
+FLOORS:        *
+BIOME:         any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: l = Lever
+KFEAT: p = PressurePlate
+
+MAP
+#######
+#.....#
+#.l...#
+#.....#
+#..p..#
+#.....#
+#...+.#
+ENDMAP

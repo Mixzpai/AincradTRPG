@@ -1,6 +1,7 @@
 using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Inventory.Core;
+using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.UI.Helpers;
 
@@ -29,6 +30,8 @@ public class EquipmentSlotView : View
         (EquipmentSlot.LeftRing,  '\u25CB', Color.BrightMagenta,  "Left Ring"),  // ○
         (EquipmentSlot.Bracelet,  '\u25CB', Color.BrightGreen,    "Bracelet"),   // ○
         (EquipmentSlot.Necklace,  '\u25CB', Color.BrightGreen,    "Necklace"),   // ○
+        // Bundle 10 — Pickaxe + future utility tools. Icon ⛏-like '⚒' renders broadly across terminals.
+        (EquipmentSlot.Tool,      '\u2692', Color.BrightCyan,     "Tool"),       // ⚒
     };
 
     public static int SlotCount => DefaultSlotLayout.Length;
@@ -121,6 +124,15 @@ public class EquipmentSlotView : View
                     SetAttr(Color.BrightRed, bg);
                     Driver!.AddStr(" BROKEN");
                 }
+                else if (eq is Pickaxe pick)
+                {
+                    // Bundle 10 — compact 6-cell durability bar + N/M readout, color by % remaining.
+                    int max = pick.MaxDurability > 0 ? pick.MaxDurability : Math.Max(1, pick.ItemDurability);
+                    int cur = Math.Clamp(pick.ItemDurability, 0, max);
+                    string bar = BarBuilder.BuildGradient(cur, max, 6);
+                    SetAttr(GetDurabilityColor(cur, max), bg);
+                    Driver!.AddStr($"  {bar} {cur}/{max}");
+                }
             }
             else
             {
@@ -129,6 +141,17 @@ public class EquipmentSlotView : View
             }
         }
         return true;
+    }
+
+    // Bundle 10 — durability gauge palette: green ≥50%, yellow ≥25%, red below.
+    // Guard: max==0 (misconfigured) treats as critical so the issue is visible, not silent.
+    private static Color GetDurabilityColor(int current, int max)
+    {
+        if (max <= 0) return Color.BrightRed;
+        double pct = (double)current / max;
+        if (pct >= 0.50) return Color.BrightGreen;
+        if (pct >= 0.25) return Color.BrightYellow;
+        return Color.BrightRed;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

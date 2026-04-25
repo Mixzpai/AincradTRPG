@@ -1,0 +1,21 @@
+NAME:          treasure_library_hoard
+DESC:          A scholarly hoard — journals and lore stones interleaved with two chests of coin.
+TAGS:          vault treasure library lore
+FLOORS:        5-99
+BIOME:         ruins any
+WEIGHT:        16
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#########
+#.......#
+#.J...J.#
+#.......#
+#.*.$.*.#
+#.......#
+#.J.$.J.#
+#.......#
+####+####
+ENDMAP

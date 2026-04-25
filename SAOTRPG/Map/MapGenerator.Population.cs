@@ -10,8 +10,11 @@ public static partial class MapGenerator
 {
     public static void PopulateFloor(GameMap map, List<Room> rooms, Player player,
         int floor, int statScale = 100, HashSet<string>? defeatedFieldBosses = null,
-        bool skipFieldBosses = false)
+        bool skipFieldBosses = false, Random? rng = null)
     {
+        // Derive a deterministic per-floor Random from the persisted master seed
+        // when callers don't supply one. Keeps F9 hot-reload reproducible.
+        rng ??= new Random(CurrentGlobalSeed ^ floor);
         UI.DebugLogger.LogGame("POPULATE", $"PopulateFloor({floor}) — {rooms.Count} rooms, map {map.Width}x{map.Height}");
         if (rooms.Count == 0) return;
 
@@ -21,7 +24,7 @@ public static partial class MapGenerator
         // F1 TOB — dedicated NPC/mob layout; skips random den/chest scatter.
         if (floor == 1)
         {
-            PopulateTownOfBeginnings(map, player, floor, statScale);
+            PopulateTownOfBeginnings(map, player, floor, statScale, rng);
             return;
         }
 
@@ -29,10 +32,10 @@ public static partial class MapGenerator
         for (int i = 1; i < rooms.Count; i++)
         {
             if (IsRoomInSafeZone(map, rooms[i])) continue;
-            int mobCount = Random.Shared.Next(1, 4);
+            int mobCount = rng.Next(1, 4);
             for (int j = 0; j < mobCount; j++)
             {
-                var (mx, my) = FindOpenSpot(map, rooms[i]);
+                var (mx, my) = FindOpenSpot(map, rooms[i], rng);
                 if (mx < 0 || IsInSafeZone(map, mx, my)) continue;
                 var mob = MobFactory.CreateFloorMob(floor, statScale);
                 map.PlaceEntity(mob, mx, my);
@@ -43,7 +46,7 @@ public static partial class MapGenerator
         int wanderers = FloorScale.WanderingMobs(floor);
         for (int i = 0; i < wanderers; i++)
         {
-            var (wx, wy) = FindOpenSpotOutsideSafeZone(map);
+            var (wx, wy) = FindOpenSpotOutsideSafeZone(map, rng);
             if (wx < 0) continue;
             var mob = MobFactory.CreateFloorMob(floor, statScale);
             map.PlaceEntity(mob, wx, wy);
@@ -66,7 +69,7 @@ public static partial class MapGenerator
             var seasonal = SeasonalEvents.GetActive();
             foreach (var fieldBoss in FieldBossFactory.GetActiveForFloor(floor, defeatedSet, seasonal))
             {
-                var (fx, fy) = FindOpenSpotOutsideSafeZone(map);
+                var (fx, fy) = FindOpenSpotOutsideSafeZone(map, rng);
                 if (fx < 0) continue;
                 map.PlaceEntity(fieldBoss, fx, fy);
             }
@@ -75,8 +78,8 @@ public static partial class MapGenerator
         // Vendor
         if (rooms.Count > 2)
         {
-            var vendorRoom = rooms[Random.Shared.Next(1, rooms.Count)];
-            var (vx, vy) = FindOpenSpot(map, vendorRoom);
+            var vendorRoom = rooms[rng.Next(1, rooms.Count)];
+            var (vx, vy) = FindOpenSpot(map, vendorRoom, rng);
             if (vx >= 0)
             {
                 var vendor = new Vendor();
@@ -87,12 +90,12 @@ public static partial class MapGenerator
         }
 
         // Wandering NPCs — 1-2 per floor with tips or small trades
-        int wandererCount = 1 + Random.Shared.Next(0, 2);
+        int wandererCount = 1 + rng.Next(0, 2);
         for (int i = 0; i < wandererCount; i++)
         {
             for (int attempt = 0; attempt < 20; attempt++)
             {
-                int x = Random.Shared.Next(10, map.Width - 10), y = Random.Shared.Next(10, map.Height - 10);
+                int x = rng.Next(10, map.Width - 10), y = rng.Next(10, map.Height - 10);
                 if (IsWalkableType(map.Tiles[x, y].Type) && map.Tiles[x, y].Occupant == null
                     && Math.Abs(x - rooms[0].CenterX) > 8 && Math.Abs(y - rooms[0].CenterY) > 8)
                 {
@@ -104,7 +107,7 @@ public static partial class MapGenerator
         }
 
         // Progressive-canon NPCs (Ran/Klein/Argo): gated by floor + room count. Order must match RNG consumption order.
-        PlaceNpcsFromTable(map, rooms, floor);
+        PlaceNpcsFromTable(map, rooms, floor, rng);
 
         // Monster dens — scaled to floor area
         int denCount = FloorScale.DenCount(floor);
@@ -112,7 +115,7 @@ public static partial class MapGenerator
         {
             for (int attempt = 0; attempt < 30; attempt++)
             {
-                int dx = Random.Shared.Next(15, map.Width - 20), dy = Random.Shared.Next(15, map.Height - 20);
+                int dx = rng.Next(15, map.Width - 20), dy = rng.Next(15, map.Height - 20);
                 double dist = Math.Sqrt((dx - rooms[0].CenterX) * (dx - rooms[0].CenterX)
                     + (dy - rooms[0].CenterY) * (dy - rooms[0].CenterY));
                 if (dist < 15) continue;
@@ -126,12 +129,12 @@ public static partial class MapGenerator
                 for (int ddx = -1; ddx <= 1; ddx++)
                     if (map.InBounds(doorX + ddx, doorY + 1))
                         map.Tiles[doorX + ddx, doorY + 1].Type = TileType.DangerZone;
-                int denMobCount = 3 + Random.Shared.Next(0, 2);
+                int denMobCount = 3 + rng.Next(0, 2);
                 var firstMob = MobFactory.CreateFloorMob(floor, statScale);
                 map.PlaceEntity(firstMob, dx + 1, dy + 1);
                 for (int m = 1; m < denMobCount; m++)
                 {
-                    var (mx, my) = FindOpenSpot(map, denRoom);
+                    var (mx, my) = FindOpenSpot(map, denRoom, rng);
                     if (mx < 0) continue;
                     var mob = MobFactory.CreateFloorMob(floor, statScale);
                     map.PlaceEntity(mob, mx, my);
@@ -144,7 +147,7 @@ public static partial class MapGenerator
         int chestCount = FloorScale.ChestCount(floor);
         for (int i = 0; i < chestCount; i++)
         {
-            var (cx, cy) = FindOpenSpotOutsideSafeZone(map);
+            var (cx, cy) = FindOpenSpotOutsideSafeZone(map, rng);
             if (cx >= 0)
                 map.Tiles[cx, cy].Type = TileType.Chest;
         }
@@ -153,16 +156,16 @@ public static partial class MapGenerator
         if (rooms.Count > 3 && Systems.WeaponEvolutionChains.SecretShrineByFloor.ContainsKey(floor))
         {
             // Room index > 2 — shrine avoids spawn area and adjacent corridors.
-            int shrineRoomIdx = Random.Shared.Next(3, rooms.Count);
+            int shrineRoomIdx = rng.Next(3, rooms.Count);
             var shrineRoom = rooms[shrineRoomIdx];
-            var (sx, sy) = FindOpenSpot(map, shrineRoom);
+            var (sx, sy) = FindOpenSpot(map, shrineRoom, rng);
             if (sx >= 0)
                 map.Tiles[sx, sy].Type = TileType.SecretShrine;
         }
     }
 
     // F1 populator: town NPCs + shopkeeper relative to spawn; wilderness mobs outside the walls.
-    private static void PopulateTownOfBeginnings(GameMap map, Player player, int floor, int statScale)
+    private static void PopulateTownOfBeginnings(GameMap map, Player player, int floor, int statScale, Random rng)
     {
         int sx = player.X, sy = player.Y;
 
@@ -258,8 +261,8 @@ public static partial class MapGenerator
         {
             var npc = new WorldSpawn(sym, color) { Name = name, Dialogue = line };
             TryPlaceEntityNear(map, npc,
-                sx + Random.Shared.Next(-20, 21),
-                sy + Random.Shared.Next(-10, 11));
+                sx + rng.Next(-20, 21),
+                sy + rng.Next(-10, 11));
         }
 
         // Guild recruitment: Kibaou (ALF) on F1 TOB plaza; others live on HQ floor via FloorNpcSpawns.
@@ -278,7 +281,7 @@ public static partial class MapGenerator
         int wanderers = FloorScale.WildernessMobsFloor1(floor);
         for (int i = 0; i < wanderers; i++)
         {
-            var (wx, wy) = FindOpenSpotOutsideSafeZone(map);
+            var (wx, wy) = FindOpenSpotOutsideSafeZone(map, rng);
             if (wx < 0) continue;
             var mob = MobFactory.CreateFloorMob(floor, statScale);
             map.PlaceEntity(mob, wx, wy);
@@ -287,12 +290,12 @@ public static partial class MapGenerator
         // Town Guard outlaw patrol: activates at karma <= -50; 3-5 guards near spawn. Map regen per entry, so no carryover.
         if (player.Karma <= -50)
         {
-            int guardCount = 3 + Random.Shared.Next(0, 3);
+            int guardCount = 3 + rng.Next(0, 3);
             for (int i = 0; i < guardCount; i++)
             {
                 var guard = MobFactory.CreateTownGuard();
-                int ox = Random.Shared.Next(-8, 9);
-                int oy = Random.Shared.Next(-8, 9);
+                int ox = rng.Next(-8, 9);
+                int oy = rng.Next(-8, 9);
                 TryPlaceEntityNear(map, guard, sx + ox, sy + oy);
             }
         }
@@ -377,6 +380,25 @@ public static partial class MapGenerator
              Name = "Dorothy",
              Dialogue = "Shadow gathers thick on this floor. I need a blade that cleaves darkness, not flesh — are you that blade?",
          }),
+
+        // Scholar Vesper — F89 Divine Object (Satanachia, Scimitar); Goetia-grimoire seal quest.
+        ((f, r) => f == 89 && r.Count > 2,
+         (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('V', Color.BrightMagenta)
+         {
+             Name = "Scholar Vesper",
+             Dialogue = "The grimoire hungers for a wielder. Break the wards below, and we will see if its pages open to you.",
+         }),
+
+        // Yulier (F40) — KoB-era Asuna friend, gives Lambent Light rapier. LN canon.
+        ((f, r) => f == 40 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('Y', Color.BrightYellow) { Name = "Yulier",
+             Dialogue = "I served beside Asuna once. She gave me her old rapier — but Lambent Light deserves a wielder, not a memorial." }),
+
+        // Jun (F76) — Sleeping Knights survivor; Mother's Rosario handover. LN MR-arc canon.
+        ((f, r) => f == 76 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('J', Color.BrightMagenta) { Name = "Jun",
+             Dialogue = "Yuuki's sword waits with us. The Sleeping Knights agreed: it goes to the next worthy hand. Are you that hand?" }),
 
         // ── HF Hollow Mission questgivers (9): each gates a canon HNM weapon behind a kill-count quest.
 
@@ -466,13 +488,13 @@ public static partial class MapGenerator
     };
 
     // Walks FloorNpcSpawns in order, placing each NPC whose gate passes.
-    private static void PlaceNpcsFromTable(GameMap map, List<Room> rooms, int floor)
+    private static void PlaceNpcsFromTable(GameMap map, List<Room> rooms, int floor, Random rng)
     {
         foreach (var spec in FloorNpcSpawns)
         {
             if (!spec.Gate(floor, rooms)) continue;
-            var room = rooms[Random.Shared.Next(spec.IdxMin(floor, rooms), spec.IdxMax(floor, rooms))];
-            var (x, y) = FindOpenSpot(map, room);
+            var room = rooms[rng.Next(spec.IdxMin(floor, rooms), spec.IdxMax(floor, rooms))];
+            var (x, y) = FindOpenSpot(map, room, rng);
             if (x >= 0) map.PlaceEntity(spec.Create(), x, y);
         }
     }
@@ -502,12 +524,12 @@ public static partial class MapGenerator
     private static bool IsRoomInSafeZone(GameMap map, Room room) =>
         map.SafeZone?.Contains(room.CenterX, room.CenterY) == true;
 
-    private static (int x, int y) FindOpenSpotOutsideSafeZone(GameMap map)
+    private static (int x, int y) FindOpenSpotOutsideSafeZone(GameMap map, Random rng)
     {
         for (int attempt = 0; attempt < 80; attempt++)
         {
-            int x = Random.Shared.Next(5, map.Width - 5);
-            int y = Random.Shared.Next(5, map.Height - 5);
+            int x = rng.Next(5, map.Width - 5);
+            int y = rng.Next(5, map.Height - 5);
             if (!IsWalkableType(map.Tiles[x, y].Type)) continue;
             if (map.Tiles[x, y].Occupant != null) continue;
             if (IsInSafeZone(map, x, y)) continue;
@@ -524,14 +546,14 @@ public static partial class MapGenerator
     private static bool IsWalkableType(TileType t) =>
         IsGrassType(t) || t == TileType.Floor || t == TileType.Path || t == TileType.Door;
 
-    internal static void PlaceCluster(GameMap map, int cx, int cy, int radius, TileType type, double density)
+    internal static void PlaceCluster(GameMap map, int cx, int cy, int radius, TileType type, double density, Random rng)
     {
         for (int x = cx - radius; x <= cx + radius; x++)
         for (int y = cy - radius; y <= cy + radius; y++)
         {
             if (!map.InInterior(x, y)) continue;
             double dist = Math.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
-            if (dist <= radius && Random.Shared.NextDouble() < density)
+            if (dist <= radius && rng.NextDouble() < density)
                 map.Tiles[x, y].Type = type;
         }
     }
@@ -544,21 +566,21 @@ public static partial class MapGenerator
                 map.Tiles[x, y].Type = fill;
     }
 
-    internal static void CarvePath(GameMap map, int x1, int y1, int x2, int y2)
+    internal static void CarvePath(GameMap map, int x1, int y1, int x2, int y2, Random rng)
     {
         int x = x1, y = y1;
         while (x != x2 || y != y2)
         {
             SetPathTile(map, x, y);
             // Occasional side-widening for a natural, well-trodden look
-            if (Random.Shared.Next(4) == 0) SetPathTile(map, x + 1, y);
-            if (Random.Shared.Next(4) == 0) SetPathTile(map, x, y + 1);
+            if (rng.Next(4) == 0) SetPathTile(map, x + 1, y);
+            if (rng.Next(4) == 0) SetPathTile(map, x, y + 1);
 
             int dx = Math.Sign(x2 - x);
             int dy = Math.Sign(y2 - y);
             if (dx != 0 && dy != 0)
             {
-                if (Random.Shared.Next(2) == 0) x += dx;
+                if (rng.Next(2) == 0) x += dx;
                 else y += dy;
             }
             else { x += dx; y += dy; }
@@ -622,12 +644,12 @@ public static partial class MapGenerator
             map.Tiles[sx + w / 2, sy + h - 1].Type = TileType.Door;
     }
 
-    private static (int x, int y) FindOpenSpot(GameMap map, Room room)
+    private static (int x, int y) FindOpenSpot(GameMap map, Room room, Random rng)
     {
         for (int attempt = 0; attempt < 30; attempt++)
         {
-            int x = room.X + Random.Shared.Next(1, Math.Max(2, room.Width - 1));
-            int y = room.Y + Random.Shared.Next(1, Math.Max(2, room.Height - 1));
+            int x = room.X + rng.Next(1, Math.Max(2, room.Width - 1));
+            int y = room.Y + rng.Next(1, Math.Max(2, room.Height - 1));
             if (map.InBounds(x, y) && IsWalkableType(map.Tiles[x, y].Type) && map.Tiles[x, y].Occupant == null)
                 return (x, y);
         }

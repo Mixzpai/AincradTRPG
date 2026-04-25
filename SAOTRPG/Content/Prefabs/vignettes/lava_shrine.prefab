@@ -1,0 +1,17 @@
+NAME:          lava_shrine
+DESC:          A lone shrine standing on an island in a lava moat — offerings never cool.
+TAGS:          vignette narrative shrine volcanic
+FLOORS:        13-95
+BIOME:         volcanic any
+WEIGHT:        16
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+LLLLL
+L...L
+L.A.L
+L...L
+LLLLL
+ENDMAP

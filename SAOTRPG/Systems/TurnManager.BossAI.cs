@@ -1,5 +1,7 @@
 using Terminal.Gui;
 using SAOTRPG.Entities;
+using SAOTRPG.Inventory.Core;
+using SAOTRPG.Items.Equipment;
 using SAOTRPG.Map;
 
 namespace SAOTRPG.Systems;
@@ -192,6 +194,14 @@ public partial class TurnManager
 
         if (Random.Shared.NextDouble() < ability.StatusChance && ability.StatusEffect != null)
         {
+            // Uninterruptible+N — chance to shrug off boss status breath.
+            var breathWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
+            int breathUninterrupt = GetSpecialEffectValue(breathWpn, "Uninterruptible");
+            if (breathUninterrupt > 0 && Random.Shared.Next(100) < breathUninterrupt)
+            {
+                _log.LogCombat($"  {breathWpn!.Name} shields you from {ability.Name}!");
+                return;
+            }
             switch (ability.StatusEffect)
             {
                 case "Poison":

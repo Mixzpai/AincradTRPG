@@ -40,13 +40,48 @@ public partial class TurnManager
             if (entity is not Monster monster) continue;
             if (!TickMobStatuses(monster)) continue;
 
-            var action = SimpleAI.DecideAction(monster, _player, _map, _stealthActive);
+            // Bundle 10 (B11) — SlowOnHit consumer. Slowed mobs act every other turn;
+            // mob.Id-XOR-TurnCount parity ensures different mobs skip on different turns.
+            if (_slowedMobs.ContainsKey(monster.Id) && ((monster.Id + TurnCount) & 1) == 0)
+                continue;
+
+            // Invisibility+N SpecialEffect: treat active invis like stealth for aggro.
+            bool concealedFromAggro = _stealthActive || _invisibilityTurnsLeft > 0;
+            // Lunacy+N: confused mobs wander instead of pathing/attacking.
+            (int dx, int dy)? action;
+            if (_confusedMobs.ContainsKey(monster.Id))
+                action = PickConfusedStep(monster);
+            else
+                action = SimpleAI.DecideAction(monster, _player, _map, concealedFromAggro);
             if (action == null)
                 ProcessMonsterAttack(monster);
             else
                 ProcessMonsterMovement(monster, action.Value, ref aggroLoggedThisTurn, ref fleeLoggedThisTurn);
             if (_player.IsDefeated) return;
         }
+    }
+
+    // Lunacy+N consumer — confused mob picks a random adjacent walkable tile,
+    // ignoring the player. Returns (0,0) idle if all neighbors are blocked.
+    private (int dx, int dy)? PickConfusedStep(Monster monster)
+    {
+        Span<int> idx = stackalloc int[8];
+        for (int i = 0; i < 8; i++) idx[i] = i;
+        for (int i = 7; i > 0; i--)
+        {
+            int j = Random.Shared.Next(i + 1);
+            (idx[i], idx[j]) = (idx[j], idx[i]);
+        }
+        foreach (int i in idx)
+        {
+            var (dx, dy) = NpcDirs[i];
+            int nx = monster.X + dx, ny = monster.Y + dy;
+            if (!_map.InBounds(nx, ny)) continue;
+            if (nx == _player.X && ny == _player.Y) continue;
+            if (!IsMonsterWalkable(monster, nx, ny)) continue;
+            return (dx, dy);
+        }
+        return (0, 0);
     }
 
     private static readonly (int dx, int dy)[] NpcDirs =
@@ -107,6 +142,7 @@ public partial class TurnManager
         if (!TickMobDot(monster, _poisonedMobs, (n, d) => $"  {n} takes {d} poison damage!")) return false;
         if (_stunnedMobs.ContainsKey(monster.Id)) { TickMobTimer(monster.Id, _stunnedMobs); return false; }
         TickMobTimer(monster.Id, _blindedMobs);
+        TickMobTimer(monster.Id, _slowedMobs);
         return true;
     }
 
@@ -212,6 +248,17 @@ public partial class TurnManager
         int finalDamage = Math.Max(1, reduced);
 
         bool monsterCrit = Random.Shared.Next(100) < Math.Max(0, monster.CriticalRate + WeatherSystem.GetCritModifier());
+        // CritImmune+N — at ≥100 cancels the crit outright; lower values roll.
+        // Bundle 8: MH + OH shield contribute, picking the max (cap-like, non-stacking).
+        var playerWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
+        int critImmune = GetEffectMax("CritImmune");
+        if (monsterCrit && critImmune > 0
+            && (critImmune >= 100 || Random.Shared.Next(100) < critImmune))
+        {
+            monsterCrit = false;
+            string aegisName = playerWpn?.Name ?? "your aegis";
+            _log.LogCombat($"  {aegisName}'s aegis blunts the critical blow!");
+        }
         if (monsterCrit)
         {
             rawDamage += monster.CriticalHitDamage;
@@ -268,7 +315,8 @@ public partial class TurnManager
     {
         var shield = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Armor;
         var mainWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        int blockFx = GetSpecialEffectValue(mainWpn, "BlockChance");
+        // Bundle 10 (B14) — BlockChance is additive across all equipped slots (armor pieces too).
+        int blockFx = GetEffectSumAllSlots("BlockChance");
         int totalBlock = (shield?.BlockChance ?? 0) + blockFx;
         if (totalBlock <= 0) return false;
         if (Random.Shared.Next(100) >= totalBlock) return false;
@@ -289,7 +337,8 @@ public partial class TurnManager
     private bool TryParry(Monster monster)
     {
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        int parryFx = GetSpecialEffectValue(wpn, "ParryChance");
+        // Bundle 10 (B14) — ParryChance additive across all slots; armor with parry-flavor stacks.
+        int parryFx = GetEffectSumAllSlots("ParryChance");
         int parryChance = Math.Min(15, _player.Dexterity) + GetActiveWeaponPerks().Parry + parryFx;
         if (parryChance <= 0 || Random.Shared.Next(100) >= parryChance) return false;
 
@@ -325,6 +374,19 @@ public partial class TurnManager
         else if (_dodgeStreak == 5) _log.LogCombat("*** Untouchable! 5 dodges! ***");
         else if (_dodgeStreak >= 7 && _dodgeStreak % 2 == 1) _log.LogCombat($"*** Phantom! {_dodgeStreak} dodge streak! ***");
 
+        // EvadeRegen+N — heal N HP on a clean dodge. B14: additive across all slots.
+        var dodgeWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
+        int evadeRegen = GetEffectSumAllSlots("EvadeRegen");
+        if (evadeRegen > 0)
+        {
+            int heal = Math.Min(evadeRegen, _player.MaxHealth - _player.CurrentHealth);
+            if (heal > 0)
+            {
+                _player.CurrentHealth += heal;
+                _log.LogCombat($"  {dodgeWpn?.Name ?? "Your evasion"} channels the dodge — +{heal} HP.");
+            }
+        }
+
         return true;
     }
 
@@ -333,14 +395,37 @@ public partial class TurnManager
         // Post-motion vulnerability: +50% incoming damage while recovering from a skill.
         if (_postMotionDelay > 0) finalDamage = (int)(finalDamage * 1.5);
 
+        // Barrier+N absorbs up to _barrierRemaining of the incoming hit.
+        int barrierAbsorbed = 0;
+        if (_barrierRemaining > 0 && finalDamage > 0)
+        {
+            barrierAbsorbed = Math.Min(finalDamage, _barrierRemaining);
+            _barrierRemaining -= barrierAbsorbed;
+            finalDamage -= barrierAbsorbed;
+            if (barrierAbsorbed > 0)
+                _log.LogCombat($"  Barrier absorbs {barrierAbsorbed} damage! ({_barrierRemaining} remaining)");
+        }
+
         TutorialSystem.ShowTip(_log, "first_damage_taken");
         _dodgeStreak = 0;
-        int blocked = rawDamage - finalDamage;
+        int blocked = rawDamage - finalDamage - barrierAbsorbed;
         string critTag = monsterCrit ? " CRITICAL HIT!" : "";
         string incomingLine = $"{monster.Name} hits you for {finalDamage} damage!{critTag}" +
             (blocked > 0 ? $" ({blocked} blocked)" : "");
         string incomingTag = BuildIncomingDamageTag(monster.Name);
         _log.LogCombat(ApplyDamageTag(incomingLine, incomingTag));
+
+        // Bundle 8: DamageReflect+N — return N% of post-mitigation damage to attacker.
+        // Sourced from MH weapon + OH shield (e.g. Nox Fermat +5). Pre-HP-deduct for counter flavor.
+        int reflectPct = GetEffectSum("DamageReflect");
+        if (reflectPct > 0 && finalDamage > 0 && !monster.IsDefeated)
+        {
+            int reflected = Math.Max(1, finalDamage * reflectPct / 100);
+            monster.TakeDamage(reflected);
+            _log.LogCombat($"  Reflect! {monster.Name} takes {reflected} damage from the counterforce.");
+            DamageDealt?.Invoke(monster.X, monster.Y, reflected, false, false);
+        }
+
         _player.TakeDamage(finalDamage);
         DamageDealt?.Invoke(_player.X, _player.Y, finalDamage, true, monsterCrit);
         // Shake when the player eats ≥20% max-HP in one blow. Mob attacks are
@@ -378,6 +463,15 @@ public partial class TurnManager
 
     private void ApplyMobStatusEffects(Monster monster)
     {
+        // Uninterruptible+N — weapon grants N% chance to shrug off any
+        // incoming status application from the monster hit we just took.
+        var uninterruptWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
+        int uninterruptChance = GetSpecialEffectValue(uninterruptWpn, "Uninterruptible");
+        if (uninterruptChance > 0 && Random.Shared.Next(100) < uninterruptChance)
+        {
+            _log.LogCombat($"  {uninterruptWpn!.Name}'s resolve shrugs off {monster.Name}'s effect.");
+            return;
+        }
         if (monster is Mob { CanPoison: true } && _poisonTurnsLeft <= 0 && Random.Shared.Next(100) < 35)
         {
             _poisonTurnsLeft = 5;

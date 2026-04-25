@@ -1,0 +1,22 @@
+NAME:          treasure_sacred_tomb
+DESC:          Four chests arranged around a monument to fallen swordsmen — hallowed loot for the worthy.
+TAGS:          vault treasure sacred monument
+FLOORS:        20-99
+BIOME:         any
+WEIGHT:        14
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  4
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#########
+#.......#
+#.......#
+#...$...#
+#.$.M.$.#
+#...$...#
+#.......#
+#.......#
+####+####
+ENDMAP

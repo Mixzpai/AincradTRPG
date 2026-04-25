@@ -43,11 +43,63 @@ public static class ParticleQueue
 
     public static void Clear() => Active.Clear();
 
+    // F9 hot-reload latch reset — conservative full clear since Particle has no
+    // Ambient category flag today. AmbientOverlayPass reseeds on map entry.
+    public static void ClearAmbient()
+    {
+        int before = Active.Count;
+        Active.Clear();
+        UI.DebugLogger.LogGame("RELOAD", $"ParticleQueue.ClearAmbient dropped {before}");
+    }
+
     // Enforce cap by dropping oldest when adding a new particle.
     private static void Push(Particle p)
     {
         if (Active.Count >= MaxConcurrent) Active.RemoveAt(0);
         Active.Add(p);
+    }
+
+    // Per-biome ambient particle table: glyph, color, fade-to color, drift velocity, duration.
+    // Keyed by particleId strings that appear in Content/Biomes/*.json ambientOverlay.particleId.
+    private static readonly Dictionary<string, (char Glyph, Color Color, Color FadeTo, float Vx, float Vy, float DurMs)>
+        _ambientSpecs = new()
+    {
+        ["wind_motes"]   = ('·', new Color(200, 200, 200), Color.DarkGray, 0.001f,  0f,       30000f),
+        ["firefly"]      = ('.', Color.BrightYellow,       Color.Yellow,   0f,      -0.0005f, 30000f),
+        ["fog_mote"]     = ('·', new Color(160, 180, 160), Color.DarkGray, 0.0005f, 0f,       30000f),
+        ["sand_drift"]   = ('\'', new Color(220, 200, 120), Color.DarkGray, 0.002f,  0f,       30000f),
+        ["snowflake"]    = ('*', Color.White,              Color.Gray,     0f,      0.001f,   30000f),
+        ["ember"]        = ('*', new Color(255, 120, 40),  Color.Red,      0f,      -0.001f,  30000f),
+        ["rain_mote"]    = ('\'', Color.Cyan,               Color.DarkGray, 0f,      0.002f,   30000f),
+        ["dust_mote"]    = ('·', new Color(180, 160, 120), Color.DarkGray, 0.0003f, 0f,       30000f),
+        ["shadow_wisp"]  = ('·', new Color(100, 80, 120),  Color.Black,    0f,      0f,       30000f),
+        ["lantern_glow"] = ('·', new Color(255, 200, 100), Color.DarkGray, 0f,      0f,       30000f),
+        ["void_spark"]   = ('*', new Color(180, 100, 220), Color.Black,    0.0005f, 0.0005f,  30000f),
+    };
+
+    // Seed ambient particles across walkable tiles. Caller computes `count` from
+    // biome densityPermille * UserSettings multiplier. No-op if id unknown or count <= 0.
+    public static void SeedAmbient(string particleId, IList<(int X, int Y)> tiles, Random rng, int count)
+    {
+        if (count <= 0 || tiles.Count == 0) return;
+        if (!_ambientSpecs.TryGetValue(particleId, out var spec)) return;
+        int cap = Math.Min(count, Math.Max(0, MaxConcurrent - 5));
+        for (int i = 0; i < cap; i++)
+        {
+            var (tx, ty) = tiles[rng.Next(tiles.Count)];
+            Push(new Particle
+            {
+                X = tx,
+                Y = ty,
+                Glyph = spec.Glyph,
+                Color = spec.Color,
+                FadeTo = spec.FadeTo,
+                UseFade = true,
+                DurationMs = spec.DurMs,
+                Vx = spec.Vx,
+                Vy = spec.Vy,
+            });
+        }
     }
 
     // Per-density tuning. Count scales + duration scales. Subtle has no hold.

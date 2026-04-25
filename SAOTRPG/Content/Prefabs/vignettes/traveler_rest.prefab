@@ -1,0 +1,15 @@
+NAME:          traveler_rest
+DESC:          A single warm campfire and a forgotten journal — someone paused here, briefly.
+TAGS:          vignette narrative rest
+FLOORS:        *
+BIOME:         any
+WEIGHT:        25
+MAX_PER_FLOOR: 3
+ROTATE:        true
+MIRROR:        true
+
+MAP
+...
+.F.
+.J.
+ENDMAP

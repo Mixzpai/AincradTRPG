@@ -1,0 +1,38 @@
+NAME:          f50_sixarmed_buddha
+DESC:          Metallic sanctum whose mandala floor radiates around six pillar-statues flanking the Six-Armed Buddha.
+TAGS:          boss canon the_six_armed_buddha ruins urban f50
+FLOORS:        50
+BIOME:         ruins urban any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: A = Shrine
+KFEAT: F = Campfire
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#########################
+#.......................#
+#.F...................F.#
+#.......................#
+#...P...............P...#
+#.......................#
+#.......................#
+#...P.......A.......P...#
+#.......................#
+#...........X...........#
+#.......................#
+#...P...............P...#
+#.......................#
+#.......................#
+#.......................#
+#.F...................F.#
+#.......................#
+############+############
+#########################
+ENDMAP

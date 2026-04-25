@@ -1,0 +1,19 @@
+NAME:          grave_circle
+DESC:          Four pillar-graves ring a central lore stone — names weathered, memory kept.
+TAGS:          vignette narrative grave memorial
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+
+MAP
+.....
+.P.P.
+..*..
+.P.P.
+.....
+ENDMAP

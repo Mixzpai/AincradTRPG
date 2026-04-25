@@ -1,0 +1,39 @@
+NAME:          f75_skull_reaper
+DESC:          Collinia Labyrinth's bone dungeon where the Skull Reaper scythes the canon-end chamber in red gloom.
+TAGS:          boss canon the_skull_reaper ruins dark f75
+FLOORS:        75
+BIOME:         ruins dark any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+KFEAT: A = Shrine
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#########################
+#.......................#
+#.F...................F.#
+#.......................#
+#...P.P.P.P.P.P.P.P.P...#
+#.......................#
+#...?.?.?.?.?.?.?.?.....#
+#.......................#
+#.P.................P...#
+#.......................#
+#...........X...........#
+#.......................#
+#.P.................P...#
+#.......................#
+#...?.?.?.?.?.?.?.?.....#
+#.......................#
+#...P.P.P.P.P.P.P.P.P...#
+#.......................#
+#.F........A..........F.#
+############+############
+ENDMAP

@@ -1,0 +1,33 @@
+NAME:          f3_nerius
+DESC:          Forest glade where Nerius the Evil Treant roots into the earth; canopy gaps admit twilight shafts.
+TAGS:          boss canon nerius_the_evil_treant forest f3
+FLOORS:        3
+BIOME:         forest any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: T = Tree
+KFEAT: F = Campfire
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#####################
+#,,T,,,T,,,,,T,,,T,,#
+#,T,,,,,,,,,,,,,,,T,#
+#,,,,,T,,,,,,,T,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,T,,,,F,,,,,F,,,,T,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,X,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,T,,,,F,,,,,F,,,,T,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,T,,,,,,,T,,,,,#
+#,T,,,,,,,,,,,,,,,T,#
+#,,T,,,T,,,,,T,,,T,,#
+#########+###########
+ENDMAP

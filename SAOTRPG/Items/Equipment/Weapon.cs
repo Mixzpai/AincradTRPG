@@ -11,9 +11,6 @@ public class Weapon : EquipmentBase
     public int AttackSpeed { get; set; }
     // Tile range for attacks. 1 = melee, 2+ = ranged.
     public int Range { get; set; }
-    // Named weapon special effect. Null = normal weapon.
-    // Examples: "SkillCooldown-1", "CritHeal+5", "ParryChance+10", "Bleed+20"
-    public string? SpecialEffect { get; set; }
 
     // IM Last-Attack-Bonus weapons trade enhance-ability for higher flat stats; false blocks CraftingDialog Enhance.
     public bool IsEnhanceable { get; set; } = true;
@@ -24,4 +21,11 @@ public class Weapon : EquipmentBase
 
     // FD Paired — pre-tuned dual-wield, OffHand without DualBlades unlock. Systems.DualWieldPairs lists canon partners → Pair Resonance synergy.
     public bool IsDualWieldPaired { get; set; } = false;
+
+    // Bundle 9 — Divine Awakening level (0-◈3). Selka F65 bumps this via
+    // DivineAwakening.Awaken; bonus folds into Bonuses.Attack additively w/ Refinement.
+    public int AwakeningLevel { get; set; } = 0;
+
+    // True when weapon is Divine-rarity and below the awakening cap.
+    public bool CanAwaken => Rarity == "Divine" && AwakeningLevel < SAOTRPG.Systems.DivineAwakening.MaxLevel;
 }

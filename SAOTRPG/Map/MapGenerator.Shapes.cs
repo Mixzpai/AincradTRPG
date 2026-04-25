@@ -101,7 +101,7 @@ public static partial class MapGenerator
     }
 
     // Carve a water stream path between two points.
-    internal static void CarveWaterPath(GameMap map, int x1, int y1, int x2, int y2, int width)
+    internal static void CarveWaterPath(GameMap map, int x1, int y1, int x2, int y2, int width, Random rng)
     {
         int x = x1, y = y1;
         while (x != x2 || y != y2)
@@ -118,14 +118,14 @@ public static partial class MapGenerator
             int ddx = Math.Sign(x2 - x), ddy = Math.Sign(y2 - y);
             if (ddx != 0 && ddy != 0)
             {
-                if (Random.Shared.Next(2) == 0) x += ddx; else y += ddy;
+                if (rng.Next(2) == 0) x += ddx; else y += ddy;
             }
             else { x += ddx; y += ddy; }
         }
     }
 
     // Corridor decoration: sconces and cracked floors.
-    internal static void DecorateCorridors(GameMap map, int spawnX, int spawnY)
+    internal static void DecorateCorridors(GameMap map, int spawnX, int spawnY, Random rng)
     {
         int w = map.Width, h = map.Height;
         // Sconces near walls adjacent to paths/floors
@@ -134,7 +134,7 @@ public static partial class MapGenerator
         {
             if (map.Tiles[x, y].Type != TileType.Wall) continue;
             if (Math.Abs(x - spawnX) < 8 && Math.Abs(y - spawnY) < 8) continue;
-            if (Random.Shared.Next(100) >= 8) continue;
+            if (rng.Next(100) >= 8) continue;
             // Find an adjacent floor/path tile to place the campfire sconce
             int[] dxs = { -1, 1, 0, 0 }, dys = { 0, 0, -1, 1 };
             for (int d = 0; d < 4; d++)
@@ -142,7 +142,7 @@ public static partial class MapGenerator
                 int nx = x + dxs[d], ny = y + dys[d];
                 if (!map.InBounds(nx, ny)) continue;
                 var t = map.Tiles[nx, ny].Type;
-                if ((t == TileType.Path || t == TileType.Floor) && Random.Shared.Next(2) == 0)
+                if ((t == TileType.Path || t == TileType.Floor) && rng.Next(2) == 0)
                 {
                     map.Tiles[nx, ny].Type = TileType.Campfire;
                     break;
@@ -153,13 +153,13 @@ public static partial class MapGenerator
         for (int x = 1; x < w - 1; x++)
         for (int y = 1; y < h - 1; y++)
         {
-            if (map.Tiles[x, y].Type == TileType.Floor && Random.Shared.Next(100) < 3)
+            if (map.Tiles[x, y].Type == TileType.Floor && rng.Next(100) < 3)
                 map.Tiles[x, y].Type = TileType.GrassSparse;
         }
     }
 
     // Place water pools around fountains and 0-1 underground streams.
-    internal static void PlaceWaterFeatures(GameMap map, int spawnX, int spawnY)
+    internal static void PlaceWaterFeatures(GameMap map, int spawnX, int spawnY, Random rng)
     {
         int w = map.Width, h = map.Height;
         // Pools around fountains
@@ -175,27 +175,27 @@ public static partial class MapGenerator
                 if (!map.InInterior(px, py)) continue;
                 if (Math.Abs(px - spawnX) < 8 && Math.Abs(py - spawnY) < 8) continue;
                 var t = map.Tiles[px, py].Type;
-                if ((IsGrassType(t) || t == TileType.Floor || t == TileType.Path) && Random.Shared.NextDouble() < 0.5)
+                if ((IsGrassType(t) || t == TileType.Floor || t == TileType.Path) && rng.NextDouble() < 0.5)
                     map.Tiles[px, py].Type = TileType.Water;
             }
         }
         // 0-1 underground streams
-        if (Random.Shared.Next(2) == 0)
+        if (rng.Next(2) == 0)
         {
-            int streamWidth = 1 + Random.Shared.Next(2);
-            bool horizontal = Random.Shared.Next(2) == 0;
+            int streamWidth = 1 + rng.Next(2);
+            bool horizontal = rng.Next(2) == 0;
             int x1, y1, x2, y2;
             if (horizontal)
             {
-                x1 = 2; y1 = Random.Shared.Next(10, h - 10);
-                x2 = w - 3; y2 = Random.Shared.Next(10, h - 10);
+                x1 = 2; y1 = rng.Next(10, h - 10);
+                x2 = w - 3; y2 = rng.Next(10, h - 10);
             }
             else
             {
-                x1 = Random.Shared.Next(10, w - 10); y1 = 2;
-                x2 = Random.Shared.Next(10, w - 10); y2 = h - 3;
+                x1 = rng.Next(10, w - 10); y1 = 2;
+                x2 = rng.Next(10, w - 10); y2 = h - 3;
             }
-            CarveWaterPath(map, x1, y1, x2, y2, streamWidth);
+            CarveWaterPath(map, x1, y1, x2, y2, streamWidth, rng);
         }
     }
 

@@ -1,0 +1,22 @@
+NAME:          void_altar
+DESC:          Sealed altar chamber where shadow-wisps pool around a silent offering stone.
+TAGS:          shrine dark void
+FLOORS:        21-99
+BIOME:         dark void any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: A = Shrine
+KFEAT: P = Pillar
+
+MAP
+#########
+#.......#
+#.P...P.#
+#...A...#
+#.P...P.#
+#.......#
+####+####
+ENDMAP

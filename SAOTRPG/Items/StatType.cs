@@ -16,5 +16,14 @@ public enum StatType
     Endurance,
     Dexterity,
     Agility,
-    Intelligence
+    Intelligence,
+
+    // Bundle 10 (B13) — append-only; int order matters for Inventory._statBonusCache.
+    // CritRate=% crit chance, AttackSpeed=weapon swing cadence, BlockChance=shield %,
+    // HPRegen=HP per tick, SkillCooldown=turns reduction on sword skills.
+    CritRate,
+    AttackSpeed,
+    BlockChance,
+    HPRegen,
+    SkillCooldown
 }

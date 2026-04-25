@@ -29,6 +29,9 @@ public partial class TurnManager
             case TileType.SecretShrine:  HandleSecretShrine(tile, tx, ty); break;
             case TileType.Lever:         HandleLever(tile); break;
             case TileType.PressurePlate: HandlePressurePlate(tile); break;
+            case TileType.Mud:           HandleMud(tile); break;
+            case TileType.BogWater:      HandleBogWater(tile); break;
+            case TileType.CrackedIce:    HandleCrackedIce(tile); break;
         }
         return false;
     }
@@ -306,5 +309,38 @@ public partial class TurnManager
     private void HandlePressurePlate(Tile tile)
     {
         ToggleLinkedDoor(tile, "pressure plate");
+    }
+
+    // Mud — on-entry Slow. Tops up to 2 turns; harmless if already slowed
+    // longer (per-step refresh would spam the log).
+    private void HandleMud(Tile tile)
+    {
+        if (_slowTurnsLeft >= 2) return;
+        _slowTurnsLeft = Math.Max(_slowTurnsLeft, 1 + Random.Shared.Next(2));
+        _log.LogCombat("The mud sucks at your boots — you slow down.");
+    }
+
+    // BogWater — on-entry Poison drip. Mirrors HandlePoisonTrap cadence but
+    // only applies when not already poisoned so wading doesn't stack forever.
+    private void HandleBogWater(Tile tile)
+    {
+        if (_poisonTurnsLeft > 0) return;
+        _poisonTurnsLeft = 2 + Random.Shared.Next(2);
+        _poisonDamagePerTick = 1 + CurrentFloor / 2;
+        _log.LogCombat($"The fetid bogwater seeps into your cuts. ({_poisonDamagePerTick} dmg/turn for {_poisonTurnsLeft} turns)");
+    }
+
+    // CrackedIce — 25% chance per step to stun for 1 turn (slip). Otherwise
+    // a flavor whisper log only. Respects existing stun cooldown.
+    private void HandleCrackedIce(Tile tile)
+    {
+        if (_stunTurnsLeft > 0) return;
+        if (Random.Shared.Next(100) < 25)
+        {
+            _stunTurnsLeft = 1;
+            _log.LogCombat("The cracked ice gives way — you slip and lose your footing!");
+        }
+        else if (Random.Shared.Next(4) == 0)
+            _log.Log("The ice groans underfoot.");
     }
 }

@@ -504,7 +504,11 @@ public static class PlayerGuideContent
             "Starving (0): -5 HP/turn plus STARVING status. Mild Fatigue:\n" +
             "-1 SPD. Heavy Fatigue: -3 SPD, -5% crit. Food restores satiety\n" +
             "and HP over turns. The Eating life skill scales food potency by\n" +
-            "+10% / +25% / +50% / +100% at L10 / L25 / L50 / L99.\n\n" +
+            "+10% / +25% / +50% / +100% at L10 / L25 / L50 / L99. At L99\n" +
+            "Eating also scales food's HP REGEN RATE — the per-turn heal\n" +
+            "ticks higher in addition to the existing Satiety duration boost,\n" +
+            "so Roast Boar with high Eating turns into a passive heal stream\n" +
+            "during exploration rather than a one-shot top-up.\n\n" +
             "COSTS\n" +
             "Satiety drains 1 point per N turns (biome- and modifier-\n" +
             "dependent). The Iron Rank run modifier doubles drain rate.\n\n" +
@@ -512,7 +516,9 @@ public static class PlayerGuideContent
             "Hover at Well Fed before any boss — the +3 ATK/DEF feeds right\n" +
             "into Damage Mitigation. Carry at least one stack of cheap bread\n" +
             "for emergency top-ups; each bread also banks Eating XP toward\n" +
-            "the food-potency milestones.\n\n" +
+            "the food-potency milestones. Once Eating hits L99, swap your\n" +
+            "between-fight grazing food from cheap bread up to Roast Boar or\n" +
+            "stew for the duration-PLUS-regen-rate stack.\n\n" +
             "SEE ALSO\n" +
             "[Food & Cooking] · [Damage Mitigation] · [Run Modifiers (12 Optional Challenges)] · [Life Skills] · [Campfires — Rest & Sleep XP]")
         {
@@ -1008,15 +1014,18 @@ public static class PlayerGuideContent
             "┌─ Combat & Rarity\n" +
             "│ Topic: Bestiary — Monster Compendium\n" +
             "│ Hotkey: Y (closes with Y or Esc)\n" +
-            "│ Scope: Every monster you've ever encountered\n" +
+            "│ Scope: 199 entries — 66 mobs + 100 bosses + 33 field bosses\n" +
             "│ Persistence: Survives permadeath via lifetime_stats.json\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "A browsable compendium of every mob you've fought or even just\n" +
             "glimpsed, cross-referenced with kill counts, drop hints, threat\n" +
-            "rating, and canon SAO flavor lore. Entries unlock on first\n" +
-            "sighting and persist permanently across runs — permadeath\n" +
-            "wipes the save, not the Bestiary.\n\n" +
+            "rating, and canon SAO flavor lore. Bundle 10 locks the roster\n" +
+            "count at 199 — 66 standard mobs across the floor pool, 100\n" +
+            "floor bosses (one per floor), and 33 field bosses scattered\n" +
+            "across the eras. Entries unlock on first sighting and persist\n" +
+            "permanently across runs — permadeath wipes the save, not the\n" +
+            "Bestiary.\n\n" +
             "USAGE\n" +
             "Press Y on the map to open. Navigate with:\n" +
             "  Up / Down         Select entry in the left-hand list\n" +
@@ -1042,13 +1051,24 @@ public static class PlayerGuideContent
             "COSTS\n" +
             "None. The Bestiary is a pause-style overlay — no turns pass\n" +
             "while it is open.\n\n" +
+            "BUNDLE 10 IMPROVEMENTS\n" +
+            "  - Loot tags now PERSIST across runs (carried in lifetime_\n" +
+            "    stats.json alongside kills/sightings) — drops you've\n" +
+            "    confirmed in run 3 still show in run 7's Bestiary.\n" +
+            "  - Boss / field-boss / elite flags now stamp on FIRST DAMAGE\n" +
+            "    instead of first aggro. Insta-kill openers (Holy Sword\n" +
+            "    burst, Iaijutsu first-strike, sword-skill alpha on a\n" +
+            "    surprised target) used to skip the flag — these no longer\n" +
+            "    leak past your compendium.\n\n" +
             "TIPS\n" +
             "Sort by kills to see your favorite targets at a glance.\n" +
             "Boss-only filter shows your canon SAO bosses — useful for\n" +
             "canon completion hunting and planning floor-by-floor pushes.\n" +
             "Bestiary knowledge persists across runs — you keep what\n" +
             "you've seen even through permadeath, so every run chips\n" +
-            "away at the undiscovered list.\n\n" +
+            "away at the undiscovered list. Track the 199 total against\n" +
+            "your seen-count: at 199/199 you've completed the canonical\n" +
+            "encounter sweep across all 100 floors.\n\n" +
             "SEE ALSO\n" +
             "[Look Mode & Counter Stance] · [Controls & Keybindings] · [Permadeath & Save Deletion] · [Floor Boss Roster] · [Field Bosses]")
         {
@@ -1209,13 +1229,29 @@ public static class PlayerGuideContent
             "  SD  = BaseSkillDamage + (INT x 2) + gear bonuses\n" +
             "  CRT = BaseCriticalRate + DEX/2  (percent)\n" +
             "  CD  = BaseCriticalHitDamage + DEX\n\n" +
+            "BUNDLE 10 — NEW DIRECT STAT GRANTS:\n" +
+            "Five new StatType entries let equipment grant the following\n" +
+            "stats DIRECTLY (no flavor-string parsing required):\n" +
+            "  CritRate         +N% to CRT — stacks with Dex contribution\n" +
+            "  AttackSpeed      +N to weapon swing cadence (faster turns)\n" +
+            "  BlockChance      +N% to shield block roll\n" +
+            "  HPRegen          +N HP per passive-regen pulse\n" +
+            "  SkillCooldown    -N turns on Sword Skill cooldowns\n" +
+            "Previously these effects only existed via SpecialEffect tag\n" +
+            "strings on weapons (CritRate+N, HPRegen+N, etc.). Now any\n" +
+            "equipment piece — armor, ring, bracelet, necklace — can roll\n" +
+            "them as a direct StatBonus, and the values stack additively\n" +
+            "with any equivalent SpecialEffect tags from other slots.\n\n" +
             "COSTS\n" +
             "Broken gear (0 durability) contributes nothing until repaired.\n\n" +
             "TIPS\n" +
             "Audit the sheet after repair runs — a dead weapon or armor\n" +
-            "slot silently halves your output until you notice.\n\n" +
+            "slot silently halves your output until you notice. Direct\n" +
+            "StatBonus grants for CritRate/AttackSpeed/HPRegen are visible\n" +
+            "on the sheet diff line; SpecialEffect tag strings show in the\n" +
+            "tooltip — both sources sum.\n\n" +
             "SEE ALSO\n" +
-            "[The Six Attributes] · [Damage Formula] · [Anvil — Repair, Enhance, Evolve, Refine]")
+            "[The Six Attributes] · [Damage Formula] · [Anvil — Repair, Enhance, Evolve, Refine] · [Advanced Weapon Effects]")
         {
             Tags = new[] { "stats", "attributes" }
         },
@@ -1551,15 +1587,16 @@ public static class PlayerGuideContent
         new("Progression", "Life Skills",
             "┌─ Progression\n" +
             "│ Topic: Life Skills\n" +
-            "│ Skills: Sleep · Walking · Running · Eating · Bargaining · Swimming\n" +
+            "│ Skills: Sleep · Walking · Running · Eating · Bargaining · Swimming · Mining\n" +
             "│ Cap: Level 99 per skill\n" +
             "│ Save: Per-player, in SaveData.LifeSkills\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Six non-combat skills level from everyday play — Sleep, Walking,\n" +
-            "Running, Eating, Bargaining, and Swimming. They sit parallel to\n" +
-            "Weapon Proficiency: proficiency rewards combat with one weapon\n" +
-            "type, Life Skills reward the travel, trade, and rest loop.\n\n" +
+            "Seven non-combat skills level from everyday play — Sleep,\n" +
+            "Walking, Running, Eating, Bargaining, Swimming, and Mining\n" +
+            "(Bundle 10). They sit parallel to Weapon Proficiency:\n" +
+            "proficiency rewards combat with one weapon type, Life Skills\n" +
+            "reward the travel, trade, rest, and resource-extraction loop.\n\n" +
             "USAGE\n" +
             "No menu — each skill banks XP from the matching in-world action.\n" +
             "Milestones at L10/25/50/99 fire a banner and stamp a permanent\n" +
@@ -1577,7 +1614,11 @@ public static class PlayerGuideContent
             "              (Sell Junk = 1 XP total)        Sell x1.03/1.06/1.10/1.15\n" +
             "  SWIMMING    +2 Water step / +3 WaterDeep    L10 Water full-speed\n" +
             "                                              L25 WaterDeep passable\n" +
-            "                                              L50 WaterDeep full-speed\n\n" +
+            "                                              L50 WaterDeep full-speed\n" +
+            "  MINING      +4 Iron / +9 Mith / +18 Div     L10 +5% drops + free dur every other strike\n" +
+            "              (per vein strike)               L25 +10% drops + 20% bonus ore roll\n" +
+            "                                              L50 +15% drops + Mith trace +1 + Iron -1 strike\n" +
+            "                                              L99 +25% drops + 20% Divine boost + dur halved\n\n" +
             "COSTS\n" +
             "None. Life Skills cost only the time spent doing the activity;\n" +
             "they never block or gate other progression. Swimming below L10\n" +
@@ -1593,7 +1634,7 @@ public static class PlayerGuideContent
             "stacks +2/+3 XP per water tile crossed, so scenic routes through\n" +
             "rivers beat dryland detours once you're willing to take the hit.\n\n" +
             "SEE ALSO\n" +
-            "[Bargaining (Life Skill)] · [Swimming (Life Skill)] · [Weapon Proficiency Tree] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move]")
+            "[Bargaining (Life Skill)] · [Swimming (Life Skill)] · [Mining (Life Skill)] · [Mining — Tool Slot & Ore Veins] · [Weapon Proficiency Tree] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move]")
         {
             Tags = new[] { "life-skills", "progression" }
         },
@@ -1687,6 +1728,69 @@ public static class PlayerGuideContent
             Tags = new[] { "life-skills", "swimming", "world" }
         },
 
+        new("Progression", "Mining (Life Skill)",
+            "┌─ Progression\n" +
+            "│ Topic: Mining (Life Skill)\n" +
+            "│ XP: +4 Iron / +9 Mithril / +18 Divine per strike\n" +
+            "│ Cap: Level 99 (+25% drops, dur damage halved)\n" +
+            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Mining is Bundle 10's seventh Life Skill — a non-combat\n" +
+            "track that levels every time you swing a Pickaxe at an ore\n" +
+            "vein. Each strike banks XP regardless of whether the vein\n" +
+            "depletes that turn, so even a Wooden Pickaxe whittling away\n" +
+            "at a stubborn Mithril vein contributes 9 XP per swing. The\n" +
+            "milestones at L10/25/50/99 progressively boost ore drops,\n" +
+            "save your pickaxe durability, and crank Divine vein yields\n" +
+            "into endgame-relevant territory.\n\n" +
+            "USAGE\n" +
+            "No menu — strike any vein with a Pickaxe equipped to bank XP.\n" +
+            "Unlike Walking and Swimming, Mining is opt-in: you have to\n" +
+            "carry the tool. The Life Skills XP curve is shared with the\n" +
+            "other six skills (L5=10, L10=100, L25=1000, L50=5000,\n" +
+            "L99=50000), so 100 Iron strikes lands you at L10 in a single\n" +
+            "vein-rich floor.\n\n" +
+            "EFFECTS\n" +
+            "XP PER STRIKE:\n" +
+            "  Iron      +4 XP\n" +
+            "  Mithril   +9 XP\n" +
+            "  Divine    +18 XP\n" +
+            "MILESTONES (stack — each level inherits prior bonuses):\n" +
+            "  L1   Base — strikes work, no bonuses\n" +
+            "  L10  +5% drop chance on every vein\n" +
+            "       Every-other-strike costs 0 durability (free swing)\n" +
+            "  L25  +10% drop chance (replaces L10 +5%)\n" +
+            "       +1 bonus ore roll @ 20% per depletion\n" +
+            "  L50  +15% drop chance\n" +
+            "       Mithril veins drop +1 mithril_trace on depletion\n" +
+            "       Iron veins cost -1 strike (combines with MiningPower)\n" +
+            "  L99  +25% drop chance\n" +
+            "       Divine vein drop rate +20%\n" +
+            "       All durability damage HALVED — every strike now ticks\n" +
+            "       0.5 durability (rounded), effectively doubling pickaxe\n" +
+            "       lifespan on top of L10's free-strike effect\n\n" +
+            "COSTS\n" +
+            "Mining XP costs only durability and turns — no Col, no\n" +
+            "stamina drain. Pickaxes SHATTER at 0 durability, so the L10\n" +
+            "every-other-free-strike and L99 dur-halved milestones aren't\n" +
+            "just nice-to-haves; they materially extend the per-pickaxe\n" +
+            "vein count.\n\n" +
+            "TIPS\n" +
+            "Power-level on Iron veins through F10-F25 — they're cheap to\n" +
+            "strike, the XP is steady, and L10's free-every-other-strike\n" +
+            "kicks in fast. Once L25 lands, swing on Mithril for the +1\n" +
+            "trace bonus + 20% bonus ore roll combo. L50 → L99 is the\n" +
+            "long curve; bank Divine strikes once F75+ access opens to\n" +
+            "make the climb manageable. The L99 dur-halved + L10 free-\n" +
+            "strike combo means a Mithril Pickaxe (200 dur) can chip\n" +
+            "DOZENS of Divine veins per repair cycle.\n\n" +
+            "SEE ALSO\n" +
+            "[Life Skills] · [Mining — Tool Slot & Ore Veins] · [Pickaxe Tiers] · [Refinement Ingots] · [Anvil — Repair, Enhance, Evolve, Refine]")
+        {
+            Tags = new[] { "life-skills", "mining", "progression" }
+        },
+
         new("Progression", "Titles & the Active Title Slot",
             "┌─ Progression\n" +
             "│ Topic: Titles & the Active Title Slot\n" +
@@ -1757,10 +1861,27 @@ public static class PlayerGuideContent
             "  L1-9    Novice / Apprentice\n" +
             "  L10-24  Journeyman grind\n" +
             "  L25     FORK 1 (crit vs parry focus)\n" +
-            "  L50     FORK 2 (dodge vs skill-damage focus)\n" +
+            "  L50     FORK 2 (dodge vs skill-damage focus,\n" +
+            "          weapon-specific for select types — see below)\n" +
             "  L75     FORK 3 (combo vs stun focus)\n" +
             "  L100    FORK 4 (capstone — per-weapon unique)\n" +
             "  L110    The Black Swordsman (cap, +120 ATK)\n\n" +
+            "BUNDLE 10 — WEAPON-SPECIFIC L50 FORKS:\n" +
+            "Three weapon types now offer flavored forks at the L50 mark\n" +
+            "instead of the generic dodge/skill-damage pick:\n" +
+            "  ONE-HANDED SWORD  Vorpal Edge (+3 CritRate)\n" +
+            "                    OR Saber Step (+1 AttackSpeed)\n" +
+            "  KATANA            Iaijutsu (+5% damage on first strike of\n" +
+            "                    every encounter — pairs with Drawing\n" +
+            "                    Stance flavor in canon)\n" +
+            "                    OR Drawing Stance (+2 CritRate)\n" +
+            "  BOW               Marksman Eye (+2 CritRate, +5 effective\n" +
+            "                    bow range overflow)\n" +
+            "                    OR Quickdraw (+1 AttackSpeed)\n" +
+            "The other 9 weapon types use the unchanged generic L50 fork.\n" +
+            "Choices use the new B13 StatType grants (CritRate, Attack-\n" +
+            "Speed) — they show up directly on the character sheet rather\n" +
+            "than as flavor-string riders.\n\n" +
             "COSTS\n" +
             "None. Fork choices cannot be respec'd without a New Game.\n\n" +
             "TIPS\n" +
@@ -2515,15 +2636,18 @@ public static class PlayerGuideContent
             "│ Topic: Run Modifiers\n" +
             "│ Floors: Applied globally at run start\n" +
             "│ Landmark: New Game modifier select screen\n" +
-            "│ Unlock: First F100 clear (testing: always on)\n" +
+            "│ Unlock: First F100 clear (the only route in)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Twelve stacked toggles that make a run harder in exchange for\n" +
             "a score multiplier (cap x10). Chosen at run start and frozen\n" +
-            "for the life of the save.\n\n" +
+            "for the life of the save. Run Modifiers unlock after your\n" +
+            "first F100 clear — before then the screen slot shows [locked].\n\n" +
             "USAGE\n" +
-            "Toggle on the New Game screen. Active modifiers show on the HUD\n" +
-            "and save into the slot summary.\n\n" +
+            "Finish a full F1-F100 run first; the modifier select screen is\n" +
+            "gated behind that victory. After the unlock, toggle modifiers\n" +
+            "on the New Game screen. Active modifiers show on the HUD and\n" +
+            "save into the slot summary.\n\n" +
             "EFFECTS\n" +
             "EASY (x1.15)\n" +
             "  Starless Night, Iron Rank\n" +
@@ -2535,11 +2659,15 @@ public static class PlayerGuideContent
             "NIGHTMARE (x1.75)\n" +
             "  Gleam Eyes Echo, Sword Art Only (pure Kirito run)\n\n" +
             "COSTS\n" +
-            "Each modifier bites differently: Iron Rank doubles satiety drain,\n" +
-            "Hollow Ingress doubles sword-skill unlock kills, Solo forbids\n" +
-            "recruits, Anti-Crystal Tyranny disables Crystal consumables.\n\n" +
+            "Pre-unlock cost: you can't use any modifier until you clear\n" +
+            "F100 once. Post-unlock, each modifier bites differently: Iron\n" +
+            "Rank doubles satiety drain, Hollow Ingress doubles sword-skill\n" +
+            "unlock kills, Solo forbids recruits, Anti-Crystal Tyranny\n" +
+            "disables Crystal consumables.\n\n" +
             "TIPS\n" +
-            "Stack compatible modifiers to approach the x10 multiplier cap.\n" +
+            "You will see [locked] in the menu slot until you complete your\n" +
+            "first F100 run — that clear is the ticket. After that, stack\n" +
+            "compatible modifiers to approach the x10 multiplier cap.\n" +
             "Starless Night pairs well with Darkness Blade builds. The\n" +
             "Laughing Coffin modifier synergizes with the LC guild path —\n" +
             "more LC mob spawns on one side, +20% BackstabDmg passive on\n" +
@@ -2698,6 +2826,448 @@ public static class PlayerGuideContent
             "[Floor Boss Roster — Canon Highlights] · [Floor Titles] · [Save System] · [Col Economy — How You Earn] · [Titles & the Active Title Slot]")
         {
             Tags = new[] { "world", "progression", "xp" }
+        },
+
+        new("World", "Terrain Hazards",
+            "┌─ World\n" +
+            "│ Topic: Terrain Hazards\n" +
+            "│ Tiles: Mud · Bog Water · Cracked Ice\n" +
+            "│ Biomes: Swamp fringe, ice edges\n" +
+            "│ Trigger: Step onto the tile\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Three walkable hazard tiles lurk in biome-native terrain: Mud\n" +
+            "(Swamp fringe — slows for one turn per step), Bog Water (Swamp\n" +
+            "pools — one Poison stack per step, Swim L1 to enter), and\n" +
+            "Cracked Ice (Ice edges — occasional slip, random Slow tick).\n" +
+            "None are lethal alone; most cost a turn and a stack of\n" +
+            "tolerance.\n\n" +
+            "USAGE\n" +
+            "Walk normally. The log line tells you when a tick triggers.\n" +
+            "Antidote clears Poison from Bog Water; Agi-built characters read\n" +
+            "Cracked Ice slips as wasted dodge rolls.\n\n" +
+            "EFFECTS\n" +
+            "  Mud           Slow 2 turns on entry, top-up guarded so\n" +
+            "                repeat steps do not stack beyond the cap\n" +
+            "  Bog Water     Poison on entry, stacks scale with floor/2\n" +
+            "                (F10 ticks 5 dmg, F40 ticks 20); Swim L1\n" +
+            "                required or you refuse to enter\n" +
+            "  Cracked Ice   25% slip chance per step; a slip applies\n" +
+            "                Stun 1 turn and wastes the move\n\n" +
+            "COSTS\n" +
+            "Mud eats one free action while you dig out. Bog Water bleeds\n" +
+            "HP over the next 3-5 turns per Poison stack. Cracked Ice\n" +
+            "slips waste the turn AND surrender your counter-attack\n" +
+            "window.\n\n" +
+            "TIPS\n" +
+            "Keep one Antidote per Swamp floor. A torch or Lantern reveals\n" +
+            "Bog Water pools before you wade in — listen for the\n" +
+            "\"something gurgles\" log line. On Ice floors, hug thick-drawn\n" +
+            "tiles; hairline-cracked glyphs are the slip risk.\n\n" +
+            "SEE ALSO\n" +
+            "[Biomes] · [Ambient World Animation] · [Status: Bleed & Poison] · [Status: Stun & Slow] · [Swimming (Life Skill)] · [Traps & Hazards]")
+        {
+            Tags = new[] { "world", "terrain", "hazard" }
+        },
+
+        new("World", "Prefab Rooms — What They Are",
+            "┌─ World\n" +
+            "│ Topic: Prefab Rooms — What They Are\n" +
+            "│ Categories: Shrines · Vaults · Trap Corridors\n" +
+            "│             Merchant Stalls · Boss Arenas · Vignettes\n" +
+            "│ Placement: Dropped into procedural floors\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Some rooms on a floor aren't generated tile-by-tile — they're\n" +
+            "hand-authored templates dropped into the map. Shrines, vaults,\n" +
+            "trap corridors, merchant stalls, and every boss arena are\n" +
+            "prefab rooms. You'll recognize them by their deliberate layout\n" +
+            "and signature decoration.\n\n" +
+            "USAGE\n" +
+            "Explore normally. Prefab rooms intermix with procedural ones.\n" +
+            "A prefab shrine in a Forest floor will look the same as that\n" +
+            "prefab shrine on any other Forest floor (modulo rotation and\n" +
+            "mirroring).\n\n" +
+            "EFFECTS\n" +
+            "Each prefab carries a biome tag and a role tag (shrine, vault,\n" +
+            "trap, merchant, boss, vignette). The generator picks prefabs\n" +
+            "whose biome matches the current floor, rotates them to fit an\n" +
+            "open room, and stamps them. Some prefabs flag MAX_PER_GAME=1\n" +
+            "so you will see them only once across a whole campaign.\n" +
+            "Template-specified mobs and items now spawn at placement:\n" +
+            "MONS slot glyphs (1-7) fill with floor-appropriate monsters\n" +
+            "and ITEM slots (a-d) drop ground items when the prefab lands.\n" +
+            "Earlier builds left these slots empty — they are now wired\n" +
+            "live, so a shrine with altar guards or a stall with stocked\n" +
+            "crates arrives fully populated.\n\n" +
+            "COSTS\n" +
+            "None passively. Interacting with a prefab's contents (altar,\n" +
+            "trap, vendor, chest) costs turns and resources per that\n" +
+            "feature's own rules.\n\n" +
+            "TIPS\n" +
+            "Scan every floor for the signature silhouettes: a clean\n" +
+            "rectangle of decoration flags a prefab. Search Mode clears\n" +
+            "hidden traps in trap-corridor prefabs. Once-per-game prefabs\n" +
+            "(secret shrines, deep vaults) are worth the detour.\n\n" +
+            "SEE ALSO\n" +
+            "[Biomes] · [Labyrinth System] · [Secret Shrines (T1 Chain Weapons)] · [Prefab Rooms — Shrine Vaults] · [Prefab Rooms — Trap Corridors] · [Prefab Rooms — Merchant Stalls] · [Prefab Rooms — Boss Arenas]")
+        {
+            Tags = new[] { "world", "terrain", "prefab" }
+        },
+
+        new("World", "Prefab Rooms — Shrine Vaults",
+            "┌─ World\n" +
+            "│ Topic: Prefab Rooms — Shrine Vaults\n" +
+            "│ Centerpiece: Altar tile (Shrine / Enchant / Secret)\n" +
+            "│ Biome variants: Frost, Forge, Grove, Dune, Void\n" +
+            "│ Interaction: Walk onto the altar\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Shrine vault prefabs center on an altar tile — often Shrine\n" +
+            "(temporary buff), EnchantShrine (one-shot enhance), or the\n" +
+            "floor-specific SecretShrine (chain weapon). Biome-themed\n" +
+            "decoration signals what kind: frost spikes in Ice, lava-forge\n" +
+            "anvils in Volcanic, bone rings in the Void.\n\n" +
+            "USAGE\n" +
+            "Walk onto the altar. Buff shrines trigger instantly; enchant\n" +
+            "shrines prompt before consuming a gear slot; secret shrines\n" +
+            "grant the chain weapon and vanish.\n\n" +
+            "EFFECTS\n" +
+            "  Shrine          Temporary biome-themed buff, ~50 turns\n" +
+            "  EnchantShrine   One-shot +1 enhance on chosen gear\n" +
+            "  SecretShrine    Tier-1 chain weapon (floor-locked list)\n" +
+            "  Altar (ritual)  Rare sacrifice variant — consumes an\n" +
+            "                  item, grants a stat-line bonus\n\n" +
+            "COSTS\n" +
+            "EnchantShrines burn one enhancement on one gear piece. Altar\n" +
+            "sacrifices consume an inventory slot permanently. Buff\n" +
+            "shrines are free.\n\n" +
+            "TIPS\n" +
+            "Save enchant shrines for a mid-tier piece you'll keep for 10+\n" +
+            "floors — the +1 doesn't refund when you upgrade. Secret\n" +
+            "shrines are MAX_PER_GAME; don't skip one because you're in a\n" +
+            "hurry. Altar sacrifices favor low-rarity items — don't feed a\n" +
+            "Legendary.\n\n" +
+            "SEE ALSO\n" +
+            "[Secret Shrines (T1 Chain Weapons)] · [Anvil — Repair, Enhance, Evolve, Refine] · [Weapon Evolution Chains] · [Prefab Rooms — What They Are] · [Lore, Journals & Enchant Shrines]")
+        {
+            Tags = new[] { "world", "terrain", "prefab", "shrine" }
+        },
+
+        new("World", "Prefab Rooms — Trap Corridors",
+            "┌─ World\n" +
+            "│ Topic: Prefab Rooms — Trap Corridors\n" +
+            "│ Shape: 3-tile-wide passage, 3-5 traps in sequence\n" +
+            "│ Trap mix: Spike · Poison · Teleport · Alarm\n" +
+            "│ Reveal: Search Mode (Dex check)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Some corridors are authored trap gauntlets: 3-5 sequential\n" +
+            "traps in a 3-tile-wide passage. Spike, Poison, Teleport, and\n" +
+            "Alarm each have their own prefab variants. Traps here are\n" +
+            "clustered by design — not the scattered randoms.\n\n" +
+            "USAGE\n" +
+            "Search Mode (Dex check) reveals hidden traps. Two thirds of\n" +
+            "trap-corridor traps are hidden; one third is telegraphed\n" +
+            "pressure plates you can see and avoid.\n\n" +
+            "EFFECTS\n" +
+            "  Spike       Flat physical damage on step\n" +
+            "  Poison      Poison stacks + small damage\n" +
+            "  Teleport    Relocates you elsewhere on the floor\n" +
+            "  Alarm       Aggros a wave of nearby monsters\n\n" +
+            "Corridor prefabs never mix Teleport with Alarm in the same\n" +
+            "run — the mixed aggro/relocate combo was too lethal.\n\n" +
+            "COSTS\n" +
+            "Each triggered trap costs a turn and burns HP or state. A\n" +
+            "failed Search Mode Dex check still costs the action.\n\n" +
+            "TIPS\n" +
+            "Run Search Mode the moment the corridor silhouette shows — a\n" +
+            "straight 3-wide hallway with no room branches is the tell.\n" +
+            "Extra Skill — Search boosts reveal odds. Keep a stack of\n" +
+            "Antidote on Poison-heavy floors.\n\n" +
+            "SEE ALSO\n" +
+            "[Traps & Hazards] · [Unique Skill: Extra Skill — Search] · [Mechanical Tiles] · [Prefab Rooms — What They Are] · [Status: Bleed & Poison]")
+        {
+            Tags = new[] { "world", "terrain", "prefab", "trap" }
+        },
+
+        new("World", "Prefab Rooms — Merchant Stalls",
+            "┌─ World\n" +
+            "│ Topic: Prefab Rooms — Merchant Stalls\n" +
+            "│ Occupant: Vendor NPC + generated stock\n" +
+            "│ Signals: Counter layout, BountyBoard, campfire\n" +
+            "│ Stock: Scales with floor; layout scales with biome\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Wilderness merchant prefabs house a Vendor NPC with generated\n" +
+            "stock. Look for counter-layouts, BountyBoards, and campfires —\n" +
+            "visual cues that a merchant is near. Stock depth follows\n" +
+            "floor; stall layout follows biome.\n\n" +
+            "USAGE\n" +
+            "Talk to the vendor. Prices match standard shop rules;\n" +
+            "investing stacks across visits, even if the stall is a\n" +
+            "one-off wilderness prefab.\n\n" +
+            "EFFECTS\n" +
+            "Vendor stock rolls from the floor-tier table, so a F20 stall\n" +
+            "shows F20-tier goods. A BountyBoard inside the stall grants\n" +
+            "the same quest options as a town board. Campfires inside the\n" +
+            "stall are rest-legal.\n\n" +
+            "COSTS\n" +
+            "Standard Col prices. Investing locks Col for a stock boost at\n" +
+            "the NEXT visit — not this one.\n\n" +
+            "TIPS\n" +
+            "Wilderness stalls are a chance to off-load heavy junk between\n" +
+            "towns. Rest at the campfire before the next pull — the\n" +
+            "stall-adjacent Safe Room flag is not guaranteed, so sleep\n" +
+            "while it's free. Invest early on floors you'll revisit.\n\n" +
+            "SEE ALSO\n" +
+            "[Vendors — Rotating Stock] · [Vendor Investing] · [Col Economy — How You Earn] · [Prefab Rooms — What They Are] · [Campfires — Rest & Sleep XP]")
+        {
+            Tags = new[] { "world", "terrain", "prefab", "merchant" }
+        },
+
+        new("World", "Prefab Rooms — Boss Arenas",
+            "┌─ World\n" +
+            "│ Topic: Prefab Rooms — Boss Arenas\n" +
+            "│ Canon bosses: Unique hand-authored arena\n" +
+            "│ Non-canon: One of three generic sizes\n" +
+            "│ Entry: Via Labyrinth Entrance stairs\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Every canon-named boss fights you in a unique hand-authored\n" +
+            "arena keyed to their theme: Illfang in a Kobold Lord throne\n" +
+            "room, Wythege in a flooded colonnade, Skull Reaper in a bone\n" +
+            "dungeon. Non-canon floors use one of three generic arena\n" +
+            "sizes (small 17×13, medium 25×19, large 33×25).\n\n" +
+            "USAGE\n" +
+            "Reached via the Labyrinth Entrance. Arena layout is\n" +
+            "deterministic per boss — repeat runs see the same\n" +
+            "architecture; only boss rolls (HP, ATK mods) vary with run\n" +
+            "modifiers.\n\n" +
+            "EFFECTS\n" +
+            "Canon arenas may include keyed features: Wythege's colonnade\n" +
+            "has Bog Water pools, Skull Reaper's hall has bone spike\n" +
+            "clusters, Gleam Eyes' lair has lava cracks. These are part of\n" +
+            "the arena, not the boss stats, so prep accordingly.\n\n" +
+            "COSTS\n" +
+            "Standard boss-fight stakes. Ascending returns you to the\n" +
+            "post-boss overworld; losing drops you back at the last save.\n\n" +
+            "TIPS\n" +
+            "Memorize the arena after a scouting death — repeat layouts\n" +
+            "mean the second attempt is a different fight. On canon\n" +
+            "floors, pack the themed counter (Antidote for Wythege, fire\n" +
+            "resist for Gleam Eyes). Generic-arena fights lean on boss\n" +
+            "stats alone; run modifiers matter more than terrain.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor Boss Roster — Canon Highlights] · [Labyrinth System] · [Floor Canon] · [Prefab Rooms — What They Are] · [Ascending a Floor]")
+        {
+            Tags = new[] { "world", "terrain", "prefab", "boss" }
+        },
+
+        new("World", "Biome Feel",
+            "┌─ World\n" +
+            "│ Topic: Biome Feel\n" +
+            "│ Layers: Tile palette · global tint · entry text\n" +
+            "│         · ambient particles · tree glyph variants\n" +
+            "│ Goal: Read a biome in five seconds, no tag peek\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A floor's biome shows through four layered cues: the base\n" +
+            "tile palette, a global color tint that washes visible tiles,\n" +
+            "entry-line flavor text on arrival, and ambient particles\n" +
+            "that drift across walkable space. Put together, you should\n" +
+            "read a biome in five seconds without looking at any tag.\n\n" +
+            "USAGE\n" +
+            "Automatic on floor entry. Use the Particles setting to tune\n" +
+            "ambient density, or Off to drop the overlay entirely.\n\n" +
+            "EFFECTS\n" +
+            "  Forest     Green tint, drifting leaves, bushy tree glyphs\n" +
+            "  Swamp      Sickly-green tint, gnat motes, drooping glyphs\n" +
+            "  Desert     Amber tint, sand grains, scrubby glyphs\n" +
+            "  Volcanic   Red tint, ember sparks, charred glyphs\n" +
+            "  Ice        Pale-blue tint, snowflakes, frost-rimed glyphs\n" +
+            "  Aquatic    Blue tint, bubble motes, kelp glyphs\n" +
+            "  Ruins      Grey tint, dust, broken-pillar silhouettes\n" +
+            "  Darkness   Near-black, no ambient, eye-glint glyphs\n" +
+            "  Void       Purple tint, reality-warp motes, glitch glyphs\n\n" +
+            "COSTS\n" +
+            "Ambient particles cost a small amount of render time. Turning\n" +
+            "Particles down to Low or Off is the fix on slow terminals.\n\n" +
+            "TIPS\n" +
+            "Trust the tint before the tag. If the floor LOOKS like\n" +
+            "Swamp, pack Antidote even if you haven't seen a hazard yet.\n" +
+            "The entry-line flavor text is lore — skim it once per new\n" +
+            "biome, then trust your eyes.\n\n" +
+            "SEE ALSO\n" +
+            "[Biomes] · [Ambient World Animation] · [Weather] · [Labyrinth System] · [Terrain Hazards]")
+        {
+            Tags = new[] { "world", "terrain", "biome" }
+        },
+
+        new("World", "Feature Quotas",
+            "┌─ World\n" +
+            "│ Topic: Feature Quotas\n" +
+            "│ Floor guarantees: 1+ shrine, 1+ chest, 1+ lore\n" +
+            "│ Biome extras: Anvils (Urban), vents (Volcanic/Swamp)\n" +
+            "│ Caps: Max counts prevent noise-y stacking\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Every floor guarantees at least one shrine, one chest, and\n" +
+            "one piece of lore (LoreStone or Journal). Biome-specific\n" +
+            "quotas may also guarantee anvils (Urban), gas vents\n" +
+            "(Volcanic/Swamp), or pillars (Ruins). Maximums cap noise-y\n" +
+            "scatter from stacking too thick.\n\n" +
+            "USAGE\n" +
+            "Transparent. Walk the floor; you'll meet quotas without\n" +
+            "trying. Missing a guarantee after exploration >= 80% is a\n" +
+            "bug — report it.\n\n" +
+            "EFFECTS\n" +
+            "  Shrine          min 1 per floor, max 3\n" +
+            "  Chest           min 1 per floor, max 6 (scales w/ floor)\n" +
+            "  LoreStone       min 1 of {LoreStone, Journal} per floor\n" +
+            "  Anvil           guaranteed on Urban / Ruins floors\n" +
+            "  Vent            guaranteed on Volcanic / Swamp floors\n" +
+            "  Trap cluster    quota scales with floor tier\n\n" +
+            "COSTS\n" +
+            "None to the player. Quotas are a generator-side contract.\n\n" +
+            "TIPS\n" +
+            "If you cleared a floor and never saw a shrine, check hidden\n" +
+            "rooms — Search Mode can reveal sealed prefab vaults. The\n" +
+            "lore guarantee is easy to miss: a single Journal behind a\n" +
+            "trapped corridor counts.\n\n" +
+            "SEE ALSO\n" +
+            "[Biomes] · [Lore, Journals & Enchant Shrines] · [Traps & Hazards] · [Prefab Rooms — What They Are] · [Ascending a Floor]")
+        {
+            Tags = new[] { "world", "terrain", "meta" }
+        },
+
+        new("World", "Floor Canon",
+            "┌─ World\n" +
+            "│ Topic: Floor Canon\n" +
+            "│ Sources: Anime · LN · Progressive · Hollow Fragment\n" +
+            "│          · Integral Factor · Fractured Daydream\n" +
+            "│ Canon floors: Get unique arenas + town overlays\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Aincrad's 100 floors trace canon sources (anime, LN,\n" +
+            "Progressive, Hollow Fragment, Integral Factor). Canon-named\n" +
+            "bosses get unique arena prefabs; canon towns get unique\n" +
+            "F1-style overlays. Non-canon floors are era-themed\n" +
+            "interpolations.\n\n" +
+            "USAGE\n" +
+            "Read FLOOR_CANON.md for the full chart. F1 Town of\n" +
+            "Beginnings, F22 Coral Village, F48 Lindarth, F55 Granzam,\n" +
+            "F100 Ruby Palace all have full canon treatment.\n\n" +
+            "EFFECTS\n" +
+            "  Canon boss floors    Named boss, unique arena prefab\n" +
+            "  Canon town floors    Hand-authored settlement overlay\n" +
+            "  Era-themed floors    Canon biome + mob table, generic\n" +
+            "                       arena and town prefabs\n" +
+            "  Fully procedural     No canon hook; random biome roll\n\n" +
+            "Roughly 16 of 100 floors have fully canon boss arenas;\n" +
+            "another 6-8 have canon town overlays. The rest draw from\n" +
+            "era-appropriate biome and mob pools.\n\n" +
+            "COSTS\n" +
+            "None. Canon content is additive — never gates progress.\n\n" +
+            "TIPS\n" +
+            "Watch the ascend banner: a canon boss title means you're\n" +
+            "stepping into a unique arena with themed terrain. Canon\n" +
+            "towns (F1, F22, F48, F55, F100) are the best stock-up\n" +
+            "points — deeper vendor tables than generic settlements.\n\n" +
+            "SEE ALSO\n" +
+            "[Aincrad's 100 Floors & Eras] · [Lindarth Town (F48)] · [Floor Boss Roster — Canon Highlights] · [Prefab Rooms — Boss Arenas] · [Monument of Swordsmen (F1)]")
+        {
+            Tags = new[] { "world", "terrain", "canon", "boss" }
+        },
+
+        new("World", "Narrative Vignettes",
+            "┌─ World\n" +
+            "│ Topic: Narrative Vignettes\n" +
+            "│ Size: 3×3 to 5×5 prefab clusters\n" +
+            "│ Placement: Wilderness, off main paths\n" +
+            "│ Reward: LoreStone or Journal (no combat)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Small 3×3 to 5×5 prefabs scattered across wilderness tell\n" +
+            "micro-stories: a toppled cart with a spilled journal, a\n" +
+            "hermit's shack with a cold campfire, a grave circle ringed\n" +
+            "by pillars. They're ambient worldbuilding — no mandatory\n" +
+            "interaction.\n\n" +
+            "USAGE\n" +
+            "Walk the wilderness. Vignettes appear as unusual clusters\n" +
+            "off main paths. Loot in them is usually a LoreStone or\n" +
+            "Journal, not combat rewards.\n\n" +
+            "EFFECTS\n" +
+            "  Toppled cart      Spilled Journal + 1-2 low-tier items\n" +
+            "  Hermit's shack    Cold campfire (re-lightable), 1 Journal\n" +
+            "  Grave circle      Ring of Pillars, 1 LoreStone center\n" +
+            "  Traveler rest     Bedroll + ash pile + 1 note\n" +
+            "  Wreckage          Broken gear + 1 LoreStone\n\n" +
+            "Vignettes do NOT count toward Feature Quotas — they're a\n" +
+            "bonus layer on top of the guaranteed lore count.\n\n" +
+            "COSTS\n" +
+            "None. No traps, no aggro, no turn penalties beyond the walk.\n\n" +
+            "TIPS\n" +
+            "Vignettes are a cheap exploration-percent boost on floors\n" +
+            "where the 90% threshold matters. Re-light the hermit's\n" +
+            "campfire for a safe rest spot far from town.\n\n" +
+            "SEE ALSO\n" +
+            "[Lore, Journals & Enchant Shrines] · [Day/Night Cycle] · [Biomes] · [Prefab Rooms — What They Are] · [Campfires — Rest & Sleep XP]")
+        {
+            Tags = new[] { "world", "terrain", "flavor" }
+        },
+
+        new("World", "Pocket Biomes",
+            "┌─ World\n" +
+            "│ Topic: Pocket Biomes\n" +
+            "│ Size: 10-30 tiles, irregular patch\n" +
+            "│ Floors: Band-edge floors (F2, F5, F10, F15, ...)\n" +
+            "│ Trigger: Walk onto the palette swap\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "On the last floor of each biome band, 1-2 small pocket biomes\n" +
+            "intrude into the dominant terrain. Expect a frozen pond on a\n" +
+            "Grassland floor, an overgrown Forest patch cutting through\n" +
+            "Ruins, or a lava vent near Desert dunes. Pockets are always\n" +
+            "climatically-close to the host biome — you will not find Ice\n" +
+            "in a Forest — and they exist only on band-edge floors.\n\n" +
+            "USAGE\n" +
+            "Walk the edges of the floor. Spot the palette swap: a patch of\n" +
+            "sand in your grassland is a Desert pocket, a frozen pond on a\n" +
+            "grass field is an Ice pocket. Borders blend with noise-\n" +
+            "perturbed transitions so the seam is organic rather than\n" +
+            "rectangular. Pocket tiles use the full intruding-biome tileset.\n\n" +
+            "EFFECTS\n" +
+            "  Tileset      Pocket tiles render from the intruding biome\n" +
+            "               (ice, dunes, forest canopy, lava) while the\n" +
+            "               rest of the floor keeps the host palette.\n" +
+            "  Hazards      Pocket hazards apply — a volcanic pocket on a\n" +
+            "               Desert floor still burns; an Ice pocket on a\n" +
+            "               Grassland floor still slips. Hazards scale to\n" +
+            "               the current floor, not the pocket biome's\n" +
+            "               canonical band.\n" +
+            "  Enemies/Loot Follow the dominant floor biome, not the pocket\n" +
+            "               — mob spawns and drop pools do not swap inside\n" +
+            "               the patch.\n" +
+            "  Placement    1-2 pockets per eligible floor; interior band\n" +
+            "               floors (e.g. F3, F4 in a Grassland band) have\n" +
+            "               none.\n\n" +
+            "COSTS\n" +
+            "None directly. Pockets add variety without penalty — you pay\n" +
+            "only the normal hazard cost if you step into one (a slip, a\n" +
+            "burn tick, a poison stack).\n\n" +
+            "TIPS\n" +
+            "Band-edge floors (F2, F5, F10, F15, F25, F35, F50, F75, F100)\n" +
+            "are the only ones that roll pockets; scout them deliberately\n" +
+            "for unique terrain and hazard mixes. An Ice pocket is a free\n" +
+            "cold-biome test chamber on a warm floor — useful for learning\n" +
+            "slip timing before the next band forces the lesson. Pack one\n" +
+            "hazard counter (Antidote for Swamp pockets, Heat Resist for\n" +
+            "Volcanic) when ascending into a band edge.\n\n" +
+            "SEE ALSO\n" +
+            "[Biomes] · [Biome Feel] · [Feature Quotas] · [Floor Canon] · [Terrain Hazards] · [Ascending a Floor]")
+        {
+            Tags = new[] { "world", "terrain", "biome", "pocket" }
         },
 
         // ── 4. Items & Weapons ──
@@ -3438,15 +4008,22 @@ public static class PlayerGuideContent
             "│ Source: Character sheet\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Ten equipment slots cover weapon, armor, accessories, and\n" +
-            "off-hand. OffHand rules depend on main-hand choice and Dual\n" +
-            "Blades unlock state.\n\n" +
+            "Eleven equipment slots cover weapon, armor, accessories, off-\n" +
+            "hand, and the new Tool slot. OffHand rules depend on main-hand\n" +
+            "choice and Dual Blades unlock state.\n\n" +
             "USAGE\n" +
             "Equip from inventory. Rings can stack two; necklaces and\n" +
-            "bracelets are one each.\n\n" +
+            "bracelets are one each. The Tool slot is single-occupancy and\n" +
+            "currently accepts pickaxes.\n\n" +
             "EFFECTS\n" +
             "Slots: Weapon, Head, Chest, Legs, Feet, RightRing, LeftRing,\n" +
-            "Bracelet, Necklace, OffHand.\n" +
+            "Bracelet, Necklace, OffHand, Tool.\n" +
+            "TOOL: Holds non-combat utility gear. Bundle 10 ships pickaxes\n" +
+            "(Wooden / Iron / Mithril) — equipping one enables the bump-\n" +
+            "action mining swing on ore-vein tiles. Tool slot is independent\n" +
+            "of OffHand, so a sword + shield + pickaxe loadout is legal\n" +
+            "(unlike weapon-vs-shield, the Tool slot never trades against\n" +
+            "your combat slots). Future bundles may add other tool types.\n" +
             "SHIELDS (OffHand): Wooden 10% block, Iron 18% block.\n" +
             "Successful block fully negates the hit and degrades the shield.\n" +
             "DUAL WIELD: 1H Swords become legal in OffHand after unlocking\n" +
@@ -3467,9 +4044,129 @@ public static class PlayerGuideContent
             "canon weapon early, you can start dual-wielding before the\n" +
             "Dual Blades grind completes.\n\n" +
             "SEE ALSO\n" +
-            "[Gear Compare] · [Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System] · [Accessories]")
+            "[Gear Compare] · [Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System] · [Accessories] · [Mining — Tool Slot & Ore Veins]")
         {
             Tags = new[] { "equipment", "weapons", "refinement" }
+        },
+
+        new("Items", "Mining — Tool Slot & Ore Veins",
+            "┌─ Items\n" +
+            "│ Topic: Mining — Tool Slot & Ore Veins\n" +
+            "│ Slot: Tool (new — equip a Pickaxe)\n" +
+            "│ Tiles: OreVeinIron · OreVeinMithril · OreVeinDivine\n" +
+            "│ Action: Bump a vein with a Pickaxe equipped\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Mining is Bundle 10's headline non-combat loop. Equip a\n" +
+            "Pickaxe in the new Tool slot, walk up to an ore vein on the\n" +
+            "map, and bump into it the way you'd bump an enemy — your\n" +
+            "swing strikes the vein, costs 1 turn, ticks 1 durability off\n" +
+            "the pickaxe, and chips down the vein's strike counter. When\n" +
+            "the vein hits 0 strikes it converts to a walkable Depleted\n" +
+            "tile and drops its loot stack on you.\n\n" +
+            "USAGE\n" +
+            "1. Find a Pickaxe (vendor in Town of Beginnings sells the\n" +
+            "   Wooden tier; harder tiers gate by floor).\n" +
+            "2. Equip it via Inventory → Tool slot.\n" +
+            "3. Explore until you spot an ore glyph on the map:\n" +
+            "      ◊  OreVeinIron      gray (RGB ~170,170,180)\n" +
+            "      ◊  OreVeinMithril   pale blue (RGB ~190,210,255)\n" +
+            "      ◈  OreVeinDivine    pulsing gold (RGB ~255,200,80)\n" +
+            "4. Move into the vein tile. Each bump = 1 strike, 1 turn,\n" +
+            "   1 durability tick on the pickaxe.\n" +
+            "5. Keep striking until the vein depletes — it switches to a\n" +
+            "   '·' Depleted tile (walkable) and drops the ore stack.\n\n" +
+            "EFFECTS\n" +
+            "STRIKES TO DEPLETE (subtracted by pickaxe MiningPower, min 1):\n" +
+            "  Iron     3 strikes\n" +
+            "  Mithril  5 strikes\n" +
+            "  Divine   8 strikes\n" +
+            "Higher-tier pickaxes (MiningPower > 0) shorten these counts.\n" +
+            "DROPS ON DEPLETION:\n" +
+            "  Iron     iron_ingot + iron_ore\n" +
+            "  Mithril  mithril_ingot + mithril_trace\n" +
+            "  Divine   divine_fragment + (rare) primordial_shard\n" +
+            "BIOME DENSITY (relative — generation pass weights veins by\n" +
+            "biome richness):\n" +
+            "  Volcanic + Void              richest tiles\n" +
+            "  Plains / Forest / Cave       moderate\n" +
+            "  Aquatic + Swamp              barren — rivers and bogs hide\n" +
+            "                               little ore\n" +
+            "FLOOR EXCLUSIONS:\n" +
+            "  F1 (Town of Beginnings)      no veins — civic floor\n" +
+            "  F100 (Ruby Palace)           no veins — final boss arena\n\n" +
+            "COSTS\n" +
+            "Each strike spends 1 durability. A pickaxe at 0 durability\n" +
+            "SHATTERS — the item is destroyed, not just disabled, and\n" +
+            "you lose the Tool slot until you equip another. On long\n" +
+            "expeditions to Mithril or Divine bands, carry a SPARE\n" +
+            "pickaxe — chipping a Divine vein with 8 strikes costs at\n" +
+            "minimum 8 of the 30 durability on a Wooden Pickaxe, so\n" +
+            "rookie-tier kit doesn't survive a Divine farming run.\n\n" +
+            "TIPS\n" +
+            "Veins cluster — generation places them in the same room or\n" +
+            "the same lake-edge corridor as part of the same pass. If\n" +
+            "you spot one, sweep the surrounding 5x5 before pressing on.\n" +
+            "Iron veins are the fastest XP-per-durability ratio for\n" +
+            "leveling Mining; Divine veins are the highest XP per strike\n" +
+            "but eat durability and gate behind F75+ access. The Tool\n" +
+            "slot does NOT compete with combat slots — keep your sword,\n" +
+            "shield, AND a pickaxe equipped at all times once you have\n" +
+            "the Tool slot unlocked.\n\n" +
+            "SEE ALSO\n" +
+            "[Pickaxe Tiers] · [Mining (Life Skill)] · [Equipment Slots & Dual Wield] · [Biomes] · [Refinement Ingots]")
+        {
+            Tags = new[] { "items", "mining", "tool", "life-skills" }
+        },
+
+        new("Items", "Pickaxe Tiers",
+            "┌─ Items\n" +
+            "│ Topic: Pickaxe Tiers\n" +
+            "│ Slot: Tool\n" +
+            "│ Tiers: Wooden · Iron · Mithril (B10 ship) — more in future\n" +
+            "│ Source: Town of Beginnings vendor + floor-gated shops\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Pickaxes are Tool-slot equipment that enable mining. Bundle\n" +
+            "10 ships three tiers, gated by floor and Col, each with\n" +
+            "different MaxDurability and MiningPower (the strike-cost\n" +
+            "reducer). Higher tiers chip veins faster AND last longer\n" +
+            "before shattering.\n\n" +
+            "USAGE\n" +
+            "Buy from the Town of Beginnings vendor (Wooden, no level\n" +
+            "gate) or from floor-gated shops at F10+ (Iron) and F50+\n" +
+            "(Mithril). Equip via Inventory → Tool slot. Repair at the\n" +
+            "Anvil like any equipment piece — pickaxes follow normal\n" +
+            "durability/repair rules.\n\n" +
+            "EFFECTS\n" +
+            "  TIER       FLOOR   COL    MAXDUR   MININGPOWER   NOTE\n" +
+            "  Wooden     F1      80     30       0             Starter — buy in TOB\n" +
+            "  Iron       F10+    320    80       1             -1 strike per vein, min 1\n" +
+            "  Mithril    F50+    1800   200      2             -2 strikes, +10% OreQuality\n" +
+            "MININGPOWER applies as: actual_strikes = max(1, base_strikes\n" +
+            "- MiningPower). Iron Pickaxe vs an Iron vein (3 base) needs\n" +
+            "2 strikes; Mithril Pickaxe vs an Iron vein needs 1 strike.\n" +
+            "Mithril's +10% OreQualityBonus rolls higher rarity tiers\n" +
+            "of the dropped ingots — silently improves Anvil refinement\n" +
+            "yield over the run.\n\n" +
+            "COSTS\n" +
+            "Pickaxes SHATTER at 0 durability — destroyed, not disabled.\n" +
+            "A Wooden Pickaxe lasts 30 strikes (≈10 Iron veins or 6\n" +
+            "Mithril, less for Divine). Iron lasts 80, Mithril 200. Plan\n" +
+            "your Col reserve so a long Mithril/Divine farming push\n" +
+            "doesn't strand you toolless mid-floor.\n\n" +
+            "TIPS\n" +
+            "Buy the Iron Pickaxe at F10 — the strike-cost reduction\n" +
+            "alone pays back the 320 Col within ~5 veins, and the durability\n" +
+            "tripling means you stop respawning Wooden replacements every\n" +
+            "shop visit. Mithril is the late-game investment — its +10%\n" +
+            "OreQuality compounds across the F50-F99 push, where you'll\n" +
+            "be chipping Mithril and Divine veins by the dozen for end-\n" +
+            "game refinement ingots.\n\n" +
+            "SEE ALSO\n" +
+            "[Mining — Tool Slot & Ore Veins] · [Mining (Life Skill)] · [Anvil — Repair, Enhance, Evolve, Refine] · [Refinement Ingots]")
+        {
+            Tags = new[] { "items", "mining", "tool", "weapons" }
         },
 
         new("Items", "Gear Compare",
@@ -4236,6 +4933,83 @@ public static class PlayerGuideContent
             "[Named Legendary Highlights] · [Field Bosses — Guaranteed Drops] · [Avatar Weapons & Last-Attack Bonus] · [Material Tiers (Baseline)]")
         {
             Tags = new[] { "corruption-stone", "corrupted-weapon", "weapons" }
+        },
+
+        new("Items", "Advanced Weapon Effects",
+            "┌─ Items\n" +
+            "│ Topic: Advanced Weapon Effects\n" +
+            "│ Tier: T3+ rarity weapons\n" +
+            "│ Weapon type: Any — tag string on SpecialEffect\n" +
+            "│ Source: Tooltip SpecialEffect line\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Several weapon SpecialEffect strings now fire live mechanics\n" +
+            "beyond the flavor text. Weapons at T3+ rarity carry tags like\n" +
+            "DragonSlayer, CritImmune, TrueStrike, Barrier, and friends —\n" +
+            "each reads \"Name+N\" where N is the magnitude and the mechanic\n" +
+            "fires automatically in combat. These used to be cosmetic; they\n" +
+            "are now wired.\n\n" +
+            "USAGE\n" +
+            "Equip a weapon, open Inventory, and read the SpecialEffect\n" +
+            "line in the tooltip. Effects apply while the weapon is held —\n" +
+            "no toggle, no activation. Multiple equipped pieces (main-hand,\n" +
+            "off-hand, accessories with effect strings) stack their tags.\n\n" +
+            "EFFECTS\n" +
+            "  HPRegen+N         Heal N HP on the passive-regen tick\n" +
+            "  SPRegen+N         Restore N SP on the passive-regen tick\n" +
+            "  CritImmune+N      N% chance to downgrade incoming crits\n" +
+            "  TrueStrike+N      N% chance to bypass evade/block per swing\n" +
+            "  HolyDamage+N      +N damage vs undead/demon-tagged mobs\n" +
+            "  Barrier+N         Absorb up to N damage before HP; refreshes\n" +
+            "                    per floor\n" +
+            "  EvadeRegen+N      HP regen on every successful dodge\n" +
+            "  DragonSlayer+N    +N damage vs dragon-tagged mobs (Asterius,\n" +
+            "                    X'rphan, Frost Dragon, and similar)\n" +
+            "  ExecuteThreshold+N 2x damage vs targets below N% HP\n" +
+            "  Uninterruptible+N N% chance to ignore stagger/stun on self\n" +
+            "  BlindOnHit+N      N% on-hit Blind proc\n" +
+            "  Stun+N            N% on-hit Stun proc\n" +
+            "  Poison+N          N% on-hit Poison proc\n" +
+            "  SlowOnHit+N       N% on-hit Slow proc — target acts every\n" +
+            "                    other turn for 3 turns (Bundle 10 wired;\n" +
+            "                    Guilty Thorn's SlowOnHit+30 is the canon\n" +
+            "                    test bench). Mob-ID parity desyncs the\n" +
+            "                    skip-turn cadence, so two slowed mobs in\n" +
+            "                    the same pull won't act on the same frame.\n" +
+            "  Cleave+N          Multi-target adjacent damage, +N magnitude\n" +
+            "  ArmorPierce+N     Ignore N armor on the struck target\n" +
+            "  PiercingShot+N    Ranged variant — pierces N armor/ranks\n" +
+            "  FrostDamage+N     Cold-element rider on each hit\n" +
+            "  ThrustDmg+N       Modifier on thrust-class sword skills\n" +
+            "  NightDamage+N     +N damage in Dark biome / Night phase\n" +
+            "  Invisibility+N    Exotic — brief stealth window on trigger\n" +
+            "  Lunacy+N          Exotic — chance-based erratic proc suite\n\n" +
+            "BUNDLE 10 — CROSS-SLOT PARSING:\n" +
+            "SpecialEffect strings now parse on Armor and Shield as well as\n" +
+            "Weapon (previously weapon-only). Defensive additive keys SUM\n" +
+            "across every equipped slot: BlockChance, ParryChance,\n" +
+            "EvadeRegen, HPRegen, SPRegen all add together — a HPRegen+2\n" +
+            "ring + Yasha Kavacha's HPRegen+3 shield + a HPRegen+1 chest\n" +
+            "ticks for +6 HP per regen pulse. ON-HIT procs (Bleed, Stun,\n" +
+            "Slow, Poison, Blind, Lunacy) remain weapon-only by design —\n" +
+            "they're swing-themed in canon, and armor-side on-hit procs\n" +
+            "would be off-flavor for the death-game tone.\n\n" +
+            "COSTS\n" +
+            "None. SpecialEffects are passive on the equipped weapon and\n" +
+            "do not consume durability, SP, or stamina beyond the normal\n" +
+            "swing cost.\n\n" +
+            "TIPS\n" +
+            "Always check the SpecialEffect line before selling a T3+ drop\n" +
+            "— an unassuming weapon with Barrier+40 is a tank anchor.\n" +
+            "Stack complementary tags: Barrier + HPRegen turns a mace into\n" +
+            "a wall, TrueStrike + Poison guarantees DoT uptime, DragonSlayer\n" +
+            "is dead weight outside dragon-tagged floors but carries the\n" +
+            "fight on F48 (Frost Dragon) and F100 approaches. NightDamage\n" +
+            "weapons pair with Darkness Blade for compound Dark-biome bursts.\n\n" +
+            "SEE ALSO\n" +
+            "[Damage Formula] · [Critical Hits] · [Status: Bleed & Poison] · [Status: Stun & Slow] · [Weapon Proficiency Ranks] · [Weapon Types Overview] · [Floor Boss Roster — Canon Highlights]")
+        {
+            Tags = new[] { "items", "weapon", "combat", "special-effect" }
         },
 
         // ── 5. Quests, NPCs & Economy ──
@@ -5452,7 +6226,10 @@ public static class PlayerGuideContent
             "  K                 Kill stats\n" +
             "  Y                 Bestiary (monster compendium)\n" +
             "  B                 Player Guide (this dialog)\n" +
-            "  H                 Quick help overlay\n" +
+            "  H                 Quick help overlay (scrollable —\n" +
+            "                    arrows / PgUp / PgDn navigate sections;\n" +
+            "                    new sections cover Mining, Tool slot,\n" +
+            "                    and Life Skills)\n" +
             "  P (in Quest Log)  Pin / unpin the selected quest\n" +
             "  Shift+S           Toggle status-tray verbose labels\n" +
             "  PageUp / PageDown Scroll the combat log\n" +
@@ -5479,6 +6256,792 @@ public static class PlayerGuideContent
             "[Pause Menu (Esc)] · [Save System] · [Sprint & Stealth Move] · [Look Mode & Counter Stance] · [Quick-Use Slots (1-5)] · [Quickbar & Consumables] · [Sword Skills — Unlock & Use] · [Bestiary — Monster Compendium] · [Damage & Toast Feedback] · [Gear Compare] · [Combat Visual Feedback] · [Damage Breakdown Format] · [Ambient World Animation] · [Categorized Combat Log] · [Quest Tracker] · [Status Icon Tray] · [Particle Effects] · [Damage Type Tags]")
         {
             Tags = new[] { "controls", "keybindings", "ui" }
+        },
+
+        new("Items", "Divine Weapons — Roster & Acquisition",
+            "┌─ Items\n" +
+            "│ Topic: Divine Weapons — Roster & Acquisition\n" +
+            "│ Tier: Divine (17 total — peak rarity)\n" +
+            "│ Cap: One Divine per run (hard lock)\n" +
+            "│ Sources: Floor bosses · Quests · Hidden vault · T4 craft\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Seventeen Divine weapons span the 13 weapon classes. Every\n" +
+            "Divine is hand-placed — never rolled on a random chest. Across\n" +
+            "a single run you may obtain AT MOST one Divine; after the first\n" +
+            "enters inventory, remaining Divine drops substitute to a banded\n" +
+            "Legendary fallback until next run. This cap preserves the\n" +
+            "\"chosen blade\" flavor and stops late-run Divine stacking.\n\n" +
+            "USAGE\n" +
+            "Clear a listed floor boss, complete the named quest, find the\n" +
+            "hidden Conflagrant Vault, or finish the T4 evolution craft.\n" +
+            "Divines equip like any weapon — unbreakable, no durability\n" +
+            "tick, no Anvil repair cost. The drop logs a BrightRed line\n" +
+            "with a diamond glyph and triggers the Divine Obtain Banner.\n\n" +
+            "EFFECTS\n" +
+            "FLOOR-BOSS GUARANTEED DROPS (10 Divines, F75-F98):\n" +
+            "  F75  Masamune              Skull Reaper\n" +
+            "  F82  Hexagramme             Legacy of Grand\n" +
+            "  F84  Caladbolg              Queen of Ant\n" +
+            "  F86  Tyrfing                King of Skeleton\n" +
+            "  F87  Iron Maiden Dagger     Radiance Eater\n" +
+            "  F88  Ouroboros              Rebellious Eyes\n" +
+            "  F91  Mjolnir                Seraphiel the Fallen\n" +
+            "  F93  Ascalon                Ragnarok the Final Beast\n" +
+            "  F97  Time Piercing Sword    Cardinal the System Error\n" +
+            "  F98  Black Lily Sword       Incarnation of the Radius\n" +
+            "PRE-EXISTING FLOOR-BOSS DROPS (2):\n" +
+            "  F20  Blue Rose Sword        Absolut the Winter Monarch\n" +
+            "  F99  Night Sky Sword        Heathcliff's Shadow\n" +
+            "QUEST REWARDS (4):\n" +
+            "  F50  Heaven-Piercing Blade  Sister Azariya quest\n" +
+            "  F65  Fragrant Olive Sword   Selka the Novice quest\n" +
+            "  F78  Starlight Banner       Dorothy quest\n" +
+            "  F89  Satanachia             Scholar Vesper quest\n" +
+            "HIDDEN VAULT (1):\n" +
+            "  F77-F79  Conflagrant Flame Bow  Conflagrant Vault prefab\n" +
+            "         (Volcanic/Ruins/Dark biomes, once-per-game)\n\n" +
+            "COSTS\n" +
+            "The one-per-run cap is absolute. A Divine entering inventory\n" +
+            "(pickup, quest turn-in, vault chest, T4 craft) sets a run-wide\n" +
+            "flag that survives save/load. Subsequent floor bosses with a\n" +
+            "Divine in their guaranteed slot drop a banded Legendary of the\n" +
+            "appropriate tier instead. The flag resets on new run only.\n\n" +
+            "TIPS\n" +
+            "Plan which Divine you want BEFORE F75 — you only get one.\n" +
+            "Canon-minded Katana mains sprint for F75 Masamune; 2H mains\n" +
+            "hold for F93 Ascalon's dragon-slayer flavor; rapier duelists\n" +
+            "can grab Hexagramme at F82 or hold for F50 Heaven-Piercing\n" +
+            "Blade via the Sister Azariya chain. The Conflagrant Vault is\n" +
+            "the only bow Divine outside T4 craft — prioritize if Archery\n" +
+            "is your main weapon track. F98 Black Lily Sword and F97 Time\n" +
+            "Piercing Sword are the mythic-tier pair; skip them only if\n" +
+            "you want a specific thematic Divine instead. Sister Selka on\n" +
+            "F65 can awaken Divines up to Lv3 for +45% base damage — see\n" +
+            "entry 'Divine Awakening'.\n\n" +
+            "SEE ALSO\n" +
+            "[Divine Objects] · [Divine Object Set — Integrity Knights] · [Named Legendary Highlights] · [Floor Boss Roster — Canon Highlights] · [Weapon Evolution Chains] · [Rarity Tiers & Drop Rates] · [Divine Awakening]")
+        {
+            Tags = new[] { "items", "weapon", "divine", "rarity", "endgame" }
+        },
+
+        new("Items", "Divine Awakening",
+            "┌─ Items\n" +
+            "│ Topic: Divine Awakening\n" +
+            "│ Applies to: Any Divine-rarity weapon\n" +
+            "│ Levels: ◈1 / ◈2 / ◈3 (+15% / +30% / +45% base damage)\n" +
+            "│ NPC: Sister Selka the Novice (F65)\n" +
+            "│ Materials: Mithril Ingot · Divine Fragment · Primordial Shard\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Once you hold a Divine weapon, Sister Selka on F65 can awaken it\n" +
+            "up to three times. Each awakening adds a flat base-damage bonus\n" +
+            "(+15%, +30%, +45% cumulative) that stacks ADDITIVELY with\n" +
+            "Refinement sockets and Enhancement levels — all three systems\n" +
+            "fold into the weapon's Attack contribution separately. Awakening\n" +
+            "is forward-only and persists across save/load.\n\n" +
+            "USAGE\n" +
+            "Carry a Divine weapon and the required materials to Sister\n" +
+            "Selka on F65. Talk to her; her dialogue now offers an extra\n" +
+            "option — \"Awaken a Divine weapon.\" Select the option, pick\n" +
+            "the Divine from the preview pane (usually one, since the run\n" +
+            "cap allows a single Divine), review the material cost, and\n" +
+            "confirm. The banner fires a golden awakening variant on success.\n\n" +
+            "EFFECTS\n" +
+            "  ◈1  +15% base damage (flat, added to Attack)\n" +
+            "  ◈2  +30% base damage (flat, added to Attack)\n" +
+            "  ◈3  +45% base damage (flat, added to Attack)\n" +
+            "Stacks additively with Refinement (e.g. a fully Refined +10\n" +
+            "weapon reaching +100% Attack from sockets; Awakening Lv3 then\n" +
+            "adds another +45% of base damage on top via Bonuses.Attack).\n" +
+            "The awakening bonus flows through Player.Attack alongside\n" +
+            "Strength, Enhancement, and Refinement — all additive.\n\n" +
+            "COSTS\n" +
+            "  Lv0→Lv1  3× Mithril Ingot       (mithril_ingot)\n" +
+            "  Lv1→Lv2  1× Divine Fragment      (divine_fragment)\n" +
+            "  Lv2→Lv3  1× Primordial Shard     (primordial_shard)\n" +
+            "Divine Fragment drops ~5% from F75+ canon floor bosses (Skull\n" +
+            "Reaper, Ghastlygaze, Legacy of Grand, and the rest of the\n" +
+            "F75-F99 lineup). Primordial Shard drops one-per-run, guaranteed,\n" +
+            "from clearing the F100 throne fight (Your Shadow — The Final\n" +
+            "Trial). You cannot obtain two Shards in the same run.\n\n" +
+            "TIPS\n" +
+            "Lv3 is a post-F100 state by design — the Primordial Shard only\n" +
+            "drops from the throne clear, so the third awakening is a\n" +
+            "victory-lap upgrade unless you reload from a pre-clear save.\n" +
+            "Plan Lv2 mid-run: if a Divine enters inventory at F75, you have\n" +
+            "the entire F75-F99 climb to farm a Divine Fragment (~0.8 expected\n" +
+            "drops across 16 canon bosses at 5%).\n" +
+            "Awakened weapon in the MAIN hand applies the full bonus. In the\n" +
+            "OFFHAND slot, the bonus does NOT apply — offhand damage reads\n" +
+            "the weapon's raw BaseDamage directly (the same limitation that\n" +
+            "applies to Refinement today). Keep your awakened Divine in the\n" +
+            "main hand.\n" +
+            "The ◈N suffix on the weapon's inventory name (e.g. \"Night Sky\n" +
+            "Sword ◈2\") tells you the current awakening level at a glance.\n\n" +
+            "SEE ALSO\n" +
+            "[Divine Weapons — Roster & Acquisition] · [Weapon Refinement System] · [Refinement Ingots] · [Enhancement Ores System] · [Floor Boss Roster — Canon Highlights] · [Advanced Weapon Effects]")
+        {
+            Tags = new[] { "items", "divine", "awakening", "endgame", "selka" }
+        },
+
+        new("Items", "Shield Special Effects",
+            "┌─ Items\n" +
+            "│ Topic: Shield Special Effects\n" +
+            "│ Slot: OffHand (ArmorSlot=Shield)\n" +
+            "│ Shields: Nox Fermat · Rosso Aegis · Yasha Kavacha · Gaou Tatari\n" +
+            "│ Effect field: SpecialEffect (shared with weapons)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Four endgame shields carry live SpecialEffect strings matching\n" +
+            "the same tag grammar weapons use. Previously flavor-only, the\n" +
+            "SpecialEffect field now lives on EquipmentBase — both weapons\n" +
+            "and shields parse it through the shared reader, so a shield in\n" +
+            "the OffHand adds its tag on top of the main-hand weapon's tag.\n\n" +
+            "USAGE\n" +
+            "Equip as OffHand (shields go to the off-hand slot, not the\n" +
+            "weapon slot). The effect applies automatically while equipped.\n" +
+            "Each shield's tag sums with any matching weapon tag for\n" +
+            "additive effects; cap-style effects (CritImmune) take the max\n" +
+            "of the two sources rather than stacking.\n\n" +
+            "EFFECTS\n" +
+            "  Nox Fermat      DamageReflect+5  Returns 5% of incoming damage\n" +
+            "                                   to the attacker as flat dmg;\n" +
+            "                                   minimum 1 per reflected hit.\n" +
+            "  Rosso Aegis     CritImmune+5     5% chance per incoming hit to\n" +
+            "                                   downgrade a monster crit to a\n" +
+            "                                   normal hit (no CritHitDmg).\n" +
+            "  Yasha Kavacha   HPRegen+3        +3 HP on every passive-regen\n" +
+            "                                   tick; sums with MH HPRegen.\n" +
+            "  Gaou Tatari     Barrier+10       Refreshing 10-HP absorb buffer,\n" +
+            "                                   recharges once per floor ascend,\n" +
+            "                                   absorbs before HP takes damage.\n\n" +
+            "STACKING RULES:\n" +
+            "  Additive (sum MH + OH): HPRegen · Barrier · DamageReflect\n" +
+            "  Cap-style (max MH vs OH): CritImmune\n\n" +
+            "COSTS\n" +
+            "Shield-slot opportunity cost — you forgo a dual-wield OffHand\n" +
+            "weapon (no +10% Pair Resonance damage, no offhand swing\n" +
+            "multiplier). Block rolls still consume shield durability on\n" +
+            "successful blocks; Divine gear is unbreakable but these four\n" +
+            "shields are not Divine-tier.\n\n" +
+            "TIPS\n" +
+            "Pair Yasha Kavacha (HPRegen+3) with a weapon that also carries\n" +
+            "HPRegen+N to double-dip the regen tick — HPRegen is additive.\n" +
+            "Gaou Tatari's per-floor Barrier refresh rewards short pulls\n" +
+            "between floor ascents; its 10-HP absorb is tiny per-hit but\n" +
+            "compounding across a boss pull. Nox Fermat's reflect punishes\n" +
+            "machine-gun attackers (lots of small hits) harder than one\n" +
+            "big-swing boss — read the monster's hit cadence first.\n\n" +
+            "SEE ALSO\n" +
+            "[Advanced Weapon Effects] · [Defense — Block, Parry, Dodge] · [Equipment Slots & Dual Wield] · [Damage Mitigation] · [Named Legendary Highlights]")
+        {
+            Tags = new[] { "items", "armor", "shield", "special-effect" }
+        },
+
+        new("Items", "Pair Resonance — Mechanics Clarified",
+            "┌─ Items\n" +
+            "│ Topic: Pair Resonance — Mechanics Clarified\n" +
+            "│ Trigger: Canonical MH+OH pair equipped\n" +
+            "│ Damage: +10% on BOTH main-hand and offhand swings\n" +
+            "│ Crit: +5% re-roll, FIRST hit per encounter only\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Pair Resonance is the synergy bonus that fires when you equip\n" +
+            "a canonical dual-wield pair (e.g. Elucidator + Dark Repulser).\n" +
+            "Two effects stack together: a persistent +10% damage rider on\n" +
+            "every swing of both hands, and a one-shot 5% crit re-roll on\n" +
+            "the FIRST hit of each new encounter. The crit re-roll used to\n" +
+            "fire on every swing, which turned resonance into a raw +5%\n" +
+            "crit buff — it is now capped to a \"sync burst\" on first hit\n" +
+            "only, matching canon FD resonance flavor.\n\n" +
+            "USAGE\n" +
+            "Fill MH and OH slots with a matched canonical pair (see the\n" +
+            "Paired Dual-Wield Weapons topic for the 3 canon pairs). On\n" +
+            "first swing against a new monster, the log prints '◆ Pair\n" +
+            "Resonance! ... sing together' ONCE per target. The damage\n" +
+            "bonus continues silently on every subsequent swing.\n\n" +
+            "EFFECTS\n" +
+            "DAMAGE BONUS (persistent, every swing):\n" +
+            "  Main-hand damage  *= 1.1\n" +
+            "  Offhand damage    *= 1.1\n" +
+            "CRIT RE-ROLL (FIRST-HIT ONLY per encounter):\n" +
+            "  If MH did NOT crit on the opening swing against a new\n" +
+            "  monster, roll d100 < 5 to convert the hit to a crit. Gate\n" +
+            "  shares the same set that gates the banner log, so the\n" +
+            "  re-roll and the banner fire once per target together.\n" +
+            "BUNDLE 8 FIX: previously the 5% re-roll was unchecked and\n" +
+            "fired every hit, effectively adding a permanent +5% crit rate\n" +
+            "on top of the +10% damage mult — compounding crit damage with\n" +
+            "the damage mult on lucky swings. The fix gates the re-roll\n" +
+            "behind the existing per-encounter banner set; the damage\n" +
+            "multiplier stays unchanged on all hits.\n\n" +
+            "BUNDLE 10 — INDEPENDENT OFFHAND CRIT:\n" +
+            "Off-hand swings from a paired weapon now roll critical hits\n" +
+            "INDEPENDENTLY from the main-hand swing on the same turn. Both\n" +
+            "rolling crit displays a CRITICAL! tag on each swing line in\n" +
+            "the combat log, and the burst damage shows up immediately —\n" +
+            "previously the offhand piggybacked on the main-hand crit\n" +
+            "result, capping pair-burst ceiling. Independent rolls mean a\n" +
+            "high-Dex Elucidator/Dark Repulser build can land double-CRIT\n" +
+            "openers; expect occasional triple-digit single-turn bursts.\n\n" +
+            "COSTS\n" +
+            "The canonical pair pool is narrow — only 3 pairs exist\n" +
+            "(Elucidator/Dark Repulser, Elucidator Rouge/Flare Pulsar,\n" +
+            "Black Iron Dual A/B). Mixing halves across pairs forfeits the\n" +
+            "synergy — the game matches by exact DefId pair lookup.\n\n" +
+            "TIPS\n" +
+            "Open every pull with a heavy-hitter sword skill — that first\n" +
+            "swing is now the single crit-re-roll window. On long boss\n" +
+            "fights, the +10% damage rider still carries the majority of\n" +
+            "the resonance payoff; the crit burst is opening flavor, not\n" +
+            "the main economic driver. If you were relying on the old\n" +
+            "every-hit re-roll for crit uptime, swap to a weapon with flat\n" +
+            "CritRate (Lambent Light, Masamune) or invest Dex.\n\n" +
+            "SEE ALSO\n" +
+            "[Paired Dual-Wield Weapons] · [Equipment Slots & Dual Wield] · [Critical Hits] · [Unique Skill: Dual Blades]")
+        {
+            Tags = new[] { "items", "dual-wield", "pair-resonance", "combat" }
+        },
+
+        new("Items", "Legendary Distribution (F75-F99)",
+            "┌─ Items\n" +
+            "│ Topic: Legendary Distribution (F75-F99)\n" +
+            "│ Peak band: F94-F95 (~23 entries per pool)\n" +
+            "│ Bundle 11 cap: peak ≤25 per floor (down from 62 at F90)\n" +
+            "│ Edge bands lifted: F75-F79 + F96-F99\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Legendary-tier loot registration clusters by floor band in the\n" +
+            "loot generator. Pre-Bundle 11, floors F88-F90 each carried\n" +
+            "~62-69 Legendary candidates per roll. The Bundle 11 sweep\n" +
+            "redistributed every Legendary across F1-F99 (see the new\n" +
+            "Legendary Redistribution Overview topic for the full picture);\n" +
+            "this section covers the F75-F99 endgame slice specifically.\n\n" +
+            "USAGE\n" +
+            "Nothing to do — the redistribution happens at chest-roll time.\n" +
+            "Endgame chests now carry a flatter per-floor roster: F75-F79\n" +
+            "is no longer a thin band, and F94-F95 caps at ~23 entries\n" +
+            "instead of the old 62-spike at F90.\n\n" +
+            "EFFECTS\n" +
+            "BUNDLE 11 ENDGAME MOVES (not exhaustive):\n" +
+            "  Fire-themed Relics/LS (Cinder Bow, Blazing Sword, Muramasa\n" +
+            "  Demon Blade) shifted down to F65-F79, matching Volcanic ramp.\n" +
+            "  Ice/cursed Relics (Snowsunder, Loveblight Bow) shifted to\n" +
+            "  F66-F86, matching ice-plain and dark-cursed flavor.\n" +
+            "  Mythic-finisher Relics (Dragoncrest, Deathbringer, Frostpeak)\n" +
+            "  shifted up to F84-F94.\n" +
+            "  AL Extreme Raid mythics (Demonslayer, Graceful Needle)\n" +
+            "  shifted up to F82-F92.\n" +
+            "  Black Iron Dual A/B (Underworld Kirito pair) anchored F78-F84.\n" +
+            "  Red Rose Sword now F95 field-boss lock (Warden of Blooming Rose).\n" +
+            "PRESERVED (NOT moved): IF series boss-anchors, IM Shop tiers,\n" +
+            "MD Originals, HF Implement weapons, FD elemental variants,\n" +
+            "and the F75/F82/F84/F86/F87/F88/F91/F93/F97/F98/F99 Divine\n" +
+            "boss anchors.\n\n" +
+            "COSTS\n" +
+            "None — no weapons removed, no rarity downgrades. Pure band\n" +
+            "redistribution. The total Legendary count stays at 185 across\n" +
+            "F1-F99.\n\n" +
+            "TIPS\n" +
+            "If you were farming F88-F90 for a specific fire-themed Relic,\n" +
+            "check F65-F79 instead — the pool shifted downward. F96-F99\n" +
+            "runs still carry mythic-tier Legendaries, just at thinner\n" +
+            "per-pool counts (~17 at F99). Named Legendaries anchored to\n" +
+            "specific floor bosses (IF series, HF Implements, the new\n" +
+            "F50 Elucidator LAB and F55 Crystal Wyrm Dark Repulser) are\n" +
+            "unchanged — the canon hooks are untouched.\n\n" +
+            "SEE ALSO\n" +
+            "[Legendary Redistribution Overview] · [Mid-Game Legendary Lifts (F12-F44)] · [Boss Drop Reference] · [Rarity Tiers & Drop Rates] · [Named Legendary Highlights] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons] · [Floor Boss Roster — Canon Highlights]")
+        {
+            Tags = new[] { "items", "rarity", "legendary", "loot" }
+        },
+
+        // ── Bundle 11 — Legendary Redistribution Player Guide entries ──
+
+        new("Items", "Legendary Redistribution Overview",
+            "┌─ Items\n" +
+            "│ Topic: Legendary Redistribution Overview (Bundle 11)\n" +
+            "│ Span: F1-F99 (was F50+ only)\n" +
+            "│ Total Legendaries: 185\n" +
+            "│ Per-floor cap: ≤25 (currently peaks at ~18 at F80)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Bundle 11 redistributed all 185 Legendary weapons across the\n" +
+            "full F1-F99 range. Before this sweep, every Legendary lived\n" +
+            "at F50 or higher — thirty mid-game floors (F1-F49) carried\n" +
+            "exactly zero Legendary chest entries. The new distribution\n" +
+            "spreads Legendaries from F1 onward, anchors canon weapons to\n" +
+            "their LN/anime/IF/AL floors, and caps the late-game spike\n" +
+            "(F90 dropped from 62 to ~20 entries per pool).\n\n" +
+            "USAGE\n" +
+            "Nothing to do — the redistribution happens automatically at\n" +
+            "chest-roll time. The change is visible in your day-to-day:\n" +
+            "early floors now occasionally drop a Legendary, and mid-game\n" +
+            "F12-F44 is no longer a Legendary wasteland.\n\n" +
+            "EFFECTS\n" +
+            "DESIGN PHILOSOPHY:\n" +
+            "  - Strict tier gating: each non-canon Legendary lives in a\n" +
+            "    narrow ~5-10 floor band, not a 25-floor smear.\n" +
+            "  - Canon-anchored weapons stay at canon floors:\n" +
+            "      Elucidator        F50 floor-boss Last-Attack\n" +
+            "      Dark Repulser     F55 Crystal Wyrm + Lisbeth gift\n" +
+            "      Black Lily Sword  F85 Silent Edge field-boss\n" +
+            "      Night Sky Sword   F99 Heathcliff's Shadow boss\n" +
+            "      Mother's Rosario  F76 Jun NPC quest\n" +
+            "      Lambent Light     F40 Yulier NPC quest + F1-F8 chest\n" +
+            "  - Non-canon weapons fill the curve smoothly between locks.\n" +
+            "  - F1 always carries at least 2 Legendaries (Mate Chopper\n" +
+            "    F1-F5 + Lambent Light F1-F8) so first-floor discovery is\n" +
+            "    a real possibility.\n" +
+            "  - Per-floor peak ≤25 Legendaries (currently ~18 at F80).\n" +
+            "PRE/POST FLOOR PROFILE:\n" +
+            "  Floor    Pre-Bundle-11   Bundle 11\n" +
+            "  F1       0               2     (was empty)\n" +
+            "  F12-44   0               1-3   (lifts seed mid-game)\n" +
+            "  F50      0               4     (Elucidator + chains)\n" +
+            "  F75      9-11            9     (preserved)\n" +
+            "  F90      62              ~20   (peak broken up)\n" +
+            "  F99      ~24             ~17   (smoothed)\n\n" +
+            "COSTS\n" +
+            "None. No weapons removed, no rarity changes. Pure band sweep.\n\n" +
+            "TIPS\n" +
+            "If you used to farm F90 for high Legendary density, the math\n" +
+            "now favors F80-F88 (still 13-18 entries per pool with better\n" +
+            "spread of canon-themed drops). Early-floor runs are no longer\n" +
+            "Legendary-empty: a lucky F1-F8 chest can roll Mate Chopper\n" +
+            "or Lambent Light. See the per-floor counts in the spec doc\n" +
+            "(LEGENDARY_REDISTRIBUTION_PROPOSAL.md section 6) for the full\n" +
+            "table.\n\n" +
+            "SEE ALSO\n" +
+            "[Legendary Distribution (F75-F99)] · [Mid-Game Legendary Lifts (F12-F44)] · [Boss Drop Reference] · [Rarity Tiers & Drop Rates] · [Named Legendary Highlights] · [Lambent Light & Asuna's Memory] · [Sleeping Knights' Tribute & Mother's Rosario] · [Crystal Wyrm of Lisbeth's Forge (F55)]")
+        {
+            Tags = new[] { "items", "rarity", "legendary", "loot", "bundle-11" }
+        },
+
+        new("Items", "Mid-Game Legendary Lifts (F12-F44)",
+            "┌─ Items\n" +
+            "│ Topic: Mid-Game Legendary Lifts (F12-F44)\n" +
+            "│ Span: F12 to F44 (previously 0 Legendaries)\n" +
+            "│ New entries: 7 LR-myth weapons + 4 floor-boss locks\n" +
+            "│ Source: Chest pool + invented Divine Beast bosses\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Pre-Bundle-11, floors F12 through F44 carried zero Legendary\n" +
+            "chest entries — thirty floors of pure Epic-or-lower loot. The\n" +
+            "Bundle 11 redistribution lifted seven Last-Recollection /\n" +
+            "Lost-Song mythological Legendaries down into this band, and\n" +
+            "kept the four Alicization-Lycoris invented Divine Beast\n" +
+            "bosses (F11, F17, F24, F30, F38, F40, F43) as guaranteed\n" +
+            "Legendary drops. Players exploring early floors now have a\n" +
+            "real chance at Legendary discovery.\n\n" +
+            "USAGE\n" +
+            "Roll chests on the listed floors; clear the floor boss for\n" +
+            "the lock. No special action needed.\n\n" +
+            "EFFECTS\n" +
+            "CHEST-POOL LIFTS (7 new mid-game Legendaries):\n" +
+            "  F12-F18  Nadr (Axe, LR myth)\n" +
+            "  F18-F25  Futsu no Mitama (Katana, Lost Song shinto)\n" +
+            "  F22-F29  Artemis Fult (Bow, LR myth)\n" +
+            "  F25-F32  Giardino (Dagger, LR myth)\n" +
+            "  F30-F36  Caduceus (Mace, Lost Song healer staff)\n" +
+            "  F30-F37  Paopei (Claws, LR myth)\n" +
+            "  F35-F42  Elder's Trident (Spear, LR myth)\n" +
+            "FLOOR-BOSS LOCKS (preserved, AL Lycoris invented bosses):\n" +
+            "  F11 Felos the Ember Drake     -> Starfall (Bow)\n" +
+            "  F17 Gelidus the Frozen Colossus -> Savage Squall (1H Sword)\n" +
+            "  F24 Grimhollow the Phantom    -> Phantasmagoria (Dagger)\n" +
+            "  F30 Primos the World Serpent  -> Void Eater (1H Sword)\n" +
+            "  F38 Obsidian the Black Knight -> Cactus Bludgeon (Mace)\n" +
+            "  F40 Dracoflame the Elder Wyrm -> Crimson Stream (2H Sword)\n" +
+            "  F43 Undine the Water Maiden   -> Midnight Rain (Rapier)\n" +
+            "QUEST-LOCKS (Bundle 11 NPCs):\n" +
+            "  F40 Yulier   -> Lambent Light (10 kills, see Lambent Light topic)\n" +
+            "  F40 chest    -> Lambent Light tail (F1-F8 anchor extends)\n\n" +
+            "COSTS\n" +
+            "None beyond standard chest/boss costs. The lifts replaced no\n" +
+            "existing weapons — they were pulled from the bloated F75-F99\n" +
+            "pool, where their per-pool weight was diluted anyway.\n\n" +
+            "TIPS\n" +
+            "If you're rolling a fresh save, push to F11 and clear the\n" +
+            "boss for the first guaranteed Legendary (Starfall). Each\n" +
+            "AL invented boss between F11 and F49 carries one more\n" +
+            "guaranteed Legendary on top of any chest roll. The seven\n" +
+            "LR-myth chest lifts are tier-coherent with their floor — a\n" +
+            "F25 Giardino isn't a numerical god (its base stats scale at\n" +
+            "the floor's tier), but it carries a Legendary special effect\n" +
+            "and a refinement slot count above any Epic-or-lower drop.\n\n" +
+            "SEE ALSO\n" +
+            "[Legendary Redistribution Overview] · [Boss Drop Reference] · [Lambent Light & Asuna's Memory] · [Floor Boss Roster — Canon Highlights] · [SAO Last Recollection Weapons] · [SAO Lost Song Named Weapons]")
+        {
+            Tags = new[] { "items", "rarity", "legendary", "mid-game", "bundle-11" }
+        },
+
+        new("Items", "Boss Drop Reference",
+            "┌─ Items\n" +
+            "│ Topic: Boss Drop Reference\n" +
+            "│ Sources: Floor-boss + field-boss + NPC + LAB\n" +
+            "│ Includes: Bundle 11 F50 Elucidator LAB + F55 Crystal Wyrm\n" +
+            "│ Use: One-stop list of every guaranteed boss drop\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Single-page reference of every guaranteed weapon/item drop\n" +
+            "from a named boss in the game — floor-boss kills, floor-boss\n" +
+            "Last-Attack Bonus (LAB) drops (must be killing-blow),\n" +
+            "field-boss kills, and the new Bundle 11 anchors at F40, F50,\n" +
+            "F55, and F76. NPC-quest weapon rewards live in the Quests &\n" +
+            "NPCs category — this entry covers the boss-side drops.\n\n" +
+            "USAGE\n" +
+            "Cross-reference before pushing a floor: know which fights\n" +
+            "give a guaranteed Legendary, which require Last-Attack, and\n" +
+            "which bosses gate Divine objects.\n\n" +
+            "EFFECTS\n" +
+            "FLOOR-BOSS GUARANTEED DROPS (any party member kills):\n" +
+            "  F11 Felos the Ember Drake       -> Starfall (Legendary Bow)\n" +
+            "  F17 Gelidus the Frozen Colossus -> Savage Squall (Legendary 1HS)\n" +
+            "  F20 Absolut the Winter Monarch  -> Blue Rose Sword (Divine)\n" +
+            "  F24 Grimhollow the Phantom      -> Phantasmagoria (Leg. Dag)\n" +
+            "  F30 Primos the World Serpent    -> Void Eater (Leg. 1HS)\n" +
+            "  F38 Obsidian the Black Knight   -> Cactus Bludgeon (Leg. Mace)\n" +
+            "  F40 Dracoflame the Elder Wyrm   -> Crimson Stream (Leg. 2HS)\n" +
+            "  F43 Undine the Water Maiden     -> Midnight Rain (Leg. Rapier)\n" +
+            "  F49 Shadowstep Assassin         -> Midnight Sun (Leg. Katana)\n" +
+            "  F75 Skull Reaper                -> Masamune (Divine Katana)\n" +
+            "  F82 Legacy of Grand             -> Hexagramme (Divine Rapier)\n" +
+            "  F84 Queen of Ant                -> Caladbolg (Divine Spear)\n" +
+            "  F86 King of Skeleton            -> Tyrfing (Divine 1HS)\n" +
+            "  F87 Radiance Eater              -> Iron Maiden Dagger (Divine)\n" +
+            "  F88 Rebellious Eyes             -> Ouroboros (Divine Axe)\n" +
+            "  F91 Seraphiel the Fallen        -> Mjolnir (Divine Mace)\n" +
+            "  F93 Ragnarok Final Beast        -> Ascalon (Divine 2HS)\n" +
+            "  F97 Cardinal System Error       -> Time Piercing Sword (Divine)\n" +
+            "  F98 Incarnation of the Radius   -> Black Lily Sword (Divine)\n" +
+            "  F99 Heathcliff's Shadow         -> Night Sky Sword (Divine)\n\n" +
+            "FLOOR-BOSS LAST-ATTACK BONUS (must be the killing blow):\n" +
+            "  F50 Tier of Sin                 -> Elucidator (Legendary 1HS, NEW)\n" +
+            "  F85 floor boss                  -> Bow Zephyros (Leg. Bow)\n" +
+            "  F92 floor boss                  -> Sacred Cross (Leg. 2HS)\n" +
+            "  F93 floor boss                  -> Glow Haze (Leg. Scimitar)\n" +
+            "  F94 floor boss                  -> Saku (Leg. Katana)\n" +
+            "  F95 floor boss                  -> Mirage Knife (Leg. Dagger)\n" +
+            "  F96 floor boss                  -> Northern Light (Leg. Axe)\n" +
+            "  F98 floor boss                  -> Lunatic Roof (Leg. Spear)\n" +
+            "  F99 Heathcliff's Shadow         -> Artemis (Leg. Bow, alongside Night Sky)\n\n" +
+            "FIELD-BOSS GUARANTEED DROPS (overworld, never respawn):\n" +
+            "  F2  Bullbous Bow             -> Bullbous Horn (mat)\n" +
+            "  F14 Starlight Sentinel       -> Integral Arc Angel (Epic Bow)\n" +
+            "  F22 Forest King Stag         -> Kingly Antler (mat)\n" +
+            "  F25 Labyrinth Warden         -> Nox Radgrid (Epic 1HS)\n" +
+            "  F35 Magnatherium             -> Mammoth Tusk (mat)\n" +
+            "  F40 Ogre Lord                -> Ogre's Cleaver (mat)\n" +
+            "  F40 Phoenix of Smolder Peak  -> Conflagrant Flame Bow (Divine)\n" +
+            "  F48 Frost Dragon             -> Crystallite Ingot (mat)\n" +
+            "  F49 Nicholas the Renegade    -> Returning Soul (Christmas only)\n" +
+            "  F55 Crystal Wyrm of Lisbeth's Forge -> Dark Repulser (Leg., NEW)\n" +
+            "  F60 Kagutsuchi Fire Samurai  -> Spirit Sword Kagutsuchi (FD Leg.)\n" +
+            "  F61 Crimson Forneus          -> Rosso Forneus (IF Leg. 1HS)\n" +
+            "  F70 Susanoo the Storm Blade  -> Spirit Sword Susanoo (FD Leg.)\n" +
+            "  F77 Goblin Leader            -> Mace of Asclepius (HF Leg.)\n" +
+            "  F80 Soul Binder              -> Arcaneblade Soul Binder (HF Leg.)\n" +
+            "  F80 Pyre Lord of Heathcliff  -> Flame Lord (FD Leg. 2HS)\n" +
+            "  F83 Arboreal Fear            -> Demonspear Gae Bolg (HF Leg.)\n" +
+            "  F83 Ruinous Herald           -> Fellblade Ruinous Doom (HF Leg.)\n" +
+            "  F85 Silent Edge              -> Black Lily Sword (Divine)\n" +
+            "  F85 Abased Beast             -> Godblade Dragonslayer (HF Leg.)\n" +
+            "  F85 Yuuki's Echo             -> Macafitel (FD Leg. Rapier)\n" +
+            "  F86 Fellaxe Revenant         -> Fellaxe Demon's Scythe (HF Leg.)\n" +
+            "  F87 Yasha the Night Demon    -> Yasha Astaroth (IF Leg.)\n" +
+            "  F87 Night Stalker            -> Saintblade Durandal (HF Leg.)\n" +
+            "  F90 Gaou the Ox-King         -> Gaou Reginleifr (IF Leg.)\n" +
+            "  F93 Banishing Ray            -> Glimmerblade Banishing Ray (HF Leg.)\n" +
+            "  F94 Ark Knight               -> Ragnarok's Bane Headsman (HF Leg.)\n" +
+            "  F95 Gaia Breaker             -> Stigmablade Arondight (HF Leg.)\n" +
+            "  F95 Warden of Stopped Hours  -> Time Piercing Sword (Divine)\n" +
+            "  F95 Warden of Blooming Rose  -> Red Rose Sword (FD Leg.)\n" +
+            "  F96 Eternal Dragon           -> Demonblade Gram (HF Leg.)\n" +
+            "  F97 Administrator's Regent   -> Silvery Ruler (FD Leg.)\n" +
+            "  F98 Blaze Armor              -> Yato Masamune (HF Leg.)\n" +
+            "  F98 Ashen Kirito Simulacrum  -> Elucidator Rouge (FD Leg.)\n\n" +
+            "FIELD-BOSS SECONDARY DROPS (paired shield):\n" +
+            "  F14 Starlight Sentinel  -> Shield Fermat (Epic)\n" +
+            "  F25 Labyrinth Warden    -> Shield Nox Fermat (Epic)\n" +
+            "  F61 Crimson Forneus     -> Rosso Aegis (Leg.)\n" +
+            "  F87 Yasha               -> Yasha Kavacha (Leg.)\n" +
+            "  F90 Gaou                -> Gaou Tatari (Leg.)\n\n" +
+            "COSTS\n" +
+            "Each field-boss never respawns once defeated; missing the\n" +
+            "kill means farming the chest pool (which carries the same\n" +
+            "DefId in many cases). LAB drops require the killing blow —\n" +
+            "if your ally lands the final hit, the LAB Legendary does NOT\n" +
+            "drop.\n\n" +
+            "TIPS\n" +
+            "F50 Elucidator and F99 Artemis are the two LAB drops most\n" +
+            "easily missed — both are paired with bigger Divine fights\n" +
+            "(F50 Six-Armed Buddha + F99 Heathcliff's Shadow). Save burst\n" +
+            "skills for the final HP slice. F95 carries three guaranteed\n" +
+            "Legendary/Divine drops in one floor (Time Piercing + Red Rose\n" +
+            "Sword + Stigmablade) — budget durability for three boss kills\n" +
+            "before ascending. F85 and F87 are similar triple-drop floors.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Crystal Wyrm of Lisbeth's Forge (F55)] · [Lambent Light & Asuna's Memory] · [Sleeping Knights' Tribute & Mother's Rosario] · [Divine Object Set — Integrity Knights]")
+        {
+            Tags = new[] { "reference", "bosses", "drops", "lab", "bundle-11" }
+        },
+
+        new("Quests & NPCs", "Lambent Light & Asuna's Memory",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Yulier (F40) — KoB-era Asuna friend\n" +
+            "│ Floor: 40 (quest); F1-F8 (chest tease)\n" +
+            "│ Quest: The Lightning Flash's Memory (10 kills)\n" +
+            "│ Reward: Lambent Light (Legendary Rapier)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Lambent Light is Asuna's signature rapier from the KoB era —\n" +
+            "the canon weapon she carried during the F50-F75 push in the\n" +
+            "novels. Bundle 11 wires it through three sources: an early\n" +
+            "F1-F8 chest tease (very rare), the F40 Yulier NPC quest\n" +
+            "(guaranteed reward), and the existing F88-F94 Radiant Light\n" +
+            "(her post-game upgrade). Mother's Rosario lives separately at\n" +
+            "F76 — see that topic.\n\n" +
+            "USAGE\n" +
+            "Three paths to Lambent Light:\n" +
+            "  1. F1-F8 chest pool — small chance per chest (Bundle 11 F1\n" +
+            "     anchor pair with Mate Chopper).\n" +
+            "  2. F40 Yulier (BrightYellow 'Y' or NPC glyph) — accept\n" +
+            "     'The Lightning Flash's Memory', slay 10 monsters on F40,\n" +
+            "     return for the rapier + 450 Col + 350 XP.\n" +
+            "  3. F88-F94 chest band — Radiant Light (Asuna post-game\n" +
+            "     upgrade, separate DefId, CritRate+20).\n\n" +
+            "EFFECTS\n" +
+            "  Lambent Light    Legendary Rapier, flat CritRate bonus\n" +
+            "  Radiant Light    Legendary Rapier, CritRate+20 (post-game)\n" +
+            "  Mother's Rosario Legendary Rapier, ComboBonus+50, 11-hit\n" +
+            "                   (F76 Jun NPC, see Sleeping Knights topic)\n" +
+            "Yulier's quest is one-shot per save. Inventory full at turn-in\n" +
+            "drops the rapier at your feet — never silently lost.\n\n" +
+            "COSTS\n" +
+            "10 F40 monster kills for the guaranteed path. The chest tease\n" +
+            "is pure RNG; do not rely on it.\n\n" +
+            "TIPS\n" +
+            "Asuna's three rapiers form a complete Asuna-themed loadout\n" +
+            "across the run. If you're playing a Rapier build, plant the\n" +
+            "F40 Yulier turn-in BEFORE fighting the F40 floor boss\n" +
+            "(Dracoflame the Elder Wyrm) — the quest kills can overlap\n" +
+            "with the boss approach. The KoB-era flavor pairs well with\n" +
+            "joining Knights of the Blood Oath at F55.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 4-7 (Aincrad arc): Lambent Light is Asuna's\n" +
+            "personalized rapier as Vice-Commander of the Knights of the\n" +
+            "Blood Oath, used through the F50-F75 floor push. Yulier is a\n" +
+            "Liberation Army officer who fought alongside Asuna on F59.\n\n" +
+            "SEE ALSO\n" +
+            "[Sleeping Knights' Tribute & Mother's Rosario] · [Knights of the Blood Oath (F55)] · [Named Legendary Highlights] · [Quest Types & Rewards] · [Critical Hits]")
+        {
+            Tags = new[] { "quests", "npcs", "asuna", "rapier", "bundle-11" }
+        },
+
+        new("Quests & NPCs", "Sleeping Knights' Tribute & Mother's Rosario",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Jun (F76) — Sleeping Knights memorial\n" +
+            "│ Floor: 76\n" +
+            "│ Quest: The Sleeping Knights' Tribute (15 kills)\n" +
+            "│ Reward: Mother's Rosario (Legendary Rapier, 11-hit OSS)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Mother's Rosario is Yuuki Konno's signature rapier — the\n" +
+            "blade that carries her 11-hit Original Sword Skill of the\n" +
+            "same name. Bundle 11 wires it as a one-shot quest reward\n" +
+            "from Jun, a Sleeping Knights survivor on F76 (the memorial\n" +
+            "floor for Yuuki and the Sleeping Knights guild).\n\n" +
+            "USAGE\n" +
+            "Reach F76. Bump Jun (NPC glyph in floor town/safe room).\n" +
+            "Accept 'The Sleeping Knights' Tribute': slay 15 monsters on\n" +
+            "F76, return to Jun for the rapier + 700 Col + 550 XP.\n\n" +
+            "EFFECTS\n" +
+            "  Mother's Rosario    Legendary Rapier\n" +
+            "                      ComboBonus+50, 11-hit Original Sword Skill\n" +
+            "                      Inventory-full -> dropped at feet\n" +
+            "Quest is one-shot per save. The 15 kills overlap with any\n" +
+            "standing F76 weapon-gated Kill quests.\n\n" +
+            "COSTS\n" +
+            "15 F76 monster kills. F76 is also the Hollow-Fragment HNM\n" +
+            "questgiver band (F79+ NPCs nearby) — budget durability for\n" +
+            "the broader floor.\n\n" +
+            "TIPS\n" +
+            "If you're already chasing Lambent Light at F40 and Radiant\n" +
+            "Light in the F88-F94 chest band, Mother's Rosario completes\n" +
+            "the Asuna/Yuuki rapier triptych. Mother's Rosario's 11-hit\n" +
+            "OSS is the longest combo in the game — pair with Combo\n" +
+            "Finisher mechanics for double-damage on the final strike.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 7 (Mother's Rosario arc): Yuuki Konno (Zekken,\n" +
+            "leader of the Sleeping Knights, terminal AIDS patient) wields\n" +
+            "Mother's Rosario as the only Original Sword Skill in canon\n" +
+            "ALO. The Sleeping Knights guild memorialize her after her\n" +
+            "death. Jun is a Sleeping Knights member who survived to\n" +
+            "tend the memorial.\n\n" +
+            "SEE ALSO\n" +
+            "[Lambent Light & Asuna's Memory] · [Sleeping Knights (F60)] · [Named Legendary Highlights] · [Combo Attacks] · [Sword Skills — Unlock & Use] · [Quest Types & Rewards]")
+        {
+            Tags = new[] { "quests", "npcs", "yuuki", "rapier", "bundle-11" }
+        },
+
+        new("World", "Crystal Wyrm of Lisbeth's Forge (F55)",
+            "┌─ World\n" +
+            "│ Topic: Crystal Wyrm of Lisbeth's Forge\n" +
+            "│ Floor: 55 (overworld field-boss)\n" +
+            "│ Glyph: BrightCyan 'W'\n" +
+            "│ Drop: Dark Repulser (Legendary 1H Sword)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A canon LN field-boss new in Bundle 11. The Crystal Wyrm\n" +
+            "lives in a crystallite hollow on F55 — its scales chime when\n" +
+            "it breathes. Defeating it grants Dark Repulser, the second\n" +
+            "half of Kirito's iconic dual-blade pair (Elucidator is the\n" +
+            "F50 Last-Attack Bonus). The Wyrm is the field-boss source;\n" +
+            "Lisbeth's F48 handover (after F55 boss clear) is a separate\n" +
+            "guaranteed gift — see Lisbeth's Dark Repulser Gift topic.\n\n" +
+            "USAGE\n" +
+            "Reach F55 overworld. The wyrm wanders the overworld floor\n" +
+            "(does NOT spawn inside the Labyrinth). Bump to engage. HP\n" +
+            "scales 3.2x normal, ATK 1.6x. Once defeated, never respawns.\n\n" +
+            "EFFECTS\n" +
+            "  Drop          Dark Repulser (Legendary 1H Sword)\n" +
+            "  Effect        CritHeal+5 — restores HP on crit hit\n" +
+            "  Pair          Canonical pair with Elucidator (F50 LAB)\n" +
+            "                Pair Resonance: +10% damage MH+OH, +5% crit\n" +
+            "                re-roll on first hit per encounter\n" +
+            "  Lisbeth gift  Talking to Lisbeth at F48 AFTER clearing the\n" +
+            "                F55 boss triggers a one-time second Dark\n" +
+            "                Repulser handover (canon Lisbeth-craft flavor)\n\n" +
+            "COSTS\n" +
+            "Field-boss durability cost. Field-boss drops do NOT block\n" +
+            "Avatar Last-Attack Bonus rolls — a Crystal Wyrm kill with a\n" +
+            "matching weapon class still rolls the avatar pool.\n\n" +
+            "TIPS\n" +
+            "Push F50 floor boss for Elucidator (Last-Attack Bonus, must\n" +
+            "be killing blow), then push to F55 and find the wyrm BEFORE\n" +
+            "the floor boss for the Dark Repulser pair. Return to F48\n" +
+            "Lindarth after F55 boss clear for Lisbeth's gift — you can\n" +
+            "end up with TWO Dark Repulsers (one for the active dual-wield\n" +
+            "set, one for an ally or storage).\n\n" +
+            "CANON\n" +
+            "SAO LN vol 2 (the Lisbeth side-story): Lisbeth and Kirito\n" +
+            "descend into a crystal cavern on F55 to harvest the breath-\n" +
+            "frozen ingot of a crystal dragon. Lisbeth forges Dark Repulser\n" +
+            "from the ingot back at her Lindarth shop. The wyrm's scales-\n" +
+            "chime detail comes directly from the LN description.\n\n" +
+            "SEE ALSO\n" +
+            "[Lisbeth's Dark Repulser Gift (F48)] · [Field Bosses — Guaranteed Drops] · [Boss Drop Reference] · [Pair Resonance — Mechanics Clarified] · [Paired Dual-Wield Weapons] · [Lindarth Town (F48)] · [F50 Boss & the Elucidator Drop]")
+        {
+            Tags = new[] { "world", "field-boss", "kirito", "dual-blades", "bundle-11" }
+        },
+
+        new("Quests & NPCs", "Lisbeth's Dark Repulser Gift (F48)",
+            "┌─ Quests & NPCs\n" +
+            "│ NPC: Lisbeth (BrightMagenta 'L', Lindarth F48)\n" +
+            "│ Floor: 48 (Lindarth town)\n" +
+            "│ Trigger: Talk to Lisbeth AFTER F55 boss is cleared\n" +
+            "│ Reward: Dark Repulser (Legendary 1H Sword), one-time\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Bundle 11 wires Lisbeth's canon LN dialogue: after you bring\n" +
+            "back F55 dragon ore (modeled here as 'clear the F55 floor\n" +
+            "boss'), Lisbeth crafts Dark Repulser and gifts it to you on\n" +
+            "your next visit. This is a separate, parallel source from\n" +
+            "the F55 Crystal Wyrm field-boss drop — both can fire on the\n" +
+            "same save, so a player who clears both ends up with two Dark\n" +
+            "Repulsers.\n\n" +
+            "USAGE\n" +
+            "  1. Reach F55 and clear the floor boss (any Five-Eyed Wraith\n" +
+            "     or your floor's labyrinth boss — the trigger is\n" +
+            "     HighestFloorBossCleared >= 55).\n" +
+            "  2. Return to F48 Lindarth.\n" +
+            "  3. Bump Lisbeth (BrightMagenta 'L') to open the forge\n" +
+            "     dialog. The gift fires before the standard craft menu.\n" +
+            "  4. The forge menu opens normally afterward — you can craft\n" +
+            "     R6 weapons in the same visit.\n\n" +
+            "EFFECTS\n" +
+            "  Dialog        \"Hey — remember that crystallite ore from the\n" +
+            "                F55 dragon? I finally finished it. Here. I\n" +
+            "                made it for you.\"\n" +
+            "  Drop          Dark Repulser (Legendary 1H Sword)\n" +
+            "  Effect        CritHeal+5 — restores HP on crit hit\n" +
+            "  Inventory     Auto-added; full -> dropped at your feet\n" +
+            "  One-time      Quest 'lisbeth_dark_repulser_gift' marks\n" +
+            "                turned-in; never fires again on the save\n\n" +
+            "COSTS\n" +
+            "None — pure gift. Does NOT consume Col, mats, or your forge\n" +
+            "craft slots. Fully additive to her R6 craft line.\n\n" +
+            "TIPS\n" +
+            "Time the F48 visit to chain with a planned R6 craft so you\n" +
+            "bank the Lindarth trip. If you also kill the F55 Crystal\n" +
+            "Wyrm, you can build a dual-wield kit AND give a backup Dark\n" +
+            "Repulser to a Kirito ally for a near-canon party loadout.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 2 (Lisbeth side-story): after the F55 dragon-ore\n" +
+            "expedition, Lisbeth gifts Dark Repulser to Kirito as a\n" +
+            "personal blacksmith gesture — both because the ingot was\n" +
+            "extraordinary and because of the bond formed during the dive.\n\n" +
+            "SEE ALSO\n" +
+            "[Crystal Wyrm of Lisbeth's Forge (F55)] · [Lindarth Town (F48)] · [Lisbeth — Rarity 6 Craft Line] · [Pair Resonance — Mechanics Clarified] · [F50 Boss & the Elucidator Drop]")
+        {
+            Tags = new[] { "quests", "npcs", "lisbeth", "kirito", "bundle-11" }
+        },
+
+        new("World", "F50 Boss & the Elucidator Drop",
+            "┌─ World\n" +
+            "│ Topic: F50 Boss & the Elucidator Drop\n" +
+            "│ Floor: 50 (labyrinth boss chamber)\n" +
+            "│ Boss: The Six-Armed Buddha / Tier of Sin\n" +
+            "│ LAB drop: Elucidator (Legendary 1H Sword) — must killing-blow\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "The F50 floor boss now drops Elucidator on Last-Attack Bonus\n" +
+            "(killing-blow only). This is a canon LN anchor: Kirito takes\n" +
+            "Elucidator from the F50 boss in SAO LN vol 4. It is the only\n" +
+            "Bundle 11 LAB drop that is paired with a non-IM weapon (the\n" +
+            "rest of the LAB pool is IM canon at F85+). Pre-Bundle-11\n" +
+            "Elucidator was orphaned to the chest pool; it now lives at\n" +
+            "its canon floor.\n\n" +
+            "USAGE\n" +
+            "Reach F50, find the labyrinth, fight the Six-Armed Buddha\n" +
+            "(Tier of Sin). YOU must land the killing blow — if your\n" +
+            "ally lands the final hit, the LAB drop does NOT fire.\n" +
+            "Elucidator drops alongside any standard floor-boss loot.\n\n" +
+            "EFFECTS\n" +
+            "  Boss          Six-Armed Buddha (canon F50 boss)\n" +
+            "  Codename      Tier of Sin (LN designation)\n" +
+            "  LAB drop      Elucidator (Legendary 1H Sword)\n" +
+            "  Effect        SkillCooldown-1 — sword skills come off\n" +
+            "                cooldown one turn faster\n" +
+            "  Pair          Canonical pair with Dark Repulser (F55 wyrm\n" +
+            "                + F48 Lisbeth gift). See Pair Resonance.\n" +
+            "  Last-Attack   Killing blow required. If allies finish, the\n" +
+            "                Legendary does NOT drop.\n\n" +
+            "COSTS\n" +
+            "Boss durability cost + the LAB risk: micro-managing damage\n" +
+            "to ensure your hit ends the fight. Burst skills and crit\n" +
+            "weapons are best for landing the killing blow predictably.\n\n" +
+            "TIPS\n" +
+            "Open the fight with Look Mode to scout the boss HP. Save\n" +
+            "your highest-burst sword skill (Vorpal Strike, Star Splash,\n" +
+            "etc.) for the final HP slice. If allies are on the field,\n" +
+            "consider rotating them to non-attack roles via SAO Switch\n" +
+            "before the killing blow window — or pre-pull aggro so the\n" +
+            "boss faces YOU. Pair this run with the F55 Crystal Wyrm\n" +
+            "and F48 Lisbeth gift for a same-session Dual-Blades kit.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 4 (Aincrad arc): Kirito takes Elucidator from\n" +
+            "the F50 floor boss as Last-Attack Bonus — the LN explicitly\n" +
+            "calls out the LAB mechanic. The blade becomes Kirito's main-\n" +
+            "hand for the rest of the F50-F75 push, and pairs with Dark\n" +
+            "Repulser (F55 Lisbeth craft) to form his iconic dual-wield\n" +
+            "loadout once Dual Blades unlocks at F74.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor Boss Roster — Canon Highlights] · [Boss Drop Reference] · [Crystal Wyrm of Lisbeth's Forge (F55)] · [Lisbeth's Dark Repulser Gift (F48)] · [Pair Resonance — Mechanics Clarified] · [Unique Skill: Dual Blades] · [Avatar Weapons & Last-Attack Bonus]")
+        {
+            Tags = new[] { "world", "bosses", "kirito", "elucidator", "lab", "bundle-11" }
         },
     };
 }

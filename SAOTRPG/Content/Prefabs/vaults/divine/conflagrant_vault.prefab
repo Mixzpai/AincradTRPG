@@ -1,0 +1,22 @@
+NAME:          conflagrant_vault
+DESC:          Ember-sealed vault humming with contained flame — hidden chamber guarding a Divine bow.
+TAGS:          vault divine hidden secret
+FLOORS:        77-79
+BIOME:         volcanic ruins dark any
+WEIGHT:        1
+CHANCE:        1.0
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ITEM:          a = conflagrant_flame_bow
+
+MAP
+######
+#....#
+#.##.#
+#.#a.#
+#.##.#
+#....#
+######
+ENDMAP

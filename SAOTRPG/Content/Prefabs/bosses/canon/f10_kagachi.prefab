@@ -1,0 +1,33 @@
+NAME:          f10_kagachi
+DESC:          Moonlit dojo where Kagachi the Samurai Lord stands poised; tatami mats, rising-sun braziers at the flanks.
+TAGS:          boss canon kagachi_the_samurai_lord urban swamp f10
+FLOORS:        10
+BIOME:         urban swamp any
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: F = Campfire
+KFEAT: P = Pillar
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#####################
+#...................#
+#.P.P.P.P.P.P.P.P.P.#
+#...................#
+#._________________.#
+#._F_____________F_.#
+#._________________.#
+#._________X_______.#
+#._________________.#
+#._F_____________F_.#
+#._________________.#
+#...................#
+#.P.P.P.P.P.P.P.P.P.#
+#...................#
+#########+###########
+ENDMAP

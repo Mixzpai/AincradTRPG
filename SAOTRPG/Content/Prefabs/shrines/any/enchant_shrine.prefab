@@ -1,0 +1,21 @@
+NAME:          enchant_shrine
+DESC:          Quiet chamber centered on an enchantment shrine — adventurers come here to strengthen their arms.
+TAGS:          shrine enchant any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: F = Campfire
+
+MAP
+#######
+#.....#
+#.F.F.#
+#..E..#
+#.F.F.#
+#.....#
+###+###
+ENDMAP

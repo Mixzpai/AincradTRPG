@@ -93,7 +93,20 @@ public static class OptionsScreen
 
         var flashLabel = FormLabel("Damage Flash", y);
         var flashCheck = Toggle("Damage Flash", y, settings.ShowDamageFlash, v => settings.ShowDamageFlash = v);
-        y += 3;
+        y += 2;
+
+        // Bundle 11 — eighth-block bars vs. ASCII fallback for HP/XP/SAT.
+        var asciiBarsLabel = FormLabel("ASCII Stat Bars", y);
+        var asciiBarsCheck = Toggle("ASCII Stat Bars", y, settings.UseAsciiStatBars,
+            v => settings.UseAsciiStatBars = v);
+        y += 1;
+        var asciiBarsDesc = new Label
+        {
+            Text = "Use ASCII bars if eighth-block (▏▎▍▌▋▊▉) misrenders.",
+            X = Pos.Center() + ControlOffset, Y = y,
+            Width = 56, Height = 1, ColorScheme = ColorSchemes.Dim,
+        };
+        y += 2;
 
         // ── Accessibility ────────────────────────────────────────────
         var accessHeader = ScreenHeader.Section("Accessibility", y);
@@ -119,9 +132,8 @@ public static class OptionsScreen
             v => settings.DamageBreakdownMode = (DamageBreakdownMode)v);
         y += 2;
 
-        // Static preview lines — numbers are frozen samples, not live data.
-        // Selected mode highlights Gold; others dim so the format comparison
-        // is immediate and doesn't require farming a monster to check.
+        // Static preview lines — frozen samples, not live. Selected mode highlights Gold,
+        // others dim, so format comparison is immediate without farming a monster.
         string[] previewLines =
         {
             "Off      You hit Kobold for 14 damage",
@@ -307,6 +319,7 @@ public static class OptionsScreen
             gameplayHeader, autoPickupLabel, autoPickupCheck,
             textSpeedLabel, textSpeedRadio,
             displayHeader, footstepLabel, footstepCheck, flashLabel, flashCheck,
+            asciiBarsLabel, asciiBarsCheck, asciiBarsDesc,
             accessHeader, shakeLabel, shakeCheck, shakeDesc,
             breakdownLabel, breakdownRadio,
             previewLabels[0], previewLabels[1], previewLabels[2], previewLabels[3],

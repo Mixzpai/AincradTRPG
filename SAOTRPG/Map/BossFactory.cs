@@ -150,6 +150,14 @@ public static class BossFactory
         ("???",                           "The Final Trial"),                  // F100 — player clone
     };
 
+    // Boss name by floor (1-indexed). Used by PrefabPlacementPass for canon-boss-arena tag lookup.
+    public static string GetBossName(int floor)
+    {
+        if (floor < 1) floor = 1;
+        int idx = Math.Clamp(floor - 1, 0, BossRoster.Length - 1);
+        return BossRoster[idx].Name;
+    }
+
     // Floor 100 handled separately (player clone).
     public static Boss CreateFloorBoss(int floor)
     {

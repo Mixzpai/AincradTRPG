@@ -1,0 +1,18 @@
+NAME:          monument_of_swordsmen
+DESC:          A small pedestal room whose centerpiece bears the Monument of Swordsmen — a register of fallen heroes.
+TAGS:          altar monument any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        15
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  6
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#####
+#...#
+#.M.#
+#...#
+##+##
+ENDMAP

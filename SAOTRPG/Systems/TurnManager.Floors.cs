@@ -195,6 +195,8 @@ public partial class TurnManager
         _bountyRewardXp = 0;
         _bountyComplete = false;
         _floorColStart = _player.ColOnHand;
+        // Barrier+N refills on floor entry per Bundle 7 spec.
+        _barrierRemaining = GetBarrierCapacity();
         ClearExplorePath();
     }
 

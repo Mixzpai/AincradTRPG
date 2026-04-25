@@ -1,0 +1,17 @@
+NAME:          toppled_cart
+DESC:          A merchant cart lies in splinters across the road — spilled crates and a bloodied journal.
+TAGS:          vignette narrative cart
+FLOORS:        *
+BIOME:         any
+WEIGHT:        22
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: b = Bush
+
+MAP
+.....
+.bJb.
+.....
+ENDMAP

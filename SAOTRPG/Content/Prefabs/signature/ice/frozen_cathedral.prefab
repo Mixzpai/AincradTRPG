@@ -1,0 +1,26 @@
+NAME:          ice_frozen_cathedral
+DESC:          Ice-pillared cathedral with a fracture-laced floor and a frozen altar at its choir.
+TAGS:          signature ice cathedral shrine
+FLOORS:        16-75
+BIOME:         ice any
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+KFEAT: A = Shrine
+
+MAP
+############
+#..........#
+#.P......P.#
+#..........#
+#..........#
+#....A.....#
+#..........#
+#..........#
+#.P......P.#
+#..........#
+####+#######
+ENDMAP

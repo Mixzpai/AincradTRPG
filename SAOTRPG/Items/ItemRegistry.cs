@@ -497,6 +497,8 @@ public static class ItemRegistry
         Register("ore_ash_white",      () => EnhancementOreDefinitions.CreateAshWhite());
 
         // ── Refinement Ingots ──
+        // Bundle 10 — Iron Ingot (Common ore drop from Iron veins via Mining).
+        Register("iron_ingot",        () => IngotDefinitions.CreateIronIngot());
         Register("sharpening_ingot",  () => IngotDefinitions.CreateSharpeningIngot());
         Register("warden_ingot",      () => IngotDefinitions.CreateWardenIngot());
         Register("hunter_ingot",      () => IngotDefinitions.CreateHunterIngot());
@@ -509,6 +511,8 @@ public static class ItemRegistry
         Register("sovereign_ingot",   () => IngotDefinitions.CreateSovereignIngot());
         Register("vanguard_ingot",    () => IngotDefinitions.CreateVanguardIngot());
         Register("astral_ingot",      () => IngotDefinitions.CreateAstralIngot());
+        // Bundle 9 — Mithril Ingot (Rare refinement + Divine Awakening Lv1 material).
+        Register("mithril_ingot",     () => IngotDefinitions.CreateMithrilIngot());
 
         // ── Shields ──────────────────────────────────────────────────
         Register("wooden_shield", () => ShieldDefinitions.CreateWoodenShield());
@@ -535,6 +539,11 @@ public static class ItemRegistry
         Register("celestial_chestplate",   () => ArmorDefinitions.CreateCelestialChest());
         Register("celestial_helmet",       () => ArmorDefinitions.CreateCelestialHelmet());
         Register("celestial_boots",        () => ArmorDefinitions.CreateCelestialBoots());
+
+        // ── Pickaxes (Tool slot — Bundle 10 mining) ──────────────────
+        Register("wooden_pickaxe",   () => PickaxeDefinitions.CreateWoodenPickaxe());
+        Register("iron_pickaxe",     () => PickaxeDefinitions.CreateIronPickaxe());
+        Register("mithril_pickaxe",  () => PickaxeDefinitions.CreateMithrilPickaxe());
 
         // Accessories
         Register("ring_of_strength", () => AccessoryDefinitions.CreateRingOfStrength());
@@ -691,6 +700,10 @@ public static class ItemRegistry
         Register("cardinal_shard",     () => IngredientDefinitions.CreateCardinalShard());
         Register("immortal_fragment",  () => IngredientDefinitions.CreateImmortalFragment());
         Register("ogres_cleaver",      () => IngredientDefinitions.CreateOgresCleaver());
+
+        // Bundle 9 — Divine Awakening catalysts (Lv1→Lv2 uses divine_fragment, Lv2→Lv3 primordial_shard).
+        Register("divine_fragment",    () => EvolutionMaterialDefinitions.CreateDivineFragment());
+        Register("primordial_shard",   () => EvolutionMaterialDefinitions.CreatePrimordialShard());
     }
 
     private static void Register(string id, Func<BaseItem> factory) => _registry[id] = factory;

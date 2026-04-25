@@ -1,0 +1,19 @@
+NAME:          sand_bones
+DESC:          Dune sand half-covers scattered bones and a wind-bleached journal.
+TAGS:          vignette narrative desert bones
+FLOORS:        11-80
+BIOME:         desert any
+WEIGHT:        18
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: O = Rock
+
+MAP
+.....
+.O.O.
+.....
+..J..
+.....
+ENDMAP

@@ -141,6 +141,10 @@ public partial class TurnManager
             }
         }
 
+        // Bundle 10 — mining bump-action diverts before the BlocksMovement gate.
+        // Returns true when the action consumed the turn (or hint logged).
+        if (TryHandleMiningStrike(tx, ty)) return;
+
         if (tile.BlocksMovement && !swimmingBypass)
         {
             TutorialSystem.ShowTip(_log, "first_wall_bump");
@@ -417,6 +421,9 @@ public partial class TurnManager
                     _map.AddItem(_player.X, _player.Y, divine);
                     _log.LogLoot($"  ◈ {divine.Name} — Divine Object. (Inventory full — dropped at your feet.)");
                 }
+                // Bundle 8: fire DivineObtained event + set one-per-run cap when a Divine was granted.
+                if (divine is Items.Equipment.Weapon divineWpn && divine.Rarity == "Divine")
+                    NotifyDivineObtained(divineWpn);
             }
             return true;
         }
@@ -459,6 +466,61 @@ public partial class TurnManager
             postCompleteLine: "The banner walks with you. There is nothing more I can give.",
             rewardCol:        700,
             rewardXp:         550);
+    }
+
+    // Scholar Vesper — F89 Satanachia (Scimitar Divine). Goetia grimoire theme.
+    private bool HandleScholarVesper(Entities.NPC npc)
+    {
+        if (npc.Name != "Scholar Vesper") return false;
+        return HandleDivineQuest(npc,
+            questId:          "divine_satanachia",
+            questTitle:       "The Goetia's Seal",
+            openingLine:      "Twenty-four wards fall before the seal unbinds. Break them, and the grimoire's blade is yours.",
+            killCount:        24,
+            divineDefId:      "satanachia",
+            handOverLine:     "The seal breaks. Take Satanachia — let its edge answer what the wards could not.",
+            inProgressLine:   "The seal holds. More must fall.",
+            postCompleteLine: "The grimoire is silent. Its page has turned to you.",
+            rewardCol:        800,
+            rewardXp:         600);
+    }
+
+    // Bundle 9: Selka awakening hook — short-circuit OR before HandleSelka. Opens dialog when base quest TurnedIn,
+    // chain quest isn't mid-turn-in, and Divine is carried; otherwise returns false to fall through untouched.
+    private bool HandleSelkaAwakening(Entities.NPC npc)
+    {
+        if (npc.Name != "Selka the Novice") return false;
+
+        // Guard 1: base quest must be fully turned in.
+        var baseQ = QuestSystem.GetQuest("divine_fragrant_olive");
+        if (baseQ == null || baseQ.Status != QuestStatus.TurnedIn) return false;
+
+        // Guard 2 (gotcha #4): chained "Sword's Awakening" must be null or TurnedIn. If InProgress/Complete,
+        // HandleSelka owns the dispatch so the player can turn it in.
+        var chainQ = QuestSystem.GetQuest("selka_unfolding_truth");
+        if (chainQ != null && chainQ.Status != QuestStatus.TurnedIn) return false;
+
+        // Guard 3: must carry a Divine weapon to be offered awakening.
+        if (!HasDivineWeapon(_player.Inventory))
+        {
+            _log.Log("Selka: \"Return when you carry a blade worthy of awakening.\"");
+            return false;
+        }
+
+        _log.Log("Selka: \"I can hear your blade's song. Let me help it awaken.\"");
+        DivineAwakeningRequested?.Invoke(_player);
+        return true;
+    }
+
+    // Returns true if any weapon in inventory OR equipped slots is Divine rarity.
+    // Equip removes from Items into equipped-slot map — must scan both.
+    private static bool HasDivineWeapon(Inventory.Core.Inventory inv)
+    {
+        foreach (var item in inv.Items)
+            if (item is Items.Equipment.Weapon w && w.Rarity == "Divine") return true;
+        foreach (Inventory.Core.EquipmentSlot s in Enum.GetValues(typeof(Inventory.Core.EquipmentSlot)))
+            if (inv.GetEquipped(s) is Items.Equipment.Weapon we && we.Rarity == "Divine") return true;
+        return false;
     }
 
     // Selka — F65 Fragrant Olive + chained "Unfolding Truth" (30 kills F65+).
@@ -596,6 +658,26 @@ public partial class TurnManager
             "Not yet. Agil was clear — fifteen, no fewer.",
             "May its bite never dull.",
             500, 400),
+
+        // LN F40 Yulier — KoB-era Asuna friend; canon Lambent Light gift.
+        // Bundle 11 anchor: Asuna's signature rapier returns to its KoB-era floor.
+        ["Yulier"] = new("ln_yulier_lambent_light", "The Lightning Flash's Memory",
+            "Asuna gave me her old rapier before the Knights took her. Ten on this floor and Lambent Light is yours — she would have wanted a wielder, not a relic.",
+            10, "lambent_light",
+            "Asuna's light is yours now. Be the flash she was — and faster, if you can.",
+            "Asuna would not have settled. Neither will I.",
+            "Carry her flash. There is nothing else of her left to give.",
+            450, 350),
+
+        // LN MR-arc F76 Jun — Sleeping Knights' tribute; Mother's Rosario handover.
+        // Bundle 11 anchor: Yuuki memorial floor F76.
+        ["Jun"] = new("ln_jun_mothers_rosario", "The Sleeping Knights' Tribute",
+            "Yuuki left her sword to whoever would carry her family's name forward. Fifteen on this floor — prove you have the heart for Mother's Rosario.",
+            15, "mothers_rosario",
+            "Yuuki would have liked you. Take her sword — and the eleven sword skills it remembers. Carry the Knights with you.",
+            "Yuuki took on a hundred. Fifteen is not too many.",
+            "The Sleeping Knights walk with you now. Yuuki rests easier.",
+            700, 550),
     };
 
     // Generic dispatcher for all Hollow Fragment quest NPCs.
@@ -762,10 +844,50 @@ public partial class TurnManager
 
     // Lisbeth at Lindarth (F48) — Rarity 6 craft dialog in place of generic flow.
     // Gated on floor 48 so Town-of-Beginnings Lisbeth (F1) stays normal.
+    // Bundle 11 — F55-boss-cleared one-time Dark Repulser handover (LN canon Lisbeth gift).
     private bool HandleLisbethLindarth(Entities.NPC npc)
     {
         if (npc.Name != "Lisbeth") return false;
         if (CurrentFloor != 48) return false;
+
+        // LN canon: Lisbeth crafts Dark Repulser after F55 dragon-ore quest. Gate on F55 boss
+        // clear (HighestFloorBossCleared >= 55). One-time per save via TurnedIn quest flag.
+        const string DrQuestId = "lisbeth_dark_repulser_gift";
+        if (ShopTierSystem.HighestFloorBossCleared >= 55
+            && QuestSystem.GetQuest(DrQuestId) == null)
+        {
+            var drQuest = new Quest
+            {
+                Id = DrQuestId,
+                Title = "Lisbeth's Gift",
+                Description = "Lisbeth's one-time Dark Repulser gift.",
+                GiverName = npc.Name,
+                Floor = CurrentFloor,
+                Type = QuestType.Kill,
+                TargetMob = "",
+                TargetCount = 0,
+                Persistent = true,
+                Status = QuestStatus.TurnedIn,
+                RewardCol = 0,
+                RewardXp = 0,
+            };
+            QuestSystem.CompletedQuests.Add(drQuest);
+
+            _log.Log($"{npc.Name}: \"Hey — remember that crystallite ore from the F55 dragon? I finally finished it. Here. I made it for you.\"");
+            var dr = Items.ItemRegistry.Create("dark_repulser");
+            if (dr != null)
+            {
+                if (_player.Inventory.AddItem(dr))
+                    _log.LogLoot($"  ◈ You receive {dr.Name} — Lisbeth's gift.");
+                else
+                {
+                    _map.AddItem(_player.X, _player.Y, dr);
+                    _log.LogLoot($"  ◈ {dr.Name} — Lisbeth's gift. (Inventory full — dropped at your feet.)");
+                }
+            }
+            // Fall through to the normal forge dialog so player can still craft on the same visit.
+        }
+
         _log.Log($"{npc.Name}: \"Welcome to the Lindarth forge. Show me rare steel and I'll show you rare work.\"");
         LisbethInteraction?.Invoke();
         return true;
@@ -820,12 +942,15 @@ public partial class TurnManager
 
             bool handledByRan = HandleRanTheBrawler(npc);
             bool handledByAzariya = HandleSisterAzariya(npc);
-            bool handledBySelka = HandleSelka(npc);
+            // Bundle 9: awakening hook runs BEFORE HandleSelka; short-circuit OR falls through
+            // to HandleSelka (preserving base + chain dialogue) when awakening conditions fail.
+            bool handledBySelka = HandleSelkaAwakening(npc) || HandleSelka(npc);
             bool handledByDorothy = HandleDorothy(npc);
+            bool handledByVesper = HandleScholarVesper(npc);
             bool handledByHollowNpc = HandleHollowWeaponNpc(npc);
             bool handledByLisbeth = HandleLisbethLindarth(npc);
             bool handledByGuildRecruiter = HandleGuildRecruiter(npc);
-            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByDorothy || handledByHollowNpc || handledByLisbeth || handledByGuildRecruiter;
+            bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByDorothy || handledByVesper || handledByHollowNpc || handledByLisbeth || handledByGuildRecruiter;
 
             QuestSystem.OnNpcTalk(_log);
             // FB-063 — karma scales with completion count (+3 per turn-in).

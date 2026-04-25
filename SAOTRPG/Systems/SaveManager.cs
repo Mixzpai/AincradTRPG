@@ -6,6 +6,7 @@ using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Items.Materials;
+using SAOTRPG.Map;
 using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
@@ -76,7 +77,24 @@ public static class SaveManager
             string path = SlotPath(slot);
             if (!File.Exists(path)) return null;
             string json = File.ReadAllText(path);
-            return JsonSerializer.Deserialize<SaveData>(json, JsonOpts);
+            var data = JsonSerializer.Deserialize<SaveData>(json, JsonOpts);
+            if (data == null) return null;
+            // Save-version migration: v1 saves have no GlobalSeed. Regenerate from
+            // TickCount and log — visible fallback per fail-loud rule.
+            if (data.SaveVersion < 2 || data.GlobalSeed < 0)
+            {
+                int fallback = Environment.TickCount;
+                DebugLogger.LogGame("SAVE", $"legacy save — globalSeed regenerated (v{data.SaveVersion} → v2, seed={fallback})");
+                data.GlobalSeed = fallback;
+                data.SaveVersion = 2;
+            }
+            MapGenerator.SetGlobalSeed(data.GlobalSeed);
+            // Bundle 7: restore per-prefab MAX_PER_GAME counter. Null-coalesces to empty
+            // dict on legacy v2 saves missing the field.
+            MapGenerator.SetPrefabUseCounts(data.PrefabUseCounts);
+            // Bundle 8: restore Divine one-per-run gate. Legacy saves default false.
+            LootGenerator.DivineObtainedThisRun = data.DivineObtainedThisRun;
+            return data;
         }
         catch (Exception ex)
         {
@@ -127,6 +145,7 @@ public static class SaveManager
     private static SaveData BuildSaveData(Player player, TurnManager tm) => new()
     {
         Timestamp = DateTime.Now, PlayTimeSeconds = (long)tm.TotalPlayTime.TotalSeconds,
+        GlobalSeed = MapGenerator.CurrentGlobalSeed,
         FirstName = player.FirstName, LastName = player.LastName, Gender = player.Gender,
         Title = player.Title, PlayerId = player.Id,
         Level = player.Level, CurrentExperience = player.CurrentExperience,
@@ -148,6 +167,8 @@ public static class SaveManager
         PoisonTurnsLeft = tm.PoisonTurnsLeft, BleedTurnsLeft = tm.BleedTurnsLeft,
         StunTurnsLeft = tm.StunTurnsLeft, SlowTurnsLeft = tm.SlowTurnsLeft,
         ShrineBuffTurns = tm.ShrineBuffTurns, LevelUpBuffTurns = tm.LevelUpBuffTurns,
+        // Bundle 10 (B1) — active food regen buff round-trip.
+        FoodRegenRate = tm.FoodRegenRate, FoodRegenTurnsLeft = tm.FoodRegenTurnsLeft,
         DiscoveredLore = tm.DiscoveredLore.ToList(),
         UnlockedAchievements = Achievements.Unlocked.ToList(),
         SeenTutorialTips = TutorialSystem.SeenTips.ToList(),
@@ -204,6 +225,10 @@ public static class SaveManager
         VendorInvestments = VendorInvestmentSystem.Snapshot(),
         // FB-466 — 10-slot consumable quickbar DefinitionIds.
         QuickbarSlotDefIds = player.Quickbar.SlotItemDefIds.ToList(),
+        // Bundle 7: per-prefab placement counts (MAX_PER_GAME enforcement).
+        PrefabUseCounts = MapGenerator.GetCurrentPrefabUseCounts(),
+        // Bundle 8: Divine one-per-run cap — mirrors LootGenerator static gate.
+        DivineObtainedThisRun = LootGenerator.DivineObtainedThisRun,
     };
 
     // Item serialization.
@@ -223,7 +248,24 @@ public static class SaveManager
         // Null/empty on unenhanced weapons to keep saves clean.
         if (item is Weapon weaponSave && weaponSave.EnhancementOreHistory.Count > 0)
             save.EnhancementOreHistory = new List<string>(weaponSave.EnhancementOreHistory);
-        if (item.DefinitionId == null) save.FullItemJson = SerializeFullItem(item);
+        // Bundle 8: persist FD Paired flag only when true. Legacy saves stay lean;
+        // Corruption Stone transforms round-trip the live state.
+        if (item is Weapon pairedSave && pairedSave.IsDualWieldPaired)
+            save.IsDualWieldPaired = true;
+        // Bundle 9: persist Divine Awakening level only when awakened. Null on
+        // unawakened/non-weapon items keeps legacy save shape untouched.
+        if (item is Weapon awakSave && awakSave.AwakeningLevel > 0)
+            save.AwakeningLevel = awakSave.AwakeningLevel;
+        // Bundle 10: persist Pickaxe MaxDurability so durability ceiling round-trips.
+        if (item is Pickaxe pickSave && pickSave.MaxDurability > 0)
+            save.MaxDurability = pickSave.MaxDurability;
+        if (item.DefinitionId == null)
+        {
+            save.FullItemJson = SerializeFullItem(item);
+            // Bundle 10 (B2) — FullItemJson Bonuses already include refinement/awakening
+            // contributions; load path must skip the runtime-replay used for DefId items.
+            save.BonusesAlreadyBaked = true;
+        }
         return save;
     }
 
@@ -308,9 +350,12 @@ public static class SaveManager
             item.ItemDurability = save.Durability;
             if (item is StackableItem stackable && save.Quantity.HasValue)
                 stackable.Quantity = save.Quantity.Value;
+            // Bundle 10 (B2) — if Bonuses are pre-baked at save time, skip the
+            // enhancement/refinement/awakening replay to avoid double-stacking.
+            bool baked = save.BonusesAlreadyBaked == true;
             // Restore enhancement. Weapons: per-level bonus biased by ore consumed.
             // Legacy saves (no ore history) → N × Crimson Flame (Attack) migration.
-            if (item is EquipmentBase eq && save.EnhancementLevel > 0)
+            if (!baked && item is EquipmentBase eq && save.EnhancementLevel > 0)
             {
                 eq.EnhancementLevel = save.EnhancementLevel;
                 int bonus = eq is Weapon ? 3 : eq is Armor ? 2 : 1;
@@ -348,13 +393,34 @@ public static class SaveManager
                 }
             }
             // IF Refinement: restore slot DefIds and fold ingot bonuses back
-            // into Bonuses so equipped gear re-grants them.
+            // into Bonuses so equipped gear re-grants them. Skip the rehydrate
+            // when Bonuses are already baked (B2 — avoid double-stacking).
             if (item is EquipmentBase eqRef && save.RefinementSlots != null)
             {
                 for (int i = 0; i < EquipmentBase.RefinementSlotCount && i < save.RefinementSlots.Count; i++)
                     eqRef.RefinementSlots[i] = save.RefinementSlots[i];
-                Refinement.RehydrateBonuses(eqRef);
+                if (!baked) Refinement.RehydrateBonuses(eqRef);
             }
+            // Bundle 8: FD Paired flag round-trip. Null (legacy) → definition value kept
+            // (ItemRegistry.Create already ran the Paired() wrapper). Non-null → overwrite.
+            if (save.IsDualWieldPaired.HasValue && item is Weapon pairedLoad)
+                pairedLoad.IsDualWieldPaired = save.IsDualWieldPaired.Value;
+            // Bundle 9: Divine Awakening round-trip. Null (legacy) → leaves at 0. Non-null →
+            // set level + re-fold flat ATK bonus into Bonuses.Attack so re-equip grants it.
+            // Skip the ATK re-fold when Bonuses are already baked (B2).
+            if (save.AwakeningLevel.HasValue && save.AwakeningLevel.Value > 0 && item is Weapon awakLoad)
+            {
+                awakLoad.AwakeningLevel = save.AwakeningLevel.Value;
+                if (!baked)
+                {
+                    int bonus = DivineAwakening.ComputeBonusAttack(awakLoad);
+                    if (bonus != 0) awakLoad.Bonuses.Add(StatType.Attack, bonus);
+                }
+            }
+            // Bundle 10: Pickaxe MaxDurability round-trip. Null (legacy/non-pickaxe) →
+            // fall back to current durability so the ceiling is at least non-zero on load.
+            if (item is Pickaxe pickLoad)
+                pickLoad.MaxDurability = save.MaxDurability ?? Math.Max(pickLoad.ItemDurability, 1);
         }
         else if (save.FullItemJson != null)
             item = DeserializeFullItem(save.FullItemJson);

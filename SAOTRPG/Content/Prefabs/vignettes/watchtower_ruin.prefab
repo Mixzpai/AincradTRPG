@@ -1,0 +1,17 @@
+NAME:          watchtower_ruin
+DESC:          Three walls of a toppled watchtower with a single lore stone still standing.
+TAGS:          vignette narrative ruins tower
+FLOORS:        5-90
+BIOME:         ruins any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#####
+#...#
+#.*.#
+#...#
+.....
+ENDMAP

@@ -1,0 +1,25 @@
+NAME:          treasure_king_hoard
+DESC:          A throned hoard — five chests and two guardian statues flanking columns of pride.
+TAGS:          vault treasure king large guardian
+FLOORS:        40-99
+BIOME:         any
+WEIGHT:        14
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  3
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+
+MAP
+###########
+#.........#
+#.P.....P.#
+#.........#
+#.$.$.$.$.#
+#....$....#
+#.........#
+#.P.1.1.P.#
+#.........#
+####+######
+ENDMAP

@@ -1,0 +1,26 @@
+NAME:          grassland_open_vista
+DESC:          Grassland hill with a lone sentinel tree, a ring of flowers, and a lit campfire at the vista's edge.
+TAGS:          signature grassland vista
+FLOORS:        1-40
+BIOME:         grassland any
+WEIGHT:        25
+MAX_PER_FLOOR: 2
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: T = Tree
+KFEAT: f = Flowers
+KFEAT: F = Campfire
+
+MAP
+,,,,,,,,,,,,
+,,,,,f,f,,,,
+,,,,f,,,,f,,
+,,,f,,T,,,f,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,f,,F,,,,f,
+,,,,,,,,,,,,
+,,,f,,,,,,,,
+,,,,,,,,,,,,
+ENDMAP

@@ -1,0 +1,30 @@
+NAME:          arena_small
+DESC:          Small circular pit boss arena with four pillars and a single arched entrance.
+TAGS:          boss generic small any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: P = Pillar
+KFEAT: X = LabyrinthEntrance
+
+MAP
+#################
+#...............#
+#.P...........P.#
+#...............#
+#...............#
+#...............#
+#.......X.......#
+#...............#
+#...............#
+#...............#
+#.P...........P.#
+#...............#
+#######+#########
+ENDMAP

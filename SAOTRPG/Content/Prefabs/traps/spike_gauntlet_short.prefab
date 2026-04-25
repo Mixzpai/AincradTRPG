@@ -1,0 +1,20 @@
+NAME:          spike_gauntlet_short
+DESC:          Narrow corridor seeded with three stepping spike traps.
+TAGS:          trap corridor short easy
+FLOORS:        *
+BIOME:         any
+WEIGHT:        25
+MAX_PER_FLOOR: 3
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+MAP
+###
+#^#
+#.#
+#^#
+#.#
+#^#
+###
+ENDMAP

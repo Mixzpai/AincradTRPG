@@ -1,0 +1,19 @@
+NAME:          cracked_vault
+DESC:          Treasure chamber hidden behind a cracked wall — reward for those who break through.
+TAGS:          vault cracked hidden any
+FLOORS:        *
+BIOME:         any
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: = = CrackedWall
+
+MAP
+#######
+#.....#
+#..$..#
+#.....#
+##===##
+ENDMAP

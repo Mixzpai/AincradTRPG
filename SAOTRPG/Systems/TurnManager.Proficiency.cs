@@ -1,8 +1,7 @@
 namespace SAOTRPG.Systems;
 
-// Weapon proficiency — per-type kills grant passive dmg + rank titles. Anchors
-// L1=0, L25=25, L50=100, L75=500, L100=2000, L110=10000 (geometric interp).
-// L25/50/75/100 = 1-of-2 fork pick (FloorLevelUp modal pattern).
+// Weapon proficiency — per-type kills grant passive dmg + rank titles.
+// Anchors L1=0,L25=25,L50=100,L75=500,L100=2000,L110=10000; L25/50/75/100 = 1-of-2 fork pick.
 public partial class TurnManager
 {
     // ── Legacy 15-tier rank ladder (display only) ─────────────────────
@@ -195,9 +194,15 @@ public partial class TurnManager
     }
 
     // Stat impact of fork picks. Dmg components (L25/L100 opt1) in GetProficiencyBonus;
-    // stat ramps land here.
+    // stat ramps land here. Bundle 10 (B15): L50 forks split by weapon type.
     private void ApplyForkPassive(string weaponType, int forkLevel, int option)
     {
+        // Bundle 10 (B15) — weapon-specific L50 forks for OHS / Katana / Bow.
+        if (forkLevel == 50 && ApplyWeaponSpecificL50Fork(weaponType, option))
+        {
+            _player.CurrentHealth = Math.Min(_player.CurrentHealth, _player.MaxHealth);
+            return;
+        }
         switch (forkLevel)
         {
             case 25: // 1:Bloodfever +5% ATK / 2:Bulwark +5 DEF
@@ -218,6 +223,28 @@ public partial class TurnManager
                 break;
         }
         _player.CurrentHealth = Math.Min(_player.CurrentHealth, _player.MaxHealth);
+    }
+
+    // Returns true if weaponType matches a B15-implemented type and the fork was applied.
+    // Apply via Player base fields so saves persist (BaseCriticalRate already snapshotted).
+    private bool ApplyWeaponSpecificL50Fork(string weaponType, int option)
+    {
+        switch (weaponType)
+        {
+            case "One-Handed Sword":
+                if (option == 1) _player.BaseCriticalRate += 3;        // Vorpal Edge
+                else             _player.BaseAttackSpeedBonus += 1;   // Saber Step
+                return true;
+            case "Katana":
+                if (option == 1) _player.KatanaIaijutsuActive = true;  // Iaijutsu (combat-side flag)
+                else             _player.BaseCriticalRate += 2;        // Drawing Stance
+                return true;
+            case "Bow":
+                if (option == 1) { _player.BaseCriticalRate += 2; _player.BowRangeOverflow += 5; } // Marksman Eye
+                else             _player.BaseAttackSpeedBonus += 1;   // Quickdraw
+                return true;
+        }
+        return false;
     }
 
     // Hydrate fork dict only — save already has adjusted stats. No delta replay.
@@ -250,15 +277,37 @@ public partial class TurnManager
             {
                 var picks = GetForkChoices(weaponType);
                 if (picks[i] != 0) continue; // already picked somehow
-                var (opt1, opt2) = GetForkOptions(fl);
+                var (opt1, opt2) = GetForkOptions(fl, weaponType);
                 _log.LogSystem($"  ** {weaponType} proficiency reached L{fl}! Choose a passive ** ");
                 ProficiencyForkRequested?.Invoke(weaponType, fl, opt1, opt2);
             }
         }
     }
 
+    // Generic fork options — used when weapon type has no specific Bundle 10 override.
     public static (ProficiencyFork Opt1, ProficiencyFork Opt2) GetForkOptions(int forkLevel) =>
-        forkLevel switch
+        GetForkOptions(forkLevel, "Generic");
+
+    // Bundle 10 (B15) — weapon-specific L50 forks for One-Handed Sword / Katana / Bow.
+    // Other 9 weapon types fall through to the generic table.
+    public static (ProficiencyFork Opt1, ProficiencyFork Opt2) GetForkOptions(int forkLevel, string weaponType)
+    {
+        if (forkLevel == 50)
+        {
+            switch (weaponType)
+            {
+                case "One-Handed Sword":
+                    return (new("Vorpal Edge",   "+3% Crit Rate"),
+                            new("Saber Step",    "+1 Attack Speed"));
+                case "Katana":
+                    return (new("Iaijutsu",      "+5% damage on first strike vs each encounter"),
+                            new("Drawing Stance","+2% Crit Rate"));
+                case "Bow":
+                    return (new("Marksman Eye",  "+2% Crit Rate, +5 effective range overflow"),
+                            new("Quickdraw",     "+1 Attack Speed"));
+            }
+        }
+        return forkLevel switch
         {
             25  => (new("Bloodfever",      "+5% Attack (flat +2 weapon dmg)"),
                     new("Bulwark",         "+5 Defense")),
@@ -270,6 +319,7 @@ public partial class TurnManager
                     new("Immortal Vanguard", "+6 END, +2 VIT (+15 DEF, +20 HP)")),
             _   => (new("?", ""), new("?", "")),
         };
+    }
 
     // Cosmetic level→rank mapping via kill-count anchors.
     public static string RankTitleForLevel(int level)

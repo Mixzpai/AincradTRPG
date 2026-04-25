@@ -220,6 +220,8 @@ public partial class MapView : View
     public event Action? PauseRequested;
     // FB-479 Shift+S — flips the status tray between compact / verbose labels.
     public event Action? StatusTrayVerboseToggleRequested;
+    // F9 — hot-reload biome JSONs + regenerate current floor with same seed.
+    public event Action? BiomeReloadRequested;
 
     // Partial method hook implemented in MapView.TileAnimations.cs.
     partial void RenderAmbientTiles(int vpWidth, int vpHeight);
