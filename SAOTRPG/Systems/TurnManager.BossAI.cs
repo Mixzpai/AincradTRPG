@@ -196,7 +196,7 @@ public partial class TurnManager
         {
             // Uninterruptible+N — chance to shrug off boss status breath.
             var breathWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-            int breathUninterrupt = GetSpecialEffectValue(breathWpn, "Uninterruptible");
+            int breathUninterrupt = breathWpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Uninterruptible>().FirstOrDefault()?.ChancePercent ?? 0;
             if (breathUninterrupt > 0 && Random.Shared.Next(100) < breathUninterrupt)
             {
                 _log.LogCombat($"  {breathWpn!.Name} shields you from {ability.Name}!");

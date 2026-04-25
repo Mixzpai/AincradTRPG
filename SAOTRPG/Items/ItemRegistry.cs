@@ -704,6 +704,19 @@ public static class ItemRegistry
         // Bundle 9 — Divine Awakening catalysts (Lv1→Lv2 uses divine_fragment, Lv2→Lv3 primordial_shard).
         Register("divine_fragment",    () => EvolutionMaterialDefinitions.CreateDivineFragment());
         Register("primordial_shard",   () => EvolutionMaterialDefinitions.CreatePrimordialShard());
+
+        // === Bundle 13 Slicing Stones ===
+        Register("slicing_stone_lesser",  () => EvolutionMaterialDefinitions.CreateLesserSlicingStone());
+        Register("slicing_stone_greater", () => EvolutionMaterialDefinitions.CreateGreaterSlicingStone());
+        Register("slicing_stone_perfect", () => EvolutionMaterialDefinitions.CreatePerfectSlicingStone());
+        // === End Bundle 13 Slicing Stones ===
+
+        // === Bundle 13 Ingots ===
+        // High-tier enhance + Reforge reuse the existing crystallite_ingot (Frost Dragon
+        // F48 drop, registered above at L693). No new ingot DefIds added — the existing
+        // crystallite_ingot already fills the Epic/Legendary mat slot. Block reserved as
+        // Agent B fence under the collision protocol; do not interleave Agent C's block.
+        // === End Bundle 13 Ingots ===
     }
 
     private static void Register(string id, Func<BaseItem> factory) => _registry[id] = factory;

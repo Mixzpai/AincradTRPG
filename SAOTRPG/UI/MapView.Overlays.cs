@@ -1,4 +1,5 @@
 using Terminal.Gui;
+using System.Runtime.InteropServices;
 using SAOTRPG.Entities;
 using SAOTRPG.Map;
 using SAOTRPG.Systems;
@@ -15,6 +16,7 @@ public partial class MapView
 
     private void RenderOverlays(int w, int h)
     {
+        using var _overlaysScope = Profiler.Begin("MapView.Overlays");
         RenderHeightmapOverlay(w, h);
         // Biome tint overlay disabled — overwrote ASCII glyph contrast. Kept method for potential revival at subtle alpha.
         if (SAOTRPG.Systems.UserSettings.Current.ShowFootsteps) RenderFootstepTrail(w, h);
@@ -43,6 +45,7 @@ public partial class MapView
         RenderLowHpPulse(w, h);
         RenderBorderFlash(w, h);
         RenderLookMode(w, h);
+        RenderRangedFireMode(w, h);
         // Popups + toasts ride above all tile/FX layers. Tick from the last
         // frame time so tween timing stays independent of the 750ms refresh.
         int dtMs = TickFrameClock();
@@ -190,13 +193,33 @@ public partial class MapView
 
     private void RenderFootstepTrail(int w, int h)
     {
-        var attr = Gfx.Attr(Color.DarkGray, Color.Black);
+        var settings = SAOTRPG.Systems.UserSettings.Current;
+        if (settings.FootstepStyle == SAOTRPG.Systems.FootstepStyle.Off) return;
+        if (settings.FootstepLength <= 0) return;
+
+        char glyph = settings.FootstepStyle switch
+        {
+            SAOTRPG.Systems.FootstepStyle.Dots       => '·',
+            SAOTRPG.Systems.FootstepStyle.Dashes     => '-',
+            SAOTRPG.Systems.FootstepStyle.Paws       => '"',
+            SAOTRPG.Systems.FootstepStyle.Bootprints => ':',
+            SAOTRPG.Systems.FootstepStyle.Chevrons   => '^',
+            _                                         => '·',
+        };
+        Color color = settings.FootstepOpacity switch
+        {
+            SAOTRPG.Systems.FootstepOpacity.Subtle => Color.DarkGray,
+            SAOTRPG.Systems.FootstepOpacity.Medium => Color.Gray,
+            SAOTRPG.Systems.FootstepOpacity.Bold   => Color.White,
+            _                                       => Color.DarkGray,
+        };
+        var attr = Gfx.Attr(color, Color.Black);
         foreach (var (fx, fy) in _footsteps)
         {
             if (!_map.InBounds(fx, fy) || !_map.IsVisible(fx, fy)) continue;
             var tile = _map.GetTile(fx, fy);
             if (tile.Occupant != null || tile.HasItems || !tile.IsWalkable) continue;
-            DrawGlyph(fx, fy, '·', attr, w, h);
+            DrawGlyph(fx, fy, glyph, attr, w, h);
         }
     }
 
@@ -245,19 +268,20 @@ public partial class MapView
 
     private void RenderDamageFlashes(int w, int h)
     {
-        for (int i = _damageFlashes.Count - 1; i >= 0; i--)
+        var span = CollectionsMarshal.AsSpan(_damageFlashes);
+        for (int i = span.Length - 1; i >= 0; i--)
         {
-            var (fx, fy, text, color, framesLeft, isCrit) = _damageFlashes[i];
+            ref var f = ref span[i];
             // Visible-only — prevents shroud leak after the player walks out of sight.
-            if (_map.InBounds(fx, fy) && _map.IsVisible(fx, fy))
+            if (_map.InBounds(f.X, f.Y) && _map.IsVisible(f.X, f.Y))
             {
-                int vx = MapToVx(fx), vy = MapToVy(fy - 1);
-                if (vy < 0) vy = MapToVy(fy);
-                if (isCrit && framesLeft <= CritDamageFlashFrames - 2) vy = Math.Max(0, vy - 1);
-                DrawTextAtView(vx, vy, text, Gfx.Attr(color, Color.Black), w, h);
+                int vx = MapToVx(f.X), vy = MapToVy(f.Y - 1);
+                if (vy < 0) vy = MapToVy(f.Y);
+                if (f.IsCrit && f.FramesLeft <= CritDamageFlashFrames - 2) vy = Math.Max(0, vy - 1);
+                DrawTextAtView(vx, vy, f.Text, Gfx.Attr(f.Color, Color.Black), w, h);
             }
-            if (framesLeft <= 1) _damageFlashes.RemoveAt(i);
-            else _damageFlashes[i] = (fx, fy, text, color, framesLeft - 1, isCrit);
+            if (f.FramesLeft <= 1) _damageFlashes.RemoveAt(i);
+            else f.FramesLeft--;
         }
     }
 
@@ -280,11 +304,10 @@ public partial class MapView
     private void RenderLootSparkle(int w, int h)
     {
         var attr = Gfx.Attr(Color.White, Color.Black);
-        for (int vy = 0; vy < h; vy++)
-        for (int vx = 0; vx < w; vx++)
+        foreach (var (mx, my) in _map.ItemTiles)
         {
-            int mx = VxToMap(vx), my = VyToMap(vy);
-            if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
+            if (!MapInView(mx, my, w, h)) continue;
+            if (!_map.IsVisible(mx, my)) continue;
             var tile = _map.GetTile(mx, my);
             if (!tile.HasItems || tile.Occupant != null) continue;
             var (glyph, _) = GetItemRarityVisual(tile.Items);
@@ -312,6 +335,7 @@ public partial class MapView
         foreach (var (_, trail) in _mobTrails)
         foreach (var (tx, ty) in trail)
         {
+            if (!MapInView(tx, ty, w, h)) continue;
             if (!_map.InBounds(tx, ty) || !_map.IsVisible(tx, ty)) continue;
             var tile = _map.GetTile(tx, ty);
             if (tile.Occupant != null || tile.HasItems || !tile.IsWalkable) continue;
@@ -324,6 +348,8 @@ public partial class MapView
         foreach (var monster in _map.Monsters)
         {
             if (monster.IsDefeated) continue;
+            // Viewport-rect early-out: skip the visible+manhattan check for off-screen mobs.
+            if (!MapInView(monster.X, monster.Y, w, h)) continue;
             if (!MapEffects.ShouldShowAggroIndicator(_map, monster.X, monster.Y, _player.X, _player.Y)) continue;
             Color c = Color.BrightRed;
             DrawGlyph(monster.X, monster.Y - 1, '!',
@@ -534,12 +560,12 @@ public partial class MapView
     {
         var attr = Gfx.Attr(new Color(120, 255, 120), Color.Black);
         int turn = SAOTRPG.Map.DayNightCycle.CurrentTurn;
-        for (int vy = 0; vy < h; vy++)
-        for (int vx = 0; vx < w; vx++)
+        var vents = _map.GasVents;
+        for (int i = 0; i < vents.Count; i++)
         {
-            int mx = VxToMap(vx), my = VyToMap(vy);
-            if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
-            if (_map.GetTile(mx, my).Type != SAOTRPG.Map.TileType.GasVent) continue;
+            var (mx, my) = vents[i];
+            if (!MapInView(mx, my, w, h)) continue;
+            if (!_map.IsVisible(mx, my)) continue;
 
             int hash = (mx * 73856093 ^ my * 19349663 ^ turn * 83492791) & 0x7FFFFFFF;
             if (hash % 8 != 0) continue;
@@ -559,15 +585,14 @@ public partial class MapView
         int phase = turn % 8;
         if (phase > 1) return; // Only sparkle for 2 of every 8 turns.
 
-        for (int vy = 0; vy < h; vy++)
-        for (int vx = 0; vx < w; vx++)
+        var shrines = _map.Shrines;
+        for (int i = 0; i < shrines.Count; i++)
         {
-            int mx = VxToMap(vx), my = VyToMap(vy);
-            if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
+            var (mx, my) = shrines[i];
+            if (!MapInView(mx, my, w, h)) continue;
+            if (!_map.IsVisible(mx, my)) continue;
             var type = _map.GetTile(mx, my).Type;
-            bool shrine = type == SAOTRPG.Map.TileType.Shrine || type == SAOTRPG.Map.TileType.EnchantShrine;
             bool fountain = type == SAOTRPG.Map.TileType.Fountain;
-            if (!shrine && !fountain) continue;
 
             int hash = (mx * 374761393 ^ my * 668265263) & 0x7FFFFFFF;
             int ox = ((hash & 3) - 1);

@@ -162,24 +162,23 @@ public sealed class ConnectivityAuditPass : IGenerationPass
 
     private static int BfsDist(GameMap map, int ax, int ay, int bx, int by)
     {
-        int w = map.Width, h = map.Height;
         if (!map.InBounds(ax, ay) || !map.InBounds(bx, by)) return -1;
-        var dist = new int[w, h];
-        for (int x = 0; x < w; x++) for (int y = 0; y < h; y++) dist[x, y] = -1;
+        var dist = new Dictionary<(int, int), int>();
         var q = new Queue<(int x, int y)>();
         q.Enqueue((ax, ay));
-        dist[ax, ay] = 0;
+        dist[(ax, ay)] = 0;
         int[] dxs = { -1, 1, 0, 0 }, dys = { 0, 0, -1, 1 };
         while (q.Count > 0)
         {
             var (cx, cy) = q.Dequeue();
-            if (cx == bx && cy == by) return dist[cx, cy];
+            int curDist = dist[(cx, cy)];
+            if (cx == bx && cy == by) return curDist;
             for (int d = 0; d < 4; d++)
             {
                 int nx = cx + dxs[d], ny = cy + dys[d];
-                if (!map.InBounds(nx, ny) || dist[nx, ny] >= 0) continue;
+                if (!map.InBounds(nx, ny) || dist.ContainsKey((nx, ny))) continue;
                 if (IsAuditBlocking(map.Tiles[nx, ny].Type)) continue;
-                dist[nx, ny] = dist[cx, cy] + 1;
+                dist[(nx, ny)] = curDist + 1;
                 q.Enqueue((nx, ny));
             }
         }

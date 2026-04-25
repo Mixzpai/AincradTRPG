@@ -117,23 +117,27 @@ public static class InventoryDialog
         }
         RefreshItemList();
 
+        // Bundle 13 (Item 10) — list shrinks to make room for 4-row compare panel below detail.
+        // Old footprint: Height = Dim.Fill(6) + detail(1) + compare(1) + sortBtn/hint = 6 anchor rows.
+        // New footprint: Height = Dim.Fill(9) + detail(1) + compare(4) + sortBtn/hint = 9 anchor rows.
         var listView = new ListView
         {
-            X = rightX, Y = 2, Width = Dim.Fill(1), Height = Dim.Fill(6),
+            X = rightX, Y = 2, Width = Dim.Fill(1), Height = Dim.Fill(9),
             Source = new ListWrapper<string>(itemNames),
             CanFocus = true,
         };
 
-        // ── Detail + compare row ─────────────────────────────────────
+        // ── Detail + compare panel ──
         var detailLabel = new Label
         {
-            Text = "", X = 1, Y = Pos.AnchorEnd(4),
+            Text = "", X = 1, Y = Pos.AnchorEnd(7),
             Width = Dim.Fill(1), Height = 1,
         };
+        // Bundle 13 (Item 10) — 4-row auto-on-selection compare panel.
         var compareLabel = new Label
         {
-            Text = "", X = 1, Y = Pos.AnchorEnd(3),
-            Width = Dim.Fill(1), Height = 1,
+            Text = "", X = 1, Y = Pos.AnchorEnd(6),
+            Width = Dim.Fill(1), Height = 4,
         };
 
         // ── Footer ───────────────────────────────────────────────────
@@ -143,7 +147,7 @@ public static class InventoryDialog
 
         var hintLabel = new Label
         {
-            Text = "Enter: act  |  L: lore  |  1-5: filter  |  Shift+N: bind slot  |  Esc: close",
+            Text = "Enter: act | L: lore | 1-5: filter | Shift+N: bind slot | Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
         };
 
@@ -253,28 +257,41 @@ public static class InventoryDialog
 
             if (item is EquipmentBase eqItem)
             {
-                // GearCompare returns a compact diff ("DMG +6  ATK +2  DEX -1") or mismatch banner.
-                // Color inherits from the net verdict so upgrade/downgrade reads at a glance.
-                compareLabel.Text = GearCompare.BuildDiffForPlayer(player, eqItem);
-                var verdict = EquipmentComparer.GetVerdict(player, eqItem);
-                compareLabel.ColorScheme = verdict switch
+                // Bundle 13 (Item 10) — 4-row compare panel auto-updates on selection.
+                // Empty array = no equipped counterpart (or non-equipment) → hide entirely.
+                var lines = GearCompare.BuildMultiLineDiffForPlayer(player, eqItem);
+                if (lines.Length == 0)
                 {
-                    EquipmentComparer.CompareResult.Upgrade => ColorSchemes.Success,
-                    EquipmentComparer.CompareResult.Downgrade => ColorSchemes.Danger,
-                    _ => ColorSchemes.Dim,
-                };
+                    compareLabel.Text = "";
+                    compareLabel.Visible = false;
+                }
+                else
+                {
+                    compareLabel.Visible = true;
+                    compareLabel.Text = string.Join("\n", lines);
+                    var verdict = EquipmentComparer.GetVerdict(player, eqItem);
+                    compareLabel.ColorScheme = verdict switch
+                    {
+                        EquipmentComparer.CompareResult.Upgrade => ColorSchemes.Success,
+                        EquipmentComparer.CompareResult.Downgrade => ColorSchemes.Danger,
+                        _ => ColorSchemes.Dim,
+                    };
+                }
             }
-            else { compareLabel.Text = ""; compareLabel.ColorScheme = ColorSchemes.Dim; }
+            else { compareLabel.Text = ""; compareLabel.Visible = false; compareLabel.ColorScheme = ColorSchemes.Dim; }
         };
 
         // Equipment slot selection shows detail for the equipped item.
         slotView.SelectedSlotChanged += (idx) =>
         {
             var slots = EquipmentSlotView.DefaultSlotLayout;
-            if (idx < 0 || idx >= slots.Length) { detailLabel.Text = ""; compareLabel.Text = ""; return; }
+            if (idx < 0 || idx >= slots.Length)
+            {
+                detailLabel.Text = ""; compareLabel.Text = ""; compareLabel.Visible = false; return;
+            }
             var eq = player.Inventory.GetEquipped(slots[idx].Slot);
             detailLabel.Text = eq != null ? EquipmentDialog.BuildItemDetail(eq) : "No item equipped in this slot.";
-            compareLabel.Text = "";
+            compareLabel.Text = ""; compareLabel.Visible = false;
         };
 
         sortBtn.Accepting += (s, e) =>

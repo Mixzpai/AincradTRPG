@@ -81,6 +81,82 @@ public static class WeaponEvolutionChains
     public static bool IsChainWeapon(string? defId)
         => defId != null && Chains.ContainsKey(defId);
 
+    // Bundle 13 — Slicing Stone alt-path map.
+    // Player presents Slicing Stone (tier-matched) instead of canon catalyst → routes to alt DefId.
+    // Tier match: Lesser→T1weapon, Greater→T2weapon, Perfect→T3weapon. T4 apex has no alt branch.
+    // Stone qty consumed: 1 (single-stone evolve, undercuts canon 3/8/20 by design).
+    public record AltStep(string AltNextDefId, string StoneDefId);
+
+    // Keyed by current weapon DefId. Alt target is a DIFFERENT DefId from canon NextDefId.
+    // Targets reuse existing weapons that thematically fit the alt branch — no new DefIds required at this stage.
+    public static readonly Dictionary<string, AltStep> AltChains = new()
+    {
+        // 1H Sword chain alt — Final Espada → Anneal Blade line (canon-called-out, Tier-Forge alt)
+        ["final_espada"]    = new("anneal_blade",            "slicing_stone_lesser"),
+        ["asmodeus"]        = new("tough_anneal_blade",      "slicing_stone_greater"),
+        ["final_avalanche"] = new("pitch_black_anneal_blade", "slicing_stone_perfect"),
+
+        // Rapier chain alt — Prima Sabre → Lambent Light line (Asuna canon)
+        ["prima_sabre"]     = new("chivalric_rapier",        "slicing_stone_lesser"),
+        ["pentagramme"]     = new("wind_fleuret",            "slicing_stone_greater"),
+        ["charadrios"]      = new("lambent_light",           "slicing_stone_perfect"),
+
+        // Scimitar chain alt — Moonstruck Saber → Ladder
+        ["moonstruck_saber"] = new("steel_scimitar",         "slicing_stone_lesser"),
+        ["diablo_esperanza"] = new("mythril_scimitar",       "slicing_stone_greater"),
+        ["iblis"]            = new("celestial_scimitar",     "slicing_stone_perfect"),
+
+        // Dagger chain alt — Heated Razor → Mate Chopper / Snow Warheit line
+        ["heated_razor"]      = new("mate_chopper",          "slicing_stone_lesser"),
+        ["valkyrie"]          = new("assassin_dagger",       "slicing_stone_greater"),
+        ["misericorde"]       = new("snow_warheit",          "slicing_stone_perfect"),
+
+        // Mace chain alt — Lunatic Press → Mace of Lord line
+        ["lunatic_press"] = new("iron_mace",                 "slicing_stone_lesser"),
+        ["nemesis"]       = new("mythril_mace",              "slicing_stone_greater"),
+        ["yggdrasil"]     = new("mace_of_lord",              "slicing_stone_perfect"),
+
+        // Katana chain alt — Matamon → Karakurenai / Kagenui line
+        ["matamon"]       = new("steel_katana",              "slicing_stone_lesser"),
+        ["shishi_otoshi"] = new("karakurenai",               "slicing_stone_greater"),
+        ["shichishito"]   = new("kagenui",                   "slicing_stone_perfect"),
+
+        // 2H Sword chain alt — Matter Dissolver → Tyrant Dragon line
+        ["matter_dissolver"] = new("steel_greatsword",       "slicing_stone_lesser"),
+        ["titans_blade"]     = new("mythril_greatsword",     "slicing_stone_greater"),
+        ["ifrit"]            = new("tyrant_dragon",          "slicing_stone_perfect"),
+
+        // Axe chain alt — Bardiche → Pale Edge / Ochigaitou line
+        ["bardiche"]       = new("battle_axe",               "slicing_stone_lesser"),
+        ["archaic_murder"] = new("pale_edge",                "slicing_stone_greater"),
+        ["nidhoggs_fang"]  = new("ochigaitou",               "slicing_stone_perfect"),
+
+        // Spear chain alt — Heart Piercer → Guilty Thorn / Anubis Spear line
+        ["heart_piercer"] = new("iron_spear",                "slicing_stone_lesser"),
+        ["trishula"]      = new("guilty_thorn",              "slicing_stone_greater"),
+        ["vijaya"]        = new("anubis_spear",              "slicing_stone_perfect"),
+
+        // Anneal Blade alt-path entry — canon F1-10 line gets Slicing Stone branching upward
+        ["anneal_blade"]              = new("queens_knightsword", "slicing_stone_greater"),
+        ["tough_anneal_blade"]        = new("azure_sky_blade",    "slicing_stone_perfect"),
+    };
+
+    // Returns alt-step for (defId, presentedStoneDefId) pair, or null if no alt-path applies.
+    public static AltStep? GetAlt(string? defId, string? stoneDefId)
+    {
+        if (defId == null || stoneDefId == null) return null;
+        if (!AltChains.TryGetValue(defId, out var alt)) return null;
+        return alt.StoneDefId == stoneDefId ? alt : null;
+    }
+
+    // True if presenting any Slicing Stone could route this weapon to an alt-path.
+    public static bool HasAltPath(string? defId)
+        => defId != null && AltChains.ContainsKey(defId);
+
+    // Returns the canonical Slicing Stone DefId expected for this weapon's alt-path.
+    public static string? AltStoneFor(string? defId)
+        => defId != null && AltChains.TryGetValue(defId, out var alt) ? alt.StoneDefId : null;
+
     // Maps floor → T1 chain weapon DefId awarded at that floor's Secret Shrine.
     // Used by MapGenerator.Population (shrine spawn) and TurnManager.Tiles (shrine interact).
     public static readonly Dictionary<int, string> SecretShrineByFloor = new()

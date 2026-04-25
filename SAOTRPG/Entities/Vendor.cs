@@ -53,6 +53,12 @@ namespace SAOTRPG.Entities
                 ShopStock.Add(PotionDefinitions.CreateReviveCrystal());
             }
 
+            // Bundle 12 (C1) — Pickaxes: Wooden F1-9, Iron F10-50. Mithril stays find-only.
+            if (floor >= 1 && floor <= 9)
+                ShopStock.Add(PickaxeDefinitions.CreateWoodenPickaxe());
+            else if (floor >= 10 && floor <= 50)
+                ShopStock.Add(PickaxeDefinitions.CreateIronPickaxe());
+
             // Floor 5+: random accessory
             if (floor >= 5)
             {

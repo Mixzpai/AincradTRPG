@@ -94,6 +94,8 @@ public static class SaveManager
             MapGenerator.SetPrefabUseCounts(data.PrefabUseCounts);
             // Bundle 8: restore Divine one-per-run gate. Legacy saves default false.
             LootGenerator.DivineObtainedThisRun = data.DivineObtainedThisRun;
+            // Bundle 13 (Item 1) — hydrate Collectables tracker. Null on legacy = empty.
+            CollectablesTracker.HydrateFromSave(data.CollectedLegendaries);
             return data;
         }
         catch (Exception ex)
@@ -101,6 +103,17 @@ public static class SaveManager
             DebugLogger.LogError($"SaveManager.Load slot {slot}", ex);
             return null;
         }
+    }
+
+    // Bundle 12 (C6) — current-floor mining vein strikes restore. Called from
+    // TurnManager.LoadFromSave after the floor map is in hand. Null/empty list
+    // = legacy save: leave dict empty so DefaultStrikesForTile re-seeds lazily.
+    public static void RestoreVeinStrikes(SaveData save, Map.GameMap map)
+    {
+        if (save.VeinStrikes == null) return;
+        map.VeinStrikesRemaining.Clear();
+        foreach (var entry in save.VeinStrikes)
+            map.VeinStrikesRemaining[(entry.X, entry.Y)] = entry.Strikes;
     }
 
     public static void DeleteSave(int slot)
@@ -229,6 +242,18 @@ public static class SaveManager
         PrefabUseCounts = MapGenerator.GetCurrentPrefabUseCounts(),
         // Bundle 8: Divine one-per-run cap — mirrors LootGenerator static gate.
         DivineObtainedThisRun = LootGenerator.DivineObtainedThisRun,
+        // Bundle 12 (C6) — current-floor mining vein strikes. Discarded on ascent
+        // (next floor's map drops the dict); empty list serializes as omitted.
+        VeinStrikes = tm.Map.VeinStrikesRemaining
+            .Select(kvp => new VeinStrikeEntry { X = kvp.Key.X, Y = kvp.Key.Y, Strikes = kvp.Value })
+            .ToList(),
+        // Bundle 13 (Item 1) — collected Legendary DefIds. Empty set serializes as null
+        // (DefaultIgnoreCondition WhenWritingNull) so legacy saves stay clean.
+        CollectedLegendaries = CollectablesTracker.Snapshot().Any()
+            ? new HashSet<string>(CollectablesTracker.Snapshot()) : null,
+        // Bundle 13 (Q16) — per-floor boss-clear flags. Empty = null.
+        DefeatedFloorBosses = tm.DefeatedFloorBosses.Count > 0
+            ? new HashSet<int>(tm.DefeatedFloorBosses) : null,
     };
 
     // Item serialization.

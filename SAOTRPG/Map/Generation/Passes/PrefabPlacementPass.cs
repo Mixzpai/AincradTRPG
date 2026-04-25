@@ -39,18 +39,35 @@ public sealed class PrefabPlacementPass : IGenerationPass
         if (bossPool.Count == 0) return;
 
         var canonHit = bossPool.FirstOrDefault(p => p.Tags.Contains(bossTag));
-        PrefabDefinition? chosen = canonHit;
-        if (chosen == null)
+        if (TryPlaceCandidate(ctx, canonHit)) return;
+
+        // Canon fell out (typically encompass disk-fit failure on small late floors).
+        // Walk the generic encompass arenas large→small before giving up.
+        var genericEncompass = bossPool
+            .Where(p => p.Tags.Contains("generic") && p.Orient == PrefabOrient.Encompass)
+            .ToList();
+        foreach (var slug in new[] { "arena_large", "arena_medium", "arena_small" })
         {
-            var generic = bossPool.Where(p => p.Tags.Contains("generic")).ToList();
-            chosen = WeightedPick(generic, ctx.Rng);
+            var def = genericEncompass.FirstOrDefault(p => p.Tags.Contains(slug));
+            if (TryPlaceCandidate(ctx, def)) return;
         }
-        if (chosen == null) return;
-        // MAX_PER_GAME check — skip placement if this prefab has hit its per-run cap.
+
+        // Last resort: weighted pick across everything else (room-anchored boss prefabs).
+        var fallback = WeightedPick(bossPool.Where(p => p.Orient != PrefabOrient.Encompass).ToList(), ctx.Rng);
+        if (TryPlaceCandidate(ctx, fallback)) return;
+
+        DebugLogger.LogGame("PREFAB",
+            $"floor={ctx.FloorNumber} all encompass arenas exceed disk; boss spawning into procedural boss room only");
+    }
+
+    // Increment-then-place; rolls back the use counter on placement failure.
+    private static bool TryPlaceCandidate(WorldContext ctx, PrefabDefinition? chosen)
+    {
+        if (chosen == null) return false;
         if (!MapGenerator.TryIncrementPrefabUse(chosen.Name, chosen.MaxPerGame))
         {
             DebugLogger.LogGame("PREFAB", $"'{chosen.Name}' skipped — MAX_PER_GAME={chosen.MaxPerGame} reached");
-            return;
+            return false;
         }
         var spawnQueue = new List<PrefabSpawnRequest>();
         bool placed;
@@ -60,6 +77,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
             placed = PrefabPlacer.TryPlaceInRoom(ctx.Map, ctx.Rooms, chosen, ctx.Rng, out _, ctx, spawnQueue);
         if (placed) DrainSpawnQueue(ctx, chosen, spawnQueue);
         else RollbackPrefabUse(chosen.Name);
+        return placed;
     }
 
     private static void TryEmbedRoomPrefabs(WorldContext ctx, string biome)

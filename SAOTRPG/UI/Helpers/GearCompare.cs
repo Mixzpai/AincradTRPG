@@ -115,6 +115,75 @@ public static class GearCompare
         return BuildDiff(eq, equipped);
     }
 
+    // Bundle 13 (Item 10) — multi-line diff for the bottom 4-row compare panel.
+    // Returns up to 4 lines: (1) header "vs <equipped name>" or "(no equipped)";
+    // (2) base + stat deltas; (3) special effects diff; (4) net verdict tag.
+    // Returns empty array when slot has no equipped counterpart and item is not EquipmentBase
+    // — caller hides the panel.
+    public static string[] BuildMultiLineDiffForPlayer(Player player, BaseItem item)
+    {
+        if (item is not EquipmentBase eq) return Array.Empty<string>();
+        EquipmentSlot? slot = ResolveSlot(eq);
+        if (slot == null) return Array.Empty<string>();
+        var equipped = player.Inventory.GetEquipped(slot.Value);
+        if (equipped == null) return Array.Empty<string>();
+
+        var lines = new List<string>(4);
+        string equippedName = TextHelpers.Truncate(equipped.Name ?? "", 40);
+        lines.Add($"vs equipped: {equippedName}");
+
+        // Type-mismatch banner — render alone, no stat lines.
+        if (eq is Weapon nw && equipped is Weapon ow
+            && !string.IsNullOrEmpty(nw.WeaponType)
+            && !string.IsNullOrEmpty(ow.WeaponType)
+            && nw.WeaponType != ow.WeaponType)
+        {
+            lines.Add($"  weapon type mismatch: {ow.WeaponType} -> {nw.WeaponType}");
+            return lines.ToArray();
+        }
+        if (eq is Armor na && equipped is Armor oa
+            && !string.IsNullOrEmpty(na.ArmorSlot)
+            && !string.IsNullOrEmpty(oa.ArmorSlot)
+            && na.ArmorSlot != oa.ArmorSlot)
+        {
+            lines.Add($"  armor slot mismatch: {oa.ArmorSlot} -> {na.ArmorSlot}");
+            return lines.ToArray();
+        }
+
+        var statDiff = BuildDiff(eq, equipped);
+        lines.Add(string.IsNullOrEmpty(statDiff) ? "  (no change)" : "  " + statDiff);
+
+        string special = BuildSpecialDiff(eq, equipped);
+        if (!string.IsNullOrEmpty(special)) lines.Add("  " + special);
+
+        var verdict = EquipmentComparer.GetVerdict(player, eq);
+        string tag = verdict switch
+        {
+            EquipmentComparer.CompareResult.Upgrade   => "[UPGRADE]",
+            EquipmentComparer.CompareResult.Downgrade => "[DOWNGRADE]",
+            _                                          => "[SIDEGRADE]",
+        };
+        if (lines.Count < 4) lines.Add(tag);
+        return lines.ToArray();
+    }
+
+    // Concise summary of special-effect deltas (e.g., "Bleed proc gained", "Lifesteal lost").
+    // Sources from EquipmentBase.ParsedEffects so works for weapons + armor uniformly.
+    private static string BuildSpecialDiff(EquipmentBase newEq, EquipmentBase oldEq)
+    {
+        var newSpecials = (newEq.ParsedEffects ?? Array.Empty<EquipmentSpecialEffect>())
+            .Select(s => s.ToString() ?? "").Where(s => s.Length > 0).ToHashSet();
+        var oldSpecials = (oldEq.ParsedEffects ?? Array.Empty<EquipmentSpecialEffect>())
+            .Select(s => s.ToString() ?? "").Where(s => s.Length > 0).ToHashSet();
+        var gained = newSpecials.Except(oldSpecials).ToList();
+        var lost   = oldSpecials.Except(newSpecials).ToList();
+        if (gained.Count == 0 && lost.Count == 0) return "";
+        var parts = new List<string>();
+        if (gained.Count > 0) parts.Add("+" + string.Join("/", gained.Select(s => TextHelpers.Truncate(s, 20))));
+        if (lost.Count > 0)   parts.Add("-" + string.Join("/", lost.Select(s => TextHelpers.Truncate(s, 20))));
+        return string.Join("  ", parts);
+    }
+
     // Mirror of EquipmentComparer.ResolveSlot — kept local to avoid a
     // reference churn during partial extraction.
     private static EquipmentSlot? ResolveSlot(EquipmentBase item)

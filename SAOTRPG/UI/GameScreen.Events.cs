@@ -289,6 +289,12 @@ public static partial class GameScreen
         mapView.StatsRequested += () => { mapView.ClearDamagePopups(); StatsDialog.Show(player, turnManager); refreshHud(); };
         mapView.HelpRequested += () => { mapView.ClearDamagePopups(); HelpDialog.Show(); };
         mapView.PlayerGuideRequested += () => { mapView.ClearDamagePopups(); PlayerGuideDialog.Show(turnManager, player); };
+        // Bundle 13 (Item 1) — Shift+L opens the Legendary Collectables panel.
+        mapView.LegendaryCollectablesRequested += () =>
+        {
+            mapView.ClearDamagePopups();
+            LegendaryCollectablesDialog.Show(turnManager.CurrentFloor);
+        };
         mapView.KillStatsRequested += () => { mapView.ClearDamagePopups(); KillStatsDialog.Show(player, turnManager); };
         mapView.BestiaryRequested += () => { mapView.ClearDamagePopups(); BestiaryDialog.Show(player, turnManager); };
         mapView.EquipmentRequested += () => { mapView.ClearDamagePopups(); EquipmentDialog.Show(player); refreshHud(); };
@@ -298,9 +304,66 @@ public static partial class GameScreen
         mapView.SprintRequested += (dx, dy) => { turnManager.ProcessSprint(dx, dy); refreshHud(); };
         mapView.StealthMoveRequested += (dx, dy) => { turnManager.ProcessStealthMove(dx, dy); refreshHud(); };
 
-        mapView.SwordSkillRequested += (slot) => { turnManager.ExecuteSwordSkill(slot); refreshHud(); };
+        // Bundle 13 Item 6 — sword skill activation. Range>1 skills route through the reticle
+        // first; Range=1 (melee bump-skills) keep the legacy nearest-target path. Eligibility
+        // (stun/post-motion/cooldown/weapon) is rechecked inside ExecuteSwordSkill on confirm,
+        // so we only gate reticle entry on the cheap structural facts.
+        mapView.SwordSkillRequested += (slot) =>
+        {
+            if (slot >= 0 && slot < turnManager.EquippedSkills.Length
+                && !mapView.IsRangedFireModeActive)
+            {
+                var skill = turnManager.EquippedSkills[slot];
+                var wpnNow = player.Inventory.GetEquipped(SAOTRPG.Inventory.Core.EquipmentSlot.Weapon)
+                                as SAOTRPG.Items.Equipment.Weapon;
+                string wtypeNow = wpnNow?.WeaponType ?? "Unarmed";
+                int bowOver = wpnNow?.WeaponType == "Bow" ? player.BowRangeOverflow : 0;
+                bool weaponMatches = skill != null
+                    && (skill.WeaponType == wtypeNow || skill.WeaponType == "Any");
+                if (skill != null && weaponMatches
+                    && skill.Range > 1 && skill.Type != SkillType.AoE
+                    && skill.Type != SkillType.Counter)
+                {
+                    mapView.EnterSkillReticle(slot, skill.Range + bowOver);
+                    return;
+                }
+            }
+            turnManager.ExecuteSwordSkill(slot);
+            refreshHud();
+        };
         mapView.SwordSkillMenuRequested += () => { SwordSkillDialog.Show(turnManager); refreshHud(); };
         mapView.QuestLogRequested += () => { QuestLogDialog.Show(player); };
+
+        // Bundle 13 Item 6 — `\` opens the Bow basic-attack reticle when a Bow is equipped.
+        // Anything else (melee weapon, unarmed, already-aiming) silently no-ops with a hint line.
+        mapView.RangedFireKeyPressed += () =>
+        {
+            if (mapView.IsRangedFireModeActive) { mapView.ExitRangedFireMode(); return; }
+            var wpn = player.Inventory.GetEquipped(SAOTRPG.Inventory.Core.EquipmentSlot.Weapon)
+                        as SAOTRPG.Items.Equipment.Weapon;
+            if (wpn?.WeaponType != "Bow")
+            {
+                gameLog.Log("You need a bow equipped to fire at range.");
+                return;
+            }
+            int range = Math.Max(1, wpn.Range + player.BowRangeOverflow);
+            mapView.EnterBowReticle(range);
+        };
+        // Reticle confirm — Bow basic-attack at the picked tile. ExecuteBowShot validates
+        // range/visibility/target again as a defensive guard against stale UI state.
+        mapView.RangedFireRequested += (tx, ty) =>
+        {
+            turnManager.ExecuteBowShot(tx, ty);
+            refreshHud();
+        };
+        // Reticle confirm — Range>1 sword skill. Stash the override on the engine so
+        // FindSkillTargets uses the picked tile instead of the nearest enemy.
+        mapView.RangedSkillFireRequested += (slot, tx, ty) =>
+        {
+            turnManager.SkillTargetOverride = (tx, ty);
+            turnManager.ExecuteSwordSkill(slot);
+            refreshHud();
+        };
 
         mapView.SaveRequested += () =>
         {

@@ -178,6 +178,7 @@ public partial class TurnManager
         _extraSearchRevealedThisFloor = false;
         _aggroAlerted.Clear();
         _dangerWarned.Clear();
+        _iaijutsuStruck.Clear();
         ClearAllMobStatuses();
         _poisonTurnsLeft = 0;
         _bleedTurnsLeft = 0;

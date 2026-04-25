@@ -80,4 +80,22 @@ public static class RarityHelper
 
     // True if the item is a Divine Object — unbreakable, bypasses block rolls.
     public static bool IsDivine(string? rarity) => rarity == "Divine";
+
+    // Bundle 13 — Slicing Stone glyphs (Wave 2 evolve-dialog visual cue).
+    // Lesser ◊ BrightCyan / Greater ◈ BrightMagenta / Perfect ✦ BrightYellow ("gold" of palette).
+    public static string SlicingStoneGlyph(string? defId) => defId switch
+    {
+        "slicing_stone_lesser"  => "◊",
+        "slicing_stone_greater" => "◈",
+        "slicing_stone_perfect" => "✦",
+        _                       => ""
+    };
+
+    public static Color SlicingStoneColor(string? defId) => defId switch
+    {
+        "slicing_stone_lesser"  => Color.BrightCyan,
+        "slicing_stone_greater" => Color.BrightMagenta,
+        "slicing_stone_perfect" => Color.BrightYellow,
+        _                       => Color.White
+    };
 }

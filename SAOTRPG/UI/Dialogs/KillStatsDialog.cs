@@ -67,13 +67,31 @@ public static class KillStatsDialog
         dialog.Add(ScreenHeader.Section("Weapon Proficiency", y++));
         if (turnManager.WeaponKills.Count > 0)
         {
+            // Bundle 12 — count entries dropped to footer-clip so the player gets a "+N more" hint
+            // instead of a silent truncation at 8+ weapon types.
+            int shown = 0;
+            int total = turnManager.WeaponKills.Count;
             foreach (var (wpnType, _) in turnManager.WeaponKills)
             {
-                if (y >= DialogHeight - 3) break;
+                // Reserve 1 row for the "+N more" line if there are still entries remaining.
+                int rowsLeft = (DialogHeight - 3) - y;
+                int remaining = total - shown;
+                if (rowsLeft <= 0) break;
+                if (rowsLeft == 1 && remaining > 1) break;
                 dialog.Add(new Label
                 {
                     Text = ProficiencyHelper.BuildDetailLine(turnManager, wpnType),
                     X = 1, Y = y++,
+                });
+                shown++;
+            }
+            if (shown < total)
+            {
+                int dropped = total - shown;
+                dialog.Add(new Label
+                {
+                    Text = $"  +{dropped} more (open Stats with P for full list)",
+                    X = 1, Y = y++, ColorScheme = ColorSchemes.Dim,
                 });
             }
         }

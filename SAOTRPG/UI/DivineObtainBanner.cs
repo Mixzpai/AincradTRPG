@@ -62,6 +62,22 @@ public static class DivineObtainBanner
     public static bool IsAwakening => _isAwakening;
     public static int AwakeningLevel => _awakeningLevel;
 
+    // Bundle 13 — particle level (1/2/3) for Wave 2 saotrpg-ui MapView.Particles consumer.
+    // Set in TriggerAwakening; mirrors _awakeningLevel for explicit particle-system contract.
+    public static int AwakeningParticleLevel { get; private set; }
+
+    // Bundle 13 — true when the awakening banner is active and we are still inside the
+    // first half of its duration window (emit phase). Consumed by saotrpg-ui Wave 2.
+    public static bool ShouldEmitParticlesThisFrame
+    {
+        get
+        {
+            if (!IsActive || !_isAwakening || _durationMs <= 0) return false;
+            long elapsed = System.Environment.TickCount64 - _activatedAtMs;
+            return elapsed >= 0 && elapsed < _durationMs / 2;
+        }
+    }
+
     // Fires the banner. Called from GameScreen.Events after TurnManager.DivineObtained.
     // Idempotent within a single active window: re-trigger just restarts the clock.
     public static void Trigger(Weapon divine, int durationMs = DefaultDurationMs)
@@ -83,6 +99,7 @@ public static class DivineObtainBanner
         _rarityLabel = divine.Rarity ?? "Divine";
         _isAwakening = true;
         _awakeningLevel = newLevel;
+        AwakeningParticleLevel = newLevel;
         _durationMs = System.Math.Max(FadeInMs + FadeOutMs + 500, durationMs);
         _activatedAtMs = System.Environment.TickCount64;
         IsActive = true;
@@ -93,7 +110,7 @@ public static class DivineObtainBanner
     {
         if (!IsActive) return false;
         long now = System.Environment.TickCount64;
-        if (now - _activatedAtMs >= _durationMs) { IsActive = false; _weaponName = ""; _isAwakening = false; _awakeningLevel = 0; }
+        if (now - _activatedAtMs >= _durationMs) { IsActive = false; _weaponName = ""; _isAwakening = false; _awakeningLevel = 0; AwakeningParticleLevel = 0; }
         return IsActive;
     }
 
@@ -105,6 +122,7 @@ public static class DivineObtainBanner
         _rarityLabel = "";
         _isAwakening = false;
         _awakeningLevel = 0;
+        AwakeningParticleLevel = 0;
         _durationMs = 0;
         _activatedAtMs = 0;
     }

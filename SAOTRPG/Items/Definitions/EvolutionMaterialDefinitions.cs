@@ -181,4 +181,52 @@ public static class EvolutionMaterialDefinitions
         DropRate = 1.0f,
         IsBossDrop = true,
     };
+
+    // Bundle 13 — Slicing Stones (alt-path evolution catalysts).
+    // Substitute for canon chain catalyst at evolve time → routes to alt-path DefId.
+    // Lesser ◊ T1→T2alt, Greater ◈ T2→T3alt, Perfect ✦ T3→T4alt.
+    public static MobDrop CreateLesserSlicingStone() => new()
+    {
+        DefinitionId = "slicing_stone_lesser",
+        Name = "Lesser Slicing Stone",
+        Value = 300,
+        Rarity = "Rare",
+        Quantity = 1,
+        MaxStacks = 20,
+        MaterialType = "Slicing Stone",
+        CraftingTier = 4,
+        SourceMonster = "various",
+        DropRate = 0.08f,
+        IsBossDrop = false,
+    };
+
+    public static MobDrop CreateGreaterSlicingStone() => new()
+    {
+        DefinitionId = "slicing_stone_greater",
+        Name = "Greater Slicing Stone",
+        Value = 1500,
+        Rarity = "Epic",
+        Quantity = 1,
+        MaxStacks = 10,
+        MaterialType = "Slicing Stone",
+        CraftingTier = 5,
+        SourceMonster = "various",
+        DropRate = 0.04f,
+        IsBossDrop = true,
+    };
+
+    public static MobDrop CreatePerfectSlicingStone() => new()
+    {
+        DefinitionId = "slicing_stone_perfect",
+        Name = "Perfect Slicing Stone",
+        Value = 5000,
+        Rarity = "Legendary",
+        Quantity = 1,
+        MaxStacks = 5,
+        MaterialType = "Slicing Stone",
+        CraftingTier = 5,
+        SourceMonster = "F75+ Floor Boss",
+        DropRate = 0.02f,
+        IsBossDrop = true,
+    };
 }

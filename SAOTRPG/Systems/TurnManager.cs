@@ -66,9 +66,14 @@ public partial class TurnManager
     private readonly HashSet<int> _discoveredLore = new();
     // Field bosses defeated this run — prevents re-spawn on floor re-entry.
     public HashSet<string> DefeatedFieldBosses { get; set; } = new();
+    // Bundle 13 (Q16) — floor-boss kills this run. Per-floor granular so PG drop reveal
+    // doesn't leak floors the player skipped via teleport.
+    public HashSet<int> DefeatedFloorBosses { get; set; } = new();
     public IReadOnlyCollection<int> DiscoveredLore => _discoveredLore;
     private bool _floorFullyExplored;
     private readonly HashSet<int> _aggroAlerted = new(), _dangerWarned = new();
+    // Iaijutsu first-strike gate (Katana proficiency 25 fork). One bonus per mob, per encounter.
+    private readonly HashSet<int> _iaijutsuStruck = new();
     private bool _stairsDiscovered;
     // ExtraSearch passive: true after the first trap reveal this floor so we
     // only log the flavor line once per floor (subsequent reveals are silent).
@@ -110,6 +115,7 @@ public partial class TurnManager
     public int StunTurnsLeft => _stunTurnsLeft;
     public int SlowTurnsLeft => _slowTurnsLeft;
     public bool IsInvisible => _invisibilityTurnsLeft > 0;
+    public int InvisibilityTurnsLeft => _invisibilityTurnsLeft;
 
     private readonly Dictionary<int, int> _blindedMobs = new(), _stunnedMobs = new();
     // Lunacy+N per-mob confusion counter: value = turns of random-wander AI left.
@@ -319,6 +325,14 @@ public partial class TurnManager
         // Barrier+N per-floor pool — seed from starting weapon so fresh runs
         // have the pool ready before the first hit. Refilled on floor entry.
         _barrierRemaining = GetBarrierCapacity();
+
+        // Bundle 13 (Item 1) — track Legendary collectables on pickup. HashSet.Add
+        // is idempotent, so dupes via stack/sell/repurchase don't double-count.
+        player.Inventory.Events.ItemAdded += (_, e) =>
+        {
+            if (e.Item.Rarity == "Legendary" && !string.IsNullOrEmpty(e.Item.DefinitionId))
+                CollectablesTracker.MarkCollected(e.Item.DefinitionId);
+        };
 
         player.Inventory.Events.ConsumableUsed += (_, e) =>
         {
@@ -616,12 +630,17 @@ public partial class TurnManager
         Skills.UniqueSkillSystem.TrapsDisarmed = save.TrapsDisarmed;
         if (save.DefeatedFieldBosses != null)
             tm.DefeatedFieldBosses = new HashSet<string>(save.DefeatedFieldBosses);
+        // Bundle 13 (Q16) — per-floor boss-clear flags. Null on legacy = empty set.
+        if (save.DefeatedFloorBosses != null)
+            tm.DefeatedFloorBosses = new HashSet<int>(save.DefeatedFloorBosses);
         RunModifiers.LoadFromSave(save.ActiveRunModifiers);
         // Shop Tiering hydrates cross-save progress; legacy saves default to 0
         // (no tiered stock until the next F50+ clear).
         ShopTierSystem.SetForLoad(save.HighestFloorBossCleared);
         // Investments hydrate per-vendor; legacy saves = cleared state.
         VendorInvestmentSystem.SetForLoad(save.VendorInvestments);
+        // Bundle 12 (C6) — restore current-floor mining vein strikes (legacy = noop).
+        SaveManager.RestoreVeinStrikes(save, map);
 
         // Restore party members
         PartySystem.Clear();
@@ -657,12 +676,13 @@ public partial class TurnManager
 
     public void UpdateVisibility()
     {
+        using var _ = Profiler.Begin("TurnManager.UpdateVisibility");
         // Sync the global clock before recomputing — ambient light and
         // effective FOV both read from DayNightCycle.
         SAOTRPG.Map.DayNightCycle.CurrentTurn = TurnCount;
         UI.Helpers.MapEffects.AnimationTurn = TurnCount;
         SAOTRPG.Map.TileAnimator.CombatActive = TurnCount - _lastCombatTurn <= 5;
-        int visRadius = Math.Max(8, SAOTRPG.Map.DayNightCycle.VisibilityRadius + BiomeSystem.VisionModifier);
+        int visRadius = Math.Max(8, SAOTRPG.Map.DayNightCycle.VisibilityRadius + BiomeSystem.VisionModifier * SAOTRPG.Map.DayNightCycle.FovMultiplier);
         _map.UpdateVisibility(_player.X, _player.Y, visRadius);
     }
 }

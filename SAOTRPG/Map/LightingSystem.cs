@@ -1,3 +1,5 @@
+using SAOTRPG.Systems;
+
 namespace SAOTRPG.Map;
 
 // Per-tile RGB light. Shadowcaster-driven FOV per emissive tile (+ player torch);
@@ -51,11 +53,12 @@ public sealed class LightingSystem
     // Fast path for render loops that have already done a bounds check.
     public LightRgb GetLightUnchecked(int x, int y) => _light[x, y];
 
-    // ROI radius matches viewport FOV so all visible tiles are lit.
-    private static int LightingRoiRadius => DayNightCycle.ViewportRadius + 10;
+    // ROI radius matches active FOV so all visible tiles are lit (FOV 4× the viewport).
+    private static int LightingRoiRadius => DayNightCycle.FovRadius + 10;
 
     public void Update(GameMap map, int playerX, int playerY)
     {
+        using var _ = Profiler.Begin("Lighting.Update");
         FillAmbientRegion(playerX, playerY);
         AddSource(map, playerX, playerY, TorchRadius(), TorchColor());
 
@@ -63,8 +66,12 @@ public sealed class LightingSystem
         // Shrine/Fountain radius breathes ±1 on a slow sine (colored pool expands/contracts).
         double pulsePhase = (DayNightCycle.CurrentTurn % 12) / 12.0 * Math.PI * 2.0;
         int pulseDelta = (int)Math.Round(Math.Sin(pulsePhase));
-        foreach (var (sx, sy, stype) in map.EmissiveTiles)
+        int emissiveCount = 0;
+        // Bucket radius 2 (5x5 64-cell buckets) covers ROI≈92 with margin.
+        int bucketRadius = (LightingRoiRadius >> GameMap.EmissiveBucketShift) + 1;
+        foreach (var (sx, sy, stype) in map.EmissiveTilesNear(playerX, playerY, bucketRadius))
         {
+            emissiveCount++;
             var emission = GetEmission(stype);
             if (emission == null) continue;
             int dx = sx - playerX, dy = sy - playerY;
@@ -74,11 +81,13 @@ public sealed class LightingSystem
                 radius = Math.Max(2, radius + pulseDelta);
             AddSource(map, sx, sy, radius, emission.Value.Color);
         }
+        Profiler.RecordCount("Lighting.EmissiveCount", emissiveCount);
     }
 
     // Only fill ambient in a region around the player — not the entire map.
     private void FillAmbientRegion(int px, int py)
     {
+        using var _ = Profiler.Begin("Lighting.FillAmbient");
         var (ar, ag, ab) = DayNightCycle.Ambient;
         var ambient = LightRgb.Of(ar, ag, ab);
         int x0 = Math.Max(0, px - LightingRoiRadius);
@@ -91,11 +100,16 @@ public sealed class LightingSystem
     }
 
     // Scratch per-source — diagonals visited by two quadrants don't double-light.
+    // Sized to (2*MaxSourceRadius+1)^2 with local-coord mapping (worldX - originX).
     private float[]? _scratchR, _scratchG, _scratchB;
+    private const int MaxSourceRadius = 16;
+    private const int ScratchStride = MaxSourceRadius * 2 + 1;
+    private const int ScratchLen = ScratchStride * ScratchStride;
 
     // Cached delegates + per-source state reused across AddSource calls to avoid 20-40 closures/turn.
     private GameMap? _srcMap;
     private int _srcSx, _srcSy, _srcRadius;
+    private int _srcOriginX, _srcOriginY;
     private float _srcColorR, _srcColorG, _srcColorB;
     private float _srcInvRadius;
     private Shadowcaster.BlockingPredicate? _blockingPred;
@@ -111,7 +125,9 @@ public sealed class LightingSystem
         float dist = FastSqrt(d2);
         float falloff = 1f - dist * _srcInvRadius;
         if (falloff <= 0) return;
-        int idx = y * Width + x;
+        int lx = x - _srcOriginX, ly = y - _srcOriginY;
+        if ((uint)lx >= (uint)ScratchStride || (uint)ly >= (uint)ScratchStride) return;
+        int idx = ly * ScratchStride + lx;
         float contribR = _srcColorR * falloff;
         float contribG = _srcColorG * falloff;
         float contribB = _srcColorB * falloff;
@@ -122,14 +138,16 @@ public sealed class LightingSystem
 
     private void AddSource(GameMap map, int sx, int sy, int radius, LightRgb color)
     {
-        // Lazy-allocate scratch buffers sized to the map.
-        if (_scratchR == null || _scratchR.Length != Width * Height)
+        using var _ = Profiler.Begin("Lighting.AddSource");
+        // Lazy-allocate ROI-sized scratch (cap at MaxSourceRadius). Reused across calls.
+        if (_scratchR == null)
         {
-            int len = Width * Height;
-            _scratchR = new float[len];
-            _scratchG = new float[len];
-            _scratchB = new float[len];
+            _scratchR = new float[ScratchLen];
+            _scratchG = new float[ScratchLen];
+            _scratchB = new float[ScratchLen];
         }
+
+        if (radius > MaxSourceRadius) radius = MaxSourceRadius;
 
         // Method-group delegates allocate once and reuse.
         _blockingPred ??= IsSourceBlocking;
@@ -138,19 +156,21 @@ public sealed class LightingSystem
         // Stash per-source context so cached delegates read without captures.
         _srcMap = map;
         _srcSx = sx; _srcSy = sy; _srcRadius = radius;
+        _srcOriginX = sx - MaxSourceRadius;
+        _srcOriginY = sy - MaxSourceRadius;
         _srcColorR = color.R; _srcColorG = color.G; _srcColorB = color.B;
         _srcInvRadius = radius > 0 ? 1f / radius : 0f;
 
         // Scratch takes MAX per tile — overlapping quadrant boundaries don't double-add.
         Shadowcaster.Compute(sx, sy, radius, _blockingPred, _revealCb);
 
-        // Additively merge scratch into grid, then clear scratch.
+        // Additively merge scratch into grid, then clear scratch (local→world coord remap).
         int x0 = Math.Max(0, sx - radius), x1 = Math.Min(Width, sx + radius + 1);
         int y0 = Math.Max(0, sy - radius), y1 = Math.Min(Height, sy + radius + 1);
         for (int y = y0; y < y1; y++)
         for (int x = x0; x < x1; x++)
         {
-            int idx = y * Width + x;
+            int idx = (y - _srcOriginY) * ScratchStride + (x - _srcOriginX);
             float sr = _scratchR[idx], sg = _scratchG![idx], sb = _scratchB![idx];
             if (sr > 0 || sg > 0 || sb > 0)
             {

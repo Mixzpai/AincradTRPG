@@ -16,12 +16,19 @@ public enum DamageTagPosition { Prefix = 0, Suffix = 1, Inline = 2 }
 // FB-452 damage tag bracket style. Brackets = default, Bare strips, Chip wraps ◆.
 public enum DamageTagStyle { Brackets = 0, Bare = 1, Chip = 2 }
 
+// Bundle 13 (Item 8) — footstep trail glyph style. Off = trail disabled.
+public enum FootstepStyle { Off = 0, Dots = 1, Dashes = 2, Paws = 3, Bootprints = 4, Chevrons = 5 }
+
+// Bundle 13 (Item 8) — footstep trail opacity (color tier). Subtle = DarkGray,
+// Medium = Gray, Bold = White. Drives RenderFootstepTrail attribute.
+public enum FootstepOpacity { Subtle = 0, Medium = 1, Bold = 2 }
+
 // Global settings at %LocalAppData%/AincradTRPG/settings.json (not per-save).
 // Add: property + OptionsScreen control + system wiring + Save() on change.
 public class UserSettings
 {
     // ── Versioning ───────────────────────────────────────────────────
-    public int SettingsVersion { get; set; } = 1;
+    public int SettingsVersion { get; set; } = 2;
 
     // ── Gameplay ─────────────────────────────────────────────────────
     // Automatically pick up items when stepping on them.
@@ -31,8 +38,25 @@ public class UserSettings
     public int TextSpeed { get; set; } = 1;
 
     // ── Display ──────────────────────────────────────────────────────
-    // Show footstep trail markers behind the player.
-    public bool ShowFootsteps { get; set; } = true;
+    // Bundle 13 (Item 8) — footstep glyph style. Off = no trail.
+    public FootstepStyle FootstepStyle { get; set; } = FootstepStyle.Dots;
+
+    // Bundle 13 (Item 8) — trail length (turns). 0 = off; 1000 = "unlimited" hard ceiling per Q17.
+    public int FootstepLength { get; set; } = 10;
+
+    // Bundle 13 (Item 8) — opacity tier. Drives Subtle/Medium/Bold gray ramp.
+    public FootstepOpacity FootstepOpacity { get; set; } = FootstepOpacity.Subtle;
+
+    // Backing-compat alias for legacy callers — derived from FootstepStyle.
+    // Setter routes to FootstepStyle (Off when false, Dots when true) so old saves
+    // that wrote {"ShowFootsteps":true} still hydrate sensibly.
+    [System.Text.Json.Serialization.JsonInclude]
+    public bool ShowFootsteps
+    {
+        get => FootstepStyle != FootstepStyle.Off;
+        set { if (!value) FootstepStyle = FootstepStyle.Off;
+              else if (FootstepStyle == FootstepStyle.Off) FootstepStyle = FootstepStyle.Dots; }
+    }
 
     // Show screen flash effect when taking damage.
     public bool ShowDamageFlash { get; set; } = true;

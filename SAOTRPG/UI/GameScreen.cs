@@ -226,7 +226,7 @@ public static partial class GameScreen
             ColorScheme = FloorThemeColor(startFloor)
         };
         var mapView = new MapView(map, camera, player)
-        { X = 0, Y = 1, Width = Dim.Fill(), Height = Dim.Fill() };
+        { X = 0, Y = 1, Width = Dim.Fill(), Height = Dim.Fill(), Log = gameLog };
         mapArea.Add(mapTitleLabel, mapView);
 
         // ── Bottom rule + action bar ─────────────────────────────────

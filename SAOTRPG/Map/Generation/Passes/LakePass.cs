@@ -28,11 +28,13 @@ public sealed class LakePass : IGenerationPass
         int lakeCount = FloorScale.LakeCount(ctx.FloorNumber, rng);
         for (int i = 0; i < lakeCount; i++)
         {
-            int cx = rng.Next(20, Math.Max(21, width - 20));
-            int cy = rng.Next(15, Math.Max(16, height - 15));
+            if (!TryPickLakeCenter(ctx, width, height, out int cx, out int cy)) continue;
             int radius = rng.Next(4, 7);
             MapGenerator.GenerateLake(map, cx, cy, radius, rng);
         }
+
+        // Lake stamping is naturally clipped — protected/Mountain tiles outside the disk
+        // resist water, and the GenerateLake helper skips IsProtectedFromWater tiles.
 
         // Bundle 5: Swamp lakes become BogWater. Ice biome water conversion is handled by IcePostWaterPass
         // (needs edge detection of Snow/Ice neighbors, so it runs as a separate pass).
@@ -46,5 +48,20 @@ public sealed class LakePass : IGenerationPass
                     map.Tiles[x, y].Type = TileType.BogWater;
             }
         }
+    }
+
+    // Up to 8 retries for an in-disk center; lakes that fail all retries are skipped.
+    private static bool TryPickLakeCenter(WorldContext ctx, int width, int height,
+        out int cx, out int cy)
+    {
+        var rng = ctx.Rng;
+        for (int attempt = 0; attempt < 8; attempt++)
+        {
+            int x = rng.Next(20, Math.Max(21, width - 20));
+            int y = rng.Next(15, Math.Max(16, height - 15));
+            if (ctx.IsInsideCircle(x, y)) { cx = x; cy = y; return true; }
+        }
+        cx = cy = 0;
+        return false;
     }
 }

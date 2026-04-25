@@ -1,5 +1,6 @@
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
+using SAOTRPG.Systems;
 
 namespace SAOTRPG.Map;
 
@@ -26,6 +27,16 @@ public class GameMap
     // on generation. UI-thread-only; not threadsafe; not serialized.
     public float[,]? DebugHeights { get; set; }
 
+    // Circular playable disk for non-town floors. Set by GenerationPipeline before
+    // passes run. Null on F1/F48 hand-built towns and F100 Ruby Palace.
+    public bool[,]? CircleMask { get; set; }
+
+    public bool IsInsideCircle(int x, int y) =>
+        CircleMask is null
+        || ((uint)x < (uint)CircleMask.GetLength(0)
+            && (uint)y < (uint)CircleMask.GetLength(1)
+            && CircleMask[x, y]);
+
     // Bundle 10 — strikes remaining per ore tile. Seeded by OreVeinPlacementPass,
     // decremented by mining strike handler, removed on depletion.
     public Dictionary<(int X, int Y), int> VeinStrikesRemaining { get; } = new();
@@ -46,12 +57,47 @@ public class GameMap
     public const byte TransitionWater      = 2;
     public const byte TransitionLava       = 3;
 
-    // Emissive tile list — lazily built, small (<~100/floor). Avoids full-map scans per frame.
+    // Emissive tile list + parallel position-set for O(1) remove. Lazily built, then incremental.
+    // Bucket grid (64-cell tiles) for spatial culling around the player.
     private List<(int X, int Y, TileType Type)>? _emissiveTiles;
+    private HashSet<(int X, int Y)>? _emissivePositions;
+    private Dictionary<(int Bx, int By), List<(int X, int Y, TileType Type)>>? _emissiveBuckets;
+    public const int EmissiveBucketShift = 6; // 64-cell buckets
 
     // Item-tile index, kept in lockstep with Tile.Items via AddItem/RemoveItem.
     // Direct tile.Items.Add/Remove bypasses this index — always go through these helpers.
     private readonly HashSet<(int X, int Y)> _itemTiles = new();
+    public IReadOnlyCollection<(int X, int Y)> ItemTiles => _itemTiles;
+
+    // Feature indexes for overlay rendering — built lazily on first access, kept incremental
+    // by OnTileTypeChanged. Iteration becomes O(N_features) instead of O(viewport).
+    private List<(int X, int Y)>? _gasVents;
+    private List<(int X, int Y)>? _shrines;
+    public IReadOnlyList<(int X, int Y)> GasVents { get { EnsureFeatureIndexes(); return _gasVents!; } }
+    public IReadOnlyList<(int X, int Y)> Shrines { get { EnsureFeatureIndexes(); return _shrines!; } }
+
+    private void EnsureFeatureIndexes()
+    {
+        if (_gasVents != null) return;
+        _gasVents = new List<(int, int)>();
+        _shrines = new List<(int, int)>();
+        for (int x = 0; x < Width; x++)
+        for (int y = 0; y < Height; y++)
+        {
+            var t = Tiles[x, y].Type;
+            if (t == TileType.GasVent) _gasVents.Add((x, y));
+            else if (IsShrineLikeType(t)) _shrines.Add((x, y));
+        }
+    }
+
+    private static bool IsShrineLikeType(TileType t) =>
+        t is TileType.Shrine or TileType.EnchantShrine or TileType.Fountain;
+
+    private static void RemovePosFromList(List<(int X, int Y)> list, int x, int y)
+    {
+        for (int i = list.Count - 1; i >= 0; i--)
+            if (list[i].X == x && list[i].Y == y) { list.RemoveAt(i); return; }
+    }
 
     // Typed entity buckets. Maintained in PlaceEntity / RemoveEntity.
     public List<Boss> Bosses { get; } = new();
@@ -125,6 +171,7 @@ public class GameMap
 
     public void UpdateVisibility(int playerX, int playerY, int radius = 80)
     {
+        using var _ = Profiler.Begin("Visibility.Update");
         // Clear visibility only in the player's visible region (avoids 125K bool clear on 500x250 map).
         int clearR = radius + 2;
         int x0 = Math.Max(0, playerX - clearR), x1 = Math.Min(Width, playerX + clearR + 1);
@@ -134,7 +181,8 @@ public class GameMap
                 _visible[x, y] = false;
 
         NewlyRevealed.Clear();
-        Shadowcaster.Compute(playerX, playerY, radius, BlocksSight, MarkVisible);
+        using (Profiler.Begin("FOV.Compute"))
+            Shadowcaster.Compute(playerX, playerY, radius, BlocksSight, MarkVisible);
         Lighting.Update(this, playerX, playerY);
     }
 
@@ -230,7 +278,7 @@ public class GameMap
         if (!InBounds(x, y)) return false;
         var tile = Tiles[x, y];
         bool removed = tile.Items.Remove(item);
-        if (removed && tile.Items.Count == 0) _itemTiles.Remove((x, y));
+        if (removed && !tile.HasItems) _itemTiles.Remove((x, y));
         return removed;
     }
 
@@ -263,9 +311,25 @@ public class GameMap
             InvalidateWallGlyph(x, y);
         }
 
-        // Emissive list rebuilds lazily on next access.
-        if (IsEmissiveType(oldType) || IsEmissiveType(newType))
-            _emissiveTiles = null;
+        // Emissive list incremental update; rebuild fully only if not yet built.
+        bool wasEmissive = IsEmissiveType(oldType);
+        bool isEmissive = IsEmissiveType(newType);
+        if ((wasEmissive || isEmissive) && _emissiveTiles != null)
+        {
+            if (wasEmissive) RemoveEmissiveAt(x, y, oldType);
+            if (isEmissive) AddEmissiveAt(x, y, newType);
+        }
+
+        // Feature index incremental update — only if already built; otherwise lazy build covers it.
+        if (_gasVents != null)
+        {
+            if (oldType == TileType.GasVent) RemovePosFromList(_gasVents, x, y);
+            if (newType == TileType.GasVent) _gasVents.Add((x, y));
+            bool wasShrine = IsShrineLikeType(oldType);
+            bool isShrine = IsShrineLikeType(newType);
+            if (wasShrine) RemovePosFromList(_shrines!, x, y);
+            if (isShrine) _shrines!.Add((x, y));
+        }
 
         // Transition borders in 3x3 neighborhood may shift on land/water/lava boundary changes.
         if (IsTransitionRelevant(oldType) || IsTransitionRelevant(newType))
@@ -379,21 +443,79 @@ public class GameMap
     private static bool IsWallLikeType(TileType t) =>
         t is TileType.Wall or TileType.CrackedWall or TileType.Mountain;
 
-    // Lazy-built from full-map scan, reused until invalidated by OnTileTypeChanged.
+    // Lazy full-map scan once; subsequent updates incremental via OnTileTypeChanged.
     public IReadOnlyList<(int X, int Y, TileType Type)> EmissiveTiles
     {
         get
         {
-            if (_emissiveTiles != null) return _emissiveTiles;
-            var list = new List<(int, int, TileType)>();
-            for (int x = 0; x < Width; x++)
-            for (int y = 0; y < Height; y++)
+            EnsureEmissiveBuilt();
+            return _emissiveTiles!;
+        }
+    }
+
+    private void EnsureEmissiveBuilt()
+    {
+        if (_emissiveTiles != null) return;
+        _emissiveTiles = new List<(int, int, TileType)>();
+        _emissivePositions = new HashSet<(int, int)>();
+        _emissiveBuckets = new Dictionary<(int, int), List<(int, int, TileType)>>();
+        for (int x = 0; x < Width; x++)
+        for (int y = 0; y < Height; y++)
+        {
+            var t = Tiles[x, y].Type;
+            if (IsEmissiveType(t)) AddEmissiveAt(x, y, t);
+        }
+    }
+
+    private void AddEmissiveAt(int x, int y, TileType t)
+    {
+        if (_emissiveTiles == null) return;
+        if (!_emissivePositions!.Add((x, y))) return;
+        var entry = (x, y, t);
+        _emissiveTiles.Add(entry);
+        var key = (x >> EmissiveBucketShift, y >> EmissiveBucketShift);
+        if (!_emissiveBuckets!.TryGetValue(key, out var bucket))
+        {
+            bucket = new List<(int, int, TileType)>();
+            _emissiveBuckets[key] = bucket;
+        }
+        bucket.Add(entry);
+    }
+
+    private void RemoveEmissiveAt(int x, int y, TileType t)
+    {
+        if (_emissiveTiles == null) return;
+        if (!_emissivePositions!.Remove((x, y))) return;
+        for (int i = _emissiveTiles.Count - 1; i >= 0; i--)
+        {
+            var e = _emissiveTiles[i];
+            if (e.X == x && e.Y == y) { _emissiveTiles.RemoveAt(i); break; }
+        }
+        var key = (x >> EmissiveBucketShift, y >> EmissiveBucketShift);
+        if (_emissiveBuckets!.TryGetValue(key, out var bucket))
+        {
+            for (int i = bucket.Count - 1; i >= 0; i--)
             {
-                var t = Tiles[x, y].Type;
-                if (IsEmissiveType(t)) list.Add((x, y, t));
+                var e = bucket[i];
+                if (e.X == x && e.Y == y) { bucket.RemoveAt(i); break; }
             }
-            _emissiveTiles = list;
-            return list;
+            if (bucket.Count == 0) _emissiveBuckets.Remove(key);
+        }
+    }
+
+    // Iterate emissives whose bucket intersects the player ROI; bucketRadius is in 64-cell buckets.
+    public IEnumerable<(int X, int Y, TileType Type)> EmissiveTilesNear(int playerX, int playerY, int bucketRadius)
+    {
+        EnsureEmissiveBuilt();
+        int bx = playerX >> EmissiveBucketShift;
+        int by = playerY >> EmissiveBucketShift;
+        for (int dby = -bucketRadius; dby <= bucketRadius; dby++)
+        for (int dbx = -bucketRadius; dbx <= bucketRadius; dbx++)
+        {
+            if (_emissiveBuckets!.TryGetValue((bx + dbx, by + dby), out var bucket))
+            {
+                for (int i = 0; i < bucket.Count; i++) yield return bucket[i];
+            }
         }
     }
 

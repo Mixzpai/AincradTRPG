@@ -251,7 +251,7 @@ public partial class TurnManager
         // CritImmune+N — at ≥100 cancels the crit outright; lower values roll.
         // Bundle 8: MH + OH shield contribute, picking the max (cap-like, non-stacking).
         var playerWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        int critImmune = GetEffectMax("CritImmune");
+        int critImmune = MaxWeaponShield<EquipmentSpecialEffect.CritImmune>(c => c.ChancePercent);
         if (monsterCrit && critImmune > 0
             && (critImmune >= 100 || Random.Shared.Next(100) < critImmune))
         {
@@ -316,7 +316,7 @@ public partial class TurnManager
         var shield = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Armor;
         var mainWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         // Bundle 10 (B14) — BlockChance is additive across all equipped slots (armor pieces too).
-        int blockFx = GetEffectSumAllSlots("BlockChance");
+        int blockFx = SumAllSlots<EquipmentSpecialEffect.BlockChanceBonus>(b => b.Percent);
         int totalBlock = (shield?.BlockChance ?? 0) + blockFx;
         if (totalBlock <= 0) return false;
         if (Random.Shared.Next(100) >= totalBlock) return false;
@@ -338,7 +338,7 @@ public partial class TurnManager
     {
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         // Bundle 10 (B14) — ParryChance additive across all slots; armor with parry-flavor stacks.
-        int parryFx = GetEffectSumAllSlots("ParryChance");
+        int parryFx = SumAllSlots<EquipmentSpecialEffect.ParryChance>(p => p.Percent);
         int parryChance = Math.Min(15, _player.Dexterity) + GetActiveWeaponPerks().Parry + parryFx;
         if (parryChance <= 0 || Random.Shared.Next(100) >= parryChance) return false;
 
@@ -376,7 +376,7 @@ public partial class TurnManager
 
         // EvadeRegen+N — heal N HP on a clean dodge. B14: additive across all slots.
         var dodgeWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        int evadeRegen = GetEffectSumAllSlots("EvadeRegen");
+        int evadeRegen = SumAllSlots<EquipmentSpecialEffect.EvadeRegen>(e => e.Percent);
         if (evadeRegen > 0)
         {
             int heal = Math.Min(evadeRegen, _player.MaxHealth - _player.CurrentHealth);
@@ -417,7 +417,7 @@ public partial class TurnManager
 
         // Bundle 8: DamageReflect+N — return N% of post-mitigation damage to attacker.
         // Sourced from MH weapon + OH shield (e.g. Nox Fermat +5). Pre-HP-deduct for counter flavor.
-        int reflectPct = GetEffectSum("DamageReflect");
+        int reflectPct = SumWeaponShield<EquipmentSpecialEffect.DamageReflect>(r => r.Percent);
         if (reflectPct > 0 && finalDamage > 0 && !monster.IsDefeated)
         {
             int reflected = Math.Max(1, finalDamage * reflectPct / 100);
@@ -466,7 +466,7 @@ public partial class TurnManager
         // Uninterruptible+N — weapon grants N% chance to shrug off any
         // incoming status application from the monster hit we just took.
         var uninterruptWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        int uninterruptChance = GetSpecialEffectValue(uninterruptWpn, "Uninterruptible");
+        int uninterruptChance = uninterruptWpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Uninterruptible>().FirstOrDefault()?.ChancePercent ?? 0;
         if (uninterruptChance > 0 && Random.Shared.Next(100) < uninterruptChance)
         {
             _log.LogCombat($"  {uninterruptWpn!.Name}'s resolve shrugs off {monster.Name}'s effect.");

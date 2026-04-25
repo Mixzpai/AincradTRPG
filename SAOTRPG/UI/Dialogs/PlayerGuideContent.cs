@@ -1776,6 +1776,14 @@ public static class PlayerGuideContent
             "every-other-free-strike and L99 dur-halved milestones aren't\n" +
             "just nice-to-haves; they materially extend the per-pickaxe\n" +
             "vein count.\n\n" +
+            "MID-MINING SAVE PERSISTENCE (Bundle 12):\n" +
+            "Partially-mined ore veins now preserve their strike-count\n" +
+            "across save/load — quit mid-vein and the chip-counter is\n" +
+            "exactly where you left it. Limited to the CURRENT FLOOR:\n" +
+            "ascending stairs regenerates the next floor and discards\n" +
+            "any prior-floor vein state along with the rest of the map.\n" +
+            "Backtracking down stairs to an earlier floor also regenerates\n" +
+            "that floor — the persistence is live-session-on-floor only.\n\n" +
             "TIPS\n" +
             "Power-level on Iron veins through F10-F25 — they're cheap to\n" +
             "strike, the XP is steady, and L10's free-every-other-strike\n" +
@@ -1871,17 +1879,33 @@ public static class PlayerGuideContent
             "instead of the generic dodge/skill-damage pick:\n" +
             "  ONE-HANDED SWORD  Vorpal Edge (+3 CritRate)\n" +
             "                    OR Saber Step (+1 AttackSpeed)\n" +
-            "  KATANA            Iaijutsu (+5% damage on first strike of\n" +
-            "                    every encounter — pairs with Drawing\n" +
-            "                    Stance flavor in canon)\n" +
+            "  KATANA            Iaijutsu (see Bundle 12 wiring below)\n" +
             "                    OR Drawing Stance (+2 CritRate)\n" +
-            "  BOW               Marksman Eye (+2 CritRate, +5 effective\n" +
-            "                    bow range overflow)\n" +
+            "  BOW               Marksman Eye (see Bundle 12 wiring below)\n" +
             "                    OR Quickdraw (+1 AttackSpeed)\n" +
             "The other 9 weapon types use the unchanged generic L50 fork.\n" +
             "Choices use the new B13 StatType grants (CritRate, Attack-\n" +
             "Speed) — they show up directly on the character sheet rather\n" +
             "than as flavor-string riders.\n\n" +
+            "BUNDLE 12 — IAIJUTSU & MARKSMAN EYE CONSUMERS WIRED:\n" +
+            "Bundle 10 added the L25 fork prompts; Bundle 12 finishes the\n" +
+            "loop by wiring the actual gameplay consumers:\n" +
+            "  KATANA L25 IAIJUTSU\n" +
+            "    +25% damage on the FIRST strike against each enemy per\n" +
+            "    floor. Tracked per-enemy, not per-encounter — once you\n" +
+            "    hit a mob once on a floor, subsequent hits on that mob\n" +
+            "    revert to baseline. Resets on floor change. Mutually\n" +
+            "    exclusive with Backstab (sneak attack already grants\n" +
+            "    x2-x3 damage; Iaijutsu does NOT layer on top of a\n" +
+            "    backstab to prevent compounding). Combat log shows:\n" +
+            "    \"Iaijutsu strike! +25% damage on first contact.\"\n" +
+            "  BOW L25 MARKSMAN EYE\n" +
+            "    +5 tile range on Bow sword-skills (in addition to the\n" +
+            "    existing +2 CritRate). Affects skills only — basic-attack\n" +
+            "    ranged-fire is reserved for Bundle 13. The range overflow\n" +
+            "    stacks with weapon-line skill range; e.g. a 6-tile skill\n" +
+            "    becomes 11 tiles with Marksman Eye selected.\n" +
+            "Picks remain permanent per save — no respec.\n\n" +
             "COSTS\n" +
             "None. Fork choices cannot be respec'd without a New Game.\n\n" +
             "TIPS\n" +
@@ -3823,8 +3847,18 @@ public static class PlayerGuideContent
             "Bank 6M+ Col before every Lindarth run so you can craft two in\n" +
             "a session. These weapons slot 3 Refinement ingots each — pair\n" +
             "with Astral or Chimeric for F70+ burst builds.\n\n" +
+            "BUNDLE 13 — FORGE TABS\n" +
+            "Lisbeth's forge dialog now exposes five tabs (F1-F5):\n" +
+            "  F1 R6 Crafts — this entry's content.\n" +
+            "  F2 Iron Ingot Enhance (Common/Uncommon, +1..+5).\n" +
+            "  F3 Mithril Ingot Enhance (Rare/Epic, +1..+7).\n" +
+            "  F4 Reforge — re-roll random Bonuses.\n" +
+            "  F5 Crystallite Ingot Enhance (Epic/Legendary, +1..+10).\n" +
+            "The +10 ceiling lifts the legacy +6 Anvil cap, but only on\n" +
+            "Epic/Legendary tier weapons via crystallite. Common-Rare gear\n" +
+            "still tops out at +5 (iron) / +7 (mithril).\n\n" +
             "SEE ALSO\n" +
-            "[Lindarth Town (F48)] · [Weapon Refinement System] · [Anvil — Repair, Enhance, Evolve, Refine] · [Named Legendary Highlights]")
+            "[Lindarth Town (F48)] · [Weapon Refinement System] · [Anvil — Repair, Enhance, Evolve, Refine] · [Named Legendary Highlights] · [Mithril Ingot Enhance (Rare/Epic, +1..+7)] · [Crystallite Ingot Enhance (Epic/Legendary, +1..+10)] · [Reforge — Re-roll Random Bonuses]")
         {
             Tags = new[] { "lisbeth", "crafting", "weapons" }
         },
@@ -4133,16 +4167,18 @@ public static class PlayerGuideContent
             "reducer). Higher tiers chip veins faster AND last longer\n" +
             "before shattering.\n\n" +
             "USAGE\n" +
-            "Buy from the Town of Beginnings vendor (Wooden, no level\n" +
-            "gate) or from floor-gated shops at F10+ (Iron) and F50+\n" +
-            "(Mithril). Equip via Inventory → Tool slot. Repair at the\n" +
-            "Anvil like any equipment piece — pickaxes follow normal\n" +
-            "durability/repair rules.\n\n" +
+            "Buy Wooden at every vendor F1-F9 (~96 Col post-markup) and\n" +
+            "Iron at every vendor F10-F50 (~384 Col post-markup). Mithril\n" +
+            "is WORLD-FIND ONLY in Bundle 12 — no vendor stocks it; loot\n" +
+            "it from chests, ore-cluster rooms, or quest rewards on F50+.\n" +
+            "Equip via Inventory → Tool slot. Repair at the Anvil like\n" +
+            "any equipment piece — pickaxes follow normal durability/repair\n" +
+            "rules.\n\n" +
             "EFFECTS\n" +
-            "  TIER       FLOOR   COL    MAXDUR   MININGPOWER   NOTE\n" +
-            "  Wooden     F1      80     30       0             Starter — buy in TOB\n" +
-            "  Iron       F10+    320    80       1             -1 strike per vein, min 1\n" +
-            "  Mithril    F50+    1800   200      2             -2 strikes, +10% OreQuality\n" +
+            "  TIER       VENDOR  COL    MAXDUR   MININGPOWER   NOTE\n" +
+            "  Wooden     F1-F9   80     30       0             Starter — vendor stock\n" +
+            "  Iron       F10-F50 320    80       1             -1 strike per vein, min 1\n" +
+            "  Mithril    none    1800   200      2             find-only, +10% OreQuality\n" +
             "MININGPOWER applies as: actual_strikes = max(1, base_strikes\n" +
             "- MiningPower). Iron Pickaxe vs an Iron vein (3 base) needs\n" +
             "2 strikes; Mithril Pickaxe vs an Iron vein needs 1 strike.\n" +
@@ -4156,13 +4192,14 @@ public static class PlayerGuideContent
             "your Col reserve so a long Mithril/Divine farming push\n" +
             "doesn't strand you toolless mid-floor.\n\n" +
             "TIPS\n" +
-            "Buy the Iron Pickaxe at F10 — the strike-cost reduction\n" +
-            "alone pays back the 320 Col within ~5 veins, and the durability\n" +
-            "tripling means you stop respawning Wooden replacements every\n" +
-            "shop visit. Mithril is the late-game investment — its +10%\n" +
-            "OreQuality compounds across the F50-F99 push, where you'll\n" +
-            "be chipping Mithril and Divine veins by the dozen for end-\n" +
-            "game refinement ingots.\n\n" +
+            "Upgrade to Iron the moment you reach F10 — the strike-cost\n" +
+            "reduction alone pays back the ~384 Col within ~5 veins, and\n" +
+            "the durability tripling means you stop respawning Wooden\n" +
+            "replacements every shop visit. Mithril is a hunt, not a\n" +
+            "purchase: ore-cluster rooms on F50+ floors are the most\n" +
+            "reliable source. Its +10% OreQuality compounds across the\n" +
+            "F50-F99 push, where you'll be chipping Mithril and Divine\n" +
+            "veins by the dozen for endgame refinement ingots.\n\n" +
             "SEE ALSO\n" +
             "[Mining — Tool Slot & Ore Veins] · [Mining (Life Skill)] · [Anvil — Repair, Enhance, Evolve, Refine] · [Refinement Ingots]")
         {
@@ -5898,6 +5935,14 @@ public static class PlayerGuideContent
             "  F4+  Elven Waybread, Flash Bomb, Revive Crystal\n" +
             "  F5+  1 random accessory\n\n" +
             "Plus 3-4 random floor-scaled weapons, 1-2 armors.\n\n" +
+            "PICKAXE STOCK (Bundle 12):\n" +
+            "  F1-F9    Wooden Pickaxe   ~96 Col post-markup (base 80)\n" +
+            "  F10-F50  Iron Pickaxe     ~384 Col post-markup (base 320)\n" +
+            "  F51+     no pickaxe slot  Mithril is world-find only\n" +
+            "Mithril Pickaxes do NOT appear in any vendor stock — you must\n" +
+            "loot them from chests, ore-cluster rooms, or quest rewards on\n" +
+            "F50+ floors. Wooden + Iron always slot in the per-floor stock\n" +
+            "regardless of the random weapon/armor rolls.\n\n" +
             "The Invest button (in ShopDialog) deposits Col per-vendor to\n" +
             "unlock bonus stock tiers beyond the global ShopTierSystem — see\n" +
             "Vendor Investing for thresholds and the \"Invested +N\" header\n" +
@@ -6378,7 +6423,12 @@ public static class PlayerGuideContent
             "applies to Refinement today). Keep your awakened Divine in the\n" +
             "main hand.\n" +
             "The ◈N suffix on the weapon's inventory name (e.g. \"Night Sky\n" +
-            "Sword ◈2\") tells you the current awakening level at a glance.\n\n" +
+            "Sword ◈2\") tells you the current awakening level at a glance.\n" +
+            "Awakening fires a particle burst from the player tile keyed to\n" +
+            "the new level — Lv1 = 3 particles / 600ms, Lv2 = 6 / 900ms,\n" +
+            "Lv3 = 12 / 1200ms. Particles emit only on the awakening event\n" +
+            "(not ambient) and respect the OptionsScreen Particle Density\n" +
+            "setting (Off cancels the burst entirely).\n\n" +
             "SEE ALSO\n" +
             "[Divine Weapons — Roster & Acquisition] · [Weapon Refinement System] · [Refinement Ingots] · [Enhancement Ores System] · [Floor Boss Roster — Canon Highlights] · [Advanced Weapon Effects]")
         {
@@ -6647,6 +6697,17 @@ public static class PlayerGuideContent
             "  F30-F36  Caduceus (Mace, Lost Song healer staff)\n" +
             "  F30-F37  Paopei (Claws, LR myth)\n" +
             "  F35-F42  Elder's Trident (Spear, LR myth)\n" +
+            "BUNDLE 12 — F44-F47 LEGENDARY FILL:\n" +
+            "F44-F47 chest pools previously seeded only 0-1 Legendaries\n" +
+            "per floor — a soft gap right before the F48 Lindarth/F50\n" +
+            "Elucidator surge. Bundle 12 lifts two existing Legendaries\n" +
+            "down into the gap so each floor now seeds at least 2\n" +
+            "Legendaries:\n" +
+            "  F44-F48  axe_lang (Lang Axe, LR myth — was F84-F90)\n" +
+            "  F40-F47  mce_caduceus extended (was F30-F36; now blankets\n" +
+            "           the F40-F47 healer-staff motif)\n" +
+            "Tier-coherent: stats scale to the chest's floor, not the old\n" +
+            "high-floor band, so a F45 Lang Axe is a F45-tier Legendary.\n" +
             "FLOOR-BOSS LOCKS (preserved, AL Lycoris invented bosses):\n" +
             "  F11 Felos the Ember Drake     -> Starfall (Bow)\n" +
             "  F17 Gelidus the Frozen Colossus -> Savage Squall (1H Sword)\n" +
@@ -6782,6 +6843,13 @@ public static class PlayerGuideContent
             "Legendary/Divine drops in one floor (Time Piercing + Red Rose\n" +
             "Sword + Stigmablade) — budget durability for three boss kills\n" +
             "before ascending. F85 and F87 are similar triple-drop floors.\n\n" +
+            "SPOILER GATING (Bundle 13)\n" +
+            "Drop names are masked as \"???\" until you've actually seen the\n" +
+            "drop unlock — floor bosses reveal their drop after the per-\n" +
+            "floor kill, LAB drops reveal once the floor is cleared, and\n" +
+            "field-boss drops reveal once you reach (or pass) the floor.\n" +
+            "Boss NAMES stay visible so the reference list still works as\n" +
+            "a planning tool; only the loot side hides.\n\n" +
             "SEE ALSO\n" +
             "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Crystal Wyrm of Lisbeth's Forge (F55)] · [Lambent Light & Asuna's Memory] · [Sleeping Knights' Tribute & Mother's Rosario] · [Divine Object Set — Integrity Knights]")
         {
@@ -7043,5 +7111,532 @@ public static class PlayerGuideContent
         {
             Tags = new[] { "world", "bosses", "kirito", "elucidator", "lab", "bundle-11" }
         },
+
+        // ── Bundle 12 — Cleanup Wave entries ──
+
+        new("Items", "Lisbeth — Iron Ingot Enhancement (Mid-Tier)",
+            "┌─ Items\n" +
+            "│ Topic: Lisbeth — Iron Ingot Enhancement (Mid-Tier)\n" +
+            "│ NPC: F48 Lindarth Lisbeth (BrightMagenta 'L')\n" +
+            "│ Recipe: 3x iron_ingot + 200 Col → +1 EnhancementLevel\n" +
+            "│ Cap: +5 on Common/Uncommon weapons only\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Bundle 12 adds a low-cost enhancement path for early/mid-game\n" +
+            "weapons at F48 Lindarth Lisbeth, separate from her endgame\n" +
+            "Rarity 6 craft line. Spend 3 iron_ingot + 200 Col per +1\n" +
+            "enhancement on a Common or Uncommon weapon, up to +5. The\n" +
+            "recipe sidesteps the Anvil's Enhancement Ore requirement\n" +
+            "entirely — useful when you're sitting on stacks of iron from\n" +
+            "Mining but haven't farmed an Ore biome.\n\n" +
+            "USAGE\n" +
+            "Reach F48, find Lindarth, bump the BrightMagenta 'L' NPC. The\n" +
+            "craft dialog now shows TWO sections: the 18-recipe R6 craft\n" +
+            "line AND the new mid-tier enhancement option. Pick the\n" +
+            "enhancement row, choose a Common or Uncommon weapon from your\n" +
+            "inventory, and confirm — Lisbeth burns 3 iron_ingot + 200 Col\n" +
+            "and bumps the weapon's EnhancementLevel by +1.\n\n" +
+            "EFFECTS\n" +
+            "  Cost per +1     3 iron_ingot + 200 Col (flat — no floor scaling)\n" +
+            "  Eligibility     Common (T0/T1) and Uncommon (T2) weapons only\n" +
+            "  Cap             +5 EnhancementLevel via this recipe\n" +
+            "  Stacks with     Anvil Enhance up to the global +10 cap, BUT\n" +
+            "                  the Anvil resumes the +6 → +10 push from\n" +
+            "                  whatever Lisbeth left it at\n" +
+            "  Failure         None — guaranteed +1 per craft (no\n" +
+            "                  downgrade risk like the Anvil's +7+ band)\n" +
+            "DISTINCT FROM R6 CRAFT LINE: the R6 line is 3M Col + rare\n" +
+            "mats per recipe; this is 200 Col + 3 iron_ingot per +1.\n" +
+            "Different menus, different flow.\n\n" +
+            "COSTS\n" +
+            "3 iron_ingot per +1 — one ~3-strike Iron vein per +1, or\n" +
+            "an inventory carry from earlier mining. Common/Uncommon\n" +
+            "limit means high-tier weapons (Rare, Epic, Legendary) are\n" +
+            "still routed through the Anvil + Enhancement Ore path.\n\n" +
+            "TIPS\n" +
+            "Push Common/Uncommon starter weapons to +5 cheaply on first\n" +
+            "F48 visit — a +5 Common weapon with the iron-ingot bumps\n" +
+            "carries through F50-F60 longer than a +0 Rare drop. Bank\n" +
+            "iron_ingot during Mining grinds: 15 ingots = a +5 push for\n" +
+            "1000 Col total, vs ~3500-5000 Col on the Anvil with ores.\n\n" +
+            "SEE ALSO\n" +
+            "[Lisbeth — Rarity 6 Craft Line] · [Anvil — Repair, Enhance, Evolve, Refine] · [Enhancement Ores System] · [Mining (Life Skill)] · [Lindarth Town (F48)]")
+        {
+            Tags = new[] { "lisbeth", "crafting", "enhancement", "mining", "bundle-12" }
+        },
+
+        new("Items", "Canon Citation Coverage (L-Inspect Popup)",
+            "┌─ Items\n" +
+            "│ Topic: Canon Citation Coverage (L-Inspect Popup)\n" +
+            "│ Coverage: 184/184 Legendaries (100%, Bundle 12)\n" +
+            "│ Source: L-key inspect popup, Canon block\n" +
+            "│ Honest tag: \"Invented for AincradTRPG\" where non-canon\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Bundle 11 added Canon citations to inspect popups; Bundle 12\n" +
+            "completes the sweep — every Legendary in the loot pool now\n" +
+            "carries a Canon citation in the L-key inspect popup. The\n" +
+            "audit ran 79 → 184 entries: any LN volume, anime arc, game\n" +
+            "source, or mythological reference is named explicitly. Where\n" +
+            "no canon source exists, the entry is honestly tagged\n" +
+            "\"Invented for AincradTRPG\" rather than fabricated.\n\n" +
+            "USAGE\n" +
+            "Hover any Legendary weapon (Inventory, Shop, Chest peek, or\n" +
+            "ground tile) and press L to open the inspect popup. The Canon\n" +
+            "block sits below the stat lines and reads one of two ways:\n" +
+            "  - Citation: \"SAO LN vol 4-7 (Aincrad arc): ...\"\n" +
+            "                or \"SAO Last Recollection — game-original\"\n" +
+            "                or \"Norse mythology: Mjolnir, Thor's hammer\"\n" +
+            "  - Honest: \"Invented for AincradTRPG (no canon source)\"\n\n" +
+            "EFFECTS\n" +
+            "Reading the Canon block tells you at a glance:\n" +
+            "  - The blade's narrative weight (LN-named beats invented)\n" +
+            "  - Which canon source to chase if you like the lore\n" +
+            "  - Whether the weapon is part of a paired set (Elucidator\n" +
+            "    pair note, Asuna-rapier note, etc.)\n" +
+            "Coverage breakdown:\n" +
+            "  - 184/184 Legendaries cited or tagged Invented\n" +
+            "  - 1 corrupted/stone-craft variant excluded (carries the\n" +
+            "    base weapon's citation by reference)\n" +
+            "  - Sources span: SAO LN vols 1-22, anime arcs (Progressive,\n" +
+            "    Aincrad, Alicization, War of Underworld), game canon\n" +
+            "    (IF, IM, MD, FD, AL Lycoris, Lost Song, LR), and named\n" +
+            "    mythological weapons (Mjolnir, Tyrfing, Caladbolg, etc.)\n\n" +
+            "COSTS\n" +
+            "None — display only. Citations do not affect drop rates,\n" +
+            "stats, or rarity.\n\n" +
+            "TIPS\n" +
+            "If you're chasing canon-flavor builds (full Asuna kit, Kirito\n" +
+            "dual-wield, Yuuki memorial), the L-popup Canon block is the\n" +
+            "fastest filter for which Legendaries belong. Honest \"Invented\"\n" +
+            "tags are NOT a quality knock — many invented blades carry\n" +
+            "best-in-slot effects (Bundle 11's AL Lycoris invented Divine\n" +
+            "Beasts drop signature Legendaries). The tag just tells you\n" +
+            "the blade isn't from a canon SAO source.\n\n" +
+            "SEE ALSO\n" +
+            "[Look Mode & Counter Stance] · [Named Legendary Highlights] · [Floor Boss Roster — Canon Highlights] · [Legendary Redistribution Overview] · [Mid-Game Legendary Lifts (F12-F44)]")
+        {
+            Tags = new[] { "items", "lore", "canon", "ui", "inspect", "bundle-12" }
+        },
+
+        // ── Bundle 13 entries ────────────────────────────────────────────
+
+        new("Items", "Legendary Collectables Panel (Shift+L)",
+            "┌─ Items\n" +
+            "│ Topic: Legendary Collectables — completion tracker\n" +
+            "│ Hotkey: Shift+L from the map\n" +
+            "│ Total: 184 Legendaries across 9 source buckets\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "A run-long completion tracker for the 184 named Legendary\n" +
+            "weapons. Press Shift+L on the map to open the panel; the list\n" +
+            "is grouped by canon source bucket (LN, Hollow Fragment,\n" +
+            "Integral Factor, etc.) with a per-bucket completion count.\n" +
+            "Pickups are recorded automatically — every Legendary that\n" +
+            "ever lands in your inventory is marked collected for the rest\n" +
+            "of the save.\n\n" +
+            "USAGE\n" +
+            "Filter keys (inside the panel):\n" +
+            "  1   Show all entries\n" +
+            "  2   Show only collected entries\n" +
+            "  3   Show only not-yet entries\n" +
+            "  F1  All floors (default)\n" +
+            "  F2  This floor band — current floor ±8\n" +
+            "  Esc Close\n\n" +
+            "Header counter reads \"Collected: N / 184\" with the same\n" +
+            "scope the filters apply.\n\n" +
+            "EFFECTS\n" +
+            "Source buckets (9):\n" +
+            "  LN          Light Novel — canon Aincrad arc\n" +
+            "  AL          Alicization Lycoris\n" +
+            "  IF          Integral Factor\n" +
+            "  HF          Hollow Fragment\n" +
+            "  LR          Last Recollection / Lost Song\n" +
+            "  MD          Memory Defrag\n" +
+            "  FD          Fractured Daydream\n" +
+            "  Myth        Mythological (non-SAO references)\n" +
+            "  Non-Canon   AincradTRPG-invented blades\n\n" +
+            "TIPS\n" +
+            "Use the This-Floor filter (F2) before pushing a new floor —\n" +
+            "the band ±8 surfaces every Legendary anchored anywhere near\n" +
+            "your current depth, so you can plan for chest hunts and\n" +
+            "field-boss farms before ascending.\n\n" +
+            "SEE ALSO\n" +
+            "[Boss Drop Reference] · [Named Legendary Highlights] · [Legendary Redistribution Overview]")
+        {
+            Tags = new[] { "items", "ui", "collectables", "bundle-13" }
+        },
+
+        new("Items", "Mithril Ingot Enhance (Rare/Epic, +1..+7)",
+            "┌─ Crafting\n" +
+            "│ Topic: Mid-tier Lisbeth enhance lane\n" +
+            "│ NPC: Lisbeth (Lindarth F48)\n" +
+            "│ Cost: 1,000 Col + 3x Mithril Ingot per +1\n" +
+            "│ Cap: +7 (this lane); higher tier requires Crystallite\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Mid-tier weapon enhancement at Lisbeth's Lindarth forge.\n" +
+            "Accepts Rare and Epic weapons, pushes them up to +7. Sits\n" +
+            "between the Common/Uncommon iron lane (+5 cap) and the Epic/\n" +
+            "Legendary crystallite lane (+10 cap).\n\n" +
+            "USAGE\n" +
+            "Open Lisbeth (F48 Lindarth) and press F3 to switch to the\n" +
+            "Mithril Ingot Enhance tab. Pick a Rare or Epic weapon from\n" +
+            "your inventory; press Confirm to spend mats. Sealed (LAB)\n" +
+            "weapons are rejected.\n\n" +
+            "COSTS\n" +
+            "  1,000 Col + 3x Mithril Ingot per +1 attempt.\n" +
+            "  Cap: +7 (this tab; higher requires Crystallite tab F5).\n\n" +
+            "TIPS\n" +
+            "Mithril is the F30s+ chest/drop ore — push your Rares to +5\n" +
+            "with iron first, then transition to mithril for the +5→+7\n" +
+            "stretch. Reforge can re-roll the bonuses without changing\n" +
+            "the enhance level — see the Reforge entry.\n\n" +
+            "SEE ALSO\n" +
+            "[Lisbeth — Rarity 6 Craft Line] · [Crystallite Ingot Enhance (Epic/Legendary)] · [Reforge — Re-roll Random Bonuses]")
+        {
+            Tags = new[] { "crafting", "lisbeth", "enhancement", "bundle-13" }
+        },
+
+        new("Items", "Crystallite Ingot Enhance (Epic/Legendary, +1..+10)",
+            "┌─ Crafting\n" +
+            "│ Topic: High-tier Lisbeth enhance lane\n" +
+            "│ NPC: Lisbeth (Lindarth F48)\n" +
+            "│ Cost: 5,000 Col + 3x Crystallite Ingot per +1\n" +
+            "│ Cap: +10 (the new game-wide ceiling)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Top-tier weapon enhancement using Crystallite Ingot — the\n" +
+            "F48 Frost Dragon signature drop. Accepts Epic and Legendary\n" +
+            "weapons; raises the enhancement cap from the legacy +6 limit\n" +
+            "to a new game-wide +10 ceiling.\n\n" +
+            "USAGE\n" +
+            "Open Lisbeth (F48 Lindarth) and press F5 to switch to the\n" +
+            "Crystallite Ingot Enhance tab. Pick an Epic or Legendary\n" +
+            "weapon. Sealed (LAB) and Divine weapons are rejected.\n\n" +
+            "COSTS\n" +
+            "  5,000 Col + 3x Crystallite Ingot per +1 attempt.\n" +
+            "  Cap: +10 (game-wide).\n\n" +
+            "TIPS\n" +
+            "Crystallite Ingot is the F48 Frost Dragon field-boss drop —\n" +
+            "you'll bank a stack from the dragon hunt itself. R6 craft\n" +
+            "recipes also list crystallite as a high-tier component, so\n" +
+            "budget the stack across enhance + R6 craft + reforge.\n\n" +
+            "SEE ALSO\n" +
+            "[Mithril Ingot Enhance (Rare/Epic)] · [Lisbeth — Rarity 6 Craft Line] · [Reforge — Re-roll Random Bonuses] · [Boss Drop Reference]")
+        {
+            Tags = new[] { "crafting", "lisbeth", "enhancement", "bundle-13" }
+        },
+
+        new("Items", "Reforge — Re-roll Random Bonuses",
+            "┌─ Crafting\n" +
+            "│ Topic: Reforge verb (Lisbeth F4 tab)\n" +
+            "│ NPC: Lisbeth (Lindarth F48)\n" +
+            "│ Cost: scales by rarity — see table\n" +
+            "│ Effect: re-rolls Bonuses; preserves enhance + awakening\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Reforge re-rolls a weapon's random Bonuses within its rarity\n" +
+            "tier band. Enhance level, Awakening level, refinement slots,\n" +
+            "and sockets are all preserved — only the random stat lines\n" +
+            "change. The new roll is independent of the preview shown\n" +
+            "before confirmation; accepting locks in whatever the seed\n" +
+            "produces.\n\n" +
+            "USAGE\n" +
+            "Open Lisbeth (F48 Lindarth), press F4 to switch to Reforge.\n" +
+            "Pick an eligible weapon. Detail panel shows current bonuses\n" +
+            "and a deterministic preview roll. Press Confirm; a second\n" +
+            "modal restates before/after and asks for explicit consent.\n\n" +
+            "COSTS\n" +
+            "  Common      5,000 Col   + 3x Mithril Ingot\n" +
+            "  Uncommon   25,000 Col   + 3x Mithril Ingot\n" +
+            "  Rare      100,000 Col   + 3x Mithril Ingot\n" +
+            "  Epic      250,000 Col   + 5x Crystallite Ingot\n" +
+            "  Legendary 1,000,000 Col + 5x Crystallite Ingot\n\n" +
+            "INELIGIBLE\n" +
+            "  Divine weapons          — bonuses are sealed (canon)\n" +
+            "  LAB-sealed weapons      — Last-Attack-Bonus drops\n\n" +
+            "TIPS\n" +
+            "The preview is informational only — random rolls can wipe\n" +
+            "good lines, so think twice before reforging a well-rolled\n" +
+            "blade. The cost ladder makes Legendary reforges expensive\n" +
+            "by design; spend mithril cheaply on Common-Rare blades to\n" +
+            "find the bonus profile you want, then graduate the kit.\n\n" +
+            "SEE ALSO\n" +
+            "[Mithril Ingot Enhance (Rare/Epic)] · [Crystallite Ingot Enhance (Epic/Legendary)] · [Lisbeth — Rarity 6 Craft Line]")
+        {
+            Tags = new[] { "crafting", "lisbeth", "reforge", "bundle-13" }
+        },
+
+        new("World", "Lindarth Town (F48)",
+            "┌─ World\n" +
+            "│ Topic: Lindarth — Lisbeth's forge town\n" +
+            "│ Floor: 48 (special area, accessible via standard descent)\n" +
+            "│ Footprint: 61×35 with 7 named buildings\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Lindarth is the dedicated forge-town on F48 — the Lisbeth\n" +
+            "headquarters and crafting hub. Bundle 13 promotes the F48\n" +
+            "approach from a procedural Labyrinth biome to a hand-laid\n" +
+            "town with seven canonical buildings.\n\n" +
+            "BUILDINGS\n" +
+            "  Forge                — Lisbeth's primary work-floor; she\n" +
+            "                         spawns deterministically on the\n" +
+            "                         centerline.\n" +
+            "  Anvil cluster (4)    — auxiliary stations for ore-driven\n" +
+            "                         enhance attempts.\n" +
+            "  Crystallite Refinery — high-tier ingot processing.\n" +
+            "  Mithril Smelter      — mid-tier ingot processing.\n" +
+            "  Material Vendor stall — mat top-up between crafts.\n" +
+            "  Lisbeth's quarters   — flavor interior, no NPC.\n" +
+            "  Lindarth Inn         — rest checkpoint.\n\n" +
+            "TIPS\n" +
+            "Lisbeth's forge dialog opens five tabs in Bundle 13 (R6, Iron,\n" +
+            "Mithril, Reforge, Crystallite). Plan a Lindarth visit to chain\n" +
+            "an enhance run + a reforge attempt + an R6 craft in one trip.\n\n" +
+            "SEE ALSO\n" +
+            "[Lisbeth — Rarity 6 Craft Line] · [Lisbeth's Dark Repulser Gift (F48)] · [Reforge — Re-roll Random Bonuses]")
+        {
+            Tags = new[] { "world", "town", "lisbeth", "bundle-13" }
+        },
+
+        new("Combat & Rarity", "Ranged Fire & the Reticle (\\)",
+            "┌─ Combat\n" +
+            "│ Topic: Ranged-fire reticle\n" +
+            "│ Hotkey: \\ (backslash)\n" +
+            "│ Scope: Bow basic-attack + sword skills with Range > 1\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Bows and long-range sword skills now route through a\n" +
+            "dedicated reticle — press \\ on the map to enter aim mode,\n" +
+            "move the reticle with arrow keys, press Enter to fire. A\n" +
+            "right-edge sidebar shows target coords, distance, and\n" +
+            "in-range status while aiming.\n\n" +
+            "USAGE\n" +
+            "  \\ (backslash)   Enter reticle (Bow basic only).\n" +
+            "  F1-F4           Activate sword skill — auto-opens reticle\n" +
+            "                  if the skill's Range > 1; bump-targets\n" +
+            "                  otherwise.\n" +
+            "  Arrows / WASD   Move the reticle.\n" +
+            "  Enter           Fire on the targeted tile.\n" +
+            "  Esc             Exit aim without firing.\n\n" +
+            "EFFECTS\n" +
+            "  Bow basic — same damage formula as melee, gated by FOV /\n" +
+            "  line-of-sight and weapon range. AoE and Counter sword\n" +
+            "  skills skip the reticle (no single-target).\n\n" +
+            "TIPS\n" +
+            "Stunned, mid-motion, or on-cooldown skills auto-cancel reticle\n" +
+            "entry — eligibility is rechecked at fire. If the target falls\n" +
+            "out of FOV/LOS during aim, fire is rejected at confirm time.\n\n" +
+            "SEE ALSO\n" +
+            "[Look Mode & Counter Stance] · [Sword Skills — Per-Weapon Lists] · [Critical Hits]")
+        {
+            Tags = new[] { "combat", "ranged", "controls", "bundle-13" }
+        },
+
+        new("Items", "Slicing Stones — Alt Evolution Paths",
+            "┌─ Items\n" +
+            "│ Topic: Slicing Stones (Lesser / Greater / Perfect)\n" +
+            "│ Use: re-route a chain weapon to its canonical alternate tier\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Slicing Stones unlock alternate evolution paths for chain\n" +
+            "weapons — three tiers (Lesser, Greater, Perfect) corresponding\n" +
+            "to the three canon T1/T2/T3 chain tiers. Use a Slicing Stone\n" +
+            "during evolution to swap the upgrade target from the default\n" +
+            "canon path to the alt-canon variant.\n\n" +
+            "TIERS\n" +
+            "  Lesser  ◊ BrightCyan      — T1 alt-route trigger (Rare)\n" +
+            "  Greater ◈ BrightMagenta   — T2 alt-route trigger (Epic)\n" +
+            "  Perfect ✦ BrightYellow    — T3 alt-route trigger (Legendary)\n\n" +
+            "USAGE\n" +
+            "When evolving an eligible chain weapon, the evolve dialog\n" +
+            "offers two confirm paths if a matching Slicing Stone is in\n" +
+            "inventory: [Confirm Canon] for the default chain target, or\n" +
+            "[Confirm Slicing Stone Alt] for the alt-canon variant.\n\n" +
+            "TIPS\n" +
+            "Coverage spans all 9 canon chains (1HS/2HS/Rapier/Scimitar/\n" +
+            "Dagger/Katana/Spear/Mace/2H Axe) plus the Anneal Blade extension\n" +
+            "line. Slicing Stones don't bypass tier requirements — the\n" +
+            "input weapon must already qualify for evolution.\n\n" +
+            "SEE ALSO\n" +
+            "[Weapon Evolution Chains] · [Lisbeth — Rarity 6 Craft Line]")
+        {
+            Tags = new[] { "items", "evolution", "stones", "bundle-13" }
+        },
+
+        new("Items", "Footstep Trail Settings",
+            "┌─ Controls & Keybindings\n" +
+            "│ Topic: Footstep trail customization\n" +
+            "│ Settings: Style + Length + Opacity\n" +
+            "│ Toggle: OptionsScreen (Display section)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "The footstep trail behind your avatar is now fully tunable:\n" +
+            "pick a glyph style, a trail length (in turns), and an opacity\n" +
+            "tier. All three settings persist across runs in the global\n" +
+            "settings.json.\n\n" +
+            "OPTIONS\n" +
+            "  Style    Off / Dots · / Dashes - / Paws \" / Boots : / Chevrons ^\n" +
+            "  Length   Off / 5 / 10 / 20 / 50 / Unlimited (1000-turn ceiling)\n" +
+            "  Opacity  Subtle (DarkGray) / Medium (Gray) / Bold (White)\n\n" +
+            "TIPS\n" +
+            "\"Unlimited\" is capped at 1000 turns to keep render cost flat\n" +
+            "even on very long sessions. If you find the trail dominates\n" +
+            "the map, drop opacity to Subtle and length to 5 — visible\n" +
+            "during back-tracking decisions, invisible during combat.\n\n" +
+            "SEE ALSO\n" +
+            "[Look Mode & Counter Stance]")
+        {
+            Tags = new[] { "controls", "footsteps", "options", "bundle-13" }
+        },
+
+        new("Combat & Rarity", "Status Effect Abbreviations",
+            "┌─ Combat\n" +
+            "│ Topic: Sidebar status row — 3-4 letter codes\n" +
+            "│ Update: Bundle 13 replaces single-glyph icons\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "The sidebar status row now uses 3-4 letter abbreviations in\n" +
+            "place of single-character icons — clearer at a glance and\n" +
+            "consistent with the in-game log tags. Each cell shows\n" +
+            "[ABBR] in the effect's color, with the remaining-turn count\n" +
+            "directly below.\n\n" +
+            "ABBREVIATIONS\n" +
+            "  BLD   Bleed             (BrightRed)\n" +
+            "  PSN   Poison            (BrightGreen)\n" +
+            "  STN   Stun              (BrightYellow)\n" +
+            "  SLW   Slow              (BrightCyan)\n" +
+            "  SHRN  Shrine Buff       (BrightYellow)\n" +
+            "  SRG   Level-Up Surge    (BrightGreen)\n" +
+            "  REGN  Food Regen        (BrightGreen)\n" +
+            "  INV   Invisibility      (White)\n\n" +
+            "TIPS\n" +
+            "On narrow sidebars (under 24 cells), the row falls back to\n" +
+            "single-letter form (B/P/S/etc.) — same color, less width. The\n" +
+            "log tag style remains [BLD]/[PSN]/etc. for consistency with\n" +
+            "the sidebar.\n\n" +
+            "SEE ALSO\n" +
+            "[Bleed Effect] · [Poison Effect] · [Stun Effect]")
+        {
+            Tags = new[] { "combat", "status", "ui", "bundle-13" }
+        },
+
+        new("Items", "Equipment Compare Panel",
+            "┌─ Items\n" +
+            "│ Topic: Inventory equipment-compare panel\n" +
+            "│ Trigger: arrow-keys on equipment in Inventory\n" +
+            "│ Footprint: bottom 4-row panel\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "When you highlight a weapon or armor in the inventory list,\n" +
+            "a 4-row compare panel auto-renders at the bottom of the\n" +
+            "dialog showing the diff against your currently-equipped\n" +
+            "counterpart. The panel hides itself if no item is equipped\n" +
+            "in the relevant slot.\n\n" +
+            "PANEL CONTENT\n" +
+            "  Row 1   \"vs equipped: <name>\" header\n" +
+            "  Row 2   Stat deltas: DMG +6  ATK +2  DEX -1\n" +
+            "  Row 3   Special-effect diff: +CritHeal  -Lifesteal\n" +
+            "  Row 4   Net verdict: [UPGRADE] / [DOWNGRADE] / [SIDEGRADE]\n\n" +
+            "TIPS\n" +
+            "Type-mismatch (different weapon class or armor slot) shows\n" +
+            "a single-line banner instead of stat deltas — that's the\n" +
+            "compare engine telling you the apples-to-oranges comparison\n" +
+            "would be misleading. Move to a same-slot piece for a real\n" +
+            "diff.\n\n" +
+            "SEE ALSO\n" +
+            "[Equipment Slots & Type] · [Weapon Type & Affinity]")
+        {
+            Tags = new[] { "items", "ui", "compare", "bundle-13" }
+        },
+
+        new("Items", "Player Guide Search & Navigation",
+            "┌─ Controls & Keybindings\n" +
+            "│ Topic: Search box + keybind reference\n" +
+            "│ Hotkey: / opens live search\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Press / to open the search bar at the top of the Player\n" +
+            "Guide. Type to filter the topic tree live — title hits\n" +
+            "weighted higher than body hits. The bar stays visible after\n" +
+            "first activation; first Esc clears the query, second Esc\n" +
+            "closes the dialog.\n\n" +
+            "USAGE\n" +
+            "  /         Open search bar (autofocuses input)\n" +
+            "  type      Filter live as you type\n" +
+            "  Enter     Keep results, hand focus back to topic tree\n" +
+            "  Esc       Clear query (1st press) / close dialog (2nd)\n" +
+            "  ↑↓        Navigate topics\n" +
+            "  Tab       Cycle focus (tree / recent / bookmarks / body)\n" +
+            "  1-5       Jump to category\n" +
+            "  b         Bookmark / unbookmark current topic\n" +
+            "  Bksp      History back\n" +
+            "  ?         Show keybind overlay\n" +
+            "  e         Export run summary to clipboard\n\n" +
+            "TIPS\n" +
+            "Search is fuzzy: \"refor\" matches Reforge; \"liz\" matches\n" +
+            "Lisbeth. Title hits dominate body hits 3:1 in the score so\n" +
+            "the most relevant topic typically lands at top.\n\n" +
+            "SEE ALSO\n" +
+            "[Look Mode & Counter Stance]")
+        {
+            Tags = new[] { "controls", "ui", "search", "bundle-13" }
+        },
     };
+
+    // Bundle 13 (Item 7) — gate boss-drop names with "???" until the boss is killed.
+    // Floor bosses: per-floor HashSet (Q16). Field bosses: best-effort gating by floor reach
+    // (floor <= turnManager.CurrentFloor) — exact field-boss-name → FieldBossId map TBD.
+    // LAB section gates same as floor bosses — clearing the floor reveals the LAB drop too.
+    public static string GateBossDropReferenceBody(string body, SAOTRPG.Systems.TurnManager? tm)
+    {
+        if (tm == null || string.IsNullOrEmpty(body)) return body;
+        const string GATED = "???";
+
+        var lines = body.Split('\n');
+        // Section state machine — section names match the static body's headers.
+        // 0=other, 1=floor-boss, 2=LAB, 3=field-boss, 4=field-boss-secondary.
+        int section = 0;
+        var sb = new System.Text.StringBuilder(body.Length + 64);
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string line = lines[i];
+            if (line.StartsWith("FLOOR-BOSS GUARANTEED DROPS")) section = 1;
+            else if (line.StartsWith("FLOOR-BOSS LAST-ATTACK BONUS")) section = 2;
+            else if (line.StartsWith("FIELD-BOSS GUARANTEED DROPS")) section = 3;
+            else if (line.StartsWith("FIELD-BOSS SECONDARY DROPS")) section = 4;
+            else if (line.Length > 0 && line[0] >= 'A' && line[0] <= 'Z'
+                     && !line.StartsWith("  ")) section = 0;
+
+            // Drop-line gating only inside boss sections; format "  Fxx <name> -> <drop>".
+            if (section >= 1 && line.StartsWith("  F"))
+            {
+                int arrow = line.IndexOf("->", StringComparison.Ordinal);
+                int floorEnd = -1;
+                for (int j = 3; j < line.Length && j < 8; j++)
+                    if (line[j] == ' ') { floorEnd = j; break; }
+                if (arrow > 0 && floorEnd > 3 && int.TryParse(line.AsSpan(3, floorEnd - 3), out int floor))
+                {
+                    bool revealed = section switch
+                    {
+                        1 or 2 => tm.DefeatedFloorBosses.Contains(floor),
+                        3 or 4 => tm.CurrentFloor >= floor, // best-effort field-boss gate
+                        _      => true,
+                    };
+                    if (!revealed)
+                    {
+                        // Replace everything after "->" with "???".
+                        string head = line.Substring(0, arrow + 2);
+                        sb.Append(head).Append(' ').Append(GATED);
+                        if (i < lines.Length - 1) sb.Append('\n');
+                        continue;
+                    }
+                }
+            }
+            sb.Append(line);
+            if (i < lines.Length - 1) sb.Append('\n');
+        }
+        return sb.ToString();
+    }
 }

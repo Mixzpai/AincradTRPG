@@ -96,6 +96,7 @@ public partial class TurnManager
 
     public void ProcessPlayerMove(int dx, int dy)
     {
+        using var _profileScope = Profiler.Begin("TurnManager.ProcessPlayerMove");
         if (_player.IsDefeated) return;
 
         if (_stunTurnsLeft > 0)

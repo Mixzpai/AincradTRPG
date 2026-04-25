@@ -13,11 +13,16 @@ public partial class MapView : View
     private readonly Camera _camera;
     private readonly Player _player;
 
-    private const int FootstepTrailLength = 10;
+    public IGameLog? Log { get; set; }
+
+    // Bundle 13 (Item 8) — read from UserSettings.FootstepLength (0..1000).
+    private static int FootstepTrailLength =>
+        Math.Clamp(SAOTRPG.Systems.UserSettings.Current.FootstepLength, 0, 1000);
     private readonly Queue<(int X, int Y)> _footsteps = new();
     private (int X, int Y) _lastPlayerPos = (-1, -1);
 
-    private readonly List<(int X, int Y, string Text, Color Color, int FramesLeft, bool IsCrit)> _damageFlashes = new();
+    private record struct DamageFlash(int X, int Y, string Text, Color Color, int FramesLeft, bool IsCrit);
+    private readonly List<DamageFlash> _damageFlashes = new();
     private const int DamageFlashFrames = 3;
     private const int CritDamageFlashFrames = 5;
 
@@ -25,18 +30,18 @@ public partial class MapView : View
     {
         string text = damage.ToString();
         Color color = isPlayerDamage ? Color.BrightRed : Color.BrightYellow;
-        _damageFlashes.Add((mx, my, text, color, DamageFlashFrames, false));
+        _damageFlashes.Add(new DamageFlash(mx, my, text, color, DamageFlashFrames, false));
     }
 
     public void AddCritDamageFlash(int mx, int my, int damage, bool isPlayerDamage)
     {
         string text = $"«{damage}»";
         Color color = isPlayerDamage ? Color.BrightRed : Color.BrightCyan;
-        _damageFlashes.Add((mx, my, text, color, CritDamageFlashFrames, true));
+        _damageFlashes.Add(new DamageFlash(mx, my, text, color, CritDamageFlashFrames, true));
     }
 
     public void AddTextFlash(int mx, int my, string text, Color color)
-        => _damageFlashes.Add((mx, my, text, color, DamageFlashFrames, false));
+        => _damageFlashes.Add(new DamageFlash(mx, my, text, color, DamageFlashFrames, false));
 
     // ── Border edge flash (crit/damage/levelup) ──────────────────────
     private int _borderFlashFrames;
@@ -222,6 +227,11 @@ public partial class MapView : View
     public event Action? StatusTrayVerboseToggleRequested;
     // F9 — hot-reload biome JSONs + regenerate current floor with same seed.
     public event Action? BiomeReloadRequested;
+    // Bundle 13 Item 6 — `\` keypress raised from MapView.Input.cs. GameScreen reads the
+    // equipped weapon and either opens the Bow reticle or toasts a "no bow" hint.
+    public event Action? RangedFireKeyPressed;
+    // Bundle 13 Item 1 — Shift+L opens the Legendary Collectables panel.
+    public event Action? LegendaryCollectablesRequested;
 
     // Partial method hook implemented in MapView.TileAnimations.cs.
     partial void RenderAmbientTiles(int vpWidth, int vpHeight);

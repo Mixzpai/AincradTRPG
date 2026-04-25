@@ -1,6 +1,7 @@
 using SAOTRPG.Inventory.Core;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Map;
+using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
@@ -66,6 +67,7 @@ public partial class TurnManager
             _ => "vein",
         };
         _log.Log($"You strike the {oreName}!");
+        DebugLogger.LogGame("MINING", $"strike vein={tile.Type} remaining={remaining} miningPower={pick.MiningPower}");
 
         // If pickaxe broke this strike, destroy it now (Q19 — broken pickaxe = DestroyEquipped).
         if (pick.ItemDurability <= 0)
@@ -131,6 +133,7 @@ public partial class TurnManager
             _log.LogLoot("The vein is exhausted but yields nothing.");
         else
             _log.LogLoot($"The vein crumbles, scattering {drops.Count} ore.");
+        DebugLogger.LogGame("MINING", $"deplete vein={from} drops={drops.Count} dropList={string.Join(",", drops.Select(d => d.DefinitionId))}");
     }
 
     // Bundle 10 — Mining XP per strike (4/9/18 per Iron/Mithril/Divine, scout 2.2).

@@ -47,7 +47,8 @@ public static class PrefabPlacer
                 int ox = room.X + 1 + (maxW - variant.Width)  / 2;
                 int oy = room.Y + 1 + (maxH - variant.Height) / 2;
                 var resolved = variant.Resolved(rng);
-                Stamp(map, resolved, ox, oy, def.KFeat, spawnQueue);
+                if (!VariantFitsInDisk(resolved, ox, oy, ctx?.CircleMask)) continue;
+                Stamp(map, resolved, ox, oy, def.KFeat, spawnQueue, ctx);
                 chosenRoom = room;
                 DebugLogger.LogGame("PREFAB",
                     $"placed '{def.Name}' at ({ox},{oy}) {resolved.Width}x{resolved.Height} in room({room.X},{room.Y})");
@@ -74,7 +75,8 @@ public static class PrefabPlacer
             int ox = (map.Width  - variant.Width)  / 2;
             int oy = (map.Height - variant.Height) / 2;
             var resolved = variant.Resolved(rng);
-            Stamp(map, resolved, ox, oy, def.KFeat, spawnQueue);
+            if (!VariantFitsInDisk(resolved, ox, oy, ctx?.CircleMask)) continue;
+            Stamp(map, resolved, ox, oy, def.KFeat, spawnQueue, ctx);
             DebugLogger.LogGame("PREFAB",
                 $"encompass-placed '{def.Name}' at ({ox},{oy}) {resolved.Width}x{resolved.Height}");
             return true;
@@ -82,6 +84,24 @@ public static class PrefabPlacer
         DebugLogger.LogGame("PREFAB",
             $"'{def.Name}' encompass failed — prefab {def.Width}x{def.Height} too big for map {map.Width}x{map.Height}");
         return false;
+    }
+
+    // True when every non-noop tile in `v` lands inside the disk. Mask null = no constraint.
+    private static bool VariantFitsInDisk(ParsedPrefab v, int ox, int oy, bool[,]? mask)
+    {
+        if (mask is null) return true;
+        var grid = v.ActiveMap;
+        int w = v.Width, h = v.Height;
+        int mw = mask.GetLength(0), mh = mask.GetLength(1);
+        for (int x = 0; x < w; x++)
+        for (int y = 0; y < h; y++)
+        {
+            if (grid[x, y] == PrefabGlyphMapping.NoopGlyph) continue;
+            int tx = ox + x, ty = oy + y;
+            if ((uint)tx >= (uint)mw || (uint)ty >= (uint)mh) return false;
+            if (!mask[tx, ty]) return false;
+        }
+        return true;
     }
 
     // Stamps a resolved variant. KFEAT overrides default glyph→TileType; ' ' leaves tile untouched;
@@ -92,7 +112,8 @@ public static class PrefabPlacer
         int ox,
         int oy,
         IReadOnlyDictionary<char, TileType> kfeat,
-        List<PrefabSpawnRequest>? spawnQueue = null)
+        List<PrefabSpawnRequest>? spawnQueue = null,
+        WorldContext? ctx = null)
     {
         var grid = variant.ActiveMap;
         int w = variant.Width, h = variant.Height;
@@ -103,6 +124,9 @@ public static class PrefabPlacer
             if (glyph == PrefabGlyphMapping.NoopGlyph) continue;
             int tx = ox + x, ty = oy + y;
             if (!map.InBounds(tx, ty)) continue;
+            // Soft-skip per-cell out-of-disk tiles — the variant fit-check above
+            // should have caught full overruns, but soft-gate keeps the stamp safe.
+            if (ctx?.CircleMask != null && !ctx.CircleMask[tx, ty]) continue;
 
             TileType tt;
             if (kfeat.TryGetValue(glyph, out var kt)) tt = kt;

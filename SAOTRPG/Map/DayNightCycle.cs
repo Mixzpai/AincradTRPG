@@ -36,13 +36,20 @@ public static class DayNightCycle
         }
     }
 
-    // Viewport half-diagonal — set each frame by MapView so FOV scales to screen.
+    // Viewport half-diagonal — set each frame by MapView. Drives ROI scratch sizing.
     public static int ViewportRadius { get; set; } = 80;
 
-    // Night → torch bubble, Day → full viewport. Min kept playable.
+    // 4× FOV multiplier — open-field daytime visibility extends well beyond the viewport.
+    // Tactical reveal radius; the camera still tracks the player within the smaller viewport.
+    public const int FovMultiplier = 4;
+
+    // Open-field FOV in cell-units. Set per frame from MapView.Rendering.cs (= halfH × FovMultiplier).
+    public static int FovRadius { get; set; } = 80 * FovMultiplier;
+
+    // Night → torch bubble, Day → full FOV. Min kept playable.
     public const int MinVisibility = 18;
     public static int VisibilityRadius =>
-        (int)Math.Round(Lerp(MinVisibility, ViewportRadius, SunLevel));
+        (int)Math.Round(Lerp(MinVisibility, FovRadius, SunLevel));
 
     // "Day", "Dusk", "Night", or "Dawn" — sun level + direction within cycle.
     public static string PhaseName

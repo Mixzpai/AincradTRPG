@@ -36,7 +36,7 @@ public sealed class RiverPass : IGenerationPass
 
         // Full-map top-K local-maxima weighted pick, with edge-margin exclusion
         // so rivers don't start adjacent to the border and die in one step.
-        var (sx, sy) = PickSeedPeak(heights, w, h, ctx.Rng);
+        var (sx, sy) = PickSeedPeak(heights, w, h, ctx.Rng, ctx);
 
         int cx = sx, cy = sy;
         for (int step = 0; step < w + h; step++)
@@ -44,6 +44,8 @@ public sealed class RiverPass : IGenerationPass
             MapGenerator.StampRiverTile(map, cx, cy);
             MapGenerator.StampRiverTile(map, cx + 1, cy);
 
+            // Stop on disk exit (protected Mountain ring) or near map bbox edge.
+            if (!ctx.IsInsideCircle(cx, cy)) break;
             if (cx <= 2 || cx >= w - 3 || cy <= 2 || cy >= h - 3) break;
 
             // Gradient descent with a tiny rng nudge to avoid straight lines.
@@ -72,13 +74,14 @@ public sealed class RiverPass : IGenerationPass
 
     // Scans entire heightmap on stride-3 grid excluding a 10-tile edge buffer,
     // collects local maxima, weight-picks one of top-K (K=10) by rank (higher = more likely).
-    private static (int X, int Y) PickSeedPeak(float[,] heights, int w, int h, Random rng)
+    private static (int X, int Y) PickSeedPeak(float[,] heights, int w, int h, Random rng, WorldContext ctx)
     {
         const int MARGIN = 10;
         var candidates = new List<(int X, int Y, float H)>();
         for (int x = MARGIN; x < w - MARGIN; x += 3)
         for (int y = MARGIN; y < h - MARGIN; y += 3)
         {
+            if (!ctx.IsInsideCircle(x, y)) continue;
             float hv = heights[x, y];
             bool local = true;
             for (int dx = -1; dx <= 1 && local; dx++)

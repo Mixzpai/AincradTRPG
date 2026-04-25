@@ -31,21 +31,30 @@ public sealed class AmbientOverlayPass : IGenerationPass
         targetCount = Math.Min(targetCount, ParticleQueue.MaxConcurrent - 5);
         if (targetCount <= 0) return;
 
-        var walkable = GatherWalkable(ctx.Map, ctx.Width, ctx.Height);
-        if (walkable.Count == 0) return;
+        var samples = ReservoirSample(ctx.Map, ctx.Width, ctx.Height, targetCount, ctx.Rng);
+        if (samples.Count == 0) return;
 
-        ParticleQueue.SeedAmbient(ctx.Config.AmbientOverlay.ParticleId!, walkable, ctx.Rng, targetCount);
+        ParticleQueue.SeedAmbient(ctx.Config.AmbientOverlay.ParticleId!, samples, ctx.Rng, targetCount);
     }
 
-    private static List<(int X, int Y)> GatherWalkable(GameMap map, int w, int h)
+    // Reservoir sampling: keep `target` random samples in a single pass — no full-map list buffer.
+    private static List<(int X, int Y)> ReservoirSample(GameMap map, int w, int h, int target, Random rng)
     {
-        var list = new List<(int X, int Y)>(w * h / 2);
+        var reservoir = new List<(int X, int Y)>(target);
+        int seen = 0;
         for (int x = 0; x < w; x++)
         for (int y = 0; y < h; y++)
         {
             if (!map.InBounds(x, y)) continue;
-            if (map.Tiles[x, y].IsWalkable) list.Add((x, y));
+            if (!map.Tiles[x, y].IsWalkable) continue;
+            seen++;
+            if (reservoir.Count < target) reservoir.Add((x, y));
+            else
+            {
+                int j = rng.Next(seen);
+                if (j < target) reservoir[j] = (x, y);
+            }
         }
-        return list;
+        return reservoir;
     }
 }

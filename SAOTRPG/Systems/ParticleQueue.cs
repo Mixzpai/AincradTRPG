@@ -17,10 +17,11 @@ public enum ParticleEvent
     HealingTick,
     EnhancementSuccess,
     FloorTransition,
+    // Bundle 13 (Item 2) — Divine Awakening burst. Level 1/2/3 scales count + duration.
+    DivineAwakening,
 }
 
-// A single live particle — position, glyph, color, velocity, lifetime.
-// Velocity is cells-per-second at Pronounced density; duration scales tier.
+// A single live particle — position, glyph, color, velocity, lifetime. Mutable for ring-buffer reuse.
 public sealed class Particle
 {
     public float X;
@@ -33,30 +34,74 @@ public sealed class Particle
     public float Vy;
     public Color FadeTo;
     public bool UseFade;
+    // True while this slot holds a live particle. Pool slots toggle this on Push and on expiry in Tick.
+    public bool Active;
 }
 
-// Global oldest-drop particle ring. Cap 40 concurrent per research §6.
+// Pre-allocated particle pool with oldest-drop wrap on overflow. Cap 40 concurrent per research §6.
 public static class ParticleQueue
 {
     public const int MaxConcurrent = 40;
-    public static readonly List<Particle> Active = new();
+    private static readonly Particle[] _pool = BuildPool();
+    private static int _writeIdx;
+    private static int _activeCount;
 
-    public static void Clear() => Active.Clear();
+    private static Particle[] BuildPool()
+    {
+        var arr = new Particle[MaxConcurrent];
+        for (int i = 0; i < MaxConcurrent; i++) arr[i] = new Particle();
+        return arr;
+    }
+
+    // Iterator wrapper exposing only active slots (filters per yield, no allocation).
+    public static IEnumerable<Particle> Active
+    {
+        get
+        {
+            for (int i = 0; i < _pool.Length; i++)
+                if (_pool[i].Active) yield return _pool[i];
+        }
+    }
+
+    public static void Clear()
+    {
+        for (int i = 0; i < _pool.Length; i++) _pool[i].Active = false;
+        _activeCount = 0;
+        _writeIdx = 0;
+    }
 
     // F9 hot-reload latch reset — conservative full clear since Particle has no
     // Ambient category flag today. AmbientOverlayPass reseeds on map entry.
     public static void ClearAmbient()
     {
-        int before = Active.Count;
-        Active.Clear();
+        int before = _activeCount;
+        Clear();
         UI.DebugLogger.LogGame("RELOAD", $"ParticleQueue.ClearAmbient dropped {before}");
     }
 
-    // Enforce cap by dropping oldest when adding a new particle.
-    private static void Push(Particle p)
+    // Pull next slot in the ring. If full, overwrite the next slot (oldest-drop semantic).
+    private static Particle NextSlot()
     {
-        if (Active.Count >= MaxConcurrent) Active.RemoveAt(0);
-        Active.Add(p);
+        var p = _pool[_writeIdx];
+        _writeIdx = (_writeIdx + 1) % MaxConcurrent;
+        if (!p.Active) _activeCount++;
+        p.Active = true;
+        p.AgeMs = 0f;
+        return p;
+    }
+
+    // Push a particle. Initializes a pool slot in-place — zero allocation per emit.
+    private static void Push(float x, float y, char glyph, Color color, Color fadeTo, bool useFade,
+        float durMs, float vx, float vy)
+    {
+        var slot = NextSlot();
+        slot.X = x; slot.Y = y;
+        slot.Glyph = glyph;
+        slot.Color = color;
+        slot.FadeTo = fadeTo;
+        slot.UseFade = useFade;
+        slot.DurationMs = durMs;
+        slot.Vx = vx; slot.Vy = vy;
     }
 
     // Per-biome ambient particle table: glyph, color, fade-to color, drift velocity, duration.
@@ -87,18 +132,7 @@ public static class ParticleQueue
         for (int i = 0; i < cap; i++)
         {
             var (tx, ty) = tiles[rng.Next(tiles.Count)];
-            Push(new Particle
-            {
-                X = tx,
-                Y = ty,
-                Glyph = spec.Glyph,
-                Color = spec.Color,
-                FadeTo = spec.FadeTo,
-                UseFade = true,
-                DurationMs = spec.DurMs,
-                Vx = spec.Vx,
-                Vy = spec.Vy,
-            });
+            Push(tx, ty, spec.Glyph, spec.Color, spec.FadeTo, true, spec.DurMs, spec.Vx, spec.Vy);
         }
     }
 
@@ -135,6 +169,28 @@ public static class ParticleQueue
             case ParticleEvent.HealingTick: EmitHealingTick(x, y, dur); break;
             case ParticleEvent.EnhancementSuccess: EmitEnhancement(x, y, dur); break;
             case ParticleEvent.FloorTransition: EmitFloorTransition(x, y, dur); break;
+            case ParticleEvent.DivineAwakening: EmitDivineAwakening(x, y, 1); break;
+        }
+    }
+
+    // Bundle 13 (Item 2) — Divine Awakening burst keyed by AwakeningLevel.
+    // Level 1 = 3 particles / 600ms, Level 2 = 6 / 900ms, Level 3 = 12 / 1200ms.
+    // Density scaling overrides count in Subtle/Moderate; Pronounced uses base.
+    public static void EmitDivineAwakening(int x, int y, int level)
+    {
+        if (UserSettings.Current.ParticleDensity == ParticleDensity.Off) return;
+        int baseCount = level switch { 1 => 3, 2 => 6, _ => 12 };
+        float dur     = level switch { 1 => 600f, 2 => 900f, _ => 1200f };
+        int n = ScaleCount(baseCount);
+        char[] glyphs = { '✦', '◈', '*', '·' };
+        Color[] palette = { Color.BrightMagenta, Color.BrightYellow };
+        for (int i = 0; i < n; i++)
+        {
+            double angle = (2 * Math.PI * i) / Math.Max(1, n);
+            float vx = (float)(Math.Cos(angle) * 0.0035f);
+            float vy = (float)(Math.Sin(angle) * 0.0035f) - 0.0008f;
+            Push(x, y, glyphs[i % glyphs.Length], palette[i % palette.Length],
+                Color.DarkGray, true, dur, vx, vy);
         }
     }
 
@@ -155,15 +211,8 @@ public static class ParticleQueue
         char[] glyphs = { '\'', '`', ',' };
         float vx = dx * 0.004f, vy = dy * 0.004f;
         for (int i = 0; i < n; i++)
-        {
-            Push(new Particle
-            {
-                X = x + dx * 0.3f, Y = y + dy * 0.3f,
-                Glyph = glyphs[i % glyphs.Length], Color = Color.White,
-                FadeTo = Color.Gray, UseFade = true,
-                DurationMs = dur * 0.6f, Vx = vx, Vy = vy,
-            });
-        }
+            Push(x + dx * 0.3f, y + dy * 0.3f, glyphs[i % glyphs.Length], Color.White,
+                Color.Gray, true, dur * 0.6f, vx, vy);
     }
 
     // Ring of 6-8 ◇ around target. Yellow → Gray fade.
@@ -175,12 +224,7 @@ public static class ParticleQueue
             double angle = (2 * Math.PI * i) / n;
             float vx = (float)(Math.Cos(angle) * 0.002f);
             float vy = (float)(Math.Sin(angle) * 0.002f);
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = '◇', Color = Color.BrightYellow,
-                FadeTo = Color.Gray, UseFade = true,
-                DurationMs = dur, Vx = vx, Vy = vy,
-            });
+            Push(x, y, '◇', Color.BrightYellow, Color.Gray, true, dur, vx, vy);
         }
     }
 
@@ -194,12 +238,7 @@ public static class ParticleQueue
             double angle = (2 * Math.PI * i) / n;
             float vx = (float)(Math.Cos(angle) * 0.003f);
             float vy = (float)(Math.Sin(angle) * 0.003f);
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = glyphs[i % 2], Color = Color.BrightCyan,
-                FadeTo = Color.DarkGray, UseFade = true,
-                DurationMs = dur, Vx = vx, Vy = vy,
-            });
+            Push(x, y, glyphs[i % 2], Color.BrightCyan, Color.DarkGray, true, dur, vx, vy);
         }
     }
 
@@ -211,12 +250,8 @@ public static class ParticleQueue
         for (int i = 0; i < n; i++)
         {
             double angle = (2 * Math.PI * i) / n;
-            Push(new Particle
-            {
-                X = x + (float)Math.Cos(angle), Y = y + (float)Math.Sin(angle),
-                Glyph = '·', Color = c, UseFade = false,
-                DurationMs = dur, Vx = 0, Vy = 0,
-            });
+            Push(x + (float)Math.Cos(angle), y + (float)Math.Sin(angle), '·', c,
+                default, false, dur, 0, 0);
         }
     }
 
@@ -227,15 +262,7 @@ public static class ParticleQueue
         float[] vxs = { -0.002f, 0.002f, 0f };
         float[] vys = { -0.002f, -0.002f, -0.003f };
         for (int i = 0; i < n; i++)
-        {
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = '✦', Color = Color.BrightYellow,
-                FadeTo = Color.Yellow, UseFade = true,
-                DurationMs = dur * 0.5f,
-                Vx = vxs[i % 3], Vy = vys[i % 3],
-            });
-        }
+            Push(x, y, '✦', Color.BrightYellow, Color.Yellow, true, dur * 0.5f, vxs[i % 3], vys[i % 3]);
     }
 
     private static void EmitPoisonInflict(int x, int y, int maxCount, float dur)
@@ -244,12 +271,7 @@ public static class ParticleQueue
         for (int i = 0; i < n; i++)
         {
             float jx = (i % 2 == 0 ? -0.001f : 0.001f);
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = '·', Color = Color.BrightGreen,
-                FadeTo = Color.Gray, UseFade = true,
-                DurationMs = dur, Vx = jx, Vy = -0.002f,
-            });
+            Push(x, y, '·', Color.BrightGreen, Color.Gray, true, dur, jx, -0.002f);
         }
     }
 
@@ -260,12 +282,7 @@ public static class ParticleQueue
         for (int i = 0; i < n; i++)
         {
             float jx = (i - 1) * 0.001f;
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = '◇', Color = Color.BrightCyan,
-                FadeTo = Color.White, UseFade = true,
-                DurationMs = dur * 0.75f, Vx = jx, Vy = 0.002f,
-            });
+            Push(x, y, '◇', Color.BrightCyan, Color.White, true, dur * 0.75f, jx, 0.002f);
         }
     }
 
@@ -275,12 +292,7 @@ public static class ParticleQueue
         for (int i = 0; i < n; i++)
         {
             float jx = (i - 1) * 0.0008f;
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = '\'', Color = Color.BrightRed,
-                FadeTo = Color.BrightYellow, UseFade = true,
-                DurationMs = dur * 0.75f, Vx = jx, Vy = -0.003f,
-            });
+            Push(x, y, '\'', Color.BrightRed, Color.BrightYellow, true, dur * 0.75f, jx, -0.003f);
         }
     }
 
@@ -290,14 +302,8 @@ public static class ParticleQueue
         int n = ScaleCount(7);
         char[] glyphs = { '·', '*', '·' };
         for (int i = 0; i < n; i++)
-        {
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = glyphs[i % glyphs.Length],
-                Color = Color.White, FadeTo = Color.BrightCyan, UseFade = true,
-                DurationMs = dur, Vx = 0, Vy = -0.003f - (i * 0.0005f),
-            });
-        }
+            Push(x, y, glyphs[i % glyphs.Length], Color.White, Color.BrightCyan, true,
+                dur, 0, -0.003f - (i * 0.0005f));
     }
 
     private static void EmitHealingTick(int x, int y, float dur)
@@ -306,12 +312,7 @@ public static class ParticleQueue
         for (int i = 0; i < n; i++)
         {
             float jx = (i == 0 ? -0.001f : 0.001f);
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = i == 0 ? '+' : '·',
-                Color = Color.BrightGreen, UseFade = false,
-                DurationMs = dur * 0.5f, Vx = jx, Vy = -0.001f,
-            });
+            Push(x, y, i == 0 ? '+' : '·', Color.BrightGreen, default, false, dur * 0.5f, jx, -0.001f);
         }
     }
 
@@ -324,12 +325,7 @@ public static class ParticleQueue
             double angle = (2 * Math.PI * i) / n;
             float vx = (float)(Math.Cos(angle) * 0.003f);
             float vy = (float)(Math.Sin(angle) * 0.003f);
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = glyphs[i % 2], Color = Color.BrightMagenta,
-                FadeTo = Color.Magenta, UseFade = true,
-                DurationMs = dur, Vx = vx, Vy = vy,
-            });
+            Push(x, y, glyphs[i % 2], Color.BrightMagenta, Color.Magenta, true, dur, vx, vy);
         }
     }
 
@@ -337,26 +333,25 @@ public static class ParticleQueue
     {
         int n = ScaleCount(5);
         for (int i = 0; i < n; i++)
-        {
-            Push(new Particle
-            {
-                X = x, Y = y, Glyph = i % 2 == 0 ? ':' : '.',
-                Color = Color.BrightCyan, FadeTo = Color.Cyan, UseFade = true,
-                DurationMs = dur * 0.8f, Vx = 0, Vy = -0.002f - i * 0.0003f,
-            });
-        }
+            Push(x, y, i % 2 == 0 ? ':' : '.', Color.BrightCyan, Color.Cyan, true,
+                dur * 0.8f, 0, -0.002f - i * 0.0003f);
     }
 
-    // Ticks every particle by dtMs; culls expired entries. Called from render.
+    // Ticks every particle by dtMs; culls expired by toggling Active=false (slot reused on next Push).
     public static void Tick(int dtMs)
     {
-        for (int i = Active.Count - 1; i >= 0; i--)
+        for (int i = 0; i < _pool.Length; i++)
         {
-            var p = Active[i];
+            var p = _pool[i];
+            if (!p.Active) continue;
             p.AgeMs += dtMs;
             p.X += p.Vx * dtMs;
             p.Y += p.Vy * dtMs;
-            if (p.AgeMs >= p.DurationMs) Active.RemoveAt(i);
+            if (p.AgeMs >= p.DurationMs)
+            {
+                p.Active = false;
+                if (_activeCount > 0) _activeCount--;
+            }
         }
     }
 }

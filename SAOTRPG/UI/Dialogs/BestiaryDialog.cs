@@ -37,10 +37,21 @@ public static class BestiaryDialog
         string sortKey = Bestiary.SessionSort;
         string activeTab = Bestiary.SessionActiveTab;
 
-        // ── Filter chip row ──
-        var chipLabel = new Label
+        // Bundle 12 — chip strip is now two-line: row 0 = tag chips (Label per chip, color-only
+        // active marker), row 1 = B/U/F/Sort indicator. Drops the [x]/[ ] markers per Risk R7
+        // so the strip fits inside 120-col terminals without silently clipping Sort:.
+        var chipLabels = new List<Label>(KnownTags.Length);
+        for (int i = 0; i < KnownTags.Length; i++)
         {
-            Text = "", X = 1, Y = 0,
+            chipLabels.Add(new Label
+            {
+                Text = "", X = 0, Y = 0, Width = 1, Height = 1,
+                ColorScheme = ColorSchemes.Dim,
+            });
+        }
+        var indicatorLabel = new Label
+        {
+            Text = "", X = 1, Y = 1,
             Width = Dim.Fill(2), Height = 1,
             ColorScheme = ColorSchemes.Body,
         };
@@ -48,13 +59,13 @@ public static class BestiaryDialog
         // ── List pane ──
         var listLabel = new Label
         {
-            Text = "[ Entries ]", X = 1, Y = 2,
+            Text = "[ Entries ]", X = 1, Y = 3,
             Width = ListPaneWidth, Height = 1,
             ColorScheme = ColorSchemes.Gold,
         };
         var listView = new ListView
         {
-            X = 1, Y = 3,
+            X = 1, Y = 4,
             Width = ListPaneWidth, Height = Dim.Fill(3),
             ColorScheme = ColorSchemes.ListSelection,
             AllowsMarking = false,
@@ -64,13 +75,13 @@ public static class BestiaryDialog
         int detailX = ListPaneWidth + 2;
         var tabLabel = new Label
         {
-            Text = "", X = detailX, Y = 2,
+            Text = "", X = detailX, Y = 3,
             Width = Dim.Fill(2), Height = 1,
             ColorScheme = ColorSchemes.Gold,
         };
         var detailView = new TextView
         {
-            X = detailX, Y = 3,
+            X = detailX, Y = 4,
             Width = Dim.Fill(2), Height = Dim.Fill(3),
             ReadOnly = true, WordWrap = false,
             ColorScheme = ColorSchemes.Body,
@@ -98,7 +109,8 @@ public static class BestiaryDialog
             ColorScheme = ColorSchemes.Body, Visible = false,
         };
 
-        dialog.Add(chipLabel, listLabel, listView, tabLabel, detailView,
+        foreach (var c in chipLabels) dialog.Add(c);
+        dialog.Add(indicatorLabel, listLabel, listView, tabLabel, detailView,
             hint, searchLabel, searchField);
 
         // ── State snapshot + refresh pipeline ──
@@ -147,16 +159,22 @@ public static class BestiaryDialog
 
         void RefreshChips()
         {
-            var parts = new List<string>();
-            foreach (var t in KnownTags)
+            // Place each chip Label side-by-side; active chips use Gold, inactive use Dim. Color
+            // alone signals state — no [x]/[ ] prefix — so the strip fits within 120-col dialogs.
+            int x = 1;
+            for (int i = 0; i < KnownTags.Length; i++)
             {
-                string mark = filter.ActiveTags.Contains(t) ? "[x]" : "[ ]";
-                parts.Add($"{mark}{t}");
+                string t = KnownTags[i];
+                bool active = filter.ActiveTags.Contains(t);
+                chipLabels[i].Text = t;
+                chipLabels[i].X = x;
+                chipLabels[i].Width = t.Length;
+                chipLabels[i].ColorScheme = active ? ColorSchemes.Gold : ColorSchemes.Dim;
+                x += t.Length + 1;
             }
-            string tagLine = string.Join(" ", parts);
             string bossMark = filter.BossOnly ? "[x]" : "[ ]";
             string undiscMark = filter.ShowUndiscovered ? "[x]" : "[ ]";
-            chipLabel.Text = $"{tagLine}  B:{bossMark}Boss  U:{undiscMark}Undisc  F{filter.FloorMin}-{filter.FloorMax}  Sort:{sortKey}";
+            indicatorLabel.Text = $"B:{bossMark}Boss  U:{undiscMark}Undisc  F{filter.FloorMin}-{filter.FloorMax}  Sort:{sortKey}";
         }
 
         void RefreshDetail()

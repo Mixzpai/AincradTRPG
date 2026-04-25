@@ -325,7 +325,7 @@ public static class LootGenerator
         (77, 83, "rap_glaring_light"),              // LR/LS
         (76, 82, "dag_fragarach"),                  // LR myth Celtic
         (65, 72, "kat_demon_blade_muramasa"),       // LS Salamander katana (lift)
-        (84, 90, "axe_lang"),                       // LR/LS
+        (44, 50, "axe_lang"),                       // LR/LS — B13 E widen to F49-50 chest fill
         (72, 78, "spr_brave_song"),                 // LR/LS (lift)
         (69, 75, "bow_silvan_bow"),                 // LR/LS Sylph (lift)
         (77, 83, "clw_iron_fist_oguma"),            // LR/LS Salamander
@@ -335,7 +335,7 @@ public static class LootGenerator
         (18, 25, "kat_futsu_no_mitama"),            // LS shinto-spirit — fill F18-25
         (22, 29, "bow_artemis_fult"),               // LR myth — fill F22-29
         (25, 32, "dag_giardino"),                   // LR myth — fill F25-32
-        (30, 36, "mce_caduceus"),                   // LR/LS — fill F30-36 (override scout)
+        (40, 49, "mce_caduceus"),                   // LR/LS — B13 E widen to F49 chest fill (width 10, slight cap deviation)
         (30, 37, "clw_paopei"),                     // LR myth — fill F30-37
         (35, 42, "spr_elders_trident"),             // LR myth — fill F35-42
         // LR-myth at high floors (tail-weighted to F95-99 for late-game support).

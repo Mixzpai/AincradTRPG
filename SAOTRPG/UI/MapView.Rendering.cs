@@ -1,5 +1,6 @@
 using Terminal.Gui;
 using SAOTRPG.Map;
+using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
@@ -10,6 +11,7 @@ public partial class MapView
 {
     protected override bool OnDrawingContent()
     {
+        using var _drawScope = Profiler.Begin("MapView.OnDrawingContent");
         var vp = Viewport;
         _camera.ViewWidth = vp.Width;
         _camera.ViewHeight = vp.Height;
@@ -20,15 +22,19 @@ public partial class MapView
         // FOV radius from smaller viewport dim — terminal chars ~2:1 aspect → height limits.
         int halfH = vp.Height / 2 + 2;
         Map.DayNightCycle.ViewportRadius = halfH;
+        Map.DayNightCycle.FovRadius = halfH * Map.DayNightCycle.FovMultiplier;
 
         TrackFootstep();
 
-        for (int vy = 0; vy < vp.Height; vy++)
-        for (int vx = 0; vx < vp.Width; vx++)
+        using (Profiler.Begin("MapView.TileLoop"))
         {
-            int mx = VxToMap(vx), my = VyToMap(vy);
-            var (ch, fg, bg) = ResolveTileVisual(mx, my);
-            Gfx.PutCell(this, vx, vy, ch, fg, bg);
+            for (int vy = 0; vy < vp.Height; vy++)
+            for (int vx = 0; vx < vp.Width; vx++)
+            {
+                int mx = VxToMap(vx), my = VyToMap(vy);
+                var (ch, fg, bg) = ResolveTileVisual(mx, my);
+                Gfx.PutCell(this, vx, vy, ch, fg, bg);
+            }
         }
 
         RenderOverlays(vp.Width, vp.Height);

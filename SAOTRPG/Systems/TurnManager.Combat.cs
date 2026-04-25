@@ -153,29 +153,30 @@ public partial class TurnManager
     // Called on floor entry + ReplaceMap to refill the per-floor pool.
     private int GetBarrierCapacity()
     {
-        return Math.Max(0, GetEffectSum("Barrier"));
+        return Math.Max(0, SumWeaponShield<EquipmentSpecialEffect.Barrier>(b => b.Magnitude));
     }
 
-    // Bundle 8: aggregate MH weapon + OH shield SpecialEffect value.
-    // Additive by default (sums); callers use GetEffectMax for cap-like effects (CritImmune).
-    internal int GetEffectSum(string effectName)
+    // Bundle 12 (C3) — typed-generic MH weapon + OH shield aggregator. Sums every parsed
+    // record of T across both slots, applying `get` to extract the int field.
+    internal int SumWeaponShield<T>(Func<T, int> get) where T : EquipmentSpecialEffect
     {
-        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
-        int v = GetSpecialEffectValue(wpn, effectName);
+        int total = 0;
+        if (_player.Inventory.GetEquipped(EquipmentSlot.Weapon) is EquipmentBase wpn)
+            foreach (var rec in wpn.ParsedEffects.OfType<T>()) total += get(rec);
         if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
-            v += GetSpecialEffectValue(shield, effectName);
-        return v;
+            foreach (var rec in shield.ParsedEffects.OfType<T>()) total += get(rec);
+        return total;
     }
 
-    // Bundle 8: MH + OH cap-style effect — picks the higher of the two (non-stacking).
-    internal int GetEffectMax(string effectName)
+    // Bundle 12 (C3) — cap-style: max of MH or OH (e.g. CritImmune, non-stacking).
+    internal int MaxWeaponShield<T>(Func<T, int> get) where T : EquipmentSpecialEffect
     {
-        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
-        int a = GetSpecialEffectValue(wpn, effectName);
-        int b = 0;
+        int best = 0;
+        if (_player.Inventory.GetEquipped(EquipmentSlot.Weapon) is EquipmentBase wpn)
+            foreach (var rec in wpn.ParsedEffects.OfType<T>()) best = Math.Max(best, get(rec));
         if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
-            b = GetSpecialEffectValue(shield, effectName);
-        return Math.Max(a, b);
+            foreach (var rec in shield.ParsedEffects.OfType<T>()) best = Math.Max(best, get(rec));
+        return best;
     }
 
     // Bundle 10 (B14) — additive defensive keys (BlockChance, ParryChance, EvadeRegen, HPRegen, SPRegen)
@@ -186,16 +187,54 @@ public partial class TurnManager
         EquipmentSlot.Legs, EquipmentSlot.Feet, EquipmentSlot.RightRing, EquipmentSlot.LeftRing,
         EquipmentSlot.Bracelet, EquipmentSlot.Necklace,
     };
+    internal int SumAllSlots<T>(Func<T, int> get) where T : EquipmentSpecialEffect
+    {
+        int total = 0;
+        foreach (var slot in _allEquippedSlots)
+        {
+            if (_player.Inventory.GetEquipped(slot) is EquipmentBase eq)
+                foreach (var rec in eq.ParsedEffects.OfType<T>()) total += get(rec);
+        }
+        return total;
+    }
+
+    // Bundle 12 (C3) — legacy string-keyed wrappers, [Obsolete] but live for save tolerance
+    // (modded saves with novel keys still need a path). Delegates to typed-generic helpers.
+    [Obsolete("Use SumWeaponShield<T>/MaxWeaponShield<T>/SumAllSlots<T> with typed records.")]
+    internal int GetEffectSum(string effectName)
+    {
+        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
+        int v = SwordSkillEngine_GetSpecialEffectValueLegacy(wpn, effectName);
+        if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
+            v += SwordSkillEngine_GetSpecialEffectValueLegacy(shield, effectName);
+        return v;
+    }
+    [Obsolete("Use MaxWeaponShield<T> with typed records.")]
+    internal int GetEffectMax(string effectName)
+    {
+        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
+        int a = SwordSkillEngine_GetSpecialEffectValueLegacy(wpn, effectName);
+        int b = 0;
+        if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
+            b = SwordSkillEngine_GetSpecialEffectValueLegacy(shield, effectName);
+        return Math.Max(a, b);
+    }
+    [Obsolete("Use SumAllSlots<T> with typed records.")]
     internal int GetEffectSumAllSlots(string effectName)
     {
         int total = 0;
         foreach (var slot in _allEquippedSlots)
         {
             if (_player.Inventory.GetEquipped(slot) is EquipmentBase eq)
-                total += GetSpecialEffectValue(eq, effectName);
+                total += SwordSkillEngine_GetSpecialEffectValueLegacy(eq, effectName);
         }
         return total;
     }
+    // Thin alias so [Obsolete] callers in this file don't trigger their own warning chain.
+    private static int SwordSkillEngine_GetSpecialEffectValueLegacy(EquipmentBase? eq, string key)
+#pragma warning disable CS0618
+        => GetSpecialEffectValue(eq, key);
+#pragma warning restore CS0618
 
     // DragonSlayer+N target check. True if LootTag=="dragon" or the name contains
     // a draconic keyword (dragon/wyrm/wyvern/drake). Fatal Scythe is excluded (undead).
@@ -220,7 +259,7 @@ public partial class TurnManager
         else { _comboTarget = monster.Id; _comboCount = 1; _pairResonanceLogged.Clear(); }
         int comboBonus = Math.Max(0, (_comboCount - 1) * 2);
         // SpecialEffect: ComboBonus+N increases combo damage by N%
-        int comboMulPct = GetSpecialEffectValue(wpn, "ComboBonus");
+        int comboMulPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ComboBonus>().FirstOrDefault()?.Percent ?? 0;
         if (comboMulPct > 0 && comboBonus > 0)
             comboBonus = comboBonus * (100 + comboMulPct) / 100;
         bool isFinisher = _comboCount == 5;
@@ -273,31 +312,31 @@ public partial class TurnManager
 
         // SpecialEffect damage multipliers — HolyDamage vs undead/demon,
         // DragonSlayer vs dragons, FrostDamage generic elemental bonus.
-        int holyPct = GetSpecialEffectValue(wpn, "HolyDamage");
+        int holyPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.HolyDamage>().FirstOrDefault()?.Percent ?? 0;
         if (holyPct > 0 && monster is Mob hm
             && (hm.LootTag == "undead" || hm.LootTag == "demon"))
             damage = damage * (100 + holyPct) / 100;
-        int dragonPct = GetSpecialEffectValue(wpn, "DragonSlayer");
+        int dragonPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.DragonSlayer>().FirstOrDefault()?.Percent ?? 0;
         if (dragonPct > 0 && IsDragonType(monster))
             damage = damage * (100 + dragonPct) / 100;
-        int frostPct = GetSpecialEffectValue(wpn, "FrostDamage");
+        int frostPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.FrostDamage>().FirstOrDefault()?.Percent ?? 0;
         if (frostPct > 0) damage = damage * (100 + frostPct) / 100;
         // NightDamage+N — only applies during night (SunLevel < 0.35).
-        int nightPct = GetSpecialEffectValue(wpn, "NightDamage");
+        int nightPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.NightDamage>().FirstOrDefault()?.Percent ?? 0;
         if (nightPct > 0 && SAOTRPG.Map.DayNightCycle.SunLevel < 0.35f)
             damage = damage * (100 + nightPct) / 100;
         // ArmorPierce+N — ignore N% of monster defense (bonus damage add).
-        int armorPiercePct = GetSpecialEffectValue(wpn, "ArmorPierce");
+        int armorPiercePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ArmorPierce>().FirstOrDefault()?.Percent ?? 0;
         if (armorPiercePct > 0)
             damage += Math.Max(0, monster.BaseDefense) * armorPiercePct / 100;
         // PiercingShot+N — bow-only variant. Stacks with ArmorPierce on bows.
-        int piercePct = GetSpecialEffectValue(wpn, "PiercingShot");
+        int piercePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.PiercingShot>().FirstOrDefault()?.Percent ?? 0;
         if (piercePct > 0 && wpnType == "Bow")
             damage += Math.Max(0, monster.BaseDefense) * piercePct / 100;
         // TrueStrike+N — on proc, bypass any mitigation: raw+profBonus,
         // crit-quality clean hit. Current engine has no monster evade on
         // player swings, so we honor intent by ensuring no-floor damage.
-        int trueStrikeChance = GetSpecialEffectValue(wpn, "TrueStrike");
+        int trueStrikeChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.TrueStrike>().FirstOrDefault()?.ChancePercent ?? 0;
         bool trueStrikeProc = trueStrikeChance > 0
             && Random.Shared.Next(100) < trueStrikeChance;
         if (trueStrikeProc)
@@ -307,8 +346,15 @@ public partial class TurnManager
         }
         if (backstab)
         {
-            int backstabMul = 2 + GetSpecialEffectValue(wpn, "BackstabDmg") / 50; // +50% → x3
+            int backstabBonus = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.BackstabDmg>().FirstOrDefault()?.BonusPercent ?? 0;
+            int backstabMul = 2 + backstabBonus / 50; // +50% → x3
             damage *= backstabMul;
+        }
+        // Bundle 12 (C4) — Iaijutsu first-strike. Suppressed under backstab to avoid 6× compound.
+        else if (_player.KatanaIaijutsuActive && wpnType == "Katana" && _iaijutsuStruck.Add(monster.Id))
+        {
+            damage = damage * 125 / 100;
+            _log.LogCombat($"Iaijutsu strike! +25% damage on first contact.");
         }
 
         if (isFinisher)
@@ -336,7 +382,7 @@ public partial class TurnManager
         var reward = monster.TakeDamage(damage);
         // ExecuteThreshold+N — if surviving HP% is below N, force-kill. Applies
         // post-damage, pre-defeat-check so loot/xp flow through HandleMonsterKill.
-        int executePct = GetSpecialEffectValue(wpn, "ExecuteThreshold");
+        int executePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ExecuteThreshold>().FirstOrDefault()?.HpPercent ?? 0;
         if (executePct > 0 && !monster.IsDefeated && monster.MaxHealth > 0
             && monster.CurrentHealth * 100 / monster.MaxHealth < executePct)
         {
@@ -400,7 +446,7 @@ public partial class TurnManager
         }
 
         // SpecialEffect: CritHeal — heal a % of damage on crit
-        int critHealPct = GetSpecialEffectValue(wpn, "CritHeal");
+        int critHealPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.CritHeal>().FirstOrDefault()?.Percent ?? 0;
         if (playerCrit && critHealPct > 0)
         {
             int heal = Math.Max(1, damage * critHealPct / 100);
@@ -410,7 +456,7 @@ public partial class TurnManager
 
         // SpecialEffect: Invisibility+N — crit conceals player for N turns.
         // Consumed by AI.cs via _invisibilityTurnsLeft > 0 cutting aggro range.
-        int invisTurns = GetSpecialEffectValue(wpn, "Invisibility");
+        int invisTurns = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Invisibility>().FirstOrDefault()?.Turns ?? 0;
         if (playerCrit && invisTurns > 0)
         {
             _invisibilityTurnsLeft = Math.Max(_invisibilityTurnsLeft, invisTurns);
@@ -418,7 +464,7 @@ public partial class TurnManager
         }
 
         // SpecialEffect: Bleed — chance to apply bleed on normal attacks
-        int bleedChance = GetSpecialEffectValue(wpn, "Bleed");
+        int bleedChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.BleedOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
         if (bleedChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < bleedChance)
         {
             _burningMobs[monster.Id] = (3, 1 + CurrentFloor);
@@ -426,21 +472,21 @@ public partial class TurnManager
         }
 
         // SpecialEffect: Stun+N — chance to stun on normal attacks (2-turn).
-        int stunChance = GetSpecialEffectValue(wpn, "Stun");
+        int stunChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.StunOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
         if (stunChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < stunChance)
         {
             _stunnedMobs[monster.Id] = 2;
             _log.LogCombat($"  {monster.Name} is stunned by {wpn!.Name}!");
         }
         // SpecialEffect: Poison+N — chance to poison on hit (floor-scaled dmg).
-        int poisonChance = GetSpecialEffectValue(wpn, "Poison");
+        int poisonChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.PoisonOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
         if (poisonChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < poisonChance)
         {
             _poisonedMobs[monster.Id] = (4, 1 + CurrentFloor);
             _log.LogCombat($"  {monster.Name} is poisoned by {wpn!.Name}!");
         }
         // SpecialEffect: BlindOnHit+N — chance to blind on hit (halves atk).
-        int blindChance = GetSpecialEffectValue(wpn, "BlindOnHit");
+        int blindChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.BlindOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
         if (blindChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < blindChance)
         {
             _blindedMobs[monster.Id] = 3;
@@ -448,7 +494,7 @@ public partial class TurnManager
         }
         // SpecialEffect: Lunacy+N — N% chance to confuse target AI for 2 turns.
         // Consumed by AI.cs: confused mobs pick a random adjacent tile.
-        int lunacyChance = GetSpecialEffectValue(wpn, "Lunacy");
+        int lunacyChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.LunacyOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
         if (lunacyChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < lunacyChance)
         {
             _confusedMobs[monster.Id] = 2;
@@ -456,14 +502,14 @@ public partial class TurnManager
         }
         // Bundle 10 (B11) — SlowOnHit+N: N% chance to slow target for 3 turns.
         // Consumed by AI.cs: slowed mobs act every other turn (skip alternate turns).
-        int slowChance = GetSpecialEffectValue(wpn, "SlowOnHit");
+        int slowChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.SlowOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
         if (slowChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < slowChance)
         {
             _slowedMobs[monster.Id] = 3;
             _log.LogCombat($"  {monster.Name} is slowed by {wpn!.Name}!");
         }
         // SpecialEffect: Cleave+N — splash N% damage to up-to-2 adjacent foes.
-        int cleavePct = GetSpecialEffectValue(wpn, "Cleave");
+        int cleavePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Cleave>().FirstOrDefault()?.SplashPercent ?? 0;
         if (cleavePct > 0 && damage > 0)
         {
             int splashDmg = Math.Max(1, damage * cleavePct / 100);
@@ -769,6 +815,9 @@ public partial class TurnManager
             // F50+ boss clear → next ShopTierSystem tier. Additive only.
             int tiersGained = ShopTierSystem.RegisterFloorBossClear(CurrentFloor, _log);
             if (tiersGained > 0) ToastQueue.EnqueueShopTier(tiersGained);
+            // Bundle 13 (Q16) — per-floor flag so PG drop reveal stays accurate
+            // when the player skips floors via teleport / Anti-Crystal lifts.
+            DefeatedFloorBosses.Add(CurrentFloor);
             FloorBossCleared?.Invoke(boss.Name);
 
             RollBossOreDrops(boss.X, boss.Y, boss.Name);
@@ -888,5 +937,39 @@ public partial class TurnManager
         _log.LogCombat($"  {monster.Name} {hpBar} {monster.CurrentHealth}/{monster.MaxHealth} ({condition})");
         if (pct <= 10) _log.LogCombat($"  >> {monster.Name} staggers! One more hit! <<");
         else if (pct <= 25) _log.LogCombat($"  {monster.Name} is barely standing...");
+    }
+
+    // Bundle 13 Item 6 — Bow basic-attack via reticle. Validates Bow + tile + range +
+    // target, then routes through HandleCombat (same melee formula per Q12 lock) and
+    // advances the turn. Range mirrors SwordSkillEngine: Weapon.Range + BowRangeOverflow.
+    public void ExecuteBowShot(int tx, int ty)
+    {
+        if (_player.IsDefeated) return;
+        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
+        if (wpn?.WeaponType != "Bow")
+        { _log.Log("You need a bow equipped to fire."); return; }
+        if (_stunTurnsLeft > 0)
+        { _log.LogCombat("You are stunned and cannot fire!"); return; }
+
+        if (!_map.InBounds(tx, ty)) { _log.Log("That target is off the map."); return; }
+        int dist = Math.Max(Math.Abs(tx - _player.X), Math.Abs(ty - _player.Y));
+        int range = Math.Max(1, wpn.Range + _player.BowRangeOverflow);
+        if (dist == 0 || dist > range)
+        { _log.Log("Out of bow range."); return; }
+        if (!_map.IsVisible(tx, ty))
+        { _log.Log("You can't see that tile."); return; }
+
+        var occ = _map.GetTile(tx, ty).Occupant;
+        if (occ is not Monster monster || monster.IsDefeated)
+        { _log.Log("No target there."); return; }
+
+        int hpBefore = _player.CurrentHealth;
+        HandleCombat(monster, hpBefore);
+        AdvanceTurn();
+        TickPoison(); TickBleed(); TickSlow();
+        if (_player.IsDefeated) return;
+        ProcessEntityTurns();
+        PassiveRegen();
+        TurnCompleted?.Invoke();
     }
 }

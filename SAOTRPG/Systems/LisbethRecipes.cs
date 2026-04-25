@@ -168,4 +168,60 @@ public static class LisbethRecipes
             if (r.WeaponDefId == defId) return r;
         return null;
     }
+
+    // Bundle 12 (C2) — Low-tier enhance recipe: iron_ingot ×3 + 200 Col enables a +1
+    // enhancement attempt on Common/Uncommon weapons up to +5 cap. Routes through the
+    // existing CraftingDialog enhance flow (mat counter + ore picker) — does NOT
+    // directly mutate EnhancementLevel. Separate from R6 HF recipes by design.
+    public record LowTierEnhanceRecipe(
+        string DisplayName,
+        int ColCost,
+        int MaxEnhancementCap,
+        string[] AllowedRarities,
+        MaterialRequirement[] Materials);
+
+    public static readonly LowTierEnhanceRecipe[] LowTierEnhanceRecipes =
+    {
+        new(
+            DisplayName: "Iron Ingot Enhance (Common/Uncommon, +1..+5)",
+            ColCost: 200,
+            MaxEnhancementCap: 5,
+            AllowedRarities: new[] { "Common", "Uncommon" },
+            Materials: new[]
+            {
+                new MaterialRequirement("iron_ingot", 3),
+            }),
+    };
+
+    // Bundle 13 (B/4a) — Mid-tier enhance: mithril_ingot ×3 + 1000 Col enables a +1
+    // attempt on Rare/Epic weapons up to +7 cap. Mirrors LowTier shape; saotrpg-ui
+    // Wave 2 wires the F3 mode tab + TryMithrilEnhance flow into LisbethCraftDialog.
+    public static readonly LowTierEnhanceRecipe[] MidTierEnhanceRecipes =
+    {
+        new(
+            DisplayName: "Mithril Ingot Enhance (Rare/Epic, +1..+7)",
+            ColCost: 1000,
+            MaxEnhancementCap: 7,
+            AllowedRarities: new[] { "Rare", "Epic" },
+            Materials: new[]
+            {
+                new MaterialRequirement("mithril_ingot", 3),
+            }),
+    };
+
+    // Bundle 13 (B/4c) — High-tier enhance: crystallite_ingot ×3 + 5000 Col enables a +1
+    // attempt on Epic/Legendary weapons up to +10 cap. crystallite_ingot is the existing
+    // Frost Dragon F48 boss drop (IngredientDefinitions); reused here as the high-tier mat.
+    public static readonly LowTierEnhanceRecipe[] HighTierEnhanceRecipes =
+    {
+        new(
+            DisplayName: "Crystallite Ingot Enhance (Epic/Legendary, +1..+10)",
+            ColCost: 5000,
+            MaxEnhancementCap: 10,
+            AllowedRarities: new[] { "Epic", "Legendary" },
+            Materials: new[]
+            {
+                new MaterialRequirement("crystallite_ingot", 3),
+            }),
+    };
 }

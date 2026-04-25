@@ -15,6 +15,8 @@ public sealed class BaseTerrainPass : IGenerationPass
         for (int x = 0; x < w; x++)
         for (int y = 0; y < h; y++)
         {
+            // Out-of-disk → Mountain (blocks sight/movement/path natively).
+            if (!ctx.IsInsideCircle(x, y)) { ctx.Map.Tiles[x, y].Type = TileType.Mountain; continue; }
             BiomeType effective = ctx.PocketBiomeMap?[x, y] ?? ctx.Biome;
             StampSingleTile(ctx, x, y, effective);
         }

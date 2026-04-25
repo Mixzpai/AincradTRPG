@@ -48,10 +48,13 @@ public static class QuestLogDialog
             Text = "", X = 41, Y = 4,
             Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Title,
         };
-        var detailDesc = new Label
+        // Bundle 12 — TextView with WordWrap + Height=6 so long HF quest descriptions don't clip
+        // mid-sentence. CanFocus=false so Tab cycling stays on the listView (Risk R10).
+        var detailDesc = new TextView
         {
             Text = "Select a quest to view details.", X = 41, Y = 6,
-            Width = Dim.Fill(2), Height = 4, ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(2), Height = 6, ColorScheme = ColorSchemes.Body,
+            ReadOnly = true, WordWrap = true, CanFocus = false,
         };
         var detailProgress = new Label
         {
@@ -74,10 +77,12 @@ public static class QuestLogDialog
             Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Body,
         };
 
-        // ── Separator between list and detail ────────────────────────
+        // Bundle 12 — Terminal.Gui Label with Width=1 only renders the FIRST char of Text. Build
+        // a multi-line newline-joined string so each row gets its own '│' glyph.
         var separator = new Label
         {
-            Text = new string('|', 20), X = 40, Y = 2,
+            Text = string.Join("\n", Enumerable.Repeat("│", 20)),
+            X = 40, Y = 2,
             Width = 1, Height = Dim.Fill(4), ColorScheme = ColorSchemes.Dim,
         };
 

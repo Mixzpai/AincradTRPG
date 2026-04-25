@@ -11,20 +11,23 @@ public partial class TurnManager
 {
     public void ExecuteSwordSkill(int slot)
     {
-        if (_player.IsDefeated) return;
-        if (slot < 0 || slot >= EquippedSkills.Length) return;
+        // Bundle 13 Item 6 — drop any reticle override on a guard-fail so a future
+        // skill use isn't accidentally retargeted to a stale tile.
+        if (_player.IsDefeated) { SkillTargetOverride = null; return; }
+        if (slot < 0 || slot >= EquippedSkills.Length) { SkillTargetOverride = null; return; }
         var skill = EquippedSkills[slot];
-        if (skill == null) { _log.Log("No skill equipped in that slot."); return; }
+        if (skill == null) { SkillTargetOverride = null; _log.Log("No skill equipped in that slot."); return; }
 
         // ── Validation ───────────────────────────────────────────────
         if (_stunTurnsLeft > 0)
-        { _log.LogCombat("You are stunned and cannot use skills!"); return; }
+        { SkillTargetOverride = null; _log.LogCombat("You are stunned and cannot use skills!"); return; }
 
         if (_postMotionDelay > 0)
-        { _log.LogCombat("Still recovering from your last skill! Wait for post-motion to end."); return; }
+        { SkillTargetOverride = null; _log.LogCombat("Still recovering from your last skill! Wait for post-motion to end."); return; }
 
         if (GetSkillCooldown(skill.Id) > 0)
         {
+            SkillTargetOverride = null;
             _log.LogCombat($"{skill.Name} is on cooldown! ({GetSkillCooldown(skill.Id)} turns remaining)");
             return;
         }
@@ -32,11 +35,12 @@ public partial class TurnManager
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         string wtype = wpn?.WeaponType ?? "Unarmed";
         if (skill.WeaponType != wtype && skill.WeaponType != "Any")
-        { _log.LogCombat($"{skill.Name} requires a {skill.WeaponType}!"); return; }
+        { SkillTargetOverride = null; _log.LogCombat($"{skill.Name} requires a {skill.WeaponType}!"); return; }
 
         // ── Find target ──────────────────────────────────────────────
         if (skill.Type == SkillType.Counter)
         {
+            SkillTargetOverride = null;
             ExecuteCounterSkill(skill);
             return;
         }
@@ -95,7 +99,7 @@ public partial class TurnManager
         int baseAtk = _player.Attack + profBonus + _shrineBuff + _levelUpBuff + SatietyAtkBonus + FatigueAtkPenalty;
         // ThrustDmg+N — thrust-class skill multiplier (Rapier/Spear thrusts).
         double skillMul = skill.DamageMultiplier;
-        int thrustPct = GetSpecialEffectValue(wpn, "ThrustDmg");
+        int thrustPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ThrustDmg>().FirstOrDefault()?.Percent ?? 0;
         if (thrustPct > 0 && (skill.Name.Contains("Thrust", StringComparison.OrdinalIgnoreCase)
                               || skill.Id.StartsWith("thrust_")))
             skillMul *= (100 + thrustPct) / 100.0;
@@ -188,11 +192,12 @@ public partial class TurnManager
         }
 
         // ── Cooldown + post-motion ───────────────────────────────────
-        int cdReduction = GetSpecialEffectValue(wpn, "SkillCooldown");
-        int cd = Math.Max(0, skill.CooldownTurns + cdReduction); // cdReduction is negative like -1
+        // SkillCooldownReduction.Turns is negative (e.g. -1) — flat add to cd.
+        int cdReduction = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.SkillCooldownReduction>().FirstOrDefault()?.Turns ?? 0;
+        int cd = Math.Max(0, skill.CooldownTurns + cdReduction);
         if (cd > 0)
             _skillCooldowns[skill.Id] = cd;
-        int pmReduction = GetSpecialEffectValue(wpn, "PostMotion");
+        int pmReduction = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.PostMotionReduction>().FirstOrDefault()?.Turns ?? 0;
         int pm = Math.Max(0, skill.PostMotionDelay + pmReduction);
         if (pm > 0)
         {
@@ -231,12 +236,31 @@ public partial class TurnManager
         TurnCompleted?.Invoke();
     }
 
+    // Bundle 13 Item 6 — reticle-driven target override. Set by MapView before ExecuteSwordSkill;
+    // consumed-and-cleared once on the next FindSkillTargets call.
+    public (int X, int Y)? SkillTargetOverride { get; set; }
+
     // AoE skills hit all adjacent enemies; single-target skills pick the nearest
     // enemy within the skill's range (Chebyshev distance).
     private List<Entity> FindSkillTargets(SwordSkill skill)
     {
         var targets = new List<Entity>();
         int range = skill.Range;
+        // Bundle 12 (C5) — Marksman Eye fork (Bow proficiency 25) extends range on bow skills only.
+        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
+        if (wpn?.WeaponType == "Bow") range += _player.BowRangeOverflow;
+
+        // Bundle 13 Item 6 — reticle override: short-circuit nearest-search and use the player-picked tile.
+        // Consumed once; cleared so the next skill use falls back to default targeting.
+        if (SkillTargetOverride is { } overrideTile)
+        {
+            SkillTargetOverride = null;
+            int chebD = Math.Max(Math.Abs(overrideTile.X - _player.X), Math.Abs(overrideTile.Y - _player.Y));
+            if (chebD <= range && _map.InBounds(overrideTile.X, overrideTile.Y)
+                && _map.GetTile(overrideTile.X, overrideTile.Y).Occupant is Monster om && !om.IsDefeated)
+                targets.Add(om);
+            return targets;
+        }
 
         if (skill.Type == SkillType.AoE)
         {
@@ -292,13 +316,16 @@ public partial class TurnManager
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EquipmentBase, Dictionary<string, int>>
         _specialFxCache = new();
 
-    // Parse SpecialEffect: "SkillCooldown-1", "CritRate+20" → signed int. 0 if missing.
-    // AttackSpeed+N folds into Weapon.AttackSpeed directly; Invisibility+N / Lunacy+N parse but have no consumer yet.
+    // Bundle 12 (C3) — legacy string-keyed accessor. Retained for save tolerance:
+    // modded saves with novel keys still need a path. Logs once per session per key.
+    private static readonly HashSet<string> _legacyKeysWarned = new();
+    [Obsolete("Use eq.ParsedEffects.OfType<T>() with the typed EquipmentSpecialEffect.* record.")]
     internal static int GetSpecialEffectValue(EquipmentBase? eq, string effectName)
     {
         if (eq?.SpecialEffect == null) return 0;
-
-        // Fast path: look up (or build) the parsed table for this weapon.
+        if (_legacyKeysWarned.Add(effectName))
+            UI.DebugLogger.LogGame("SPECIALEFFECT",
+                $"Legacy GetSpecialEffectValue('{effectName}') — migrate caller to typed record.");
         var table = _specialFxCache.GetValue(eq, BuildSpecialFxTable);
         return table.TryGetValue(effectName, out int val) ? val : 0;
     }

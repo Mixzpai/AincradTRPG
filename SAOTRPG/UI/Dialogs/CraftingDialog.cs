@@ -352,6 +352,27 @@ public static class CraftingDialog
         player.Inventory.InvalidateStatCache();  // Bonuses mutated on equipped item
     }
 
+    // B12 C2 — Lisbeth iron-ingot path. Mirrors ApplyEnhancementDelta +1 logic but works on
+    // any weapon (equipped or backpack), no ore picker; flat Crimson-Flame Attack bias.
+    internal static void ApplyLisbethIronIngotEnhance(Player player, Weapon weapon)
+    {
+        bool wasEquipped = ReferenceEquals(player.Inventory.GetEquipped(EquipmentSlot.Weapon), weapon)
+                           || ReferenceEquals(player.Inventory.GetEquipped(EquipmentSlot.OffHand), weapon);
+        if (wasEquipped) weapon.Unequip(player);
+
+        int bonus = BonusPerLevel(weapon);
+        // Crimson Flame fallback keeps EnhancementOreHistory consistent with Anvil saves.
+        const string ore = "ore_crimson_flame";
+        weapon.EnhancementOreHistory.Add(ore);
+        var stat = EnhancementOreDefinitions.OreDefIdToStat
+            .TryGetValue(ore, out var s) ? s : StatType.Attack;
+        weapon.Bonuses.Add(stat, bonus);
+        weapon.EnhancementLevel += 1;
+
+        if (wasEquipped) weapon.Equip(player);
+        player.Inventory.InvalidateStatCache();
+    }
+
     // Ore DurabilityBonus via prototype. Only Adamant Ore is non-zero today (+10/level).
     private static int GetOreDurabilityBonus(string oreDefId)
     {

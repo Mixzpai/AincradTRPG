@@ -37,6 +37,7 @@ public sealed class FeatureScatterPass : IGenerationPass
                 {
                     int cx = rng.Next(q.xMin, q.xMax);
                     int cy = rng.Next(q.yMin, q.yMax);
+                    if (!ctx.IsInsideCircle(cx, cy)) continue;
                     if (MapGenerator.PlaceClearing(map, rooms, clearings, cx, cy, rng)) break;
                 }
             }
@@ -47,25 +48,12 @@ public sealed class FeatureScatterPass : IGenerationPass
         if (clearings.Count > 2)
             MapGenerator.CarvePath(map, clearings[^1].x, clearings[^1].y, clearings[0].x, clearings[0].y, rng);
 
-        // Boss room: rotates through 4 corners per floor.
+        // Boss room: rotates through 4 quadrants, halfway between center and disk edge.
+        // Bbox-corner fallback (towns/F100 with null mask) preserves legacy behavior.
         int bossW = Math.Min(13, width / 4);
         int bossH = Math.Min(11, height / 4);
         int bossQuadrant = (ctx.FloorNumber - 1) % 4;
-        int edgePad = Math.Max(6, bossW + 2);
-        int bossX = bossQuadrant switch
-        {
-            0 => Math.Max(edgePad, width - edgePad - bossW),
-            1 => edgePad,
-            2 => edgePad,
-            _ => Math.Max(edgePad, width - edgePad - bossW),
-        };
-        int bossY = bossQuadrant switch
-        {
-            0 => Math.Max(edgePad, height - edgePad - bossH),
-            1 => Math.Max(edgePad, height - edgePad - bossH),
-            2 => edgePad,
-            _ => edgePad,
-        };
+        var (bossX, bossY) = PickBossRoomOrigin(ctx, spawnX, spawnY, bossW, bossH, bossQuadrant);
         MapGenerator.BuildStructure(map, bossX, bossY, bossW, bossH);
         if (bossQuadrant <= 1)
         {
@@ -97,6 +85,7 @@ public sealed class FeatureScatterPass : IGenerationPass
         for (int attempt = 0; attempt < 20; attempt++)
         {
             int lx = rng.Next(15, width - 15), ly = rng.Next(15, height - 15);
+            if (!ctx.IsInsideCircle(lx, ly)) continue;
             if (MapGenerator.IsGrassType(map.Tiles[lx, ly].Type)
                 && Math.Abs(lx - spawnX) > 20 && Math.Abs(ly - spawnY) > 20)
             { map.Tiles[lx, ly].Type = TileType.Pillar; break; }
@@ -106,6 +95,7 @@ public sealed class FeatureScatterPass : IGenerationPass
         for (int i = 0; i < lavaPools; i++)
         {
             int lx = rng.Next(12, width - 12), ly = rng.Next(12, height - 12);
+            if (!ctx.IsInsideCircle(lx, ly)) continue;
             if (Math.Abs(lx - spawnX) < 10 && Math.Abs(ly - spawnY) < 10) continue;
             MapGenerator.PlaceCluster(map, lx, ly, rng.Next(1, 3), TileType.Lava, 0.5, rng);
         }
@@ -118,6 +108,7 @@ public sealed class FeatureScatterPass : IGenerationPass
         for (int i = 0; i < dangerClusters; i++)
         {
             int dx = rng.Next(15, width - 15), dy = rng.Next(15, height - 15);
+            if (!ctx.IsInsideCircle(dx, dy)) continue;
             if (Math.Abs(dx - spawnX) < 10 && Math.Abs(dy - spawnY) < 10) continue;
             MapGenerator.PlaceCluster(map, dx, dy, 2, TileType.DangerZone, 0.5, rng);
         }
@@ -141,6 +132,9 @@ public sealed class FeatureScatterPass : IGenerationPass
             int srX = scx + (side == 0 ? 6 : side == 1 ? -9 : -2);
             int srY = scy + (side == 2 ? 6 : side == 3 ? -7 : -2);
             if (srX < 3 || srX + 5 >= width - 3 || srY < 3 || srY + 5 >= height - 3) continue;
+            // Reject any secret room whose 5x5 footprint clips out of the disk.
+            if (!ctx.IsInsideCircle(srX, srY) || !ctx.IsInsideCircle(srX + 4, srY + 4)
+                || !ctx.IsInsideCircle(srX, srY + 4) || !ctx.IsInsideCircle(srX + 4, srY)) continue;
             for (int sx = srX; sx < srX + 5; sx++)
                 for (int sy = srY; sy < srY + 5; sy++)
                     map.Tiles[sx, sy].Type = (sx == srX || sx == srX + 4 || sy == srY || sy == srY + 4)
@@ -160,6 +154,7 @@ public sealed class FeatureScatterPass : IGenerationPass
             for (int attempt = 0; attempt < 30; attempt++)
             {
                 int dx = rng.Next(15, width - 15), dy = rng.Next(15, height - 15);
+                if (!ctx.IsInsideCircle(dx, dy)) continue;
                 if (Math.Abs(dx - spawnX) < 12 && Math.Abs(dy - spawnY) < 12) continue;
                 if (map.Tiles[dx, dy].Type != TileType.Wall) continue;
                 bool hasFloor = (map.InBounds(dx - 1, dy) && map.Tiles[dx - 1, dy].Type == TileType.Floor)
@@ -172,6 +167,7 @@ public sealed class FeatureScatterPass : IGenerationPass
                 {
                     int lx = dx + rng.Next(-8, 9), ly = dy + rng.Next(-8, 9);
                     if (!map.InBounds(lx, ly)) continue;
+                    if (!ctx.IsInsideCircle(lx, ly)) continue;
                     var lt = map.Tiles[lx, ly].Type;
                     if (lt != TileType.Floor && !MapGenerator.IsGrassType(lt)) continue;
                     map.Tiles[lx, ly].Type = useLever ? TileType.Lever : TileType.PressurePlate;
@@ -206,10 +202,11 @@ public sealed class FeatureScatterPass : IGenerationPass
         int ventMin = q.MinGasVents;
         int ventMax = Math.Max(q.MaxGasVents, floor / 4);
 
-        // Poisson acceptance: walkable (grass/floor/path), off-edge, off-spawn.
+        // Poisson acceptance: walkable (grass/floor/path), inside disk, off-edge, off-spawn.
         bool AcceptTile(int x, int y)
         {
             if (x < 8 || y < 8 || x >= width - 8 || y >= height - 8) return false;
+            if (!ctx.IsInsideCircle(x, y)) return false;
             if (Math.Abs(x - spawnX) < 10 && Math.Abs(y - spawnY) < 10) return false;
             var t = map.Tiles[x, y].Type;
             return MapGenerator.IsGrassType(t) || t == TileType.Floor || t == TileType.Path;
@@ -317,6 +314,59 @@ public sealed class FeatureScatterPass : IGenerationPass
             $"anvils={placedAnvils} shrines={placedShrines} chests={placedChests} " +
             $"traps={placedTraps} vents={placedVents} lore={placedLore} " +
             $"journals={placedJournals} campfires={placedCampfires} pillars={placedPillars}");
+    }
+
+    // Picks the boss room top-left so the room sits halfway between map center and the
+    // disk edge along the quadrant diagonal. Falls back to bbox-corner placement when
+    // no mask (towns/F100) so legacy behavior is preserved.
+    private static (int X, int Y) PickBossRoomOrigin(WorldContext ctx, int spawnX, int spawnY,
+        int bossW, int bossH, int quadrant)
+    {
+        int width = ctx.Width, height = ctx.Height;
+        int edgePad = Math.Max(6, bossW + 2);
+
+        if (ctx.CircleMask is null)
+        {
+            int bx = quadrant switch
+            {
+                0 => Math.Max(edgePad, width - edgePad - bossW),
+                1 => edgePad,
+                2 => edgePad,
+                _ => Math.Max(edgePad, width - edgePad - bossW),
+            };
+            int by = quadrant switch
+            {
+                0 => Math.Max(edgePad, height - edgePad - bossH),
+                1 => Math.Max(edgePad, height - edgePad - bossH),
+                2 => edgePad,
+                _ => edgePad,
+            };
+            return (bx, by);
+        }
+
+        // Diagonal direction per quadrant; walk inward from the disk edge until we
+        // find a position whose 4 corners all fit inside the disk.
+        int sxDir = quadrant == 1 || quadrant == 2 ? -1 : 1;
+        int syDir = quadrant == 2 || quadrant == 3 ? -1 : 1;
+        int cx = spawnX, cy = spawnY;
+        int targetX = sxDir > 0 ? width - edgePad : edgePad;
+        int targetY = syDir > 0 ? height - edgePad : edgePad;
+        int midX = (cx + targetX) / 2;
+        int midY = (cy + targetY) / 2;
+
+        for (int shrink = 0; shrink < 12; shrink++)
+        {
+            int tlX = Math.Clamp(midX - bossW / 2 - shrink * sxDir, edgePad, width - edgePad - bossW);
+            int tlY = Math.Clamp(midY - bossH / 2 - shrink * syDir, edgePad, height - edgePad - bossH);
+            if (ctx.IsInsideCircle(tlX, tlY)
+                && ctx.IsInsideCircle(tlX + bossW - 1, tlY)
+                && ctx.IsInsideCircle(tlX, tlY + bossH - 1)
+                && ctx.IsInsideCircle(tlX + bossW - 1, tlY + bossH - 1))
+                return (tlX, tlY);
+        }
+        // Hard fallback: clamp toward map center.
+        return (Math.Clamp(cx + sxDir * Math.Max(8, bossW), edgePad, width - edgePad - bossW),
+                Math.Clamp(cy + syDir * Math.Max(6, bossH), edgePad, height - edgePad - bossH));
     }
 
     // Per-biome weighted trap pool. Biases toward signature hazards.

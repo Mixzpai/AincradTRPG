@@ -80,7 +80,7 @@ public sealed class OreVeinPlacementPass : IGenerationPass
         _ => TileType.OreVeinIron,
     };
 
-    // Seed must be a Wall in interior, outside SafeZone, and >=4 tiles from any room.
+    // Seed must be a Wall in interior, outside SafeZone, inside disk, and >=4 tiles from any room.
     private static bool TryPickSeed(WorldContext ctx, out int cx, out int cy)
     {
         var map = ctx.Map;
@@ -90,6 +90,7 @@ public sealed class OreVeinPlacementPass : IGenerationPass
         {
             int x = rng.Next(4, Math.Max(5, ctx.Width - 4));
             int y = rng.Next(4, Math.Max(5, ctx.Height - 4));
+            if (!ctx.IsInsideCircle(x, y)) continue;
             if (!map.InInterior(x, y)) continue;
             if (map.Tiles[x, y].Type != TileType.Wall) continue;
             if (IsTooCloseToRoom(ctx.Rooms, x, y, 4)) continue;

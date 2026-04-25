@@ -37,6 +37,16 @@ public sealed class WorldContext
     // null entries (and null map) fall back to ctx.Biome in BaseTerrainPass.
     public BiomeType?[,]? PocketBiomeMap { get; set; }
 
+    // Circular playable disk; null on towns + F100 (no circular bound).
+    // Built once per floor by GenerationPipeline.BuildCircleMask before passes run.
+    public bool[,]? CircleMask { get; set; }
+
+    public bool IsInsideCircle(int x, int y) =>
+        CircleMask is null
+        || ((uint)x < (uint)CircleMask.GetLength(0)
+            && (uint)y < (uint)CircleMask.GetLength(1)
+            && CircleMask[x, y]);
+
     public WorldContext(int floorNumber, int globalSeed, int width, int height,
         BiomeType biome, BiomeGenConfig config, GameMap map)
     {

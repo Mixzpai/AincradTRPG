@@ -1,4 +1,5 @@
 using Terminal.Gui;
+using SAOTRPG.Systems;
 
 namespace SAOTRPG.UI;
 
@@ -8,6 +9,8 @@ public partial class MapView
     protected override bool OnKeyDown(Key keyEvent)
     {
         if (HandleLookModeKey(keyEvent)) return true;
+        // Bundle 13 Item 6 — reticle modal swallows keys before any movement/dialog dispatch.
+        if (HandleRangedFireKey(keyEvent)) return true;
 
         int dx = 0, dy = 0;
         var bareKey = keyEvent.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
@@ -32,6 +35,35 @@ public partial class MapView
             keyEvent.Handled = true;
             return true;
         }
+
+        // Shift+F12 — dump profiler buckets to log; Shift+F11 — reset.
+        if (bareKey == KeyCode.F12 && keyEvent.IsShift)
+        {
+            if (Log != null) Profiler.Dump(Log);
+            keyEvent.Handled = true;
+            return true;
+        }
+        if (bareKey == KeyCode.F11 && keyEvent.IsShift)
+        {
+            Profiler.Reset();
+            Log?.LogSystem("Profiler reset.");
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        // Bundle 13 (Item 1) — Shift+L opens the Legendary Collectables panel.
+        // Bare L stays Look mode (handled below in the switch). Modifier check is
+        // explicit so quirks §6 modal-shadow concerns don't apply (this is map focus).
+        if (bareKey == KeyCode.L && keyEvent.IsShift
+            && (keyEvent.KeyCode & KeyCode.CtrlMask) == 0)
+        {
+            return FireEvent(LegendaryCollectablesRequested, keyEvent);
+        }
+
+        // Bundle 13 Item 6 — `\` (backslash) opens the ranged-fire reticle. KeyCode
+        // has no Backslash member in v2 — match via the typed rune so the binding
+        // works regardless of host keyboard layout.
+        if (keyEvent.AsRune.Value == '\\') return FireEvent(RangedFireKeyPressed, keyEvent);
 
         switch (bareKey)
         {

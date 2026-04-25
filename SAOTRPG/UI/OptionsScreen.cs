@@ -87,8 +87,30 @@ public static class OptionsScreen
         var displayHeader = ScreenHeader.Section("Display", y);
         y += 2;
 
-        var footstepLabel = FormLabel("Footstep Trails", y);
-        var footstepCheck = Toggle("Footstep Trails", y, settings.ShowFootsteps, v => settings.ShowFootsteps = v);
+        // Bundle 13 (Item 8) — Style + Length + Opacity replace the single ShowFootsteps toggle.
+        var footstepStyleLabel = FormLabel("Footstep Style", y);
+        var footstepStyleRadio = Radio("Footstep Style", y,
+            new[] { "Off", "Dots", "Dashes", "Paws", "Boots", "Chevrons" },
+            (int)settings.FootstepStyle,
+            v => settings.FootstepStyle = (FootstepStyle)v);
+        y += 2;
+
+        // Length picker maps option index → turn count. 1000 = "unlimited" hard ceiling per Q17.
+        int[] footstepLengthOptions = { 0, 5, 10, 20, 50, 1000 };
+        string[] footstepLengthLabels = { "Off", "5", "10", "20", "50", "Unlim" };
+        int currentLengthIdx = Array.IndexOf(footstepLengthOptions, settings.FootstepLength);
+        if (currentLengthIdx < 0) currentLengthIdx = 2;
+        var footstepLengthLabel = FormLabel("Footstep Length", y);
+        var footstepLengthRadio = Radio("Footstep Length", y,
+            footstepLengthLabels, currentLengthIdx,
+            v => settings.FootstepLength = footstepLengthOptions[v]);
+        y += 2;
+
+        var footstepOpacityLabel = FormLabel("Footstep Opacity", y);
+        var footstepOpacityRadio = Radio("Footstep Opacity", y,
+            new[] { "Subtle", "Medium", "Bold" },
+            (int)settings.FootstepOpacity,
+            v => settings.FootstepOpacity = (FootstepOpacity)v);
         y += 2;
 
         var flashLabel = FormLabel("Damage Flash", y);
@@ -318,7 +340,11 @@ public static class OptionsScreen
             header, headerRule, saveLabel,
             gameplayHeader, autoPickupLabel, autoPickupCheck,
             textSpeedLabel, textSpeedRadio,
-            displayHeader, footstepLabel, footstepCheck, flashLabel, flashCheck,
+            displayHeader,
+            footstepStyleLabel, footstepStyleRadio,
+            footstepLengthLabel, footstepLengthRadio,
+            footstepOpacityLabel, footstepOpacityRadio,
+            flashLabel, flashCheck,
             asciiBarsLabel, asciiBarsCheck, asciiBarsDesc,
             accessHeader, shakeLabel, shakeCheck, shakeDesc,
             breakdownLabel, breakdownRadio,

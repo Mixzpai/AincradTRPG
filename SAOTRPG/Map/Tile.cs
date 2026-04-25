@@ -8,7 +8,10 @@ public class Tile
 {
     public TileType Type { get; set; }
     public Entity? Occupant { get; set; }
-    public List<BaseItem> Items { get; } = new();
+    private List<BaseItem>? _items;
+    // Lazy backing: 1M empty tiles previously held 1M empty list headers.
+    public List<BaseItem> Items => _items ??= new List<BaseItem>();
+    public int ItemCount => _items?.Count ?? 0;
 
     // Water + WaterDeep block at tile-level; player bypasses via Swimming skill, aquatic mobs via Monster.CanSwim.
     // Bundle 10: ore veins block until depleted (mining bump-action diverts before this gate).
@@ -28,7 +31,7 @@ public class Tile
         TileType.BogWater  => 1,
         _                  => -1,
     };
-    public bool HasItems => Items.Count > 0;
+    public bool HasItems => _items != null && _items.Count > 0;
     // Trap tiles render as Floor until revealed by DEX check or trigger.
     public bool TrapHidden { get; set; } = true;
     // Lever/pressure plate → linked door (null if unlinked).

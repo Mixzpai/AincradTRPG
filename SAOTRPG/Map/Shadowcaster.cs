@@ -7,8 +7,9 @@ public static class Shadowcaster
     public delegate bool BlockingPredicate(int x, int y);
     public delegate void VisibilityCallback(int x, int y);
 
-    // Compute FOV from (ox, oy) up to a Euclidean distance of .
-    // Invokes  for the origin and every tile proven visible.
+    // Compute FOV from (ox, oy) up to a Euclidean distance of `radius`. Aspect-correction:
+    // x-distance is scaled down by Generation.FloorMask.CellAspectRatio so the in-cell
+    // ellipse renders as a visual circle on screen (cells are ~2x as tall as wide).
     public static void Compute(int ox, int oy, int radius,
         BlockingPredicate isBlocking, VisibilityCallback reveal)
     {
@@ -47,7 +48,9 @@ public static class Shadowcaster
 
             bool isWall = isBlocking(tx, ty);
             int dx = tx - ox, dy = ty - oy;
-            bool withinRadius = dx * dx + dy * dy <= rSq;
+            // Aspect-corrected: shrink x-distance so screen-cells (taller than wide) form a visual circle.
+            float adx = dx / Generation.FloorMask.CellAspectRatio;
+            bool withinRadius = adx * adx + dy * dy <= rSq;
 
             if (withinRadius && (isWall || IsSymmetric(ref row, col)))
                 reveal(tx, ty);

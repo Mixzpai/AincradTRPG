@@ -96,6 +96,7 @@ public static partial class MapGenerator
             for (int attempt = 0; attempt < 20; attempt++)
             {
                 int x = rng.Next(10, map.Width - 10), y = rng.Next(10, map.Height - 10);
+                if (!map.IsInsideCircle(x, y)) continue;
                 if (IsWalkableType(map.Tiles[x, y].Type) && map.Tiles[x, y].Occupant == null
                     && Math.Abs(x - rooms[0].CenterX) > 8 && Math.Abs(y - rooms[0].CenterY) > 8)
                 {
@@ -116,6 +117,8 @@ public static partial class MapGenerator
             for (int attempt = 0; attempt < 30; attempt++)
             {
                 int dx = rng.Next(15, map.Width - 20), dy = rng.Next(15, map.Height - 20);
+                // 5x5 den must fit entirely inside the disk so doors/chest land on real floor.
+                if (!map.IsInsideCircle(dx, dy) || !map.IsInsideCircle(dx + 4, dy + 4)) continue;
                 double dist = Math.Sqrt((dx - rooms[0].CenterX) * (dx - rooms[0].CenterX)
                     + (dy - rooms[0].CenterY) * (dy - rooms[0].CenterY));
                 if (dist < 15) continue;
@@ -493,9 +496,21 @@ public static partial class MapGenerator
         foreach (var spec in FloorNpcSpawns)
         {
             if (!spec.Gate(floor, rooms)) continue;
+            var npc = spec.Create();
+
+            // Bundle 13 (B/4b) — Lisbeth on F48 Lindarth spawns at deterministic Forge
+            // interior coord (not random), routed through TryPlaceEntityNear so an
+            // occupied tile spirals to the nearest walkable neighbor.
+            if (floor == 48 && npc.Name == "Lisbeth")
+            {
+                int fx = rooms[0].CenterX + LindarthForgeOffsetX;
+                int fy = rooms[0].CenterY + LindarthForgeOffsetY;
+                if (TryPlaceEntityNear(map, npc, fx, fy)) continue;
+            }
+
             var room = rooms[rng.Next(spec.IdxMin(floor, rooms), spec.IdxMax(floor, rooms))];
             var (x, y) = FindOpenSpot(map, room, rng);
-            if (x >= 0) map.PlaceEntity(spec.Create(), x, y);
+            if (x >= 0) map.PlaceEntity(npc, x, y);
         }
     }
 
@@ -530,6 +545,7 @@ public static partial class MapGenerator
         {
             int x = rng.Next(5, map.Width - 5);
             int y = rng.Next(5, map.Height - 5);
+            if (!map.IsInsideCircle(x, y)) continue;
             if (!IsWalkableType(map.Tiles[x, y].Type)) continue;
             if (map.Tiles[x, y].Occupant != null) continue;
             if (IsInSafeZone(map, x, y)) continue;
@@ -613,13 +629,14 @@ public static partial class MapGenerator
             map.Tiles[x, y].Type = TileType.Path;
     }
 
-    // Road-tile setter; clears trees/rocks so a main road cuts cleanly through terrain.
+    // Road-tile setter; clears trees/rocks but never carves through Mountain (disk wall).
     private static void SetRoadTile(GameMap map, int x, int y)
     {
         if (!map.InBounds(x, y)) return;
         var t = map.Tiles[x, y].Type;
         if (t == TileType.Wall || t == TileType.Floor || t == TileType.Door
-            || t == TileType.StairsUp || t == TileType.StairsDown) return;
+            || t == TileType.StairsUp || t == TileType.StairsDown
+            || t == TileType.Mountain) return;
         map.Tiles[x, y].Type = TileType.Path;
     }
 

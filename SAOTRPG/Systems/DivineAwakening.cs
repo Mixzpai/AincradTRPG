@@ -2,6 +2,7 @@ using SAOTRPG.Entities;
 using SAOTRPG.Inventory.Core;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Equipment;
+using SAOTRPG.UI;
 using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;
 
 namespace SAOTRPG.Systems;
@@ -68,6 +69,9 @@ public static class DivineAwakening
 
         if (wasEquipped) weapon.Equip(player);
         inv.InvalidateStatCache();
+
+        // Bundle 13 — fire awakening banner + particle hook (Wave 2 consumes AwakeningParticleLevel).
+        DivineObtainBanner.TriggerAwakening(weapon, nextLevel);
     }
 
     // True if `w` currently occupies any equipment slot in `inv`.

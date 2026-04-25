@@ -209,15 +209,18 @@ public static class PlayerGuideDialog
             ReadOnly = true, WordWrap = false,
         };
 
+        // Bundle 13 (Item 11) — search bar moved from bottom to TOP of dialog,
+        // anchored above the body header. Stays visible for the rest of the session
+        // once activated by '/'. Autofocus on activation.
         var searchLabel = new Label
         {
-            Text = "/", X = 1, Y = Pos.AnchorEnd(2), Width = 2,
+            Text = "/", X = LeftPaneWidth + 2, Y = 0, Width = 2,
             ColorScheme = ColorSchemes.Gold,
             Visible = false,
         };
         var searchField = new TextField
         {
-            X = 3, Y = Pos.AnchorEnd(2), Width = LeftPaneWidth - 2,
+            X = LeftPaneWidth + 4, Y = 0, Width = Dim.Fill(2),
             ColorScheme = ColorSchemes.Body,
             Visible = false,
         };
@@ -303,7 +306,11 @@ public static class PlayerGuideDialog
                 bodyHeader.Text = $"{t.Entry.Category} › {t.Entry.Title}";
                 bodyHeader.ColorScheme = CategoryColor(t.Entry.Category);
                 // Render <details:TITLE>…</details> per expansion state, then wrap.
-                string rendered = RenderBodyWithDetails(TopicKey(t.Entry), t.Entry.Body);
+                string srcBody = t.Entry.Body;
+                // Bundle 13 (Item 7) — gate boss-drop names by kill state.
+                if (t.Entry.Title == "Boss Drop Reference")
+                    srcBody = PlayerGuideContent.GateBossDropReferenceBody(srcBody, _activeTm);
+                string rendered = RenderBodyWithDetails(TopicKey(t.Entry), srcBody);
                 bodyText.Text = WrapTo(rendered, BodyWrapCols);
                 _visitedThisSession.Add(TopicKey(t.Entry));  // clears "· " unread dot
             }
@@ -461,6 +468,9 @@ public static class PlayerGuideDialog
             ShowSelected();
         }
 
+        // Bundle 13 (Item 11) — search bar stays visible after first activation.
+        // First Esc clears the query (if any); a second Esc closes the dialog.
+        // Enter exits-but-keeps-results (focus moves to tree, results persist).
         void StartSearch()
         {
             searchLabel.Visible = true;
@@ -468,18 +478,34 @@ public static class PlayerGuideDialog
             searchField.Text = "";
             searchField.SetFocus();
         }
-        void EndSearch(bool keepResults)
+        void ExitSearchToTree(bool keepResults)
         {
-            searchField.Visible = false;
-            searchLabel.Visible = false;
             if (!keepResults) ApplyFilter("");
             tree.SetFocus();
         }
         searchField.TextChanged += (s, e) => ApplyFilter(searchField.Text ?? "");
         searchField.KeyDown += (s, e) =>
         {
-            if (e.KeyCode == KeyCode.Esc) { EndSearch(keepResults: false); e.Handled = true; }
-            else if (e.KeyCode == KeyCode.Enter) { EndSearch(keepResults: true); e.Handled = true; }
+            if (e.KeyCode == KeyCode.Esc)
+            {
+                // First press: if query non-empty, clear it (keep bar visible). Second press closes.
+                if (!string.IsNullOrEmpty(searchField.Text?.ToString()))
+                {
+                    searchField.Text = "";
+                    ApplyFilter("");
+                    e.Handled = true;
+                }
+                else
+                {
+                    ExitSearchToTree(keepResults: false);
+                    e.Handled = true;
+                }
+            }
+            else if (e.KeyCode == KeyCode.Enter)
+            {
+                ExitSearchToTree(keepResults: true);
+                e.Handled = true;
+            }
         };
 
         // ── Category jump ──

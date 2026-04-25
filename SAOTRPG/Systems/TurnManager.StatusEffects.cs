@@ -181,8 +181,8 @@ public partial class TurnManager
         // SpecialEffect regen stacks on top of native regen.
         // Bundle 10 (B14): HPRegen + SPRegen sum across ALL equipped slots (armor pieces stack).
         var regenWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Items.Equipment.Weapon;
-        int hpBonus = GetEffectSumAllSlots("HPRegen");
-        int spBonus = GetEffectSumAllSlots("SPRegen");
+        int hpBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.HPRegen>(h => h.Amount);
+        int spBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.SPRegen>(s => s.Amount);
 
         // Bundle 10 (B1) — active food regen buff folds into the same tick.
         // Consumed once per regen interval; expires when turns reach 0.

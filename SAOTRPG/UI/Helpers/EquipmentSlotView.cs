@@ -113,16 +113,33 @@ public class EquipmentSlotView : View
             // Item name + rarity abbreviation, or (empty)
             if (eq != null)
             {
-                SetAttr(GetRarityColor(eq.Rarity), bg);
-                Driver!.AddStr(eq.Name ?? "");
+                // Bundle 12 — clamp name + suffixes against the left-pane content budget so long
+                // Legendary names + rarity tag + durability bar can't bleed into the right pane.
+                int writtenSoFar = 1 + 1 + 1 + LabelPadWidth;
+                int remaining = _contentWidth - writtenSoFar;
+                string rarityTag = $" ({AbbrevRarity(eq.Rarity)})";
+                int rarityLen = rarityTag.Length;
 
-                SetAttr(Color.DarkGray, bg);
-                Driver!.AddStr($" ({AbbrevRarity(eq.Rarity)})");
+                int nameBudget = Math.Max(0, remaining - rarityLen);
+                string nameOut = TextHelpers.Truncate(eq.Name ?? "", nameBudget);
+                SetAttr(GetRarityColor(eq.Rarity), bg);
+                Driver!.AddStr(nameOut);
+
+                int afterName = remaining - nameOut.Length;
+                if (afterName >= rarityLen)
+                {
+                    SetAttr(Color.DarkGray, bg);
+                    Driver!.AddStr(rarityTag);
+                    afterName -= rarityLen;
+                }
 
                 if (eq.ItemDurability <= 0)
                 {
-                    SetAttr(Color.BrightRed, bg);
-                    Driver!.AddStr(" BROKEN");
+                    if (afterName >= 7)
+                    {
+                        SetAttr(Color.BrightRed, bg);
+                        Driver!.AddStr(" BROKEN");
+                    }
                 }
                 else if (eq is Pickaxe pick)
                 {
@@ -130,8 +147,13 @@ public class EquipmentSlotView : View
                     int max = pick.MaxDurability > 0 ? pick.MaxDurability : Math.Max(1, pick.ItemDurability);
                     int cur = Math.Clamp(pick.ItemDurability, 0, max);
                     string bar = BarBuilder.BuildGradient(cur, max, 6);
-                    SetAttr(GetDurabilityColor(cur, max), bg);
-                    Driver!.AddStr($"  {bar} {cur}/{max}");
+                    string durability = $"  {bar} {cur}/{max}";
+                    // Drop bar silently when it won't fit (≥14 cells needed for "  ###### NN/NN").
+                    if (afterName >= durability.Length && afterName >= 14)
+                    {
+                        SetAttr(GetDurabilityColor(cur, max), bg);
+                        Driver!.AddStr(durability);
+                    }
                 }
             }
             else

@@ -4,14 +4,15 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Widgets;
 
-// Bundle 11 — compact status-effect icon row. Two visual rows: glyph row
-// (per-icon colored) and countdown row (turns remaining beneath each glyph).
-// Renders nothing when no statuses are active OR when sidebar width < 12 cols
-// (caller should also fall back to existing text status in that case).
+// Bundle 13 (Item 9) — abbreviated status row.
+// Two visual rows: abbrev row "[BLD] [PSN] [STN]" + countdown row "  3    5    1".
+// Each cell width = bracket+abbrev+bracket+space; longest abbrev is "REGN"/"SHRN" (4 chars → 7-cell cell).
+// Width fallback: when sidebar < 24 cells, render single-letter form (B/P/S/...) to avoid wrap.
 public class StatusIconRowWidget : View
 {
     private readonly TurnManager _tm;
     private const int MinSidebarWidth = 12;
+    private const int CompactBelowWidth = 24;
 
     public StatusIconRowWidget(TurnManager tm)
     {
@@ -36,37 +37,38 @@ public class StatusIconRowWidget : View
         var icons = StatusIconMap.Collect(_tm);
         if (icons.Count == 0) return true;
 
-        // Layout: "[B][P][S]" on row 0, " 4  3  ∞ " under it on row 1.
-        // 3 cells per icon: '[' glyph ']' = 3 chars + optional space.
+        bool compact = vp.Width < CompactBelowWidth;
         int col = 0;
-        const int CellWidth = 4; // "[X] " spacing
         foreach (var icon in icons)
         {
-            if (col + 3 > vp.Width) break;
+            string label = compact ? icon.Abbrev.Substring(0, 1) : icon.Abbrev;
+            int cellWidth = label.Length + 3; // '[' + label + ']' + ' '
+            if (col + cellWidth - 1 > vp.Width) break;
 
-            // Row 0: bracketed glyph in the icon's color.
+            // Row 0: bracketed abbrev in the icon's color.
             Driver!.SetAttribute(Gfx.Attr(Color.DarkGray, Color.Black));
             Move(col, 0);
             Driver!.AddRune(new System.Text.Rune('['));
             Driver!.SetAttribute(Gfx.Attr(icon.Color, Color.Black));
-            Driver!.AddRune(new System.Text.Rune(icon.Glyph));
+            for (int i = 0; i < label.Length; i++)
+                Driver!.AddRune(new System.Text.Rune(label[i]));
             Driver!.SetAttribute(Gfx.Attr(Color.DarkGray, Color.Black));
             Driver!.AddRune(new System.Text.Rune(']'));
 
-            // Row 1: countdown number centered under the glyph (col + 1).
-            // 0 = duration-less status, render as middle dot.
+            // Row 1: countdown, centered under the abbrev (label-width window).
+            // 0 = duration-less, render as middle dot.
             if (vp.Height > 1)
             {
                 string count = icon.Count > 0 ? icon.Count.ToString() : "·";
-                if (count.Length > 3) count = "9+"; // safety clamp
-                int dx = (3 - count.Length) / 2;
+                if (count.Length > 3) count = "9+";
+                int dx = Math.Max(0, (label.Length - count.Length) / 2) + 1; // +1 for the leading '['
                 Driver!.SetAttribute(Gfx.Attr(Color.Gray, Color.Black));
                 Move(col + dx, 1);
                 foreach (var ch in count)
                     Driver!.AddRune(new System.Text.Rune(ch));
             }
 
-            col += CellWidth;
+            col += cellWidth;
         }
         return true;
     }

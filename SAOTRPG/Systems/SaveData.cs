@@ -157,6 +157,27 @@ public class SaveData
     // Bundle 8: Divine one-per-run cap. Set when any Divine enters inventory.
     // LootGenerator checks before rolling a Divine boss drop; legacy saves default false.
     public bool DivineObtainedThisRun { get; set; }
+
+    // Bundle 12 (C6) — current-floor mining vein strike counters. Null on legacy saves
+    // (loader treats as empty → re-seeds via DefaultStrikesForTile on first strike).
+    public List<VeinStrikeEntry>? VeinStrikes { get; set; }
+
+    // Bundle 13 (Item 1) — Legendary DefIds the player has collected this run.
+    // Null on legacy saves (CollectablesTracker treats as empty set).
+    public HashSet<string>? CollectedLegendaries { get; set; }
+
+    // Bundle 13 (Q16) — per-floor boss-clear flags so PG drop reveal doesn't leak
+    // floors the player skipped via teleport. Null on legacy = empty set.
+    public HashSet<int>? DefeatedFloorBosses { get; set; }
+}
+
+// Bundle 12 (C6) — JSON-friendly tile-strike pair. Tuples don't round-trip cleanly via
+// JsonElement; named props avoid that pitfall.
+public class VeinStrikeEntry
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Strikes { get; set; }
 }
 
 // FB-050 — serialized form of a single life skill's live state.

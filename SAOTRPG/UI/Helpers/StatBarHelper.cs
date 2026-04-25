@@ -55,12 +55,12 @@ public static class StatBarHelper
         return "[" + new string(bar) + "]";
     }
 
-    // ASCII fallback — '█' fill + '-' empty. Same logic as legacy HUD bars
-    // but kept here so the toggle flips both Unicode and ASCII at one site.
+    // ASCII fallback — '#' fill + '-' empty. Pure ASCII so terminals lacking
+    // eighth-block / full-block code points still render correctly.
     private static string BuildAscii(int current, int max, int width)
     {
         int filled = (int)Math.Round(Math.Clamp((double)current / max, 0.0, 1.0) * width);
-        return "[" + new string('█', filled) + new string('-', width - filled) + "]";
+        return "[" + new string('#', filled) + new string('-', width - filled) + "]";
     }
 
     // Color zone for stat bars. >=50% green, 25-49% yellow, <25% red.
