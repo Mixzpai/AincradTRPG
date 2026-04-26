@@ -4,15 +4,25 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.Map;
 
-// 2D tile grid for one dungeon floor: entity placement, fog-of-war, LOS, exploration.
+// 2D tile grid (flat Tile[] row-major) for one dungeon floor: entity placement, fog-of-war, LOS, exploration.
 // Caches (wallGlyph/emissive/itemTiles/typed-entities/walkableCount) kept in sync via SetTileType + Add/Remove helpers.
 public class GameMap
 {
-    private static readonly Tile OutOfBounds = new(TileType.Wall);
+    private static Tile MakeOutOfBounds() => new(TileType.Wall);
 
     public int Width { get; }
     public int Height { get; }
-    public Tile[,] Tiles { get; }
+    private readonly Tile[] _tiles;
+
+    // Indexer shim for `map.Tiles[x, y].Type = ...` mapgen idiom. Returns ref Tile so
+    // direct field mutation through the indexer mutates the underlying array.
+    public readonly struct TileAccessor
+    {
+        private readonly GameMap _map;
+        public TileAccessor(GameMap map) { _map = map; }
+        public ref Tile this[int x, int y] => ref _map._tiles[y * _map.Width + x];
+    }
+    public TileAccessor Tiles => new(this);
     public List<Entity> Entities { get; } = new();
     public HashSet<(int X, int Y)> NewlyRevealed { get; } = new();
     public HashSet<(int X, int Y)> OpenedDoors { get; } = new();
@@ -41,6 +51,10 @@ public class GameMap
     // decremented by mining strike handler, removed on depletion.
     public Dictionary<(int X, int Y), int> VeinStrikesRemaining { get; } = new();
 
+    // True once any animated tile (Lava/Campfire/OreVeinDivine) exists anywhere on this floor.
+    // Coarse: never flips back to false on tile removal — false-positive 50ms timer ticks are harmless.
+    public bool HasAnimatedTiles { get; private set; }
+
     private readonly bool[,] _visible;
     private readonly bool[,] _explored;
     private readonly int[,] _visitCounts;
@@ -64,10 +78,18 @@ public class GameMap
     private Dictionary<(int Bx, int By), List<(int X, int Y, TileType Type)>>? _emissiveBuckets;
     public const int EmissiveBucketShift = 6; // 64-cell buckets
 
-    // Item-tile index, kept in lockstep with Tile.Items via AddItem/RemoveItem.
-    // Direct tile.Items.Add/Remove bypasses this index — always go through these helpers.
-    private readonly HashSet<(int X, int Y)> _itemTiles = new();
-    public IReadOnlyCollection<(int X, int Y)> ItemTiles => _itemTiles;
+    // Sparse item storage — Items field hoisted off Tile struct. Lazy-allocated on first add.
+    // _itemsAt.Keys IS the set of tiles with items (replaces former _itemTiles HashSet).
+    private Dictionary<(int X, int Y), List<BaseItem>>? _itemsAt;
+    private static readonly List<BaseItem> EmptyItems = new(0);
+
+    // Sparse linked-door storage — extremely rare (lever/pressure plate tiles only).
+    private Dictionary<(int X, int Y), (int X, int Y)>? _linkedDoorAt;
+
+    // Public render-side iteration of item tiles. Empty-collection fallback when no items dict allocated.
+    public IReadOnlyCollection<(int X, int Y)> ItemTiles =>
+        _itemsAt != null ? (IReadOnlyCollection<(int X, int Y)>)_itemsAt.Keys
+                         : Array.Empty<(int X, int Y)>();
 
     // Feature indexes for overlay rendering — built lazily on first access, kept incremental
     // by OnTileTypeChanged. Iteration becomes O(N_features) instead of O(viewport).
@@ -84,7 +106,7 @@ public class GameMap
         for (int x = 0; x < Width; x++)
         for (int y = 0; y < Height; y++)
         {
-            var t = Tiles[x, y].Type;
+            var t = _tiles[Idx(x, y)].Type;
             if (t == TileType.GasVent) _gasVents.Add((x, y));
             else if (IsShrineLikeType(t)) _shrines.Add((x, y));
         }
@@ -112,7 +134,7 @@ public class GameMap
     public GameMap(int width, int height)
     {
         Width = width; Height = height;
-        Tiles = new Tile[width, height];
+        _tiles = new Tile[width * height];
         _visible = new bool[width, height];
         _explored = new bool[width, height];
         _visitCounts = new int[width, height];
@@ -120,17 +142,25 @@ public class GameMap
         _wallGlyphCache = new char[width, height];
         _transitionCache = new byte[width, height];
         Lighting = new LightingSystem(width, height);
-        for (int x = 0; x < width; x++)
-            for (int y = 0; y < height; y++)
-                Tiles[x, y] = new Tile(TileType.Wall);
+        // TileType.Grass is 0 → struct default would be Grass; explicitly seed Wall to match prior behavior
+        // (mapgen overwrites; rare runtime allocation paths still expect a Wall floor).
+        for (int i = 0; i < _tiles.Length; i++)
+            _tiles[i] = new Tile(TileType.Wall);
     }
 
-    public bool InBounds(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
+    private int Idx(int x, int y) => y * Width + x;
+
+    // Hot-path: no bounds check. Caller validates via InBounds.
+    public ref Tile RefTile(int x, int y) => ref _tiles[y * Width + x];
+
+    // Returns a copy. Out-of-bounds yields a fresh Wall sentinel (matches pre-refactor OutOfBounds semantics).
+    public Tile GetTile(int x, int y) => InBounds(x, y) ? _tiles[y * Width + x] : MakeOutOfBounds();
+
+    public bool InBounds(int x, int y) => (uint)x < (uint)Width && (uint)y < (uint)Height;
     // Strictly inside the map (one-tile border excluded). Used by mapgen.
     public bool InInterior(int x, int y) => x > 0 && y > 0 && x < Width - 1 && y < Height - 1;
     public bool IsVisible(int x, int y) => InBounds(x, y) && _visible[x, y];
     public bool IsExplored(int x, int y) => InBounds(x, y) && _explored[x, y];
-    public Tile GetTile(int x, int y) => InBounds(x, y) ? Tiles[x, y] : OutOfBounds;
     public void IncrementVisit(int x, int y) { if (InBounds(x, y)) _visitCounts[x, y]++; }
     public int GetVisitCount(int x, int y) => InBounds(x, y) ? _visitCounts[x, y] : 0;
     public int GetLastSeenTurn(int x, int y) => InBounds(x, y) ? _lastSeenTurn[x, y] : 0;
@@ -141,7 +171,7 @@ public class GameMap
         {
             _explored[x, y] = true;
             ExploredTileCount++;
-            if (IsWalkableForExploration(Tiles[x, y].Type)) _exploredCount++;
+            if (IsWalkableForExploration(_tiles[Idx(x, y)].Type)) _exploredCount++;
         }
     }
 
@@ -150,13 +180,17 @@ public class GameMap
     {
         _walkableCount = 0;
         _exploredCount = 0;
+        bool anyAnimated = false;
         for (int x = 0; x < Width; x++)
         for (int y = 0; y < Height; y++)
         {
-            if (!IsWalkableForExploration(Tiles[x, y].Type)) continue;
+            var t = _tiles[Idx(x, y)].Type;
+            if (!anyAnimated && TileDefinitions.IsAnimated(t)) anyAnimated = true;
+            if (!IsWalkableForExploration(t)) continue;
             _walkableCount++;
             if (_explored[x, y]) _exploredCount++;
         }
+        HasAnimatedTiles = anyAnimated;
     }
 
     private static bool IsWalkableForExploration(TileType t) =>
@@ -198,7 +232,7 @@ public class GameMap
         {
             _explored[x, y] = true;
             ExploredTileCount++;
-            if (IsWalkableForExploration(Tiles[x, y].Type)) _exploredCount++;
+            if (IsWalkableForExploration(_tiles[Idx(x, y)].Type)) _exploredCount++;
             NewlyRevealed.Add((x, y));
         }
     }
@@ -206,7 +240,7 @@ public class GameMap
     private bool BlocksSight(int x, int y)
     {
         if (!InBounds(x, y)) return true;
-        var t = Tiles[x, y].Type;
+        var t = _tiles[Idx(x, y)].Type;
         if (t is TileType.Wall or TileType.Mountain or TileType.Tree or TileType.TreePine or TileType.Rock)
             return true;
         if (t == TileType.Door && !OpenedDoors.Contains((x, y))) return true;
@@ -218,7 +252,7 @@ public class GameMap
     public void PlaceEntity(Entity entity, int x, int y)
     {
         entity.X = x; entity.Y = y;
-        Tiles[x, y].Occupant = entity;
+        _tiles[Idx(x, y)].Occupant = entity;
         if (!Entities.Contains(entity))
         {
             Entities.Add(entity);
@@ -229,14 +263,14 @@ public class GameMap
 
     public void MoveEntity(Entity entity, int newX, int newY)
     {
-        if (InBounds(entity.X, entity.Y)) Tiles[entity.X, entity.Y].Occupant = null;
+        if (InBounds(entity.X, entity.Y)) _tiles[Idx(entity.X, entity.Y)].Occupant = null;
         entity.X = newX; entity.Y = newY;
-        Tiles[newX, newY].Occupant = entity;
+        _tiles[Idx(newX, newY)].Occupant = entity;
     }
 
     public void RemoveEntity(Entity entity)
     {
-        if (InBounds(entity.X, entity.Y)) Tiles[entity.X, entity.Y].Occupant = null;
+        if (InBounds(entity.X, entity.Y)) _tiles[Idx(entity.X, entity.Y)].Occupant = null;
         if (Entities.Remove(entity)) RemoveTyped(entity);
     }
 
@@ -263,46 +297,106 @@ public class GameMap
         }
     }
 
-    // --- Item-tile index ---
+    // --- Sparse Items API (replaces former Tile.Items list) ---
 
-    // Preferred over direct tile.Items.Add — keeps _itemTiles in sync so HasItems is O(1).
+    // O(1) check; lazy-dict friendly. Replaces former Tile.HasItems property + _itemTiles HashSet.
+    public bool HasItemsAt(int x, int y) => _itemsAt != null && _itemsAt.ContainsKey((x, y));
+
+    public IReadOnlyList<BaseItem> GetItemsAt(int x, int y)
+    {
+        if (_itemsAt != null && _itemsAt.TryGetValue((x, y), out var list)) return list;
+        return EmptyItems;
+    }
+
+    // Mutable access for callers that iterate-and-remove (Loot pickup loop).
+    public List<BaseItem>? GetItemsListOrNull(int x, int y)
+    {
+        if (_itemsAt != null && _itemsAt.TryGetValue((x, y), out var list)) return list;
+        return null;
+    }
+
+    public int GetItemCountAt(int x, int y) =>
+        _itemsAt != null && _itemsAt.TryGetValue((x, y), out var list) ? list.Count : 0;
+
+    // Lazy-allocates the sparse map + the per-tile list on first use.
     public void AddItem(int x, int y, BaseItem item)
     {
         if (!InBounds(x, y)) return;
-        Tiles[x, y].Items.Add(item);
-        _itemTiles.Add((x, y));
+        _itemsAt ??= new Dictionary<(int X, int Y), List<BaseItem>>();
+        if (!_itemsAt.TryGetValue((x, y), out var list))
+        {
+            list = new List<BaseItem>();
+            _itemsAt[(x, y)] = list;
+        }
+        list.Add(item);
     }
 
+    // Drops the dict entry when last item removed → HasItemsAt stays accurate.
     public bool RemoveItem(int x, int y, BaseItem item)
     {
-        if (!InBounds(x, y)) return false;
-        var tile = Tiles[x, y];
-        bool removed = tile.Items.Remove(item);
-        if (removed && !tile.HasItems) _itemTiles.Remove((x, y));
+        if (!InBounds(x, y) || _itemsAt == null) return false;
+        if (!_itemsAt.TryGetValue((x, y), out var list)) return false;
+        bool removed = list.Remove(item);
+        if (removed && list.Count == 0) _itemsAt.Remove((x, y));
         return removed;
     }
 
-    // O(1) render-hot-path query.
-    public bool HasItemsAt(int x, int y) =>
-        InBounds(x, y) && _itemTiles.Contains((x, y));
+    // --- Sparse LinkedDoor API (lever/pressure plate → door coord) ---
+
+    public (int X, int Y)? GetLinkedDoor(int x, int y) =>
+        _linkedDoorAt != null && _linkedDoorAt.TryGetValue((x, y), out var d) ? d : null;
+
+    public void SetLinkedDoor(int x, int y, int dx, int dy)
+    {
+        _linkedDoorAt ??= new Dictionary<(int X, int Y), (int X, int Y)>();
+        _linkedDoorAt[(x, y)] = (dx, dy);
+    }
 
     // --- Tile mutation + cache invalidation ---
 
-    // Centralized setter with auto wall/emissive invalidation. Direct Tiles[x,y].Type = ... is allowed in mapgen,
+    // Centralized setter with auto wall/emissive invalidation. Direct RefTile(x,y).Type = ... is allowed in mapgen,
     // but runtime mutations MUST use this OR call Invalidate* helpers or caches go stale.
     public void SetTileType(int x, int y, TileType newType)
     {
         if (!InBounds(x, y)) return;
-        var oldType = Tiles[x, y].Type;
+        ref var tile = ref _tiles[Idx(x, y)];
+        var oldType = tile.Type;
         if (oldType == newType) return;
-        Tiles[x, y].Type = newType;
+        tile.Type = newType;
         OnTileTypeChanged(x, y, oldType, newType);
     }
 
+    // Direct mutation of TrapHidden — the only non-Type field that runtime writes flip frequently.
+    // Trap-hidden flag flips the rendered tile type (Floor → real trap), so visual cache must invalidate.
+    public void SetTrapHidden(int x, int y, bool hidden)
+    {
+        if (!InBounds(x, y)) return;
+        ref var t = ref _tiles[Idx(x, y)];
+        if (t.TrapHidden == hidden) return;
+        t.TrapHidden = hidden;
+        TileVisualInvalidated?.Invoke(x, y);
+    }
+
+    // Cache-invalidation event for per-cell visual changes that don't flip the tile Type.
+    // Subscribers (TileVisualCache) should drop the slot at (x, y).
+    public event Action<int, int>? TileVisualInvalidated;
+
+    // Subscribers (TileVisualCache, frame-cache) listen here to invalidate per-cell state.
+    public event Action<int, int, TileType, TileType>? TileTypeChanged;
+
     // Hook for direct Tile.Type mutations: invalidates wall glyph + 4 cardinals, rebuilds emissive if boundary crossed,
-    // updates walkable count on walkability change.
+    // updates walkable count on walkability change. Wave 2 caches subscribe to this surface.
     public void OnTileTypeChanged(int x, int y, TileType oldType, TileType newType)
     {
+        // === H12 visual cache === fires before internal caches so external subscribers see post-tile-flip state.
+        TileTypeChanged?.Invoke(x, y, oldType, newType);
+        // === H3 frame cache === Tile mutation invalidates the cached frame buffer.
+        UI.MapView.MarkFrameDirty();
+
+        // Sticky-true once any animated tile appears. Wave 1 — drives 50ms timer gate.
+        if (!HasAnimatedTiles && TileDefinitions.IsAnimated(newType))
+            HasAnimatedTiles = true;
+
         bool wasWallLike = IsWallLikeType(oldType);
         bool isWallLike  = IsWallLikeType(newType);
         if (wasWallLike != isWallLike || wasWallLike || isWallLike)
@@ -365,7 +459,7 @@ public class GameMap
     // Returns connected box-drawing glyph for a wall/cracked-wall, memoized on first access.
     public char GetWallGlyph(int x, int y)
     {
-        if (!InBounds(x, y)) return '\u25CB';
+        if (!InBounds(x, y)) return '○';
         char cached = _wallGlyphCache[x, y];
         if (cached != '\0') return cached;
 
@@ -375,29 +469,29 @@ public class GameMap
         bool w = IsWallLikeAt(x - 1, y);
         char g = (n, s, e, w) switch
         {
-            (true, true, true, true)     => '\u253C',
-            (true, true, true, false)    => '\u251C',
-            (true, true, false, true)    => '\u2524',
-            (true, false, true, true)    => '\u2534',
-            (false, true, true, true)    => '\u252C',
-            (true, true, false, false)   => '\u2502',
-            (false, false, true, true)   => '\u2500',
-            (true, false, true, false)   => '\u2514',
-            (true, false, false, true)   => '\u2518',
-            (false, true, true, false)   => '\u250C',
-            (false, true, false, true)   => '\u2510',
-            (true, false, false, false)  => '\u2502',
-            (false, true, false, false)  => '\u2502',
-            (false, false, true, false)  => '\u2500',
-            (false, false, false, true)  => '\u2500',
-            _                            => '\u25CB',
+            (true, true, true, true)     => '┼',
+            (true, true, true, false)    => '├',
+            (true, true, false, true)    => '┤',
+            (true, false, true, true)    => '┴',
+            (false, true, true, true)    => '┬',
+            (true, true, false, false)   => '│',
+            (false, false, true, true)   => '─',
+            (true, false, true, false)   => '└',
+            (true, false, false, true)   => '┘',
+            (false, true, true, false)   => '┌',
+            (false, true, false, true)   => '┐',
+            (true, false, false, false)  => '│',
+            (false, true, false, false)  => '│',
+            (false, false, true, false)  => '─',
+            (false, false, false, true)  => '─',
+            _                            => '○',
         };
         _wallGlyphCache[x, y] = g;
         return g;
     }
 
     private bool IsWallLikeAt(int x, int y) =>
-        InBounds(x, y) && IsWallLikeType(Tiles[x, y].Type);
+        InBounds(x, y) && IsWallLikeType(_tiles[Idx(x, y)].Type);
 
     // Compute + memoize transition-border code at (x,y). Non-land tiles return TransitionNone.
     public byte GetTransitionCode(int x, int y)
@@ -406,7 +500,7 @@ public class GameMap
         byte cached = _transitionCache[x, y];
         if (cached != TransitionUncomputed) return cached;
 
-        var t = Tiles[x, y].Type;
+        var t = _tiles[Idx(x, y)].Type;
         if (t is not (TileType.Floor or TileType.Path or TileType.Grass
             or TileType.GrassSparse or TileType.GrassTall))
         {
@@ -421,7 +515,7 @@ public class GameMap
             if (dx == 0 && dy == 0) continue;
             int nx = x + dx, ny = y + dy;
             if (!InBounds(nx, ny)) continue;
-            var adj = Tiles[nx, ny].Type;
+            var adj = _tiles[Idx(nx, ny)].Type;
             if (adj is TileType.Water or TileType.WaterDeep) result = TransitionWater;
             else if (adj == TileType.Lava) result = TransitionLava;
         }
@@ -462,7 +556,7 @@ public class GameMap
         for (int x = 0; x < Width; x++)
         for (int y = 0; y < Height; y++)
         {
-            var t = Tiles[x, y].Type;
+            var t = _tiles[Idx(x, y)].Type;
             if (IsEmissiveType(t)) AddEmissiveAt(x, y, t);
         }
     }

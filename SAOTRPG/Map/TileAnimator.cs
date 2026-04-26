@@ -63,7 +63,7 @@ public static class TileAnimator
     {
         if (!Registry.TryGetValue(type, out var anim) || anim.Frames.Length == 0)
             return ('?', Color.White);
-        long now = System.Environment.TickCount64;
+        long now = SAOTRPG.Systems.FrameClock.ElapsedMs;
         int idx = (int)((now / anim.IntervalMs) % anim.Frames.Length);
         return (anim.Frames[idx], anim.Color);
     }
@@ -72,7 +72,7 @@ public static class TileAnimator
     // sparkle is in the "off" phase of its cycle.
     public static (char Glyph, Color Color)? ChestSparkle()
     {
-        long now = System.Environment.TickCount64;
+        long now = SAOTRPG.Systems.FrameClock.ElapsedMs;
         long phase = now % 2000;
         if (phase > 200) return null;
         char[] glyphs = { '·', '◇', '*' };

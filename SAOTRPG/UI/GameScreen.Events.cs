@@ -16,8 +16,8 @@ public static partial class GameScreen
             if (isCrit) mapView.AddCritDamageFlash(x, y, dmg, isPlayer);
             else mapView.AddDamageFlash(x, y, dmg, isPlayer);
             if (isPlayer) mapView.AddScorchMark(x, y);
-            if (isCrit) mapView.FlashBorder(isPlayer ? Color.BrightRed : Color.BrightCyan, 4);
-            else if (isPlayer) mapView.FlashBorder(Color.Red, 2);
+            if (isCrit) mapView.FlashBorder(isPlayer ? Color.BrightRed : Color.BrightCyan, 132);
+            else if (isPlayer) mapView.FlashBorder(Color.Red, 66);
             // Red-BG flash on the tile that took damage.
             mapView.AddHitFlash(x, y);
             // Player crits trigger a single-frame screen-wide brightness boost.
@@ -33,7 +33,7 @@ public static partial class GameScreen
         turnManager.LeveledUp += () =>
         {
             mapView.TriggerLevelUpFlash();
-            mapView.FlashBorder(Color.BrightYellow, 6);
+            mapView.FlashBorder(Color.BrightYellow, 200);
             PartySystem.ScaleToPlayer(turnManager.Player.Level);
             turnManager.RequestTalentPick();
             ToastQueue.EnqueueLevelUp(turnManager.Player.Level);
@@ -44,7 +44,7 @@ public static partial class GameScreen
         {
             mapView.AddCorpseMarker(x, y);
             mapView.AddShatterParticle(x, y);
-            mapView.FlashBorder(Color.BrightCyan, 2); // SAO blue flash on kill
+            mapView.FlashBorder(Color.BrightCyan, 66); // SAO blue flash on kill
             if (turnManager.KillStreak >= 2)
                 mapView.TriggerKillStreakFlash(turnManager.KillStreak);
         };
@@ -61,7 +61,7 @@ public static partial class GameScreen
         turnManager.DivineObtained += (weapon) =>
         {
             DivineObtainBanner.Trigger(weapon);
-            mapView.FlashBorder(Color.BrightYellow, 8);
+            mapView.FlashBorder(Color.BrightYellow, 264);
             mapView.TriggerCritScreenFlash();
             string display = string.IsNullOrWhiteSpace(weapon.EnhancedName) ? (weapon.Name ?? "Divine Weapon") : weapon.EnhancedName;
             ToastQueue.Enqueue($"◈ DIVINE: {display} ◈", Color.BrightYellow, ToastCategory.FloorBossCleared);
@@ -72,7 +72,7 @@ public static partial class GameScreen
         turnManager.SkillActivated += (x, y, color) =>
         {
             mapView.AddSkillFlash(x, y, color);
-            mapView.FlashBorder(color, 1);
+            mapView.FlashBorder(color, 33);
             // FB-450 skill-cast ring of particles at the caster tile.
             ParticleQueue.Emit(ParticleEvent.SkillCastStart, x, y, tint: color);
         };
@@ -105,7 +105,7 @@ public static partial class GameScreen
             // Multi-hit side effects only — NO EnqueueDamagePopup (cascade owns it).
             mapView.AddHitFlash(x, y);
             mapView.AddScorchMark(x, y);
-            if (isCrit) mapView.FlashBorder(Color.BrightCyan, 4);
+            if (isCrit) mapView.FlashBorder(Color.BrightCyan, 132);
         };
     }
 
@@ -421,8 +421,8 @@ public static partial class GameScreen
         turnManager.TurnCompleted += () =>
         {
             var tile = turnManager.Map.GetTile(player.X, player.Y);
-            if (tile.HasItems)
-                gameLog.Log($"You see {tile.Items.Count} item(s) on the ground. Press G to pick up.");
+            if (turnManager.Map.HasItemsAt(player.X, player.Y))
+                gameLog.Log($"You see {turnManager.Map.GetItemCountAt(player.X, player.Y)} item(s) on the ground. Press G to pick up.");
 
             if (tile.Type == SAOTRPG.Map.TileType.Door)
             {
@@ -463,11 +463,11 @@ public static partial class GameScreen
             return true;
         });
 
-        // Fast 50ms ticker redraws while a popup or toast is active. Keeps
-        // the 750ms base cadence quiet when nothing's animating.
+        // Fast 50ms ticker redraws while any real-time animation is active (Wave 1).
+        // Gate now covers tile animations, particles, popups, toasts, flashes, shake.
         Application.AddTimeout(TimeSpan.FromMilliseconds(50), () =>
         {
-            if (SAOTRPG.Systems.ToastQueue.Peek() != null || mapView.HasActivePopups)
+            if (mapView.HasActiveRealtimeAnimations())
                 mapView.SetNeedsDraw();
             return true;
         });

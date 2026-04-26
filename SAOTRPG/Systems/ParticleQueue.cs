@@ -63,6 +63,9 @@ public static class ParticleQueue
         }
     }
 
+    // O(1) liveness probe — frame cache reads this to decide whether to keep dirty.
+    public static bool HasAny => _activeCount > 0;
+
     public static void Clear()
     {
         for (int i = 0; i < _pool.Length; i++) _pool[i].Active = false;
@@ -102,6 +105,7 @@ public static class ParticleQueue
         slot.UseFade = useFade;
         slot.DurationMs = durMs;
         slot.Vx = vx; slot.Vy = vy;
+        UI.MapView.MarkFrameDirty();
     }
 
     // Per-biome ambient particle table: glyph, color, fade-to color, drift velocity, duration.

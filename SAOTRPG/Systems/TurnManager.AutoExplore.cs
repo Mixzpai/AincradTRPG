@@ -41,7 +41,7 @@ public partial class TurnManager
             }
         }
 
-        if (_map.GetTile(_player.X, _player.Y).HasItems)
+        if (_map.HasItemsAt(_player.X, _player.Y))
         {
             _log.Log(FlavorText.AutoExploreItemFlavors[Random.Shared.Next(FlavorText.AutoExploreItemFlavors.Length)]);
             ClearExplorePath(); return false;

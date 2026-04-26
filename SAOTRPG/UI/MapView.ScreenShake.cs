@@ -30,6 +30,7 @@ public partial class MapView
         { _shakeFrameMs = 33; _shakeAmplitude = 1; _shakeMsLeft = 100; }
         _shakeElapsedInFrameMs = 0;
         PickShakeOffset();
+        DirtyFrame();
     }
 
     // Camera applies (shakeOffsetX, shakeOffsetY) as an extra viewport nudge.

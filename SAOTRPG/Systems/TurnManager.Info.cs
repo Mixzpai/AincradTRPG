@@ -27,7 +27,7 @@ public partial class TurnManager
         if (tile.Occupant != null && !tile.Occupant.IsDefeated)
             return DescribeOccupant(tile.Occupant);
         string terrain = DescribeTerrain(tile);
-        if (tile.HasItems) terrain += $" [{tile.Items.Count} item(s)]";
+        if (_map.HasItemsAt(x, y)) terrain += $" [{_map.GetItemCountAt(x, y)} item(s)]";
         return terrain;
     }
 
@@ -149,7 +149,7 @@ public partial class TurnManager
     public string GetContextHint()
     {
         var tile = _map.GetTile(_player.X, _player.Y);
-        if (tile.HasItems) return "[G] Pick up";
+        if (_map.HasItemsAt(_player.X, _player.Y)) return "[G] Pick up";
         if (tile.Type == TileType.StairsUp) return "[Bump] Ascend";
         if (tile.Type == TileType.Campfire) return "Resting...";
 

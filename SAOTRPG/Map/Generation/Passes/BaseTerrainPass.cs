@@ -60,7 +60,8 @@ public sealed class BaseTerrainPass : IGenerationPass
         if (r < cfg.BaseGrassWeight) pick = TileType.Grass;
         else if (r < cfg.BaseGrassWeight + cfg.GrassTallWeight) pick = TileType.GrassTall;
         else if (r < cfg.BaseGrassWeight + cfg.GrassTallWeight + cfg.SparseWeight) pick = TileType.GrassSparse;
-        else pick = TileType.Flowers;
+        // F47 Floria is canon flower-garden floor; other floors fall back to Grass.
+        else pick = ctx.FloorNumber == 47 ? TileType.Flowers : TileType.Grass;
 
         if (heights != null)
         {

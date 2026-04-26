@@ -27,8 +27,8 @@ public partial class TurnManager
             case TileType.Journal:       HandleJournal(tile, tx, ty); break;
             case TileType.EnchantShrine: HandleEnchantShrine(tile, tx, ty); break;
             case TileType.SecretShrine:  HandleSecretShrine(tile, tx, ty); break;
-            case TileType.Lever:         HandleLever(tile); break;
-            case TileType.PressurePlate: HandlePressurePlate(tile); break;
+            case TileType.Lever:         HandleLever(tx, ty); break;
+            case TileType.PressurePlate: HandlePressurePlate(tx, ty); break;
             case TileType.Mud:           HandleMud(tile); break;
             case TileType.BogWater:      HandleBogWater(tile); break;
             case TileType.CrackedIce:    HandleCrackedIce(tile); break;
@@ -276,9 +276,9 @@ public partial class TurnManager
         _map.SetTileType(tx, ty, TileType.Floor);
     }
 
-    private void ToggleLinkedDoor(Tile tile, string source)
+    private void ToggleLinkedDoor(int tx, int ty, string source)
     {
-        if (tile.LinkedDoor is not var (dx, dy) || !_map.InBounds(dx, dy)) return;
+        if (_map.GetLinkedDoor(tx, ty) is not var (dx, dy) || !_map.InBounds(dx, dy)) return;
         var doorTile = _map.GetTile(dx, dy);
         if (doorTile.Type == TileType.Wall)
         {
@@ -301,14 +301,14 @@ public partial class TurnManager
         MonumentInteraction?.Invoke();
     }
 
-    private void HandleLever(Tile tile)
+    private void HandleLever(int tx, int ty)
     {
-        ToggleLinkedDoor(tile, "lever");
+        ToggleLinkedDoor(tx, ty, "lever");
     }
 
-    private void HandlePressurePlate(Tile tile)
+    private void HandlePressurePlate(int tx, int ty)
     {
-        ToggleLinkedDoor(tile, "pressure plate");
+        ToggleLinkedDoor(tx, ty, "pressure plate");
     }
 
     // Mud — on-entry Slow. Tops up to 2 turns; harmless if already slowed

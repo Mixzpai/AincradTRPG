@@ -40,6 +40,7 @@ public partial class MapView
         Color tintColor, int maxTargetHp)
     {
         if (damage <= 0) return;
+        DirtyFrame();
         // Chip-damage suppression (research §5): sub-2% max HP reads as noise.
         if (maxTargetHp > 0 && damage * 100 < maxTargetHp * 2 && !isCrit) return;
 
@@ -77,6 +78,7 @@ public partial class MapView
     public void EnqueueMultiHitPopup(int mx, int my, int damage, int hitIndex, int delayMs)
     {
         if (damage <= 0) return;
+        DirtyFrame();
         // Alternate BrightYellow / White per hit for visual pulse.
         Color c = (hitIndex & 1) == 0 ? Color.BrightYellow : Color.White;
         int jitter = (hitIndex % 3) - 1;
@@ -91,6 +93,7 @@ public partial class MapView
     {
         _popups.Add(new DamagePopup(mx, my - 1, $"×{hits} = {total}",
             Color.BrightYellow, crit: true, multiHit: true, delayMs: delayMs));
+        DirtyFrame();
     }
 
     // DoT tick filter — first tick per mob id passes, the rest suppress.
@@ -106,7 +109,7 @@ public partial class MapView
     // Clears pending popups + projectiles — called when a modal dialog opens
     // so overlays don't leak past the z-order boundary.
     public void ClearDamagePopups()
-    { _popups.Clear(); ClearProjectiles(); }
+    { _popups.Clear(); ClearProjectiles(); DirtyFrame(); }
 
     public bool HasActivePopups => _popups.Count > 0 || HasActiveProjectiles;
 

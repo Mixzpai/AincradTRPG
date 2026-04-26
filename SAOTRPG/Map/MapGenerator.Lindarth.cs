@@ -92,11 +92,11 @@ public static partial class MapGenerator
         SetTileSafe(map, innX + 2, innY + 4, TileType.Campfire, TileType.Floor);
         rooms.Add(new Room(innX, innY, innW, innH));
 
-        // 10. Plaza fountain at spawn + flower ring.
+        // 10. Plaza fountain at spawn + grass ring.
         map.Tiles[sx, sy].Type = TileType.Fountain;
         (int dx, int dy)[] ring = { (-2,-2),(0,-2),(2,-2), (-2,0),(2,0), (-2,2),(0,2),(2,2) };
         foreach (var (dx, dy) in ring)
-            SetTileSafe(map, sx + dx, sy + dy, TileType.Flowers, TileType.Floor);
+            SetTileSafe(map, sx + dx, sy + dy, TileType.Grass, TileType.Floor);
 
         // 11. Boulevard pavement — N gate to plaza, plaza to S gate.
         PaveVertical(map, sx, ty + 1, sy);
@@ -109,14 +109,14 @@ public static partial class MapGenerator
         // 13. Street lamps — boulevard every 6 tiles + cross-street lamps.
         PlaceStreetLamps(map, sx, ty, LindarthFullW, LindarthFullH, sy);
 
-        // 14. South park — patch of grass + flowers near south wall.
+        // 14. South park — patch of grass near south wall.
         int parkCx = sx, parkCy = sy + LindarthHalfH - 3;
         for (int dx = -4; dx <= 4; dx++)
         for (int dy = -1; dy <= 1; dy++)
         {
             int px = parkCx + dx, py = parkCy + dy;
             if (!map.InBounds(px, py) || map.Tiles[px, py].Type != TileType.Floor) continue;
-            map.Tiles[px, py].Type = (dx + dy) % 2 == 0 ? TileType.Grass : TileType.Flowers;
+            map.Tiles[px, py].Type = TileType.Grass;
         }
 
         return new Room(tx, ty, LindarthFullW, LindarthFullH);

@@ -8,7 +8,7 @@ public partial class TurnManager
 {
     private bool HandleTrapEffects(Tile tile, int tx, int ty)
     {
-        tile.TrapHidden = false;
+        _map.SetTrapHidden(tx, ty, false);
         // Each trap encounter counts toward the Extra: Search unique skill unlock.
         var searchUnlock = Skills.UniqueSkillSystem.OnTrapDisarmed();
         if (searchUnlock != null) NotifyUniqueSkillUnlock(searchUnlock.Value);
@@ -155,7 +155,7 @@ public partial class TurnManager
                     int detectChance = Math.Min(95, 30 + _player.Dexterity * 3);
                     if (Random.Shared.Next(100) < detectChance)
                     {
-                        adjTile.TrapHidden = false;
+                        _map.SetTrapHidden(tx + tdx, ty + tdy, false);
                         _log.LogSystem("Your keen senses reveal a hidden trap nearby!");
                     }
                     else

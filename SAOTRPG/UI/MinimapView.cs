@@ -162,7 +162,7 @@ public class MinimapView : View
                     }
                     else if (occ is NPC) { entityCh = EntityMarker; entityFg = Color.BrightCyan; haveEntity = true; }
                 }
-                if (!haveEntity && tile.HasItems)
+                if (!haveEntity && _map.HasItemsAt(x, y))
                 { entityCh = ItemMarker; entityFg = Color.BrightYellow; haveEntity = true; }
             }
 

@@ -32,7 +32,7 @@ public static class DivineObtainBanner
         get
         {
             if (!IsActive || _durationMs <= 0) return 0f;
-            long now = System.Environment.TickCount64;
+            long now = SAOTRPG.Systems.FrameClock.ElapsedMs;
             float t = (now - _activatedAtMs) / (float)_durationMs;
             return System.Math.Clamp(t, 0f, 1f);
         }
@@ -44,7 +44,7 @@ public static class DivineObtainBanner
         get
         {
             if (!IsActive) return 0f;
-            long now = System.Environment.TickCount64;
+            long now = SAOTRPG.Systems.FrameClock.ElapsedMs;
             long elapsed = now - _activatedAtMs;
             if (elapsed < 0) return 0f;
             if (elapsed < FadeInMs) return elapsed / (float)FadeInMs;
@@ -73,7 +73,7 @@ public static class DivineObtainBanner
         get
         {
             if (!IsActive || !_isAwakening || _durationMs <= 0) return false;
-            long elapsed = System.Environment.TickCount64 - _activatedAtMs;
+            long elapsed = SAOTRPG.Systems.FrameClock.ElapsedMs - _activatedAtMs;
             return elapsed >= 0 && elapsed < _durationMs / 2;
         }
     }
@@ -87,7 +87,7 @@ public static class DivineObtainBanner
         _isAwakening = false;
         _awakeningLevel = 0;
         _durationMs = System.Math.Max(FadeInMs + FadeOutMs + 500, durationMs);
-        _activatedAtMs = System.Environment.TickCount64;
+        _activatedAtMs = SAOTRPG.Systems.FrameClock.ElapsedMs;
         IsActive = true;
     }
 
@@ -101,7 +101,7 @@ public static class DivineObtainBanner
         _awakeningLevel = newLevel;
         AwakeningParticleLevel = newLevel;
         _durationMs = System.Math.Max(FadeInMs + FadeOutMs + 500, durationMs);
-        _activatedAtMs = System.Environment.TickCount64;
+        _activatedAtMs = SAOTRPG.Systems.FrameClock.ElapsedMs;
         IsActive = true;
     }
 
@@ -109,7 +109,7 @@ public static class DivineObtainBanner
     public static bool Tick()
     {
         if (!IsActive) return false;
-        long now = System.Environment.TickCount64;
+        long now = SAOTRPG.Systems.FrameClock.ElapsedMs;
         if (now - _activatedAtMs >= _durationMs) { IsActive = false; _weaponName = ""; _isAwakening = false; _awakeningLevel = 0; AwakeningParticleLevel = 0; }
         return IsActive;
     }

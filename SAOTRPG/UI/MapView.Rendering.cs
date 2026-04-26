@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Terminal.Gui;
 using SAOTRPG.Map;
 using SAOTRPG.Systems;
@@ -12,6 +13,8 @@ public partial class MapView
     protected override bool OnDrawingContent()
     {
         using var _drawScope = Profiler.Begin("MapView.OnDrawingContent");
+        // Wave 2: single canonical FrameClock tick per frame; dt threaded through render passes.
+        int dtMs = FrameClock.Tick();
         var vp = Viewport;
         _camera.ViewWidth = vp.Width;
         _camera.ViewHeight = vp.Height;
@@ -26,29 +29,120 @@ public partial class MapView
 
         TrackFootstep();
 
+        // === H3 frame cache === Idle frames blit the last snapshot and skip recompute.
+        if (!IsFrameDirty(vp.Width, vp.Height) && TryBlitFrame(vp.Width, vp.Height))
+            return true;
+
+        long memTotal = 0, visibleTotal = 0, lightingTotal = 0, tintTotal = 0, wallsTotal = 0, emitTotal = 0;
+        int memCells = 0, visibleCells = 0;
+
         using (Profiler.Begin("MapView.TileLoop"))
         {
             for (int vy = 0; vy < vp.Height; vy++)
             for (int vx = 0; vx < vp.Width; vx++)
             {
                 int mx = VxToMap(vx), my = VyToMap(vy);
-                var (ch, fg, bg) = ResolveTileVisual(mx, my);
+                char ch; Color fg, bg;
+
+                if (!_map.InBounds(mx, my) || !_map.IsExplored(mx, my))
+                {
+                    ch = ' '; fg = Color.Black; bg = Color.Black;
+                }
+                else if (!_map.IsVisible(mx, my))
+                {
+                    long t0 = Stopwatch.GetTimestamp();
+                    (ch, fg, bg) = ResolveMemoryTile(mx, my);
+                    memTotal += Stopwatch.GetTimestamp() - t0;
+                    memCells++;
+                }
+                else
+                {
+                    long t0 = Stopwatch.GetTimestamp();
+                    var tile = _map.GetTile(mx, my);
+                    (ch, fg, bg) = ResolveVisibleTile(_map, tile, mx, my);
+                    long t1 = Stopwatch.GetTimestamp();
+                    visibleTotal += t1 - t0;
+
+                    ApplyConnectedWalls(tile, mx, my, ref ch);
+                    long t2 = Stopwatch.GetTimestamp();
+                    wallsTotal += t2 - t1;
+
+                    ApplyLighting(mx, my, ref fg, ref bg);
+                    long t3 = Stopwatch.GetTimestamp();
+                    lightingTotal += t3 - t2;
+
+                    ApplyStatusTint(mx, my, ref fg);
+                    tintTotal += Stopwatch.GetTimestamp() - t3;
+                    visibleCells++;
+                }
+
+                long tEmit = Stopwatch.GetTimestamp();
                 Gfx.PutCell(this, vx, vy, ch, fg, bg);
+                emitTotal += Stopwatch.GetTimestamp() - tEmit;
             }
         }
+        Profiler.RecordRaw("TileLoop.Memory", memTotal);
+        Profiler.RecordRaw("TileLoop.Visible", visibleTotal);
+        Profiler.RecordRaw("TileLoop.ConnectedWalls", wallsTotal);
+        Profiler.RecordRaw("TileLoop.Lighting", lightingTotal);
+        Profiler.RecordRaw("TileLoop.StatusTint", tintTotal);
+        Profiler.RecordRaw("TileLoop.DriverEmit", emitTotal);
+        Profiler.RecordCount("TileLoop.MemCells", memCells);
+        Profiler.RecordCount("TileLoop.VisibleCells", visibleCells);
 
-        RenderOverlays(vp.Width, vp.Height);
-        TickFrameEffects();
+        RenderOverlays(vp.Width, vp.Height, dtMs);
+        TickFrameEffects(dtMs);
+
+        // Always capture the post-render frame so the cache has a snapshot for any
+        // quiet window. Active animations still mark the next frame dirty so counters tick.
+        CaptureFrame(vp.Width, vp.Height);
+        bool active = HasActiveAnimations();
+        if (active || _animTailDirty)
+        {
+            DirtyFrame();
+            _animTailDirty = active;
+        }
         return true;
     }
 
-    private void TickFrameEffects()
+    // True when any time-bounded visual effect is still alive — keeps the cache dirty so
+    // the next frame retraces the recompute path and ticks counters.
+    private bool HasActiveAnimations()
     {
-        if (_critScreenFlashFrames > 0) _critScreenFlashFrames--;
+        return _hitFlashes.Count > 0
+            || _doorFlashes.Count > 0
+            || _critScreenFlashRemainingMs > 0
+            || _bossEntranceRemainingMs > 0
+            || _borderFlashRemainingMs > 0
+            || _levelUpFlashRemainingMs > 0
+            || _killStreakFlashRemainingMs > 0
+            || _damageFlashes.Count > 0
+            || _polyBursts.Count > 0
+            || _skillFlashes.Count > 0
+            || _weaponSwings.Count > 0
+            || _scorchMarks.Count > 0
+            || _corpseMarkers.Count > 0
+            || HasActivePopups
+            || IsShaking
+            || ParticleQueue.HasAny
+            || ToastQueue.Peek() != null;
+    }
+
+    // Public gate for the 50ms render timer. True when any time-bounded effect is alive
+    // OR a floor with animated tiles is loaded.
+    public bool HasActiveRealtimeAnimations()
+    {
+        return HasActiveAnimations() || _map.HasAnimatedTiles;
+    }
+
+    private void TickFrameEffects(int dtMs)
+    {
+        if (_critScreenFlashRemainingMs > 0)
+            _critScreenFlashRemainingMs = Math.Max(0, _critScreenFlashRemainingMs - dtMs);
         for (int i = _hitFlashes.Count - 1; i >= 0; i--)
         {
             var f = _hitFlashes[i];
-            if (f.FramesLeft <= 1)
+            if (f.RemainingMs <= dtMs)
             {
                 _hitFlashes.RemoveAt(i);
                 // Only drop from set once no other active entry flashes this tile (dup-hit safe).
@@ -60,15 +154,16 @@ public partial class MapView
                 }
                 if (!stillFlashing) _hitFlashSet.Remove((f.X, f.Y));
             }
-            else _hitFlashes[i] = (f.X, f.Y, f.FramesLeft - 1);
+            else _hitFlashes[i] = (f.X, f.Y, f.RemainingMs - dtMs);
         }
         for (int i = _doorFlashes.Count - 1; i >= 0; i--)
         {
             var f = _doorFlashes[i];
-            if (f.FramesLeft <= 1) _doorFlashes.RemoveAt(i);
-            else _doorFlashes[i] = (f.X, f.Y, f.FramesLeft - 1);
+            if (f.RemainingMs <= dtMs) _doorFlashes.RemoveAt(i);
+            else _doorFlashes[i] = (f.X, f.Y, f.RemainingMs - dtMs);
         }
-        if (_bossEntranceFrames > 0) _bossEntranceFrames--;
+        if (_bossEntranceRemainingMs > 0)
+            _bossEntranceRemainingMs = Math.Max(0, _bossEntranceRemainingMs - dtMs);
     }
 
     private void TrackFootstep()
@@ -89,7 +184,7 @@ public partial class MapView
         if (!_map.IsVisible(mx, my)) return ResolveMemoryTile(mx, my);
 
         var tile = _map.GetTile(mx, my);
-        var (ch, fg, bg) = ResolveVisibleTile(tile, mx, my);
+        var (ch, fg, bg) = ResolveVisibleTile(_map, tile, mx, my);
         ApplyConnectedWalls(tile, mx, my, ref ch);
         ApplyLighting(mx, my, ref fg, ref bg);
         ApplyStatusTint(mx, my, ref fg);
@@ -109,8 +204,8 @@ public partial class MapView
             or TileType.TrapPoison or TileType.TrapAlarm)
             tileType = TileType.Floor;
 
-        var visual = TileDefinitions.GetVisual(tileType, mx, my);
-        char ch = visual.Glyph;
+        var visual = _visualCache.Get(mx, my, tileType);
+        char ch = visual.Ch;
         if (tileType is TileType.Wall or TileType.CrackedWall)
             ch = MapEffects.GetConnectedWallGlyph(_map, mx, my);
         if (tileType == TileType.Door && _openedDoors.Contains((mx, my))) ch = '·';
@@ -138,12 +233,12 @@ public partial class MapView
         return (ch, fg, Color.Black);
     }
 
-    private (char ch, Color fg, Color bg) ResolveVisibleTile(Map.Tile tile, int mx, int my)
+    private (char ch, Color fg, Color bg) ResolveVisibleTile(Map.GameMap map, Map.Tile tile, int mx, int my)
     {
         if (tile.Occupant != null && !tile.Occupant.IsDefeated) return ResolveOccupant(tile, mx, my);
-        if (tile.HasItems)
+        if (map.HasItemsAt(mx, my))
         {
-            var (glyph, color) = GetItemRarityVisual(tile.Items);
+            var (glyph, color) = GetItemRarityVisual(map.GetItemsAt(mx, my));
             return (glyph, color, Color.Black);
         }
         return ResolveTerrain(tile, mx, my);
@@ -174,8 +269,8 @@ public partial class MapView
             or TileType.TrapPoison or TileType.TrapAlarm)
             renderType = TileType.Floor;
 
-        var visual = TileDefinitions.GetVisual(renderType, mx, my);
-        char ch = visual.Glyph; Color fg = visual.Foreground; Color bg = visual.Background;
+        var visual = _visualCache.Get(mx, my, renderType);
+        char ch = visual.Ch; Color fg = visual.Fg; Color bg = visual.Bg;
         if (tile.Type == TileType.Door && _openedDoors.Contains((mx, my))) ch = '·';
         if (tile.Type is TileType.Water or TileType.WaterDeep)
             ResolveWater(tile, mx, my, ref ch, ref fg);
@@ -235,8 +330,8 @@ public partial class MapView
         // Hit flash: override bg with dim red on tiles that just took damage.
         if (IsHitFlashed(mx, my)) bg = new Color(120, 10, 10);
 
-        // Crit screen flash: one-frame fg→white blend across all visible tiles.
-        if (_critScreenFlashFrames > 0)
+        // Crit screen flash: brief fg→white blend across all visible tiles.
+        if (_critScreenFlashRemainingMs > 0)
         {
             fg = new Color(
                 (byte)Math.Min(255, fg.R + 80),
@@ -257,7 +352,7 @@ public partial class MapView
         return (above.Occupant != null && !above.Occupant.IsDefeated) ? above.Occupant : null;
     }
 
-    private static (char Glyph, Color Color) GetItemRarityVisual(List<Items.BaseItem> items)
+    private static (char Glyph, Color Color) GetItemRarityVisual(IReadOnlyList<Items.BaseItem> items)
     {
         int bestRank = 0;
         foreach (var item in items)

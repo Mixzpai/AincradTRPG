@@ -14,41 +14,37 @@ public partial class MapView
     // for visual QA. UI-thread-only; no persistence.
     internal static bool HeightmapDebugEnabled;
 
-    private void RenderOverlays(int w, int h)
+    // dtMs threaded in from OnDrawingContent (FrameClock.Tick) so all overlays share one wall-clock dt.
+    private void RenderOverlays(int w, int h, int dtMs)
     {
         using var _overlaysScope = Profiler.Begin("MapView.Overlays");
         RenderHeightmapOverlay(w, h);
         // Biome tint overlay disabled — overwrote ASCII glyph contrast. Kept method for potential revival at subtle alpha.
         if (SAOTRPG.Systems.UserSettings.Current.ShowFootsteps) RenderFootstepTrail(w, h);
         RenderBossBar(w);
-        RenderCorpseMarkers(w, h);
+        RenderCorpseMarkers(w, h, dtMs);
         RenderLootSparkle(w, h);
         RenderDoorFlashes(w, h);
         RenderGasVentParticles(w, h);
         RenderShrineGlow(w, h);
-        RenderNightStars(w, h);
-        RenderWeaponSwings(w, h);
-        if (SAOTRPG.Systems.UserSettings.Current.ShowDamageFlash) RenderDamageFlashes(w, h);
-        RenderScorchMarks(w, h);
+        RenderWeaponSwings(w, h, dtMs);
+        if (SAOTRPG.Systems.UserSettings.Current.ShowDamageFlash) RenderDamageFlashes(w, h, dtMs);
+        RenderScorchMarks(w, h, dtMs);
         RenderMobTrails(w, h);
         RenderAggroIndicators(w, h);
         // Ambient tile layer (implemented by TileAnimations partial — stub here).
         RenderAmbientTiles(w, h);
-        RenderShatterParticles(w, h);
-        RenderSkillFlashes(w, h);
-        RenderKillStreakFlash(w, h);
-        RenderLevelUpFlash(w, h);
+        RenderShatterParticles(w, h, dtMs);
+        RenderSkillFlashes(w, h, dtMs);
+        RenderKillStreakFlash(w, h, dtMs);
+        RenderLevelUpFlash(w, h, dtMs);
         // Border flash draws LAST to win the cell over the low-HP background pulse.
-        RenderWeatherOverlay(w, h);
-        RenderAllyIndicators(w, h);
+        RenderRainOverlay(w, h);
         RenderBossEntrance(w, h);
         RenderLowHpPulse(w, h);
-        RenderBorderFlash(w, h);
+        RenderBorderFlash(w, h, dtMs);
         RenderLookMode(w, h);
         RenderRangedFireMode(w, h);
-        // Popups + toasts ride above all tile/FX layers. Tick from the last
-        // frame time so tween timing stays independent of the 750ms refresh.
-        int dtMs = TickFrameClock();
         TickShake(dtMs);
         // Particles draw BELOW projectiles + popups so later passes overwrite.
         RenderParticles(w, h, dtMs);
@@ -170,25 +166,13 @@ public partial class MapView
             int mx = VxToMap(vx), my = VyToMap(vy);
             if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
             var tile = _map.GetTile(mx, my);
-            var (glyph, fg, bg) = Map.TileDefinitions.GetVisual(tile.Type, mx, my);
+            var (glyph, fg, bg) = _visualCache.Get(mx, my, tile.Type);
             var blended = new Color(
                 (byte)(bg.R * ia + tr * a),
                 (byte)(bg.G * ia + tg * a),
                 (byte)(bg.B * ia + tb * a));
             DrawGlyph_View(vx, vy, glyph, Gfx.Attr(fg, blended));
         }
-    }
-
-    // Monotonic clock for sub-frame popup timing. AnimationIntervalMs (750) is too coarse
-    // for 400ms tweens — we tick real ms since last render instead.
-    private long _lastFrameTicks;
-    private int TickFrameClock()
-    {
-        long now = System.Environment.TickCount64;
-        if (_lastFrameTicks == 0) { _lastFrameTicks = now; return 16; }
-        int dt = (int)Math.Min(500, now - _lastFrameTicks);
-        _lastFrameTicks = now;
-        return dt;
     }
 
     private void RenderFootstepTrail(int w, int h)
@@ -218,7 +202,7 @@ public partial class MapView
         {
             if (!_map.InBounds(fx, fy) || !_map.IsVisible(fx, fy)) continue;
             var tile = _map.GetTile(fx, fy);
-            if (tile.Occupant != null || tile.HasItems || !tile.IsWalkable) continue;
+            if (tile.Occupant != null || _map.HasItemsAt(fx, fy) || !tile.IsWalkable) continue;
             DrawGlyph(fx, fy, glyph, attr, w, h);
         }
     }
@@ -234,7 +218,7 @@ public partial class MapView
         if (_bossesSeen.Add(boss.Id))
         {
             TriggerBossEntrance(boss.Name);
-            FlashBorder(Color.BrightRed, 3);
+            FlashBorder(Color.BrightRed, 100);
         }
 
         const int barWidth = 20;
@@ -266,7 +250,7 @@ public partial class MapView
         }
     }
 
-    private void RenderDamageFlashes(int w, int h)
+    private void RenderDamageFlashes(int w, int h, int dtMs)
     {
         var span = CollectionsMarshal.AsSpan(_damageFlashes);
         for (int i = span.Length - 1; i >= 0; i--)
@@ -277,27 +261,27 @@ public partial class MapView
             {
                 int vx = MapToVx(f.X), vy = MapToVy(f.Y - 1);
                 if (vy < 0) vy = MapToVy(f.Y);
-                if (f.IsCrit && f.FramesLeft <= CritDamageFlashFrames - 2) vy = Math.Max(0, vy - 1);
+                if (f.IsCrit && f.RemainingMs <= CritDamageFlashMs - 66) vy = Math.Max(0, vy - 1);
                 DrawTextAtView(vx, vy, f.Text, Gfx.Attr(f.Color, Color.Black), w, h);
             }
-            if (f.FramesLeft <= 1) _damageFlashes.RemoveAt(i);
-            else f.FramesLeft--;
+            if (f.RemainingMs <= dtMs) _damageFlashes.RemoveAt(i);
+            else f.RemainingMs -= dtMs;
         }
     }
 
-    private void RenderCorpseMarkers(int w, int h)
+    private void RenderCorpseMarkers(int w, int h, int dtMs)
     {
         for (int i = _corpseMarkers.Count - 1; i >= 0; i--)
         {
-            var (cx, cy, framesLeft) = _corpseMarkers[i];
+            var (cx, cy, remainingMs) = _corpseMarkers[i];
             if (!_map.InBounds(cx, cy) || !_map.IsVisible(cx, cy)) continue;
             var tile = _map.GetTile(cx, cy);
-            if (tile.Occupant != null || tile.HasItems) continue;
-            double life = (double)framesLeft / CorpseMarkerFrames;
+            if (tile.Occupant != null || _map.HasItemsAt(cx, cy)) continue;
+            double life = (double)remainingMs / CorpseMarkerMs;
             Color c = life > 0.66 ? Color.Red : life > 0.33 ? Color.Gray : Color.DarkGray;
             DrawGlyph(cx, cy, '†', Gfx.Attr(c, Color.Black), w, h);
-            if (framesLeft <= 1) _corpseMarkers.RemoveAt(i);
-            else _corpseMarkers[i] = (cx, cy, framesLeft - 1);
+            if (remainingMs <= dtMs) _corpseMarkers.RemoveAt(i);
+            else _corpseMarkers[i] = (cx, cy, remainingMs - dtMs);
         }
     }
 
@@ -309,23 +293,23 @@ public partial class MapView
             if (!MapInView(mx, my, w, h)) continue;
             if (!_map.IsVisible(mx, my)) continue;
             var tile = _map.GetTile(mx, my);
-            if (!tile.HasItems || tile.Occupant != null) continue;
-            var (glyph, _) = GetItemRarityVisual(tile.Items);
+            if (!_map.HasItemsAt(mx, my) || tile.Occupant != null) continue;
+            var (glyph, _) = GetItemRarityVisual(_map.GetItemsAt(mx, my));
             DrawGlyph(mx, my, glyph, attr, w, h);
         }
     }
 
-    private void RenderScorchMarks(int w, int h)
+    private void RenderScorchMarks(int w, int h, int dtMs)
     {
         for (int i = _scorchMarks.Count - 1; i >= 0; i--)
         {
-            var (sx, sy, framesLeft) = _scorchMarks[i];
+            var (sx, sy, remainingMs) = _scorchMarks[i];
             if (!_map.InBounds(sx, sy) || !_map.IsVisible(sx, sy)) continue;
             if (_map.GetTile(sx, sy).Occupant != null) continue;
-            Color c = framesLeft > ScorchMarkFrames / 2 ? Color.Red : Color.DarkGray;
+            Color c = remainingMs > ScorchMarkMs / 2 ? Color.Red : Color.DarkGray;
             DrawGlyph(sx, sy, '░', Gfx.Attr(c, Color.Black), w, h);
-            if (framesLeft <= 1) _scorchMarks.RemoveAt(i);
-            else _scorchMarks[i] = (sx, sy, framesLeft - 1);
+            if (remainingMs <= dtMs) _scorchMarks.RemoveAt(i);
+            else _scorchMarks[i] = (sx, sy, remainingMs - dtMs);
         }
     }
 
@@ -338,7 +322,7 @@ public partial class MapView
             if (!MapInView(tx, ty, w, h)) continue;
             if (!_map.InBounds(tx, ty) || !_map.IsVisible(tx, ty)) continue;
             var tile = _map.GetTile(tx, ty);
-            if (tile.Occupant != null || tile.HasItems || !tile.IsWalkable) continue;
+            if (tile.Occupant != null || _map.HasItemsAt(tx, ty) || !tile.IsWalkable) continue;
             DrawGlyph(tx, ty, '·', attr, w, h);
         }
     }
@@ -359,30 +343,31 @@ public partial class MapView
 
     // SAO polygon dissolution -- fragments scatter outward in expanding rings,
     // cycling through polygon-like glyphs with cyan-to-dark color fade.
-    private void RenderShatterParticles(int w, int h)
+    // Step index (TotalMs-RemainingMs)/StepMs reproduces the original per-frame scatter math.
+    private void RenderShatterParticles(int w, int h, int dtMs)
     {
         for (int i = _polyBursts.Count - 1; i >= 0; i--)
         {
             var burst = _polyBursts[i];
-            int elapsed = (burst.IsBoss ? PolyBurstFrames + 3 : PolyBurstFrames) - burst.Frame;
+            int step = (burst.TotalMs - burst.RemainingMs) / PolyBurstStepMs;
 
-            // Frame 0: bright white flash at kill point
-            if (elapsed == 0)
+            // Step 0: bright white flash at kill point
+            if (step == 0)
             {
                 DrawGlyph(burst.X, burst.Y, '*', Gfx.Attr(Color.White, Color.Black), w, h);
             }
 
-            // Frames 1+: fragments scatter outward
+            // Steps 1+: fragments scatter outward
             foreach (var (dx, dy, speed, gi) in PolyFragments)
             {
-                int dist = elapsed * speed / 2;
+                int dist = step * speed / 2;
                 if (dist < 1) continue;
                 int px = burst.X + dx * dist / speed;
                 int py = burst.Y + dy * dist / speed;
                 if (!_map.InBounds(px, py) || !_map.IsVisible(px, py)) continue;
 
                 // Color fade: bright cyan -> cyan -> blue -> dark gray
-                float life = (float)burst.Frame / (burst.IsBoss ? PolyBurstFrames + 3 : PolyBurstFrames);
+                float life = (float)burst.RemainingMs / burst.TotalMs;
                 Color c = life > 0.7f ? Color.BrightCyan
                         : life > 0.4f ? Color.Cyan
                         : life > 0.2f ? Color.Blue
@@ -391,28 +376,28 @@ public partial class MapView
                 // Boss kills use brighter colors
                 if (burst.IsBoss && life > 0.5f) c = Color.White;
 
-                char glyph = PolyGlyphs[(gi + elapsed) % PolyGlyphs.Length];
+                char glyph = PolyGlyphs[(gi + step) % PolyGlyphs.Length];
                 DrawGlyph(px, py, glyph, Gfx.Attr(c, Color.Black), w, h);
             }
 
-            if (burst.Frame <= 1) _polyBursts.RemoveAt(i);
-            else _polyBursts[i] = burst with { Frame = burst.Frame - 1 };
+            if (burst.RemainingMs <= dtMs) _polyBursts.RemoveAt(i);
+            else _polyBursts[i] = burst with { RemainingMs = burst.RemainingMs - dtMs };
         }
     }
 
-    // Sword skill activation -- expanding ring of colored light
-    private void RenderSkillFlashes(int w, int h)
+    // Sword skill activation -- expanding ring of colored light.
+    // ringStep grows from 1 → SkillFlashMs/StepMs as the flash ages.
+    private void RenderSkillFlashes(int w, int h, int dtMs)
     {
         for (int i = _skillFlashes.Count - 1; i >= 0; i--)
         {
-            var (cx, cy, frame, color) = _skillFlashes[i];
-            int ring = SkillFlashFrames - frame + 1;
+            var (cx, cy, remainingMs, totalMs, color) = _skillFlashes[i];
+            int step = (totalMs - remainingMs) / SkillFlashStepMs;
+            int ring = step + 1;
 
-            // Draw a ring at the current expansion radius
             for (int dx = -ring; dx <= ring; dx++)
             for (int dy = -ring; dy <= ring; dy++)
             {
-                // Only draw the ring outline, not the filled circle
                 int cheb = Math.Max(Math.Abs(dx), Math.Abs(dy));
                 if (cheb != ring) continue;
                 int px = cx + dx, py = cy + dy;
@@ -423,19 +408,19 @@ public partial class MapView
                     (0, _) => '|', (_, 0) => '-',
                     _ when dx == dy => '\\', _ => '/',
                 };
-                Color c = frame >= 2 ? color : Color.DarkGray;
+                Color c = remainingMs >= totalMs / 3 ? color : Color.DarkGray;
                 DrawGlyph(px, py, glyph, Gfx.Attr(c, Color.Black), w, h);
             }
 
-            if (frame <= 1) _skillFlashes.RemoveAt(i);
-            else _skillFlashes[i] = (cx, cy, frame - 1, color);
+            if (remainingMs <= dtMs) _skillFlashes.RemoveAt(i);
+            else _skillFlashes[i] = (cx, cy, remainingMs - dtMs, totalMs, color);
         }
     }
 
-    private void RenderKillStreakFlash(int w, int h)
+    private void RenderKillStreakFlash(int w, int h, int dtMs)
     {
-        if (_killStreakFlashFrames <= 0) return;
-        _killStreakFlashFrames--;
+        if (_killStreakFlashRemainingMs <= 0) return;
+        _killStreakFlashRemainingMs = Math.Max(0, _killStreakFlashRemainingMs - dtMs);
 
         // Starburst around player for streak ≥ 3
         if (_killStreakLevel >= 3)
@@ -447,77 +432,69 @@ public partial class MapView
               DrawGlyph(_player.X + dx, _player.Y + dy, '*', starAttr, w, h); }
         }
 
-        // Centered tier text banner — pulses every other frame
+        // Centered tier text banner — color pulses on a 66ms cadence
         if (string.IsNullOrEmpty(_killStreakText)) return;
-        Color bannerColor = (_killStreakFlashFrames % 2 == 0) ? _killStreakColor : Color.White;
+        Color bannerColor = ((_killStreakFlashRemainingMs / 66) & 1) == 0 ? _killStreakColor : Color.White;
         string banner = $"  {_killStreakText}  x{_killStreakLevel}  ";
         DrawCenteredBanner(banner, Math.Max(1, h / 3), Gfx.Attr(bannerColor, Color.Black), w);
     }
 
-    private void RenderLevelUpFlash(int w, int h)
+    private void RenderLevelUpFlash(int w, int h, int dtMs)
     {
-        if (_levelUpFlashFrames <= 0) return;
-        _levelUpFlashFrames--;
+        if (_levelUpFlashRemainingMs <= 0) return;
+        _levelUpFlashRemainingMs = Math.Max(0, _levelUpFlashRemainingMs - dtMs);
         DrawCenteredBanner("* LEVEL UP! *", h / 2, Gfx.Attr(Color.BrightYellow, Color.Black), w);
     }
 
-    private void RenderBorderFlash(int w, int h)
+    private void RenderBorderFlash(int w, int h, int dtMs)
     {
-        if (_borderFlashFrames <= 0) return;
-        _borderFlashFrames--;
+        if (_borderFlashRemainingMs <= 0) return;
+        _borderFlashRemainingMs = Math.Max(0, _borderFlashRemainingMs - dtMs);
         // Top and bottom rows only — left/right would interfere with map edges too much
         DrawEdgeBar('▁', '▔', Gfx.Attr(_borderFlashColor, Color.Black), w, h);
     }
 
-    private void RenderWeaponSwings(int w, int h)
+    private void RenderWeaponSwings(int w, int h, int dtMs)
     {
         for (int i = _weaponSwings.Count - 1; i >= 0; i--)
         {
-            var (fx, fy, tx, ty, color, framesLeft) = _weaponSwings[i];
+            var (fx, fy, tx, ty, color, remainingMs) = _weaponSwings[i];
             int dx = tx - fx, dy = ty - fy;
 
-            // Directional slash glyph based on attack angle
             char glyph = (dx, dy) switch
             {
-                (0, -1) or (0, 1) => '|',   // vertical
-                (-1, 0) or (1, 0) => '-',   // horizontal
+                (0, -1) or (0, 1) => '|',
+                (-1, 0) or (1, 0) => '-',
                 (> 0, > 0) or (< 0, < 0) => '\\',
                 _ => '/',
             };
 
-            // Draw slash at the target position
             int mx = tx, my = ty;
             if (_map.InBounds(mx, my) && _map.IsVisible(mx, my))
             {
                 DrawGlyph(mx, my, glyph, Gfx.Attr(color, Color.Black), w, h);
 
-                // Frame 1: draw a trail behind the slash for heavier feel
-                if (framesLeft >= 2)
+                // First half of life: trail behind the slash for heavier feel.
+                if (remainingMs >= WeaponSwingMs / 2)
                 {
                     int trailX = mx - Math.Sign(dx), trailY = my - Math.Sign(dy);
                     if (_map.InBounds(trailX, trailY) && _map.IsVisible(trailX, trailY))
                         DrawGlyph(trailX, trailY, '~', Gfx.Attr(Color.DarkGray, Color.Black), w, h);
                 }
             }
-            if (framesLeft <= 1) _weaponSwings.RemoveAt(i);
-            else _weaponSwings[i] = (fx, fy, tx, ty, color, framesLeft - 1);
+            if (remainingMs <= dtMs) _weaponSwings.RemoveAt(i);
+            else _weaponSwings[i] = (fx, fy, tx, ty, color, remainingMs - dtMs);
         }
     }
 
-    // Sparse weather particles for Rain and Fog.
-    private void RenderWeatherOverlay(int w, int h)
+    // Cyan apostrophes scattered randomly — gives Rain weather a visible overlay.
+    // Fog removed (visual noise vs ASCII map).
+    private void RenderRainOverlay(int w, int h)
     {
-        var weather = Systems.WeatherSystem.Current;
-        if (weather == Systems.WeatherType.Clear || weather == Systems.WeatherType.Wind) return;
-
-        int count = weather == Systems.WeatherType.Rain ? 8 : 5;
-        char glyph = weather == Systems.WeatherType.Rain ? '\'' : '.';
-        Color c = weather == Systems.WeatherType.Rain ? Color.Cyan : Color.DarkGray;
-        var attr = Gfx.Attr(c, Color.Black);
-
-        // Decorative noise → shared RNG; scatter no longer reseeds from turn count.
+        if (Systems.WeatherSystem.Current != Systems.WeatherType.Rain) return;
+        var attr = Gfx.Attr(Color.Cyan, Color.Black);
         var rng = Random.Shared;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < 8; i++)
         {
             int vx = rng.Next(0, w), vy = rng.Next(0, h);
             int mx = VxToMap(vx), my = VyToMap(vy);
@@ -525,20 +502,7 @@ public partial class MapView
             var tile = _map.GetTile(mx, my);
             if (tile.Occupant != null) continue;
             Driver!.SetAttribute(attr); Move(vx, vy);
-            Driver!.AddRune(new System.Text.Rune(glyph));
-        }
-    }
-
-    // Green dot under allies to distinguish from NPCs/enemies.
-    private void RenderAllyIndicators(int w, int h)
-    {
-        var attr = Gfx.Attr(Color.BrightGreen, Color.Black);
-        foreach (var ally in Systems.PartySystem.Members)
-        {
-            if (ally.IsDefeated) continue;
-            if (!_map.InBounds(ally.X, ally.Y) || !_map.IsVisible(ally.X, ally.Y)) continue;
-            // Draw a small dot below the ally (y+1)
-            DrawGlyph(ally.X, ally.Y + 1, '.', attr, w, h);
+            Driver!.AddRune(new System.Text.Rune('\''));
         }
     }
 
@@ -546,20 +510,20 @@ public partial class MapView
     private void RenderDoorFlashes(int w, int h)
     {
         var brightAttr = Gfx.Attr(Color.BrightYellow, Color.Black);
-        foreach (var (dx, dy, frames) in _doorFlashes)
+        foreach (var (dx, dy, remainingMs) in _doorFlashes)
         {
             if (!_map.InBounds(dx, dy) || !_map.IsVisible(dx, dy)) continue;
-            char glyph = frames >= 2 ? '|' : '·';
+            char glyph = remainingMs >= DoorFlashMs / 2 ? '|' : '·';
             DrawGlyph(dx, dy, glyph, brightAttr, w, h);
         }
     }
 
     // Wisps of green gas puffing up from GasVent tiles. Position-hashed +
-    // turn-based so the emission is deterministic per tile per turn.
+    // wall-clock so emission is deterministic per tile per real-time tick.
     private void RenderGasVentParticles(int w, int h)
     {
         var attr = Gfx.Attr(new Color(120, 255, 120), Color.Black);
-        int turn = SAOTRPG.Map.DayNightCycle.CurrentTurn;
+        int turn = (int)(SAOTRPG.Systems.FrameClock.ElapsedMs / 500);
         var vents = _map.GasVents;
         for (int i = 0; i < vents.Count; i++)
         {
@@ -581,9 +545,9 @@ public partial class MapView
     // the colored ground light a breathing feel without changing radius.
     private void RenderShrineGlow(int w, int h)
     {
-        int turn = SAOTRPG.Map.DayNightCycle.CurrentTurn;
+        int turn = (int)(SAOTRPG.Systems.FrameClock.ElapsedMs / 500);
         int phase = turn % 8;
-        if (phase > 1) return; // Only sparkle for 2 of every 8 turns.
+        if (phase > 1) return; // Sparkle for 1 of every 4 seconds.
 
         var shrines = _map.Shrines;
         for (int i = 0; i < shrines.Count; i++)
@@ -609,29 +573,6 @@ public partial class MapView
         }
     }
 
-    // Sparse starfield on unexplored viewport cells during night. Gives the
-    // black void outside the torch bubble a sense of sky instead of empty.
-    private void RenderNightStars(int w, int h)
-    {
-        string phase = SAOTRPG.Map.DayNightCycle.PhaseName;
-        if (phase != "Night" && phase != "Dusk" && phase != "Dawn") return;
-        int starCount = phase == "Night" ? 12 : 5;
-
-        // Twinkling = decorative noise → shared RNG (star count still phase-gated above).
-        var rng = Random.Shared;
-        var attr = Gfx.Attr(Color.White, Color.Black);
-        var dimAttr = Gfx.Attr(Color.DarkGray, Color.Black);
-        for (int i = 0; i < starCount; i++)
-        {
-            int vx = rng.Next(0, w), vy = rng.Next(0, h / 2); // top half of viewport
-            int mx = VxToMap(vx), my = VyToMap(vy);
-            // Unexplored cells only (not visible, not remembered rooms).
-            if (_map.InBounds(mx, my) && _map.IsExplored(mx, my)) continue;
-            bool bright = rng.Next(3) == 0;
-            DrawGlyph_View(vx, vy, bright ? '*' : '·', bright ? attr : dimAttr);
-        }
-    }
-
     // Viewport-space glyph draw (no map coords needed).
     private void DrawGlyph_View(int vx, int vy, char glyph, Terminal.Gui.Attribute attr)
     {
@@ -643,8 +584,9 @@ public partial class MapView
     // the banner when the boss name matches a registered AsciiPortraits entry.
     private void RenderBossEntrance(int w, int h)
     {
-        if (_bossEntranceFrames <= 0 || string.IsNullOrEmpty(_bossEntranceName)) return;
-        bool bright = (_bossEntranceFrames & 1) == 0;
+        if (_bossEntranceRemainingMs <= 0 || string.IsNullOrEmpty(_bossEntranceName)) return;
+        // Color flips at ~100ms cadence so the banner pulses without flicker on dt jitter.
+        bool bright = ((_bossEntranceRemainingMs / 100) & 1) == 0;
         Color c = bright ? Color.BrightRed : Color.BrightYellow;
         string? key = AsciiPortraits.KeyForName(_bossEntranceName);
         int baseRow = Math.Max(2, h / 2 - 2);

@@ -242,8 +242,7 @@ public partial class TurnManager
     public void PickupItems()
     {
         int px = _player.X, py = _player.Y;
-        var tile = _map.GetTile(px, py);
-        if (!tile.HasItems)
+        if (!_map.HasItemsAt(px, py))
         {
             _log.Log(FlavorText.EmptyGroundFlavors[Random.Shared.Next(FlavorText.EmptyGroundFlavors.Length)]);
             return;
@@ -251,7 +250,8 @@ public partial class TurnManager
 
         var picked = new List<BaseItem>();
         bool emittedPickup = false;
-        foreach (var item in tile.Items.ToList())
+        // Snapshot before pickup mutates the sparse list.
+        foreach (var item in _map.GetItemsAt(px, py).ToList())
         {
             if (_player.Inventory.AddItem(item))
             {

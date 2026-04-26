@@ -16,10 +16,10 @@ public sealed class LightingSystem
     public int Width { get; }
     public int Height { get; }
 
-    // Ambient via DayNightCycle.Ambient. Player torch: warm white, flickers (radius 11-13, color warm/cool per turn).
+    // Ambient via DayNightCycle.Ambient. Player torch: warm white, flickers (radius 11-13, color warm/cool, real-time @ 4Hz).
     private static LightRgb TorchColor()
     {
-        int phase = DayNightCycle.CurrentTurn % 4;
+        int phase = (int)(FrameClock.ElapsedMs / 250) % 4;
         return phase switch
         {
             0 => LightRgb.Of(220, 200, 160),
@@ -28,7 +28,7 @@ public sealed class LightingSystem
             _ => LightRgb.Of(225, 195, 155),
         };
     }
-    private static int TorchRadius() => 11 + (DayNightCycle.CurrentTurn % 3);
+    private static int TorchRadius() => 11 + (int)(FrameClock.ElapsedMs / 250) % 3;
 
     private readonly LightRgb[,] _light;
 
@@ -63,8 +63,8 @@ public sealed class LightingSystem
         AddSource(map, playerX, playerY, TorchRadius(), TorchColor());
 
         int roiSq = LightingRoiRadius * LightingRoiRadius;
-        // Shrine/Fountain radius breathes ±1 on a slow sine (colored pool expands/contracts).
-        double pulsePhase = (DayNightCycle.CurrentTurn % 12) / 12.0 * Math.PI * 2.0;
+        // Shrine/Fountain radius breathes ±1 on a slow real-time sine (3-second cycle).
+        double pulsePhase = (FrameClock.ElapsedMs % 3000L) / 3000.0 * Math.PI * 2.0;
         int pulseDelta = (int)Math.Round(Math.Sin(pulsePhase));
         int emissiveCount = 0;
         // Bucket radius 2 (5x5 64-cell buckets) covers ROI≈92 with margin.

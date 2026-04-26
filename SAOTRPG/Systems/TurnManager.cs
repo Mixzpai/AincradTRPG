@@ -680,7 +680,6 @@ public partial class TurnManager
         // Sync the global clock before recomputing — ambient light and
         // effective FOV both read from DayNightCycle.
         SAOTRPG.Map.DayNightCycle.CurrentTurn = TurnCount;
-        UI.Helpers.MapEffects.AnimationTurn = TurnCount;
         SAOTRPG.Map.TileAnimator.CombatActive = TurnCount - _lastCombatTurn <= 5;
         int visRadius = Math.Max(8, SAOTRPG.Map.DayNightCycle.VisibilityRadius + BiomeSystem.VisionModifier * SAOTRPG.Map.DayNightCycle.FovMultiplier);
         _map.UpdateVisibility(_player.X, _player.Y, visRadius);

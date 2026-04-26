@@ -1,4 +1,5 @@
 using Terminal.Gui;
+using SAOTRPG.Systems;
 
 namespace SAOTRPG.Map;
 
@@ -55,6 +56,12 @@ public static class TileDefinitions
     private static readonly Color OreMithrilDepFg    = new(110, 120, 140);
     private static readonly Color OreDivineFg        = new(255, 200, 80);
     private static readonly Color OreDivineDepFg     = new(140, 120, 80);
+
+    // Tiles whose visual depends on FrameClock.ElapsedMs — bypass per-cell visual cache
+    // and drive HasAnimatedTiles so the 50ms render timer fires when in viewport.
+    public static bool IsAnimated(TileType type) =>
+        type is TileType.Lava or TileType.Campfire or TileType.OreVeinDivine
+        or TileType.Water or TileType.WaterDeep;
 
     public static (char Glyph, Color Foreground, Color Background) GetVisual(TileType type, int x = 0, int y = 0)
     {
@@ -245,29 +252,29 @@ public static class TileDefinitions
             FlowerColors[hash % FlowerColors.Length],
             Color.Black);
 
-    // Lava pulses between orange and yellow using the animation turn counter.
+    // Lava pulses between orange and yellow on real-time @ 4Hz.
     private static (char, Color, Color) LavaVisual(int hash)
     {
-        int phase = (UI.Helpers.MapEffects.AnimationTurn + hash) % 4;
+        int phase = ((int)(FrameClock.ElapsedMs / 250) + hash) % 4;
         char glyph = phase < 2 ? '~' : '-';
         // Pulse color between orange and bright yellow
         Color c = phase % 2 == 0 ? LavaOrange : new Color(255, 160, 40);
         return (glyph, c, Color.Black);
     }
 
-    // Campfire flickers between glyphs and warm colors.
+    // Campfire flickers between glyphs and warm colors on real-time @ 3Hz.
     private static (char, Color, Color) CampfireVisual(int hash)
     {
-        int phase = (UI.Helpers.MapEffects.AnimationTurn + hash) % 3;
+        int phase = ((int)(FrameClock.ElapsedMs / 333) + hash) % 3;
         char glyph = phase == 0 ? '&' : phase == 1 ? '*' : '&';
         Color c = phase == 1 ? new Color(255, 150, 50) : FireYellow;
         return (glyph, c, Color.Black);
     }
 
-    // Bundle 10 — Divine vein pulses between '◈' (cool) and '◊' (warm) to telegraph rarity.
+    // Divine vein pulses between '◈' (cool) and '◊' (warm) on real-time @ 4Hz.
     private static (char, Color, Color) DivineVeinVisual(int hash)
     {
-        int phase = (UI.Helpers.MapEffects.AnimationTurn + hash) % 4;
+        int phase = ((int)(FrameClock.ElapsedMs / 250) + hash) % 4;
         char glyph = phase < 2 ? '◈' : '◊';
         Color c = phase % 2 == 0 ? OreDivineFg : new Color(255, 230, 130);
         return (glyph, c, Color.Black);

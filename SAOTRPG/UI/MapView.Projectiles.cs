@@ -25,6 +25,7 @@ public partial class MapView
             Path = BresenhamPath(sx, sy, ex, ey),
         };
         _projectiles.Add(p);
+        DirtyFrame();
     }
 
     // Arrow convenience — directional glyph from (dx, dy) vector.
@@ -47,6 +48,7 @@ public partial class MapView
         if (glyphs.Length == 0) return;
         _statusTrails.Add(new StatusTrail
         { X = x, Y = y, Glyphs = glyphs, Color = color, FrameMs = frameMs });
+        DirtyFrame();
     }
 
     public void ClearProjectiles()

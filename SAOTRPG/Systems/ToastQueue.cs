@@ -49,11 +49,11 @@ public static class ToastQueue
     }
 
     private static readonly List<Toast> _queue = new();
-    private static readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
 
     public static void Enqueue(string message, Color accent, ToastCategory category)
     {
-        long now = _clock.ElapsedMilliseconds;
+        UI.MapView.MarkFrameDirty();
+        long now = FrameClock.ElapsedMs;
 
         // Coalesce: if tail is same-cat, still within 500ms window, and not
         // yet activated (text still safe to edit), merge into it.
@@ -80,8 +80,8 @@ public static class ToastQueue
     {
         if (_queue.Count == 0) return null;
         var head = _queue[0];
-        if (head.ActivatedAtMs < 0) head.ActivatedAtMs = _clock.ElapsedMilliseconds;
-        head.ElapsedMs = (int)(_clock.ElapsedMilliseconds - head.ActivatedAtMs);
+        if (head.ActivatedAtMs < 0) head.ActivatedAtMs = FrameClock.ElapsedMs;
+        head.ElapsedMs = (int)(FrameClock.ElapsedMs - head.ActivatedAtMs);
         if (head.ElapsedMs >= LifetimeMs)
         {
             _queue.RemoveAt(0);

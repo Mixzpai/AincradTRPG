@@ -8,6 +8,8 @@ public partial class MapView
 {
     protected override bool OnKeyDown(Key keyEvent)
     {
+        // Any keypress is potential state-change → invalidate frame cache before dispatch.
+        DirtyFrame();
         if (HandleLookModeKey(keyEvent)) return true;
         // Bundle 13 Item 6 — reticle modal swallows keys before any movement/dialog dispatch.
         if (HandleRangedFireKey(keyEvent)) return true;
@@ -36,10 +38,13 @@ public partial class MapView
             return true;
         }
 
-        // Shift+F12 — dump profiler buckets to log; Shift+F11 — reset.
+        // Shift+F12 — dump profiler to log AND timestamped file; Shift+F11 — reset.
         if (bareKey == KeyCode.F12 && keyEvent.IsShift)
         {
             if (Log != null) Profiler.Dump(Log);
+            string path = Profiler.DumpToFile();
+            if (Log != null && !string.IsNullOrEmpty(path))
+                Log.Log($"Profiler written to: {path}");
             keyEvent.Handled = true;
             return true;
         }

@@ -171,7 +171,7 @@ public sealed class FeatureScatterPass : IGenerationPass
                     var lt = map.Tiles[lx, ly].Type;
                     if (lt != TileType.Floor && !MapGenerator.IsGrassType(lt)) continue;
                     map.Tiles[lx, ly].Type = useLever ? TileType.Lever : TileType.PressurePlate;
-                    map.Tiles[lx, ly].LinkedDoor = (dx, dy);
+                    map.SetLinkedDoor(lx, ly, dx, dy);
                     break;
                 }
                 break;

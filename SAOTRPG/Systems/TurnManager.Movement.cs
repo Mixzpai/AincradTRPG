@@ -252,8 +252,7 @@ public partial class TurnManager
 
         if (UserSettings.Current.AutoPickup)
         {
-            var stepTile = _map.GetTile(_player.X, _player.Y);
-            if (stepTile.HasItems) PickupItems();
+            if (_map.HasItemsAt(_player.X, _player.Y)) PickupItems();
         }
 
         TurnCount++;
@@ -298,7 +297,7 @@ public partial class TurnManager
             if (!tile.TrapHidden) continue;
             if (tile.Type is not (TileType.TrapSpike or TileType.TrapTeleport
                 or TileType.TrapPoison or TileType.TrapAlarm)) continue;
-            tile.TrapHidden = false;
+            _map.SetTrapHidden(tx, ty, false);
             revealedAny = true;
         }
         if (revealedAny && !_extraSearchRevealedThisFloor)

@@ -4,8 +4,8 @@ namespace SAOTRPG.Map;
 // SunLevel ∈ [0,1] drives LightingSystem ambient + GameMap FOV radius. Runs start at noon (turn 0).
 public static class DayNightCycle
 {
-    // Total turns per full day→night→day cycle.
-    public const int CycleLength = 400;
+    // Total turns per full day→night→day cycle. Wave 1 — 10× extension; the prior 400 felt too brisk.
+    public const int CycleLength = 4000;
 
     // Total turns elapsed. TurnManager pushes each turn so lighting/FOV react without threading through calls.
     public static int CurrentTurn { get; set; }

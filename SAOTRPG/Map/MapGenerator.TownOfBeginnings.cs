@@ -49,7 +49,7 @@ public static partial class MapGenerator
         map.Tiles[sx, sy].Type = TileType.Fountain;
         (int dx, int dy)[] ring = { (-2,-2),(0,-2),(2,-2), (-2,0),(2,0), (-2,2),(0,2),(2,2) };
         foreach (var (dx, dy) in ring)
-            SetTileSafe(map, sx + dx, sy + dy, TileType.Flowers, TileType.Floor);
+            SetTileSafe(map, sx + dx, sy + dy, TileType.Grass, TileType.Floor);
 
         // ── 6. Shop buildings (7×5 each) ─────────────────────────────
         BuildShop(map, rooms, sx - 18, sy - 4, TileType.Anvil,         doorSide: DoorSide.South); // NW: Blacksmith
@@ -90,7 +90,7 @@ public static partial class MapGenerator
         {
             int px = parkCx + dx, py = parkCy + dy;
             if (!map.InBounds(px, py) || map.Tiles[px, py].Type != TileType.Floor) continue;
-            map.Tiles[px, py].Type = (dx + dy) % 2 == 0 ? TileType.Grass : TileType.Flowers;
+            map.Tiles[px, py].Type = TileType.Grass;
         }
 
         // ── 13. Monument of Swordsmen — canon TOB placement: plaza park west side, 2 tiles off boulevard, pillar-flanked.

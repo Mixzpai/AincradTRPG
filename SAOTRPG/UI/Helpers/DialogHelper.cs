@@ -100,9 +100,11 @@ public static class DialogHelper
     }
 
     // Runs the dialog modally and disposes it. Convenience wrapper.
+    // Wave 1 — also pauses FrameClock so animations freeze while the dialog is up.
     public static void RunModal(Dialog dialog)
     {
-        Application.Run(dialog);
-        dialog.Dispose();
+        SAOTRPG.Systems.FrameClock.Pause();
+        try { Application.Run(dialog); }
+        finally { SAOTRPG.Systems.FrameClock.Resume(); dialog.Dispose(); }
     }
 }

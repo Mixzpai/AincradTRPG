@@ -1,5 +1,6 @@
 using Terminal.Gui;
 using SAOTRPG.Map;
+using SAOTRPG.Systems;
 
 namespace SAOTRPG.UI.Helpers;
 
@@ -41,14 +42,13 @@ public static partial class MapEffects
     private static bool HasLand(GameMap map, int x, int y) =>
         !map.InBounds(x, y) || map.GetTile(x, y).Type is not (TileType.Water or TileType.WaterDeep);
 
-    // Water glyph cycles per turn for a ripple effect. Phase offset by position
+    // Water glyph cycles in real-time @ 2.5Hz (slow ambience). Phase offset by position
     // so adjacent tiles don't all change in sync.
     private static readonly char[] WaterGlyphs = { '~', '-', '~', '-' };
-    public static int AnimationTurn { get; set; } // set from TurnManager each turn
 
     public static char GetWaterFlowGlyph(int x, int y)
     {
-        int phase = (AnimationTurn + x * 3 + y * 7) % WaterGlyphs.Length;
+        int phase = ((int)(FrameClock.ElapsedMs / 400) + x * 3 + y * 7) % WaterGlyphs.Length;
         return WaterGlyphs[phase];
     }
 

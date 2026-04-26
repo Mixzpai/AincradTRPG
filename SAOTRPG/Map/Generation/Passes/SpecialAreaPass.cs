@@ -41,10 +41,14 @@ public sealed class SpecialAreaPass : IGenerationPass
         else
         {
             MapGenerator.ClearArea(map, spawnX, spawnY, 12, TileType.Grass);
-            for (int x = spawnX - 3; x <= spawnX + 3; x++)
-                for (int y = spawnY - 3; y <= spawnY + 3; y++)
-                    if (map.InBounds(x, y) && rng.Next(5) == 0)
-                        map.Tiles[x, y].Type = TileType.Flowers;
+            // F47 Floria keeps spawn-area flower scatter (canon flower-garden floor).
+            if (ctx.FloorNumber == 47)
+            {
+                for (int x = spawnX - 3; x <= spawnX + 3; x++)
+                    for (int y = spawnY - 3; y <= spawnY + 3; y++)
+                        if (map.InBounds(x, y) && rng.Next(5) == 0)
+                            map.Tiles[x, y].Type = TileType.Flowers;
+            }
             ctx.Rooms.Add(new Room(spawnX - 5, spawnY - 5, 11, 11));
             MapGenerator.BuildTown(map, spawnX, spawnY, ctx.Rooms);
         }
