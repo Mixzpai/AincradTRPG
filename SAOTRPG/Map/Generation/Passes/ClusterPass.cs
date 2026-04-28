@@ -41,7 +41,7 @@ public sealed class ClusterPass : IGenerationPass
         {
             int x = rng.Next(marginX, Math.Max(marginX + 1, ctx.Width - marginX));
             int y = rng.Next(marginY, Math.Max(marginY + 1, ctx.Height - marginY));
-            if (ctx.IsInsideCircle(x, y)) { cx = x; cy = y; return true; }
+            if (ctx.IsInsideCircle(x, y) && !ctx.IsInTownKeepOut(x, y)) { cx = x; cy = y; return true; }
         }
         cx = cy = 0;
         return false;

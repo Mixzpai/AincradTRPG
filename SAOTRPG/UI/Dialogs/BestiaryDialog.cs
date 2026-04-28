@@ -10,7 +10,7 @@ namespace SAOTRPG.UI.Dialogs;
 // Size = min(screen-6, 120x45). Left list + right tabbed detail, filter chips under title, footer hint.
 public static class BestiaryDialog
 {
-    private const int MaxWidth = 120;
+    private const int MaxWidth = 130;
     private const int MaxHeight = 45;
     private const int ListPaneWidth = 38;
 

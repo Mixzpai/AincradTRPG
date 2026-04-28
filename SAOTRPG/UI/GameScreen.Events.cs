@@ -43,11 +43,18 @@ public static partial class GameScreen
         turnManager.MonsterKilled += (x, y) =>
         {
             mapView.AddCorpseMarker(x, y);
-            mapView.AddShatterParticle(x, y);
             mapView.FlashBorder(Color.BrightCyan, 66); // SAO blue flash on kill
             if (turnManager.KillStreak >= 2)
                 mapView.TriggerKillStreakFlash(turnManager.KillStreak);
         };
+        // Two-phase braille death burst. Tier 0=standard, 1=elite, 2=floor boss.
+        turnManager.MonsterDeathBurstRequested += (x, y, tier) =>
+            mapView.EmitMonsterDeathBurst(x, y, tier switch
+            {
+                2 => MapView.MobTier.FloorBoss,
+                1 => MapView.MobTier.Elite,
+                _ => MapView.MobTier.Standard,
+            });
         // Floor-boss cleared toast — the TurnManager side logs the banner,
         // we mirror it into the toast channel for the center-screen readout.
         turnManager.FloorBossCleared += (name) =>

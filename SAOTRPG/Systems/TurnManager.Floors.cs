@@ -49,6 +49,8 @@ public partial class TurnManager
         }
 
         CurrentFloor++;
+        // Persistent Player Guide unlock gate; survives permadeath.
+        LifetimeStats.RecordFloorReach(CurrentFloor);
         SAOTRPG.Map.TileDefinitions.CurrentFloor = CurrentFloor;
 
         if (SaveManager.SaveGame(_player, this, ActiveSaveSlot))
@@ -196,7 +198,7 @@ public partial class TurnManager
         _bountyRewardXp = 0;
         _bountyComplete = false;
         _floorColStart = _player.ColOnHand;
-        // Barrier+N refills on floor entry per Bundle 7 spec.
+        // Barrier+N refills on floor entry.
         _barrierRemaining = GetBarrierCapacity();
         ClearExplorePath();
     }

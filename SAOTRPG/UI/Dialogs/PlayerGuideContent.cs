@@ -44,6 +44,32 @@ public static class PlayerGuideContent
             Tags = new[] { "combat", "stats" }
         },
 
+        new("Combat & Rarity", "Floor Scaling Formulas",
+            "┌─ Combat & Rarity\n" +
+            "│ Topic: Floor Scaling Formulas\n" +
+            "│ Source: Map/BossFactory.cs\n" +
+            "│ Applies to: Procedurally-named floor bosses (F2-F99)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Floor bosses scale linearly+quadratically with floor number.\n" +
+            "Canon-anchored bosses (Illfang F1, Asterius F2, etc.) override\n" +
+            "the scaling values — see their Floor entry. The curve below\n" +
+            "applies to procedurally-named bosses that fill unspecified\n" +
+            "floors.\n\n" +
+            "MECHANICS\n" +
+            "Level = 10 + 2 * floor\n" +
+            "HP    = 150 + 30 * floor + 0.5 * floor^2\n" +
+            "Col   = 4000 + 500 * floor + 20 * floor^2\n\n" +
+            "TIPS\n" +
+            "Use these to estimate prep gear before stepping on a stair tile.\n" +
+            "If the boss room is shrouded, the formulas predict approximate\n" +
+            "HP.\n\n" +
+            "SEE ALSO\n" +
+            "[Damage Formula] · [Critical Hits] · [Floor 50] · [Floor 75] · [Floor 99]")
+        {
+            Tags = new[] { "combat", "scaling", "bosses" }
+        },
+
         new("Combat & Rarity", "Critical Hits",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Critical Hits\n" +
@@ -192,7 +218,7 @@ public static class PlayerGuideContent
             "reposition. Keep open ground behind you during boss fights so\n" +
             "the whiff-move is always available.\n\n" +
             "SEE ALSO\n" +
-            "[Look Mode & Counter Stance] · [Sprint & Stealth Move] · [Floor Boss Roster — Canon Highlights]")
+            "[Look Mode & Counter Stance] · [Sprint & Stealth Move] · [Floor Scaling Formulas]")
         {
             Tags = new[] { "combat", "bosses" }
         },
@@ -1020,7 +1046,7 @@ public static class PlayerGuideContent
             "SUMMARY\n" +
             "A browsable compendium of every mob you've fought or even just\n" +
             "glimpsed, cross-referenced with kill counts, drop hints, threat\n" +
-            "rating, and canon SAO flavor lore. Bundle 10 locks the roster\n" +
+            "rating, and canon SAO flavor lore. The roster is locked\n" +
             "count at 199 — 66 standard mobs across the floor pool, 100\n" +
             "floor bosses (one per floor), and 33 field bosses scattered\n" +
             "across the eras. Entries unlock on first sighting and persist\n" +
@@ -1070,7 +1096,7 @@ public static class PlayerGuideContent
             "your seen-count: at 199/199 you've completed the canonical\n" +
             "encounter sweep across all 100 floors.\n\n" +
             "SEE ALSO\n" +
-            "[Look Mode & Counter Stance] · [Controls & Keybindings] · [Permadeath & Save Deletion] · [Floor Boss Roster] · [Field Bosses]")
+            "[Look Mode & Counter Stance] · [Controls & Keybindings] · [Permadeath & Save Deletion]")
         {
             Tags = new[] { "combat", "knowledge", "controls", "persistence" }
         },
@@ -1170,7 +1196,7 @@ public static class PlayerGuideContent
             "pour most starting SP there. Spread investment leaves every\n" +
             "combat number underwhelming.\n\n" +
             "SEE ALSO\n" +
-            "[The Six Attributes] · [Experience & Leveling] · [Town of Beginnings NPCs (F1)]")
+            "[The Six Attributes] · [Experience & Leveling] · [Floor 1]")
         {
             Tags = new[] { "leveling", "stats" }
         },
@@ -1344,7 +1370,7 @@ public static class PlayerGuideContent
             "fallback, treat the F75 clear as a one-shot — don't skip the\n" +
             "fight expecting to come back later.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Dual Blades] · [Defense — Block, Parry, Dodge] · [Floor Boss Roster — Canon Highlights]")
+            "[Unique Skill: Dual Blades] · [Defense — Block, Parry, Dodge] · [Floor Scaling Formulas]")
         {
             Tags = new[] { "combat", "unique-skills", "holy-sword" }
         },
@@ -1375,7 +1401,7 @@ public static class PlayerGuideContent
             "use for 1H Sword — the 20% crit rate pairs neatly with Keen\n" +
             "Edge and Dex.\n\n" +
             "SEE ALSO\n" +
-            "[Ran the Brawler (F2)] · [Sword Skills — Unlock & Use] · [Critical Hits]")
+            "[Floor 2] · [Sword Skills — Unlock & Use] · [Critical Hits]")
         {
             Tags = new[] { "combat", "unique-skills", "martial-arts" }
         },
@@ -1467,7 +1493,7 @@ public static class PlayerGuideContent
             "carries you through Ice biomes and Frozen carries you through\n" +
             "Volcanic. One pair, two biome hard-counters.\n\n" +
             "SEE ALSO\n" +
-            "[Biomes] · [Status: Stun & Slow] · [Floor Boss Roster — Canon Highlights]")
+            "[Biomes] · [Status: Stun & Slow] · [Floor Scaling Formulas]")
         {
             Tags = new[] { "combat", "unique-skills", "blazing" }
         },
@@ -1526,7 +1552,7 @@ public static class PlayerGuideContent
             "fight that unlocks Holy Sword — a natural story beat to look\n" +
             "forward to.\n\n" +
             "SEE ALSO\n" +
-            "[Aincrad's 100 Floors & Eras] · [Ascending a Floor] · [Achievements] · [Titles & the Active Title Slot]")
+            "[Floor 1] · [Ascending a Floor] · [Achievements] · [Titles & the Active Title Slot]")
         {
             Tags = new[] { "leveling", "floors" }
         },
@@ -1579,7 +1605,7 @@ public static class PlayerGuideContent
             "almost two quest turn-ins. Pair Honorable with L99 Bargaining\n" +
             "before a big shop run for the full -23.5% stack.\n\n" +
             "SEE ALSO\n" +
-            "[Guild System Overview] · [Town Guard (Outlaw Mode)] · [Laughing Coffin (F75 Hidden)] · [Sleeping Knights (F60)] · [Bargaining (Life Skill)] · [Vendors — Rotating Stock]")
+            "[Guild System Overview] · [Town Guard (Outlaw Mode)] · [Floor 75] · [Floor 60] · [Bargaining (Life Skill)] · [Vendors — Rotating Stock]")
         {
             Tags = new[] { "karma", "alignment", "progression" }
         },
@@ -1594,7 +1620,7 @@ public static class PlayerGuideContent
             "SUMMARY\n" +
             "Seven non-combat skills level from everyday play — Sleep,\n" +
             "Walking, Running, Eating, Bargaining, Swimming, and Mining\n" +
-            "(Bundle 10). They sit parallel to Weapon Proficiency:\n" +
+            ". They sit parallel to Weapon Proficiency:\n" +
             "proficiency rewards combat with one weapon type, Life Skills\n" +
             "reward the travel, trade, rest, and resource-extraction loop.\n\n" +
             "USAGE\n" +
@@ -1736,7 +1762,7 @@ public static class PlayerGuideContent
             "│ Save: Per-player, in SaveData.LifeSkills\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Mining is Bundle 10's seventh Life Skill — a non-combat\n" +
+            "Mining is the seventh Life Skill — a non-combat\n" +
             "track that levels every time you swing a Pickaxe at an ore\n" +
             "vein. Each strike banks XP regardless of whether the vein\n" +
             "depletes that turn, so even a Wooden Pickaxe whittling away\n" +
@@ -1776,7 +1802,7 @@ public static class PlayerGuideContent
             "every-other-free-strike and L99 dur-halved milestones aren't\n" +
             "just nice-to-haves; they materially extend the per-pickaxe\n" +
             "vein count.\n\n" +
-            "MID-MINING SAVE PERSISTENCE (Bundle 12):\n" +
+            "MID-MINING SAVE PERSISTENCE:\n" +
             "Partially-mined ore veins now preserve their strike-count\n" +
             "across save/load — quit mid-vein and the chip-counter is\n" +
             "exactly where you left it. Limited to the CURRENT FLOOR:\n" +
@@ -1840,7 +1866,7 @@ public static class PlayerGuideContent
             "leg: species-specific passives for floor grinds, then a\n" +
             "tag-aggregate like Beast Lord once you move on.\n\n" +
             "SEE ALSO\n" +
-            "[Monument of Swordsmen (F1)] · [Life Skills] · [Weapon Proficiency Ranks] · [Floor Titles]")
+            "[Floor 1] · [Life Skills] · [Weapon Proficiency Ranks] · [Floor Titles]")
         {
             Tags = new[] { "titles", "progression" }
         },
@@ -1879,16 +1905,16 @@ public static class PlayerGuideContent
             "instead of the generic dodge/skill-damage pick:\n" +
             "  ONE-HANDED SWORD  Vorpal Edge (+3 CritRate)\n" +
             "                    OR Saber Step (+1 AttackSpeed)\n" +
-            "  KATANA            Iaijutsu (see Bundle 12 wiring below)\n" +
+            "  KATANA            Iaijutsu (see wiring below)\n" +
             "                    OR Drawing Stance (+2 CritRate)\n" +
-            "  BOW               Marksman Eye (see Bundle 12 wiring below)\n" +
+            "  BOW               Marksman Eye (see wiring below)\n" +
             "                    OR Quickdraw (+1 AttackSpeed)\n" +
             "The other 9 weapon types use the unchanged generic L50 fork.\n" +
             "Choices use the new B13 StatType grants (CritRate, Attack-\n" +
             "Speed) — they show up directly on the character sheet rather\n" +
             "than as flavor-string riders.\n\n" +
             "BUNDLE 12 — IAIJUTSU & MARKSMAN EYE CONSUMERS WIRED:\n" +
-            "Bundle 10 added the L25 fork prompts; Bundle 12 finishes the\n" +
+            "The L25 fork prompts and L50 wiring complete the\n" +
             "loop by wiring the actual gameplay consumers:\n" +
             "  KATANA L25 IAIJUTSU\n" +
             "    +25% damage on the FIRST strike against each enemy per\n" +
@@ -1902,7 +1928,7 @@ public static class PlayerGuideContent
             "  BOW L25 MARKSMAN EYE\n" +
             "    +5 tile range on Bow sword-skills (in addition to the\n" +
             "    existing +2 CritRate). Affects skills only — basic-attack\n" +
-            "    ranged-fire is reserved for Bundle 13. The range overflow\n" +
+            "    ranged-fire is a separate system. The range overflow\n" +
             "    stacks with weapon-line skill range; e.g. a 6-tile skill\n" +
             "    becomes 11 tiles with Marksman Eye selected.\n" +
             "Picks remain permanent per save — no respec.\n\n" +
@@ -1921,40 +1947,6 @@ public static class PlayerGuideContent
         },
 
         // ── 3. World & Exploration ──
-
-        new("World", "Aincrad's 100 Floors & Eras",
-            "┌─ World\n" +
-            "│ Topic: Aincrad's 100 Floors & Eras\n" +
-            "│ Floors: 1-100\n" +
-            "│ Entry: Start at F1 Town of Beginnings\n" +
-            "│ Unlock: Ascend by clearing each floor boss\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Aincrad is a 100-floor stacked castle. Every floor has its own\n" +
-            "named boss, and clearing that boss unlocks the stairs up. Floors\n" +
-            "are grouped into thematic eras that cycle biomes and rosters.\n\n" +
-            "USAGE\n" +
-            "Climb one floor at a time. Clearing F100 triggers GameWon.\n\n" +
-            "EFFECTS\n" +
-            "Thematic era bands:\n" +
-            "  F1-5    Verdant   (beasts, nature)\n" +
-            "  F6-10   Stone     (constructs, puzzles)\n" +
-            "  F11-15  Crimson   (fire, demons)\n" +
-            "  F16-20  Crystal   (ice)\n" +
-            "  F21-25  Twilight  (shadow, undead)\n" +
-            "  F26-75  era pattern repeats\n" +
-            "  F76-95  Hollow Fragment canon endgame\n" +
-            "  F96-100 Ruby Palace - F100 mirrors a clone of you\n\n" +
-            "COSTS\n" +
-            "None. Ascent is the objective, not a resource sink.\n\n" +
-            "TIPS\n" +
-            "Era bands predict biomes — pack ice gear before F16-20 and fire\n" +
-            "resist before F11-15. The endgame (F76+) is notably harsher.\n\n" +
-            "SEE ALSO\n" +
-            "[Biomes] · [Floor Boss Roster — Canon Highlights] · [Labyrinth System] · [Ascending a Floor]")
-        {
-            Tags = new[] { "world", "floors", "bosses" }
-        },
 
         new("World", "Day/Night Cycle",
             "┌─ World\n" +
@@ -2138,7 +2130,7 @@ public static class PlayerGuideContent
             "only exist outside. Enter the labyrinth fully rested, at 100%\n" +
             "durability, with escape consumables in quick slots.\n\n" +
             "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Ascending a Floor] · [Mechanical Tiles] · [Ambient World Animation]")
+            "[Floor Scaling Formulas] · [Ascending a Floor] · [Mechanical Tiles] · [Ambient World Animation]")
         {
             Tags = new[] { "world", "floors", "bosses" }
         },
@@ -2368,7 +2360,7 @@ public static class PlayerGuideContent
             "dryland mobs (their IsWalkable refuses it) but porous to any\n" +
             "aquatic mob flagged CanSwim.\n\n" +
             "SEE ALSO\n" +
-            "[Labyrinth System] · [Safe Rooms & Mechanics] · [River Crossing & Aquatic Mobs] · [Swimming (Life Skill)] · [Ascending a Floor] · [Monument of Swordsmen (F1)]")
+            "[Labyrinth System] · [Safe Rooms & Mechanics] · [River Crossing & Aquatic Mobs] · [Swimming (Life Skill)] · [Ascending a Floor] · [Floor 1]")
         {
             Tags = new[] { "world", "floors", "economy" }
         },
@@ -2423,238 +2415,6 @@ public static class PlayerGuideContent
             Tags = new[] { "world", "aquatic", "swimming" }
         },
 
-        new("World", "Monument of Swordsmen (F1)",
-            "┌─ World\n" +
-            "│ Topic: Monument of Swordsmen (F1)\n" +
-            "│ Glyph: BrightYellow M\n" +
-            "│ Floor: 1 — Town of Beginnings, south plaza grass park\n" +
-            "│ Unlock: Walk onto the tile\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "A canonical Town of Beginnings landmark. Stepping on it opens a\n" +
-            "dialog showing your species kill log with milestone checkmarks\n" +
-            "and the equip/unequip picker for every title you've unlocked.\n\n" +
-            "USAGE\n" +
-            "Walk onto the M tile in the southern plaza park of F1. The\n" +
-            "MonumentDialog pops with two sections: species kill list\n" +
-            "(checkmarks at 10 / 100 / 1000) and the active title picker.\n\n" +
-            "EFFECTS\n" +
-            "  KILL LOG    Per-species tally vs milestone thresholds; check\n" +
-            "              marks show which title triggers have fired.\n" +
-            "  TITLE SLOT  Equip / unequip any unlocked title — same single-\n" +
-            "              slot passive available from StatsDialog.\n" +
-            "  LANDMARK    Does not consume on step; revisit freely.\n\n" +
-            "COSTS\n" +
-            "None. Zero-durability, zero-Col interaction.\n\n" +
-            "TIPS\n" +
-            "Check in whenever you return to F1 — the kill log is the fastest\n" +
-            "way to spot which species title you're closest to unlocking.\n" +
-            "Swap titles here before heading to the next floor so the right\n" +
-            "passive rides with you up the stairs.\n\n" +
-            "SEE ALSO\n" +
-            "[Titles & the Active Title Slot] · [Town of Beginnings NPCs (F1)] · [Mechanical Tiles] · [Life Skills]")
-        {
-            Tags = new[] { "monument", "titles", "world" }
-        },
-
-        new("World", "Floor Boss Roster — Canon Highlights",
-            "┌─ World\n" +
-            "│ Topic: Floor Boss Roster\n" +
-            "│ Floors: 1-100, one canonical boss each\n" +
-            "│ Landmark: Labyrinth boss chamber\n" +
-            "│ Unlock: Enter the Labyrinth and survive\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Each floor has one canonical boss whose death unlocks Stairs Up.\n" +
-            "A select slice maps to SAO novel / anime canon — the rest follow\n" +
-            "the scaling curve below.\n\n" +
-            "USAGE\n" +
-            "Fought inside the Labyrinth. Allies join; party size caps at 2.\n\n" +
-            "EFFECTS\n" +
-            "F1  Illfang the Kobold Lord       F50  The Six-Armed Buddha\n" +
-            "F2  Asterius the Taurus King      F55  X'rphan the White Wyrm\n" +
-            "F3  Nerius the Evil Treant        F60  Armoured Stone Warrior\n" +
-            "F4  Wythege the Hippocampus       F74  The Gleam Eyes\n" +
-            "F5  Fuscus the Vacant Colossus    F75  The Skull Reaper\n" +
-            "F6  The Irrational Cube           F98  Incarnation of the Radius\n" +
-            "F10 Kagachi the Samurai Lord      F99  Heathcliff's Shadow\n" +
-            "F22 The Witch of the West         F100 ??? (Your clone, 150% HP)\n" +
-            "F25 The Two-Headed Giant\n" +
-            "F27 The Four-Armed Giant\n" +
-            "F35 Nicholas the Renegade\n" +
-            "F46 The Ant Queen\n\n" +
-            "Scaling curve for unlisted floors:\n" +
-            "  Level = 10 + 2*floor\n" +
-            "  HP    = 150 + 30*floor + 0.5*floor^2\n" +
-            "  Col   = 4000 + 500*floor + 20*floor^2\n\n" +
-            "COSTS\n" +
-            "Durability, consumables, and allies' HP. Boss deaths cannot be\n" +
-            "rolled back — a wipe in a boss fight deletes the save slot.\n\n" +
-            "TIPS\n" +
-            "F74 Gleam Eyes unlocks Dual Blades; F75 Heathcliff locks Holy\n" +
-            "Sword unless you defeat him. Park major quest turn-ins before\n" +
-            "fighting a boss so you don't waste overflow XP.\n\n" +
-            "SEE ALSO\n" +
-            "[Labyrinth System] · [Unique Skill: Dual Blades] · [Unique Skill: Holy Sword] · [Field Bosses — Guaranteed Drops]")
-        {
-            Tags = new[] { "world", "bosses", "floors" }
-        },
-
-        new("World", "Field Bosses — Guaranteed Drops",
-            "┌─ World\n" +
-            "│ Topic: Field Bosses\n" +
-            "│ Floors: 2, 14, 22, 25, 35, 40, 48, 49, 60, 61, 70, 77+, 80, 83, 85, 86, 87, 90, 93, 95, 97, 98\n" +
-            "│ Landmark: Roaming overworld elites\n" +
-            "│ Unlock: Floor entry; never spawn in labyrinths\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Field bosses are roaming elites on overworld floors. Each\n" +
-            "100%-drops a named item — some Divine, some craft catalysts,\n" +
-            "some Hollow-Fragment implements, and (post-FD pass) seven\n" +
-            "canonical FD character weapons. Once defeated, a field boss\n" +
-            "never respawns on that save.\n\n" +
-            "USAGE\n" +
-            "Engage in the open world — they appear on the overworld only,\n" +
-            "not inside labyrinths. Escape Rope / Teleport crystals work.\n" +
-            "F70+ field-boss kills also roll the Avatar Weapon Last-Attack\n" +
-            "Bonus (see Avatar Weapons topic).\n\n" +
-            "EFFECTS\n" +
-            "  F2   Bullbous Bow           -> Bullbous Horn\n" +
-            "  F14  Starlight Sentinel     -> Integral Arc Angel (IF Epic)\n" +
-            "  F22  Forest King Stag       -> Kingly Antler\n" +
-            "  F25  Labyrinth Warden       -> Nox Radgrid (IF Epic)\n" +
-            "  F35  Magnatherium           -> Mammoth Tusk\n" +
-            "  F40  Ogre Lord              -> Ogre's Cleaver\n" +
-            "  F40  Phoenix of Smolder Pk  -> Flame Bow (Divine)\n" +
-            "  F48  Frost Dragon           -> Crystallite Ingot\n" +
-            "  F49  Nicholas Renegade      -> Returning Soul (Christmas only)\n" +
-            "  F60  Kagutsuchi Fire Samurai-> Spirit Sword Kagutsuchi (FD)\n" +
-            "  F61  Crimson Forneus        -> Rosso Forneus (IF Legendary)\n" +
-            "  F70  Susanoo the Storm Blade-> Spirit Sword Susanoo (FD)\n" +
-            "  F80  Soul Binder            -> Arcaneblade: Soul Binder (HF)\n" +
-            "  F80  Pyre Lord of Heathcliff-> Flame Lord (FD Legendary)\n" +
-            "  F83  Ruinous Herald         -> Fellblade: Ruinous Doom (HF)\n" +
-            "  F85  Silent Edge            -> Black Lily Sword (Divine)\n" +
-            "  F85  Abased Beast           -> canon HNM (Avatar 10% rate)\n" +
-            "  F85  Yuuki's Echo           -> Macafitel (FD Legendary)\n" +
-            "  F86  Fellaxe Revenant       -> Fellaxe: Demon's Scythe (HF)\n" +
-            "  F87  Yasha the Night Demon  -> Yasha Astaroth (IF Legendary)\n" +
-            "  F90  Gaou the Ox-King       -> Gaou Reginleifr (IF Legendary)\n" +
-            "  F93  Banishing Ray          -> Glimmerblade: Banishing Ray (HF)\n" +
-            "  F94  Ark Knight             -> canon HNM (Avatar 10% rate)\n" +
-            "  F95  Warden of Stopped Hrs  -> Time Piercing (Divine)\n" +
-            "  F95  Warden of Blooming Rose-> Red Rose Sword (FD Legendary)\n" +
-            "  F95  Gaia Breaker           -> canon HNM (Avatar 10% rate)\n" +
-            "  F96  Eternal Dragon         -> canon HNM (Avatar 10% rate)\n" +
-            "  F97  Administrator's Regent -> Silvery Ruler (FD Legendary)\n" +
-            "  F98  Ashen Kirito Simulacrum-> Elucidator Rouge (FD Legendary)\n\n" +
-            "COSTS\n" +
-            "No time limit, but field bosses scale 1.5x normal HP and deal\n" +
-            "heavier telegraphed attacks. FD canon bosses scale harder\n" +
-            "(up to 4.5x HP, 1.85x ATK) — see FD Field Bosses topic.\n\n" +
-            "TIPS\n" +
-            "Clear the overworld fully before stepping on the Labyrinth\n" +
-            "entrance — missing a Divine, HF, or FD character drop is\n" +
-            "painful. Christmas-only Nicholas on F49 is one of only two\n" +
-            "Divine Stone of Returning Soul sources. F98 Ashen Kirito\n" +
-            "coexists with Blaze Armor, so budget durability. F95+ field\n" +
-            "bosses also roll a 10% Corruption Stone drop (random Night or\n" +
-            "Shadow), independent of the Avatar last-attack roll.\n\n" +
-            "SEE ALSO\n" +
-            "[Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Corruption Stones & Corrupted Weapons] · [Divine Object Set — Integrity Knights] · [Seasonal Events]")
-        {
-            Tags = new[] { "world", "bosses", "fractured-daydream" }
-        },
-
-        new("World", "Integral Factor Field Bosses",
-            "┌─ World\n" +
-            "│ Topic: Integral Factor Field Bosses\n" +
-            "│ Floors: F14, F25, F61, F87, F90\n" +
-            "│ Landmark: Overworld, one per IF series\n" +
-            "│ Unlock: Floor entry; never respawn\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Five new field bosses gate the Integral Factor weapon series.\n" +
-            "Each guarantees one signature weapon of its series; the series\n" +
-            "shield drops as a secondary, and the remaining series weapons\n" +
-            "fall into the floor-banded Epic/Legendary loot pool.\n\n" +
-            "USAGE\n" +
-            "Clear the overworld on the listed floors. These bosses scale\n" +
-            "harder than standard field bosses (up to 4.5x HP, 1.85x ATK)\n" +
-            "and deal heavier telegraphed attacks.\n\n" +
-            "EFFECTS\n" +
-            "  F14 Starlight Sentinel      Integral Arc Angel (Epic Bow)\n" +
-            "  F25 Labyrinth Warden        Nox Radgrid (Epic 1H Sword)\n" +
-            "  F61 Crimson Forneus         Rosso Forneus (Leg. 1H Sword)\n" +
-            "  F87 Yasha the Night Demon   Yasha Astaroth (Leg. 1H Sword)\n" +
-            "  F90 Gaou the Ox-King        Gaou Reginleifr (Leg. 1H Sword)\n" +
-            "Yasha was moved from canon F85 to F87 to avoid collision with\n" +
-            "Silent Edge (Black Lily Sword) and Abased Beast already on\n" +
-            "that floor. Night Stalker and Yasha coexist on F87.\n\n" +
-            "COSTS\n" +
-            "No time limit. Each boss never respawns on that save, so\n" +
-            "missing a clear means farming the remaining series items\n" +
-            "through the floor-banded loot pool.\n\n" +
-            "TIPS\n" +
-            "Do NOT skip F14 Starlight Sentinel — Integral is the first\n" +
-            "tier that carries through every later tier's refinement\n" +
-            "upgrades. Yasha/Gaou field bosses hit in the 80-90 range\n" +
-            "where an unrefined Celestial weapon is already underpowered.\n\n" +
-            "SEE ALSO\n" +
-            "[Integral Factor Weapon Series] · [Field Bosses — Guaranteed Drops] · [Fractured Daydream Field Bosses] · [Named Legendary Highlights]")
-        {
-            Tags = new[] { "world", "bosses", "integral-factor" }
-        },
-
-        new("World", "Fractured Daydream Field Bosses",
-            "┌─ World\n" +
-            "│ Topic: Fractured Daydream Field Bosses\n" +
-            "│ Floors: F60, F70, F80, F85, F95, F97, F98\n" +
-            "│ Landmark: Overworld, canon FD arc bosses\n" +
-            "│ Unlock: Floor entry; never respawn\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Seven canonical field bosses gate Fractured Daydream (FD)\n" +
-            "character weapons. Each 100%-drops one FD Legendary on kill,\n" +
-            "moving those weapons out of the random banded loot pool into\n" +
-            "fixed canon placements.\n\n" +
-            "USAGE\n" +
-            "Clear the overworld on the listed floors. FD bosses scale\n" +
-            "harder than standard field bosses (2.8x-4.5x HP, 1.5x-1.85x\n" +
-            "ATK) and deal heavier telegraphed attacks — budget crystals.\n\n" +
-            "EFFECTS\n" +
-            "  F60 Kagutsuchi the Fire Samurai    (2.8x HP, 1.5x ATK)\n" +
-            "                                      -> Spirit Sword Kagutsuchi\n" +
-            "  F70 Susanoo the Storm Blade        (3.2x HP, 1.6x ATK)\n" +
-            "                                      -> Spirit Sword Susanoo\n" +
-            "  F80 Pyre Lord of Heathcliff        (3.8x HP, 1.7x ATK)\n" +
-            "                                      -> Flame Lord\n" +
-            "  F85 Yuuki's Echo                   (4.0x HP, 1.75x ATK)\n" +
-            "                                      -> Macafitel\n" +
-            "  F95 Warden of the Blooming Rose    (4.3x HP, 1.8x ATK)\n" +
-            "                                      -> Red Rose Sword\n" +
-            "  F97 Administrator's Regent         (4.2x HP, 1.8x ATK)\n" +
-            "                                      -> Silvery Ruler\n" +
-            "  F98 Ashen Kirito Simulacrum        (4.5x HP, 1.85x ATK)\n" +
-            "                                      -> Elucidator Rouge\n" +
-            "Also canon: F55 Agil's Apprentice (quest NPC, 15 kills) hands\n" +
-            "out Ground Gorge — see Fractured Daydream Character Weapons.\n\n" +
-            "COSTS\n" +
-            "No time limit. Each boss never respawns on that save, so\n" +
-            "missing a clear means the weapon never drops on this run.\n" +
-            "F97 bumped from canon F95 to space out with Warden of Stopped\n" +
-            "Hours and Red Rose Warden. F98 coexists with Blaze Armor.\n\n" +
-            "TIPS\n" +
-            "Kagutsuchi (F60) and Susanoo (F70) are the easiest pair — Klein\n" +
-            "canon kit lands here. Chain F95 → F97 → F98 on a single push\n" +
-            "for three Legendary drops in two floors. Ashen Kirito drops\n" +
-            "the Elucidator Rouge half of the Rouge/Flare Pulsar pair.\n\n" +
-            "SEE ALSO\n" +
-            "[Field Bosses — Guaranteed Drops] · [Fractured Daydream Character Weapons] · [Agil's Apprentice (F55)] · [Paired Dual-Wield Weapons]")
-        {
-            Tags = new[] { "world", "bosses", "fractured-daydream" }
-        },
-
         new("World", "Run Modifiers (12 Optional Challenges)",
             "┌─ World\n" +
             "│ Topic: Run Modifiers\n" +
@@ -2698,7 +2458,7 @@ public static class PlayerGuideContent
             "the other — and with Legend Braves' +15 Attack vs LC-tagged\n" +
             "mobs if you're running the anti-PK track instead.\n\n" +
             "SEE ALSO\n" +
-            "[Unique Skill: Darkness Blade] · [Laughing Coffin (F75 Hidden)] · [Legend Braves (F25)] · [Permadeath & Save Deletion] · [Save System]")
+            "[Unique Skill: Darkness Blade] · [Floor 75] · [Floor 25] · [Permadeath & Save Deletion] · [Save System]")
         {
             Tags = new[] { "world", "progression", "permadeath" }
         },
@@ -2735,43 +2495,9 @@ public static class PlayerGuideContent
             "Returning Soul — it auto-revives you within 10 seconds of death\n" +
             "and is a literal save-from-deletion since every run is permadeath.\n\n" +
             "SEE ALSO\n" +
-            "[Field Bosses — Guaranteed Drops] · [Potions, Crystals & Throwables] · [Permadeath & Save Deletion] · [Divine Objects]")
+            "[Potions, Crystals & Throwables] · [Permadeath & Save Deletion] · [Divine Objects]")
         {
             Tags = new[] { "world", "bosses", "divine" }
-        },
-
-        new("World", "Lindarth Town (F48)",
-            "┌─ World\n" +
-            "│ Topic: Lindarth Town (F48)\n" +
-            "│ Floors: 48\n" +
-            "│ Landmark: Settlement hub on Floor 48\n" +
-            "│ Unlock: Reach F48; walk into town tiles\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Lindarth is the canon SAO blacksmithing town on Floor 48 and\n" +
-            "the only place Lisbeth's Rarity 6 craft line is available.\n" +
-            "Treat it as the mid-endgame crafting hub.\n\n" +
-            "USAGE\n" +
-            "Ascend to Floor 48 and explore until you find the Lindarth\n" +
-            "settlement tiles. Bump the BrightMagenta 'L' NPC (F48 Lisbeth,\n" +
-            "distinct from the F1 townsfolk) to open the R6 craft dialog.\n\n" +
-            "EFFECTS\n" +
-            "Lindarth houses:\n" +
-            "  F48 Lisbeth (craft-only, Rarity 6 recipes)\n" +
-            "  Standard floor vendor\n" +
-            "  Safe-room tiles (Campfire / Anvil)\n" +
-            "The Frost Dragon field boss also spawns on F48 — its\n" +
-            "Crystallite Ingot drop feeds several R6 recipes.\n\n" +
-            "COSTS\n" +
-            "None to visit. R6 crafts cost 3M Col + rare mats each.\n\n" +
-            "TIPS\n" +
-            "Bank Col aggressively before reaching F48 — a single R6 craft\n" +
-            "drains 3M Col. Stock Crystallite Ingots by farming the F48\n" +
-            "Frost Dragon on your way in.\n\n" +
-            "SEE ALSO\n" +
-            "[Lisbeth — Rarity 6 Craft Line] · [Field Bosses — Guaranteed Drops] · [Town of Beginnings NPCs (F1)] · [Anvil — Repair, Enhance, Evolve, Refine]")
-        {
-            Tags = new[] { "world", "lisbeth", "npcs" }
         },
 
         new("World", "Town Guard (Outlaw Mode)",
@@ -2807,7 +2533,7 @@ public static class PlayerGuideContent
             "game. If you're NOT running LC, push karma above -50 with\n" +
             "quest turn-ins before setting foot in TOB again.\n\n" +
             "SEE ALSO\n" +
-            "[Karma & Alignment] · [Laughing Coffin (F75 Hidden)] · [Town of Beginnings NPCs (F1)] · [Guild System Overview]")
+            "[Karma & Alignment] · [Floor 75] · [Floor 1] · [Guild System Overview]")
         {
             Tags = new[] { "outlaw", "karma", "world" }
         },
@@ -2847,7 +2573,7 @@ public static class PlayerGuideContent
             "Clearing F50 also unlocks the equippable Survivor title (see\n" +
             "Titles & the Active Title Slot).\n\n" +
             "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Floor Titles] · [Save System] · [Col Economy — How You Earn] · [Titles & the Active Title Slot]")
+            "[Floor Scaling Formulas] · [Floor Titles] · [Save System] · [Col Economy — How You Earn] · [Titles & the Active Title Slot]")
         {
             Tags = new[] { "world", "progression", "xp" }
         },
@@ -3083,7 +2809,7 @@ public static class PlayerGuideContent
             "resist for Gleam Eyes). Generic-arena fights lean on boss\n" +
             "stats alone; run modifiers matter more than terrain.\n\n" +
             "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Labyrinth System] · [Floor Canon] · [Prefab Rooms — What They Are] · [Ascending a Floor]")
+            "[Floor Scaling Formulas] · [Labyrinth System] · [Floor Canon] · [Prefab Rooms — What They Are] · [Ascending a Floor]")
         {
             Tags = new[] { "world", "terrain", "prefab", "boss" }
         },
@@ -3199,7 +2925,7 @@ public static class PlayerGuideContent
             "towns (F1, F22, F48, F55, F100) are the best stock-up\n" +
             "points — deeper vendor tables than generic settlements.\n\n" +
             "SEE ALSO\n" +
-            "[Aincrad's 100 Floors & Eras] · [Lindarth Town (F48)] · [Floor Boss Roster — Canon Highlights] · [Prefab Rooms — Boss Arenas] · [Monument of Swordsmen (F1)]")
+            "[Floor 1] · [Floor 48] · [Floor Scaling Formulas] · [Prefab Rooms — Boss Arenas] · [Floor 1]")
         {
             Tags = new[] { "world", "terrain", "canon", "boss" }
         },
@@ -3481,7 +3207,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Memory Defrag Originals] · [MD Alicization Canonical Extras] · [Fractured Daydream Character Weapons] · [Elemental Weapon Variants] · [Integral Factor Weapon Series] · [Infinity Moment Last Attack Bonus Weapons] · [Infinity Moment Shop Weapons] · [Lisbeth — Rarity 6 Craft Line] · [Avatar Weapons & Last-Attack Bonus] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons] · [SAO Last Recollection Weapons] · [Corruption Stones & Corrupted Weapons]")
         {
-            Tags = new[] { "weapons", "rarity", "cross-game" }
+            Tags = new[] { "weapons", "rarity", "cross-game", "spoiler" }
         },
 
         new("Items", "Divine Object Set — Integrity Knights",
@@ -3517,9 +3243,9 @@ public static class PlayerGuideContent
             "Divine Scythe; pair it with Scythe proficiency for the 2-range\n" +
             "reaper build.\n\n" +
             "SEE ALSO\n" +
-            "[Divine Objects] · [Dorothy (F78)] · [Selka the Novice (F65)] · [Sister Azariya (F50)]")
+            "[Divine Objects] · [Floor 78] · [Floor 65] · [Floor 50]")
         {
-            Tags = new[] { "weapons", "divine", "last-recollection" }
+            Tags = new[] { "weapons", "divine", "last-recollection", "spoiler" }
         },
 
         new("Items", "Weapon Evolution Chains",
@@ -3628,7 +3354,7 @@ public static class PlayerGuideContent
             "feeds both 1H Sword and Katana chains, making those two\n" +
             "chains efficient co-grinds.\n\n" +
             "SEE ALSO\n" +
-            "[Weapon Evolution Chains] · [Evolution Chain Table] · [Field Bosses — Guaranteed Drops]")
+            "[Weapon Evolution Chains] · [Evolution Chain Table]")
         {
             Tags = new[] { "weapons", "evolution", "crafting" }
         },
@@ -3680,7 +3406,7 @@ public static class PlayerGuideContent
             "(Ash White from hollow mobs F76+, Crimson Flame from fire/demon,\n" +
             "etc.) — see Enhancement Ores System.\n\n" +
             "SEE ALSO\n" +
-            "[Weapon Refinement System] · [Weapon Evolution Chains] · [Refinement Ingots] · [Enhancement Ores System] · [Non-Enhanceable LAB Weapons] · [Lisbeth — Rarity 6 Craft Line]")
+            "[Weapon Refinement System] · [Weapon Evolution Chains] · [Refinement Ingots] · [Enhancement Ores System] · [Sealed Weapons] · [Lisbeth — Rarity 6 Craft Line]")
         {
             Tags = new[] { "crafting", "anvil", "refinement" }
         },
@@ -3721,7 +3447,7 @@ public static class PlayerGuideContent
             "F14 Integral weapon with 3 Epic ingots can outperform an\n" +
             "unrefined F40 Legendary for many floors.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Field Bosses] · [Weapon Refinement System] · [Named Legendary Highlights]")
+            "[Weapon Refinement System] · [Named Legendary Highlights]")
         {
             Tags = new[] { "weapons", "integral-factor", "rarity" }
         },
@@ -3858,7 +3584,7 @@ public static class PlayerGuideContent
             "Epic/Legendary tier weapons via crystallite. Common-Rare gear\n" +
             "still tops out at +5 (iron) / +7 (mithril).\n\n" +
             "SEE ALSO\n" +
-            "[Lindarth Town (F48)] · [Weapon Refinement System] · [Anvil — Repair, Enhance, Evolve, Refine] · [Named Legendary Highlights] · [Mithril Ingot Enhance (Rare/Epic, +1..+7)] · [Crystallite Ingot Enhance (Epic/Legendary, +1..+10)] · [Reforge — Re-roll Random Bonuses]")
+            "[Floor 48] · [Weapon Refinement System] · [Anvil — Repair, Enhance, Evolve, Refine] · [Named Legendary Highlights] · [Mithril Ingot Enhance (Rare/Epic, +1..+7)] · [Crystallite Ingot Enhance (Epic/Legendary, +1..+10)] · [Reforge — Re-roll Random Bonuses]")
         {
             Tags = new[] { "lisbeth", "crafting", "weapons" }
         },
@@ -3912,7 +3638,7 @@ public static class PlayerGuideContent
             "the type you want. Dual Blades users should finish with the\n" +
             "off-hand weapon type they care about.\n\n" +
             "SEE ALSO\n" +
-            "[Field Bosses — Guaranteed Drops] · [Named Legendary Highlights] · [Weapon Types Overview] · [Infinity Moment Last Attack Bonus Weapons] · [Hollow Fragment HNM Questgivers (F79-F99)] · [Corruption Stones & Corrupted Weapons]")
+            "[Named Legendary Highlights] · [Weapon Types Overview] · [Infinity Moment Last Attack Bonus Weapons] · [Floor 79] · [Corruption Stones & Corrupted Weapons]")
         {
             Tags = new[] { "avatar", "weapons", "hollow-fragment" }
         },
@@ -3949,7 +3675,7 @@ public static class PlayerGuideContent
             "fill the gaps between canon HF questgiver rewards and the\n" +
             "Avatar Weapon roster.\n\n" +
             "SEE ALSO\n" +
-            "[Hollow Fragment HNM Questgivers (F79-F99)] · [Avatar Weapons & Last-Attack Bonus] · [Named Legendary Highlights] · [Rarity Tiers & Drop Rates]")
+            "[Floor 79] · [Avatar Weapons & Last-Attack Bonus] · [Named Legendary Highlights] · [Rarity Tiers & Drop Rates]")
         {
             Tags = new[] { "hollow-area", "weapons", "hollow-fragment" }
         },
@@ -3994,7 +3720,7 @@ public static class PlayerGuideContent
             "out until a new save. The Implement System roster is the\n" +
             "spine of any post-F75 build diversity.\n\n" +
             "SEE ALSO\n" +
-            "[Hollow Fragment HNM Questgivers (F79-F99)] · [Field Bosses — Guaranteed Drops] · [Hollow Area Uniques] · [Avatar Weapons & Last-Attack Bonus]")
+            "[Floor 79] · [Hollow Area Uniques] · [Avatar Weapons & Last-Attack Bonus]")
         {
             Tags = new[] { "hollow-fragment", "weapons", "quests" }
         },
@@ -4029,7 +3755,7 @@ public static class PlayerGuideContent
             "Angel window. Socket Hunter or Sharpening Ingots into its 3\n" +
             "refinement slots to squeeze another 10-20 floors of use.\n\n" +
             "SEE ALSO\n" +
-            "[Integral Factor Weapon Series] · [Weapon Refinement System] · [Town of Beginnings NPCs (F1)]")
+            "[Integral Factor Weapon Series] · [Weapon Refinement System] · [Floor 1]")
         {
             Tags = new[] { "weapons", "integral-factor", "crafting" }
         },
@@ -4052,7 +3778,7 @@ public static class PlayerGuideContent
             "EFFECTS\n" +
             "Slots: Weapon, Head, Chest, Legs, Feet, RightRing, LeftRing,\n" +
             "Bracelet, Necklace, OffHand, Tool.\n" +
-            "TOOL: Holds non-combat utility gear. Bundle 10 ships pickaxes\n" +
+            "TOOL: Holds non-combat utility gear. Pickaxes\n" +
             "(Wooden / Iron / Mithril) — equipping one enables the bump-\n" +
             "action mining swing on ore-vein tiles. Tool slot is independent\n" +
             "of OffHand, so a sword + shield + pickaxe loadout is legal\n" +
@@ -4091,7 +3817,7 @@ public static class PlayerGuideContent
             "│ Action: Bump a vein with a Pickaxe equipped\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Mining is Bundle 10's headline non-combat loop. Equip a\n" +
+            "Mining is the headline non-combat loop. Equip a\n" +
             "Pickaxe in the new Tool slot, walk up to an ore vein on the\n" +
             "map, and bump into it the way you'd bump an enemy — your\n" +
             "swing strikes the vein, costs 1 turn, ticks 1 durability off\n" +
@@ -4169,7 +3895,7 @@ public static class PlayerGuideContent
             "USAGE\n" +
             "Buy Wooden at every vendor F1-F9 (~96 Col post-markup) and\n" +
             "Iron at every vendor F10-F50 (~384 Col post-markup). Mithril\n" +
-            "is WORLD-FIND ONLY in Bundle 12 — no vendor stocks it; loot\n" +
+            "is WORLD-FIND ONLY — no vendor stocks it; loot\n" +
             "it from chests, ore-cluster rooms, or quest rewards on F50+.\n" +
             "Equip via Inventory → Tool slot. Repair at the Anvil like\n" +
             "any equipment piece — pickaxes follow normal durability/repair\n" +
@@ -4456,7 +4182,7 @@ public static class PlayerGuideContent
             "on a later climb. Park Saku (Katana, NightDamage) for Darkness\n" +
             "Blade builds; Artemis (Bow) is one of only two F99 apex drops.\n\n" +
             "SEE ALSO\n" +
-            "[Non-Enhanceable LAB Weapons] · [Avatar Weapons & Last-Attack Bonus] · [Infinity Moment Shop Weapons] · [Named Legendary Highlights]")
+            "[Sealed Weapons] · [Avatar Weapons & Last-Attack Bonus] · [Infinity Moment Shop Weapons] · [Named Legendary Highlights]")
         {
             Tags = new[] { "infinity-moment", "lab-weapon", "weapons" }
         },
@@ -4544,43 +4270,37 @@ public static class PlayerGuideContent
             "15-30% so floor-boss farming is the fastest stockpile route.\n" +
             "Humanoid/bandit biomes double-dip as chain-catalyst farms.\n\n" +
             "SEE ALSO\n" +
-            "[Anvil — Repair, Enhance, Evolve, Refine] · [Material Tiers (Baseline)] · [Non-Enhanceable LAB Weapons] · [Infinity Moment Shop Weapons]")
+            "[Anvil — Repair, Enhance, Evolve, Refine] · [Material Tiers (Baseline)] · [Sealed Weapons] · [Infinity Moment Shop Weapons]")
         {
             Tags = new[] { "enhancement-ore", "anvil", "crafting" }
         },
 
-        new("Items", "Non-Enhanceable LAB Weapons",
+        new("Items", "Sealed Weapons",
             "┌─ Items\n" +
-            "│ Topic: Non-Enhanceable LAB Weapons\n" +
-            "│ Tier: Legendary (IsEnhanceable flag = false)\n" +
+            "│ Topic: Sealed Weapons\n" +
+            "│ Tier: Legendary (sealed flag set)\n" +
             "│ Weapon type: All 8 Infinity Moment LAB drops\n" +
             "│ Source: F85-F99 floor-boss LAB hook\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "A subset of late-game weapons carry the IsEnhanceable=false\n" +
-            "flag. Canon IM rationale: LAB weapons ship with high base\n" +
-            "stats and cannot scale further. The Anvil Enhance menu marks\n" +
-            "them [SEALED] and blocks any attempt with a clear message.\n\n" +
-            "USAGE\n" +
-            "Equip and fight as normal. Repair, Evolve (if on a chain), and\n" +
-            "Refine flows all still apply — only Enhance is blocked.\n\n" +
-            "EFFECTS\n" +
-            "Sealed weapons (all 8 current IM LAB drops):\n" +
+            "A subset of late-game LAB weapons ship sealed: their stats\n" +
+            "cannot be scaled further. The Anvil and Reforge menus mark\n" +
+            "them [SEALED] and block any attempt with a clear message.\n\n" +
+            "MECHANICS\n" +
+            "Enhance and Reforge are blocked. Repair and Evolve (if on a\n" +
+            "chain) still work. Refinement sockets still accept ingots.\n" +
+            "Sealed roster (all 8 current IM LAB drops):\n" +
             "  Zephyros, Sacred Cross, Glow Haze, Saku, Mirage Knife,\n" +
             "  Northern Light, Lunatic Roof, Artemis.\n" +
-            "Remains Heart remains enhanceable (canon Lisbeth masterwork\n" +
-            "exception). Any future LAB additions inherit the flag.\n\n" +
-            "COSTS\n" +
-            "Opportunity cost only: a sealed weapon's +3 ATK / +N bias\n" +
-            "ceiling is forfeit. Factor high base stats into the comparison\n" +
-            "against an enhanceable Epic/Legendary you could push to +10.\n\n" +
+            "Remains Heart stays enhanceable (canon Lisbeth masterwork\n" +
+            "exception).\n\n" +
             "TIPS\n" +
-            "Pair a sealed LAB with heavy Refinement investment — socket 3\n" +
-            "Astral or Chimeric Ingots to recover the ATK you can't enhance\n" +
-            "in. Dual Blades users can mix a sealed main-hand with an\n" +
-            "enhanceable off-hand for scaling on one side.\n\n" +
+            "Pair a sealed LAB with heavy Refinement — socket 3 Astral or\n" +
+            "Chimeric Ingots to recover the ATK you can't enhance in. Dual\n" +
+            "Blades users can mix a sealed main-hand with an enhanceable\n" +
+            "off-hand for scaling on one side.\n\n" +
             "SEE ALSO\n" +
-            "[Infinity Moment Last Attack Bonus Weapons] · [Anvil — Repair, Enhance, Evolve, Refine] · [Enhancement Ores System] · [Weapon Refinement System]")
+            "[Infinity Moment Last Attack Bonus Weapons] · [Anvil — Repair, Enhance, Evolve, Refine] · [Reforge — Re-roll Random Bonuses] · [Weapon Refinement System]")
         {
             Tags = new[] { "infinity-moment", "lab-weapon", "weapons" }
         },
@@ -4615,7 +4335,7 @@ public static class PlayerGuideContent
             "badge doesn't lock you out — the item remains in stock — but\n" +
             "the badge is the best way to spot the new drop quickly.\n\n" +
             "SEE ALSO\n" +
-            "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Vendor Investing] · [Ascending a Floor] · [Floor Boss Roster — Canon Highlights] · [Gear Compare]")
+            "[Infinity Moment Shop Weapons] · [Vendors — Rotating Stock] · [Vendor Investing] · [Ascending a Floor] · [Floor Scaling Formulas] · [Gear Compare]")
         {
             Tags = new[] { "shop-tiering", "infinity-moment", "economy" }
         },
@@ -4696,7 +4416,7 @@ public static class PlayerGuideContent
             "Unfolding Truth is the MD-canon complement to the Divine\n" +
             "Fragrant Olive from Selka Q1 — both canon, different flavor.\n\n" +
             "SEE ALSO\n" +
-            "[The Sword's Awakening (Selka F65)] · [Paired Dual-Wield Weapons] · [Divine Object Set — Integrity Knights] · [Memory Defrag Originals] · [Named Legendary Highlights]")
+            "[Floor 65] · [Paired Dual-Wield Weapons] · [Divine Object Set — Integrity Knights] · [Memory Defrag Originals] · [Named Legendary Highlights]")
         {
             Tags = new[] { "memory-defrag", "weapons", "divine" }
         },
@@ -4748,7 +4468,7 @@ public static class PlayerGuideContent
             "Pair Resonance dual-wield combo; add Murasama G4 as a Katana\n" +
             "sidearm for Katana Mastery's bleed pressure when swapping.\n\n" +
             "SEE ALSO\n" +
-            "[Fractured Daydream Field Bosses] · [Agil's Apprentice (F55)] · [Paired Dual-Wield Weapons] · [Elemental Weapon Variants] · [Named Legendary Highlights]")
+            "[Floor 55] · [Paired Dual-Wield Weapons] · [Elemental Weapon Variants] · [Named Legendary Highlights]")
         {
             Tags = new[] { "fractured-daydream", "weapons", "rarity" }
         },
@@ -4919,7 +4639,7 @@ public static class PlayerGuideContent
             "Dorothy's pre-purification base and works as an F50-65 bridge\n" +
             "toward the Divine upgrade.\n\n" +
             "SEE ALSO\n" +
-            "[Dorothy (F78)] · [Divine Object Set — Integrity Knights] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons]")
+            "[Floor 78] · [Divine Object Set — Integrity Knights] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons]")
         {
             Tags = new[] { "last-recollection", "weapons", "divine" }
         },
@@ -4967,7 +4687,7 @@ public static class PlayerGuideContent
             "Corrupted Elucidator + Dark Repulser) to soften the HolyDamage\n" +
             "hit on the pair.\n\n" +
             "SEE ALSO\n" +
-            "[Named Legendary Highlights] · [Field Bosses — Guaranteed Drops] · [Avatar Weapons & Last-Attack Bonus] · [Material Tiers (Baseline)]")
+            "[Named Legendary Highlights] · [Avatar Weapons & Last-Attack Bonus] · [Material Tiers (Baseline)]")
         {
             Tags = new[] { "corruption-stone", "corrupted-weapon", "weapons" }
         },
@@ -5008,7 +4728,7 @@ public static class PlayerGuideContent
             "  Stun+N            N% on-hit Stun proc\n" +
             "  Poison+N          N% on-hit Poison proc\n" +
             "  SlowOnHit+N       N% on-hit Slow proc — target acts every\n" +
-            "                    other turn for 3 turns (Bundle 10 wired;\n" +
+            "                    other turn for 3 turns (wired;\n" +
             "                    Guilty Thorn's SlowOnHit+30 is the canon\n" +
             "                    test bench). Mob-ID parity desyncs the\n" +
             "                    skip-turn cadence, so two slowed mobs in\n" +
@@ -5044,7 +4764,7 @@ public static class PlayerGuideContent
             "fight on F48 (Frost Dragon) and F100 approaches. NightDamage\n" +
             "weapons pair with Darkness Blade for compound Dark-biome bursts.\n\n" +
             "SEE ALSO\n" +
-            "[Damage Formula] · [Critical Hits] · [Status: Bleed & Poison] · [Status: Stun & Slow] · [Weapon Proficiency Ranks] · [Weapon Types Overview] · [Floor Boss Roster — Canon Highlights]")
+            "[Damage Formula] · [Critical Hits] · [Status: Bleed & Poison] · [Status: Stun & Slow] · [Weapon Proficiency Ranks] · [Weapon Types Overview] · [Floor Scaling Formulas]")
         {
             Tags = new[] { "items", "weapon", "combat", "special-effect" }
         },
@@ -5116,7 +4836,7 @@ public static class PlayerGuideContent
             "Keep a Town NPC in reach during long farming runs — turn in\n" +
             "between waves so overflow XP isn't eaten by a level-up mid-quest.\n\n" +
             "SEE ALSO\n" +
-            "[Quest Types & Rewards] · [Town of Beginnings NPCs (F1)] · [Vendors — Rotating Stock] · [Save System] · [Quest Tracker]")
+            "[Quest Types & Rewards] · [Floor 1] · [Vendors — Rotating Stock] · [Save System] · [Quest Tracker]")
         {
             Tags = new[] { "quests", "npcs", "economy" }
         },
@@ -5156,321 +4876,9 @@ public static class PlayerGuideContent
             "Leave the auto-pin alone if you only ever keep one quest at a\n" +
             "time; unpin to reclaim the HUD space for a big-map session.\n\n" +
             "SEE ALSO\n" +
-            "[Accepting & Completing Quests] · [Quest Types & Rewards] · [Town of Beginnings NPCs (F1)] · [Controls & Keybindings]")
+            "[Accepting & Completing Quests] · [Quest Types & Rewards] · [Floor 1] · [Controls & Keybindings]")
         {
             Tags = new[] { "quests", "ui", "hud" }
-        },
-
-        new("Quests & NPCs", "Ran the Brawler (F2)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Ran the Brawler (green 'R')\n" +
-            "│ Floor: 2\n" +
-            "│ Quest: Ran's Trial (Unique Skill unlock)\n" +
-            "│ Reward: Martial Arts + 200 Col + 150 XP\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "An SAO Progressive canon NPC who gates the Martial Arts Unique\n" +
-            "Skill behind an unarmed-combat trial on Floor 2.\n\n" +
-            "USAGE\n" +
-            "Bump Ran on F2. Accept Ran's Trial: defeat 5 beasts on F2 using\n" +
-            "Unarmed (no weapon equipped). Return to Ran after completion.\n\n" +
-            "EFFECTS\n" +
-            "On turn-in:\n" +
-            "  - Unlocks Martial Arts Unique Skill\n" +
-            "  - +200 Col\n" +
-            "  - +150 XP\n" +
-            "Alternative unlock: Martial Arts auto-unlocks at 30 unarmed\n" +
-            "kills. The trial banner is guarded against double-firing if the\n" +
-            "milestone already popped.\n\n" +
-            "COSTS\n" +
-            "You fight 5 F2 beasts with hands empty. Fists do reduced raw\n" +
-            "damage but benefit from Martial Arts' unarmed +10% / +20% crit\n" +
-            "once it's active.\n\n" +
-            "TIPS\n" +
-            "Travel to F2 with a ranged backup (Bow) stashed in backpack so\n" +
-            "you can re-equip if a boss ambushes. Feline/kobold beasts on F2\n" +
-            "die in 2-3 unarmed hits at Lv4+.\n\n" +
-            "SEE ALSO\n" +
-            "[Unique Skill: Martial Arts] · [Accepting & Completing Quests] · [Weapon Proficiency Ranks] · [Sword Skills — Unlock & Use]")
-        {
-            Tags = new[] { "quests", "npcs", "unique-skills" }
-        },
-
-        new("Quests & NPCs", "Sister Azariya (F50)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Sister Azariya (cyan 'A')\n" +
-            "│ Floor: 50\n" +
-            "│ Quest: Light at the Edge of Sight\n" +
-            "│ Reward: Heaven-Piercing Blade (Divine) + 500 Col + 400 XP\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "A Divine Object giver on Floor 50 who hands over Fanatio's\n" +
-            "Heaven-Piercing Blade in exchange for clearing monsters on her\n" +
-            "floor. Former Fanatio apprentice; left the Integrity Knight\n" +
-            "order.\n\n" +
-            "USAGE\n" +
-            "Bump Sister Azariya on F50. Accept \"Light at the Edge of Sight\":\n" +
-            "slay 20 monsters on Floor 50. Return to her with the quest\n" +
-            "complete.\n\n" +
-            "EFFECTS\n" +
-            "On turn-in:\n" +
-            "  - Heaven-Piercing Blade (Divine, PiercingBeam+30, Range 2)\n" +
-            "  - +500 Col\n" +
-            "  - +400 XP\n" +
-            "Auto-added to inventory; dropped at your feet if inventory full.\n\n" +
-            "COSTS\n" +
-            "20 F50 monster kills. She never layers random quests on top, so\n" +
-            "don't expect extra side work.\n\n" +
-            "TIPS\n" +
-            "Double-dip by accepting weapon-gated random Kill quests from\n" +
-            "another F50 NPC first — the same 20 kills can pay out twice.\n\n" +
-            "SEE ALSO\n" +
-            "[Divine Object Set — Integrity Knights] · [Divine Objects] · [Selka the Novice (F65)] · [Dorothy (F78)] · [Quest Types & Rewards]")
-        {
-            Tags = new[] { "quests", "npcs", "divine" }
-        },
-
-        new("Quests & NPCs", "Selka the Novice (F65)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Selka the Novice (white 'S')\n" +
-            "│ Floor: 65\n" +
-            "│ Quest 1: The Last Knight's Bequest (25 kills)\n" +
-            "│ Quest 2: The Sword's Awakening (30 kills, post-turn-in)\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "A Floor 65 Divine Object giver and chained-quest NPC. Selka\n" +
-            "(Alice's younger sister) keeps Alice's blade for a worthy\n" +
-            "wielder, then returns with a canon MD awakening chain.\n\n" +
-            "USAGE\n" +
-            "Bump Selka on F65. Accept \"The Last Knight's Bequest\": slay 25\n" +
-            "monsters on Floor 65, return for the Divine blade. After turn-\n" +
-            "in, bump her again to unlock \"The Sword's Awakening\": slay 30\n" +
-            "monsters on F65+ for the MD-awakened variant.\n\n" +
-            "EFFECTS\n" +
-            "Quest 1 (The Last Knight's Bequest):\n" +
-            "  - Fragrant Olive Sword (Divine, HolyAoE+15, SD+15)\n" +
-            "  - +500 Col, +400 XP\n" +
-            "Quest 2 (The Sword's Awakening, chained):\n" +
-            "  - Unfolding Truth Fragrant Olive Sword (MD-awakened, stronger)\n" +
-            "  - +800 Col, +600 XP\n" +
-            "  - Closes Selka's arc with canon MD \"awakening\" dialogue\n" +
-            "Auto-added to inventory; dropped at your feet if full.\n\n" +
-            "COSTS\n" +
-            "25 + 30 F65+ monster kills. No new save schema — the chain\n" +
-            "uses QuestStatus.TurnedIn as the Quest 2 gate.\n\n" +
-            "TIPS\n" +
-            "If you're running a Holy-Sword build, Fragrant Olive Sword's\n" +
-            "HolyAoE+15 stacks with Sacred Edge nicely. Push straight into\n" +
-            "Quest 2 for the awakened upgrade — the 30 kills overlap with\n" +
-            "any standing F65+ kill quests, so stack your accept list.\n\n" +
-            "SEE ALSO\n" +
-            "[The Sword's Awakening (Selka F65)] · [Divine Object Set — Integrity Knights] · [Dorothy (F78)] · [MD Alicization Canonical Extras] · [Unique Skill: Holy Sword]")
-        {
-            Tags = new[] { "quests", "npcs", "unfolding-truth" }
-        },
-
-        new("Quests & NPCs", "The Sword's Awakening (Selka F65)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Selka the Novice (F65)\n" +
-            "│ Floor: 65+ (kills count anywhere F65 or above)\n" +
-            "│ Quest: selka_unfolding_truth (chained Quest 2)\n" +
-            "│ Reward: Unfolding Truth Fragrant Olive Sword + 800 Col + 600 XP\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Selka's chained second quest. Becomes available only after the\n" +
-            "base Fragrant Olive Sword quest (The Last Knight's Bequest) is\n" +
-            "turned in — no new save schema; uses QuestStatus.TurnedIn as\n" +
-            "the unlock gate.\n\n" +
-            "USAGE\n" +
-            "Turn in Quest 1 for the Divine Fragrant Olive Sword. Return to\n" +
-            "Selka on F65 and bump her again — the awakening dialogue opens.\n" +
-            "Accept, then slay 30 monsters on F65 or higher and return.\n\n" +
-            "EFFECTS\n" +
-            "On turn-in:\n" +
-            "  - Unfolding Truth Fragrant Olive Sword\n" +
-            "    (MD-awakened variant, stronger stats than Divine base)\n" +
-            "  - +800 Col\n" +
-            "  - +600 XP\n" +
-            "  - Post-turn-in flavor line closes Selka's arc\n" +
-            "Dialogue uses canon MD phrasing (\"awakening\", \"unfolding\n" +
-            "truth\") pulled from the Alicization mobile storyline.\n\n" +
-            "COSTS\n" +
-            "30 F65+ kills. Kills roll up from any floor at or above 65, so\n" +
-            "you can advance the counter while climbing.\n\n" +
-            "TIPS\n" +
-            "Stack the 30 kills with HF HNM questgiver grinds on F79+ —\n" +
-            "those floors count, and you'll pay off two quests at once.\n" +
-            "The awakened blade replaces the Divine base in most builds;\n" +
-            "salvage or vault the Divine for Holy-Sword flavor runs.\n\n" +
-            "SEE ALSO\n" +
-            "[Selka the Novice (F65)] · [MD Alicization Canonical Extras] · [Divine Object Set — Integrity Knights] · [Quest Types & Rewards]")
-        {
-            Tags = new[] { "quests", "unfolding-truth", "npcs" }
-        },
-
-        new("Quests & NPCs", "Dorothy (F78)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Dorothy (BrightCyan 'D' glyph)\n" +
-            "│ Floor: 78\n" +
-            "│ Quest: Purify the Darkness (22 kills)\n" +
-            "│ Reward: Starlight Banner (Divine) + 700 Col + 550 XP\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "A Divine Object giver on Floor 78, canon Last Recollection\n" +
-            "character. Dorothy hands over the Starlight Banner — the 8th\n" +
-            "Divine Object and the only Divine Scythe in the game — in\n" +
-            "exchange for purifying her floor.\n\n" +
-            "USAGE\n" +
-            "Bump the BrightCyan 'D' on F78. Accept \"Purify the Darkness\":\n" +
-            "slay 22 monsters on Floor 78. Return to Dorothy complete.\n\n" +
-            "EFFECTS\n" +
-            "On turn-in:\n" +
-            "  - Starlight Banner (Divine Scythe, HolyAoE+20, range 2)\n" +
-            "  - +700 Col\n" +
-            "  - +550 XP\n" +
-            "Drop logs with a bespoke diamond (◈) Divine line to mark the\n" +
-            "8th Divine Object placement. Auto-added to inventory; dropped\n" +
-            "at your feet if full.\n\n" +
-            "COSTS\n" +
-            "22 F78 monster kills. Single-quest NPC — no chained follow-up\n" +
-            "like Selka's awakening arc.\n\n" +
-            "TIPS\n" +
-            "Bring Scythe proficiency into the F78 push if you want to\n" +
-            "wield Starlight Banner on receipt — its 2-range reach shines\n" +
-            "on Scythe builds. Stack the 22 kills with any standing F78\n" +
-            "weapon-gated Kill quests before turn-in; the counter overlaps.\n" +
-            "Dorothy pairs neatly with Sister Azariya (F50) and Selka\n" +
-            "(F65) to complete the NPC-quest Divine trio before F80.\n\n" +
-            "SEE ALSO\n" +
-            "[Divine Object Set — Integrity Knights] · [Divine Objects] · [SAO Last Recollection Weapons] · [Sister Azariya (F50)] · [Selka the Novice (F65)] · [Quest Types & Rewards]")
-        {
-            Tags = new[] { "quests", "npcs", "last-recollection" }
-        },
-
-        new("Quests & NPCs", "Agil's Apprentice (F55)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Agil's Apprentice (BrightYellow 'G' glyph)\n" +
-            "│ Floor: 55\n" +
-            "│ Quest: Ground Gorge reclamation (15 kills)\n" +
-            "│ Reward: Ground Gorge (FD 2H Axe, Agil canon)\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "A quest NPC on F55 who gate-keeps Agil's signature FD weapon\n" +
-            "Ground Gorge. Moves the drop out of the random banded pool\n" +
-            "into a fixed canon placement — no more banded RNG for the axe.\n\n" +
-            "USAGE\n" +
-            "Bump the BrightYellow 'G' on F55. Accept the kill quest: 15\n" +
-            "monsters on Floor 55. Return on completion for Ground Gorge.\n\n" +
-            "EFFECTS\n" +
-            "On turn-in:\n" +
-            "  - Ground Gorge (Fractured Daydream, 2H Axe, Agil signature)\n" +
-            "Auto-added to inventory; dropped at your feet if full.\n\n" +
-            "COSTS\n" +
-            "15 F55 kills. Axe proficiency recommended if you plan to\n" +
-            "wield the reward — otherwise save it for an Agil ally run.\n\n" +
-            "TIPS\n" +
-            "Perfect canon loadout if you're recruiting Agil — hand the\n" +
-            "axe to him via party gear. Double-dip with standing F55\n" +
-            "weapon-gated Kill quests; the same 15 can resolve both.\n\n" +
-            "SEE ALSO\n" +
-            "[Fractured Daydream Character Weapons] · [Fractured Daydream Field Bosses] · [Recruitable Allies & Party System] · [Quest Types & Rewards]")
-        {
-            Tags = new[] { "quests", "npcs", "fractured-daydream" }
-        },
-
-        new("Quests & NPCs", "Hollow Fragment HNM Questgivers (F79-F99)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: 13 Hollow-Fragment HNM givers\n" +
-            "│ Floor: 79, 80, 81, 83, 84, 85, 88, 90, 91, 92, 95, 98, 99\n" +
-            "│ Quest: Kill-count-on-this-floor chain\n" +
-            "│ Reward: Named HNM weapon + Col/XP\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Thirteen Hollow Fragment HNM (High-Notorious-Monster, endgame\n" +
-            "elite) weapon NPCs gate the late-endgame arsenal behind floor-\n" +
-            "locked kill quests. All grant a canon HF weapon. With the F84/\n" +
-            "F85/F92/F99 gap-fillers the Implement System (the canon HF\n" +
-            "weapon-grant framework) is now content-complete F77-F99.\n\n" +
-            "USAGE\n" +
-            "Bump the NPC on their floor, complete the kill count on that\n" +
-            "same floor, return for the weapon.\n\n" +
-            "EFFECTS\n" +
-            "  F79 Scholar Ellroy        15 kills  Infinite Ouroboros    400/300\n" +
-            "  F80 Hunter Kojiro         15        Jato Onikirimaru      400/300\n" +
-            "  F81 Ranger Torva          15        Fiendblade Deathbringr 450/320\n" +
-            "  F83 Apiarist Nell         15        Fayblade Tizona       450/320\n" +
-            "  F84 Spiralist Vey         10        Spiralblade:Rendering Fail\n" +
-            "  F85 Crusher Drago         10        Crusher:Bond Cyclone (2H Axe)\n" +
-            "  F88 Watcher Kael          20        Starmace Elysium      600/450\n" +
-            "  F90 High Priestess Sola   20        Eurynome's Holy Sword 650/480\n" +
-            "  F91 Torchbearer Meir      20        Saintspear Rhongomyniad 700/520\n" +
-            "  F92 Auric Knight Halric   15        Aurumbrand: Hauteclaire\n" +
-            "  F95 Elder Beastkeeper     25        Shinto Ama-no-Murakumo 800/600\n" +
-            "  F98 Sentinel Captain      25        Godspear Gungnir      800/600\n" +
-            "  F99 Last Herald Xiv       20        Deathglutton: Epetamu\n\n" +
-            "COSTS\n" +
-            "Kill-count is the only cost. Progress resets if you ascend\n" +
-            "before turning in — no exceptions.\n\n" +
-            "TIPS\n" +
-            "Farm all thirteen on a single climb; build variety is the\n" +
-            "reward. Crusher Drago (F85) shares the floor with Silent Edge\n" +
-            "and Abased Beast — budget durability accordingly.\n\n" +
-            "SEE ALSO\n" +
-            "[Implement System Weapons (F77-F99)] · [Named Legendary Highlights] · [Divine Object Set — Integrity Knights] · [Quest Types & Rewards]")
-        {
-            Tags = new[] { "quests", "npcs", "hollow-fragment" }
-        },
-
-        new("Quests & NPCs", "Town of Beginnings NPCs (F1)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Agil, Klein, Argo, Kibaou, Lisbeth, Silica, +3\n" +
-            "│ Floor: 1 (hub)\n" +
-            "│ Quest: Tutorial + vendor + ALF recruiter\n" +
-            "│ Reward: Dialogue, shop access, tips, guild join\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "F1's hand-built Town of Beginnings hosts fixed canon NPCs — the\n" +
-            "core SAO cast plus supporting staff and the Aincrad Liberation\n" +
-            "Force (ALF) recruiter. Anchors the tutorial flow, the early\n" +
-            "recruitment pool, and the ALF guild onramp.\n\n" +
-            "USAGE\n" +
-            "Bump to trigger dialogue or a shop. Klein and Argo also wander\n" +
-            "beyond F1 once the player climbs. Kibaou stays in the plaza as\n" +
-            "ALF's permanent recruiter.\n\n" +
-            "EFFECTS\n" +
-            "  Agil            Vendor, \"Agil's General Store\"\n" +
-            "  Klein           Tutorial dialogue (combat / progression /\n" +
-            "                  survival)\n" +
-            "  Argo the Rat    Information broker; tips on bosses,\n" +
-            "                  proficiency, death\n" +
-            "  Kibaou          ALF recruiter (see Aincrad Liberation Force)\n" +
-            "  Priest Tadashi  Flavor\n" +
-            "  Nezha           Smith; points to anvil\n" +
-            "  Lisbeth         Short canon dialogue\n" +
-            "  Silica          Short canon dialogue\n" +
-            "  Diavel          Short canon dialogue\n\n" +
-            "Klein also appears on F2-F3; Argo on F3+ as wandering NPCs.\n" +
-            "The Monument of Swordsmen (BrightYellow M) stands in the south\n" +
-            "plaza park — step on to review species kill milestones and\n" +
-            "swap your Active Title.\n\n" +
-            "COSTS\n" +
-            "None for dialogue. Agil's shop prices follow standard vendor\n" +
-            "markup (+20%).\n\n" +
-            "TIPS\n" +
-            "Talk to Argo before every new era — her tips rotate with your\n" +
-            "current floor. Klein and the F1 Lisbeth townsfolk become\n" +
-            "recruitable once bumped outside F1. Agil's shop offers the\n" +
-            "Anneal Blade craft line. Kibaou is the lowest-gate guild\n" +
-            "recruit in the game (ALF, Lv1, karma >=-30). NOTE: the F1\n" +
-            "Lisbeth here is the flavor/recruit NPC — the F48 Lindarth\n" +
-            "Lisbeth is a separate crafting NPC that gates the Rarity 6\n" +
-            "craft line. If your karma has dropped to <=-50, Town Guards\n" +
-            "spawn in this plaza on entry — raise karma first or bring a\n" +
-            "fight.\n\n" +
-            "SEE ALSO\n" +
-            "[Aincrad Liberation Force (F1)] · [Town Guard (Outlaw Mode)] · [Guild System Overview] · [Anneal Blade Craft Line] · [Ran the Brawler (F2)] · [Lindarth Town (F48)] · [Starting Loadout] · [Monument of Swordsmen (F1)]")
-        {
-            Tags = new[] { "quests", "npcs", "shops" }
         },
 
         new("Quests & NPCs", "SAO Switch (Party)",
@@ -5536,7 +4944,7 @@ public static class PlayerGuideContent
             "front/back composition. Silica's Dragon Tamer extra-hit stacks\n" +
             "with Combo Attacks for fast takedowns.\n\n" +
             "SEE ALSO\n" +
-            "[SAO Switch (Party)] · [Town of Beginnings NPCs (F1)] · [Guild System Overview] · [Run Modifiers (12 Optional Challenges)] · [Combo Attacks]")
+            "[SAO Switch (Party)] · [Floor 1] · [Guild System Overview] · [Run Modifiers (12 Optional Challenges)] · [Combo Attacks]")
         {
             Tags = new[] { "quests", "npcs", "combat" }
         },
@@ -5580,294 +4988,9 @@ public static class PlayerGuideContent
             "signature-quest rewards with the guild's passive perk for the\n" +
             "biggest power spike per floor.\n\n" +
             "SEE ALSO\n" +
-            "[Karma & Alignment] · [Knights of the Blood Oath (F55)] · [Aincrad Liberation Force (F1)] · [Laughing Coffin (F75 Hidden)] · [Player-Founded Guild]")
+            "[Karma & Alignment] · [Floor 55] · [Floor 1] · [Floor 75] · [Player-Founded Guild]")
         {
             Tags = new[] { "guild", "quests", "npcs" }
-        },
-
-        new("Quests & NPCs", "Knights of the Blood Oath (F55)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Heathcliff (leader), Godfree (recruiter)\n" +
-            "│ Floor: 55 Granzam HQ\n" +
-            "│ Quest: Recruitment + \"Defend the Frontline\"\n" +
-            "│ Reward: +8 Defense + BlockChance via Vitality\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Knights of the Blood Oath (KoB) is Heathcliff's elite frontline\n" +
-            "order headquartered at F55 Granzam. Steep gate — Level 25 with\n" +
-            "karma >= +30 — but the passive is one of the strongest in the\n" +
-            "canon roster.\n\n" +
-            "USAGE\n" +
-            "Climb to F55, find Granzam, bump Godfree to open the recruit\n" +
-            "dialog. Decline the prompt if you haven't decided yet; Godfree\n" +
-            "stays available while your gate is met.\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 25, Karma >= +30\n" +
-            "  Passive   +8 Defense + BlockChance scaling on Vitality\n" +
-            "  Recruit   10 labyrinth mob kills (frontline-tagged)\n" +
-            "  Signature \"Defend the Frontline\" — hold a KoB-coded\n" +
-            "            labyrinth push\n\n" +
-            "COSTS\n" +
-            "The karma gate locks out anyone running the LC path. Leaving KoB\n" +
-            "drops the Defense passive and costs -3 karma — don't flip guilds\n" +
-            "casually once you're tanking on the +8.\n\n" +
-            "TIPS\n" +
-            "Vitality-heavy builds benefit the most — the BlockChance bonus\n" +
-            "scales with VIT, so KoB compounds with a shield / 1H build. Pair\n" +
-            "with DDA-style tank gear for the highest survivability ceiling.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Divine Dragon Alliance (F40)] · [Defense — Block, Parry, Dodge] · [Karma & Alignment]")
-        {
-            Tags = new[] { "guild", "npcs", "quests" }
-        },
-
-        new("Quests & NPCs", "Aincrad Liberation Force (F1)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Kibaou (leader + recruiter)\n" +
-            "│ Floor: 1 Town of Beginnings plaza\n" +
-            "│ Quest: Recruitment + \"Raid the Frontlines\"\n" +
-            "│ Reward: +5% XP + 2 all stats\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Aincrad Liberation Force (ALF) is Kibaou's mass-recruitment guild\n" +
-            "— the largest faction in the game, headquartered in the F1 TOB\n" +
-            "plaza. Lowest gate of any canon guild: Level 1, karma >= -30.\n\n" +
-            "USAGE\n" +
-            "Bump Kibaou in the F1 plaza to open the recruit dialog. The\n" +
-            "gate is loose enough that any early-floor build can sign up\n" +
-            "on Day One.\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 1, Karma >= -30\n" +
-            "  Passive   +5% XP gain, +2 to all stats\n" +
-            "  Recruit   10 low-floor mob kills\n" +
-            "  Signature \"Raid the Frontlines\" — canon-themed push quest\n\n" +
-            "COSTS\n" +
-            "ALF's mass-recruitment identity means the passive is generalist\n" +
-            "rather than specialist — other guilds hit harder in single\n" +
-            "stats. Leaving costs -3 karma like any guild drop.\n\n" +
-            "TIPS\n" +
-            "ALF is the best fallback guild while you climb toward a gated\n" +
-            "option (KoB +30, Sleeping Knights +50). The +5% XP rider\n" +
-            "stacks cleanly with quest turn-in XP — use ALF as your\n" +
-            "early-game engine, then swap once you hit the level thresholds.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Town of Beginnings NPCs (F1)] · [Experience & Leveling] · [Karma & Alignment]")
-        {
-            Tags = new[] { "guild", "npcs", "quests" }
-        },
-
-        new("Quests & NPCs", "Fuurinkazan (F20)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Klein (leader + recruiter)\n" +
-            "│ Floor: 20 HQ\n" +
-            "│ Quest: Recruitment + \"Blades of Friendship\"\n" +
-            "│ Reward: +5% CritRate, +10 Attack with Katana\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Fuurinkazan is Klein's samurai-themed crew, headquartered on\n" +
-            "Floor 20. The passive is the single best Katana buff in the\n" +
-            "game — +10 flat Attack on every Katana swing on top of +5%\n" +
-            "CritRate across all weapons.\n\n" +
-            "USAGE\n" +
-            "Reach F20, find the Fuurinkazan HQ, bump Klein to open the\n" +
-            "recruit dialog. Any karma is acceptable — no alignment gate.\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 10, any karma\n" +
-            "  Passive   +5% CritRate + +10 Attack when wielding a Katana\n" +
-            "  Recruit   10 mob kills (Katana-tagged theme)\n" +
-            "  Signature \"Blades of Friendship\" — canon Klein-crew quest\n\n" +
-            "COSTS\n" +
-            "Non-Katana weapons still get the +5% crit — but the +10 Attack\n" +
-            "rider is the real draw. If you're not committing to Katana the\n" +
-            "guild is underutilized.\n\n" +
-            "TIPS\n" +
-            "Stack Fuurinkazan with Katana Mastery and a Klein-recruit ally\n" +
-            "for a full samurai composition. Karakurenai (Klein's canon\n" +
-            "Katana) hits hardest when its BackstabDmg+50 rider lands on\n" +
-            "top of the Fuurinkazan +10.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Unique Skill: Katana Mastery] · [Recruitable Allies & Party System] · [Critical Hits]")
-        {
-            Tags = new[] { "guild", "katana", "quests" }
-        },
-
-        new("Quests & NPCs", "Legend Braves (F25)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Schmitt (recruiter)\n" +
-            "│ Floor: 25 HQ\n" +
-            "│ Quest: Recruitment + \"Hunt the Coffin\"\n" +
-            "│ Reward: +5% Attack, +15 Atk vs LC-tagged mobs\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Legend Braves is the player-organized anti-Laughing Coffin\n" +
-            "(LC) guild on Floor 25. Its perk directly counters LC — +15\n" +
-            "flat Attack specifically against LC-tagged enemies on top of\n" +
-            "a generalist +5% Attack.\n\n" +
-            "USAGE\n" +
-            "Climb to F25, find the Legend Braves HQ, bump Schmitt to\n" +
-            "recruit. Karma >= 0 is the gate; you cannot be Shady or Outlaw\n" +
-            "and wear the tabard.\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 15, Karma >= 0\n" +
-            "  Passive   +5% Attack + +15 Attack vs LC-flagged mobs\n" +
-            "  Recruit   10 LC-theme mob kills\n" +
-            "  Signature \"Hunt the Coffin\" — LC-themed push\n\n" +
-            "COSTS\n" +
-            "Mutually exclusive with LC itself (karma gates don't overlap).\n" +
-            "Leaving is -3 karma, and Schmitt will not re-admit you without\n" +
-            "a karma rebuild.\n\n" +
-            "TIPS\n" +
-            "Stack with the Laughing Coffin run modifier — modifier spawns\n" +
-            "more LC mobs, and Legend Braves' +15 Attack rider applies to\n" +
-            "every one of them. A canon synergy with a real damage gain.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Laughing Coffin (F75 Hidden)] · [Run Modifiers (12 Optional Challenges)] · [Karma & Alignment]")
-        {
-            Tags = new[] { "guild", "quests", "npcs" }
-        },
-
-        new("Quests & NPCs", "Divine Dragon Alliance (F40)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Lind (leader + recruiter)\n" +
-            "│ Floor: 40 HQ\n" +
-            "│ Quest: Recruitment + \"Drake Hunt\"\n" +
-            "│ Reward: +10 Vitality, +5 Defense\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Divine Dragon Alliance (DDA) is Lind's rival-tank guild to KoB,\n" +
-            "headquartered on Floor 40. The passive is the raw-tank package:\n" +
-            "+10 VIT and +5 Defense on every equipped loadout.\n\n" +
-            "USAGE\n" +
-            "Ascend to F40, find the DDA HQ, bump Lind to recruit. Gate is\n" +
-            "Level 15 and karma >= 0 — a middleweight gate between ALF\n" +
-            "(easy) and KoB (strict).\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 15, Karma >= 0\n" +
-            "  Passive   +10 Vitality + +5 Defense\n" +
-            "  Recruit   10 labyrinth-drake-tagged mob kills\n" +
-            "  Signature \"Drake Hunt\" — canon dragon-themed push\n\n" +
-            "COSTS\n" +
-            "DDA and KoB are mutually exclusive active guilds — pick one\n" +
-            "tank identity. Leaving is the standard -3 karma.\n\n" +
-            "TIPS\n" +
-            "Raw +10 VIT feeds HP, stamina, and (via BlockChance scaling on\n" +
-            "Vitality) defense at the same time — DDA is the better pick\n" +
-            "for pure survivability, while KoB edges ahead for shield-\n" +
-            "focused builds.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Knights of the Blood Oath (F55)] · [The Six Attributes] · [Defense — Block, Parry, Dodge]")
-        {
-            Tags = new[] { "guild", "quests", "npcs" }
-        },
-
-        new("Quests & NPCs", "Sleeping Knights (F60)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Siune (recruiter), Yuuki (leader)\n" +
-            "│ Floor: 60 HQ\n" +
-            "│ Quest: Recruitment + \"The Moon's Rest\"\n" +
-            "│ Reward: +3 all stats, +5% CritRate\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Sleeping Knights is Yuuki's late-game elite order on Floor 60.\n" +
-            "The steepest positive-karma gate in the game (Level 50, karma\n" +
-            ">= +50) but a clean all-stats passive plus crit.\n\n" +
-            "USAGE\n" +
-            "Reach F60, find the Sleeping Knights HQ, bump Siune to open\n" +
-            "the recruit dialog. Karma floor (+50) means you're likely\n" +
-            "already in Honorable tier by the time you qualify.\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 50, Karma >= +50\n" +
-            "  Passive   +3 to all stats + +5% CritRate\n" +
-            "  Recruit   10 late-floor mob kills\n" +
-            "  Signature \"The Moon's Rest\" — canon Yuuki-crew quest\n\n" +
-            "COSTS\n" +
-            "The karma + level gate locks this out of speedruns. Leaving is\n" +
-            "-3 karma — but you've earned enough to survive the drop.\n\n" +
-            "TIPS\n" +
-            "Treat Sleeping Knights as the endgame honorable-path capstone\n" +
-            "— swap in from ALF or KoB once you clear the +50 karma + L50\n" +
-            "gate and ride the +3 all-stats through the F75 Heathcliff\n" +
-            "fight.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Karma & Alignment] · [Knights of the Blood Oath (F55)] · [Critical Hits]")
-        {
-            Tags = new[] { "guild", "quests", "npcs" }
-        },
-
-        new("Quests & NPCs", "Laughing Coffin (F75 Hidden)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: PoH's Herald (recruiter)\n" +
-            "│ Floor: 75 (hidden hideout)\n" +
-            "│ Quest: Recruitment + \"Crimson Letter\"\n" +
-            "│ Reward: +20% BackstabDmg, Town Guard hostility\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Laughing Coffin (LC) is PoH's PKer guild, hidden on Floor 75\n" +
-            "and gated behind karma <= -50 (Outlaw tier). The signature\n" +
-            "quest \"Crimson Letter\" demands 5 NPC kills — canon atrocity\n" +
-            "as written.\n\n" +
-            "USAGE\n" +
-            "Drop to karma <= -50, climb to F75, find the hidden hideout,\n" +
-            "bump PoH's Herald. The gate opens only while you're Outlaw —\n" +
-            "bounce above -50 and the entrance closes again.\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 30, Karma <= -50\n" +
-            "  Passive   +20% BackstabDmg\n" +
-            "  Recruit   10 PK-mob / LC-mob kills\n" +
-            "  Signature \"Crimson Letter\" — 5 NPC kills\n" +
-            "  Side      Town Guards hostile at F1 plaza while in LC\n\n" +
-            "COSTS\n" +
-            "Shops refuse service (karma tier). Town Guards aggro on F1\n" +
-            "entry. Named NPC kills cost -20 karma each — the signature\n" +
-            "quest alone will bottom your score.\n\n" +
-            "TIPS\n" +
-            "Farm Town Guards on F1 for +20 LC rep each — fastest rep\n" +
-            "faucet in the game. Pair with the Laughing Coffin run modifier\n" +
-            "for a themed, self-consistent PKer run. The BackstabDmg +20%\n" +
-            "stacks multiplicatively with weapons like Karakurenai.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Karma & Alignment] · [Town Guard (Outlaw Mode)] · [Run Modifiers (12 Optional Challenges)]")
-        {
-            Tags = new[] { "guild", "outlaw", "karma" }
-        },
-
-        new("Quests & NPCs", "Moonlit Black Cats (F10)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Keita (leader + recruiter)\n" +
-            "│ Floor: 10 HQ (quest turn-in stays F10)\n" +
-            "│ Quest: Recruitment + \"One More Floor\"\n" +
-            "│ Reward: +5 Vitality, +3 Defense (fate-sealed)\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Moonlit Black Cats is Keita's tragic early-game guild on\n" +
-            "Floor 10. The passive is modest but the canon fate is the\n" +
-            "hook — the guild dissolves on F27 entry regardless of your\n" +
-            "play, losing -5 karma along with the perk.\n\n" +
-            "USAGE\n" +
-            "Climb to F10, find the Moonlit Black Cats HQ, bump Keita.\n" +
-            "The signature \"One More Floor\" auto-completes when you\n" +
-            "step onto F25 — turn it in back at Keita on F10.\n\n" +
-            "EFFECTS\n" +
-            "  Gate      Level 5, Karma >= -20\n" +
-            "  Passive   +5 Vitality + +3 Defense\n" +
-            "  Recruit   10 F10-tier mob kills\n" +
-            "  Signature \"One More Floor\" — auto-complete on F25 entry,\n" +
-            "            turn in at Keita (F10)\n" +
-            "  FATE      Guild dissolves on F27 entry (-5 karma, perk lost)\n\n" +
-            "COSTS\n" +
-            "The F27 fate is canonical and unavoidable. Plan your F27 ascend\n" +
-            "knowing the perk drops and the karma dings — banked guild rep\n" +
-            "does not carry into a replacement guild.\n\n" +
-            "TIPS\n" +
-            "Use Moonlit Black Cats as a known-expiry stepping stone between\n" +
-            "F5 and F27 — collect the signature turn-in reward on F25 and\n" +
-            "bank the XP / Col before the fate event fires. Line up the\n" +
-            "replacement guild recruit (Fuurinkazan F20 is a good bridge)\n" +
-            "before you step onto F27.\n\n" +
-            "SEE ALSO\n" +
-            "[Guild System Overview] · [Karma & Alignment] · [Fuurinkazan (F20)] · [Ascending a Floor]")
-        {
-            Tags = new[] { "guild", "npcs", "quests" }
         },
 
         new("Quests & NPCs", "Player-Founded Guild",
@@ -5904,7 +5027,7 @@ public static class PlayerGuideContent
             "Pick the preset that matches your build's weakest column\n" +
             "for the biggest marginal gain.\n\n" +
             "SEE ALSO\n" +
-            "[Guild System Overview] · [Karma & Alignment] · [Aincrad Liberation Force (F1)] · [Col Economy — How You Earn]")
+            "[Guild System Overview] · [Karma & Alignment] · [Floor 1] · [Col Economy — How You Earn]")
         {
             Tags = new[] { "guild", "economy", "quests" }
         },
@@ -5935,7 +5058,7 @@ public static class PlayerGuideContent
             "  F4+  Elven Waybread, Flash Bomb, Revive Crystal\n" +
             "  F5+  1 random accessory\n\n" +
             "Plus 3-4 random floor-scaled weapons, 1-2 armors.\n\n" +
-            "PICKAXE STOCK (Bundle 12):\n" +
+            "PICKAXE STOCK:\n" +
             "  F1-F9    Wooden Pickaxe   ~96 Col post-markup (base 80)\n" +
             "  F10-F50  Iron Pickaxe     ~384 Col post-markup (base 320)\n" +
             "  F51+     no pickaxe slot  Mithril is world-find only\n" +
@@ -6307,16 +5430,15 @@ public static class PlayerGuideContent
             "┌─ Items\n" +
             "│ Topic: Divine Weapons — Roster & Acquisition\n" +
             "│ Tier: Divine (17 total — peak rarity)\n" +
-            "│ Cap: One Divine per run (hard lock)\n" +
+            "│ Cap: None — collect any/all Divines per run\n" +
             "│ Sources: Floor bosses · Quests · Hidden vault · T4 craft\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Seventeen Divine weapons span the 13 weapon classes. Every\n" +
-            "Divine is hand-placed — never rolled on a random chest. Across\n" +
-            "a single run you may obtain AT MOST one Divine; after the first\n" +
-            "enters inventory, remaining Divine drops substitute to a banded\n" +
-            "Legendary fallback until next run. This cap preserves the\n" +
-            "\"chosen blade\" flavor and stops late-run Divine stacking.\n\n" +
+            "Divine is hand-placed — never rolled on a random chest. There\n" +
+            "is no per-run cap on Divine drops; clear every gating boss and\n" +
+            "complete every named quest to assemble the full set in a single\n" +
+            "run if you can.\n\n" +
             "USAGE\n" +
             "Clear a listed floor boss, complete the named quest, find the\n" +
             "hidden Conflagrant Vault, or finish the T4 evolution craft.\n" +
@@ -6347,27 +5469,25 @@ public static class PlayerGuideContent
             "  F77-F79  Conflagrant Flame Bow  Conflagrant Vault prefab\n" +
             "         (Volcanic/Ruins/Dark biomes, once-per-game)\n\n" +
             "COSTS\n" +
-            "The one-per-run cap is absolute. A Divine entering inventory\n" +
-            "(pickup, quest turn-in, vault chest, T4 craft) sets a run-wide\n" +
-            "flag that survives save/load. Subsequent floor bosses with a\n" +
-            "Divine in their guaranteed slot drop a banded Legendary of the\n" +
-            "appropriate tier instead. The flag resets on new run only.\n\n" +
+            "Each Divine demands a high-tier boss kill, a long quest chain,\n" +
+            "or a deep T4 craft pipeline — there is no per-run lockout, but\n" +
+            "the time/durability/consumable cost of farming the full 17 in\n" +
+            "one run is steep on its own.\n\n" +
             "TIPS\n" +
-            "Plan which Divine you want BEFORE F75 — you only get one.\n" +
-            "Canon-minded Katana mains sprint for F75 Masamune; 2H mains\n" +
-            "hold for F93 Ascalon's dragon-slayer flavor; rapier duelists\n" +
-            "can grab Hexagramme at F82 or hold for F50 Heaven-Piercing\n" +
-            "Blade via the Sister Azariya chain. The Conflagrant Vault is\n" +
-            "the only bow Divine outside T4 craft — prioritize if Archery\n" +
-            "is your main weapon track. F98 Black Lily Sword and F97 Time\n" +
-            "Piercing Sword are the mythic-tier pair; skip them only if\n" +
-            "you want a specific thematic Divine instead. Sister Selka on\n" +
-            "F65 can awaken Divines up to Lv3 for +45% base damage — see\n" +
-            "entry 'Divine Awakening'.\n\n" +
+            "Plan a Divine route by floor band and weapon class. Canon-\n" +
+            "minded Katana mains sprint for F75 Masamune; 2H mains hold for\n" +
+            "F93 Ascalon's dragon-slayer flavor; rapier duelists can grab\n" +
+            "Hexagramme at F82 or hold for F50 Heaven-Piercing Blade via\n" +
+            "the Sister Azariya chain. The Conflagrant Vault is the only\n" +
+            "bow Divine outside T4 craft — prioritize if Archery is your\n" +
+            "main weapon track. F98 Black Lily Sword and F97 Time Piercing\n" +
+            "Sword are the mythic-tier pair. Sister Selka on F65 can awaken\n" +
+            "Divines up to Lv3 for +45% base damage — see entry 'Divine\n" +
+            "Awakening'.\n\n" +
             "SEE ALSO\n" +
-            "[Divine Objects] · [Divine Object Set — Integrity Knights] · [Named Legendary Highlights] · [Floor Boss Roster — Canon Highlights] · [Weapon Evolution Chains] · [Rarity Tiers & Drop Rates] · [Divine Awakening]")
+            "[Divine Objects] · [Divine Object Set — Integrity Knights] · [Named Legendary Highlights] · [Floor Scaling Formulas] · [Weapon Evolution Chains] · [Rarity Tiers & Drop Rates] · [Divine Awakening]")
         {
-            Tags = new[] { "items", "weapon", "divine", "rarity", "endgame" }
+            Tags = new[] { "items", "weapon", "divine", "rarity", "endgame", "spoiler" }
         },
 
         new("Items", "Divine Awakening",
@@ -6430,7 +5550,7 @@ public static class PlayerGuideContent
             "(not ambient) and respect the OptionsScreen Particle Density\n" +
             "setting (Off cancels the burst entirely).\n\n" +
             "SEE ALSO\n" +
-            "[Divine Weapons — Roster & Acquisition] · [Weapon Refinement System] · [Refinement Ingots] · [Enhancement Ores System] · [Floor Boss Roster — Canon Highlights] · [Advanced Weapon Effects]")
+            "[Divine Weapons — Roster & Acquisition] · [Weapon Refinement System] · [Refinement Ingots] · [Enhancement Ores System] · [Floor Scaling Formulas] · [Advanced Weapon Effects]")
         {
             Tags = new[] { "items", "divine", "awakening", "endgame", "selka" }
         },
@@ -6554,605 +5674,34 @@ public static class PlayerGuideContent
             Tags = new[] { "items", "dual-wield", "pair-resonance", "combat" }
         },
 
-        new("Items", "Legendary Distribution (F75-F99)",
+        new("Items", "Iron Ingot Enhancement (Lisbeth)",
             "┌─ Items\n" +
-            "│ Topic: Legendary Distribution (F75-F99)\n" +
-            "│ Peak band: F94-F95 (~23 entries per pool)\n" +
-            "│ Bundle 11 cap: peak ≤25 per floor (down from 62 at F90)\n" +
-            "│ Edge bands lifted: F75-F79 + F96-F99\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Legendary-tier loot registration clusters by floor band in the\n" +
-            "loot generator. Pre-Bundle 11, floors F88-F90 each carried\n" +
-            "~62-69 Legendary candidates per roll. The Bundle 11 sweep\n" +
-            "redistributed every Legendary across F1-F99 (see the new\n" +
-            "Legendary Redistribution Overview topic for the full picture);\n" +
-            "this section covers the F75-F99 endgame slice specifically.\n\n" +
-            "USAGE\n" +
-            "Nothing to do — the redistribution happens at chest-roll time.\n" +
-            "Endgame chests now carry a flatter per-floor roster: F75-F79\n" +
-            "is no longer a thin band, and F94-F95 caps at ~23 entries\n" +
-            "instead of the old 62-spike at F90.\n\n" +
-            "EFFECTS\n" +
-            "BUNDLE 11 ENDGAME MOVES (not exhaustive):\n" +
-            "  Fire-themed Relics/LS (Cinder Bow, Blazing Sword, Muramasa\n" +
-            "  Demon Blade) shifted down to F65-F79, matching Volcanic ramp.\n" +
-            "  Ice/cursed Relics (Snowsunder, Loveblight Bow) shifted to\n" +
-            "  F66-F86, matching ice-plain and dark-cursed flavor.\n" +
-            "  Mythic-finisher Relics (Dragoncrest, Deathbringer, Frostpeak)\n" +
-            "  shifted up to F84-F94.\n" +
-            "  AL Extreme Raid mythics (Demonslayer, Graceful Needle)\n" +
-            "  shifted up to F82-F92.\n" +
-            "  Black Iron Dual A/B (Underworld Kirito pair) anchored F78-F84.\n" +
-            "  Red Rose Sword now F95 field-boss lock (Warden of Blooming Rose).\n" +
-            "PRESERVED (NOT moved): IF series boss-anchors, IM Shop tiers,\n" +
-            "MD Originals, HF Implement weapons, FD elemental variants,\n" +
-            "and the F75/F82/F84/F86/F87/F88/F91/F93/F97/F98/F99 Divine\n" +
-            "boss anchors.\n\n" +
-            "COSTS\n" +
-            "None — no weapons removed, no rarity downgrades. Pure band\n" +
-            "redistribution. The total Legendary count stays at 185 across\n" +
-            "F1-F99.\n\n" +
-            "TIPS\n" +
-            "If you were farming F88-F90 for a specific fire-themed Relic,\n" +
-            "check F65-F79 instead — the pool shifted downward. F96-F99\n" +
-            "runs still carry mythic-tier Legendaries, just at thinner\n" +
-            "per-pool counts (~17 at F99). Named Legendaries anchored to\n" +
-            "specific floor bosses (IF series, HF Implements, the new\n" +
-            "F50 Elucidator LAB and F55 Crystal Wyrm Dark Repulser) are\n" +
-            "unchanged — the canon hooks are untouched.\n\n" +
-            "SEE ALSO\n" +
-            "[Legendary Redistribution Overview] · [Mid-Game Legendary Lifts (F12-F44)] · [Boss Drop Reference] · [Rarity Tiers & Drop Rates] · [Named Legendary Highlights] · [Alicization Lycoris Raid Weapons] · [SAO Lost Song Named Weapons] · [Floor Boss Roster — Canon Highlights]")
-        {
-            Tags = new[] { "items", "rarity", "legendary", "loot" }
-        },
-
-        // ── Bundle 11 — Legendary Redistribution Player Guide entries ──
-
-        new("Items", "Legendary Redistribution Overview",
-            "┌─ Items\n" +
-            "│ Topic: Legendary Redistribution Overview (Bundle 11)\n" +
-            "│ Span: F1-F99 (was F50+ only)\n" +
-            "│ Total Legendaries: 185\n" +
-            "│ Per-floor cap: ≤25 (currently peaks at ~18 at F80)\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Bundle 11 redistributed all 185 Legendary weapons across the\n" +
-            "full F1-F99 range. Before this sweep, every Legendary lived\n" +
-            "at F50 or higher — thirty mid-game floors (F1-F49) carried\n" +
-            "exactly zero Legendary chest entries. The new distribution\n" +
-            "spreads Legendaries from F1 onward, anchors canon weapons to\n" +
-            "their LN/anime/IF/AL floors, and caps the late-game spike\n" +
-            "(F90 dropped from 62 to ~20 entries per pool).\n\n" +
-            "USAGE\n" +
-            "Nothing to do — the redistribution happens automatically at\n" +
-            "chest-roll time. The change is visible in your day-to-day:\n" +
-            "early floors now occasionally drop a Legendary, and mid-game\n" +
-            "F12-F44 is no longer a Legendary wasteland.\n\n" +
-            "EFFECTS\n" +
-            "DESIGN PHILOSOPHY:\n" +
-            "  - Strict tier gating: each non-canon Legendary lives in a\n" +
-            "    narrow ~5-10 floor band, not a 25-floor smear.\n" +
-            "  - Canon-anchored weapons stay at canon floors:\n" +
-            "      Elucidator        F50 floor-boss Last-Attack\n" +
-            "      Dark Repulser     F55 Crystal Wyrm + Lisbeth gift\n" +
-            "      Black Lily Sword  F85 Silent Edge field-boss\n" +
-            "      Night Sky Sword   F99 Heathcliff's Shadow boss\n" +
-            "      Mother's Rosario  F76 Jun NPC quest\n" +
-            "      Lambent Light     F40 Yulier NPC quest + F1-F8 chest\n" +
-            "  - Non-canon weapons fill the curve smoothly between locks.\n" +
-            "  - F1 always carries at least 2 Legendaries (Mate Chopper\n" +
-            "    F1-F5 + Lambent Light F1-F8) so first-floor discovery is\n" +
-            "    a real possibility.\n" +
-            "  - Per-floor peak ≤25 Legendaries (currently ~18 at F80).\n" +
-            "PRE/POST FLOOR PROFILE:\n" +
-            "  Floor    Pre-Bundle-11   Bundle 11\n" +
-            "  F1       0               2     (was empty)\n" +
-            "  F12-44   0               1-3   (lifts seed mid-game)\n" +
-            "  F50      0               4     (Elucidator + chains)\n" +
-            "  F75      9-11            9     (preserved)\n" +
-            "  F90      62              ~20   (peak broken up)\n" +
-            "  F99      ~24             ~17   (smoothed)\n\n" +
-            "COSTS\n" +
-            "None. No weapons removed, no rarity changes. Pure band sweep.\n\n" +
-            "TIPS\n" +
-            "If you used to farm F90 for high Legendary density, the math\n" +
-            "now favors F80-F88 (still 13-18 entries per pool with better\n" +
-            "spread of canon-themed drops). Early-floor runs are no longer\n" +
-            "Legendary-empty: a lucky F1-F8 chest can roll Mate Chopper\n" +
-            "or Lambent Light. See the per-floor counts in the spec doc\n" +
-            "(LEGENDARY_REDISTRIBUTION_PROPOSAL.md section 6) for the full\n" +
-            "table.\n\n" +
-            "SEE ALSO\n" +
-            "[Legendary Distribution (F75-F99)] · [Mid-Game Legendary Lifts (F12-F44)] · [Boss Drop Reference] · [Rarity Tiers & Drop Rates] · [Named Legendary Highlights] · [Lambent Light & Asuna's Memory] · [Sleeping Knights' Tribute & Mother's Rosario] · [Crystal Wyrm of Lisbeth's Forge (F55)]")
-        {
-            Tags = new[] { "items", "rarity", "legendary", "loot", "bundle-11" }
-        },
-
-        new("Items", "Mid-Game Legendary Lifts (F12-F44)",
-            "┌─ Items\n" +
-            "│ Topic: Mid-Game Legendary Lifts (F12-F44)\n" +
-            "│ Span: F12 to F44 (previously 0 Legendaries)\n" +
-            "│ New entries: 7 LR-myth weapons + 4 floor-boss locks\n" +
-            "│ Source: Chest pool + invented Divine Beast bosses\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Pre-Bundle-11, floors F12 through F44 carried zero Legendary\n" +
-            "chest entries — thirty floors of pure Epic-or-lower loot. The\n" +
-            "Bundle 11 redistribution lifted seven Last-Recollection /\n" +
-            "Lost-Song mythological Legendaries down into this band, and\n" +
-            "kept the four Alicization-Lycoris invented Divine Beast\n" +
-            "bosses (F11, F17, F24, F30, F38, F40, F43) as guaranteed\n" +
-            "Legendary drops. Players exploring early floors now have a\n" +
-            "real chance at Legendary discovery.\n\n" +
-            "USAGE\n" +
-            "Roll chests on the listed floors; clear the floor boss for\n" +
-            "the lock. No special action needed.\n\n" +
-            "EFFECTS\n" +
-            "CHEST-POOL LIFTS (7 new mid-game Legendaries):\n" +
-            "  F12-F18  Nadr (Axe, LR myth)\n" +
-            "  F18-F25  Futsu no Mitama (Katana, Lost Song shinto)\n" +
-            "  F22-F29  Artemis Fult (Bow, LR myth)\n" +
-            "  F25-F32  Giardino (Dagger, LR myth)\n" +
-            "  F30-F36  Caduceus (Mace, Lost Song healer staff)\n" +
-            "  F30-F37  Paopei (Claws, LR myth)\n" +
-            "  F35-F42  Elder's Trident (Spear, LR myth)\n" +
-            "BUNDLE 12 — F44-F47 LEGENDARY FILL:\n" +
-            "F44-F47 chest pools previously seeded only 0-1 Legendaries\n" +
-            "per floor — a soft gap right before the F48 Lindarth/F50\n" +
-            "Elucidator surge. Bundle 12 lifts two existing Legendaries\n" +
-            "down into the gap so each floor now seeds at least 2\n" +
-            "Legendaries:\n" +
-            "  F44-F48  axe_lang (Lang Axe, LR myth — was F84-F90)\n" +
-            "  F40-F47  mce_caduceus extended (was F30-F36; now blankets\n" +
-            "           the F40-F47 healer-staff motif)\n" +
-            "Tier-coherent: stats scale to the chest's floor, not the old\n" +
-            "high-floor band, so a F45 Lang Axe is a F45-tier Legendary.\n" +
-            "FLOOR-BOSS LOCKS (preserved, AL Lycoris invented bosses):\n" +
-            "  F11 Felos the Ember Drake     -> Starfall (Bow)\n" +
-            "  F17 Gelidus the Frozen Colossus -> Savage Squall (1H Sword)\n" +
-            "  F24 Grimhollow the Phantom    -> Phantasmagoria (Dagger)\n" +
-            "  F30 Primos the World Serpent  -> Void Eater (1H Sword)\n" +
-            "  F38 Obsidian the Black Knight -> Cactus Bludgeon (Mace)\n" +
-            "  F40 Dracoflame the Elder Wyrm -> Crimson Stream (2H Sword)\n" +
-            "  F43 Undine the Water Maiden   -> Midnight Rain (Rapier)\n" +
-            "QUEST-LOCKS (Bundle 11 NPCs):\n" +
-            "  F40 Yulier   -> Lambent Light (10 kills, see Lambent Light topic)\n" +
-            "  F40 chest    -> Lambent Light tail (F1-F8 anchor extends)\n\n" +
-            "COSTS\n" +
-            "None beyond standard chest/boss costs. The lifts replaced no\n" +
-            "existing weapons — they were pulled from the bloated F75-F99\n" +
-            "pool, where their per-pool weight was diluted anyway.\n\n" +
-            "TIPS\n" +
-            "If you're rolling a fresh save, push to F11 and clear the\n" +
-            "boss for the first guaranteed Legendary (Starfall). Each\n" +
-            "AL invented boss between F11 and F49 carries one more\n" +
-            "guaranteed Legendary on top of any chest roll. The seven\n" +
-            "LR-myth chest lifts are tier-coherent with their floor — a\n" +
-            "F25 Giardino isn't a numerical god (its base stats scale at\n" +
-            "the floor's tier), but it carries a Legendary special effect\n" +
-            "and a refinement slot count above any Epic-or-lower drop.\n\n" +
-            "SEE ALSO\n" +
-            "[Legendary Redistribution Overview] · [Boss Drop Reference] · [Lambent Light & Asuna's Memory] · [Floor Boss Roster — Canon Highlights] · [SAO Last Recollection Weapons] · [SAO Lost Song Named Weapons]")
-        {
-            Tags = new[] { "items", "rarity", "legendary", "mid-game", "bundle-11" }
-        },
-
-        new("Items", "Boss Drop Reference",
-            "┌─ Items\n" +
-            "│ Topic: Boss Drop Reference\n" +
-            "│ Sources: Floor-boss + field-boss + NPC + LAB\n" +
-            "│ Includes: Bundle 11 F50 Elucidator LAB + F55 Crystal Wyrm\n" +
-            "│ Use: One-stop list of every guaranteed boss drop\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Single-page reference of every guaranteed weapon/item drop\n" +
-            "from a named boss in the game — floor-boss kills, floor-boss\n" +
-            "Last-Attack Bonus (LAB) drops (must be killing-blow),\n" +
-            "field-boss kills, and the new Bundle 11 anchors at F40, F50,\n" +
-            "F55, and F76. NPC-quest weapon rewards live in the Quests &\n" +
-            "NPCs category — this entry covers the boss-side drops.\n\n" +
-            "USAGE\n" +
-            "Cross-reference before pushing a floor: know which fights\n" +
-            "give a guaranteed Legendary, which require Last-Attack, and\n" +
-            "which bosses gate Divine objects.\n\n" +
-            "EFFECTS\n" +
-            "FLOOR-BOSS GUARANTEED DROPS (any party member kills):\n" +
-            "  F11 Felos the Ember Drake       -> Starfall (Legendary Bow)\n" +
-            "  F17 Gelidus the Frozen Colossus -> Savage Squall (Legendary 1HS)\n" +
-            "  F20 Absolut the Winter Monarch  -> Blue Rose Sword (Divine)\n" +
-            "  F24 Grimhollow the Phantom      -> Phantasmagoria (Leg. Dag)\n" +
-            "  F30 Primos the World Serpent    -> Void Eater (Leg. 1HS)\n" +
-            "  F38 Obsidian the Black Knight   -> Cactus Bludgeon (Leg. Mace)\n" +
-            "  F40 Dracoflame the Elder Wyrm   -> Crimson Stream (Leg. 2HS)\n" +
-            "  F43 Undine the Water Maiden     -> Midnight Rain (Leg. Rapier)\n" +
-            "  F49 Shadowstep Assassin         -> Midnight Sun (Leg. Katana)\n" +
-            "  F75 Skull Reaper                -> Masamune (Divine Katana)\n" +
-            "  F82 Legacy of Grand             -> Hexagramme (Divine Rapier)\n" +
-            "  F84 Queen of Ant                -> Caladbolg (Divine Spear)\n" +
-            "  F86 King of Skeleton            -> Tyrfing (Divine 1HS)\n" +
-            "  F87 Radiance Eater              -> Iron Maiden Dagger (Divine)\n" +
-            "  F88 Rebellious Eyes             -> Ouroboros (Divine Axe)\n" +
-            "  F91 Seraphiel the Fallen        -> Mjolnir (Divine Mace)\n" +
-            "  F93 Ragnarok Final Beast        -> Ascalon (Divine 2HS)\n" +
-            "  F97 Cardinal System Error       -> Time Piercing Sword (Divine)\n" +
-            "  F98 Incarnation of the Radius   -> Black Lily Sword (Divine)\n" +
-            "  F99 Heathcliff's Shadow         -> Night Sky Sword (Divine)\n\n" +
-            "FLOOR-BOSS LAST-ATTACK BONUS (must be the killing blow):\n" +
-            "  F50 Tier of Sin                 -> Elucidator (Legendary 1HS, NEW)\n" +
-            "  F85 floor boss                  -> Bow Zephyros (Leg. Bow)\n" +
-            "  F92 floor boss                  -> Sacred Cross (Leg. 2HS)\n" +
-            "  F93 floor boss                  -> Glow Haze (Leg. Scimitar)\n" +
-            "  F94 floor boss                  -> Saku (Leg. Katana)\n" +
-            "  F95 floor boss                  -> Mirage Knife (Leg. Dagger)\n" +
-            "  F96 floor boss                  -> Northern Light (Leg. Axe)\n" +
-            "  F98 floor boss                  -> Lunatic Roof (Leg. Spear)\n" +
-            "  F99 Heathcliff's Shadow         -> Artemis (Leg. Bow, alongside Night Sky)\n\n" +
-            "FIELD-BOSS GUARANTEED DROPS (overworld, never respawn):\n" +
-            "  F2  Bullbous Bow             -> Bullbous Horn (mat)\n" +
-            "  F14 Starlight Sentinel       -> Integral Arc Angel (Epic Bow)\n" +
-            "  F22 Forest King Stag         -> Kingly Antler (mat)\n" +
-            "  F25 Labyrinth Warden         -> Nox Radgrid (Epic 1HS)\n" +
-            "  F35 Magnatherium             -> Mammoth Tusk (mat)\n" +
-            "  F40 Ogre Lord                -> Ogre's Cleaver (mat)\n" +
-            "  F40 Phoenix of Smolder Peak  -> Conflagrant Flame Bow (Divine)\n" +
-            "  F48 Frost Dragon             -> Crystallite Ingot (mat)\n" +
-            "  F49 Nicholas the Renegade    -> Returning Soul (Christmas only)\n" +
-            "  F55 Crystal Wyrm of Lisbeth's Forge -> Dark Repulser (Leg., NEW)\n" +
-            "  F60 Kagutsuchi Fire Samurai  -> Spirit Sword Kagutsuchi (FD Leg.)\n" +
-            "  F61 Crimson Forneus          -> Rosso Forneus (IF Leg. 1HS)\n" +
-            "  F70 Susanoo the Storm Blade  -> Spirit Sword Susanoo (FD Leg.)\n" +
-            "  F77 Goblin Leader            -> Mace of Asclepius (HF Leg.)\n" +
-            "  F80 Soul Binder              -> Arcaneblade Soul Binder (HF Leg.)\n" +
-            "  F80 Pyre Lord of Heathcliff  -> Flame Lord (FD Leg. 2HS)\n" +
-            "  F83 Arboreal Fear            -> Demonspear Gae Bolg (HF Leg.)\n" +
-            "  F83 Ruinous Herald           -> Fellblade Ruinous Doom (HF Leg.)\n" +
-            "  F85 Silent Edge              -> Black Lily Sword (Divine)\n" +
-            "  F85 Abased Beast             -> Godblade Dragonslayer (HF Leg.)\n" +
-            "  F85 Yuuki's Echo             -> Macafitel (FD Leg. Rapier)\n" +
-            "  F86 Fellaxe Revenant         -> Fellaxe Demon's Scythe (HF Leg.)\n" +
-            "  F87 Yasha the Night Demon    -> Yasha Astaroth (IF Leg.)\n" +
-            "  F87 Night Stalker            -> Saintblade Durandal (HF Leg.)\n" +
-            "  F90 Gaou the Ox-King         -> Gaou Reginleifr (IF Leg.)\n" +
-            "  F93 Banishing Ray            -> Glimmerblade Banishing Ray (HF Leg.)\n" +
-            "  F94 Ark Knight               -> Ragnarok's Bane Headsman (HF Leg.)\n" +
-            "  F95 Gaia Breaker             -> Stigmablade Arondight (HF Leg.)\n" +
-            "  F95 Warden of Stopped Hours  -> Time Piercing Sword (Divine)\n" +
-            "  F95 Warden of Blooming Rose  -> Red Rose Sword (FD Leg.)\n" +
-            "  F96 Eternal Dragon           -> Demonblade Gram (HF Leg.)\n" +
-            "  F97 Administrator's Regent   -> Silvery Ruler (FD Leg.)\n" +
-            "  F98 Blaze Armor              -> Yato Masamune (HF Leg.)\n" +
-            "  F98 Ashen Kirito Simulacrum  -> Elucidator Rouge (FD Leg.)\n\n" +
-            "FIELD-BOSS SECONDARY DROPS (paired shield):\n" +
-            "  F14 Starlight Sentinel  -> Shield Fermat (Epic)\n" +
-            "  F25 Labyrinth Warden    -> Shield Nox Fermat (Epic)\n" +
-            "  F61 Crimson Forneus     -> Rosso Aegis (Leg.)\n" +
-            "  F87 Yasha               -> Yasha Kavacha (Leg.)\n" +
-            "  F90 Gaou                -> Gaou Tatari (Leg.)\n\n" +
-            "COSTS\n" +
-            "Each field-boss never respawns once defeated; missing the\n" +
-            "kill means farming the chest pool (which carries the same\n" +
-            "DefId in many cases). LAB drops require the killing blow —\n" +
-            "if your ally lands the final hit, the LAB Legendary does NOT\n" +
-            "drop.\n\n" +
-            "TIPS\n" +
-            "F50 Elucidator and F99 Artemis are the two LAB drops most\n" +
-            "easily missed — both are paired with bigger Divine fights\n" +
-            "(F50 Six-Armed Buddha + F99 Heathcliff's Shadow). Save burst\n" +
-            "skills for the final HP slice. F95 carries three guaranteed\n" +
-            "Legendary/Divine drops in one floor (Time Piercing + Red Rose\n" +
-            "Sword + Stigmablade) — budget durability for three boss kills\n" +
-            "before ascending. F85 and F87 are similar triple-drop floors.\n\n" +
-            "SPOILER GATING (Bundle 13)\n" +
-            "Drop names are masked as \"???\" until you've actually seen the\n" +
-            "drop unlock — floor bosses reveal their drop after the per-\n" +
-            "floor kill, LAB drops reveal once the floor is cleared, and\n" +
-            "field-boss drops reveal once you reach (or pass) the floor.\n" +
-            "Boss NAMES stay visible so the reference list still works as\n" +
-            "a planning tool; only the loot side hides.\n\n" +
-            "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Field Bosses — Guaranteed Drops] · [Integral Factor Field Bosses] · [Fractured Daydream Field Bosses] · [Avatar Weapons & Last-Attack Bonus] · [Crystal Wyrm of Lisbeth's Forge (F55)] · [Lambent Light & Asuna's Memory] · [Sleeping Knights' Tribute & Mother's Rosario] · [Divine Object Set — Integrity Knights]")
-        {
-            Tags = new[] { "reference", "bosses", "drops", "lab", "bundle-11" }
-        },
-
-        new("Quests & NPCs", "Lambent Light & Asuna's Memory",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Yulier (F40) — KoB-era Asuna friend\n" +
-            "│ Floor: 40 (quest); F1-F8 (chest tease)\n" +
-            "│ Quest: The Lightning Flash's Memory (10 kills)\n" +
-            "│ Reward: Lambent Light (Legendary Rapier)\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Lambent Light is Asuna's signature rapier from the KoB era —\n" +
-            "the canon weapon she carried during the F50-F75 push in the\n" +
-            "novels. Bundle 11 wires it through three sources: an early\n" +
-            "F1-F8 chest tease (very rare), the F40 Yulier NPC quest\n" +
-            "(guaranteed reward), and the existing F88-F94 Radiant Light\n" +
-            "(her post-game upgrade). Mother's Rosario lives separately at\n" +
-            "F76 — see that topic.\n\n" +
-            "USAGE\n" +
-            "Three paths to Lambent Light:\n" +
-            "  1. F1-F8 chest pool — small chance per chest (Bundle 11 F1\n" +
-            "     anchor pair with Mate Chopper).\n" +
-            "  2. F40 Yulier (BrightYellow 'Y' or NPC glyph) — accept\n" +
-            "     'The Lightning Flash's Memory', slay 10 monsters on F40,\n" +
-            "     return for the rapier + 450 Col + 350 XP.\n" +
-            "  3. F88-F94 chest band — Radiant Light (Asuna post-game\n" +
-            "     upgrade, separate DefId, CritRate+20).\n\n" +
-            "EFFECTS\n" +
-            "  Lambent Light    Legendary Rapier, flat CritRate bonus\n" +
-            "  Radiant Light    Legendary Rapier, CritRate+20 (post-game)\n" +
-            "  Mother's Rosario Legendary Rapier, ComboBonus+50, 11-hit\n" +
-            "                   (F76 Jun NPC, see Sleeping Knights topic)\n" +
-            "Yulier's quest is one-shot per save. Inventory full at turn-in\n" +
-            "drops the rapier at your feet — never silently lost.\n\n" +
-            "COSTS\n" +
-            "10 F40 monster kills for the guaranteed path. The chest tease\n" +
-            "is pure RNG; do not rely on it.\n\n" +
-            "TIPS\n" +
-            "Asuna's three rapiers form a complete Asuna-themed loadout\n" +
-            "across the run. If you're playing a Rapier build, plant the\n" +
-            "F40 Yulier turn-in BEFORE fighting the F40 floor boss\n" +
-            "(Dracoflame the Elder Wyrm) — the quest kills can overlap\n" +
-            "with the boss approach. The KoB-era flavor pairs well with\n" +
-            "joining Knights of the Blood Oath at F55.\n\n" +
-            "CANON\n" +
-            "SAO LN vol 4-7 (Aincrad arc): Lambent Light is Asuna's\n" +
-            "personalized rapier as Vice-Commander of the Knights of the\n" +
-            "Blood Oath, used through the F50-F75 floor push. Yulier is a\n" +
-            "Liberation Army officer who fought alongside Asuna on F59.\n\n" +
-            "SEE ALSO\n" +
-            "[Sleeping Knights' Tribute & Mother's Rosario] · [Knights of the Blood Oath (F55)] · [Named Legendary Highlights] · [Quest Types & Rewards] · [Critical Hits]")
-        {
-            Tags = new[] { "quests", "npcs", "asuna", "rapier", "bundle-11" }
-        },
-
-        new("Quests & NPCs", "Sleeping Knights' Tribute & Mother's Rosario",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Jun (F76) — Sleeping Knights memorial\n" +
-            "│ Floor: 76\n" +
-            "│ Quest: The Sleeping Knights' Tribute (15 kills)\n" +
-            "│ Reward: Mother's Rosario (Legendary Rapier, 11-hit OSS)\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Mother's Rosario is Yuuki Konno's signature rapier — the\n" +
-            "blade that carries her 11-hit Original Sword Skill of the\n" +
-            "same name. Bundle 11 wires it as a one-shot quest reward\n" +
-            "from Jun, a Sleeping Knights survivor on F76 (the memorial\n" +
-            "floor for Yuuki and the Sleeping Knights guild).\n\n" +
-            "USAGE\n" +
-            "Reach F76. Bump Jun (NPC glyph in floor town/safe room).\n" +
-            "Accept 'The Sleeping Knights' Tribute': slay 15 monsters on\n" +
-            "F76, return to Jun for the rapier + 700 Col + 550 XP.\n\n" +
-            "EFFECTS\n" +
-            "  Mother's Rosario    Legendary Rapier\n" +
-            "                      ComboBonus+50, 11-hit Original Sword Skill\n" +
-            "                      Inventory-full -> dropped at feet\n" +
-            "Quest is one-shot per save. The 15 kills overlap with any\n" +
-            "standing F76 weapon-gated Kill quests.\n\n" +
-            "COSTS\n" +
-            "15 F76 monster kills. F76 is also the Hollow-Fragment HNM\n" +
-            "questgiver band (F79+ NPCs nearby) — budget durability for\n" +
-            "the broader floor.\n\n" +
-            "TIPS\n" +
-            "If you're already chasing Lambent Light at F40 and Radiant\n" +
-            "Light in the F88-F94 chest band, Mother's Rosario completes\n" +
-            "the Asuna/Yuuki rapier triptych. Mother's Rosario's 11-hit\n" +
-            "OSS is the longest combo in the game — pair with Combo\n" +
-            "Finisher mechanics for double-damage on the final strike.\n\n" +
-            "CANON\n" +
-            "SAO LN vol 7 (Mother's Rosario arc): Yuuki Konno (Zekken,\n" +
-            "leader of the Sleeping Knights, terminal AIDS patient) wields\n" +
-            "Mother's Rosario as the only Original Sword Skill in canon\n" +
-            "ALO. The Sleeping Knights guild memorialize her after her\n" +
-            "death. Jun is a Sleeping Knights member who survived to\n" +
-            "tend the memorial.\n\n" +
-            "SEE ALSO\n" +
-            "[Lambent Light & Asuna's Memory] · [Sleeping Knights (F60)] · [Named Legendary Highlights] · [Combo Attacks] · [Sword Skills — Unlock & Use] · [Quest Types & Rewards]")
-        {
-            Tags = new[] { "quests", "npcs", "yuuki", "rapier", "bundle-11" }
-        },
-
-        new("World", "Crystal Wyrm of Lisbeth's Forge (F55)",
-            "┌─ World\n" +
-            "│ Topic: Crystal Wyrm of Lisbeth's Forge\n" +
-            "│ Floor: 55 (overworld field-boss)\n" +
-            "│ Glyph: BrightCyan 'W'\n" +
-            "│ Drop: Dark Repulser (Legendary 1H Sword)\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "A canon LN field-boss new in Bundle 11. The Crystal Wyrm\n" +
-            "lives in a crystallite hollow on F55 — its scales chime when\n" +
-            "it breathes. Defeating it grants Dark Repulser, the second\n" +
-            "half of Kirito's iconic dual-blade pair (Elucidator is the\n" +
-            "F50 Last-Attack Bonus). The Wyrm is the field-boss source;\n" +
-            "Lisbeth's F48 handover (after F55 boss clear) is a separate\n" +
-            "guaranteed gift — see Lisbeth's Dark Repulser Gift topic.\n\n" +
-            "USAGE\n" +
-            "Reach F55 overworld. The wyrm wanders the overworld floor\n" +
-            "(does NOT spawn inside the Labyrinth). Bump to engage. HP\n" +
-            "scales 3.2x normal, ATK 1.6x. Once defeated, never respawns.\n\n" +
-            "EFFECTS\n" +
-            "  Drop          Dark Repulser (Legendary 1H Sword)\n" +
-            "  Effect        CritHeal+5 — restores HP on crit hit\n" +
-            "  Pair          Canonical pair with Elucidator (F50 LAB)\n" +
-            "                Pair Resonance: +10% damage MH+OH, +5% crit\n" +
-            "                re-roll on first hit per encounter\n" +
-            "  Lisbeth gift  Talking to Lisbeth at F48 AFTER clearing the\n" +
-            "                F55 boss triggers a one-time second Dark\n" +
-            "                Repulser handover (canon Lisbeth-craft flavor)\n\n" +
-            "COSTS\n" +
-            "Field-boss durability cost. Field-boss drops do NOT block\n" +
-            "Avatar Last-Attack Bonus rolls — a Crystal Wyrm kill with a\n" +
-            "matching weapon class still rolls the avatar pool.\n\n" +
-            "TIPS\n" +
-            "Push F50 floor boss for Elucidator (Last-Attack Bonus, must\n" +
-            "be killing blow), then push to F55 and find the wyrm BEFORE\n" +
-            "the floor boss for the Dark Repulser pair. Return to F48\n" +
-            "Lindarth after F55 boss clear for Lisbeth's gift — you can\n" +
-            "end up with TWO Dark Repulsers (one for the active dual-wield\n" +
-            "set, one for an ally or storage).\n\n" +
-            "CANON\n" +
-            "SAO LN vol 2 (the Lisbeth side-story): Lisbeth and Kirito\n" +
-            "descend into a crystal cavern on F55 to harvest the breath-\n" +
-            "frozen ingot of a crystal dragon. Lisbeth forges Dark Repulser\n" +
-            "from the ingot back at her Lindarth shop. The wyrm's scales-\n" +
-            "chime detail comes directly from the LN description.\n\n" +
-            "SEE ALSO\n" +
-            "[Lisbeth's Dark Repulser Gift (F48)] · [Field Bosses — Guaranteed Drops] · [Boss Drop Reference] · [Pair Resonance — Mechanics Clarified] · [Paired Dual-Wield Weapons] · [Lindarth Town (F48)] · [F50 Boss & the Elucidator Drop]")
-        {
-            Tags = new[] { "world", "field-boss", "kirito", "dual-blades", "bundle-11" }
-        },
-
-        new("Quests & NPCs", "Lisbeth's Dark Repulser Gift (F48)",
-            "┌─ Quests & NPCs\n" +
-            "│ NPC: Lisbeth (BrightMagenta 'L', Lindarth F48)\n" +
-            "│ Floor: 48 (Lindarth town)\n" +
-            "│ Trigger: Talk to Lisbeth AFTER F55 boss is cleared\n" +
-            "│ Reward: Dark Repulser (Legendary 1H Sword), one-time\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Bundle 11 wires Lisbeth's canon LN dialogue: after you bring\n" +
-            "back F55 dragon ore (modeled here as 'clear the F55 floor\n" +
-            "boss'), Lisbeth crafts Dark Repulser and gifts it to you on\n" +
-            "your next visit. This is a separate, parallel source from\n" +
-            "the F55 Crystal Wyrm field-boss drop — both can fire on the\n" +
-            "same save, so a player who clears both ends up with two Dark\n" +
-            "Repulsers.\n\n" +
-            "USAGE\n" +
-            "  1. Reach F55 and clear the floor boss (any Five-Eyed Wraith\n" +
-            "     or your floor's labyrinth boss — the trigger is\n" +
-            "     HighestFloorBossCleared >= 55).\n" +
-            "  2. Return to F48 Lindarth.\n" +
-            "  3. Bump Lisbeth (BrightMagenta 'L') to open the forge\n" +
-            "     dialog. The gift fires before the standard craft menu.\n" +
-            "  4. The forge menu opens normally afterward — you can craft\n" +
-            "     R6 weapons in the same visit.\n\n" +
-            "EFFECTS\n" +
-            "  Dialog        \"Hey — remember that crystallite ore from the\n" +
-            "                F55 dragon? I finally finished it. Here. I\n" +
-            "                made it for you.\"\n" +
-            "  Drop          Dark Repulser (Legendary 1H Sword)\n" +
-            "  Effect        CritHeal+5 — restores HP on crit hit\n" +
-            "  Inventory     Auto-added; full -> dropped at your feet\n" +
-            "  One-time      Quest 'lisbeth_dark_repulser_gift' marks\n" +
-            "                turned-in; never fires again on the save\n\n" +
-            "COSTS\n" +
-            "None — pure gift. Does NOT consume Col, mats, or your forge\n" +
-            "craft slots. Fully additive to her R6 craft line.\n\n" +
-            "TIPS\n" +
-            "Time the F48 visit to chain with a planned R6 craft so you\n" +
-            "bank the Lindarth trip. If you also kill the F55 Crystal\n" +
-            "Wyrm, you can build a dual-wield kit AND give a backup Dark\n" +
-            "Repulser to a Kirito ally for a near-canon party loadout.\n\n" +
-            "CANON\n" +
-            "SAO LN vol 2 (Lisbeth side-story): after the F55 dragon-ore\n" +
-            "expedition, Lisbeth gifts Dark Repulser to Kirito as a\n" +
-            "personal blacksmith gesture — both because the ingot was\n" +
-            "extraordinary and because of the bond formed during the dive.\n\n" +
-            "SEE ALSO\n" +
-            "[Crystal Wyrm of Lisbeth's Forge (F55)] · [Lindarth Town (F48)] · [Lisbeth — Rarity 6 Craft Line] · [Pair Resonance — Mechanics Clarified] · [F50 Boss & the Elucidator Drop]")
-        {
-            Tags = new[] { "quests", "npcs", "lisbeth", "kirito", "bundle-11" }
-        },
-
-        new("World", "F50 Boss & the Elucidator Drop",
-            "┌─ World\n" +
-            "│ Topic: F50 Boss & the Elucidator Drop\n" +
-            "│ Floor: 50 (labyrinth boss chamber)\n" +
-            "│ Boss: The Six-Armed Buddha / Tier of Sin\n" +
-            "│ LAB drop: Elucidator (Legendary 1H Sword) — must killing-blow\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "The F50 floor boss now drops Elucidator on Last-Attack Bonus\n" +
-            "(killing-blow only). This is a canon LN anchor: Kirito takes\n" +
-            "Elucidator from the F50 boss in SAO LN vol 4. It is the only\n" +
-            "Bundle 11 LAB drop that is paired with a non-IM weapon (the\n" +
-            "rest of the LAB pool is IM canon at F85+). Pre-Bundle-11\n" +
-            "Elucidator was orphaned to the chest pool; it now lives at\n" +
-            "its canon floor.\n\n" +
-            "USAGE\n" +
-            "Reach F50, find the labyrinth, fight the Six-Armed Buddha\n" +
-            "(Tier of Sin). YOU must land the killing blow — if your\n" +
-            "ally lands the final hit, the LAB drop does NOT fire.\n" +
-            "Elucidator drops alongside any standard floor-boss loot.\n\n" +
-            "EFFECTS\n" +
-            "  Boss          Six-Armed Buddha (canon F50 boss)\n" +
-            "  Codename      Tier of Sin (LN designation)\n" +
-            "  LAB drop      Elucidator (Legendary 1H Sword)\n" +
-            "  Effect        SkillCooldown-1 — sword skills come off\n" +
-            "                cooldown one turn faster\n" +
-            "  Pair          Canonical pair with Dark Repulser (F55 wyrm\n" +
-            "                + F48 Lisbeth gift). See Pair Resonance.\n" +
-            "  Last-Attack   Killing blow required. If allies finish, the\n" +
-            "                Legendary does NOT drop.\n\n" +
-            "COSTS\n" +
-            "Boss durability cost + the LAB risk: micro-managing damage\n" +
-            "to ensure your hit ends the fight. Burst skills and crit\n" +
-            "weapons are best for landing the killing blow predictably.\n\n" +
-            "TIPS\n" +
-            "Open the fight with Look Mode to scout the boss HP. Save\n" +
-            "your highest-burst sword skill (Vorpal Strike, Star Splash,\n" +
-            "etc.) for the final HP slice. If allies are on the field,\n" +
-            "consider rotating them to non-attack roles via SAO Switch\n" +
-            "before the killing blow window — or pre-pull aggro so the\n" +
-            "boss faces YOU. Pair this run with the F55 Crystal Wyrm\n" +
-            "and F48 Lisbeth gift for a same-session Dual-Blades kit.\n\n" +
-            "CANON\n" +
-            "SAO LN vol 4 (Aincrad arc): Kirito takes Elucidator from\n" +
-            "the F50 floor boss as Last-Attack Bonus — the LN explicitly\n" +
-            "calls out the LAB mechanic. The blade becomes Kirito's main-\n" +
-            "hand for the rest of the F50-F75 push, and pairs with Dark\n" +
-            "Repulser (F55 Lisbeth craft) to form his iconic dual-wield\n" +
-            "loadout once Dual Blades unlocks at F74.\n\n" +
-            "SEE ALSO\n" +
-            "[Floor Boss Roster — Canon Highlights] · [Boss Drop Reference] · [Crystal Wyrm of Lisbeth's Forge (F55)] · [Lisbeth's Dark Repulser Gift (F48)] · [Pair Resonance — Mechanics Clarified] · [Unique Skill: Dual Blades] · [Avatar Weapons & Last-Attack Bonus]")
-        {
-            Tags = new[] { "world", "bosses", "kirito", "elucidator", "lab", "bundle-11" }
-        },
-
-        // ── Bundle 12 — Cleanup Wave entries ──
-
-        new("Items", "Lisbeth — Iron Ingot Enhancement (Mid-Tier)",
-            "┌─ Items\n" +
-            "│ Topic: Lisbeth — Iron Ingot Enhancement (Mid-Tier)\n" +
+            "│ Topic: Iron Ingot Enhancement (Lisbeth)\n" +
             "│ NPC: F48 Lindarth Lisbeth (BrightMagenta 'L')\n" +
             "│ Recipe: 3x iron_ingot + 200 Col → +1 EnhancementLevel\n" +
             "│ Cap: +5 on Common/Uncommon weapons only\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Bundle 12 adds a low-cost enhancement path for early/mid-game\n" +
-            "weapons at F48 Lindarth Lisbeth, separate from her endgame\n" +
-            "Rarity 6 craft line. Spend 3 iron_ingot + 200 Col per +1\n" +
-            "enhancement on a Common or Uncommon weapon, up to +5. The\n" +
-            "recipe sidesteps the Anvil's Enhancement Ore requirement\n" +
-            "entirely — useful when you're sitting on stacks of iron from\n" +
-            "Mining but haven't farmed an Ore biome.\n\n" +
-            "USAGE\n" +
-            "Reach F48, find Lindarth, bump the BrightMagenta 'L' NPC. The\n" +
-            "craft dialog now shows TWO sections: the 18-recipe R6 craft\n" +
-            "line AND the new mid-tier enhancement option. Pick the\n" +
-            "enhancement row, choose a Common or Uncommon weapon from your\n" +
-            "inventory, and confirm — Lisbeth burns 3 iron_ingot + 200 Col\n" +
-            "and bumps the weapon's EnhancementLevel by +1.\n\n" +
-            "EFFECTS\n" +
+            "A low-cost enhancement path for early/mid-game weapons at F48\n" +
+            "Lindarth Lisbeth, separate from her endgame Rarity 6 craft\n" +
+            "line. Spend 3 iron_ingot + 200 Col per +1 enhancement on a\n" +
+            "Common or Uncommon weapon, up to +5. The recipe sidesteps the\n" +
+            "Anvil's Enhancement Ore requirement entirely — useful when\n" +
+            "you're sitting on iron from Mining but haven't farmed an Ore\n" +
+            "biome.\n\n" +
+            "MECHANICS\n" +
             "  Cost per +1     3 iron_ingot + 200 Col (flat — no floor scaling)\n" +
             "  Eligibility     Common (T0/T1) and Uncommon (T2) weapons only\n" +
             "  Cap             +5 EnhancementLevel via this recipe\n" +
-            "  Stacks with     Anvil Enhance up to the global +10 cap, BUT\n" +
-            "                  the Anvil resumes the +6 → +10 push from\n" +
-            "                  whatever Lisbeth left it at\n" +
-            "  Failure         None — guaranteed +1 per craft (no\n" +
-            "                  downgrade risk like the Anvil's +7+ band)\n" +
-            "DISTINCT FROM R6 CRAFT LINE: the R6 line is 3M Col + rare\n" +
-            "mats per recipe; this is 200 Col + 3 iron_ingot per +1.\n" +
-            "Different menus, different flow.\n\n" +
-            "COSTS\n" +
-            "3 iron_ingot per +1 — one ~3-strike Iron vein per +1, or\n" +
-            "an inventory carry from earlier mining. Common/Uncommon\n" +
-            "limit means high-tier weapons (Rare, Epic, Legendary) are\n" +
-            "still routed through the Anvil + Enhancement Ore path.\n\n" +
+            "  Stacks with     Anvil Enhance up to the global +10 cap; the\n" +
+            "                  Anvil resumes the +6 → +10 push from whatever\n" +
+            "                  Lisbeth left it at\n" +
+            "  Failure         None — guaranteed +1 per craft (no downgrade\n" +
+            "                  risk like the Anvil's +7+ band)\n" +
+            "Distinct from the R6 craft line: that's 3M Col + rare mats per\n" +
+            "recipe; this is 200 Col + 3 iron_ingot per +1. Different menus,\n" +
+            "different flow. High-tier weapons (Rare/Epic/Legendary) still\n" +
+            "route through the Anvil + Enhancement Ore path.\n\n" +
             "TIPS\n" +
             "Push Common/Uncommon starter weapons to +5 cheaply on first\n" +
             "F48 visit — a +5 Common weapon with the iron-ingot bumps\n" +
@@ -7160,66 +5709,10 @@ public static class PlayerGuideContent
             "iron_ingot during Mining grinds: 15 ingots = a +5 push for\n" +
             "1000 Col total, vs ~3500-5000 Col on the Anvil with ores.\n\n" +
             "SEE ALSO\n" +
-            "[Lisbeth — Rarity 6 Craft Line] · [Anvil — Repair, Enhance, Evolve, Refine] · [Enhancement Ores System] · [Mining (Life Skill)] · [Lindarth Town (F48)]")
+            "[Lisbeth — Rarity 6 Craft Line] · [Anvil — Repair, Enhance, Evolve, Refine] · [Enhancement Ores System] · [Mining (Life Skill)] · [Floor 48]")
         {
-            Tags = new[] { "lisbeth", "crafting", "enhancement", "mining", "bundle-12" }
+            Tags = new[] { "lisbeth", "crafting", "enhancement", "mining" }
         },
-
-        new("Items", "Canon Citation Coverage (L-Inspect Popup)",
-            "┌─ Items\n" +
-            "│ Topic: Canon Citation Coverage (L-Inspect Popup)\n" +
-            "│ Coverage: 184/184 Legendaries (100%, Bundle 12)\n" +
-            "│ Source: L-key inspect popup, Canon block\n" +
-            "│ Honest tag: \"Invented for AincradTRPG\" where non-canon\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Bundle 11 added Canon citations to inspect popups; Bundle 12\n" +
-            "completes the sweep — every Legendary in the loot pool now\n" +
-            "carries a Canon citation in the L-key inspect popup. The\n" +
-            "audit ran 79 → 184 entries: any LN volume, anime arc, game\n" +
-            "source, or mythological reference is named explicitly. Where\n" +
-            "no canon source exists, the entry is honestly tagged\n" +
-            "\"Invented for AincradTRPG\" rather than fabricated.\n\n" +
-            "USAGE\n" +
-            "Hover any Legendary weapon (Inventory, Shop, Chest peek, or\n" +
-            "ground tile) and press L to open the inspect popup. The Canon\n" +
-            "block sits below the stat lines and reads one of two ways:\n" +
-            "  - Citation: \"SAO LN vol 4-7 (Aincrad arc): ...\"\n" +
-            "                or \"SAO Last Recollection — game-original\"\n" +
-            "                or \"Norse mythology: Mjolnir, Thor's hammer\"\n" +
-            "  - Honest: \"Invented for AincradTRPG (no canon source)\"\n\n" +
-            "EFFECTS\n" +
-            "Reading the Canon block tells you at a glance:\n" +
-            "  - The blade's narrative weight (LN-named beats invented)\n" +
-            "  - Which canon source to chase if you like the lore\n" +
-            "  - Whether the weapon is part of a paired set (Elucidator\n" +
-            "    pair note, Asuna-rapier note, etc.)\n" +
-            "Coverage breakdown:\n" +
-            "  - 184/184 Legendaries cited or tagged Invented\n" +
-            "  - 1 corrupted/stone-craft variant excluded (carries the\n" +
-            "    base weapon's citation by reference)\n" +
-            "  - Sources span: SAO LN vols 1-22, anime arcs (Progressive,\n" +
-            "    Aincrad, Alicization, War of Underworld), game canon\n" +
-            "    (IF, IM, MD, FD, AL Lycoris, Lost Song, LR), and named\n" +
-            "    mythological weapons (Mjolnir, Tyrfing, Caladbolg, etc.)\n\n" +
-            "COSTS\n" +
-            "None — display only. Citations do not affect drop rates,\n" +
-            "stats, or rarity.\n\n" +
-            "TIPS\n" +
-            "If you're chasing canon-flavor builds (full Asuna kit, Kirito\n" +
-            "dual-wield, Yuuki memorial), the L-popup Canon block is the\n" +
-            "fastest filter for which Legendaries belong. Honest \"Invented\"\n" +
-            "tags are NOT a quality knock — many invented blades carry\n" +
-            "best-in-slot effects (Bundle 11's AL Lycoris invented Divine\n" +
-            "Beasts drop signature Legendaries). The tag just tells you\n" +
-            "the blade isn't from a canon SAO source.\n\n" +
-            "SEE ALSO\n" +
-            "[Look Mode & Counter Stance] · [Named Legendary Highlights] · [Floor Boss Roster — Canon Highlights] · [Legendary Redistribution Overview] · [Mid-Game Legendary Lifts (F12-F44)]")
-        {
-            Tags = new[] { "items", "lore", "canon", "ui", "inspect", "bundle-12" }
-        },
-
-        // ── Bundle 13 entries ────────────────────────────────────────────
 
         new("Items", "Legendary Collectables Panel (Shift+L)",
             "┌─ Items\n" +
@@ -7262,9 +5755,9 @@ public static class PlayerGuideContent
             "your current depth, so you can plan for chest hunts and\n" +
             "field-boss farms before ascending.\n\n" +
             "SEE ALSO\n" +
-            "[Boss Drop Reference] · [Named Legendary Highlights] · [Legendary Redistribution Overview]")
+            "[Named Legendary Highlights]")
         {
-            Tags = new[] { "items", "ui", "collectables", "bundle-13" }
+            Tags = new[] { "items", "ui", "collectables" }
         },
 
         new("Items", "Mithril Ingot Enhance (Rare/Epic, +1..+7)",
@@ -7295,7 +5788,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Lisbeth — Rarity 6 Craft Line] · [Crystallite Ingot Enhance (Epic/Legendary)] · [Reforge — Re-roll Random Bonuses]")
         {
-            Tags = new[] { "crafting", "lisbeth", "enhancement", "bundle-13" }
+            Tags = new[] { "crafting", "lisbeth", "enhancement" }
         },
 
         new("Items", "Crystallite Ingot Enhance (Epic/Legendary, +1..+10)",
@@ -7323,9 +5816,9 @@ public static class PlayerGuideContent
             "recipes also list crystallite as a high-tier component, so\n" +
             "budget the stack across enhance + R6 craft + reforge.\n\n" +
             "SEE ALSO\n" +
-            "[Mithril Ingot Enhance (Rare/Epic)] · [Lisbeth — Rarity 6 Craft Line] · [Reforge — Re-roll Random Bonuses] · [Boss Drop Reference]")
+            "[Mithril Ingot Enhance (Rare/Epic)] · [Lisbeth — Rarity 6 Craft Line] · [Reforge — Re-roll Random Bonuses]")
         {
-            Tags = new[] { "crafting", "lisbeth", "enhancement", "bundle-13" }
+            Tags = new[] { "crafting", "lisbeth", "enhancement" }
         },
 
         new("Items", "Reforge — Re-roll Random Bonuses",
@@ -7365,39 +5858,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Mithril Ingot Enhance (Rare/Epic)] · [Crystallite Ingot Enhance (Epic/Legendary)] · [Lisbeth — Rarity 6 Craft Line]")
         {
-            Tags = new[] { "crafting", "lisbeth", "reforge", "bundle-13" }
-        },
-
-        new("World", "Lindarth Town (F48)",
-            "┌─ World\n" +
-            "│ Topic: Lindarth — Lisbeth's forge town\n" +
-            "│ Floor: 48 (special area, accessible via standard descent)\n" +
-            "│ Footprint: 61×35 with 7 named buildings\n" +
-            "└─\n\n" +
-            "SUMMARY\n" +
-            "Lindarth is the dedicated forge-town on F48 — the Lisbeth\n" +
-            "headquarters and crafting hub. Bundle 13 promotes the F48\n" +
-            "approach from a procedural Labyrinth biome to a hand-laid\n" +
-            "town with seven canonical buildings.\n\n" +
-            "BUILDINGS\n" +
-            "  Forge                — Lisbeth's primary work-floor; she\n" +
-            "                         spawns deterministically on the\n" +
-            "                         centerline.\n" +
-            "  Anvil cluster (4)    — auxiliary stations for ore-driven\n" +
-            "                         enhance attempts.\n" +
-            "  Crystallite Refinery — high-tier ingot processing.\n" +
-            "  Mithril Smelter      — mid-tier ingot processing.\n" +
-            "  Material Vendor stall — mat top-up between crafts.\n" +
-            "  Lisbeth's quarters   — flavor interior, no NPC.\n" +
-            "  Lindarth Inn         — rest checkpoint.\n\n" +
-            "TIPS\n" +
-            "Lisbeth's forge dialog opens five tabs in Bundle 13 (R6, Iron,\n" +
-            "Mithril, Reforge, Crystallite). Plan a Lindarth visit to chain\n" +
-            "an enhance run + a reforge attempt + an R6 craft in one trip.\n\n" +
-            "SEE ALSO\n" +
-            "[Lisbeth — Rarity 6 Craft Line] · [Lisbeth's Dark Repulser Gift (F48)] · [Reforge — Re-roll Random Bonuses]")
-        {
-            Tags = new[] { "world", "town", "lisbeth", "bundle-13" }
+            Tags = new[] { "crafting", "lisbeth", "reforge" }
         },
 
         new("Combat & Rarity", "Ranged Fire & the Reticle (\\)",
@@ -7431,7 +5892,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Look Mode & Counter Stance] · [Sword Skills — Per-Weapon Lists] · [Critical Hits]")
         {
-            Tags = new[] { "combat", "ranged", "controls", "bundle-13" }
+            Tags = new[] { "combat", "ranged", "controls" }
         },
 
         new("Items", "Slicing Stones — Alt Evolution Paths",
@@ -7462,7 +5923,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Weapon Evolution Chains] · [Lisbeth — Rarity 6 Craft Line]")
         {
-            Tags = new[] { "items", "evolution", "stones", "bundle-13" }
+            Tags = new[] { "items", "evolution", "stones" }
         },
 
         new("Items", "Footstep Trail Settings",
@@ -7488,13 +5949,13 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Look Mode & Counter Stance]")
         {
-            Tags = new[] { "controls", "footsteps", "options", "bundle-13" }
+            Tags = new[] { "controls", "footsteps", "options" }
         },
 
         new("Combat & Rarity", "Status Effect Abbreviations",
             "┌─ Combat\n" +
             "│ Topic: Sidebar status row — 3-4 letter codes\n" +
-            "│ Update: Bundle 13 replaces single-glyph icons\n" +
+            "│ Update: multi-glyph status icons\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "The sidebar status row now uses 3-4 letter abbreviations in\n" +
@@ -7519,7 +5980,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Bleed Effect] · [Poison Effect] · [Stun Effect]")
         {
-            Tags = new[] { "combat", "status", "ui", "bundle-13" }
+            Tags = new[] { "combat", "status", "ui" }
         },
 
         new("Items", "Equipment Compare Panel",
@@ -7548,7 +6009,7 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Equipment Slots & Type] · [Weapon Type & Affinity]")
         {
-            Tags = new[] { "items", "ui", "compare", "bundle-13" }
+            Tags = new[] { "items", "ui", "compare" }
         },
 
         new("Items", "Player Guide Search & Navigation",
@@ -7581,11 +6042,3491 @@ public static class PlayerGuideContent
             "SEE ALSO\n" +
             "[Look Mode & Counter Stance]")
         {
-            Tags = new[] { "controls", "ui", "search", "bundle-13" }
+            Tags = new[] { "controls", "ui", "search" }
+        },
+
+        // ── Floors (per-floor entries; gated by LifetimeStats.MaxFloorReached) ──
+
+        new("Floors", "Floor 1",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 1\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Grassland\n" +
+            "│ Boss: Illfang the Kobold Lord (Tyrant of the First Floor)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "The opening floor and Aincrad's largest. A walled hub city, the\n" +
+            "Town of Beginnings, occupies the south plaza; everything outside\n" +
+            "is open grassland sloping into kobold-haunted hills. Map size is\n" +
+            "1000x1000 — every later floor shrinks toward the F99 100x100.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Illfang the Kobold Lord — single Power Strike phase 2 ability\n" +
+            "(1.8x). Lv12, ~180 HP at this floor's curve. Bring slash damage\n" +
+            "and a positioning skill; the arena is wide enough to kite.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed drop. No Last-Attack Bonus weapon. Chest pool is\n" +
+            "Tier-1 commons + the occasional uncommon. The Mate Chopper\n" +
+            "Legendary can roll from F1 elite kobolds — F1 carries two\n" +
+            "Legendaries' worth of luck-band loot, so don't skip the open\n" +
+            "fields.\n" +
+            "\n" +
+            "NPCS / QUESTS\n" +
+            "Town of Beginnings is the entire ground floor of the game's\n" +
+            "social layer:\n" +
+            "  - Klein (samurai, future Fuurinkazan founder)\n" +
+            "  - Argo the Rat (info broker, cheapest tips in Aincrad)\n" +
+            "  - Agil (vendor, becomes the F50 trader later)\n" +
+            "  - Lisbeth & Silica (flavor — they level up before you meet\n" +
+            "    them at F48 / F35)\n" +
+            "  - Diavel (raid commander, Illfang strategy)\n" +
+            "  - Kibaou (recruits the Aincrad Liberation Force at the plaza\n" +
+            "    fountain — Lv1+ and karma >= -30 to join, +5% XP and +2 to\n" +
+            "    every stat after sign-up)\n" +
+            "  - Priest Tadashi, Nezha (side flavor)\n" +
+            "Quest hooks: First Day chain, ALF recruitment, Anneal Blade\n" +
+            "craft line out of Horunka village.\n" +
+            "\n" +
+            "Monument of Swordsmen sits in the south plaza park — a tall\n" +
+            "BrightYellow M tile. Step on it to open the species kill log\n" +
+            "and pick the active title shown on your name plate.\n" +
+            "\n" +
+            "Town Guard outlaw response: drop your karma to -50 or below\n" +
+            "and crossing back into the plaza spawns 3-5 Lv20 BrightBlue G\n" +
+            "guards. They are not optional and they hit hard.\n" +
+            "\n" +
+            "CANON\n" +
+            "SAO LN vol 1 / anime S1E1-2 / Progressive vol 1: Diavel's raid\n" +
+            "kills Illfang at the cost of his life when the LN-canon four-bar\n" +
+            "boss switches from talwar to nodachi at the last bar. The Town\n" +
+            "of Beginnings, Black Iron Palace, and Monument of Life are all\n" +
+            "first-floor canon landmarks; the Monument of Swordsmen is this\n" +
+            "build's hub-tile cousin of the Monument of Life.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Do the ALF recruit early — that +5% XP banks for every later\n" +
+            "floor. Stand on the Monument of Swordsmen before each run to\n" +
+            "lock the title that fits your build. F1 is the only floor\n" +
+            "where prefab placement is fully suppressed (Town of Beginnings\n" +
+            "is the prefab); explore the open fields, not the labyrinth\n" +
+            "wing, for early loot.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 2] · [Floor 50] · [Floor Scaling Formulas] · [Karma & Alignment]")
+        {
+            Tags = new[] { "floors", "f1", "canon", "town", "monument", "guild" }
+        },
+
+        new("Floors", "Floor 2",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 2\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Grassland (savanna / mesa)\n" +
+            "│ Boss: Asterius the Taurus King (Sovereign of the Labyrinth)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Wind-stripped plateau, the Taurus plains. The cylindrical stone\n" +
+            "town of Urbus crowns a mesa; below, Bullbous Bow herds drift\n" +
+            "the savanna. The first floor where unarmed builds get a real\n" +
+            "playground.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Asterius the Taurus King (Lv14, ~212 HP). Progressive canon\n" +
+            "fight — Asterius is flanked by Baran the General Taurus and\n" +
+            "Nato the Colonel Taurus in lore; in-engine he is the single\n" +
+            "boss entity. Standard Power Strike phase-2 ability. Bring\n" +
+            "blunt or slash; the boss room is open enough to circle.\n" +
+            "\n" +
+            "DROPS\n" +
+            "Field boss Bullbous Bow (Armored Terror of the Plains) roams\n" +
+            "the plateau and gates the labyrinth entrance — kill drops the\n" +
+            "Bullbous Horn material guaranteed. No labyrinth-boss LAB drop;\n" +
+            "chest pool stays Tier-1.\n" +
+            "\n" +
+            "NPCS / QUESTS\n" +
+            "Ran the Brawler — Progressive canon, hub of Urbus. Ran's Trial\n" +
+            "is the Martial Arts unique-skill quest: 5 unarmed kills against\n" +
+            "F2 beasts. Reward: Martial Arts unique skill flag + 200 Col +\n" +
+            "150 XP. The actual unlock condition for Martial Arts is 30\n" +
+            "lifetime unarmed kills — Ran's quest just frames the canon.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive vol 2: Asterius is the second-floor boss of the\n" +
+            "PV beta tester era; Ran is the canon Martial Arts trial giver,\n" +
+            "the only NPC in PV who teaches you to fight without a weapon.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Don't skip Ran's Trial even on a sword build — the quest XP\n" +
+            "and Col are the easiest of any F2 NPC. Bullbous Bow drops the\n" +
+            "horn whether you finish or an ally does, but you want the\n" +
+            "killing blow on Asterius for the boss-room loot ring.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 1] · [Floor 3] · [Unique Skill: Martial Arts] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f2", "canon", "unique-skills" }
+        },
+
+        new("Floors", "Floor 3",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 3\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Forest (deep, twilight canopy)\n" +
+            "│ Boss: Nerius the Evil Treant (The Rotting Ancient)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Perpetual twilight under the canopy. The hollowed trio of\n" +
+            "baobabs known as Zumfut shelter the trade road; out past it,\n" +
+            "the Forest Elf and Dark Elf war begins. Plant-type aggression\n" +
+            "is up across the floor.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Nerius the Evil Treant (Lv16, ~244 HP). Plant-type — fire and\n" +
+            "edged weapons cut best. Standard scaling-curve ability set\n" +
+            "(Power Strike phase 2).\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop. No Last-Attack Bonus weapon.\n" +
+            "Tier-1 chest pool with low rare chance.\n" +
+            "\n" +
+            "NPCS / QUESTS\n" +
+            "Kizmel the Dark Elf — Progressive canon companion, found at\n" +
+            "an elf camp west of the trade road. Her questline carries\n" +
+            "across F3 and F4 in canon; in this build she is flavor.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive vols 2-3: F3 opens the Elf War quest chain. Zumfut\n" +
+            "(town hollowed into three baobab trees) and Yofel Castle frame\n" +
+            "the floor. Kizmel is the player's first Dark Elf ally and a\n" +
+            "fixture of Progressive's early arc.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Vision is shorter under the canopy — keep a torch or fire\n" +
+            "Crystal in inventory. Plant mobs ignite if you stack burn from\n" +
+            "an enchanted blade.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 2] · [Floor 4] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f3", "canon" }
+        },
+
+        new("Floors", "Floor 4",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 4\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Aquatic (lake / canals)\n" +
+            "│ Boss: Wythege the Hippocampus (Serpent of the Drowned Cavern)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Rovia the canal town. Most of the floor is flooded — gondolas\n" +
+            "are the canon way around. Step into open water and the biome\n" +
+            "rules apply: 5% slip per move and -3 ATK while wet.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Wythege the Hippocampus (Lv18, ~278 HP). Aquatic seahorse-form\n" +
+            "boss in a water-themed arena studded with Bog Water tiles.\n" +
+            "Lightning carries through the wet floor — bring it.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop. Aquatic mob pool (Water\n" +
+            "Drake, Lakeshore Crab, Giant Clam, Water Wight, Scavenger\n" +
+            "Toad) has CanSwim set on this floor — they'll cross water you\n" +
+            "wouldn't expect to.\n" +
+            "\n" +
+            "NPCS / QUESTS\n" +
+            "Romolo the Shipwright of Yore — canon Rovia gondolier. The\n" +
+            "dam-breaking quest chain starts in the canal district.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive vol 3: Rovia is canonically a Venice-styled water\n" +
+            "town. Beta-test memory has it as a sandy canyon, but the live\n" +
+            "version is the lake floor.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Don't fight in standing water unless your kit handles slip\n" +
+            "rolls. The Water Wight's drain attack ignores armor — kill it\n" +
+            "first in any mixed pack.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 3] · [Floor 5] · [Biomes] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f4", "canon", "aquatic", "swimming" }
+        },
+
+        new("Floors", "Floor 5",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 5\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Ruins\n" +
+            "│ Boss: Fuscus the Vacant Colossus (The Hollow Giant)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Karluin and the Pitch-Black Cathedral. The Ruins biome's\n" +
+            "decay pass eats walls and grows scrub through the floor —\n" +
+            "open cathedral nave one minute, broken nave with bushes next.\n" +
+            "Undead show up here for the first time.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Fuscus the Vacant Colossus (Lv20, ~312 HP). Stone golem;\n" +
+            "blunt damage does best, edged glances. F5 is also the band\n" +
+            "where bosses pick up Call Reinforcements as a second ability —\n" +
+            "expect adds in phase 2.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop. Tier-1/2 chest pool.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive vol 4 / Integral Factor: Fuscus is the IF F5\n" +
+            "boss; the Pitch-Black Cathedral and catacombs are PV4 canon.\n" +
+            "Halloween Haunted Maze (Hollow Realization) reskins this\n" +
+            "floor in seasonal events.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Kill the summoned adds before they reach you — Fuscus's adds\n" +
+            "stack damage faster than the boss does. The decay pass is\n" +
+            "deterministic per seed, so a remembered shortcut from a prior\n" +
+            "run still exists.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 4] · [Floor 6] · [Biomes] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f5", "canon" }
+        },
+
+        new("Floors", "Floor 6",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 6\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Swamp\n" +
+            "│ Boss: The Irrational Cube (Enigma of the Sixth Floor)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Marsh, fog, kobold mining shafts. The Swamp biome takes 5 off\n" +
+            "your sight range and rolls 8% step poison through the muck.\n" +
+            "The boss is a puzzle, not a slugfest.\n" +
+            "\n" +
+            "BOSS\n" +
+            "The Irrational Cube (Lv22, ~348 HP). Progressive canon — six\n" +
+            "faces, randomized damage type per face it shows. Read the\n" +
+            "presented face, swap to the resist or weakness it implies, and\n" +
+            "go again. Bull-rushing the cube punishes most kits hard.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop. Cube fight rewards Tier-1/2\n" +
+            "chest pulls.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive: F6 is the canon puzzle floor; the Cube's\n" +
+            "shifting-face mechanic is the lore-anchor for elemental\n" +
+            "swap-coverage builds.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Carry one weapon of every common element you can stomach —\n" +
+            "this is the floor that pays for that breadth. Stockpile\n" +
+            "antidote crystals before the descent; the swamp's poison\n" +
+            "ticks add up.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 5] · [Floor 7] · [Biomes] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f6", "canon" }
+        },
+
+        new("Floors", "Floor 7",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 7\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Forest (rainforest)\n" +
+            "│ Boss: The Storm Magnus Duo (Twin Sentinels of the Stone Keep)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Lectea — the canon sky floor of cloud seas and stone\n" +
+            "platforms; in this build it renders as a dense rainforest.\n" +
+            "The Dogma thieves' lair sits somewhere in the canopy. PKer\n" +
+            "guild presence is up; carry a teleport crystal.\n" +
+            "\n" +
+            "BOSS\n" +
+            "The Storm Magnus Duo (Lv24, ~384 HP). Twin sentinels —\n" +
+            "Progressive canon two-body fight. Splitting damage between\n" +
+            "them keeps both at half HP and wastes burst; focus one down\n" +
+            "first while the other repositions.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive vols 5-6: Lectea is sky platforms over a cloud\n" +
+            "sea; Dogma is the floor's PKer arc.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Park the second Magnus in a corridor while you finish the\n" +
+            "first. AoE feels efficient — it isn't, you'll just heal-race\n" +
+            "the duo.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 6] · [Floor 8] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f7", "canon" }
+        },
+
+        new("Floors", "Floor 8",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 8\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Ice (winter / flooded forest)\n" +
+            "│ Boss: Wadjet the Flaming Serpent (Inferno of the Eighth Floor)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Frieven is canonically a coastal-forest village with salt fog\n" +
+            "mornings; this build's biome system runs F8 as ice — winter\n" +
+            "labyrinths, frozen pine, 12% slip per move. The boss bucks the\n" +
+            "biome and arrives on fire.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Wadjet the Flaming Serpent (Lv26, ~422 HP). Fire-element\n" +
+            "snake on ice tiles — the floor's terrain works with you, not\n" +
+            "against you. Cold or water damage cuts best. The boss heat\n" +
+            "thaws ice tiles into water mid-fight; repositioning matters.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive vol 6: Frieven is the post-Dogma quiet floor —\n" +
+            "low player presence, recovery tone. The fire-on-ice flavor is\n" +
+            "this build's invention.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Stand on the unmelted ice — Wadjet's tail-sweep crit window\n" +
+            "shrinks if it has to slide.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 7] · [Floor 9] · [Biomes] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f8", "canon" }
+        },
+
+        new("Floors", "Floor 9",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 9\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Forest (enchanted)\n" +
+            "│ Boss: Cagnazzo the Toad Demon (Tyrant of the Drowned Vault)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Stachion the puzzle-town. NPC doors lock behind riddles,\n" +
+            "stone-golem labyrinths weave through the underbrush, and a\n" +
+            "cursed-mayor questline runs the social plot. The boss waits\n" +
+            "in the drowned vault below the town.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Cagnazzo the Toad Demon (Lv28, ~460 HP). Progressive canon —\n" +
+            "swallow attack with a long tell, jump-pound that water-stuns\n" +
+            "in radius 1. Strike from melee range while it's recovering\n" +
+            "from a swallow miss.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop.\n" +
+            "\n" +
+            "CANON\n" +
+            "Progressive vol 7: Stachion's cursed mayor and the riddle\n" +
+            "doors are the canon plot beats; Cagnazzo is the vault boss.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Don't refuse the riddle quests — they unlock the boss-room\n" +
+            "stairs without a long backtrack. Stand-still skills go badly\n" +
+            "during the swallow attack; have a movement skill cued.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 8] · [Floor 10] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f9", "canon" }
+        },
+
+        new("Floors", "Floor 10",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 10\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Urban (traditional Japanese village)\n" +
+            "│ Boss: Kagachi the Samurai Lord (Blade of the Rising Moon)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Taft — Aincrad's Edo-flavored mountain town. Wooden alleys,\n" +
+            "lantern stalls, no natural floor hazards. F10 is the band\n" +
+            "where bosses replace Power Strike with Ground Slam (radius 2,\n" +
+            "1.3x AoE). Big swing-room labyrinth.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Kagachi the Samurai Lord (Lv30, ~500 HP). Integral Factor\n" +
+            "canon — giant reptilian in samurai armor with a katana.\n" +
+            "Wide horizontal slashes and a Ground Slam AoE; piercing or\n" +
+            "lightning damage cuts armor. Don't bunch the party — the AoE\n" +
+            "hits radius 2.\n" +
+            "\n" +
+            "DROPS\n" +
+            "No guaranteed labyrinth-boss drop. Tier-2 chest pool opens up.\n" +
+            "\n" +
+            "NPCS / QUESTS\n" +
+            "The Moonlit Black Cats — Keita's small guild, headquartered\n" +
+            "on F10. Recruit gate: Lv5+ and karma >= -20. Bonuses on join:\n" +
+            "+5 VIT and +3 DEF, plus a guild-buff aura when partied with\n" +
+            "Black Cats members. Sachi is the soft-voiced spear member you\n" +
+            "are most likely to befriend. The 'One More Floor' signature\n" +
+            "quest from Keita resolves at this floor on F25 entry — the\n" +
+            "clear is the canon promise the guild is celebrating.\n" +
+            "\n" +
+            "Open the chat with Keita early in your run. The Black Cats\n" +
+            "fate triggers on F27 entry, force-leaves you, and costs -5\n" +
+            "karma. There is no save-state path that prevents it; the\n" +
+            "tragedy is canon-mandatory.\n" +
+            "\n" +
+            "CANON\n" +
+            "SAO LN vol 2 / anime ep 3 — Black Cats arc origin floor.\n" +
+            "Keita and the Black Cats are the start of Kirito's grief\n" +
+            "thread. Kagachi the Samurai Lord is Integral Factor's F10 boss.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Recruit the Black Cats. Take the F10-F26 guild buff and the\n" +
+            "+5 VIT for the entire mid-tier climb. Save your strongest\n" +
+            "burst skill for Kagachi's Ground Slam wind-down — that is\n" +
+            "the one consistent crit window in the fight.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 9] · [Floor 11] · [Floor 25] · [Floor 27] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f10", "canon", "guild" }
+        },
+
+        new("Floors", "Floor 11",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 11\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Desert\n" +
+            "│ Boss: Felos the Ember Drake (Wings of Living Flame)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "First desert in the climb. Heat and grit raise your satiety\n" +
+            "drain by 1 per turn — pack water. The first floor that\n" +
+            "guarantees a Divine Beast drop on the labyrinth boss.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Felos the Ember Drake (Lv32, ~540 HP). Flying fire-breath\n" +
+            "drake, ranged threat at the top of the boss arena. Stay close\n" +
+            "or take cover — the breath cone has long range and ignores\n" +
+            "low walls. Cold or water cuts best.\n" +
+            "\n" +
+            "DROPS\n" +
+            "- Guaranteed: Starfall — Divine Beast bow. Drops on any kill,\n" +
+            "  not Last-Attack-locked. Bow users lock the floor for the\n" +
+            "  Divine slot here.\n" +
+            "- Tier-2 chest pool.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Bring water flasks; the satiety drain stacks with hot-tile\n" +
+            "ticks if any walls of the labyrinth carry residual fire from\n" +
+            "Felos's breath. Starfall pairs well with a melee carry —\n" +
+            "consider a two-character party.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 10] · [Floor 12] · [Divine Weapons — Roster & Acquisition] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f11", "canon", "divine", "loot" }
+        },
+
+        new("Floors", "Floor 12",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 12\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Aquatic (seashore)\n" +
+            "│ Boss: Volcanus the Molten King (Lord of the Slag Throne)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor — the floor follows the\n" +
+            "scaling curve. Biome: aquatic seashore (see [Biomes]).\n" +
+            "\n" +
+            "BOSS\n" +
+            "Volcanus the Molten King (Lv34, ~582 HP). Standard\n" +
+            "scaling-curve boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Wet sand reduces footing — slow walks where possible.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Biomes] · [Floor 11] · [Floor 13]")
+        {
+            Tags = new[] { "floors", "f12" }
+        },
+
+        new("Floors", "Floor 13",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 13\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Charion the Ash Wraith (Specter of Cinder)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. Volcanic biome — 2 dmg\n" +
+            "per 8 turns environment tick (see [Biomes]).\n" +
+            "\n" +
+            "BOSS\n" +
+            "Charion the Ash Wraith (Lv36, ~624 HP). Standard scaling-curve\n" +
+            "boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Carry burn-resist Crystals. The volcanic tick stacks on top of\n" +
+            "any direct fire damage in the fight.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Biomes] · [Floor 12] · [Floor 14]")
+        {
+            Tags = new[] { "floors", "f13" }
+        },
+
+        new("Floors", "Floor 14",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 14\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Forest (dense)\n" +
+            "│ Boss: Ignaroth the Infernal (Demon of the Burning Halls)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon labyrinth-boss anchor. Forest\n" +
+            "biome — dense canopy, short sight. The floor's distinctive\n" +
+            "feature is the Integral Factor field boss.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Ignaroth the Infernal (Lv38, ~668 HP). Standard scaling-curve\n" +
+            "boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "DROPS\n" +
+            "Field boss Starlight Sentinel (Guardian of the Integral Dawn)\n" +
+            "roams the floor and is the IF Integral series anchor —\n" +
+            "guaranteed Integral Arc Angel (Epic bow) plus Shield Fermat\n" +
+            "(Epic). The IF Integral chest band runs F14-F25.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Skip the labyrinth boss-rush on a fresh run; clear Starlight\n" +
+            "Sentinel first for the Epic bow, then descend.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Floor 13] · [Floor 15] · [Floor 25] · [Integral Factor Weapon Series]")
+        {
+            Tags = new[] { "floors", "f14", "integral-factor", "field-boss" }
+        },
+
+        new("Floors", "Floor 15",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 15\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Surtr the Flame Giant (The Floor-Scorcher)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. Volcanic biome at its\n" +
+            "crimson-era peak — long fissures, ash drifts, and the same\n" +
+            "tick-damage rules as F13 (see [Biomes]).\n" +
+            "\n" +
+            "BOSS\n" +
+            "Surtr the Flame Giant (Lv40, ~712 HP). Standard scaling-curve\n" +
+            "boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Burn-resist Crystals carry the floor; the giant's swing arc\n" +
+            "is wide but slow.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Biomes] · [Floor 14] · [Floor 16]")
+        {
+            Tags = new[] { "floors", "f15" }
+        },
+
+        new("Floors", "Floor 16",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 16\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Ice (crystal era)\n" +
+            "│ Boss: Crystalis the Frost Weaver (Architect of the Ice Labyrinth)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. The ice band opens —\n" +
+            "F16 through F20 all run cold biomes with slip checks and\n" +
+            "shorter combat ranges.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Crystalis the Frost Weaver (Lv42, ~758 HP). Standard\n" +
+            "scaling-curve boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "TIPS\n" +
+            "The ice biome rewards patience — let melee come to you, kite\n" +
+            "across thawed water lanes when the boss tries to charge.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Biomes] · [Floor 15] · [Floor 17]")
+        {
+            Tags = new[] { "floors", "f16" }
+        },
+
+        new("Floors", "Floor 17",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 17\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Ice\n" +
+            "│ Boss: Gelidus the Frozen Colossus (The Rime-Bound Titan)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. Ice biome continues.\n" +
+            "Second guaranteed Divine Beast drop in the climb.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Gelidus the Frozen Colossus (Lv44, ~805 HP). Standard\n" +
+            "scaling-curve boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "DROPS\n" +
+            "- Guaranteed: Savage Squall — Divine Beast 1H sword. Drops\n" +
+            "  on any kill, not Last-Attack-locked.\n" +
+            "- Tier-2 chest pool.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Don't cheese the boss in a corridor — the Divine roll\n" +
+            "guarantees regardless, but you want clean line of sight for\n" +
+            "the loot pull radius.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Floor 16] · [Floor 18] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f17", "divine", "loot" }
+        },
+
+        new("Floors", "Floor 18",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 18\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Ice\n" +
+            "│ Boss: Prismalynx the Shardcat (Predator of Refracted Light)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. Ice biome.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Prismalynx the Shardcat (Lv46, ~852 HP). Standard scaling-curve\n" +
+            "boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Refracted-light flavor — the Shardcat dazzles after a hit\n" +
+            "lands; close the distance to deny range.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Biomes] · [Floor 17] · [Floor 19]")
+        {
+            Tags = new[] { "floors", "f18" }
+        },
+
+        new("Floors", "Floor 19",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 19\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Ice\n" +
+            "│ Boss: Gelmyre the Crystal Hydra (Three Heads of Living Ice)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. Ice biome. Multi-head\n" +
+            "fight gives the floor more shape than the surrounding\n" +
+            "scaling-curve floors.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Gelmyre the Crystal Hydra (Lv48, ~901 HP). Three heads share\n" +
+            "an HP pool but not their cooldowns — a head down doesn't\n" +
+            "remove its slot from the rotation. Treat it as one boss with\n" +
+            "stacked ability windows.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Edged or piercing damage cuts. Cold builds get no biome\n" +
+            "advantage on Ice mobs that aren't using cold attacks.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Floor 18] · [Floor 20]")
+        {
+            Tags = new[] { "floors", "f19" }
+        },
+
+        new("Floors", "Floor 20",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 20\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Ice (mountain summit)\n" +
+            "│ Boss: Absolut the Winter Monarch (Sovereign of Eternal Frost)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Era-I closing floor. Mountain summit, eternal frost, and the\n" +
+            "first canonically Alicization-flavored Divine drop in the\n" +
+            "climb. Tier 1 ends here in lore; the scaling curve doesn't\n" +
+            "agree, but the boss roster does.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Absolut the Winter Monarch (Lv50, ~950 HP). Frost-element\n" +
+            "boss. The arena freezes water tiles into walkable ice\n" +
+            "between phases — your usual path may close mid-fight.\n" +
+            "\n" +
+            "DROPS\n" +
+            "- Guaranteed: Blue Rose Sword — Divine Object, Eugeo's blade.\n" +
+            "  Drops on the floor-boss kill (any party member's blow\n" +
+            "  qualifies). Carries Freeze on hit.\n" +
+            "- Tier-2/3 chest pool.\n" +
+            "\n" +
+            "NPCS / QUESTS\n" +
+            "Klein and his samurai cohort headquarter Fuurinkazan on F20\n" +
+            "(implementation; not strict canon). Recruit gate: Lv10+, any\n" +
+            "karma. Bonuses on join: +5% CritRate and +10 ATK with Katana.\n" +
+            "Best fit for any kit running Katana or relying on crit\n" +
+            "scaling.\n" +
+            "\n" +
+            "CANON\n" +
+            "Alicization: the Blue Rose Sword is Eugeo's signature blade,\n" +
+            "the Underworld Divine Object that frosts a target on impact.\n" +
+            "Klein's Fuurinkazan is Aincrad-era canon (LN vol 1+); F20 HQ\n" +
+            "is this build's invention.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Land the killing blow yourself if you want to stack the\n" +
+            "title-board kill on top of the Divine drop. The Blue Rose\n" +
+            "Sword's Freeze procs work best on melee mob density — bank\n" +
+            "it for F21-F25 dungeon clears.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 19] · [Floor 21] · [Floor 25] · [Divine Weapons — Roster & Acquisition] · [Guild System Overview]")
+        {
+            Tags = new[] { "floors", "f20", "canon", "divine", "guild", "loot" }
+        },
+
+        new("Floors", "Floor 21",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 21\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Dark (twilight era)\n" +
+            "│ Boss: Morgath the Lich King (Deathless Lord of Floor 21)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. Dark biome opens — sight\n" +
+            "drops by 20 across the floor (see [Biomes]).\n" +
+            "\n" +
+            "BOSS\n" +
+            "Morgath the Lich King (Lv52, ~1000 HP). Standard scaling-curve\n" +
+            "boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Pack a torch or pre-stash fire crystals — the Dark biome's\n" +
+            "vision penalty applies to mobs too, so stealth pulls work.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Biomes] · [Floor 20] · [Floor 22]")
+        {
+            Tags = new[] { "floors", "f21" }
+        },
+
+        new("Floors", "Floor 22",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 22\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Dark (lakeside coniferous, golden hour)\n" +
+            "│ Boss: The Witch of the West (Mistress of the Black Marsh)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Coral Village and the Forest of Wandering. Aincrad's gentlest\n" +
+            "floor in canon — golden-hour woodland over a still lake, the\n" +
+            "fog rolls thin, and a small log cabin sits where Kirito and\n" +
+            "Asuna canonically retire to live as a married couple.\n" +
+            "\n" +
+            "BOSS\n" +
+            "The Witch of the West (Lv54, ~1052 HP). Some lore docs call\n" +
+            "this fight the King of Lakes; in this build the labyrinth\n" +
+            "boss is the Witch. Marsh arena, summons that root the\n" +
+            "approach. Edged or fire damage cuts.\n" +
+            "\n" +
+            "DROPS\n" +
+            "Field boss Forest King Stag (Crowned Beast of Wandering)\n" +
+            "roams the Forest of Wandering — guaranteed Kingly Antler\n" +
+            "material on kill (any party member's blow qualifies). The\n" +
+            "antler unlocks recipes at Lisbeth on F48.\n" +
+            "\n" +
+            "CANON\n" +
+            "SAO LN vol 1 / anime ep 11-12: F22 is the Yui arc floor.\n" +
+            "Kirito and Asuna's honeymoon cabin, the AI child Yui found\n" +
+            "wandering the forest, the soft beat between Aincrad's harder\n" +
+            "stretches. The Forest of Wandering's name carries through the\n" +
+            "entire arc.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Don't sprint through the Forest of Wandering — its visibility\n" +
+            "model is built for slow exploration. The Stag's antler is\n" +
+            "your earliest recipe-unlock material; even non-craft kits\n" +
+            "should bank one.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 21] · [Floor 23] · [Floor 48]")
+        {
+            Tags = new[] { "floors", "f22", "canon", "asuna", "kirito" }
+        },
+
+        new("Floors", "Floor 23",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 23\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Dark (meadow / pastoral)\n" +
+            "│ Boss: Skullvane the Bone Dragon (The Rattling Sky)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-1 scaling band, no canon anchor. Dark biome, pastoral\n" +
+            "meadow flavor — Lore.txt notes a Japanese-inspired farming\n" +
+            "town for color, but no NPCs hook quests here.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Skullvane the Bone Dragon (Lv56, ~1104 HP). Standard\n" +
+            "scaling-curve boss; no canonical fight mechanics.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Open meadow approach — bring ranged or expect a long charge\n" +
+            "into Skullvane's breath cone.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor Scaling Formulas] · [Floor 22] · [Floor 24]")
+        {
+            Tags = new[] { "floors", "f23" }
+        },
+
+        new("Floors", "Floor 24",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 24\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Dark (lake resort)\n" +
+            "│ Boss: Grimhollow the Phantom (The Shape That Haunts)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Panareze — the lake resort. Wooden bridges between sun-drenched\n" +
+            "islands in Integral Factor canon; in this build the dark biome\n" +
+            "wash dims it to dusk. Vacation-town flavor surfaces in\n" +
+            "Hollow Realization summer-beach event reskins.\n" +
+            "\n" +
+            "BOSS\n" +
+            "Grimhollow the Phantom (Lv58, ~1158 HP). Phase-shifter — turns\n" +
+            "intangible mid-fight, ignores incoming damage during the tell.\n" +
+            "Wait out the phase before committing burst.\n" +
+            "\n" +
+            "DROPS\n" +
+            "- Guaranteed: Phantasmagoria — Divine Beast dagger. Drops on\n" +
+            "  any kill, not Last-Attack-locked.\n" +
+            "- Tier-2/3 chest pool.\n" +
+            "\n" +
+            "CANON\n" +
+            "SAO Material Edition / Integral Factor: Panareze is canonically\n" +
+            "the floor's hub town. Stratos the St. Centaur and An Invictus\n" +
+            "of the Cherub are IF's named bosses; this build runs Grimhollow\n" +
+            "as the labyrinth boss with the Divine drop attached.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Phantasmagoria is a Tier-1 Divine — keep it through F40+\n" +
+            "if you're a dagger kit. Don't burn cooldowns into Grimhollow's\n" +
+            "intangible phase; the AI tell is consistent.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 23] · [Floor 25] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f24", "canon", "divine", "loot" }
+        },
+
+        new("Floors", "Floor 25",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 25\n" +
+            "│ Tier: 1 (newbie)\n" +
+            "│ Biome: Dark (forest ridge)\n" +
+            "│ Boss: The Two-Headed Giant (Terror of the Twin Peaks)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Quarter-floor canon — Aincrad's multiples-of-25 spike the\n" +
+            "boss difficulty. Forested ridge between two peaks, narrow\n" +
+            "approach, single corridor into the labyrinth. F25 is the\n" +
+            "band where bosses gain Toxic Breath — a status ability that\n" +
+            "rotates Poison/Bleed/Slow on a floor%3 cycle.\n" +
+            "\n" +
+            "BOSS\n" +
+            "The Two-Headed Giant (Lv60, ~1212 HP). Twin-headed brute,\n" +
+            "two attack timelines. The Toxic Breath gimmick layers a\n" +
+            "DoT on top of melee pressure — Poison rotation here. Bring\n" +
+            "antidote crystals or a cleanse skill.\n" +
+            "\n" +
+            "DROPS\n" +
+            "Field boss Labyrinth Warden (Keeper of the Underground Vault)\n" +
+            "roams the labyrinth approach — IF Nox series anchor.\n" +
+            "Guaranteed Nox Radgrid (Epic 1H sword) plus Shield Nox Fermat\n" +
+            "(Epic). The IF Nox chest band runs F25-F40.\n" +
+            "\n" +
+            "NPCS / QUESTS\n" +
+            "The Legend Braves — Schmitt's anti-Laughing-Coffin guild,\n" +
+            "F25 HQ. Recruit gate: Lv15+ and karma >= 0. Bonuses on join:\n" +
+            "+5% ATK plus +15 ATK against Laughing Coffin opponents. The\n" +
+            "F25 boss clear is also the trigger that resolves the Black\n" +
+            "Cats 'One More Floor' signature quest left over from F10.\n" +
+            "\n" +
+            "CANON\n" +
+            "Pre-tragedy buffer floor in canon. The Legend Braves and the\n" +
+            "anti-LC tone foreshadow F27's Black Cats catastrophe.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Bring an antidote stack and one cleanse-on-friendly skill.\n" +
+            "If you recruited the Black Cats on F10, hand in 'One More\n" +
+            "Floor' before descending — the bonus XP is wasted if you\n" +
+            "trigger the F27 fate event with the quest still open.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Floor 10] · [Floor 24] · [Floor 27] · [Guild System Overview] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f25", "canon", "guild", "field-boss", "integral-factor" }
+        },
+
+        new("Floors", "Floor 26",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 26\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Venomfang the Basilisk (Gaze of Petrification)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "First floor of the Tier-2 jungle-ruins band. Greener and\n" +
+            "denser than the F21-F25 dark-forest stretch, with overgrown\n" +
+            "stonework breaking up the corridors. No specific canon\n" +
+            "anchor — follow the scaling curve.\n\n" +
+            "BOSS\n" +
+            "Venomfang the Basilisk (Gaze of Petrification). Status-\n" +
+            "heavy: petrify-style stalls layer onto direct damage.\n" +
+            "Antidote stack and a buffer ally help.\n\n" +
+            "TIPS\n" +
+            "F25+ bosses gain a Toxic-Breath status ability that rotates\n" +
+            "Poison/Bleed/Slow on a 3-floor cycle — pre-stock cures so\n" +
+            "the rotation never costs you a clear.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 25] · [Floor 27] · [Floor Scaling Formulas] · [Status Effects]")
+        {
+            Tags = new[] { "floors", "f26" }
+        },
+
+        new("Floors", "Floor 27",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 27\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: The Four-Armed Giant (Colossus of the Jungle Ruins)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "The trap-dungeon floor. Overgrown jungle ruins choke the\n" +
+            "labyrinth corridors and the air goes still in a way the\n" +
+            "earlier floors never did. F27 is a narrative checkpoint as\n" +
+            "much as a fight: the Moonlit Black Cats fate event fires\n" +
+            "the moment you arrive on the floor — the guild dissolves\n" +
+            "and your karma takes a -5 hit you cannot prevent.\n\n" +
+            "BOSS\n" +
+            "The Four-Armed Giant (Colossus of the Jungle Ruins). Four\n" +
+            "weapon arcs in a single round; lateral spacing matters\n" +
+            "more than burst. Slash damage is reliable; a shield-stance\n" +
+            "ally helps absorb the multi-arm volley.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 2: Kirito's guild the Moonlit Black Cats wipes\n" +
+            "in a F27 trap dungeon and Sachi dies. The fate event is\n" +
+            "the in-game tribute — the guild force-disbands on F27\n" +
+            "entry regardless of your standing with them, mirroring the\n" +
+            "LN's fixed tragedy.\n\n" +
+            "TIPS\n" +
+            "If you joined the Black Cats earlier, do not bank goals on\n" +
+            "their roster lasting past F26. Take the karma hit, push\n" +
+            "through the boss, treat F28-F30 as recovery floors.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 26] · [Floor 28] · [Karma & Alignment] · [Guild System Overview]")
+        {
+            Tags = new[] { "floors", "f27", "canon" }
+        },
+
+        new("Floors", "Floor 28",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 28\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Thornqueen Selvaria (Empress of the Briar Maze)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 jungle band, no specific canon anchor — follow the\n" +
+            "scaling curve. Briar walls thicken the labyrinth and side\n" +
+            "rooms tend to dead-end into thorn pockets.\n\n" +
+            "BOSS\n" +
+            "Thornqueen Selvaria (Empress of the Briar Maze). Roots\n" +
+            "and snares; mobility loss compounds her direct hits.\n" +
+            "Bring a cleanse or a dash skill.\n\n" +
+            "TIPS\n" +
+            "Don't burn pots clearing thorn rooms — push the labyrinth\n" +
+            "and skip cosmetic dead-ends.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 27] · [Floor 29] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f28" }
+        },
+
+        new("Floors", "Floor 29",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 29\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Raptoros the Apex Hunter (The Unseen Strike)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 jungle band, no specific canon anchor — follow the\n" +
+            "scaling curve. Sightlines tighten under heavier canopy and\n" +
+            "ambush-prone mobs cluster around the chokepoints.\n\n" +
+            "BOSS\n" +
+            "Raptoros the Apex Hunter (The Unseen Strike). Stealth +\n" +
+            "single-target burst opener. Keep your back to a wall and\n" +
+            "save a hard CC for the first appearance.\n\n" +
+            "TIPS\n" +
+            "Look-Mode the room before committing — Raptoros' approach\n" +
+            "telegraph is a fold in the lighting, not a tile glyph.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 28] · [Floor 30] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f29" }
+        },
+
+        new("Floors", "Floor 30",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 30\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Primos the World Serpent (Coil That Encircles the Floor)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 multiples-of-10 floor — no canon hub. Closes the\n" +
+            "F26-F30 jungle band; the labyrinth opens out into one large\n" +
+            "boss-arena hollow rather than the usual corridor stack.\n\n" +
+            "BOSS\n" +
+            "Primos the World Serpent (Coil That Encircles the Floor).\n" +
+            "Wide-arena serpent fight. Drops a guaranteed Void Eater\n" +
+            "(Divine Beast). Mobile rotation around a central coil —\n" +
+            "stay outside its wrap range or eat the squeeze.\n\n" +
+            "TIPS\n" +
+            "Last clean break before the F31-F35 ruins band. Re-stock\n" +
+            "consumables and stash anything you do not want to risk in\n" +
+            "the F35 Christmas-event window.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 29] · [Floor 31] · [Floor 35] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f30" }
+        },
+
+        new("Floors", "Floor 31",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 31\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Ruins\n" +
+            "│ Boss: Garrison the Living Wall (The Unbreakable Bulwark)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Opens the F31-F35 fortress-ruins band. Crumbling outer\n" +
+            "battlements, decay-flagged tiles, and the labyrinth wraps\n" +
+            "around old siege-engine emplacements. No canon anchor.\n\n" +
+            "BOSS\n" +
+            "Garrison the Living Wall (The Unbreakable Bulwark). High-\n" +
+            "Defense bulwark frame — ArmorPierce and crit-stack damage\n" +
+            "outpace flat ATK. Patient fight, not a burst race.\n\n" +
+            "TIPS\n" +
+            "Ruins-biome decay drains structure HP on contact tiles.\n" +
+            "Lean on edge-of-wall pulls so the boss eats the decay,\n" +
+            "not you.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 30] · [Floor 32] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f31" }
+        },
+
+        new("Floors", "Floor 32",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 32\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Ruins\n" +
+            "│ Boss: Ironhyde the Siege Golem (Breaker of Gates)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 fortress-ruins band, no canon anchor. Wider corridors\n" +
+            "framed by collapsed siege engines; line-of-sight is unusually\n" +
+            "long for a ruins floor.\n\n" +
+            "BOSS\n" +
+            "Ironhyde the Siege Golem (Breaker of Gates). Heavy single-\n" +
+            "target slams; predictable telegraph but punishing if you\n" +
+            "stand-and-trade. Move on the wind-up.\n\n" +
+            "TIPS\n" +
+            "Long sightlines reward Bow openers. Fire from outside the\n" +
+            "boss aggro radius before bumping the room.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 31] · [Floor 33] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f32" }
+        },
+
+        new("Floors", "Floor 33",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 33\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Ruins\n" +
+            "│ Boss: Ballistor the War Machine (Construct of Endless Arrows)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 fortress-ruins band, no canon anchor — follow the\n" +
+            "scaling curve. Old artillery emplacements scatter the open\n" +
+            "rooms; the walking is straightforward.\n\n" +
+            "BOSS\n" +
+            "Ballistor the War Machine (Construct of Endless Arrows).\n" +
+            "Sustained ranged volleys with no real stop. Close the gap\n" +
+            "fast or eat a dozen arrows on the approach.\n\n" +
+            "TIPS\n" +
+            "Block / Parry shines here — ranged frames have a better\n" +
+            "average mitigation profile than dodge-stacking against\n" +
+            "Ballistor's volume.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 32] · [Floor 34] · [Defense — Block, Parry, Dodge]")
+        {
+            Tags = new[] { "floors", "f33" }
+        },
+
+        new("Floors", "Floor 34",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 34\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Ruins\n" +
+            "│ Boss: Warden Keloth (Jailer of the Deep Dungeon)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 fortress-ruins band, no canon anchor. Last quiet\n" +
+            "floor before the F35 Christmas-event spike — Keloth's\n" +
+            "warden cells dominate the Labyrinth interior.\n\n" +
+            "BOSS\n" +
+            "Warden Keloth (Jailer of the Deep Dungeon). Stalls and\n" +
+            "snares; a typical sustained-fight frame. Cleanse stack\n" +
+            "and bring patience.\n\n" +
+            "TIPS\n" +
+            "Treat F34 as the staging floor for a F35 Nicholas attempt:\n" +
+            "if the in-game date sits in the Dec 20-26 window, the F35\n" +
+            "labyrinth approach overlaps with the seasonal Forest of\n" +
+            "Wandering field event.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 33] · [Floor 35] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f34" }
+        },
+
+        new("Floors", "Floor 35",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 35\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Ruins\n" +
+            "│ Boss: Nicholas The Renegade (The Fallen Christmas Knight)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "The Christmas floor. Canon name Mishe — gentle hill-and-\n" +
+            "village setting in the lore, fortress-ruins biome in code.\n" +
+            "F35 wires Nicholas as the labyrinth boss directly,\n" +
+            "anchoring the canonical Christmas-event association at the\n" +
+            "floor it belongs to.\n\n" +
+            "BOSS\n" +
+            "Nicholas The Renegade (The Fallen Christmas Knight). Heavy\n" +
+            "two-hand frame, slow swings, predictable rotation. The\n" +
+            "Magnatherium field boss also roams F35 with a guaranteed\n" +
+            "Mammoth Tusk drop.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 2 / Anime Ep3: Nicholas the Renegade is the\n" +
+            "Christmas Eve event boss in the Forest of Wandering, dropping\n" +
+            "the Divine Stone of Returning Soul (a one-shot resurrection\n" +
+            "item). Kirito chases the rumor solo and the duel is one of\n" +
+            "the canon arc's emotional pivots. In this codebase Nicholas\n" +
+            "stands as the regular F35 labyrinth boss; the seasonal\n" +
+            "Forest-of-Wandering event still fires at F49 in a\n" +
+            "Dec 20-26 window with the Returning-Soul drop.\n\n" +
+            "TIPS\n" +
+            "If you are diving F35 in the December window, plan a side\n" +
+            "trip down to F49 for the seasonal field encounter — the\n" +
+            "Returning Soul is a permadeath insurance policy worth the\n" +
+            "detour.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 34] · [Floor 36] · [Floor 49] · [Seasonal Events]")
+        {
+            Tags = new[] { "floors", "f35", "canon" }
+        },
+
+        new("Floors", "Floor 36",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 36\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Pyroclast the Lava Titan (Born of the Caldera)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Opens the F36-F40 volcanic band. Heat shimmer, ash-fall,\n" +
+            "magma-channel hazards lining the labyrinth interior. No\n" +
+            "specific canon anchor — follow the scaling curve.\n\n" +
+            "BOSS\n" +
+            "Pyroclast the Lava Titan (Born of the Caldera). Fire\n" +
+            "rotation and ground-damage AoE; expect chip damage every\n" +
+            "turn near its mass. Cold or Holy elements help.\n\n" +
+            "TIPS\n" +
+            "Stack a fire-resist accessory before stepping onto F36 —\n" +
+            "the volcanic biome layers ambient damage over the boss\n" +
+            "fight on top of mob aggro.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 35] · [Floor 37] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f36" }
+        },
+
+        new("Floors", "Floor 37",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 37\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Infernus the Red Wyvern (Scourge of the Ashen Skies)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 volcanic band, no specific canon anchor — follow\n" +
+            "the scaling curve. Open arenas and short corridors,\n" +
+            "punctuated by hazard flows.\n\n" +
+            "BOSS\n" +
+            "Infernus the Red Wyvern (Scourge of the Ashen Skies).\n" +
+            "Aerial-pattern fire-breath frame; pulls aggro early and\n" +
+            "stays mobile. Bow openers at range trade well.\n\n" +
+            "TIPS\n" +
+            "Bring a fire-resist potion stash — the wyvern's breath\n" +
+            "stacks on top of biome ambient.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 36] · [Floor 38] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f37" }
+        },
+
+        new("Floors", "Floor 38",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 38\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Obsidian the Black Knight (Forged in Volcanic Glass)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 volcanic band, no canon anchor. Floor boss carries\n" +
+            "a guaranteed Cactus Bludgeon (Divine Beast) drop on a\n" +
+            "regular clear — worth the kit-up detour.\n\n" +
+            "BOSS\n" +
+            "Obsidian the Black Knight (Forged in Volcanic Glass).\n" +
+            "Heavy single-blade frame, parries cleanly into\n" +
+            "counter-strikes. Sword-skill cooldown management matters.\n\n" +
+            "TIPS\n" +
+            "Equip Elucidator (-1 SkillCooldown) if you have it — this\n" +
+            "fight rewards skill rotation density.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 37] · [Floor 39] · [Floor 50]")
+        {
+            Tags = new[] { "floors", "f38" }
+        },
+
+        new("Floors", "Floor 39",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 39\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Magmaron the Core Beast (The Living Eruption)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 volcanic band, no canon anchor. Quiet penultimate\n" +
+            "floor before the F40 mid-game pivot — last room to bank\n" +
+            "consumables before Dracoflame and the DDA recruit window.\n\n" +
+            "BOSS\n" +
+            "Magmaron the Core Beast (The Living Eruption). Pulses AoE\n" +
+            "on a fixed cadence. Watch the count, time your skill\n" +
+            "windows between pulses.\n\n" +
+            "TIPS\n" +
+            "Ship gear back to Lindarth (F48) after this clear if you\n" +
+            "want a Mithril enhance pass before F40 — it slots cleanly\n" +
+            "into the descent route.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 38] · [Floor 40] · [Floor 48]")
+        {
+            Tags = new[] { "floors", "f39" }
+        },
+
+        new("Floors", "Floor 40",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 40\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Dracoflame the Elder Wyrm (Grandfather of Fire)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Quarter-floor mid-game pivot. F40 packs three Legendary\n" +
+            "seeds, a guild HQ, and a canon NPC into one volcanic\n" +
+            "stretch. Plan the descent so you do not skip any of them.\n\n" +
+            "BOSS\n" +
+            "Dracoflame the Elder Wyrm (Grandfather of Fire). Drops\n" +
+            "the Crimson Stream Demonblade (Legendary 2H Sword) on a\n" +
+            "regular clear. Heavy fire-rotation wyrm; cold and Holy\n" +
+            "elements help, fire-resist accessory mandatory.\n\n" +
+            "DROPS\n" +
+            "- Floor boss: Crimson Stream (Legendary 2H Sword,\n" +
+            "  guaranteed Divine Beast drop).\n" +
+            "- Field boss Ogre Lord (Chieftain of the Broken Valley):\n" +
+            "  Ogre's Cleaver.\n" +
+            "- Field boss Phoenix of the Smolder Peak: Conflagrant\n" +
+            "  Flame Bow (Divine — Deusolbert's bow, Alicization canon).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Yulier (BrightYellow 'Y') — KoB-era Asuna friend. Quest\n" +
+            "'The Lightning Flash's Memory': 10 F40 kills returns\n" +
+            "Lambent Light (Asuna's Legendary Rapier) plus 450 Col +\n" +
+            "350 XP. One-shot per save.\n" +
+            "Lind (Divine Dragon Alliance HQ) — recruiter for the rival\n" +
+            "tank guild to KoB. Gate Lv15 + karma >= 0; passive +10\n" +
+            "Vitality + 5 Defense. DDA and KoB are mutually exclusive\n" +
+            "active guilds.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 4-7: Lambent Light is Asuna's signature rapier\n" +
+            "as Vice-Commander of KoB; she carries it through the\n" +
+            "F50-F75 push. Yulier (Liberation Army) fought beside Asuna\n" +
+            "on F59, modeled here as the F40 questgiver. The Conflagrant\n" +
+            "Flame Bow is Deusolbert's blade in Alicization canon —\n" +
+            "Aincrad-invented placement on the Smolder Peak phoenix.\n\n" +
+            "TIPS\n" +
+            "Plant the Yulier turn-in BEFORE the floor boss so the 10\n" +
+            "F40 kills overlap with the boss approach. If you intend to\n" +
+            "join DDA, complete recruitment before stepping to F55,\n" +
+            "where KoB recruitment opens (Godfree, Granzam HQ).\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 39] · [Floor 41] · [Floor 50] · [Floor 55] · [Floor 55]")
+        {
+            Tags = new[] { "floors", "f40", "canon" }
+        },
+
+        new("Floors", "Floor 41",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 41\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Aquatic\n" +
+            "│ Boss: Leviathan the Depth Lord (Terror of the Sunken Halls)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Opens the F41-F45 aquatic band. Flooded corridors,\n" +
+            "swimming-zone hazards, and a long stretch of Tier-2\n" +
+            "scaling-curve boss roster with no specific canon anchors.\n\n" +
+            "BOSS\n" +
+            "Leviathan the Depth Lord (Terror of the Sunken Halls).\n" +
+            "Mass single-target frame; sustained pressure rather than\n" +
+            "burst telegraph. Lightning damage scales unusually well\n" +
+            "in submerged rooms.\n\n" +
+            "TIPS\n" +
+            "Water tiles slow basic movement — use a dash or swap to\n" +
+            "Bow before stepping into the boss arena.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 40] · [Floor 42] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f41" }
+        },
+
+        new("Floors", "Floor 42",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 42\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Aquatic\n" +
+            "│ Boss: Coralith the Reef Titan (The Living Atoll)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 aquatic band, no canon anchor. Reef-floor visuals;\n" +
+            "the labyrinth is unusually open with reef pillars\n" +
+            "interrupting otherwise straight lanes.\n\n" +
+            "BOSS\n" +
+            "Coralith the Reef Titan (The Living Atoll). Static-\n" +
+            "platform frame: low mobility, high regional damage. Bring\n" +
+            "ranged damage and stay outside its passive aura.\n\n" +
+            "TIPS\n" +
+            "If you stalled out kit-wise on F40, F42 is the cheapest\n" +
+            "farm window — wide rooms, predictable monster rotation.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 41] · [Floor 43] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f42" }
+        },
+
+        new("Floors", "Floor 43",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 43\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Aquatic\n" +
+            "│ Boss: Undine the Water Maiden (Siren of the Deep)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 aquatic band, no canon anchor. Floor boss carries\n" +
+            "a guaranteed Midnight Rain (Divine Beast Legendary Rapier)\n" +
+            "drop on a regular clear.\n\n" +
+            "BOSS\n" +
+            "Undine the Water Maiden (Siren of the Deep). Charm /\n" +
+            "stall rotation that punishes single-target focus. Bring\n" +
+            "a cleanse and rotate damage targets when she summons.\n\n" +
+            "TIPS\n" +
+            "Rapier players: this is your kit-up window. Midnight Rain\n" +
+            "carries a Rapier build cleanly to F50 and beyond.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 42] · [Floor 44] · [Floor 40]")
+        {
+            Tags = new[] { "floors", "f43" }
+        },
+
+        new("Floors", "Floor 44",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 44\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Aquatic\n" +
+            "│ Boss: Abyssal Kraken (Tentacles of the Drowned Floor)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 aquatic band, no canon anchor — follow the scaling\n" +
+            "curve. Open-room labyrinth; the floor leans into wide\n" +
+            "boss-arena fights instead of corridor stacks.\n\n" +
+            "BOSS\n" +
+            "Abyssal Kraken (Tentacles of the Drowned Floor). Multi-\n" +
+            "tentacle frame; cleave damage shines, single-target\n" +
+            "burst loses tempo to summons.\n\n" +
+            "TIPS\n" +
+            "Stay mobile — the Kraken's tentacle pattern punishes\n" +
+            "stand-and-trade. AoE consumables (Fire Bombs, Lightning\n" +
+            "Crystals) trade up here.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 43] · [Floor 45] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f44" }
+        },
+
+        new("Floors", "Floor 45",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 45\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Aquatic\n" +
+            "│ Boss: Tidecaller Nereus (Herald of the Endless Flood)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Tier-2 aquatic band, no canon anchor. Closes the aquatic\n" +
+            "stretch before the F46-F50 dark-band shift; floor boss\n" +
+            "is a multiples-of-5 milestone but not a canon hub.\n\n" +
+            "BOSS\n" +
+            "Tidecaller Nereus (Herald of the Endless Flood). Summons\n" +
+            "and tide-pulse AoE; treat it like a wave-based fight\n" +
+            "rather than a duel.\n\n" +
+            "TIPS\n" +
+            "Stash a Holy or Light item — the dark biome on F46-F50\n" +
+            "shifts the elemental landscape. Last cheap restock floor\n" +
+            "before the run intensifies.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 44] · [Floor 46] · [Floor 50]")
+        {
+            Tags = new[] { "floors", "f45" }
+        },
+
+        new("Floors", "Floor 46",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 46\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: The Ant Queen (Matriarch of the Hive Floor)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Opens the F46-F50 dark band. Hive-density labyrinth, mob\n" +
+            "swarms, restricted sightlines. The Ant Queen lands here\n" +
+            "by canon Floor Boss Roster — same boss reappears in a\n" +
+            "Tier-4 form on F84.\n\n" +
+            "BOSS\n" +
+            "The Ant Queen (Matriarch of the Hive Floor). Summon-\n" +
+            "and-swarm frame: multi-target damage cleans her broods\n" +
+            "faster than single-target burst will. Bring AoE.\n\n" +
+            "TIPS\n" +
+            "If you cleared the F40 Crimson Stream Demonblade, this\n" +
+            "is a clean cleave-damage room to settle the kit. The Ant\n" +
+            "Queen herself goes down quickly once the swarm thins.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 45] · [Floor 47] · [Floor 84]")
+        {
+            Tags = new[] { "floors", "f46" }
+        },
+
+        new("Floors", "Floor 47",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 47\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: Mindflayer Zethos (The Thought Devourer)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "The canon Floria floor — Aincrad's flower-garden hub in\n" +
+            "the lore. The dark biome dominates code-side, but the\n" +
+            "spawn-area generator scatters flower tiles into the local\n" +
+            "7×7 box at 1/5 density as a flavor nod.\n\n" +
+            "BOSS\n" +
+            "Mindflayer Zethos (The Thought Devourer). Charm /\n" +
+            "psychic-damage frame; punishes single-target burst\n" +
+            "rotations and rewards cleanse stack.\n\n" +
+            "CANON\n" +
+            "SAO Aincrad arc / Material Edition: Floria is the\n" +
+            "canonical flower-garden floor — a quiet town with no\n" +
+            "labyrinth-defining canon boss. The flower-tile sprinkle\n" +
+            "around the spawn arena is the in-game tribute.\n\n" +
+            "TIPS\n" +
+            "Treat F47 as a controlled stretch before the F48 Lindarth\n" +
+            "side-trip. Anti-charm potion helps Zethos go cleanly.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 46] · [Floor 48] · [Floor 50] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f47", "canon" }
+        },
+
+        new("Floors", "Floor 48",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 48\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: Nightweaver Morrigan (Spinner of Bad Dreams)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Lindarth — Lisbeth's forge town. The mid-endgame crafting\n" +
+            "hub: a hand-laid 61×35 hub with seven named buildings\n" +
+            "carved out of the Labyrinth interior. Snowstorm weather\n" +
+            "is canon. Plan the run so F48 is a multi-purpose stop.\n\n" +
+            "BOSS\n" +
+            "Nightweaver Morrigan (Spinner of Bad Dreams). Standard\n" +
+            "scaling-curve labyrinth boss; the floor's interest is in\n" +
+            "the town and the field encounter, not the boss room.\n\n" +
+            "DROPS\n" +
+            "- Field boss Frost Dragon (Wyrm of the Crystallite Cave):\n" +
+            "  Crystallite Ingot — feeds Lisbeth's Crystallite enhance\n" +
+            "  tab and several R6 recipes.\n" +
+            "- Floor boss carries the standard Tier-2 chest pool.\n\n" +
+            "NPCS / QUESTS\n" +
+            "F48 Lisbeth (BrightMagenta 'L', distinct from the F1\n" +
+            "townsfolk) spawns deterministically inside the central\n" +
+            "Forge. Her dialog opens five tabs:\n" +
+            "  R6 craft       Rarity-6 Legendary recipes, 3M Col +\n" +
+            "                 rare mats per craft.\n" +
+            "  Iron enhance   Common/Uncommon, +5 cap, 200 Col + 3\n" +
+            "                 iron per +1.\n" +
+            "  Mithril enhance Rare/Epic, +7 cap, 1000 Col + 3 mithril\n" +
+            "                 per +1.\n" +
+            "  Crystallite    Epic/Legendary, +10 cap, 5000 Col + 3\n" +
+            "                 crystallite per +1.\n" +
+            "  Reforge        Re-roll random bonuses.\n" +
+            "Dark Repulser gift line: clear the F55 floor boss, return\n" +
+            "to F48, bump Lisbeth — she gifts Dark Repulser (Legendary\n" +
+            "1H Sword, CritHeal+5) before the standard forge dialog.\n" +
+            "One-shot per save; pure gift, no Col / mat cost.\n\n" +
+            "BUILDINGS\n" +
+            "  Forge                Lisbeth's primary work-floor.\n" +
+            "  Anvil cluster (4)    Auxiliary enhance stations.\n" +
+            "  Crystallite Refinery High-tier ingot processing.\n" +
+            "  Mithril Smelter      Mid-tier ingot processing.\n" +
+            "  Material Vendor      Mat top-up between crafts.\n" +
+            "  Lisbeth's quarters   Flavor interior.\n" +
+            "  Lindarth Inn         Rest checkpoint.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 2 / Anime Ep7 (Lisbeth side-story): Lisbeth's\n" +
+            "smithing town sits on a Lindarth-equivalent floor. After\n" +
+            "the F55 dragon-ore expedition (modeled here as 'clear F55\n" +
+            "floor boss'), Lisbeth crafts Dark Repulser from the\n" +
+            "Crystallite Ingot and gifts it to Kirito. The same\n" +
+            "Crystallite Ingot harvested from the F48 Frost Dragon is\n" +
+            "the canon material thread.\n\n" +
+            "TIPS\n" +
+            "Stack a Lindarth visit with one R6 craft + one reforge +\n" +
+            "an enhance run. Bank Col aggressively before F48 — a\n" +
+            "single R6 craft drains 3M. Two Dark Repulsers per save\n" +
+            "are possible: the F55 Crystal Wyrm field-boss drop is\n" +
+            "fully additive to Lisbeth's gift line.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 47] · [Floor 49] · [Floor 50] · [Floor 55] · [Lisbeth — Rarity 6 Craft Line] · [Pair Resonance]")
+        {
+            Tags = new[] { "floors", "f48", "canon" }
+        },
+
+        new("Floors", "Floor 49",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 49\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: Shadowstep Assassin (The Boss You Never See Coming)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Canon name Myujen — a white-stone city in the Aincrad\n" +
+            "lore, dark-dungeon flavor in code. The seasonal Nicholas\n" +
+            "the Renegade event drops here as the field-boss layer in\n" +
+            "the Forest of Wandering during a Dec 20-26 window.\n\n" +
+            "BOSS\n" +
+            "Shadowstep Assassin (The Boss You Never See Coming).\n" +
+            "Tier-2 scaling-curve labyrinth boss with stealth-opener\n" +
+            "framing. Drops a guaranteed Midnight Sun (Divine Beast,\n" +
+            "Legendary Katana). Watch the first appearance — its\n" +
+            "burst window opens the fight.\n\n" +
+            "DROPS\n" +
+            "- Floor boss: Midnight Sun (Legendary Katana, guaranteed).\n" +
+            "- Seasonal field boss Nicholas the Renegade (Fallen Saint\n" +
+            "  of the Winter Fir): Divine Stone of Returning Soul. Only\n" +
+            "  fires on Dec 20-26 in-game.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 2 / Anime Ep3: the Christmas-Eve Nicholas duel\n" +
+            "drops the Returning Soul, a one-shot resurrection item.\n" +
+            "F49 is the seasonal placement; F35 carries the regular\n" +
+            "labyrinth-boss appearance year-round.\n\n" +
+            "TIPS\n" +
+            "Drop in during the December window if you can — Returning\n" +
+            "Soul is permadeath insurance. Otherwise, treat F49 like\n" +
+            "any Tier-2 floor and ride the curve to F50.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 48] · [Floor 50] · [Floor 35] · [Seasonal Events]")
+        {
+            Tags = new[] { "floors", "f49", "canon" }
+        },
+
+        new("Floors", "Floor 50",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 50\n" +
+            "│ Tier: 2 (mid-game)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: The Six-Armed Buddha (Tier of Sin)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Mid-game pivot. The labyrinth shifts from corridor-heavy\n" +
+            "to open-arena and the boss is the canonical Elucidator\n" +
+            "drop floor. Canon name Algade — major commercial hub in\n" +
+            "the Aincrad arc, KoB ascension era. F50+ also unlocks\n" +
+            "additive shop tiers as boss clears feed forward.\n\n" +
+            "BOSS\n" +
+            "The Six-Armed Buddha (Tier of Sin). Multi-arm flurries;\n" +
+            "Holy / Light cuts through best. F50+ bosses gain a\n" +
+            "Regeneration self-heal (10% MaxHealth, phase 3, cooldown\n" +
+            "10) — burst the final HP slice or the heal denies the\n" +
+            "kill window.\n\n" +
+            "DROPS\n" +
+            "- Last-Attack Bonus (your killing blow only): Elucidator\n" +
+            "  — Legendary 1H Sword, SkillCooldown-1. Ally finishers\n" +
+            "  forfeit it.\n" +
+            "- Chest pool: Tier-2/3 Legendaries, mid-tier ingots.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Sister Azariya (cyan 'A', former Fanatio apprentice,\n" +
+            "left the Integrity Knight order). Quest 'Light at the\n" +
+            "Edge of Sight': 20 F50 kills returns Heaven-Piercing\n" +
+            "Blade (Divine Rapier, PiercingBeam+30, Range 2) plus\n" +
+            "500 Col + 400 XP. She never layers random side quests.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 4 (Aincrad arc): Kirito takes Elucidator from\n" +
+            "the F50 boss as Last-Attack Bonus — the LN explicitly\n" +
+            "calls out the LAB mechanic. The blade carries his\n" +
+            "F50-F75 push and pairs with Dark Repulser at F74 once\n" +
+            "Dual Blades unlocks. Heaven-Piercing Blade is Fanatio's\n" +
+            "Alicization Integrity-Knight blade; the Sister Azariya\n" +
+            "questline is implementation-canon placement.\n\n" +
+            "TIPS\n" +
+            "Save your highest-burst skill for the final HP slice.\n" +
+            "Pre-pull aggro so the boss faces you in the LAB window;\n" +
+            "rotate allies to non-attack stance via SAO Switch if you\n" +
+            "want absolute LAB safety. Run F50 → F55 → F48 in one\n" +
+            "session for a same-run Dual Blades kit.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 48] · [Floor 49] · [Floor 55] · [Pair Resonance] · [Unique Skill: Dual Blades]")
+        {
+            Tags = new[] { "floors", "f50", "canon" }
+        },
+
+        new("Floors", "Floor 51",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 51\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Yggdrath the World Tree (The Rooted Colossus)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "First step into the expert tier. Ancient-forest biome opens\n" +
+            "the F51-F55 band — no canon hub on this floor itself, just\n" +
+            "deeper canopy and wider boss arenas. Follow the scaling curve.\n\n" +
+            "BOSS\n" +
+            "Yggdrath the World Tree (The Rooted Colossus). Scaling-curve\n" +
+            "labyrinth boss with no canon-anchored mechanic. Treant frame —\n" +
+            "Holy / Light damage cuts through best; fire risks setting the\n" +
+            "arena alight without measurable bonus.\n\n" +
+            "TIPS\n" +
+            "Bank a Lindarth (F48) crafting stop on the way up — Iron and\n" +
+            "Mithril enhancements are the cheap kit-up window before the\n" +
+            "F55 canon spike. Expert-tier mob HP outpaces flat damage; lean\n" +
+            "on crit and elemental riders.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 48] · [Floor 55] · [Floor Scaling Formulas] · [Critical Hits]")
+        {
+            Tags = new[] { "floors", "f51" }
+        },
+
+        new("Floors", "Floor 52",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 52\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Fenrir the Dread Wolf (The Unchained Beast)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Mid-band ancient forest. No canon anchor; scaling-curve floor\n" +
+            "between F51's tree-boss and F55's Pale Dragon. Beast packs\n" +
+            "lean fast and lupine.\n\n" +
+            "BOSS\n" +
+            "Fenrir the Dread Wolf (The Unchained Beast). Scaling-curve\n" +
+            "labyrinth boss. High-mobility brawler — kite into chokepoints\n" +
+            "to deny its lunge windows.\n\n" +
+            "TIPS\n" +
+            "F52-F54 reward straight-line climbing toward the F55 Lisbeth\n" +
+            "canon spike. Don't burn finite consumables here; conserve for\n" +
+            "the F55 dragon and floor boss.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 51] · [Floor 55] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f52" }
+        },
+
+        new("Floors", "Floor 53",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 53\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Sylphiel the Storm Dryad (Wrath of the Ancient Wood)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Forest band continues. No canon hub. Storm-touched canopy:\n" +
+            "expect lightning-flavored mob ability rotations on top of the\n" +
+            "expert-tier scaling curve.\n\n" +
+            "BOSS\n" +
+            "Sylphiel the Storm Dryad (Wrath of the Ancient Wood). Scaling-\n" +
+            "curve labyrinth boss. Wind / lightning theming; bring conductive\n" +
+            "armor at your own risk and prefer Holy / Light cleansing kits.\n\n" +
+            "TIPS\n" +
+            "Same advice as F51-F52: ride the curve, save burn for F55.\n" +
+            "Stack any standing F51-F55 weapon-gated quest counters here\n" +
+            "rather than backtracking later.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 52] · [Floor 55] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f53" }
+        },
+
+        new("Floors", "Floor 54",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 54\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Forest\n" +
+            "│ Boss: Titanoak the Living Fortress (Where the Forest Fights Back)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Last forest floor before Granzam. No canon anchor; the labyrinth\n" +
+            "biome thickens into siege-style oaken bulwarks. Treat as the\n" +
+            "final breath-take before the F55 spike.\n\n" +
+            "BOSS\n" +
+            "Titanoak the Living Fortress (Where the Forest Fights Back).\n" +
+            "Scaling-curve labyrinth boss. High-Defense bark frame —\n" +
+            "ArmorPierce and crit-stack damage scale better here than raw\n" +
+            "flat ATK.\n\n" +
+            "TIPS\n" +
+            "Verify your kit before stepping to F55: Elucidator (F50 Last-\n" +
+            "Attack Bonus) in your main hand, weapon-class ally if you want\n" +
+            "to land the Crystal Wyrm killing blow personally. F54 is the\n" +
+            "last cheap-revive floor before canon density rises.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 53] · [Floor 55] · [Floor 50] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f54" }
+        },
+
+        new("Floors", "Floor 55",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 55\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Forest (Granzam fortress city)\n" +
+            "│ Boss: X'rphan the White Wyrm (The Pale Dragon of Floor 55)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Granzam — the iron fortress-city, Knights of the Blood Oath\n" +
+            "headquarters, and the floor where Lisbeth's dragon-cave canon\n" +
+            "anchors. Steel-grey weather, militaristic streets, the West\n" +
+            "Mountain in the distance. Three guaranteed canon hooks land\n" +
+            "here: KoB recruitment, the Crystal Wyrm field boss, and Agil's\n" +
+            "Apprentice quest.\n\n" +
+            "BOSS\n" +
+            "X'rphan the White Wyrm (The Pale Dragon of Floor 55). Canon\n" +
+            "labyrinth boss, distinct from the field-boss Crystal Wyrm.\n" +
+            "Clearing X'rphan flips the lifetime flag that arms Lisbeth's\n" +
+            "Dark Repulser gift on your next F48 visit.\n\n" +
+            "DROPS\n" +
+            "- Field boss: Crystal Wyrm of Lisbeth's Forge (BrightCyan W,\n" +
+            "  overworld only — never spawns inside the Labyrinth). HP 3.2x,\n" +
+            "  ATK 1.6x. Guaranteed Dark Repulser (Legendary 1H Sword,\n" +
+            "  CritHeal+5). Once defeated, never respawns.\n" +
+            "- Lisbeth gift (post-clear): return to F48 Lindarth after\n" +
+            "  X'rphan is dead — Lisbeth crafts and gifts a second Dark\n" +
+            "  Repulser, one-time per save. A player who kills the wyrm\n" +
+            "  AND clears X'rphan AND returns to Lindarth ends up with two.\n" +
+            "- Floor-boss chest pool: standard expert-tier Legendaries.\n\n" +
+            "NPCS / QUESTS\n" +
+            "- Knights of the Blood Oath HQ — Godfree (recruiter), Heathcliff\n" +
+            "  (leader). Gate Lv25, karma >= +30. Passive: +8 Defense and\n" +
+            "  BlockChance scaling on Vitality. Recruit task: 10 frontline\n" +
+            "  labyrinth kills.\n" +
+            "- Agil's Apprentice (BrightYellow G). Quest: 15 F55 kills →\n" +
+            "  Ground Gorge (Fractured Daydream 2H Axe, Agil's signature).\n\n" +
+            "CANON\n" +
+            "SAO LN vol 2 — the Lisbeth side-story. Lisbeth and Kirito dive\n" +
+            "into a crystallite hollow on F55 to harvest the breath-frozen\n" +
+            "ingot of a crystal dragon; her scales chime when she breathes.\n" +
+            "Lisbeth forges Dark Repulser from the ingot back at her Lindarth\n" +
+            "shop. Granzam is also Knights of the Blood Oath HQ in the LN —\n" +
+            "Heathcliff's elite frontline order operates from the West\n" +
+            "Mountain fortress.\n\n" +
+            "TIPS\n" +
+            "Path: kill F50 Six-Armed Buddha for Elucidator (Last-Attack\n" +
+            "Bonus, killing blow only) → push F51-F54 → on F55, find the\n" +
+            "Crystal Wyrm in the overworld BEFORE engaging X'rphan, kill it\n" +
+            "for the field-boss Dark Repulser → clear X'rphan → return to\n" +
+            "F48 Lindarth for Lisbeth's gift Dark Repulser. Same-session\n" +
+            "Dual Blades kit: Elucidator + two Dark Repulsers (one for the\n" +
+            "active dual-wield set, one to vault or hand to a Kirito ally\n" +
+            "for a near-canon party loadout). Vitality builds gain the most\n" +
+            "from KoB recruitment — the BlockChance rider scales with VIT,\n" +
+            "compounding with shield kits.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 48] · [Floor 50] · [Floor 60] · [Floor 74] · [Pair Resonance] · [Unique Skill: Dual Blades] · [Guild System Overview] · [Karma & Alignment]")
+        {
+            Tags = new[] { "floors", "f55", "canon" }
+        },
+
+        new("Floors", "Floor 56",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 56\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ruins (Pani forest outpost)\n" +
+            "│ Boss: Geocrawler (The Burrowing Menace)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Pani — Hollow Fragment-era forest outpost and canon Divine\n" +
+            "Dragon Alliance frontier post. Picnic safe-zone respite floor\n" +
+            "after the Granzam push. Quieter biome, but the labyrinth boss\n" +
+            "is a canon HF-adjacent burrower.\n\n" +
+            "BOSS\n" +
+            "Geocrawler (The Burrowing Menace). Canon HF-adjacent floor\n" +
+            "boss. Tunnels under the arena floor and surfaces under your\n" +
+            "feet — keep moving and avoid tile-camping.\n\n" +
+            "DROPS\n" +
+            "Floor-boss chest pool: standard expert-tier Legendaries; no\n" +
+            "guaranteed unique anchor.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Forest House (purchasable safe-zone cottage, HF canon) —\n" +
+            "F56's quiet hub asset for parties looking to bank a long\n" +
+            "rest near the DDA frontier post.\n\n" +
+            "CANON\n" +
+            "Hollow Fragment — Pani is the canon DDA forward outpost in\n" +
+            "the post-Aincrad-arc HF storyline; the Geocrawler is canon\n" +
+            "HF / LN-adjacent in the same post-floor band.\n\n" +
+            "TIPS\n" +
+            "Stop at the Forest House to bank rest before pushing F60.\n" +
+            "Geocrawler's burrow telegraphs as a tile shimmer — step off\n" +
+            "the affected tile the turn before it surfaces.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 55] · [Floor 60] · [Floor 40]")
+        {
+            Tags = new[] { "floors", "f56", "canon" }
+        },
+
+        new("Floors", "Floor 57",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 57\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ruins (Marten mountain trade)\n" +
+            "│ Boss: Atlas the Mountainbreaker (He Who Carries the Ceiling)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Marten — canon mountain-trade town. Caravan escorts run the\n" +
+            "switchbacks between Granzam and the F60 frontier. Open-sky\n" +
+            "ruins biome with steep ridge labyrinths.\n\n" +
+            "BOSS\n" +
+            "Atlas the Mountainbreaker (He Who Carries the Ceiling).\n" +
+            "Scaling-curve floor boss. Heavy stone titan; long wind-up on\n" +
+            "ceiling-cracker AoE — bait the swing, then cut from his arc.\n\n" +
+            "DROPS\n" +
+            "Floor-boss chest pool: standard expert-tier Legendaries.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Caravan-escort flavor quests in Marten — small Col / XP\n" +
+            "rewards, nothing canon-anchored to a Divine drop.\n\n" +
+            "CANON\n" +
+            "LN V1 adjacent — Marten is named in canon as a mountain-trade\n" +
+            "town along the F55-F60 ridge; in implementation it stays\n" +
+            "flavor-only (no canon NPC anchored here).\n\n" +
+            "TIPS\n" +
+            "Use Marten as a staging stop for F60 — the caravan-escort\n" +
+            "kill counters double as F57 weapon-gated quest progress.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 55] · [Floor 60] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f57", "canon" }
+        },
+
+        new("Floors", "Floor 58",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 58\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ruins\n" +
+            "│ Boss: Gravelthorn the Earth Elemental (Heart of the Mountain)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Mid-band rugged frontier between Marten and the F60 spike.\n" +
+            "No canon hub; ridge ruins continue. Follow the scaling curve.\n\n" +
+            "BOSS\n" +
+            "Gravelthorn the Earth Elemental (Heart of the Mountain).\n" +
+            "Scaling-curve floor boss. Earth elemental; bleed and pierce\n" +
+            "outperform blunt damage.\n\n" +
+            "TIPS\n" +
+            "Stage at Marten or push to F59 sandstorm canon. F58-F59 are\n" +
+            "the cheap kit-up window before the Sleeping Knights gate at\n" +
+            "F60.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 57] · [Floor 60] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f58" }
+        },
+
+        new("Floors", "Floor 59",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 59\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ruins (Danac, sandstorm)\n" +
+            "│ Boss: Stonewyrm Basileus (Petrified Dragon King)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Danac — canon sandstorm town. Reduced visibility on the\n" +
+            "overworld, calmer inside the labyrinth. Last frontier floor\n" +
+            "before F60 Sleeping Knights HQ.\n\n" +
+            "BOSS\n" +
+            "Stonewyrm Basileus (Petrified Dragon King). Scaling-curve\n" +
+            "floor boss. High DEF stone-scaled wyrm; ArmorPierce builds\n" +
+            "shine here.\n\n" +
+            "TIPS\n" +
+            "Sandstorm reduces overworld vision — close-quarter combat\n" +
+            "the field-boss spawns to keep them in your detection cone.\n" +
+            "Stage karma to >= +50 before F60 if you want to recruit\n" +
+            "Sleeping Knights on the next ascent.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 58] · [Floor 60] · [Karma & Alignment]")
+        {
+            Tags = new[] { "floors", "f59" }
+        },
+
+        new("Floors", "Floor 60",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 60\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ruins (mountain frontier)\n" +
+            "│ Boss: The Armoured Stone Warrior (Golem of the Granite Throne)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "F60 is the canon multiples-of-ten quarter spike — second-\n" +
+            "hardest tier inside Era III. Sleeping Knights HQ lives here\n" +
+            "(Yuuki's elite order in canon Mother's Rosario), and Klein's\n" +
+            "Kagutsuchi field boss roams the overworld. Stat-gate floor\n" +
+            "for the steepest positive-karma guild in the game.\n\n" +
+            "BOSS\n" +
+            "The Armoured Stone Warrior (Golem of the Granite Throne).\n" +
+            "Canon labyrinth boss. Granite plate frame — slow turn radius\n" +
+            "but heavy uninterruptible swings. Reposition between phases.\n\n" +
+            "DROPS\n" +
+            "- Field boss: Kagutsuchi the Fire Samurai (Ember-Wielder of\n" +
+            "  the Sixtieth Summit). Guaranteed drop: Spirit Sword\n" +
+            "  Kagutsuchi (Fractured Daydream Legendary Katana, Klein's\n" +
+            "  signature FD weapon).\n" +
+            "- Floor-boss chest pool: standard expert-tier Legendaries.\n\n" +
+            "NPCS / QUESTS\n" +
+            "- Sleeping Knights HQ — Siune (recruiter), Yuuki (leader).\n" +
+            "  Gate Lv50, karma >= +50 (highest positive-karma threshold\n" +
+            "  in the game). Passive: +3 to all stats, +5% CritRate.\n" +
+            "  Recruit: 10 late-floor mob kills. Signature: \"The Moon's\n" +
+            "  Rest\" — Yuuki-crew themed push.\n\n" +
+            "CANON\n" +
+            "Sleeping Knights are Yuuki's guild from SAO LN vol 7 (the\n" +
+            "Mother's Rosario arc). The arc is canonically post-Aincrad\n" +
+            "in ALO; the implementation seats them here as the late-game\n" +
+            "honorable-path capstone. Kagutsuchi is Fractured Daydream\n" +
+            "canon: Klein's flame-named blade from the FD spinoff.\n\n" +
+            "TIPS\n" +
+            "Time the recruit pickup carefully — F60 is the FIRST floor\n" +
+            "where the Lv50 + karma +50 gate can resolve, so plan an\n" +
+            "honorable-path build to step in cleanly. Kagutsuchi roams\n" +
+            "the overworld, never the Labyrinth — sweep the field before\n" +
+            "engaging the floor boss. Klein-recruit allies pair perfectly\n" +
+            "with Spirit Sword Kagutsuchi.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 55] · [Floor 65] · [Floor 70] · [Floor 76] · [Karma & Alignment] · [Guild System Overview] · [Recruitable Allies & Party System]")
+        {
+            Tags = new[] { "floors", "f60", "canon" }
+        },
+
+        new("Floors", "Floor 61",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 61\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Volcanic (Selmburg fog lake)\n" +
+            "│ Boss: Belzeroth the Pit Fiend (Duke of the Infernal Court)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Selmburg — canon perpetual-fog lake town. Volcanic biome\n" +
+            "opens at the F61-F65 band. Anchors the Integral Factor Rosso\n" +
+            "Series field-boss ladder; the Crimson Forneus encounter on\n" +
+            "this floor seeds the F58-F64 banded Rosso chest pool.\n\n" +
+            "BOSS\n" +
+            "Belzeroth the Pit Fiend (Duke of the Infernal Court). Scaling-\n" +
+            "curve floor boss. Fire-resistant fiend; Holy / Light damage\n" +
+            "and bleed riders cut through best.\n\n" +
+            "DROPS\n" +
+            "- Field boss: Crimson Forneus (Demon of the Scarlet Depths).\n" +
+            "  HP 4.0x, ATK 1.7x. Guaranteed drop: Rosso Forneus (Legendary\n" +
+            "  1H Sword) plus Rosso Aegis (Legendary shield) on the\n" +
+            "  secondary roll.\n" +
+            "- Banded chest pool: F58-F64 chests roll the four IF Rosso\n" +
+            "  series weapons (Rosso Albatross / Sigrun / Rhapsody /\n" +
+            "  Dominion).\n\n" +
+            "CANON\n" +
+            "Integral Factor — Rosso Series. Selmburg's perpetual fog is\n" +
+            "noted in the SAO Wiki canon entry; Crimson Forneus is the IF\n" +
+            "field-boss anchor for the four-weapon Rosso chest band.\n\n" +
+            "TIPS\n" +
+            "Engage Crimson Forneus only with shield-up loadouts — its\n" +
+            "ATK 1.7x rider crushes light builds. The Rosso Aegis shield\n" +
+            "drop pairs naturally with KoB Vitality scaling. Fog reduces\n" +
+            "overworld vision; pre-scout from the labyrinth entrance.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 60] · [Floor 65] · [Integral Factor Weapon Series] · [Floor 55]")
+        {
+            Tags = new[] { "floors", "f61", "canon" }
+        },
+
+        new("Floors", "Floor 62",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 62\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Hellion the Chaos Dancer (Madness Made Manifest)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Mid-band volcanic ridge inside the IF Rosso chest band. No\n" +
+            "canon hub. Follow the scaling curve.\n\n" +
+            "BOSS\n" +
+            "Hellion the Chaos Dancer (Madness Made Manifest). Scaling-\n" +
+            "curve floor boss. Erratic move pattern; lock the room down\n" +
+            "with a Slow status to predict its dance.\n\n" +
+            "TIPS\n" +
+            "F62-F64 chests roll the IF Rosso series weapons — clear\n" +
+            "extra rooms for the banded drops. Volcanic environment ticks\n" +
+            "2 dmg / 8 turns; pack heat-resist gear or fire potions.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 61] · [Floor 65] · [Integral Factor Weapon Series]")
+        {
+            Tags = new[] { "floors", "f62" }
+        },
+
+        new("Floors", "Floor 63",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 63\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Ashborn the Ember Lich (Death That Burns)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Volcanic mid-band continues. No canon hub. Inside the IF\n" +
+            "Rosso chest band; ride the scaling curve.\n\n" +
+            "BOSS\n" +
+            "Ashborn the Ember Lich (Death That Burns). Scaling-curve\n" +
+            "floor boss. Undead caster; silence and stun riders shut down\n" +
+            "its longest cast windows.\n\n" +
+            "TIPS\n" +
+            "Holy / Light cuts through undead lich frames. Continue\n" +
+            "rolling chests for the Rosso banded drops.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 62] · [Floor 65] · [Integral Factor Weapon Series]")
+        {
+            Tags = new[] { "floors", "f63" }
+        },
+
+        new("Floors", "Floor 64",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 64\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Moloch the Soul Furnace (The Hunger That Never Ends)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Last floor of the IF Rosso chest band. No canon hub. Volcanic\n" +
+            "ridge; F65 Selka canon waits one floor up.\n\n" +
+            "BOSS\n" +
+            "Moloch the Soul Furnace (The Hunger That Never Ends). Scaling-\n" +
+            "curve floor boss. Drains MP / SP on hit — bring potions and\n" +
+            "avoid extended skill chains under his leech aura.\n\n" +
+            "TIPS\n" +
+            "Final floor for IF Rosso chest rolls — clear extra rooms\n" +
+            "before pushing F65. Pre-stage karma for any Selka-side\n" +
+            "considerations on the next floor (no karma gate, but the\n" +
+            "Holy-Sword build path benefits from honorable rep).\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 63] · [Floor 65] · [Integral Factor Weapon Series]")
+        {
+            Tags = new[] { "floors", "f64" }
+        },
+
+        new("Floors", "Floor 65",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 65\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Volcanic (active lava cone)\n" +
+            "│ Boss: Abaddon the Destroyer (Annihilation Incarnate)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Volcanic crater floor — active lava cone, obsidian fields,\n" +
+            "ashfall, heat shimmer. Anchors Selka the Novice's chained\n" +
+            "Alicization-canon quest line: two Divines back-to-back, base\n" +
+            "Fragrant Olive Sword and the Memory-Defrag awakened variant.\n\n" +
+            "BOSS\n" +
+            "Abaddon the Destroyer (Annihilation Incarnate). Scaling-curve\n" +
+            "floor boss with no canon-anchored mechanic. Heavy AoE, low\n" +
+            "single-target precision — burst-damage builds outpace its\n" +
+            "phase windows.\n\n" +
+            "DROPS\n" +
+            "Floor-boss chest pool: standard expert-tier Legendaries. The\n" +
+            "Divine drops on this floor live in Selka's NPC quests, not\n" +
+            "the boss.\n\n" +
+            "NPCS / QUESTS\n" +
+            "- Selka the Novice (white S). Quest 1 \"The Last Knight's\n" +
+            "  Bequest\": 25 F65 kills → Fragrant Olive Sword (Divine 1H\n" +
+            "  Sword, HolyAoE+15, SD+15) + 500 Col + 400 XP.\n" +
+            "- Selka chained Quest 2 \"The Sword's Awakening\" (unlocks on\n" +
+            "  Q1 turn-in): 30 F65+ kills → Unfolding Truth Fragrant\n" +
+            "  Olive Sword (MD-awakened variant, stronger) + 800 Col +\n" +
+            "  600 XP. Kills from any F65+ floor count toward the second\n" +
+            "  counter, so push and farm in parallel.\n\n" +
+            "CANON\n" +
+            "Alicization — Selka is Alice's younger sister; Fragrant Olive\n" +
+            "Sword is Alice's blade in the Underworld arc. The Unfolding\n" +
+            "Truth awakening is Memory Defrag mobile-canon, where Selka\n" +
+            "carries the awakening dialogue (\"awakening\", \"unfolding\n" +
+            "truth\") used in the chained quest.\n\n" +
+            "TIPS\n" +
+            "Holy-Sword builds gain the most — Fragrant Olive Sword's\n" +
+            "HolyAoE+15 stacks with Sacred Edge. Push straight into Q2\n" +
+            "after Q1 turn-in; the 30 kills overlap with any standing\n" +
+            "F65+ weapon-gated quest counters and HF HNM grinds at F79+.\n" +
+            "Volcanic environment damage; pack fire-resist gear.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 60] · [Floor 70] · [Floor 78] · [Unique Skill: Holy Sword] · [MD Alicization Canonical Extras] · [Divine Object Set — Integrity Knights]")
+        {
+            Tags = new[] { "floors", "f65", "canon" }
+        },
+
+        new("Floors", "Floor 66",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 66\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Void (cosmic era)\n" +
+            "│ Boss: Void Sentinel Nyx (Watcher of the Starless Dark)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Void biome opens — F66-F70 cosmic era. +1 satiety drain,\n" +
+            "1 dmg / 10 turns environment. No canon hub on F66 itself;\n" +
+            "ride the curve.\n\n" +
+            "BOSS\n" +
+            "Void Sentinel Nyx (Watcher of the Starless Dark). Scaling-\n" +
+            "curve floor boss. Reduced visibility in arena; rely on sound\n" +
+            "and tile-feel rather than line-of-sight.\n\n" +
+            "TIPS\n" +
+            "Pack extra rations for the satiety tick. Light sources don't\n" +
+            "cut the Void biome — bring Holy weapons that emit their own\n" +
+            "ambient glow.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 65] · [Floor 70] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f66" }
+        },
+
+        new("Floors", "Floor 67",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 67\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: Cosmolith the Star Eater (The Gravity That Devours)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Void mid-band. No canon hub. Continued environment tick.\n\n" +
+            "BOSS\n" +
+            "Cosmolith the Star Eater (The Gravity That Devours). Scaling-\n" +
+            "curve floor boss. Pulls you toward a center tile each phase\n" +
+            "transition — kite outward to deny the gravity well.\n\n" +
+            "TIPS\n" +
+            "Movement speed counters the gravity pull. Sticky-foot effects\n" +
+            "from ground hazards compound badly here; clear the arena of\n" +
+            "tar / ice / web before engaging.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 66] · [Floor 70] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f67" }
+        },
+
+        new("Floors", "Floor 68",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 68\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Void (IF event-floor flavor)\n" +
+            "│ Boss: Etheron the Phase Shifter (The Boss Between Dimensions)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Void biome. Canon-flavored as an Integral Factor event-floor\n" +
+            "underground cave — implementation keeps the Void atmosphere\n" +
+            "intact. No canon NPC anchor.\n\n" +
+            "BOSS\n" +
+            "Etheron the Phase Shifter (The Boss Between Dimensions).\n" +
+            "Scaling-curve floor boss. Phase-skip ability — windows where\n" +
+            "it's untargetable; bait the un-phase, then commit burst.\n\n" +
+            "TIPS\n" +
+            "Track the phase rhythm — Etheron drops out of view on a\n" +
+            "predictable cooldown. Save your highest-burst skill for the\n" +
+            "rephase window.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 67] · [Floor 70] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f68" }
+        },
+
+        new("Floors", "Floor 69",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 69\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Void (reptilian-tribe flavor)\n" +
+            "│ Boss: Nebulord Vortex (Storm of Collapsing Stars)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Void biome continues. Canon-flavored as a reptilian-tribe\n" +
+            "desert per the lore docs; implementation keeps the Void\n" +
+            "skyline as the dominant tone. No canon NPC anchor.\n\n" +
+            "BOSS\n" +
+            "Nebulord Vortex (Storm of Collapsing Stars). Scaling-curve\n" +
+            "floor boss. Spiral AoE with rotating safe-tiles — read the\n" +
+            "rotation, step into the sweet spot, swing on the off-beat.\n\n" +
+            "TIPS\n" +
+            "Last Void floor before F70 Susanoo field-boss canon. Bank\n" +
+            "consumables for the Klein-canon spike.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 68] · [Floor 70] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f69" }
+        },
+
+        new("Floors", "Floor 70",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 70\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Void (cosmic era closes)\n" +
+            "│ Boss: Celestine the Radiant (Light That Blinds and Burns)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Canon multiples-of-ten quarter floor. Closes the cosmic-Void\n" +
+            "band; the Ice band opens at F71. No canon labyrinth-boss\n" +
+            "anchor, but Klein's second Spirit Sword field-boss roams\n" +
+            "the overworld here.\n\n" +
+            "BOSS\n" +
+            "Celestine the Radiant (Light That Blinds and Burns). Scaling-\n" +
+            "curve floor boss. Inflicts Blind on phase transitions — pre-\n" +
+            "stage cleansing potions or status-immune armor.\n\n" +
+            "DROPS\n" +
+            "- Field boss: Susanoo the Storm Blade (Thunder-Wielder of the\n" +
+            "  Seventieth Vault). HP 3.2x, ATK 1.6x. Guaranteed: Spirit\n" +
+            "  Sword Susanoo (Fractured Daydream Legendary Katana — second\n" +
+            "  half of Klein's FD pair, complementing Kagutsuchi at F60).\n" +
+            "- Floor-boss chest pool: standard expert-tier Legendaries.\n\n" +
+            "CANON\n" +
+            "Susanoo is Fractured Daydream canon — Klein's storm-cloud-\n" +
+            "splitter blade from FD, paired with his Kagutsuchi flame\n" +
+            "drop on F60. The mythological reference is Susanoo's cloud-\n" +
+            "splitting sword from LN-canon Japanese myth.\n\n" +
+            "TIPS\n" +
+            "Klein FD-canon completion run: kill Kagutsuchi on F60, then\n" +
+            "sweep F70 for Susanoo, hand both to a Klein-recruit ally for\n" +
+            "the canon-paired loadout. Sweep before engaging Celestine —\n" +
+            "the Blind status makes wandering field encounters unsafe\n" +
+            "post-fight.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 60] · [Floor 75] · [Fractured Daydream Character Weapons] · [Recruitable Allies & Party System]")
+        {
+            Tags = new[] { "floors", "f70" }
+        },
+
+        new("Floors", "Floor 71",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 71\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ice (legendary era opens)\n" +
+            "│ Boss: Stormbringer Raijin (The Thunder God's Wrath)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Ice band opens — F71-F75 legendary era. Slip hazards return,\n" +
+            "vision penalties intensify. No canon hub on F71; ride the\n" +
+            "scaling curve toward Gleam Eyes at F74.\n\n" +
+            "BOSS\n" +
+            "Stormbringer Raijin (The Thunder God's Wrath). Scaling-curve\n" +
+            "floor boss. Lightning AoE; conductive armor still risky.\n\n" +
+            "TIPS\n" +
+            "Stage F71-F73 conservatively — F74 Gleam Eyes is the canon\n" +
+            "Aincrad-arc spike before F75 Skull Reaper. Bank consumables;\n" +
+            "respect the slip hazard on overworld ice.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 70] · [Floor 74] · [Floor 75]")
+        {
+            Tags = new[] { "floors", "f71" }
+        },
+
+        new("Floors", "Floor 72",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 72\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ice (Kales'Oh, remote elven ruins)\n" +
+            "│ Boss: Bloodfang the Vampire Lord (Eternal Night's Master)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Kales'Oh — canon-flavored remote-island elven ruins. No canon\n" +
+            "NPC anchor; ride the curve.\n\n" +
+            "BOSS\n" +
+            "Bloodfang the Vampire Lord (Eternal Night's Master). Scaling-\n" +
+            "curve floor boss. Life-drain riders heal him on hit — burst\n" +
+            "windows beat sustained DPS.\n\n" +
+            "TIPS\n" +
+            "Holy / Light damage cuts hardest. Avoid bleed-on-self riders\n" +
+            "(thorns, retaliation procs) — Bloodfang's life-drain feeds on\n" +
+            "those.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 71] · [Floor 74]")
+        {
+            Tags = new[] { "floors", "f72" }
+        },
+
+        new("Floors", "Floor 73",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 73\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ice\n" +
+            "│ Boss: Deathweaver Arachne (Mother of All Spiders)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Last unmarked floor before F74 Gleam Eyes canon. Ice band\n" +
+            "continues. No canon hub; bank kit and consumables for the\n" +
+            "two-floor canon spike.\n\n" +
+            "BOSS\n" +
+            "Deathweaver Arachne (Mother of All Spiders). Scaling-curve\n" +
+            "floor boss. Web tiles slow movement — clear them between\n" +
+            "phases or pre-stack movement-speed boosts.\n\n" +
+            "TIPS\n" +
+            "Kit check before F74: 1H Sword OHS-kill counter at 50 if\n" +
+            "you're chasing the Dual Blades unique-skill unlock; the\n" +
+            "milestone fires on the next OHS kill regardless of floor.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 72] · [Floor 74] · [Unique Skill: Dual Blades]")
+        {
+            Tags = new[] { "floors", "f73" }
+        },
+
+        new("Floors", "Floor 74",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 74\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ice (Collinia plains, overcast)\n" +
+            "│ Boss: The Gleam Eyes (The Blue Demon of Floor 74)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Collinia / Kamdet — canon overcast cliffs and plains. Tense\n" +
+            "weather, narrow ridges. F74 is the canon Gleam Eyes floor:\n" +
+            "the blue-skinned, goat-headed demon with a zanbato that the\n" +
+            "Aincrad arc remembers as the moment Kirito reveals Dual\n" +
+            "Blades.\n\n" +
+            "BOSS\n" +
+            "The Gleam Eyes (The Blue Demon of Floor 74). Canon labyrinth\n" +
+            "boss. Goat-headed humanoid demon, zanbato two-hander, purple-\n" +
+            "energy aura. Heavy single-target combo pressure — interrupt\n" +
+            "the wind-up windows, kite the cleave.\n\n" +
+            "DROPS\n" +
+            "Floor-boss chest pool: standard expert-tier Legendaries.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 1 / Anime Ep 9 — the Gleam Eyes raid is the canon\n" +
+            "moment Kirito reveals his Dual Blades unique skill. In our\n" +
+            "codebase, the unique-skill flavor string anchors Dual Blades\n" +
+            "to F74, but the actual unlock is kill-count milestone driven:\n" +
+            "50 1H-Sword (OHS) kills, regardless of floor. F74 is canon-\n" +
+            "anchor flavor, not a coded gate. If your OHS counter hits 50\n" +
+            "anywhere from F1 onward, the System flag fires.\n\n" +
+            "TIPS\n" +
+            "Stack the OHS kill counter on the way up — by F74 most\n" +
+            "single-handed builds clear the milestone naturally. Bring\n" +
+            "Elucidator (F50 LAB drop) + Dark Repulser (F55 wyrm or F48\n" +
+            "Lisbeth gift) as your canon dual-wield kit; if Dual Blades\n" +
+            "unlocks during the Gleam Eyes fight, swap to dual-wield mid-\n" +
+            "phase for the canon-perfect kill. Save your highest-burst\n" +
+            "skill for the zanbato wind-up window.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 50] · [Floor 55] · [Floor 75] · [Unique Skill: Dual Blades] · [Pair Resonance]")
+        {
+            Tags = new[] { "floors", "f74", "canon" }
+        },
+
+        new("Floors", "Floor 75",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 75\n" +
+            "│ Tier: 3 (expert)\n" +
+            "│ Biome: Ice (Collinia Labyrinth, bone arena)\n" +
+            "│ Boss: The Skull Reaper (Death's Scythe)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Collinia Labyrinth — the last frontline town in canon, the\n" +
+            "bone-dungeon arena, the dread red gloom. F75 is the canon\n" +
+            "endpoint of the Aincrad arc proper: in the LN/anime this is\n" +
+            "where Heathcliff reveals himself as Kayaba, in our codebase\n" +
+            "this is the Skull Reaper raid that breaks the frontline.\n" +
+            "Quarter-floor canon spike — second-hardest tier inside Era\n" +
+            "III. Hidden Laughing Coffin hideout sits on this floor for\n" +
+            "Outlaw-tier players.\n\n" +
+            "BOSS\n" +
+            "The Skull Reaper (Death's Scythe). Canon labyrinth boss. In\n" +
+            "the LN, Skull Reaper killed 14 high-level players before the\n" +
+            "raid won — lethal cleave windows, two-arm scythe, centipede\n" +
+            "frame. Phase-1 Devastating Charge ability rolls in here\n" +
+            "(2.5x multiplier, cooldown 5) on top of the standard expert-\n" +
+            "tier scaling.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Masamune (Divine Katana — Hollow\n" +
+            "  Realization mythological apex blade). Drops on the kill\n" +
+            "  regardless of last-attack.\n" +
+            "- Floor-boss chest pool: standard expert-tier Legendaries.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Laughing Coffin hidden hideout (PoH's Herald). Gate Lv30,\n" +
+            "karma <= -50 (Outlaw tier only — entrance closes if you\n" +
+            "bounce above -50). Passive: +20% BackstabDmg. Signature\n" +
+            "\"Crimson Letter\" demands 5 NPC kills. Town Guards aggro at\n" +
+            "F1 plaza while LC is active.\n\n" +
+            "CANON\n" +
+            "SAO LN vol 1 / Anime Ep 14. F75 is the arc-climax floor —\n" +
+            "the boss raid where the canon assault clears Aincrad's lethal\n" +
+            "centipede and Heathcliff (Kayaba) reveals himself as the\n" +
+            "creator. Important reconciliation: in this codebase, the\n" +
+            "Heathcliff fight does not happen here. F75's labyrinth boss\n" +
+            "is The Skull Reaper, and the player-clone Heathcliff's Shadow\n" +
+            "fight lives at F99 instead. The canon Heathcliff narrative\n" +
+            "beat anchors F75 spiritually — the Holy Sword unique-skill\n" +
+            "flavor string still references F75 — but the unique-skill\n" +
+            "unlock is kill-count milestone driven (no F75 code branch),\n" +
+            "and the literal Heathcliff confrontation is moved to the\n" +
+            "F99 ascent. Laughing Coffin is canon LN — PoH's player-killer\n" +
+            "guild whose hidden hub in canon sits on a high floor; the\n" +
+            "implementation seats it here.\n\n" +
+            "TIPS\n" +
+            "Bring Dual Blades online before this fight if you possibly\n" +
+            "can — the Elucidator + Dark Repulser pair with the Pair\n" +
+            "Resonance bonus is the canon kit. Skull Reaper's centipede\n" +
+            "cleave demands a wide arena — pre-clear minions before\n" +
+            "engaging. Bank Masamune for a Klein-recruit ally if your\n" +
+            "build is already saturated on Katana. The Laughing Coffin\n" +
+            "hideout only opens at karma <= -50 — Honorable-path runs\n" +
+            "will not see the entrance at all (it shows as locked terrain).\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 50] · [Floor 55] · [Floor 74] · [Floor 99] · [Unique Skill: Dual Blades] · [Pair Resonance] · [Karma & Alignment] · [Run Modifiers (12 Optional Challenges)]")
+        {
+            Tags = new[] { "floors", "f75", "canon" }
+        },
+
+        new("Floors", "Floor 76",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 76\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: The Ghastlygaze (The All-Seeing Abomination)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "First floor past the canon endpoint — the climb survivors who\n" +
+            "kept going after Heathcliff. Algade revisited as the Hollow-\n" +
+            "Fragment casino district, all neon and dark glass over a Dark-\n" +
+            "biome demigod-tier scaling band. Lv 162, 5316 HP boss, 215 ATK.\n\n" +
+            "BOSS\n" +
+            "The Ghastlygaze (HF canon). Eye-studded horror. By F76 the\n" +
+            "boss kit is fully loaded: Devastating Charge opener, Ground\n" +
+            "Slam phase 2, Toxic Breath status, and 10% Regeneration on\n" +
+            "phase 3. No floor-boss guaranteed Divine.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss: standard chest pool — Tier-4 Legendaries, high-\n" +
+            "  tier ingots, no guaranteed Divine.\n" +
+            "- No field bosses rostered for F76.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Jun (Sleeping Knights memorial) — quest 'The Sleeping Knights'\n" +
+            "Tribute', 15 F76 kills returns Mother's Rosario (Legendary\n" +
+            "Rapier, ComboBonus+50, 11-hit Original Sword Skill) plus 700\n" +
+            "Col / 550 XP. One-shot per save.\n\n" +
+            "CANON\n" +
+            "Mother's Rosario (LN vol 7): Yuuki Konno's blade and the only\n" +
+            "Original Sword Skill in canon ALO. F76 placement is\n" +
+            "implementation canon — the MR arc takes place post-Aincrad in\n" +
+            "the original LN. Jun is a Sleeping Knights survivor tending\n" +
+            "the memorial.\n\n" +
+            "TIPS\n" +
+            "Stack the 15 Jun kills with any standing F76 weapon-Kill\n" +
+            "quests — counters overlap. The 11-hit OSS is the longest\n" +
+            "combo in the game; pair with Combo Finisher for double-damage\n" +
+            "on the final strike. F76 is also where the F79+ HF questgiver\n" +
+            "chain begins — pace the climb so you don't burn the rapier\n" +
+            "on a single push.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 60] · [Floor 79] · [Combo Attacks] · [Pair Resonance]")
+        {
+            Tags = new[] { "floors", "f76", "canon" }
+        },
+
+        new("Floors", "Floor 77",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 77\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: The Crystalize Claw (Prismatic Scorpion of Floor 77)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Hollow-Fragment hill-zone floor. Dark biome, demigod scaling.\n" +
+            "Lv 164, 5424 HP boss, 219 ATK. Implement-System questgiver\n" +
+            "band starts here in spirit, formal NPCs from F79.\n\n" +
+            "BOSS\n" +
+            "The Crystalize Claw (HF canon). Prismatic scorpion — refractive\n" +
+            "carapace, claw cleaves. Standard F75+ kit (Devastating Charge\n" +
+            "+ Ground Slam + Toxic Breath + Regen).\n\n" +
+            "DROPS\n" +
+            "- Floor-boss: standard chest pool, no guaranteed Divine.\n" +
+            "- Field boss: Goblin Leader (Warchief of the Kobold Host) →\n" +
+            "  Mace of Asclepius (HF Legendary Mace, HPRegen+3).\n\n" +
+            "TIPS\n" +
+            "Field-boss spawn is overworld; Goblin Leader plays cleanly into\n" +
+            "any caster build that wants HPRegen. Bring AoE for the kobold\n" +
+            "host adds.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 76] · [Floor 79] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f77" }
+        },
+
+        new("Floors", "Floor 78",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 78\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: The Horn of Madness (Berserker of the Endless Maze)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Dark-biome maze floor. Lv 166, 5532 HP boss, 222 ATK. Anchor\n" +
+            "for Dorothy's Last-Recollection canon line — the only Divine\n" +
+            "Scythe in the game lives here.\n\n" +
+            "BOSS\n" +
+            "The Horn of Madness (HF canon). Berserker of the Endless Maze\n" +
+            "— minotaur-frame berserker, charge attacks chain in tight\n" +
+            "labyrinth corridors. Full F75+ kit on top of standard scaling.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss: standard chest pool, no guaranteed Divine.\n" +
+            "- No field bosses rostered for F78.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Dorothy (BrightCyan 'D') — quest 'Purify the Darkness',\n" +
+            "22 F78 kills returns Starlight Banner (Divine Scythe,\n" +
+            "HolyAoE+20, range 2) plus 700 Col / 550 XP. One-shot per save;\n" +
+            "no chained follow-up.\n\n" +
+            "CANON\n" +
+            "Last Recollection: Dorothy is a canon LR character, scythe-\n" +
+            "wielder. Starlight Banner is her purification scythe in LR.\n" +
+            "Her base scythe Azuretear (also LR) is not in implementation\n" +
+            "as a named drop.\n\n" +
+            "TIPS\n" +
+            "Bring Scythe proficiency into the F78 push if you intend to\n" +
+            "wield Starlight Banner on receipt — its 2-range reach shines\n" +
+            "on Scythe builds. Stack the 22 kills with any standing F78\n" +
+            "weapon-gated Kill quest. Dorothy completes the NPC-quest\n" +
+            "Divine trio with Sister Azariya (F50) and Selka (F65) before\n" +
+            "F80.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 50] · [Floor 65] · [Divine Object Set — Integrity Knights]")
+        {
+            Tags = new[] { "floors", "f78", "canon" }
+        },
+
+        new("Floors", "Floor 79",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 79\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: The Tempest of Trihead (Three-Headed Storm Hydra)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Dark-biome ice-plain frontier per HF canon. Lv 168, 5640 HP\n" +
+            "boss, 226 ATK. First formal Hollow-Fragment Implement-System\n" +
+            "questgiver floor.\n\n" +
+            "BOSS\n" +
+            "The Tempest of Trihead (HF canon). Three-headed storm hydra —\n" +
+            "lightning attacks alongside the F75+ kit. Spread melee,\n" +
+            "the heads share a hitbox on a 2-tile cone.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Scholar Ellroy (HF HNM questgiver) — 15 F79 kills returns\n" +
+            "Infinite Ouroboros (HF Mace, Barrier+20). Standard one-shot\n" +
+            "per save.\n\n" +
+            "TIPS\n" +
+            "Lightning weapons drop F79+ chests on the standard pool — pre-\n" +
+            "stage one before the boss for the multi-head pressure. Pack\n" +
+            "antidotes for Toxic Breath spillover.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 80] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f79" }
+        },
+
+        new("Floors", "Floor 80",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 80\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Dark\n" +
+            "│ Boss: The Guilty Scythe (Reaper of the Eightieth Floor)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Sky-sanctum floor in HF canon — Dark biome, demigod scaling.\n" +
+            "Lv 170, 5750 HP boss, 229 ATK. Multiples-of-10 spike floor.\n" +
+            "Heavy field-boss roster: two Legendaries plus an HF questgiver.\n\n" +
+            "BOSS\n" +
+            "The Guilty Scythe (HF canon). Reaper of the Eightieth Floor —\n" +
+            "scythe-wielding revenant. Standard F75+ kit; the scythe's\n" +
+            "phase-2 cleave doubles as the Ground Slam radius cone, so\n" +
+            "spacing collapses fast in the boss room.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss: standard chest pool, no guaranteed Divine.\n" +
+            "- Field boss: Soul Binder (Wraith of the Gathered Hymns) →\n" +
+            "  Arcaneblade: Soul Binder (HF Legendary Scimitar, SP gain on\n" +
+            "  hit).\n" +
+            "- Field boss: Pyre Lord of Heathcliff (Red-Hand of the\n" +
+            "  Eightieth Flame) → Flame Lord (FD Heathcliff Legendary\n" +
+            "  2H Sword). HP 3.8x, ATK 1.7x.\n" +
+            "- Chest band: Black Iron Dual Sword A & B (Underworld Kirito\n" +
+            "  early-arc pair, AL canon F78-F84 chest band).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Hunter Kojiro (HF HNM questgiver) — 15 F80 kills returns Jato:\n" +
+            "Onikiri-maru (HF Katana, Bleed+20).\n\n" +
+            "CANON\n" +
+            "The Guilty Scythe is HF F80 boss canon. Pyre Lord references\n" +
+            "Heathcliff via Fractured Daydream — the FD line is post-canon\n" +
+            "Aincrad-arc scenario filler. Black Iron Dual Swords are Kirito's\n" +
+            "early Underworld pair from Alicization.\n\n" +
+            "TIPS\n" +
+            "F80 is a chest-pool jackpot floor — clear Soul Binder before\n" +
+            "the boss for SP-on-hit fuel into the Pyre Lord fight, then\n" +
+            "stack the Pyre Lord 2H Sword for the floor-boss kill. The\n" +
+            "Black Iron Dual Swords are the cleanest pre-Dual-Blades\n" +
+            "training weapons in the band.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 79] · [Floor 85] · [Fractured Daydream Character Weapons]")
+        {
+            Tags = new[] { "floors", "f80", "canon" }
+        },
+
+        new("Floors", "Floor 81",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 81\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Swamp\n" +
+            "│ Boss: The Knight of Darkness (Black Paladin of the Void Keep)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Swamp biome — 8% step-poison hazard. Lv 172, 5862 HP boss,\n" +
+            "233 ATK. Hollow-Fragment nightmare-difficulty band opens here.\n\n" +
+            "BOSS\n" +
+            "The Knight of Darkness (HF canon). Black-armor paladin with\n" +
+            "shadow-aura strikes. Standard F75+ kit. Watch the boss's phase-2\n" +
+            "Devastating Charge while you're losing HP to swamp poison.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Ranger Torva (HF HNM questgiver) — 15 F81 kills returns\n" +
+            "Fiendblade: Deathbringer (HF 1H Sword).\n\n" +
+            "TIPS\n" +
+            "Antidote tier-up before the climb — F81 swamp + Toxic Breath\n" +
+            "phase-2 stacks twice. The 8% step-poison is the actual killer\n" +
+            "on long traversal.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 80] · [Floor 82] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f81" }
+        },
+
+        new("Floors", "Floor 82",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 82\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Swamp\n" +
+            "│ Boss: The Legacy of Grand (The Ancient Construct Guardian)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Swamp biome, HF nightmare band. Lv 174, 5974 HP boss, 236 ATK.\n" +
+            "Guaranteed Divine drop floor — Hexagramme.\n\n" +
+            "BOSS\n" +
+            "The Legacy of Grand (HF canon). Ancient construct — heavy DEF\n" +
+            "(153), so DPS-per-tick matters more than burst. Standard F75+\n" +
+            "kit. The construct's Regeneration phase is the timing window\n" +
+            "the fight is built around.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Hexagramme — Divine Rapier, hex-\n" +
+            "  pattern arcane piercing.\n" +
+            "- No field bosses rostered for F82.\n\n" +
+            "TIPS\n" +
+            "Hexagramme is one of the few Divine Rapiers in the run — bring\n" +
+            "Rapier proficiency if you intend to wield it on pickup. ATK-\n" +
+            "burst comps can race the construct's Regeneration tick by\n" +
+            "killing during phase-1 before it stabilizes.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 81] · [Floor 83] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f82" }
+        },
+
+        new("Floors", "Floor 83",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 83\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Swamp\n" +
+            "│ Boss: The Horn of Furious (Flame-Aura Minotaur Lord)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Swamp biome, HF nightmare band. Lv 176, 6088 HP boss, 240 ATK.\n" +
+            "Two HF field bosses anchor the chest pool.\n\n" +
+            "BOSS\n" +
+            "The Horn of Furious (HF canon). Flame-aura minotaur lord —\n" +
+            "the F78 Horn of Madness's bigger brother. Charge-attacks chain\n" +
+            "alongside the F75+ kit; the flame aura adds passive burn on\n" +
+            "adjacency.\n\n" +
+            "DROPS\n" +
+            "- Field boss: Arboreal Fear (Horror of the Hanging Grove) →\n" +
+            "  Demonspear: Gae Bolg (HF Spear, Cú Chulainn myth).\n" +
+            "- Field boss: Ruinous Herald (Doom-Prophet of the Falling\n" +
+            "  Tower) → Fellblade: Ruinous Doom (HF Scimitar).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Apiarist Nell (HF HNM questgiver) — 15 F83 kills returns\n" +
+            "Fayblade: Tizona (HF 1H Sword).\n\n" +
+            "TIPS\n" +
+            "Stand off the burn aura — Spear or Scimitar reach pays for\n" +
+            "itself here. Take Gae Bolg early; its myth-pierce nullifies a\n" +
+            "lot of the boss's DEF.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 82] · [Floor 84] · [Floor Scaling Formulas]")
+        {
+            Tags = new[] { "floors", "f83" }
+        },
+
+        new("Floors", "Floor 84",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 84\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Swamp\n" +
+            "│ Boss: The Queen of Ant (Matriarch of the Insect Deeps)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Swamp biome, HF nightmare band. Lv 178, 6202 HP boss, 243 ATK.\n" +
+            "Guaranteed Divine drop — Caladbolg. The Maelstrom (F85) waits\n" +
+            "right after.\n\n" +
+            "BOSS\n" +
+            "The Queen of Ant (HF canon). Matriarch — summons swarms via\n" +
+            "Call Reinforcements every cooldown, then the F75+ kit on top.\n" +
+            "The reinforcement count scales by floor — expect 4+ minions\n" +
+            "per summon at this depth.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Caladbolg — Divine, Irish mythic\n" +
+            "  spear (Fergus mac Roich's blade in Irish myth).\n" +
+            "- No field bosses rostered for F84.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Spiralist Vey (HF HNM questgiver) — 10 F84 kills returns\n" +
+            "Spiralblade: Rendering Fail.\n\n" +
+            "TIPS\n" +
+            "AoE is mandatory — the swarm trickle outpaces single-target\n" +
+            "kills before the Queen's HP bar moves. Caladbolg pickup is the\n" +
+            "second Divine Spear in the run; pair with Spear-proficiency\n" +
+            "build for guaranteed wield.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 83] · [Floor 85] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f84" }
+        },
+
+        new("Floors", "Floor 85",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 85\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Swamp\n" +
+            "│ Boss: The Maelstrom of Trihead (Upgraded Storm Hydra)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Volcanic-ruin swamp, Hollow-Fragment nightmare band. Lv 180,\n" +
+            "6318 HP boss, 247 ATK. Triple-loot floor — Black Lily Sword\n" +
+            "(Divine), Macafitel (FD Yuuki rapier), Godblade Dragonslayer,\n" +
+            "Bow Zephyros LAB. Heaviest haul before F95.\n\n" +
+            "BOSS\n" +
+            "The Maelstrom of Trihead (HF canon). Upgraded storm hydra —\n" +
+            "the F79 Tempest with another phase and faster head respawns.\n" +
+            "F75+ kit on top of the storm-cone signature.\n\n" +
+            "DROPS\n" +
+            "- Last-Attack Bonus (your killing blow only): Bow Zephyros\n" +
+            "  (Legendary Bow, non-enhanceable — Infinity Moment canon).\n" +
+            "  Ally finisher forfeits it.\n" +
+            "- Field boss: The Silent Edge (Wielder of the Severing Blade)\n" +
+            "  → Black Lily Sword (Divine 1H Sword — Sheyta's blade,\n" +
+            "  Alicization canon, severing strike).\n" +
+            "- Field boss: Abased Beast (Fallen Wyrm of the Crimson Cliff)\n" +
+            "  → Godblade: Dragonslayer (HF, +damage vs dragons, 10% LAB).\n" +
+            "- Field boss: Yuuki's Echo (Absolute-Sword Revenant of the\n" +
+            "  Eighty-Fifth) → Macafitel (FD Yuuki rapier, HP 4.0x ATK 1.75x).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Crusher Drago (HF HNM questgiver) — 10 F85 kills returns\n" +
+            "Crusher: Bond Cyclone (HF 2H Axe).\n\n" +
+            "CANON\n" +
+            "Black Lily Sword (Alicization): Sheyta the Silent's blade —\n" +
+            "the Integrity Knight whose name no one says above a whisper.\n" +
+            "F85 Silent Edge is the canonical drop path; F98's floor-boss\n" +
+            "guaranteed Black Lily is a duplicate that exists in code, but\n" +
+            "Silent Edge is the canonical kill. Yuuki's Echo references\n" +
+            "LN vol 7 (Mother's Rosario / Sleeping Knights); Macafitel is\n" +
+            "Yuuki's FD rapier in canon.\n\n" +
+            "TIPS\n" +
+            "Don't try to clear all four field-boss-tier kills in one\n" +
+            "delve — Silent Edge alone is a stat-check fight at HP 4.0x\n" +
+            "scaling. Land the Maelstrom killing blow yourself for\n" +
+            "Zephyros, then circle back for Silent Edge after a town reset.\n" +
+            "Black Lily's severing strike pairs with the F95 Time Piercing\n" +
+            "Sword for a full Sheyta/Bercouli Integrity-Knight sweep.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 78] · [Floor 95] · [Divine Weapons — Roster & Acquisition] · [Fractured Daydream Character Weapons]")
+        {
+            Tags = new[] { "floors", "f85", "canon", "divine" }
+        },
+
+        new("Floors", "Floor 86",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 86\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: The King of Skeleton (Lich-Lord of the Bone Throne)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome — random status warps + reality flicker. Lv 182,\n" +
+            "6434 HP boss, 251 ATK. Guaranteed Divine drop floor — Tyrfing.\n\n" +
+            "BOSS\n" +
+            "The King of Skeleton (HF canon). Lich-Lord — necromancer kit\n" +
+            "stacks Call Reinforcements undead with the floor's Void status\n" +
+            "warps. Standard F75+ on top.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Tyrfing — Divine 1H Sword, Norse-myth\n" +
+            "  cursed blade.\n" +
+            "- Field boss: Fellaxe Revenant (Demon-Shade of the Crimson\n" +
+            "  Reap) → Fellaxe: Demon's Scythe (HF 2H Axe).\n\n" +
+            "TIPS\n" +
+            "Void warps rotate your statuses unpredictably — pack broad-\n" +
+            "spectrum cures rather than the F81-specific antidote stack.\n" +
+            "Tyrfing's curse stat plays well with corruption-build comps.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 85] · [Floor 88] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f86" }
+        },
+
+        new("Floors", "Floor 87",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 87\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: The Radiance Eater (The Light-Devouring Beast)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome, godlike-tier scaling. Lv 184, 6552 HP boss, 254\n" +
+            "ATK. Guaranteed Iron Maiden Dagger Divine, plus the Integral\n" +
+            "Factor Yasha series anchor.\n\n" +
+            "BOSS\n" +
+            "The Radiance Eater (HF canon). Light-devouring beast — turns\n" +
+            "Holy/Light damage into self-heal during phase 2. Bring non-\n" +
+            "Holy backup or eat the Regeneration tick fully timed.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Iron Maiden Dagger — Divine, caged-\n" +
+            "  pain dagger.\n" +
+            "- Field boss: Yasha the Night Demon (Demon-Warrior of the\n" +
+            "  Moonless Path) → Yasha Astaroth (IF Legendary 1H Sword) +\n" +
+            "  Yasha Kavacha (Legendary shield). IF Yasha Series anchor.\n" +
+            "- Field boss: Night Stalker (Predator of the Moonless Halls)\n" +
+            "  → Saintblade: Durandal (HF 2H Sword).\n\n" +
+            "CANON\n" +
+            "Yasha series (Integral Factor): five-weapon banded chest pool\n" +
+            "across F84-F90 unlocks once Yasha falls — the F87 kill is the\n" +
+            "anchor that opens the rest. Saintblade Durandal is HF / Roland\n" +
+            "myth.\n\n" +
+            "TIPS\n" +
+            "Skip Holy weapons in this fight — feeding the Eater extends\n" +
+            "the kill window past the Regeneration cycle. Iron Maiden\n" +
+            "Dagger is one of the few Divine Daggers in the run; pair with\n" +
+            "backstab comp for guaranteed wield. Cleared Yasha unlocks the\n" +
+            "F84-F90 IF chest band.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 86] · [Floor 90] · [Integral Factor Weapon Series] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f87", "canon", "divine" }
+        },
+
+        new("Floors", "Floor 88",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 88\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: The Rebellious Eyes (Hundred-Eyed Aberration)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome, godlike scaling. Lv 186, 6670 HP boss, 258 ATK.\n" +
+            "Guaranteed Divine — Ouroboros. F88 anchors the Lambent/Radiant\n" +
+            "Light Asuna chest band that runs F88-F94.\n\n" +
+            "BOSS\n" +
+            "The Rebellious Eyes (HF canon). Hundred-eyed aberration —\n" +
+            "every eye is a potential ranged attacker. Status pressure is\n" +
+            "the entire fight. Standard F75+ kit on top.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Ouroboros — Divine Axe, self-\n" +
+            "  consuming serpent (Norse-myth chain).\n" +
+            "- Chest band: Radiant Light (Legendary, Asuna F88-F94 chest\n" +
+            "  band, pairs with F40 Lambent Light).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Watcher Kael (HF HNM questgiver) — 20 F88 kills returns\n" +
+            "Starmace: Elysium (HF Mace, Uninterruptible+50).\n\n" +
+            "TIPS\n" +
+            "Uninterruptible+50 from Starmace Elysium is the cleanest\n" +
+            "anti-status answer for the rest of the climb — don't skip\n" +
+            "Watcher Kael. Stack the 20 kills with Radiant Light chest farms.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 87] · [Floor 89] · [Floor 40] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f88" }
+        },
+
+        new("Floors", "Floor 89",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 89\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: The Murderer Fang (Alpha of the Bleeding Pack)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome, godlike scaling. Lv 188, 6788 HP boss, 262 ATK.\n" +
+            "Scholar Vesper anchors a Divine quest here.\n\n" +
+            "BOSS\n" +
+            "The Murderer Fang (HF canon). Alpha-werebeast pack leader.\n" +
+            "Bleed pressure stacks — bring active healing or Bleed-cure.\n" +
+            "Standard F75+ kit on top.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Scholar Vesper (Satanachia Divine quest giver) — chained kill\n" +
+            "quest returns Satanachia (Divine Scimitar, infernal-tier T4\n" +
+            "chain).\n\n" +
+            "TIPS\n" +
+            "Bleed-resist gear pays here. Satanachia's infernal tier slots\n" +
+            "into the F86 Tyrfing / F88 Ouroboros / F91 Mjolnir Norse-and-\n" +
+            "myth Divine spine — collect them as a chain set if you're\n" +
+            "running a curse-build.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 88] · [Floor 90] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f89" }
+        },
+
+        new("Floors", "Floor 90",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 90\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: Colossus of Aincrad (The Living Floor)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome, godlike-tier multiples-of-10 spike. Lv 190, 6908\n" +
+            "HP boss, 265 ATK. Celestial-garden HF canon flavor — the\n" +
+            "Integral Factor Gaou series anchors here, plus a High-Priestess\n" +
+            "HF questgiver.\n\n" +
+            "BOSS\n" +
+            "Colossus of Aincrad — invented (no canon HF F90 boss). 'The\n" +
+            "Living Floor' is the in-fiction read: every wall and tile is\n" +
+            "the boss. Standard F75+ kit on top of map-scale presence.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss: standard chest pool, no guaranteed Divine.\n" +
+            "- Field boss: Gaou the Ox-King (Demon-King of the Horned\n" +
+            "  Vanguard) → Gaou Reginleifr (IF Legendary 1H Sword) + Gaou\n" +
+            "  Tatari (Legendary shield). IF Gaou Series anchor.\n\n" +
+            "NPCS / QUESTS\n" +
+            "High Priestess Sola (HF HNM questgiver) — 20 F90 kills returns\n" +
+            "Eurynome's Holy Sword (HF/IM 1H Sword, HolyDamage+20).\n\n" +
+            "CANON\n" +
+            "Gaou series (Integral Factor): IF anchor for the F90 chest\n" +
+            "band. Eurynome's Holy Sword bridges HF and Infinity Moment\n" +
+            "canon. The HF original calls F90 'The Ruler of Blade';\n" +
+            "implementation renames to Colossus of Aincrad to fit the\n" +
+            "in-game theme.\n\n" +
+            "TIPS\n" +
+            "F90 closes the Yasha-Gaou IF series window — clear both Yasha\n" +
+            "(F87) and Gaou for the full IF chest unlock. Sola's holy sword\n" +
+            "stacks with Eugeo's Blue Rose Sword (F20) for a holy-damage\n" +
+            "burst comp into F91 volcanic.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 87] · [Floor 91] · [Integral Factor Weapon Series]")
+        {
+            Tags = new[] { "floors", "f90", "canon" }
+        },
+
+        new("Floors", "Floor 91",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 91\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Seraphiel the Fallen (Angel of the Burning Sword)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Volcanic biome, impossible-tier scaling. Lv 192, 7028 HP boss,\n" +
+            "269 ATK. Guaranteed Divine — Mjolnir.\n\n" +
+            "BOSS\n" +
+            "Seraphiel the Fallen — invented. Burning-sword angel: fire and\n" +
+            "holy combo damage. Standard F75+ kit on top.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Mjolnir — Divine, thunderbolt hammer\n" +
+            "  (Norse-myth chain).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Torchbearer Meir (HF HNM questgiver) — 20 F91 kills returns\n" +
+            "Saintspear: Rhongomyniad (HF Spear, HPRegen+5).\n\n" +
+            "TIPS\n" +
+            "Mjolnir is the second of four Norse-myth Divines (Tyrfing F86,\n" +
+            "Ouroboros F88, Mjolnir F91, Ascalon F93). Build a Mace comp\n" +
+            "here if chasing the chain — the storm-axis play extends to F94.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 90] · [Floor 93] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f91" }
+        },
+
+        new("Floors", "Floor 92",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 92\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Apollyon the World-Ender (The Seventy-Second Demon)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Volcanic biome, impossible-tier scaling. Lv 194, 7150 HP boss,\n" +
+            "273 ATK. Last-Attack drop floor — Sacred Cross.\n\n" +
+            "BOSS\n" +
+            "Apollyon the World-Ender — invented, 'Seventy-Second Demon'\n" +
+            "title plays into the Goetia framing. Heavy ATK + Devastating\n" +
+            "Charge phase 1 — pre-position before pull.\n\n" +
+            "DROPS\n" +
+            "- Last-Attack Bonus (your killing blow only): Sacred Cross\n" +
+            "  (IM Legendary 2H Sword). Ally finisher forfeits it.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Auric Knight Halric (HF HNM questgiver) — 15 F92 kills returns\n" +
+            "Aurumbrand: Hauteclaire (HF 1H Sword).\n\n" +
+            "TIPS\n" +
+            "Save your highest-burst skill for the final HP slice — Sacred\n" +
+            "Cross is LAB-only. Halric's 15-kill quest doubles up cleanly\n" +
+            "with the boss approach.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 91] · [Floor 93] · [Avatar Weapons & Last-Attack Bonus]")
+        {
+            Tags = new[] { "floors", "f92" }
+        },
+
+        new("Floors", "Floor 93",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 93\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Ragnarok the Final Beast (End of All Things)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Volcanic biome, impossible-tier scaling. Lv 196, 7272 HP boss,\n" +
+            "277 ATK. Both a guaranteed Divine (Ascalon) and a LAB drop\n" +
+            "(Glow Haze) — pure-loot floor.\n\n" +
+            "BOSS\n" +
+            "Ragnarok the Final Beast — invented. 'End of All Things'\n" +
+            "framing. Standard F75+ kit; the Devastating Charge opener\n" +
+            "deals enough that an all-in trade often loses you the LAB.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Ascalon — Divine 2H Sword, dragon-\n" +
+            "  slayer (Norse-myth chain closer).\n" +
+            "- Last-Attack Bonus (your killing blow only): Glow Haze (IM\n" +
+            "  Scimitar).\n" +
+            "- Field boss: Banishing Ray (Sentinel of the White Horizon)\n" +
+            "  → Glimmerblade: Banishing Ray (HF Rapier).\n\n" +
+            "TIPS\n" +
+            "If you want both drops, win the Ragnarok DPS race solo — Glow\n" +
+            "Haze is LAB-only. Ascalon completes the F86/F88/F91/F93 Norse-\n" +
+            "myth chain. Pre-clear Banishing Ray for Glimmerblade if you\n" +
+            "want a Rapier alongside Ascalon's 2H Sword.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 91] · [Floor 95] · [Divine Weapons — Roster & Acquisition]")
+        {
+            Tags = new[] { "floors", "f93" }
+        },
+
+        new("Floors", "Floor 94",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 94\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Immortal Phoenix (The Boss That Won't Stay Dead)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Volcanic biome, impossible-tier scaling. Lv 198, 7396 HP boss,\n" +
+            "280 ATK. LAB drop floor — Saku katana with Night damage.\n\n" +
+            "BOSS\n" +
+            "Immortal Phoenix — invented. 'The Boss That Won't Stay Dead' —\n" +
+            "phoenix Regeneration cycle is the entire encounter. Burn the\n" +
+            "boss past the Regen threshold or it'll outlast your skill\n" +
+            "rotation.\n\n" +
+            "DROPS\n" +
+            "- Last-Attack Bonus (your killing blow only): Saku (IM Katana,\n" +
+            "  NightDamage). Ally finisher forfeits it.\n" +
+            "- Field boss: Ark Knight (Executioner of the Final Ark) →\n" +
+            "  Ragnarok's Bane: Headsman (HF 2H Axe, HNM).\n\n" +
+            "TIPS\n" +
+            "If you can't kill the Phoenix in two rotations, the fight\n" +
+            "turns infinite — front-load damage. Saku's Night damage line\n" +
+            "is the cleanest carry for the Void biome that opens at F96.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 93] · [Floor 95] · [Avatar Weapons & Last-Attack Bonus]")
+        {
+            Tags = new[] { "floors", "f94" }
+        },
+
+        new("Floors", "Floor 95",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 95\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Volcanic\n" +
+            "│ Boss: Abyss Walker (The Darkness Between Floors)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Volcanic biome, divine-ascension flavor (cloud palaces, golden\n" +
+            "halls, ethereal-light weather canon). Lv 200, 7522 HP boss,\n" +
+            "284 ATK. Heaviest field-boss roster before F99 — Time\n" +
+            "Piercing Sword (Divine), Red Rose Sword (FD Legendary),\n" +
+            "Stigmablade Arondight, Mirage Knife LAB, plus an HF Shinto\n" +
+            "questgiver.\n\n" +
+            "BOSS\n" +
+            "Abyss Walker — invented. 'The Darkness Between Floors' is the\n" +
+            "in-fiction read. Standard F75+ kit on top of impossible-tier\n" +
+            "scaling — phase-1 Devastating Charge alone clears 30% of an\n" +
+            "unprepared frontline.\n\n" +
+            "DROPS\n" +
+            "- Last-Attack Bonus (your killing blow only): Mirage Knife\n" +
+            "  (IM Dagger). Ally finisher forfeits it.\n" +
+            "- Field boss: Warden of Stopped Hours (Sentinel of the Broken\n" +
+            "  Clock) → Time Piercing Sword (Divine 1H Sword — Bercouli's\n" +
+            "  blade, Alicization canon).\n" +
+            "- Field boss: Gaia Breaker (Titan of the Cracked Earth) →\n" +
+            "  Stigmablade: Arondight (HF 2H Sword, HNM).\n" +
+            "- Field boss: Warden of the Blooming Rose (Petal-Wreathed\n" +
+            "  Sentinel of the Ninety-Fifth) → Red Rose Sword (FD Kirito\n" +
+            "  red-edge Legendary, Last Recollection canon — pairs with\n" +
+            "  Night Sky Sword from F99).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Elder Beastkeeper (HF HNM questgiver) — 25 F95 kills returns\n" +
+            "Shinto: Ama-no-Murakumo (HF Katana, Susanoo's cloud-splitter\n" +
+            "from LN myth).\n\n" +
+            "CANON\n" +
+            "Time Piercing Sword (Alicization): Bercouli Synthesis One's\n" +
+            "blade — the First Knight, the one who broke time. F95 Warden\n" +
+            "of Stopped Hours is the canonical drop path; the F97 Cardinal\n" +
+            "floor-boss guaranteed Time Piercing also exists in code, but\n" +
+            "Warden of Stopped Hours is the canonical kill (the Stopped\n" +
+            "Hours name maps directly to Bercouli's clock-piercer).\n" +
+            "Red Rose Sword pairs with Night Sky Sword (F99) as Kirito's\n" +
+            "Last-Recollection red/black duo.\n\n" +
+            "TIPS\n" +
+            "F95 is a one-day-of-grinding floor — you cannot clear all\n" +
+            "three field bosses plus the floor in a single delve. Plan two\n" +
+            "or three trips. Land the Abyss Walker killing blow yourself\n" +
+            "for Mirage Knife. Take Warden of Stopped Hours first if\n" +
+            "you've skipped F85 Black Lily — pair the two Integrity-\n" +
+            "Knight blades for the cleanest endgame Sheyta/Bercouli kit.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 85] · [Floor 99] · [Divine Weapons — Roster & Acquisition] · [Fractured Daydream Character Weapons]")
+        {
+            Tags = new[] { "floors", "f95", "canon", "divine" }
+        },
+
+        new("Floors", "Floor 96",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 96\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: Herald of the Ruby Palace (The Last Gatekeeper)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome — Ruby Palace approach begins. Lv 202, 7648 HP\n" +
+            "boss, 287 ATK. LAB drop (Northern Light) + an HF field boss\n" +
+            "carrying Sigurd's mythic blade.\n\n" +
+            "BOSS\n" +
+            "Herald of the Ruby Palace — invented. 'The Last Gatekeeper'\n" +
+            "framing — the floor reads as the doorway to the F100 final\n" +
+            "arena. Standard F75+ kit; Void warps add status pressure.\n\n" +
+            "DROPS\n" +
+            "- Last-Attack Bonus (your killing blow only): Northern Light\n" +
+            "  (IM Axe). Ally finisher forfeits it.\n" +
+            "- Field boss: Eternal Dragon (The Wyrm That Refuses to Die)\n" +
+            "  → Demonblade: Gram (HF 2H Sword, Sigurd's blade in Norse\n" +
+            "  myth, HNM).\n\n" +
+            "TIPS\n" +
+            "Eternal Dragon's HP-recovery cycle mirrors the F94 Phoenix —\n" +
+            "burst it down or accept the long fight. Northern Light is the\n" +
+            "last Axe LAB before F99; if you're running an Axe build, this\n" +
+            "is your last chance to claim the LAB-only line.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 95] · [Floor 99] · [Avatar Weapons & Last-Attack Bonus]")
+        {
+            Tags = new[] { "floors", "f96" }
+        },
+
+        new("Floors", "Floor 97",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 97\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: Cardinal the System Error (When the Game Fights Back)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome, Ruby Palace approach. Lv 204, 7776 HP boss, 291\n" +
+            "ATK. The fourth-wall floor — Cardinal is the system itself\n" +
+            "objecting to your climb. Administrator's Regent waits as the\n" +
+            "field boss.\n\n" +
+            "BOSS\n" +
+            "Cardinal the System Error (HF canon, 'The Emperor of Death'\n" +
+            "in HF). 'When the Game Fights Back' is the in-fiction read —\n" +
+            "Cardinal is the Underworld's regulator system, weaponized.\n" +
+            "Standard F75+ kit on top of impossible-tier scaling, with\n" +
+            "Void status warps overlapping every phase.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss: standard chest pool — Tier-4 Legendaries, no\n" +
+            "  guaranteed Divine. (Time Piercing Sword's canonical drop\n" +
+            "  is F95 Warden of Stopped Hours; the F97 floor-boss code-\n" +
+            "  side duplicate is left unused per locked decision.)\n" +
+            "- Field boss: Administrator's Regent (Pontifex Echo of the\n" +
+            "  Ninety-Seventh Cathedral) → Silvery Ruler (FD Administrator\n" +
+            "  Legendary 1H Sword).\n\n" +
+            "CANON\n" +
+            "Cardinal (Alicization): the autonomous system Quinella/the\n" +
+            "Administrator subverted — the original program meant to keep\n" +
+            "Underworld coherent. Administrator's Regent is the Pontifex\n" +
+            "echo Quinella left behind after her Alicization defeat;\n" +
+            "Silvery Ruler is her FD-canon blade. F97 references the HF\n" +
+            "'Emperor of Death' boss slot remixed into AincradTRPG's\n" +
+            "Cardinal/Administrator framing.\n\n" +
+            "TIPS\n" +
+            "Don't try to outlast Cardinal — the boss heals through Void\n" +
+            "warps. Burst windows are the entire encounter. Pre-clear\n" +
+            "Administrator's Regent for Silvery Ruler before the floor-\n" +
+            "boss approach; the Regent fight tunes the same status-warp\n" +
+            "pressure you'll see in Cardinal.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 95] · [Floor 98] · [Fractured Daydream Character Weapons]")
+        {
+            Tags = new[] { "floors", "f97", "canon" }
+        },
+
+        new("Floors", "Floor 98",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 98\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: Incarnation of the Radius (An Impossible Geometry)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Void biome, Ruby Palace approach. Lv 206, 7904 HP boss, 295\n" +
+            "ATK. Heaviest pre-F99 floor — LAB drop, two field-boss\n" +
+            "Legendaries, an HF questgiver. Original LN canon final boss\n" +
+            "name surfaces here.\n\n" +
+            "BOSS\n" +
+            "Incarnation of the Radius (HF canon, 'The Kaiser Dragon' in\n" +
+            "HF). LN canon — the original programmed F100 final boss\n" +
+            "before Heathcliff revealed himself in Aincrad arc. Here\n" +
+            "Incarnation gets a F98 placement as the geometry-boss filler\n" +
+            "for the Ruby Palace approach. Standard F75+ kit on top of\n" +
+            "impossible-tier scaling. The Devastating Charge phase 1 is\n" +
+            "the kill check.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss: standard chest pool — Tier-4 Legendaries. (Black\n" +
+            "  Lily Sword's canonical drop is F85 Silent Edge; the F98\n" +
+            "  floor-boss code-side duplicate is left unused per locked\n" +
+            "  decision.)\n" +
+            "- Last-Attack Bonus (your killing blow only): Lunatic Roof\n" +
+            "  (IM Spear, Lunacy effect). Ally finisher forfeits it.\n" +
+            "- Field boss: Blaze Armor (Living Armor of the Hollow Forge)\n" +
+            "  → Yato: Masamune (HF Katana, Hollow Area canon).\n" +
+            "- Field boss: Ashen Kirito Simulacrum (Red-Edge Echo of the\n" +
+            "  Ninety-Eighth) → Elucidator Rouge (FD Legendary 1H Sword,\n" +
+            "  Kirito FD red variant — pairs with Flare Pulsar).\n\n" +
+            "NPCS / QUESTS\n" +
+            "Sentinel Captain (HF HNM questgiver) — 25 F98 kills returns\n" +
+            "Godspear: Gungnir (HF Spear, Odin's spear in LN myth).\n\n" +
+            "CANON\n" +
+            "Incarnation of the Radius is the original programmed F100\n" +
+            "final boss in LN vol 1 — the boss Heathcliff replaced with\n" +
+            "himself when he masqueraded as a player. Implementation moves\n" +
+            "Incarnation to F98 so F99 can carry the Heathcliff narrative\n" +
+            "thread directly. Yato Masamune is HF Hollow Area canon. Ashen\n" +
+            "Kirito Simulacrum is FD Last-Recollection-canon Kirito.\n\n" +
+            "TIPS\n" +
+            "Lunatic Roof's Lunacy effect plays into the Void biome's\n" +
+            "status-warp meta — the spear is the cleanest LAB choice into\n" +
+            "F99. Ashen Kirito's Elucidator Rouge completes the Kirito\n" +
+            "weapon line if you've been collecting (F50 Elucidator + F55\n" +
+            "Dark Repulser + F95 Red Rose Sword + this). Save Sentinel\n" +
+            "Captain's 25 kills for the Incarnation approach run — the\n" +
+            "counter overlaps.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 50] · [Floor 95] · [Floor 99] · [Fractured Daydream Character Weapons]")
+        {
+            Tags = new[] { "floors", "f98", "canon" }
+        },
+
+        new("Floors", "Floor 99",
+            "┌─ Floors\n" +
+            "│ Topic: Floor 99\n" +
+            "│ Tier: 4 (endgame)\n" +
+            "│ Biome: Void\n" +
+            "│ Boss: Heathcliff's Shadow (Echo of the Creator)\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Final guide-covered floor. Void biome, divine-ascension flavor.\n" +
+            "Lv 208, 8034 HP boss, 298 ATK. The last gate before the Ruby\n" +
+            "Palace. Two endgame Divines drop here — Night Sky Sword\n" +
+            "(guaranteed) and Artemis (LAB).\n\n" +
+            "BOSS\n" +
+            "Heathcliff's Shadow — 'Echo of the Creator'. The shade of\n" +
+            "Akihiko Kayaba's avatar, looped onto F99 as the climb's last\n" +
+            "trial. The full F75+ kit fires every cooldown: Devastating\n" +
+            "Charge phase 1, Ground Slam phase 2, Toxic Breath, 10%\n" +
+            "Regeneration on phase 3. The Shadow knows your loadout —\n" +
+            "expect mirror-style read on your highest-burst skill.\n\n" +
+            "DROPS\n" +
+            "- Floor-boss guaranteed: Night Sky Sword — Divine 1H Sword,\n" +
+            "  ArmorPierce+30. Kirito's Alicization-canon blade. Priority\n" +
+            "  46 — the highest-priority Divine in the run.\n" +
+            "- Last-Attack Bonus (your killing blow only): Artemis (IM\n" +
+            "  Legendary Bow, F99 canon). Ally finisher forfeits it.\n\n" +
+            "NPCS / QUESTS\n" +
+            "Last Herald Xiv (HF HNM questgiver) — 20 F99 kills returns\n" +
+            "Deathglutton: Epetamu (HF Scimitar). The final HF questgiver\n" +
+            "in the chain.\n\n" +
+            "CANON\n" +
+            "F99's Heathcliff's Shadow is the in-code echo of the canonical\n" +
+            "F75 Heathcliff arc climax — in the original LN/anime Aincrad\n" +
+            "arc, Kirito defeats Heathcliff (Akihiko Kayaba) on F75 and\n" +
+            "ends the death game. Implementation moves the Skull Reaper to\n" +
+            "F75 (LN-faithful) and routes the Heathcliff narrative thread\n" +
+            "to F99 as the endgame mirror — the Shadow is the climb's\n" +
+            "memory of the canonical F75 duel, fought again at the top.\n" +
+            "Night Sky Sword is Kirito's Alicization-canon blade (Underworld\n" +
+            "endgame). Artemis is Infinity Moment's F99 LAB anchor — the\n" +
+            "two pair as Kirito's combined Aincrad-survivor / Underworld-\n" +
+            "knight kit.\n\n" +
+            "TIPS\n" +
+            "Land the Shadow's killing blow yourself or you forfeit\n" +
+            "Artemis. The Shadow's mirror-read targets your highest-burst\n" +
+            "skill — bait it with a feint slot, then commit your real\n" +
+            "burst on its phase-3 Regeneration window. Pair Night Sky\n" +
+            "Sword with the F95 Red Rose Sword for Kirito's Last-Recollection\n" +
+            "red/black duo. F99 closes the Player Guide; the F100 Ruby\n" +
+            "Palace fight has no guide entry — what's beyond is yours.\n\n" +
+            "SEE ALSO\n" +
+            "[Floor 75] · [Floor 95] · [Floor 98] · [Divine Weapons — Roster & Acquisition] · [Avatar Weapons & Last-Attack Bonus]")
+        {
+            Tags = new[] { "floors", "f99", "canon", "divine" }
         },
     };
 
-    // Bundle 13 (Item 7) — gate boss-drop names with "???" until the boss is killed.
+    // Gate boss-drop names with "???" until the boss is killed.
     // Floor bosses: per-floor HashSet (Q16). Field bosses: best-effort gating by floor reach
     // (floor <= turnManager.CurrentFloor) — exact field-boss-name → FieldBossId map TBD.
     // LAB section gates same as floor bosses — clearing the floor reveals the LAB drop too.

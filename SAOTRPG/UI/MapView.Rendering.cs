@@ -117,7 +117,7 @@ public partial class MapView
             || _levelUpFlashRemainingMs > 0
             || _killStreakFlashRemainingMs > 0
             || _damageFlashes.Count > 0
-            || _polyBursts.Count > 0
+            || _deathBursts.Count > 0
             || _skillFlashes.Count > 0
             || _weaponSwings.Count > 0
             || _scorchMarks.Count > 0
@@ -125,7 +125,17 @@ public partial class MapView
             || HasActivePopups
             || IsShaking
             || ParticleQueue.HasAny
-            || ToastQueue.Peek() != null;
+            || ToastQueue.Peek() != null
+            || _statusTintTransitionRemainingMs > 0
+            || _playerHpTween.Active || _playerXpTween.Active || _playerSatTween.Active
+            || HasAnyActiveMonsterTween();
+    }
+
+    private bool HasAnyActiveMonsterTween()
+    {
+        foreach (var kv in _monsterHpTween)
+            if (kv.Value.Active) return true;
+        return false;
     }
 
     // Public gate for the 50ms render timer. True when any time-bounded effect is alive
@@ -164,6 +174,61 @@ public partial class MapView
         }
         if (_bossEntranceRemainingMs > 0)
             _bossEntranceRemainingMs = Math.Max(0, _bossEntranceRemainingMs - dtMs);
+        TickStatusTintTransition(dtMs);
+        TickHpTweens(dtMs);
+    }
+
+    // Wave 2 — advances player HP/XP/SAT + per-monster HP tweens. Raises
+    // PlayerBarsTweenTick so GameScreen can refresh the action-bar labels.
+    private void TickHpTweens(int dtMs)
+    {
+        bool playerActive = _playerHpTween.Active || _playerXpTween.Active || _playerSatTween.Active;
+        if (playerActive)
+        {
+            _playerHpTween.Tick(dtMs, HpTweenDurationMs);
+            _playerXpTween.Tick(dtMs, HpTweenDurationMs);
+            _playerSatTween.Tick(dtMs, HpTweenDurationMs);
+            PlayerBarsTweenTick?.Invoke();
+            DirtyFrame();
+        }
+        if (_monsterHpTween.Count > 0)
+        {
+            // Snapshot keys to avoid mutation-during-iteration since tween is a struct.
+            var keys = _monsterHpTween.Keys.ToList();
+            bool anyActive = false;
+            foreach (var id in keys)
+            {
+                var tw = _monsterHpTween[id];
+                if (!tw.Active) continue;
+                tw.Tick(dtMs, HpTweenDurationMs);
+                _monsterHpTween[id] = tw;
+                anyActive = true;
+            }
+            if (anyActive) DirtyFrame();
+        }
+    }
+
+    // Wave 2 — eases _statusTintCurrentColor from source→target over 200ms.
+    // Null transitions fade through black so poison-removed tints retreat smoothly.
+    private void TickStatusTintTransition(int dtMs)
+    {
+        if (_statusTintTransitionRemainingMs <= 0) return;
+        _statusTintTransitionRemainingMs = Math.Max(0, _statusTintTransitionRemainingMs - dtMs);
+
+        if (_statusTintTransitionRemainingMs <= 0)
+        {
+            _statusTintCurrentColor = _statusTintTargetColor;
+        }
+        else
+        {
+            float t = 1f - _statusTintTransitionRemainingMs / (float)StatusTintTransitionMs;
+            float eased = SAOTRPG.Systems.EasingHelper.Ease(t,
+                SAOTRPG.Systems.EasingHelper.EasingType.EaseOut);
+            Color from = _statusTintSourceColor ?? Color.Black;
+            Color to = _statusTintTargetColor ?? Color.Black;
+            _statusTintCurrentColor = SAOTRPG.Systems.EasingHelper.LerpColor(from, to, eased);
+        }
+        DirtyFrame();
     }
 
     private void TrackFootstep()
@@ -342,7 +407,8 @@ public partial class MapView
 
     private void ApplyStatusTint(int mx, int my, ref Color fg)
     {
-        if (_statusTintColor != null && (mx + my) % 3 == 0) fg = _statusTintColor.Value;
+        if (_statusTintCurrentColor != null && (mx + my) % 3 == 0)
+            fg = _statusTintCurrentColor.Value;
     }
 
     private Entities.Entity? GetReflectedEntity(int x, int y)

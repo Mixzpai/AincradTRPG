@@ -47,6 +47,20 @@ public sealed class WorldContext
             && (uint)y < (uint)CircleMask.GetLength(1)
             && CircleMask[x, y]);
 
+    // Town keep-out rect (footprint + gate-approach margin). Set by
+    // GenerationPipeline.ComputeTownKeepOut before passes run. Cluster/Lake/River
+    // skip stamping inside so trees don't block gates and rivers don't clip
+    // through town. Default -1 = no keep-out (helper returns false).
+    public int TownKeepOutX { get; set; } = -1;
+    public int TownKeepOutY { get; set; }
+    public int TownKeepOutW { get; set; }
+    public int TownKeepOutH { get; set; }
+
+    public bool IsInTownKeepOut(int x, int y) =>
+        TownKeepOutX >= 0
+        && x >= TownKeepOutX && x < TownKeepOutX + TownKeepOutW
+        && y >= TownKeepOutY && y < TownKeepOutY + TownKeepOutH;
+
     public WorldContext(int floorNumber, int globalSeed, int width, int height,
         BiomeType biome, BiomeGenConfig config, GameMap map)
     {

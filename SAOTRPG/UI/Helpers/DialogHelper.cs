@@ -100,11 +100,55 @@ public static class DialogHelper
     }
 
     // Runs the dialog modally and disposes it. Convenience wrapper.
-    // Wave 1 — also pauses FrameClock so animations freeze while the dialog is up.
+    // Pauses FrameClock so animations freeze; restores on close + forces a
+    // full repaint so dialog cells don't linger as stale frame-cache content.
     public static void RunModal(Dialog dialog)
     {
         SAOTRPG.Systems.FrameClock.Pause();
-        try { Application.Run(dialog); }
-        finally { SAOTRPG.Systems.FrameClock.Resume(); dialog.Dispose(); }
+        try
+        {
+            FadeInDialog(dialog, durationMs: 200,
+                SAOTRPG.Systems.EasingHelper.EasingType.EaseOut);
+            Application.Run(dialog);
+        }
+        finally
+        {
+            SAOTRPG.Systems.FrameClock.Resume();
+            dialog.Dispose();
+            // Force underlying view redraw so dialog cells aren't served stale by the frame cache.
+            SAOTRPG.UI.MapView.MarkFrameDirty();
+            Application.Top?.SetNeedsDraw();
+        }
+    }
+
+    // Wave 2 — schedules a per-frame ColorScheme ramp from black→baseline.
+    // Stopwatch-driven so it runs independently of the paused FrameClock.
+    private static void FadeInDialog(Dialog dialog, int durationMs,
+        SAOTRPG.Systems.EasingHelper.EasingType easing)
+    {
+        var originalScheme = dialog.ColorScheme;
+        if (originalScheme == null) return; // belt-and-suspenders for safety
+        long startTicks = System.Diagnostics.Stopwatch.GetTimestamp();
+        long target = (long)(durationMs *
+            (System.Diagnostics.Stopwatch.Frequency / 1000.0));
+        if (target <= 0) return; // degenerate guard
+
+        // Snap to black at frame 0 so the first paint isn't full-color.
+        dialog.ColorScheme = SAOTRPG.Systems.EasingHelper.ScaleScheme(originalScheme, 0f);
+
+        Application.AddTimeout(TimeSpan.FromMilliseconds(16), () =>
+        {
+            long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - startTicks;
+            float t = Math.Clamp((float)elapsed / target, 0f, 1f);
+            float alpha = SAOTRPG.Systems.EasingHelper.Ease(t, easing);
+            dialog.ColorScheme = SAOTRPG.Systems.EasingHelper.ScaleScheme(originalScheme, alpha);
+            dialog.SetNeedsDraw();
+            if (t >= 1f)
+            {
+                dialog.ColorScheme = originalScheme; // snap to baseline
+                return false;
+            }
+            return true;
+        });
     }
 }

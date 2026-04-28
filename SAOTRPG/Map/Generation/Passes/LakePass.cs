@@ -59,7 +59,7 @@ public sealed class LakePass : IGenerationPass
         {
             int x = rng.Next(20, Math.Max(21, width - 20));
             int y = rng.Next(15, Math.Max(16, height - 15));
-            if (ctx.IsInsideCircle(x, y)) { cx = x; cy = y; return true; }
+            if (ctx.IsInsideCircle(x, y) && !ctx.IsInTownKeepOut(x, y)) { cx = x; cy = y; return true; }
         }
         cx = cy = 0;
         return false;

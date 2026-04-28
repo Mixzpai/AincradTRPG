@@ -81,6 +81,11 @@ public class UserSettings
     // eighth-block unicode (█▉▊▋▌▍▎▏) incorrectly. Default false → unicode.
     public bool UseAsciiStatBars { get; set; } = false;
 
+    // Player Guide — fall back to ASCII disclosure glyphs ('>' / 'v') instead
+    // of '▸' / '▾' when the terminal font lacks the geometric arrow code points.
+    // Default false → unicode.
+    public bool UseAsciiDisclosureGlyphs { get; set; } = false;
+
     // Persistence: singleton + atomic JSON save/load.
 
     private static readonly string SettingsDir =

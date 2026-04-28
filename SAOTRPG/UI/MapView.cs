@@ -100,40 +100,93 @@ public partial class MapView : View
 
     public void ClearMobTrail(int entityId) { _mobTrails.Remove(entityId); DirtyFrame(); }
 
-    // SAO-style polygon dissolution -- fragments scatter outward from kill
-    // point with cyan flash, cycling through polygon glyphs as they expand.
-    private readonly List<PolygonBurst> _polyBursts = new();
-    private const int PolyBurstMs = 200;
-    private const int PolyBurstStepMs = 33;
+    // Monster death braille burst — two-phase fracture+spread. Tier scales radius/duration/count.
+    public enum MobTier { Standard, Elite, FloorBoss }
 
-    // Each fragment: offset direction, speed multiplier, glyph index
-    private static readonly (int dx, int dy, int speed, int glyphIdx)[] PolyFragments =
+    // One shard inside a death burst. Polar (angle, dist) integrates over elapsed ms.
+    private struct DeathShard
     {
-        // Inner ring (speed 1)
-        (-1, -1, 1, 0), ( 0, -1, 1, 1), ( 1, -1, 1, 2),
-        (-1,  0, 1, 3),                  ( 1,  0, 1, 0),
-        (-1,  1, 1, 1), ( 0,  1, 1, 2), ( 1,  1, 1, 3),
-        // Outer ring (speed 2) -- more fragments for density
-        (-2, -1, 2, 0), (-1, -2, 2, 1), ( 1, -2, 2, 2), ( 2, -1, 2, 3),
-        (-2,  1, 2, 0), (-1,  2, 2, 1), ( 1,  2, 2, 2), ( 2,  1, 2, 3),
-        // Far scatter (speed 3)
-        ( 0, -3, 3, 0), ( 3,  0, 3, 1), ( 0,  3, 3, 2), (-3,  0, 3, 3),
-        (-2, -2, 3, 0), ( 2, -2, 3, 1), ( 2,  2, 3, 2), (-2,  2, 3, 3),
-    };
+        public float OriginX;
+        public float OriginY;
+        public float Angle;       // radians
+        public float Speed;       // tiles/ms (≈0.008–0.012)
+        public float SpawnRadius; // initial offset from kill point
+        public bool IsHero;       // true → ◆/◊ glyph; false → braille
+        public byte Seed;         // per-shard rng seed for braille mask churn
+        public float LifeBoost;   // extra multiplier on duration (north-side bias)
+    }
 
-    private static readonly char[] PolyGlyphs = { '>', '<', '^', 'v', '/', '\\', '+', 'x' };
-
-    // RemainingMs counts down; renderer derives integer step = (TotalMs - RemainingMs) / PolyBurstStepMs.
-    private record struct PolygonBurst(int X, int Y, int RemainingMs, int TotalMs, bool IsBoss);
-
-    public void AddShatterParticle(int mx, int my)
-    { _polyBursts.Add(new PolygonBurst(mx, my, PolyBurstMs, PolyBurstMs, false)); DirtyFrame(); }
-
-    public void AddBossShatter(int mx, int my)
+    private struct DeathBurst
     {
-        int total = PolyBurstMs + 100;
-        _polyBursts.Add(new PolygonBurst(mx, my, total, total, true));
+        public int X;
+        public int Y;
+        public MobTier Tier;
+        public float ElapsedMs;
+        public float TotalMs;
+        public float FlashMs;       // fracture-flash phase length
+        public DeathShard[] Shards;
+    }
+
+    private readonly List<DeathBurst> _deathBursts = new();
+
+    public void EmitMonsterDeathBurst(int x, int y, MobTier tier)
+    {
+        if (Systems.UserSettings.Current.ParticleDensity == Systems.ParticleDensity.Off) return;
+        var burst = BuildDeathBurst(x, y, tier);
+        _deathBursts.Add(burst);
         DirtyFrame();
+    }
+
+    private DeathBurst BuildDeathBurst(int x, int y, MobTier tier)
+    {
+        // Tier scaling: total ms, flash ms, base shard count, radius.
+        (float total, float flash, int baseCount, float radius) = tier switch
+        {
+            MobTier.FloorBoss => (2000f, 200f, 140, 5.5f),
+            MobTier.Elite     => ( 800f, 100f,  70, 3.0f),
+            _                 => ( 500f,  80f,  40, 2.0f),
+        };
+
+        // Density scaling: respects user preference. ScaleCount mirrors ParticleQueue.
+        int n = Systems.UserSettings.Current.ParticleDensity switch
+        {
+            Systems.ParticleDensity.Subtle   => Math.Max(8,  baseCount / 3),
+            Systems.ParticleDensity.Moderate => Math.Max(12, baseCount * 2 / 3),
+            _                                => baseCount,
+        };
+
+        var rng = new Random(unchecked(x * 73856093 ^ y * 19349663 ^ (int)Systems.FrameClock.ElapsedMs));
+        var shards = new DeathShard[n];
+        // Hero ◆/◊ count: 1-2 standard, 2-3 elite, 3-4 boss.
+        int heroCount = tier switch { MobTier.FloorBoss => 4, MobTier.Elite => 3, _ => 2 };
+        for (int i = 0; i < n; i++)
+        {
+            bool isHero = i < heroCount;
+            float angle = (float)(rng.NextDouble() * Math.PI * 2.0);
+            // Hero shards travel slower (mid-flight while braille spreads ahead).
+            float speedRange = isHero ? 0.0008f : 0.0011f;
+            float speedFloor = isHero ? 0.0006f : 0.0008f;
+            float speed = speedFloor + (float)rng.NextDouble() * speedRange;
+            // Spawn at silhouette boundary (≈0.4 tiles for std, scales with size).
+            float silhouette = tier switch { MobTier.FloorBoss => 1.4f, MobTier.Elite => 0.9f, _ => 0.4f };
+            float spawnR = isHero ? silhouette : (float)rng.NextDouble() * 0.6f;
+            // North bias — shards above the kill point live ~20% longer.
+            float lifeBoost = (Math.Sin(angle) < 0f) ? 1.20f : 1.00f;
+            shards[i] = new DeathShard
+            {
+                OriginX = x,
+                OriginY = y,
+                Angle = angle,
+                Speed = speed,
+                SpawnRadius = spawnR,
+                IsHero = isHero,
+                Seed = (byte)rng.Next(256),
+                LifeBoost = lifeBoost,
+            };
+        }
+        // Cap radius via shard speed × duration ≈ radius tiles.
+        return new DeathBurst { X = x, Y = y, Tier = tier, ElapsedMs = 0f,
+            TotalMs = total, FlashMs = flash, Shards = shards };
     }
 
     // Sword skill activation burst -- ring of light around player
@@ -172,8 +225,22 @@ public partial class MapView : View
     private const int LevelUpFlashMs = 200;
     public void TriggerLevelUpFlash() { _levelUpFlashRemainingMs = LevelUpFlashMs; DirtyFrame(); }
 
-    private Color? _statusTintColor;
-    public void SetStatusTint(Color? color) { _statusTintColor = color; DirtyFrame(); }
+    // Wave 2 — status tint crossfade. _statusTintCurrentColor is what
+    // ApplyStatusTint reads; SetStatusTint kicks off a 200ms ease toward target.
+    private Color? _statusTintCurrentColor;
+    private Color? _statusTintTargetColor;
+    private Color? _statusTintSourceColor;
+    private int _statusTintTransitionRemainingMs;
+    private const int StatusTintTransitionMs = 200;
+
+    public void SetStatusTint(Color? color)
+    {
+        if (color == _statusTintTargetColor) return;
+        _statusTintSourceColor = _statusTintCurrentColor;
+        _statusTintTargetColor = color;
+        _statusTintTransitionRemainingMs = StatusTintTransitionMs;
+        DirtyFrame();
+    }
 
     private readonly HashSet<(int X, int Y)> _openedDoors = new();
     private readonly List<(int X, int Y, int RemainingMs)> _doorFlashes = new();
@@ -256,6 +323,90 @@ public partial class MapView : View
     // Bundle 13 Item 1 — Shift+L opens the Legendary Collectables panel.
     public event Action? LegendaryCollectablesRequested;
 
+    // ── Wave 2 HP/XP/SAT tween state ──────────────────────────────────
+    // Generic int-tween with start/target/remaining state. ApplyTarget bumps the
+    // tween (multi-hit: restart from current displayed value, no jump).
+    private struct IntTween
+    {
+        public int Displayed;
+        public int Start;
+        public int Target;
+        public int RemainingMs;
+        public bool ApplyTarget(int newTarget, int durationMs)
+        {
+            if (newTarget == Target && RemainingMs == 0) return false;
+            if (newTarget == Target) return false;
+            Start = Displayed;
+            Target = newTarget;
+            RemainingMs = durationMs;
+            return true;
+        }
+        public void Tick(int dtMs, int durationMs)
+        {
+            if (RemainingMs <= 0) { Displayed = Target; return; }
+            RemainingMs = Math.Max(0, RemainingMs - dtMs);
+            if (RemainingMs <= 0) { Displayed = Target; return; }
+            float t = 1f - RemainingMs / (float)durationMs;
+            float eased = SAOTRPG.Systems.EasingHelper.Ease(t,
+                SAOTRPG.Systems.EasingHelper.EasingType.EaseOutQuad);
+            Displayed = Start + (int)Math.Round((Target - Start) * eased);
+        }
+        public bool Active => RemainingMs > 0;
+    }
+
+    private const int HpTweenDurationMs = 300;
+    private IntTween _playerHpTween;
+    private IntTween _playerXpTween;
+    private IntTween _playerSatTween;
+    private bool _playerBarsInitialized;
+    // Per-monster HP tween for boss bar + look-mode enemy display.
+    private readonly Dictionary<int, IntTween> _monsterHpTween = new();
+
+    // Fires when any HP/XP/SAT tween advanced this frame so the HUD label
+    // text picks up the new value without a turn-tick.
+    public event Action? PlayerBarsTweenTick;
+
+    // Player bars: GameScreen.RefreshHud calls each turn to set targets;
+    // MapView ticks tweens on OnDrawingContent + raises PlayerBarsTweenTick.
+    public int DisplayedPlayerHp  => _playerHpTween.Displayed;
+    public int DisplayedPlayerXp  => _playerXpTween.Displayed;
+    public int DisplayedPlayerSat => _playerSatTween.Displayed;
+
+    public void SetPlayerBarTargets(int hp, int xp, int sat)
+    {
+        if (!_playerBarsInitialized)
+        {
+            _playerHpTween.Displayed = _playerHpTween.Target = _playerHpTween.Start = hp;
+            _playerXpTween.Displayed = _playerXpTween.Target = _playerXpTween.Start = xp;
+            _playerSatTween.Displayed = _playerSatTween.Target = _playerSatTween.Start = sat;
+            _playerBarsInitialized = true;
+            return;
+        }
+        bool a = _playerHpTween.ApplyTarget(hp, HpTweenDurationMs);
+        bool b = _playerXpTween.ApplyTarget(xp, HpTweenDurationMs);
+        bool c = _playerSatTween.ApplyTarget(sat, HpTweenDurationMs);
+        if (a || b || c) DirtyFrame();
+    }
+
+    // Boss/look-mode mob HP read path. Caller passes id+target each render;
+    // first call seeds, subsequent target changes start a tween from current.
+    public int GetDisplayedMonsterHp(int id, int targetHp)
+    {
+        if (!_monsterHpTween.TryGetValue(id, out var tw))
+        {
+            tw = new IntTween { Displayed = targetHp, Start = targetHp, Target = targetHp };
+            _monsterHpTween[id] = tw;
+            return targetHp;
+        }
+        if (tw.Target != targetHp)
+        {
+            tw.ApplyTarget(targetHp, HpTweenDurationMs);
+            _monsterHpTween[id] = tw;
+            DirtyFrame();
+        }
+        return tw.Displayed;
+    }
+
     // Partial method hook implemented in MapView.TileAnimations.cs.
     partial void RenderAmbientTiles(int vpWidth, int vpHeight);
 
@@ -277,10 +428,15 @@ public partial class MapView : View
         _levelUpFlashRemainingMs = 0;
         _scorchMarks.Clear();
         _mobTrails.Clear();
-        _polyBursts.Clear();
+        _deathBursts.Clear();
         _skillFlashes.Clear();
         _killStreakFlashRemainingMs = 0;
-        _statusTintColor = null;
+        _statusTintCurrentColor = null;
+        _statusTintTargetColor = null;
+        _statusTintSourceColor = null;
+        _statusTintTransitionRemainingMs = 0;
+        _monsterHpTween.Clear();
+        _playerBarsInitialized = false;
         _weaponSwings.Clear();
         _borderFlashRemainingMs = 0;
         _damageFlashes.Clear();

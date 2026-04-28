@@ -17,7 +17,7 @@ public sealed class RiverPass : IGenerationPass
         switch (ctx.Config.RiverAlgorithm)
         {
             case RiverAlgorithm.DrunkardWalk:
-                MapGenerator.GenerateRiver(ctx.Map, ctx.FloorNumber % 2 == 0, rng);
+                MapGenerator.GenerateRiver(ctx.Map, ctx.FloorNumber % 2 == 0, rng, ctx);
                 break;
             case RiverAlgorithm.DownslopeTrace:
                 DownslopeTrace(ctx);
@@ -31,7 +31,7 @@ public sealed class RiverPass : IGenerationPass
     {
         var map = ctx.Map;
         var heights = ctx.Heights;
-        if (heights == null) { MapGenerator.GenerateRiver(map, ctx.FloorNumber % 2 == 0, ctx.Rng); return; }
+        if (heights == null) { MapGenerator.GenerateRiver(map, ctx.FloorNumber % 2 == 0, ctx.Rng, ctx); return; }
         int w = ctx.Width, h = ctx.Height;
 
         // Full-map top-K local-maxima weighted pick, with edge-margin exclusion
@@ -41,8 +41,9 @@ public sealed class RiverPass : IGenerationPass
         int cx = sx, cy = sy;
         for (int step = 0; step < w + h; step++)
         {
-            MapGenerator.StampRiverTile(map, cx, cy);
-            MapGenerator.StampRiverTile(map, cx + 1, cy);
+            // Skip stamping inside town keep-out so rivers don't clip through gates/buildings.
+            if (!ctx.IsInTownKeepOut(cx, cy))     MapGenerator.StampRiverTile(map, cx, cy);
+            if (!ctx.IsInTownKeepOut(cx + 1, cy)) MapGenerator.StampRiverTile(map, cx + 1, cy);
 
             // Stop on disk exit (protected Mountain ring) or near map bbox edge.
             if (!ctx.IsInsideCircle(cx, cy)) break;

@@ -5,8 +5,8 @@ namespace SAOTRPG.Map;
 public static partial class MapGenerator
 {
     // ── River: drunk-walk with drift from source edge to opposite, meanders laterally but always progresses.
-    // horizontal=true → L→R, false → T→B.
-    internal static void GenerateRiver(GameMap map, bool horizontal, Random rng)
+    // horizontal=true → L→R, false → T→B. ctx supplied so river skips town keep-out tiles.
+    internal static void GenerateRiver(GameMap map, bool horizontal, Random rng, Generation.WorldContext ctx)
     {
         int w = map.Width, h = map.Height;
 
@@ -30,8 +30,10 @@ public static partial class MapGenerator
             // Stamp river tiles (1-2 wide depending on hash).
             int rx = horizontal ? pos : cross;
             int ry = horizontal ? cross : pos;
-            StampRiverTile(map, rx, ry);
-            StampRiverTile(map, rx + (horizontal ? 0 : 1), ry + (horizontal ? 1 : 0));
+            int rx2 = rx + (horizontal ? 0 : 1);
+            int ry2 = ry + (horizontal ? 1 : 0);
+            if (!ctx.IsInTownKeepOut(rx,  ry))  StampRiverTile(map, rx,  ry);
+            if (!ctx.IsInTownKeepOut(rx2, ry2)) StampRiverTile(map, rx2, ry2);
 
             // Advance along the primary axis.
             pos++;

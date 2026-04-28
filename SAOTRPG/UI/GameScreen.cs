@@ -365,11 +365,16 @@ public static partial class GameScreen
             playerStatsText.Text = sidebar.ToString();
 
             // Bundle 11: eighth-block stat bar resolution (8x ASCII), with green/
-            // yellow/red zones via StatBarHelper.ZoneColor. Width unchanged so the
-            // sidebar layout stays stable.
-            string hpBar = StatBarHelper.Build(player.CurrentHealth, player.MaxHealth, HpBarWidth);
-            string xpBar = StatBarHelper.Build(player.CurrentExperience, player.ExperienceRequired, XpBarWidth);
-            string satBar = StatBarHelper.Build(turnManager.Satiety, TurnManager.MaxSatiety, 6);
+            // yellow/red zones via StatBarHelper.ZoneColor. Wave 2 — bars read
+            // tweened "displayed" values from MapView so HP/XP/SAT drift smoothly.
+            mapView.SetPlayerBarTargets(player.CurrentHealth,
+                player.CurrentExperience, turnManager.Satiety);
+            int dispHp  = mapView.DisplayedPlayerHp;
+            int dispXp  = mapView.DisplayedPlayerXp;
+            int dispSat = mapView.DisplayedPlayerSat;
+            string hpBar = StatBarHelper.Build(dispHp, player.MaxHealth, HpBarWidth);
+            string xpBar = StatBarHelper.Build(dispXp, player.ExperienceRequired, XpBarWidth);
+            string satBar = StatBarHelper.Build(dispSat, TurnManager.MaxSatiety, 6);
             string durWarns = DurabilityHelper.BuildWarningTags(player.Inventory);
             string statusTags = StatusTagBuilder.Build(turnManager, durWarns);
             string saveTag = saveFlash[0] > 0 ? "  [Saved]" : "";
@@ -377,13 +382,13 @@ public static partial class GameScreen
             string weatherTag = WeatherSystem.Current != WeatherType.Clear
                 ? $"  [{WeatherSystem.GetLabel()}]" : "";
 
-            // Row 0: HP | XP | SAT | Status effects
-            hpLabel.Text = $"HP {hpBar} {player.CurrentHealth}/{player.MaxHealth}" +
+            // Row 0: HP | XP | SAT | Status effects (numerator uses tweened display).
+            hpLabel.Text = $"HP {hpBar} {dispHp}/{player.MaxHealth}" +
                            $" | XP {xpBar} Lv{player.Level}" +
                            $" | SAT {satBar}" + statusTags + weatherTag + saveTag;
             // HP zone color drives the row tint. Critical (<25%) escalates to
             // ColorSchemes.Danger so the existing low-HP redline behavior persists.
-            var hpZone = StatBarHelper.ZoneColor(player.CurrentHealth, player.MaxHealth);
+            var hpZone = StatBarHelper.ZoneColor(dispHp, player.MaxHealth);
             hpLabel.ColorScheme = hpZone == Color.BrightRed
                 ? ColorSchemes.Danger
                 : (hpZone == Color.BrightYellow ? ColorSchemes.FromColor(Color.BrightYellow) : ColorSchemes.Body);
@@ -453,6 +458,8 @@ public static partial class GameScreen
         WireKeybindActions(turnManager, mapView, minimapView, player, gameLog, coloredLog,
             inventoryBtn, saveSlot, saveFlash, RefreshHud);
         WirePassiveSystems(turnManager, mapView, player, gameLog);
+        // Wave 2 — refresh HP/XP/SAT label every frame while a bar tween is mid-flight.
+        mapView.PlayerBarsTweenTick += RefreshHud;
 
         mainWindow.Add(mapArea, rightPanel, ruleBottom, actionBar);
         mapView.SetFocus();

@@ -17,23 +17,14 @@ public static class ProfileData
     public static bool HasCompletedGame { get; private set; }
 
     // ── Player Guide persistence ─────────
-    // Keys "{Category}|{Title}". Lists preserve order; HashSets for gating.
+    // Keys "{Category}|{Title}" for known-topics; category names for expanded-state.
 
-    // User-pinned topics (unlimited).
-    public static List<string> GuideBookmarks { get; private set; } = new();
-
-    // Most-recently-viewed topics, oldest at index 0, newest at end.
-    // Capped at 10 with oldest-out eviction.
-    public static List<string> GuideRecentlyViewed { get; private set; } = new();
-
-    // Every topic the player has ever opened. Used for first-visit
-    // "unread" marker decoration.
-    public static HashSet<string> GuideVisitedTopics { get; private set; } = new();
-
-    // Gameplay-unlocked topics. Masks unseen entries as ??? in TreeView.
+    // Gameplay-unlocked topics. Lifts the spoiler ??? mask via tag-match.
     public static HashSet<string> GuideKnownTopics { get; private set; } = new();
 
-    private const int RecentlyViewedCap = 10;
+    // Sidebar categories the user has chosen to expand. Persisted across
+    // sessions so the guide reopens to the same shape.
+    public static HashSet<string> GuideExpandedCategories { get; private set; } = new();
 
     private static bool _loaded;
 
@@ -49,47 +40,24 @@ public static class ProfileData
             if (dto?.EverSeenEvents != null)
                 EverSeenEvents = new HashSet<string>(dto.EverSeenEvents);
             HasCompletedGame = dto?.HasCompletedGame ?? false;
-            if (dto?.GuideBookmarks != null)
-                GuideBookmarks = new List<string>(dto.GuideBookmarks);
-            if (dto?.GuideRecentlyViewed != null)
-                GuideRecentlyViewed = new List<string>(dto.GuideRecentlyViewed);
-            if (dto?.GuideVisitedTopics != null)
-                GuideVisitedTopics = new HashSet<string>(dto.GuideVisitedTopics);
             if (dto?.GuideKnownTopics != null)
                 GuideKnownTopics = new HashSet<string>(dto.GuideKnownTopics);
+            if (dto?.GuideExpandedCategories != null)
+                GuideExpandedCategories = new HashSet<string>(dto.GuideExpandedCategories);
         }
         catch { /* corrupt profile — start fresh rather than crash the game */ }
     }
 
     // ── Guide helpers ─────────────────────────────────────────────────
 
-    // Toggle bookmark state. Returns the new state (true = now bookmarked).
-    public static bool ToggleBookmark(string topicKey)
+    // Persist sidebar expand-state. Idempotent.
+    public static void SetCategoryExpanded(string category, bool expanded)
     {
         EnsureLoaded();
-        if (GuideBookmarks.Remove(topicKey)) { Save(); return false; }
-        GuideBookmarks.Add(topicKey);
-        Save();
-        return true;
-    }
-
-    public static bool IsBookmarked(string topicKey)
-    {
-        EnsureLoaded();
-        return GuideBookmarks.Contains(topicKey);
-    }
-
-    // Record a topic view. Moves existing entries to the end (newest) and
-    // evicts oldest when the list exceeds RecentlyViewedCap.
-    public static void MarkRecentlyViewed(string topicKey)
-    {
-        EnsureLoaded();
-        GuideRecentlyViewed.Remove(topicKey);
-        GuideRecentlyViewed.Add(topicKey);
-        while (GuideRecentlyViewed.Count > RecentlyViewedCap)
-            GuideRecentlyViewed.RemoveAt(0);
-        GuideVisitedTopics.Add(topicKey);
-        Save();
+        bool changed = expanded
+            ? GuideExpandedCategories.Add(category)
+            : GuideExpandedCategories.Remove(category);
+        if (changed) Save();
     }
 
     public static void MarkKnown(string topicKey)
@@ -130,10 +98,8 @@ public static class ProfileData
             {
                 EverSeenEvents = EverSeenEvents.ToList(),
                 HasCompletedGame = HasCompletedGame,
-                GuideBookmarks = new List<string>(GuideBookmarks),
-                GuideRecentlyViewed = new List<string>(GuideRecentlyViewed),
-                GuideVisitedTopics = GuideVisitedTopics.ToList(),
                 GuideKnownTopics = GuideKnownTopics.ToList(),
+                GuideExpandedCategories = GuideExpandedCategories.ToList(),
             };
             File.WriteAllText(ProfilePath, JsonSerializer.Serialize(dto));
         }
@@ -147,9 +113,10 @@ public static class ProfileData
 
         // Player Guide persistence. Lists (not HashSets) so System.Text.Json
         // reflection round-trips cleanly without needing a source-gen context.
-        public List<string> GuideBookmarks { get; set; } = new();
-        public List<string> GuideRecentlyViewed { get; set; } = new();
-        public List<string> GuideVisitedTopics { get; set; } = new();
+        // Legacy fields (GuideBookmarks, GuideRecentlyViewed, GuideVisitedTopics)
+        // were dropped in the guide rewrite; the deserializer ignores unknown
+        // properties so old profiles load cleanly.
         public List<string> GuideKnownTopics { get; set; } = new();
+        public List<string> GuideExpandedCategories { get; set; } = new();
     }
 }

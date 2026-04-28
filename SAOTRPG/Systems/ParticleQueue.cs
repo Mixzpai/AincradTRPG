@@ -163,7 +163,9 @@ public static class ParticleQueue
         {
             case ParticleEvent.SwordSlash: EmitSwordSlash(x, y, dirX ?? 0, dirY ?? 0, dur); break;
             case ParticleEvent.CritShatter: EmitCritShatter(x, y, cMax, dur); break;
-            case ParticleEvent.MonsterDeath: EmitMonsterDeath(x, y, cMax, dur); break;
+            // MonsterDeath now routed through MapView.EmitMonsterDeathBurst (two-phase braille).
+            // Kept for enum/back-compat; old ring-buffer path retired.
+            case ParticleEvent.MonsterDeath: break;
             case ParticleEvent.SkillCastStart: EmitSkillCast(x, y, dur, tint); break;
             case ParticleEvent.ItemPickup: EmitItemPickup(x, y, dur); break;
             case ParticleEvent.PoisonInflict: EmitPoisonInflict(x, y, cMax, dur); break;
@@ -229,20 +231,6 @@ public static class ParticleQueue
             float vx = (float)(Math.Cos(angle) * 0.002f);
             float vy = (float)(Math.Sin(angle) * 0.002f);
             Push(x, y, '◇', Color.BrightYellow, Color.Gray, true, dur, vx, vy);
-        }
-    }
-
-    // 8-ray polygon ring for monster deaths. Supplementary to existing shatter.
-    private static void EmitMonsterDeath(int x, int y, int maxCount, float dur)
-    {
-        int n = Math.Min(maxCount, ScaleCount(8));
-        char[] glyphs = { '◇', '·' };
-        for (int i = 0; i < n; i++)
-        {
-            double angle = (2 * Math.PI * i) / n;
-            float vx = (float)(Math.Cos(angle) * 0.003f);
-            float vy = (float)(Math.Sin(angle) * 0.003f);
-            Push(x, y, glyphs[i % 2], Color.BrightCyan, Color.DarkGray, true, dur, vx, vy);
         }
     }
 

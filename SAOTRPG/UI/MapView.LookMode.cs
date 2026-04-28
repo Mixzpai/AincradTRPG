@@ -417,8 +417,10 @@ public partial class MapView
         };
 
         int dist = Math.Max(Math.Abs(m.X - _player.X), Math.Abs(m.Y - _player.Y));
-        int hpPct = m.MaxHealth > 0 ? m.CurrentHealth * 100 / m.MaxHealth : 0;
-        string hpBar = BarBuilder.BuildGradient(m.CurrentHealth, m.MaxHealth, 12);
+        // Wave 2 — tweened HP for smooth movement when the looked-at mob takes damage.
+        int displayedHp = GetDisplayedMonsterHp(m.Id, m.CurrentHealth);
+        int hpPct = m.MaxHealth > 0 ? displayedHp * 100 / m.MaxHealth : 0;
+        string hpBar = BarBuilder.BuildGradient(displayedHp, m.MaxHealth, 12);
 
         var lines = new List<string>
         {

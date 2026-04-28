@@ -40,7 +40,7 @@ public static class LifetimeStats
         public int LastFloor { get; set; }
         public int DeathsCaused { get; set; }
         public string LastSeenDate { get; set; } = "";
-        // Bundle 10 (B9) — encounter loot tag persisted across runs.
+        // Encounter loot tag persisted across runs.
         // Nullable: legacy entries → null, resolved at load via MobFactory fallback.
         public string? LootTag { get; set; }
     }
@@ -52,6 +52,9 @@ public static class LifetimeStats
         public int TotalVictories { get; set; }
         public int TotalKills { get; set; }
         public int HighestFloor { get; set; }
+        // Player Guide unlock gate. Updated on every floor ascent (not run-end).
+        // Distinct from HighestFloor, which only updates in RecordRun.
+        public int MaxFloorReached { get; set; }
         public string BestGrade { get; set; } = "D";
         public long TotalPlayTimeSeconds { get; set; }
         public int HighestLevel { get; set; }
@@ -103,6 +106,16 @@ public static class LifetimeStats
         _ when grade.StartsWith("C")  => 2,
         _ => 1,
     };
+
+    // Record per-ascent floor reach. No-op when floor <= existing max.
+    // Fires from TurnManager.AscendFloor immediately after CurrentFloor++.
+    public static void RecordFloorReach(int floor)
+    {
+        var data = Load();
+        if (floor <= data.MaxFloorReached) return;
+        data.MaxFloorReached = floor;
+        Save(data);
+    }
 
     // Record run. Victories append to VictoryRuns (uncapped); RecentRuns caps at 10.
     public static void RecordRun(int kills, int floor, int level, string grade,

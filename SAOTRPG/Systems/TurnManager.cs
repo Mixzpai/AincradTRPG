@@ -176,6 +176,8 @@ public partial class TurnManager
     public event Action<int, int, int, bool, bool>? DamageDealt;
     public event Action<int, int, int, int, Color>? WeaponSwing;
     public event Action<int, int>? MonsterKilled;
+    // Tiered death-burst request: tier 0=standard, 1=elite, 2=floor boss.
+    public event Action<int, int, int>? MonsterDeathBurstRequested;
     public event Action<int, int, string, Color>? CombatTextEvent;
     public event Action? LeveledUp;
     public event Action<int, int, Color>? SkillActivated;
@@ -294,11 +296,11 @@ public partial class TurnManager
 
     public void ApplyTalent(PassiveTalents.Perk perk) => perk.Apply(_player);
 
-    // Bundle 8: call after a Divine enters inventory (boss drop or quest reward).
-    // Sets one-per-run gate + fires event for the banner. No-op if already set.
+    // Fires after a Divine enters inventory (boss drop or quest reward).
+    // The flag is kept for save-compat round-trip but no longer gates the banner —
+    // the cap is gone, so every Divine pickup gets full ceremony.
     private void NotifyDivineObtained(Items.Equipment.Weapon divine)
     {
-        if (LootGenerator.DivineObtainedThisRun) return;
         LootGenerator.DivineObtainedThisRun = true;
         DivineObtained?.Invoke(divine);
     }
@@ -308,6 +310,9 @@ public partial class TurnManager
     {
         _map = map; _player = player; _log = log;
         CurrentFloor = floor;
+        // Player Guide unlock — record on construct so new games + loads at any floor
+        // mark themselves reached (otherwise F1 stays locked at game start).
+        LifetimeStats.RecordFloorReach(floor);
         TileDefinitions.CurrentFloor = floor;
         Difficulty = difficulty;
         _diffTier = DifficultyData.Get(difficulty);

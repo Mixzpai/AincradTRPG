@@ -69,8 +69,8 @@ public static class LootGenerator
         [20] = "blue_rose_sword",             // Absolut the Winter Monarch — ice theme, Eugeo canon
         [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito canon
 
-        // Bundle 8: Divine placement — 10 orphan Divines wired to F75-F98 bosses.
-        // One-per-run cap enforced via DivineObtainedThisRun gate below.
+        // Divine placement — 10 orphan Divines wired to F75-F98 bosses.
+        // No per-run cap; every guaranteed Divine slot drops Divine.
         [75] = "masamune",                    // Skull Reaper — canon endgame katana apex
         [82] = "hexagramme",                  // Legacy of Grand — hex-pattern arcane rapier
         [84] = "caladbolg",                   // Queen of Ant — Caladbolg Irish mythic spear
@@ -390,21 +390,15 @@ public static class LootGenerator
         return ids[Random.Shared.Next(ids.Length)];
     }
 
-    // Bundle 8: Divine one-per-run cap. Set when any Divine enters inventory;
-    // roundtripped via SaveData.DivineObtainedThisRun. Reset on new run in GameScreen.ShowInternal.
+    // Legacy flag retained for save-compat round-trip (SaveData.DivineObtainedThisRun);
+    // the per-run Divine cap was lifted — players may now collect any/all Divines per run.
     public static bool DivineObtainedThisRun;
 
-    // Bundle 8: resolve floor-boss drop honoring one-per-run Divine cap. Null = no entry;
-    // pass-through for Legendary; Divine slot post-cap substitutes a floor-banded Legendary.
+    // Resolve floor-boss drop. The per-run Divine cap was removed; every guaranteed
+    // drop passes through unchanged (Divine slots stay Divine).
     public static string? ResolveFloorBossDropDefId(int floor)
     {
         if (!FloorBossGuaranteedDrops.TryGetValue(floor, out var dropId)) return null;
-        if (!DivineObtainedThisRun) return dropId;
-        // Cap fired — inspect the slot: if this boss's canonical drop is Divine,
-        // substitute a floor-banded Legendary fallback instead. Non-Divine slots pass through.
-        var probe = ItemRegistry.Create(dropId);
-        if (probe != null && probe.Rarity == "Divine")
-            return PickFloorBandedRegisteredDefId(floor);
         return dropId;
     }
 

@@ -34,7 +34,6 @@ public partial class MapView
         RenderAggroIndicators(w, h);
         // Ambient tile layer (implemented by TileAnimations partial — stub here).
         RenderAmbientTiles(w, h);
-        RenderShatterParticles(w, h, dtMs);
         RenderSkillFlashes(w, h, dtMs);
         RenderKillStreakFlash(w, h, dtMs);
         RenderLevelUpFlash(w, h, dtMs);
@@ -222,7 +221,9 @@ public partial class MapView
         }
 
         const int barWidth = 20;
-        string hpBar = BarBuilder.BuildGradient(boss.CurrentHealth, boss.MaxHealth, barWidth);
+        // Wave 2 — tweened HP for smooth bar drift on boss damage.
+        int displayedHp = GetDisplayedMonsterHp(boss.Id, boss.CurrentHealth);
+        string hpBar = BarBuilder.BuildGradient(displayedHp, boss.MaxHealth, barWidth);
         string label = $" {boss.Name} {hpBar} {boss.CurrentHealth}/{boss.MaxHealth} ";
         DrawCenteredBanner(label, row: 0, Gfx.Attr(Color.BrightRed, Color.DarkGray), w);
     }
@@ -338,50 +339,6 @@ public partial class MapView
             Color c = Color.BrightRed;
             DrawGlyph(monster.X, monster.Y - 1, '!',
                 Gfx.Attr(c, Color.Black), w, h);
-        }
-    }
-
-    // SAO polygon dissolution -- fragments scatter outward in expanding rings,
-    // cycling through polygon-like glyphs with cyan-to-dark color fade.
-    // Step index (TotalMs-RemainingMs)/StepMs reproduces the original per-frame scatter math.
-    private void RenderShatterParticles(int w, int h, int dtMs)
-    {
-        for (int i = _polyBursts.Count - 1; i >= 0; i--)
-        {
-            var burst = _polyBursts[i];
-            int step = (burst.TotalMs - burst.RemainingMs) / PolyBurstStepMs;
-
-            // Step 0: bright white flash at kill point
-            if (step == 0)
-            {
-                DrawGlyph(burst.X, burst.Y, '*', Gfx.Attr(Color.White, Color.Black), w, h);
-            }
-
-            // Steps 1+: fragments scatter outward
-            foreach (var (dx, dy, speed, gi) in PolyFragments)
-            {
-                int dist = step * speed / 2;
-                if (dist < 1) continue;
-                int px = burst.X + dx * dist / speed;
-                int py = burst.Y + dy * dist / speed;
-                if (!_map.InBounds(px, py) || !_map.IsVisible(px, py)) continue;
-
-                // Color fade: bright cyan -> cyan -> blue -> dark gray
-                float life = (float)burst.RemainingMs / burst.TotalMs;
-                Color c = life > 0.7f ? Color.BrightCyan
-                        : life > 0.4f ? Color.Cyan
-                        : life > 0.2f ? Color.Blue
-                        : Color.DarkGray;
-
-                // Boss kills use brighter colors
-                if (burst.IsBoss && life > 0.5f) c = Color.White;
-
-                char glyph = PolyGlyphs[(gi + step) % PolyGlyphs.Length];
-                DrawGlyph(px, py, glyph, Gfx.Attr(c, Color.Black), w, h);
-            }
-
-            if (burst.RemainingMs <= dtMs) _polyBursts.RemoveAt(i);
-            else _polyBursts[i] = burst with { RemainingMs = burst.RemainingMs - dtMs };
         }
     }
 

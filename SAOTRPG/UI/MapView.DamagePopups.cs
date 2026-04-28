@@ -29,6 +29,10 @@ public partial class MapView
 
     private const int PopupLifetimeMs = 400;
     private const int PopupFadeOutMs  = 150;
+    // Wave 2 — popup rise easing constants (research §7.5).
+    private const int PopupRiseDelayMs    = 100;
+    private const int PopupRiseDurationMs = 300;
+    private const int PopupRiseHeightTiles = 1;
     // Max concurrent popups per (x,y) frame before coalesce.
     private const int PopupMaxPerTile = 3;
     private readonly List<DamagePopup> _popups = new();
@@ -149,9 +153,13 @@ public partial class MapView
             }
             if (!_map.InBounds(p.X, p.Y) || !_map.IsVisible(p.X, p.Y)) continue;
 
-            // Tween: stay at (x, y) first third, then rise 1 cell.
-            int vy = MapToVy(p.Y - 1);
-            if (p.ElapsedMs < PopupLifetimeMs / 3) vy = MapToVy(p.Y);
+            // Wave 2 — smooth EaseOutCubic rise: hold for 100ms, then ease up
+            // by 1 tile over 300ms. Replaces the snap mid-life (research §7.5).
+            float riseT = (p.ElapsedMs - PopupRiseDelayMs) / (float)PopupRiseDurationMs;
+            float eased = SAOTRPG.Systems.EasingHelper.Ease(riseT,
+                SAOTRPG.Systems.EasingHelper.EasingType.EaseOutCubic);
+            int yOffset = (int)Math.Round(eased * PopupRiseHeightTiles);
+            int vy = MapToVy(p.Y) - yOffset;
             int vx = MapToVx(p.X);
 
             // Alpha-emulation: dim the foreground during the last 150ms.

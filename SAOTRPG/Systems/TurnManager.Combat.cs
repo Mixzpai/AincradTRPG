@@ -831,9 +831,10 @@ public partial class TurnManager
             new Story.StoryContext(CurrentFloor, KillCount, _player, monster));
 
         DropLoot(monster);
-        // FB-450 supplementary polygon ring — fires alongside the existing
-        // shatter burst. Count scales via ParticleDensity.
-        ParticleQueue.Emit(ParticleEvent.MonsterDeath, monster.X, monster.Y);
+        // Two-phase braille death burst — tier scales radius/duration/density.
+        int deathTier = monster is Boss ? 2
+            : (monster is Mob { Variant: "Elite" or "Champion" } ? 1 : 0);
+        MonsterDeathBurstRequested?.Invoke(monster.X, monster.Y, deathTier);
         MonsterKilled?.Invoke(monster.X, monster.Y);
         CleanupMobStatus(monster.Id);
         _map.RemoveEntity(monster);
