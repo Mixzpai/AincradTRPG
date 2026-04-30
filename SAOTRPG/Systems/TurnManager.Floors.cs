@@ -7,7 +7,7 @@ public partial class TurnManager
 {
     public void AscendFloor()
     {
-        // FB-450 stairs ascent sparkle — emits before map swap so the tile is valid.
+        // Stairs ascent sparkle — emits before map swap so the tile is valid.
         ParticleQueue.Emit(ParticleEvent.FloorTransition, _player.X, _player.Y);
         int elapsed = TurnCount - _floorStartTurn;
         int par = FloorParTurns[Math.Min(CurrentFloor - 1, FloorParTurns.Length - 1)];
@@ -41,12 +41,9 @@ public partial class TurnManager
             _log.LogLoot($"  Thorough exploration rewarded! +{xpBonus} XP, +{colBonus} Col!");
         }
 
-        foreach (var ach in Achievements.CheckFloor(this, _player, speedClear: elapsed <= par))
-        {
-            _player.ColOnHand += ach.ColReward;
-            TotalColEarned += ach.ColReward;
-            _log.LogSystem($"  **ACHIEVEMENT: {ach.Name} — {ach.Description} (+{ach.ColReward} Col)");
-        }
+        bool speedClear = elapsed <= par;
+        MilestoneSystem.CheckFloor(this, _player, speedClear);
+        MilestoneSystem.OnFloorCleared(this, _player, CurrentFloor);
 
         CurrentFloor++;
         // Persistent Player Guide unlock gate; survives permadeath.
@@ -63,6 +60,7 @@ public partial class TurnManager
             _log.LogSystem("  You have cleared all 100 floors of Aincrad!");
             _log.LogSystem("  The death game is over. You are free.");
             _log.LogSystem("====================================");
+            MilestoneSystem.OnAincradCleared(this, _player);
             GameWon?.Invoke();
             return;
         }
@@ -119,14 +117,13 @@ public partial class TurnManager
         Story.StorySystem.TryFire(Story.StoryTrigger.FloorEntry,
             new Story.StoryContext(CurrentFloor, KillCount, _player));
 
-        // FB-058 Survivor title: F50 crossing (permadeath makes this equivalent
-        // to "no-death-this-run").
-        TitleSystem.CheckFloor50Survivor(_player, CurrentFloor);
+        // Survivor title (F50 crossing) — handled by MilestoneSystem.CheckFloor's
+        // floor-threshold unlocks; permadeath makes "no-death-this-run" equivalent.
 
-        // FB-063 Black Cats dissolve at F27 (idempotent). Force-leave + -5 karma.
+        // Black Cats dissolve at F27 (idempotent). Force-leave + -5 karma.
         GuildSystem.CheckBlackCatsFate(_player, CurrentFloor, _log);
 
-        // FB-063 "One More Floor" — auto-complete on F25 entry. Sentinel target
+        // "One More Floor" — auto-complete on F25 entry. Sentinel target
         // prevents OnMobKilled auto-advance; turn in at Keita on F10.
         var catsSig = QuestSystem.GetQuest("guild_sig_cats_one_more_floor");
         if (catsSig != null && catsSig.Status == QuestStatus.Active && CurrentFloor >= 25)
@@ -136,7 +133,7 @@ public partial class TurnManager
             _log.LogSystem("  [QUEST] 'One More Floor' complete — return to Keita.");
         }
 
-        // FB-564 Laughing Coffin modifier — PK squad ambush every 5 floors.
+        // Laughing Coffin modifier — PK squad ambush every 5 floors.
         if (RunModifiers.IsActive(RunModifier.LaughingCoffin) && CurrentFloor % 5 == 0)
             SpawnLaughingCoffinSquad();
 

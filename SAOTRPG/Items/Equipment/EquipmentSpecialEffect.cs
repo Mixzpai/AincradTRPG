@@ -1,7 +1,7 @@
 namespace SAOTRPG.Items.Equipment;
 
-// Bundle 10 (B12) — typed special effect registry. Discriminated record set; each variant
-// carries exactly the fields its consumer reads. The string field on EquipmentBase remains
+// Typed special effect registry. Discriminated record set; each variant carries
+// exactly the fields its consumer reads. The string field on EquipmentBase remains
 // the save-format authority; this is the parsed view (built lazily on first access).
 public abstract record EquipmentSpecialEffect
 {
@@ -27,7 +27,7 @@ public abstract record EquipmentSpecialEffect
     public sealed record PoisonOnHit(int ChancePercent) : EquipmentSpecialEffect { public override string Key => "Poison"; }
     public sealed record BlindOnHit(int ChancePercent)  : EquipmentSpecialEffect { public override string Key => "BlindOnHit"; }
     public sealed record LunacyOnHit(int ChancePercent) : EquipmentSpecialEffect { public override string Key => "Lunacy"; }
-    public sealed record SlowOnHit(int ChancePercent)   : EquipmentSpecialEffect { public override string Key => "SlowOnHit"; }   // Bundle 10 (B11) — new consumer
+    public sealed record SlowOnHit(int ChancePercent)   : EquipmentSpecialEffect { public override string Key => "SlowOnHit"; }
 
     // ── Crit-triggered modifiers (weapon-only)
     public sealed record CritHeal(int Percent)          : EquipmentSpecialEffect { public override string Key => "CritHeal"; }
@@ -53,31 +53,8 @@ public abstract record EquipmentSpecialEffect
     // ── Pre-existing-but-unconsumed (parsed, no-op consumer — flagged at registry build time)
     public sealed record DarknessRending(int Percent)   : EquipmentSpecialEffect { public override string Key => "DarknessRending"; }
 
-    // Tries to parse a single "Key+N" / "Key-N" / "KeyN" token (no embedded multiple-pairs).
-    // Use EquipmentSpecialEffectRegistry.GetParsed for full strings (multi-pair).
-    public static bool TryParse(string raw, out EquipmentSpecialEffect? effect)
-    {
-        effect = null;
-        if (string.IsNullOrEmpty(raw)) return false;
-        int i = 0;
-        while (i < raw.Length && !char.IsLetter(raw[i])) i++;
-        int keyStart = i;
-        while (i < raw.Length && char.IsLetter(raw[i])) i++;
-        if (i == keyStart) return false;
-        string key = raw.Substring(keyStart, i - keyStart);
-        int numStart = i;
-        while (i < raw.Length)
-        {
-            char c = raw[i];
-            if (c == '+' || c == '-' || char.IsDigit(c)) i++; else break;
-        }
-        if (i == numStart || !int.TryParse(raw.AsSpan(numStart, i - numStart), out int val)) return false;
-        effect = Build(key, val);
-        return effect != null;
-    }
-
     // Constructs the typed record for a known key. Returns null for unrecognised keys
-    // (caller logs a debug warning; raw int still accessible via SwordSkillEngine.GetSpecialEffectValue).
+    // (caller logs a debug warning).
     internal static EquipmentSpecialEffect? Build(string key, int value) => key switch
     {
         "HolyDamage"       => new HolyDamage(value),

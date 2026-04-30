@@ -13,7 +13,7 @@ public static class ProfileData
 
     public static HashSet<string> EverSeenEvents { get; private set; } = new();
 
-    // Set on first F100 clear. Gates Run Modifiers UI (FB-564).
+    // Set on first F100 clear. Gates Run Modifiers UI.
     public static bool HasCompletedGame { get; private set; }
 
     // ── Player Guide persistence ─────────

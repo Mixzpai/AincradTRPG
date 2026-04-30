@@ -1,10 +1,10 @@
 namespace SAOTRPG.Map;
 
 // F48 Lindarth — Lisbeth's smithing hub town. Walled mountain forge-city, larger
-// than F1 TOB (60x35 vs 51x29). Anchors the Bundle 13 Lisbeth Workshop overhaul:
-// central Forge, anvil cluster, Crystallite Refinery (Frost Dragon tie), Mithril
-// Smelter, Material Vendor, Lisbeth's quarters, Lindarth Inn. Lisbeth NPC spawns
-// at deterministic Forge interior coord (Population.cs:434).
+// than F1 TOB (60x35 vs 51x29). Anchors the Lisbeth Workshop: central Forge,
+// anvil cluster, Crystallite Refinery (Frost Dragon tie), Mithril Smelter,
+// Material Vendor, Lisbeth's quarters, Lindarth Inn. Lisbeth NPC spawns at the
+// deterministic Forge interior coord — see PlaceNpcsFromTable in Population.cs.
 public static partial class MapGenerator
 {
     private const int LindarthHalfW = 30;
@@ -54,7 +54,7 @@ public static partial class MapGenerator
         SetTileSafe(map, clusterX + 2, clusterY + 2, TileType.Anvil);
         rooms.Add(new Room(clusterX - 1, clusterY - 2, 7, 7));
 
-        // 5. Crystallite Refinery — east of forge, canon tie to Bundle 11 Frost Dragon.
+        // 5. Crystallite Refinery — east of forge, canon tie to Frost Dragon.
         int refW = 8, refH = 6;
         int refX = sx + 6, refY = sy - 5;
         BuildStructure(map, refX, refY, refW, refH);

@@ -36,7 +36,7 @@ public sealed class LakePass : IGenerationPass
         // Lake stamping is naturally clipped — protected/Mountain tiles outside the disk
         // resist water, and the GenerateLake helper skips IsProtectedFromWater tiles.
 
-        // Bundle 5: Swamp lakes become BogWater. Ice biome water conversion is handled by IcePostWaterPass
+        // Swamp lakes become BogWater. Ice biome water conversion is handled by IcePostWaterPass
         // (needs edge detection of Snow/Ice neighbors, so it runs as a separate pass).
         if (ctx.Biome == BiomeType.Swamp)
         {

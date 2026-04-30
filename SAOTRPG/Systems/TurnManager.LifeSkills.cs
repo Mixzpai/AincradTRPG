@@ -4,13 +4,10 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.Systems;
 
-// Life Skill XP grants hooked to movement/rest/food pipelines; Title unlock
-// checks run on every kill via the Bestiary.
+// Life Skill XP grants hooked to movement/rest/food pipelines. Kill-driven
+// milestone unlocks run inside MilestoneSystem.CheckCombat directly.
 public partial class TurnManager
 {
-    // Tag-kill counter for Title unlocks. Rebuilt lazily from Bestiary on load.
-    private readonly Dictionary<string, int> _tagKills = new();
-
     // Wires life-skill milestone banner + food XP grant via ConsumableUsed.
     private void WireLifeSkillHooks()
     {
@@ -21,16 +18,7 @@ public partial class TurnManager
             _log.LogSystem("══════════════════════════════════════");
             _log.LogSystem($"  ✦ {name} reaches Level {level}!  ({bonus})");
             _log.LogSystem("══════════════════════════════════════");
-        };
-
-        // Title unlock banner — reuses Unique-Skill cadence.
-        TitleSystem.TitleUnlocked += def =>
-        {
-            _log.LogSystem("══════════════════════════════════════");
-            _log.LogSystem($"  ★ Title unlocked: {def.DisplayName}");
-            _log.LogSystem($"    {def.Description}");
-            _log.LogSystem("══════════════════════════════════════");
-            ToastQueue.EnqueueTitle(def.DisplayName);
+            MilestoneSystem.CheckLifeSkillLevel(_player, skill, level);
         };
 
         // Food XP — separate ConsumableUsed sub so ctor handler is untouched.
@@ -73,34 +61,4 @@ public partial class TurnManager
         _player.LifeSkills.GrantXp(LifeSkillType.Eating, 10);
     }
 
-    // Post-kill hook (after Bestiary.RecordKill): refresh tag counts + TitleSystem.
-    public void CheckTitleUnlocksAfterKill(Monster monster)
-    {
-        // Tag kills. Field/named bosses default "generic" (TOTAL only, no tag bucket).
-        string tag = monster is Mob mob ? mob.LootTag : "generic";
-        if (!string.IsNullOrEmpty(tag))
-            _tagKills[tag] = _tagKills.GetValueOrDefault(tag) + 1;
-
-        // Bestiary = authoritative species (handles Elite/Champion prefix).
-        var speciesKills = Bestiary.GetAll()
-            .ToDictionary(e => e.Name, e => e.TimesKilled);
-
-        TitleSystem.CheckKillUnlocks(
-            _player,
-            totalKillCount: KillCount,
-            speciesKills: speciesKills,
-            tagKills: _tagKills);
-    }
-
-    // Post-load _tagKills rebuild. Approximates via MobFactory species→tag
-    // (Bestiary doesn't persist LootTag). Missing species = "generic".
-    public void RebuildTagKillsFromBestiary()
-    {
-        _tagKills.Clear();
-        foreach (var entry in Bestiary.GetAll())
-        {
-            string tag = SAOTRPG.Map.MobFactory.GetLootTagForName(entry.Name) ?? "generic";
-            _tagKills[tag] = _tagKills.GetValueOrDefault(tag) + entry.TimesKilled;
-        }
-    }
 }

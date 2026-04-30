@@ -3,7 +3,7 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Subtle damage popups: float 1 cell up over ~400ms, fade in last 150ms.
+// Damage popups: float 1 cell up over ~400ms, fade in last 150ms.
 // Dim-first palette (crits add brightness + polygon glyph); frame-coalesce + DoT + chip filters keep it quiet.
 public partial class MapView
 {
@@ -14,8 +14,8 @@ public partial class MapView
         public Color Color;
         public int ElapsedMs;
         public bool IsCrit;
-        // MultiHitStream popups bypass the 3-per-tile coalesce rule so the
-        // 16-hit Starburst Stream cascade renders as 16 distinct numbers.
+        // MultiHitStream popups bypass the 3-per-tile coalesce rule so multi-hit
+        // skills render as N distinct numbers (one per hit).
         public bool MultiHitStream;
         // Pre-render delay — skill cascade staggers popups at 40ms intervals
         // so they don't all collide on the same frame.
@@ -29,7 +29,7 @@ public partial class MapView
 
     private const int PopupLifetimeMs = 400;
     private const int PopupFadeOutMs  = 150;
-    // Wave 2 — popup rise easing constants (research §7.5).
+    // Popup rise easing constants.
     private const int PopupRiseDelayMs    = 100;
     private const int PopupRiseDurationMs = 300;
     private const int PopupRiseHeightTiles = 1;
@@ -45,7 +45,7 @@ public partial class MapView
     {
         if (damage <= 0) return;
         DirtyFrame();
-        // Chip-damage suppression (research §5): sub-2% max HP reads as noise.
+        // Chip-damage suppression: sub-2% max HP reads as noise.
         if (maxTargetHp > 0 && damage * 100 < maxTargetHp * 2 && !isCrit) return;
 
         string text = damage.ToString();
@@ -77,7 +77,7 @@ public partial class MapView
         _popups.Add(new DamagePopup(mx, my - yOffset, text, c, isCrit));
     }
 
-    // Multi-hit cascade popup (Starburst Stream, Eclipse, Mother's Rosario).
+    // Multi-hit cascade popup (multi-hit skills).
     // Bypasses coalesce; ±1 cell x-jitter prevents single-column stack; delayMs staggers per hitIndex.
     public void EnqueueMultiHitPopup(int mx, int my, int damage, int hitIndex, int delayMs)
     {
@@ -92,7 +92,7 @@ public partial class MapView
     }
 
     // Aggregate "×N = total" popup for end-of-cascade summary. BrightYellow,
-    // fires 400ms after the last hit per research §7.3.
+    // fires 400ms after the last hit.
     public void EnqueueCascadeAggregate(int mx, int my, int hits, int total, int delayMs)
     {
         _popups.Add(new DamagePopup(mx, my - 1, $"×{hits} = {total}",
@@ -153,8 +153,7 @@ public partial class MapView
             }
             if (!_map.InBounds(p.X, p.Y) || !_map.IsVisible(p.X, p.Y)) continue;
 
-            // Wave 2 — smooth EaseOutCubic rise: hold for 100ms, then ease up
-            // by 1 tile over 300ms. Replaces the snap mid-life (research §7.5).
+            // Smooth EaseOutCubic rise: hold for 100ms, then ease up by 1 tile over 300ms.
             float riseT = (p.ElapsedMs - PopupRiseDelayMs) / (float)PopupRiseDurationMs;
             float eased = SAOTRPG.Systems.EasingHelper.Ease(riseT,
                 SAOTRPG.Systems.EasingHelper.EasingType.EaseOutCubic);

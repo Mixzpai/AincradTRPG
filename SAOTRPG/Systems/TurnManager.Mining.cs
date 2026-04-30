@@ -5,8 +5,8 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// Bundle 10 — mining bump-action handler. Diverted from TurnManager.Movement
-// before the BlocksMovement gate when target tile is mineable + Pickaxe equipped.
+// Mining bump-action handler. Diverted from TurnManager.Movement before the
+// BlocksMovement gate when target tile is mineable + Pickaxe equipped.
 public partial class TurnManager
 {
     // Default strikes per tier (mirrors OreVeinPlacementPass.DefaultStrikes).
@@ -19,7 +19,7 @@ public partial class TurnManager
         _ => 0,
     };
 
-    // Floor on strikes-remaining after MiningPower bonus per scout 2.1 table.
+    // Floor on strikes-remaining after MiningPower bonus.
     private static int MinStrikesAfterPower(TileType t) => t switch
     {
         TileType.OreVeinIron    => 1,
@@ -50,7 +50,7 @@ public partial class TurnManager
         if (pick == null)
         {
             _log.Log("You'd need a pickaxe to mine that.");
-            // Fall through to BlocksMovement — locked spec (scout 2.1).
+            // Fall through to BlocksMovement.
             return false;
         }
 
@@ -69,7 +69,7 @@ public partial class TurnManager
         _log.Log($"You strike the {oreName}!");
         DebugLogger.LogGame("MINING", $"strike vein={tile.Type} remaining={remaining} miningPower={pick.MiningPower}");
 
-        // If pickaxe broke this strike, destroy it now (Q19 — broken pickaxe = DestroyEquipped).
+        // If pickaxe broke this strike, destroy it now (broken pickaxe = DestroyEquipped).
         if (pick.ItemDurability <= 0)
         {
             _player.Inventory.DestroyEquipped(EquipmentSlot.Tool);
@@ -136,7 +136,7 @@ public partial class TurnManager
         DebugLogger.LogGame("MINING", $"deplete vein={from} drops={drops.Count} dropList={string.Join(",", drops.Select(d => d.DefinitionId))}");
     }
 
-    // Bundle 10 — Mining XP per strike (4/9/18 per Iron/Mithril/Divine, scout 2.2).
+    // Mining XP per strike (4/9/18 per Iron/Mithril/Divine).
     private void GrantMiningXp(TileType veinType)
     {
         int xp = MiningOreTables.XpForStrike(veinType);

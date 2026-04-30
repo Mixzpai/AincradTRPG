@@ -3,8 +3,7 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Bundle 13 (Item 9) — 3-4 letter abbreviations for the 8 currently-modeled
-// status effects. REPLACES Bundle 11's single-glyph mapping.
+// 3-4 letter abbreviations for the 8 currently-modeled status effects.
 // Reserved-but-unused codes (BRN/FRZ/IAI/MSE/DVN/BAR) intentionally omitted —
 // they have no backing TurnManager state today.
 public static class StatusIconMap

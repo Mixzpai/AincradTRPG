@@ -2,7 +2,7 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions;
 
-// Bundle 10 — Tool-slot Pickaxe tiers. Three tiers cover early/mid/end:
+// Tool-slot Pickaxe tiers. Three tiers cover early/mid/end:
 // Wooden (TOB starter), Iron (F10+), Mithril (F50+ endgame, +10% ore quality).
 public static class PickaxeDefinitions
 {

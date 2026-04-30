@@ -1,7 +1,7 @@
 namespace SAOTRPG.Map.Generation.Passes;
 
-// Bundle 10 — seed-grow ore vein clustering. Slots between Cluster and Lake
-// so terrain rocks already exist (avoid overlap) and water hasn't washed walls.
+// Seed-grow ore vein clustering. Slots between Cluster and Lake so terrain rocks
+// already exist (avoid overlap) and water hasn't washed walls.
 public sealed class OreVeinPlacementPass : IGenerationPass
 {
     public string Name => "OreVeinPlacement";

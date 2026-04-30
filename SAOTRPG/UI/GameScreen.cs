@@ -63,10 +63,8 @@ public static partial class GameScreen
             Story.StorySystem.Reset();
             Skills.UniqueSkillSystem.Reset();
             Skills.UniqueSkillSystem.TrapsDisarmed = 0;
-            // Bundle 7: fresh run → zero out per-prefab MAX_PER_GAME counts.
+            // Fresh run → zero out per-prefab MAX_PER_GAME counts.
             MapGenerator.SetPrefabUseCounts(null);
-            // Bundle 8: fresh run → clear Divine one-per-run gate.
-            LootGenerator.DivineObtainedThisRun = false;
         }
         else
         {
@@ -104,8 +102,8 @@ public static partial class GameScreen
             ColorScheme = ColorSchemes.Dim,
         };
 
-        // FB-474 quest tracker — anchored 2-row gap below minimap legend so
-        // 80×24 terminals keep map breathing room. Widget hides at empty state.
+        // Quest tracker — anchored 2-row gap below minimap legend so 80×24 terminals
+        // keep map breathing room. Widget hides at empty state.
         int trackerY    = MinimapHeight + 3;
         var questTracker = new QuestTrackerWidget
         { X = 1, Y = trackerY };
@@ -125,9 +123,9 @@ public static partial class GameScreen
             Text = "Status", X = 1, Y = statsTitleY, Width = Dim.Fill(1), Height = 1,
             ColorScheme = ColorSchemes.Gold,
         };
-        // Bundle 11: shrink stats text by 2 rows to make room for the status
-        // icon row underneath (instantiated after turnManager exists below).
-        // The [Effects] sidebar section now renders only when icon row hides.
+        // Shrink stats text by 2 rows to make room for the status icon row
+        // underneath (instantiated after turnManager exists below). The
+        // [Effects] sidebar section now renders only when icon row hides.
         const int IconRowHeight = 2;
         var playerStatsText = new TextView
         {
@@ -249,7 +247,7 @@ public static partial class GameScreen
         // Row 1: Floor info + weapon + context
         var infoLabel = new Label { Text = "", X = 1, Y = 1, Width = 62, ColorScheme = ColorSchemes.Dim };
         // Row 2: Consumable quickbar (left, 29 cols) + sword-skill indicator
-        // (right, ~32 cols with F1-F4 shrunk to [FN]). See research §3 budget.
+        // (right, ~32 cols with F1-F4 shrunk to [FN]).
         var hotbarLabel = new Label { Text = "", X = 1, Y = 2, Width = 30, ColorScheme = ColorSchemes.Body };
         var skillBarLabel = new Label { Text = "", X = Pos.AnchorEnd(34), Y = 2, Width = 32, ColorScheme = ColorSchemes.Gold };
         actionBar.Add(hpLabel, inventoryBtn, infoLabel, hotbarLabel, skillBarLabel);
@@ -264,21 +262,21 @@ public static partial class GameScreen
         mainWindow.Title = $"Aincrad TRPG — Floor {turnManager.CurrentFloor}";
         int[] saveFlash = { 0 };
 
-        // FB-479 status tray — starts col 64 (right of HP bars), 2-row tall.
+        // Status tray — starts col 64 (right of HP bars), 2-row tall.
         // Second-row wrap handled inside the widget when col budget exceeded.
         var statusTray = new StatusTrayWidget(turnManager, player)
         { X = 64, Y = 0, Width = Dim.Fill(18), Height = 2 };
         actionBar.Add(statusTray);
 
-        // Bundle 11 — sidebar status icon row, slotted between Status text and
-        // ruleB. 2 rows: glyph row + countdown row. Hides on sidebar < 12 cols.
+        // Sidebar status icon row, slotted between Status text and ruleB.
+        // 2 rows: glyph row + countdown row. Hides on sidebar < 12 cols.
         var statusIconRow = new StatusIconRowWidget(turnManager)
         {
             X = 1, Y = Pos.Bottom(playerStatsText),
             Width = Dim.Fill(1), Height = IconRowHeight,
         };
         rightPanel.Add(statusIconRow);
-        // Shift+S toggles verbose labels (session-local; research §6 says don't persist).
+        // Shift+S toggles verbose labels (session-local; not persisted).
         mapView.StatusTrayVerboseToggleRequested += () => statusTray.ToggleVerbose();
 
         // F9 — biome JSON hot-reload. Re-reads Content/Biomes/*.json, regenerates
@@ -331,9 +329,9 @@ public static partial class GameScreen
             sidebar.Append($"\n  Kills:{floorKills}  Expl:{explPct}%  {SAOTRPG.Map.DayNightCycle.PhaseName}");
             sidebar.Append($"\n  T{turnManager.FloorTurns}/{par}  {turnManager.GetFloorDangerLabel()}");
 
-            // Bundle 11 — Effects text moved to StatusIconRowWidget (rendered
-            // beneath this sidebar block). Exhaustion/Fatigue stay as text since
-            // they have no per-glyph icon mapping in StatusIconMap.
+            // Effects text rendered by StatusIconRowWidget beneath this sidebar
+            // block. Exhaustion/Fatigue stay as text since they have no per-glyph
+            // icon mapping in StatusIconMap.
             if (turnManager.RestCounter >= 250)
                 sidebar.Append("\n\n[ Effects ]\n  EXHAUSTED");
             else if (turnManager.RestCounter >= 150)
@@ -364,9 +362,9 @@ public static partial class GameScreen
 
             playerStatsText.Text = sidebar.ToString();
 
-            // Bundle 11: eighth-block stat bar resolution (8x ASCII), with green/
-            // yellow/red zones via StatBarHelper.ZoneColor. Wave 2 — bars read
-            // tweened "displayed" values from MapView so HP/XP/SAT drift smoothly.
+            // Eighth-block stat bar resolution (8x ASCII), with green/yellow/red
+            // zones via StatBarHelper.ZoneColor. Bars read tweened "displayed"
+            // values from MapView so HP/XP/SAT drift smoothly.
             mapView.SetPlayerBarTargets(player.CurrentHealth,
                 player.CurrentExperience, turnManager.Satiety);
             int dispHp  = mapView.DisplayedPlayerHp;
@@ -413,9 +411,8 @@ public static partial class GameScreen
                              $" | T{turnManager.TurnCount}" +
                              hintTag;
 
-            // Row 2 left: 10-slot quickbar. "N G" pairs separated by 1-col
-            // gutter per research §3 (29 cols for 10 slots). Slot number
-            // dim-gray, glyph bright when filled / `·` dim when empty.
+            // Row 2 left: 10-slot quickbar. "N G" pairs separated by 1-col gutter
+            // (29 cols total). Slot number dim-gray, glyph bright when filled / `·` dim when empty.
             var qb = new System.Text.StringBuilder();
             for (int qs = 0; qs < QuickbarState.SlotCount; qs++)
             {
@@ -446,7 +443,7 @@ public static partial class GameScreen
             inventoryBtn.Text = $" Inventory ({player.Inventory.Items.Count}) ";
             int explored = turnManager.Map.GetExplorationPercent();
             minimapTitleLabel.Text = $"Minimap — F{turnManager.CurrentFloor} ({explored}%)";
-            // FB-474/FB-479 widgets repaint every HUD refresh tick.
+            // Tracker + tray repaint every HUD refresh tick.
             questTracker.SetNeedsDraw();
             statusTray.SetNeedsDraw();
             mapView.SetNeedsDraw();
@@ -458,7 +455,7 @@ public static partial class GameScreen
         WireKeybindActions(turnManager, mapView, minimapView, player, gameLog, coloredLog,
             inventoryBtn, saveSlot, saveFlash, RefreshHud);
         WirePassiveSystems(turnManager, mapView, player, gameLog);
-        // Wave 2 — refresh HP/XP/SAT label every frame while a bar tween is mid-flight.
+        // Refresh HP/XP/SAT label every frame while a bar tween is mid-flight.
         mapView.PlayerBarsTweenTick += RefreshHud;
 
         mainWindow.Add(mapArea, rightPanel, ruleBottom, actionBar);
@@ -515,8 +512,8 @@ public static partial class GameScreen
         DebugLogger.EndTimer("GameScreen.Show", sw);
     }
 
-    // FB-564 — Apply Run Modifier start-of-run effects. Called once per new
-    // game after player + inventory are wired up, before MapGenerator runs.
+    // Apply Run Modifier start-of-run effects. Called once per new game
+    // after player + inventory are wired up, before MapGenerator runs.
     private static void ApplyNewGameModifiers(Player player, IGameLog log)
     {
         if (RunModifiers.Active.Count == 0) return;

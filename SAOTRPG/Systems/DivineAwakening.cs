@@ -7,8 +7,8 @@ using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;
 
 namespace SAOTRPG.Systems;
 
-// Bundle 9 — Divine Awakening. Sister Selka (F65) upgrades a Divine weapon up to
-// ◈3, folding BaseDamage*15% per level into Bonuses.Attack (additive w/ Refinement).
+// Divine Awakening. Sister Selka (F65) upgrades a Divine weapon up to ◈3,
+// folding BaseDamage*15% per level into Bonuses.Attack (additive w/ Refinement).
 public static class DivineAwakening
 {
     // Awakening cap (◈1/◈2/◈3). Referenced by Weapon.CanAwaken.
@@ -16,6 +16,9 @@ public static class DivineAwakening
 
     // Flat percent-of-BaseDamage Attack bonus granted per awakening level.
     public const int DamagePercentPerLevel = 15;
+
+    // Fires after Awaken successfully bumps the AwakeningLevel.
+    public static event Action<Weapon, int>? WeaponAwakened;
 
     // Per-level material cost table. Keys are DefIds from ItemRegistry.
     // Lv1: mithril ingot x3 · Lv2: divine fragment x1 · Lv3: primordial shard x1.
@@ -70,8 +73,9 @@ public static class DivineAwakening
         if (wasEquipped) weapon.Equip(player);
         inv.InvalidateStatCache();
 
-        // Bundle 13 — fire awakening banner + particle hook (Wave 2 consumes AwakeningParticleLevel).
+        // Fire awakening banner + particle hook.
         DivineObtainBanner.TriggerAwakening(weapon, nextLevel);
+        WeaponAwakened?.Invoke(weapon, nextLevel);
     }
 
     // True if `w` currently occupies any equipment slot in `inv`.

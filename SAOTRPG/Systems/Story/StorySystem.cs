@@ -3,7 +3,7 @@ using SAOTRPG.Entities;
 namespace SAOTRPG.Systems.Story;
 
 // Scripted story events registry + dispatcher. Static state (matches
-// Achievements/TutorialSystem SaveData pattern).
+// MilestoneSystem/TutorialSystem SaveData pattern).
 public static class StorySystem
 {
     public static HashSet<string> FiredEventIds { get; set; } = new();

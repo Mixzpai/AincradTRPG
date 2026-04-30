@@ -295,7 +295,7 @@ Usage Example:
 
 Benefits:
     - UI updates without coupling to Inventory class
-    - Achievement/quest tracking on item events
+    - Milestone/quest tracking on item events
     - Sound/visual effects on inventory changes
     - Analytics/telemetry integration
 

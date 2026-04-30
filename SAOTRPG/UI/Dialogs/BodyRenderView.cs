@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.RegularExpressions;
 using Terminal.Gui;
 using SAOTRPG.UI.Helpers;
 
@@ -7,14 +6,16 @@ namespace SAOTRPG.UI.Dialogs;
 
 // Read-only body renderer for PlayerGuideDialog. Replaces TextView so each
 // token can hold its own Attribute — Terminal.Gui v2 TextView shares one
-// ColorScheme across all content (quirks §5). Owns scroll position + focused
-// See-also bullet cursor. Tokenizes the wrapped body once on SetContent.
+// ColorScheme across all content. Owns scroll position + focused See-also
+// bullet cursor. Tokenizes the wrapped body once on SetContent.
+//
+// PATH-D-PORT: documented justified custom View subclass. Required because
+// TG v2 TextView cannot per-token-color content (single ColorScheme), and
+// the See-also link focus-highlight + inline [[link]] cyan tokens both need
+// per-span Attribute swaps. Path D port reimplements as a custom rune-paint
+// pass over the same Span/Line tokenization (no TG dependency below).
 internal sealed class BodyRenderView : View
 {
-    // Atomic [[Topic]] regex; matches the same shape MigrateBracketsToDouble emits.
-    private static readonly Regex DoubleBracketRegex =
-        new(@"\[\[([^\]]+)\]\]", RegexOptions.Compiled);
-
     private sealed class Span
     {
         public string Text = "";
@@ -226,6 +227,10 @@ internal sealed class BodyRenderView : View
     }
 
     // ── Drawing ──────────────────────────────────────────────────────────
+    // PATH-D-PORT: TG-coupled paint surface. Iterates the Span/Line list and
+    // pushes per-span Attribute + AddStr to the TG Driver. Path D port replaces
+    // the Driver calls with the new backend's glyph-blitter while keeping the
+    // span loop intact — span tokenization above is renderer-agnostic.
     protected override bool OnDrawingContent()
     {
         int height = Frame.Height;
@@ -244,6 +249,7 @@ internal sealed class BodyRenderView : View
             {
                 if (col >= width) break;
                 Color fg = isFocused ? FgFocusLine : span.Fg;
+                // PATH-D-PORT: direct TG Driver attribute + glyph push.
                 Driver!.SetAttribute(new Terminal.Gui.Attribute(fg, Color.Black));
                 Move(col, row);
                 int writable = Math.Min(span.Text.Length, width - col);

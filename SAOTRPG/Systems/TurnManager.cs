@@ -10,6 +10,9 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
+// Player-death broadcast payload. Cause is a short tag ("monster" / "trap" / "bleed" / "starvation" / "biome" / "tile").
+public record DeathContext(string Cause, string KillerName, int FloorAtDeath, int TurnAtDeath);
+
 // Core gameplay loop controller -- owns the active map, floor state, and status effects.
 public partial class TurnManager
 {
@@ -66,8 +69,8 @@ public partial class TurnManager
     private readonly HashSet<int> _discoveredLore = new();
     // Field bosses defeated this run — prevents re-spawn on floor re-entry.
     public HashSet<string> DefeatedFieldBosses { get; set; } = new();
-    // Bundle 13 (Q16) — floor-boss kills this run. Per-floor granular so PG drop reveal
-    // doesn't leak floors the player skipped via teleport.
+    // Floor-boss kills this run. Per-floor granular so PG drop reveal doesn't leak
+    // floors the player skipped via teleport.
     public HashSet<int> DefeatedFloorBosses { get; set; } = new();
     public IReadOnlyCollection<int> DiscoveredLore => _discoveredLore;
     private bool _floorFullyExplored;
@@ -91,8 +94,8 @@ public partial class TurnManager
     private int _levelUpBuff, _levelUpBuffTurns;
     public int LevelUpBuffTurns => _levelUpBuffTurns;
 
-    // Bundle 10 (B1) — active food regen buff. Set when Food with RegenerationRate>0
-    // is consumed; consumed in PassiveRegen each tick. 0 = inactive (legacy default).
+    // Active food regen buff. Set when Food with RegenerationRate>0 is consumed;
+    // consumed in PassiveRegen each tick. 0 = inactive (legacy default).
     private int _foodRegenRate, _foodRegenTurnsLeft;
     public int FoodRegenRate => _foodRegenRate;
     public int FoodRegenTurnsLeft => _foodRegenTurnsLeft;
@@ -120,7 +123,7 @@ public partial class TurnManager
     private readonly Dictionary<int, int> _blindedMobs = new(), _stunnedMobs = new();
     // Lunacy+N per-mob confusion counter: value = turns of random-wander AI left.
     private readonly Dictionary<int, int> _confusedMobs = new();
-    // Bundle 10 (B11) — SlowOnHit per-mob slow counter: value = turns of every-other-turn skip left.
+    // SlowOnHit per-mob slow counter: value = turns of every-other-turn skip left.
     private readonly Dictionary<int, int> _slowedMobs = new();
     private readonly Dictionary<int, (int turns, int dmg)> _burningMobs = new(), _poisonedMobs = new();
     // Telegraphed attacks — monster winds up for 1 turn, then deals heavy damage
@@ -156,18 +159,35 @@ public partial class TurnManager
 
     private int _floorDamageTaken, _floorItemsFound, _floorKillsStart;
     public int FloorKillsStart => _floorKillsStart;
+
+    // Run-scoped: any ally KO'd at least once. Cleared on new run via TurnManager
+    // construction (default false). Used by if_no_ally_death F100 milestone.
+    public bool AnyAllyKOdThisRun { get; internal set; }
+
+    // Per-run completion tallies for QuestSubCategory turn-ins. Drive progressive
+    // toasts and milestone unlocks (hf_element_researcher / hf_debug_field_tester).
+    // Round-tripped via SaveData; reset to 0 on new run.
+    public int IfImplementQuestsCompletedThisRun { get; internal set; }
+    public int HfMissionsCompletedThisRun { get; internal set; }
     public record FloorRecapData(int Floor, int Kills, int Items, int DamageTaken, int Turns, int ExplorePercent,
         int ColEarned = 0, string? BountyTarget = null, int BountyProgress = 0, int BountyNeeded = 0, bool BountyDone = false,
         TimeSpan RealTime = default);
     public FloorRecapData? LastFloorRecap { get; private set; }
 
-    // FB-469 — center-screen toast hooks. Fires from HandleMonsterKill so
+    // Center-screen toast hooks. Fires from HandleMonsterKill so
     // GameScreen.Events can route to ToastQueue without reaching into combat.
     public event Action<string>? FloorBossCleared;
     public event Action<string>? SpeciesFirstKilled;
 
     public event Action? TurnCompleted;
     public event Action? PlayerDied;
+    // Detailed death broadcast — fires alongside PlayerDied with full context.
+    public event Action<DeathContext>? PlayerDiedDetailed;
+    private void RaisePlayerDied(string cause)
+    {
+        PlayerDied?.Invoke();
+        PlayerDiedDetailed?.Invoke(new DeathContext(cause, LastKillerName ?? "", CurrentFloor, TurnCount));
+    }
     public event Action<int>? FloorChanged;
     public event Action<Vendor>? VendorInteraction;
     public event Action? StairsConfirmRequested;
@@ -186,10 +206,10 @@ public partial class TurnManager
 
     // Fires when the active map swaps (enter/exit labyrinth). UI refreshes map references.
     public event Action? MapSwapped;
-    // Bundle 8: fires once per run when a Divine Object enters inventory (boss drop or quest).
+    // Fires once per run when a Divine Object enters inventory (boss drop or quest).
     // GameScreen.Events subscribes to trigger DivineObtainBanner + border flash + toast.
     public event Action<Items.Equipment.Weapon>? DivineObtained;
-    // Bundle 9: Selka awakening dialog request. GameScreen.Events subscribes to open
+    // Selka awakening dialog request. GameScreen.Events subscribes to open
     // DivineAwakeningDialog modal. Fires each time Selka is engaged while carrying a Divine.
     public event Action<Entities.Player>? DivineAwakeningRequested;
     // Fires when the player steps on an Anvil. UI opens CraftingDialog.
@@ -197,8 +217,8 @@ public partial class TurnManager
     public event Action? CookingInteraction;
     // Fires when the player talks to Lisbeth at Lindarth. UI opens LisbethCraftDialog.
     public event Action? LisbethInteraction;
-    // FB-057 — fires when the player steps on the Monument of Swordsmen
-    // tile (F1 Town of Beginnings). UI opens the MonumentDialog.
+    // Fires when the player steps on the Monument of Swordsmen tile
+    // (F1 Town of Beginnings). UI opens the MonumentDialog.
     public event Action? MonumentInteraction;
 
     // ── Sword Skills state ───────────────────────────────────────────
@@ -297,11 +317,9 @@ public partial class TurnManager
     public void ApplyTalent(PassiveTalents.Perk perk) => perk.Apply(_player);
 
     // Fires after a Divine enters inventory (boss drop or quest reward).
-    // The flag is kept for save-compat round-trip but no longer gates the banner —
-    // the cap is gone, so every Divine pickup gets full ceremony.
+    // Every Divine pickup gets full ceremony — no per-run cap.
     private void NotifyDivineObtained(Items.Equipment.Weapon divine)
     {
-        LootGenerator.DivineObtainedThisRun = true;
         DivineObtained?.Invoke(divine);
     }
 
@@ -327,17 +345,28 @@ public partial class TurnManager
         // first rest/walk/sprint/food grant and first kill are observed.
         WireLifeSkillHooks();
 
+        // Milestone dispatcher — global event subscriptions are idempotent;
+        // turn-scoped PlayerDiedDetailed binds per-instance.
+        MilestoneSystem.Initialize();
+        MilestoneSystem.HookTurnManager(this);
+
         // Barrier+N per-floor pool — seed from starting weapon so fresh runs
         // have the pool ready before the first hit. Refilled on floor entry.
         _barrierRemaining = GetBarrierCapacity();
 
-        // Bundle 13 (Item 1) — track Legendary collectables on pickup. HashSet.Add
-        // is idempotent, so dupes via stack/sell/repurchase don't double-count.
+        // Track Legendary collectables on pickup. Routes through MilestoneSystem;
+        // the unlock guard inside LifetimeStats prevents double-fire.
         player.Inventory.Events.ItemAdded += (_, e) =>
         {
             if (e.Item.Rarity == "Legendary" && !string.IsNullOrEmpty(e.Item.DefinitionId))
-                CollectablesTracker.MarkCollected(e.Item.DefinitionId);
+            {
+                MilestoneSystem.OnLegendaryCollected(player, e.Item.DefinitionId);
+            }
         };
+
+        // Equipment-state milestones (sealed/legendary/divine/Kirito-pair).
+        player.Inventory.Events.ItemEquipped += (_, e) =>
+            MilestoneSystem.OnItemEquipped(player, e.Equipment);
 
         player.Inventory.Events.ConsumableUsed += (_, e) =>
         {
@@ -371,7 +400,7 @@ public partial class TurnManager
                 string bonusTag = bonusPct > 0 ? $" [+{bonusPct}% Eating]" : "";
                 _log.Log($"You feel sated. (Satiety: {Satiety}/{MaxSatiety}){bonusTag}");
                 _starvingWarned = false;
-                // Bundle 10 (B1) — RegenerationRate buff: tick HP regen for RegenerationDuration turns.
+                // RegenerationRate buff: tick HP regen for RegenerationDuration turns.
                 // Eating bonusPct scales the regen rate (L99 → +100% rate). 0 = inert.
                 int scaledRate = food.RegenerationRate + (food.RegenerationRate * bonusPct / 100);
                 if (scaledRate > 0 && food.RegenerationDuration > 0)
@@ -416,13 +445,13 @@ public partial class TurnManager
 
     private void HandleCrystal(SAOTRPG.Items.Consumables.Crystal crystal)
     {
-        // FB-564 Anti-Crystal Tyranny — all crystals inert.
+        // Anti-Crystal Tyranny — all crystals inert.
         if (RunModifiers.IsActive(RunModifier.AntiCrystalTyranny))
         {
             _log.Log("The crystal hums but refuses to activate. Anti-Crystal field suppresses it.");
             return;
         }
-        // FB-564 Kayaba's Wager — teleport/corridor crystals specifically inert.
+        // Kayaba's Wager — teleport/corridor crystals specifically inert.
         if (RunModifiers.IsActive(RunModifier.KayabasWager)
             && crystal.CrystalType is "Teleport" or "Corridor")
         {
@@ -590,7 +619,7 @@ public partial class TurnManager
         tm._poisonTurnsLeft = save.PoisonTurnsLeft; tm._bleedTurnsLeft = save.BleedTurnsLeft;
         tm._stunTurnsLeft = save.StunTurnsLeft; tm._slowTurnsLeft = save.SlowTurnsLeft;
         tm._shrineBuffTurns = save.ShrineBuffTurns; tm._levelUpBuffTurns = save.LevelUpBuffTurns;
-        // Bundle 10 (B1) — restore food regen buff. 0 = inactive on legacy saves.
+        // Restore food regen buff. 0 = inactive on legacy saves.
         tm._foodRegenRate = save.FoodRegenRate; tm._foodRegenTurnsLeft = save.FoodRegenTurnsLeft;
         tm._floorStartTurn = save.TurnCount; tm._floorStartRealTime = DateTime.Now;
         tm._floorKillsStart = save.KillCount; tm._restCounter = save.RestCounter;
@@ -601,11 +630,12 @@ public partial class TurnManager
         // IF Proficiency forks — rehydrate per-weapon pick state.
         tm.RehydrateForkChoices(save.WeaponProficiencyForks);
         if (save.DiscoveredLore != null) foreach (var idx in save.DiscoveredLore) tm._discoveredLore.Add(idx);
-        if (save.UnlockedAchievements != null) Achievements.Unlocked = new HashSet<string>(save.UnlockedAchievements);
         if (save.SeenTutorialTips != null) TutorialSystem.SeenTips = new HashSet<string>(save.SeenTutorialTips);
         if (save.ActiveQuests != null) QuestSystem.ActiveQuests = new List<Quest>(save.ActiveQuests);
         if (save.CompletedQuests != null) QuestSystem.CompletedQuests = new List<Quest>(save.CompletedQuests);
         QuestSystem.PinnedQuestId = save.PinnedQuestId;
+        tm.IfImplementQuestsCompletedThisRun = save.IfImplementQuestsCompletedThisRun;
+        tm.HfMissionsCompletedThisRun = save.HfMissionsCompletedThisRun;
         if (save.FiredStoryEventIds != null)
             Story.StorySystem.FiredEventIds = new HashSet<string>(save.FiredStoryEventIds);
         if (save.StoryFlags != null)
@@ -619,7 +649,7 @@ public partial class TurnManager
             Story.StorySystem.Reputation.Clear();
             foreach (var kvp in save.FactionReputation)
             {
-                // FB-063 faction rename: legacy saves use "AincradLiberationSquad".
+                // Faction rename: legacy saves use "AincradLiberationSquad".
                 string key = kvp.Key == "AincradLiberationSquad"
                     ? "AincradLiberationForce" : kvp.Key;
                 if (Enum.TryParse<Story.Faction>(key, out var f))
@@ -635,7 +665,7 @@ public partial class TurnManager
         Skills.UniqueSkillSystem.TrapsDisarmed = save.TrapsDisarmed;
         if (save.DefeatedFieldBosses != null)
             tm.DefeatedFieldBosses = new HashSet<string>(save.DefeatedFieldBosses);
-        // Bundle 13 (Q16) — per-floor boss-clear flags. Null on legacy = empty set.
+        // Per-floor boss-clear flags. Null on legacy = empty set.
         if (save.DefeatedFloorBosses != null)
             tm.DefeatedFloorBosses = new HashSet<int>(save.DefeatedFloorBosses);
         RunModifiers.LoadFromSave(save.ActiveRunModifiers);
@@ -644,7 +674,7 @@ public partial class TurnManager
         ShopTierSystem.SetForLoad(save.HighestFloorBossCleared);
         // Investments hydrate per-vendor; legacy saves = cleared state.
         VendorInvestmentSystem.SetForLoad(save.VendorInvestments);
-        // Bundle 12 (C6) — restore current-floor mining vein strikes (legacy = noop).
+        // Restore current-floor mining vein strikes (legacy = noop).
         SaveManager.RestoreVeinStrikes(save, map);
 
         // Restore party members
@@ -673,9 +703,6 @@ public partial class TurnManager
         if (save.SkillCooldowns != null)
             foreach (var kvp in save.SkillCooldowns) tm._skillCooldowns[kvp.Key] = kvp.Value;
         tm._priorPlayTime = TimeSpan.FromSeconds(save.PlayTimeSeconds);
-        // Rebuild tag-kill cache from Bestiary so Title tag-milestones stay
-        // consistent across sessions without a parallel persisted dict.
-        tm.RebuildTagKillsFromBestiary();
         return tm;
     }
 

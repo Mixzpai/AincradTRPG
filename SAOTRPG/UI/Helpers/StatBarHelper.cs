@@ -3,10 +3,10 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.UI.Helpers;
 
-// Bundle 11 — eighth-block stat bars (HP/MP/SP). 8x sub-cell resolution via
-// `█▉▊▋▌▍▎▏`. Falls back to ASCII `[████-----]` style when
-// UserSettings.UseAsciiStatBars is true (some monospace fonts misrender the
-// eighth-block range; toggle is per-user, not per-save).
+// Eighth-block stat bars (HP/MP/SP). 8x sub-cell resolution via `█▉▊▋▌▍▎▏`.
+// Falls back to ASCII `[████-----]` style when UserSettings.UseAsciiStatBars
+// is true (some monospace fonts misrender the eighth-block range; toggle is
+// per-user, not per-save).
 public static class StatBarHelper
 {
     // Trailing-edge eighths in increasing fill order. Index 0 = empty cell,

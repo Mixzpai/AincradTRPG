@@ -83,7 +83,7 @@ public class SaveData
     public int SlowTurnsLeft { get; set; }
     public int ShrineBuffTurns { get; set; }
     public int LevelUpBuffTurns { get; set; }
-    // Bundle 10 (B1) — active food regen buff. 0 = inactive (legacy default safe).
+    // Active food regen buff. 0 = inactive (legacy default safe).
     public int FoodRegenRate { get; set; }
     public int FoodRegenTurnsLeft { get; set; }
 
@@ -96,8 +96,6 @@ public class SaveData
     // Indices of discovered lore stone entries (0-based into FlavorText.LoreStoneEntries).
     public List<int> DiscoveredLore { get; set; } = [];
 
-    public List<string> UnlockedAchievements { get; set; } = [];
-
     // IDs of tutorial tips already shown (so they don't repeat on reload).
     public List<string> SeenTutorialTips { get; set; } = [];
 
@@ -105,6 +103,11 @@ public class SaveData
     public List<Quest> ActiveQuests { get; set; } = [];
     public List<Quest> CompletedQuests { get; set; } = [];
     public string? PinnedQuestId { get; set; }
+
+    // Per-run completion tallies for QuestSubCategory-tagged turn-ins. Reset on
+    // new game (save replaced). Drive progressive toasts and milestone unlocks.
+    public int IfImplementQuestsCompletedThisRun { get; set; }
+    public int HfMissionsCompletedThisRun { get; set; }
 
     // Party members
     public List<AllySaveData> PartyMembers { get; set; } = [];
@@ -121,58 +124,50 @@ public class SaveData
     // Field bosses defeated this run (ids like "frost_dragon_f48")
     public List<string> DefeatedFieldBosses { get; set; } = [];
 
-    // Active Run Modifiers (FB-564) — set at run start, fixed per run
+    // Active Run Modifiers — set at run start, fixed per run
     public List<string> ActiveRunModifiers { get; set; } = [];
 
     // IM Shop Tiering — highest boss-cleared floor. 0 = base stock only.
     public int HighestFloorBossCleared { get; set; }
 
-    // FB-050 Life Skills — Level + CurrentXp by enum name. Missing = L1/0.
+    // Life Skills — Level + CurrentXp by enum name. Missing = L1/0.
     public Dictionary<string, LifeSkillStateSave> LifeSkills { get; set; } = new();
 
-    // FB-058 Titles — unlocked IDs + active. Null/empty until Monument visit.
-    public List<string> UnlockedTitleIds { get; set; } = new();
+    // Active equipped title (Milestone Id with RewardType.EquippableTitle).
+    // Null = no title equipped. Unlock set itself lives in lifetime_stats.json.
     public string? ActiveTitleId { get; set; }
 
-    // FB-063 Karma/Guild. Karma [-100,+100]; ActiveGuildId = Faction enum name,
+    // Karma/Guild. Karma [-100,+100]; ActiveGuildId = Faction enum name,
     // "None" = no guild. Founded fields apply only when ActiveGuildId=="PlayerGuild".
     public int Karma { get; set; }
     public string ActiveGuildId { get; set; } = "None";
     public string? FoundedGuildName { get; set; }
     public int FoundedGuildPerk { get; set; }
 
-    // FB-072 Investing — per-vendor Col totals by ShopName.
+    // Investing — per-vendor Col totals by ShopName.
     // VendorInvestmentSystem clamps to [0, MaxInvestmentPerVendor] on load.
     public Dictionary<string, int> VendorInvestments { get; set; } = new();
 
-    // FB-466 — 10 consumable-quickbar slots (keys 1-0), DefinitionId per index.
+    // 10 consumable-quickbar slots (keys 1-0), DefinitionId per index.
     // Null entries = empty. Legacy saves deserialize as nulls and auto-fill
     // from the first pickup thereafter.
     public List<string?> QuickbarSlotDefIds { get; set; } = new();
 
-    // Bundle 7: per-prefab-name placement counts this run. Enforces MAX_PER_GAME directive.
+    // Per-prefab-name placement counts this run. Enforces MAX_PER_GAME directive.
     // Missing on legacy v2 saves → S.T.J yields empty dict (no migration needed).
     public Dictionary<string, int> PrefabUseCounts { get; set; } = new();
 
-    // Bundle 8: Divine one-per-run cap. Set when any Divine enters inventory.
-    // LootGenerator checks before rolling a Divine boss drop; legacy saves default false.
-    public bool DivineObtainedThisRun { get; set; }
-
-    // Bundle 12 (C6) — current-floor mining vein strike counters. Null on legacy saves
+    // Current-floor mining vein strike counters. Null on legacy saves
     // (loader treats as empty → re-seeds via DefaultStrikesForTile on first strike).
     public List<VeinStrikeEntry>? VeinStrikes { get; set; }
 
-    // Bundle 13 (Item 1) — Legendary DefIds the player has collected this run.
-    // Null on legacy saves (CollectablesTracker treats as empty set).
-    public HashSet<string>? CollectedLegendaries { get; set; }
-
-    // Bundle 13 (Q16) — per-floor boss-clear flags so PG drop reveal doesn't leak
-    // floors the player skipped via teleport. Null on legacy = empty set.
+    // Per-floor boss-clear flags so PG drop reveal doesn't leak floors the player
+    // skipped via teleport. Null on legacy = empty set.
     public HashSet<int>? DefeatedFloorBosses { get; set; }
 }
 
-// Bundle 12 (C6) — JSON-friendly tile-strike pair. Tuples don't round-trip cleanly via
-// JsonElement; named props avoid that pitfall.
+// JSON-friendly tile-strike pair. Tuples don't round-trip cleanly via JsonElement;
+// named props avoid that pitfall.
 public class VeinStrikeEntry
 {
     public int X { get; set; }
@@ -180,7 +175,7 @@ public class VeinStrikeEntry
     public int Strikes { get; set; }
 }
 
-// FB-050 — serialized form of a single life skill's live state.
+// Serialized form of a single life skill's live state.
 public class LifeSkillStateSave
 {
     public int Level { get; set; } = 1;
@@ -206,19 +201,19 @@ public class ItemSaveData
     // for level i+1). Null on legacy → auto-fill N × Crimson Flame.
     public List<string>? EnhancementOreHistory { get; set; }
 
-    // Bundle 8: FD Paired flag. Nullable → legacy saves fall back to weapon-definition value;
+    // FD Paired flag. Nullable → legacy saves fall back to weapon-definition value;
     // runtime mutators (Corruption Stone transforms) round-trip via the saved flag.
     public bool? IsDualWieldPaired { get; set; }
 
-    // Bundle 9: Divine Awakening level (◈1-◈3). Null on legacy/unawakened saves,
+    // Divine Awakening level (◈1-◈3). Null on legacy/unawakened saves,
     // written only when > 0. Deserialize re-folds the ATK bonus via ComputeBonusAttack.
     public int? AwakeningLevel { get; set; }
 
-    // Bundle 10 — Pickaxe durability ceiling. Null on legacy/non-pickaxe saves;
+    // Pickaxe durability ceiling. Null on legacy/non-pickaxe saves;
     // load-time fallback uses ItemDurability when null so legacy still loads cleanly.
     public int? MaxDurability { get; set; }
 
-    // Bundle 10 (B2) — true when Bonuses already include enhancement/refinement/awakening.
+    // True when Bonuses already include enhancement/refinement/awakening.
     // DefId items leave null (runtime replays); FullItemJson items set true (skip replay).
     public bool? BonusesAlreadyBaked { get; set; }
 }

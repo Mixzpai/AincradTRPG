@@ -149,7 +149,7 @@ public static class EvolutionMaterialDefinitions
         IsBossDrop = true,
     };
 
-    // Bundle 9 — Divine Awakening catalysts.
+    // Divine Awakening catalysts.
     // F75+ canon boss ~5% drop. Used for Divine Awakening Lv1→Lv2.
     public static MobDrop CreateDivineFragment() => new()
     {
@@ -182,7 +182,7 @@ public static class EvolutionMaterialDefinitions
         IsBossDrop = true,
     };
 
-    // Bundle 13 — Slicing Stones (alt-path evolution catalysts).
+    // Slicing Stones (alt-path evolution catalysts).
     // Substitute for canon chain catalyst at evolve time → routes to alt-path DefId.
     // Lesser ◊ T1→T2alt, Greater ◈ T2→T3alt, Perfect ✦ T3→T4alt.
     public static MobDrop CreateLesserSlicingStone() => new()

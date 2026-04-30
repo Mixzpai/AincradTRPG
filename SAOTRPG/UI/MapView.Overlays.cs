@@ -92,7 +92,7 @@ public partial class MapView
         Move(x1, y1); Driver!.AddRune(new System.Text.Rune('╝'));
 
         // ── Row 1: header banner ─────────────────────────────────────
-        // Bundle 9: awakening variant swaps header + flavor; obtain variant unchanged.
+        // Awakening variant swaps header + flavor; obtain variant unchanged.
         bool awakening = DivineObtainBanner.IsAwakening;
         string header = awakening ? "◈ DIVINE AWAKENED ◈" : "◈ DIVINE OBJECT OBTAINED ◈";
         int hx = x0 + (bw - header.Length) / 2;
@@ -221,7 +221,7 @@ public partial class MapView
         }
 
         const int barWidth = 20;
-        // Wave 2 — tweened HP for smooth bar drift on boss damage.
+        // Tweened HP for smooth bar drift on boss damage.
         int displayedHp = GetDisplayedMonsterHp(boss.Id, boss.CurrentHealth);
         string hpBar = BarBuilder.BuildGradient(displayedHp, boss.MaxHealth, barWidth);
         string label = $" {boss.Name} {hpBar} {boss.CurrentHealth}/{boss.MaxHealth} ";

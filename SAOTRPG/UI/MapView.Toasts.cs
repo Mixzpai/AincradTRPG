@@ -8,7 +8,7 @@ namespace SAOTRPG.UI;
 // centered X at Y=vpHeight*0.3. Double-box for LevelUp/FloorBossCleared only.
 public partial class MapView
 {
-    // Bundle 12 — variable sizing: width adapts to message len; height grows to line count.
+    // Variable sizing: width adapts to message len; height grows to line count.
     // Bounds keep the banner readable but never wider than the viewport (clamped at render time).
     private const int MinBoxWidth = 24;
     private const int AbsMaxBoxWidth = 60;

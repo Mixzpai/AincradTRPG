@@ -1,7 +1,7 @@
 namespace SAOTRPG.Systems;
 
 // Run Modifiers: run-start toggles that alter gameplay (stackable, score mul is
-// multiplicative). Unlocked after F100 clear (FB-564, gated via ProfileData.HasCompletedGame).
+// multiplicative). Unlocked after F100 clear (gated via ProfileData.HasCompletedGame).
 public enum RunModifier
 {
     StarlessNight,        // Easy   — perpetual night, +spawn density
@@ -105,8 +105,6 @@ public static class RunModifiers
             mul *= Definitions[mod].ScoreMultiplier;
         return Math.Min(mul, 10.0);
     }
-
-    public static void Reset() => Active.Clear();
 
     public static void LoadFromSave(IEnumerable<string>? ids)
     {

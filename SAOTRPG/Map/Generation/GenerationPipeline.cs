@@ -27,11 +27,10 @@ public static class GenerationPipeline
         return (ctx.Map, ctx.Rooms);
     }
 
-    // Towns + F100 skip mask build (mask stays null → IsInsideCircle returns true everywhere).
+    // F100 skips mask build (mask stays null → IsInsideCircle returns true everywhere).
     // GameMap mirrors the mask so post-pipeline Population can gate placements.
     private static void BuildCircleMask(WorldContext ctx)
     {
-        if (FloorScale.IsHandBuiltTownFloor(ctx.FloorNumber)) return;
         if (ctx.FloorNumber == 100) return;
         ctx.CircleMask = FloorMask.Build(ctx.Width, ctx.Height, ctx.GlobalSeed ^ ctx.FloorNumber);
         ctx.Map.CircleMask = ctx.CircleMask;

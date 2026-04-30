@@ -57,7 +57,7 @@ public partial class TurnManager
         _restCounter = 0;
         _fatiguedWarned = false;
         _exhaustedWarned = false;
-        // FB-051 — Campfire counts as restful sleep. Slightly less XP than
+        // Campfire counts as restful sleep. Slightly less XP than
         // a full rest (10 vs 20) since the player doesn't spend turns.
         GrantCampfireSleepXp();
         CookingInteraction?.Invoke();
@@ -139,7 +139,7 @@ public partial class TurnManager
         {
             LastKillerName = "lava";
             _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-            PlayerDied?.Invoke();
+            RaisePlayerDied("lava");
             return true;
         }
         return false;
@@ -169,7 +169,7 @@ public partial class TurnManager
         {
             LastKillerName = "corrupted ground";
             _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-            PlayerDied?.Invoke();
+            RaisePlayerDied("corrupted_ground");
             return true;
         }
         return false;

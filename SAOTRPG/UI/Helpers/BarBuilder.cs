@@ -9,17 +9,6 @@ public static class BarBuilder
     private const double GradientMid    = 0.50;
     private const double GradientLow    = 0.25;
 
-    // Flat bar: [||||........]. Simpler than BuildGradient when block elements aren't needed.
-    public static string Build(int current, int max, int width = 16, char fillChar = '|', char emptyChar = '.')
-    {
-        if (max <= 0) return "[" + new string(emptyChar, width) + "]";
-
-        int filled = (int)Math.Round((double)current / max * width);
-        filled = Math.Clamp(filled, 0, width);
-
-        return "[" + new string(fillChar, filled) + new string(emptyChar, width - filled) + "]";
-    }
-
     // Gradient █▓▒░ bar; visual examples (w=10): 100%→[██████████], 50%→[█████·····], 5%→[░·········].
     public static string BuildGradient(int current, int max, int width = 16)
     {
@@ -59,14 +48,4 @@ public static class BarBuilder
 
         return "[" + new string(bar) + "]";
     }
-
-    // Renders an XP gradient bar. Convenience wrapper for the HUD action bar.
-    // Default width is narrower (10) since XP is secondary info.
-    public static string BuildXp(int current, int required, int width = 10)
-        => BuildGradient(current, required, width);
-
-    // Renders an HP gradient bar. Convenience wrapper for the HUD action bar.
-    // Default width is wider (16) since HP is the primary survival gauge.
-    public static string BuildHp(int current, int max, int width = 16)
-        => BuildGradient(current, max, width);
 }

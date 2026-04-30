@@ -173,7 +173,7 @@ public static class BossFactory
         int xp    = 800 + floor * 200 + floor * floor * 5;
         int col   = 4000 + floor * 500 + floor * floor * 20;
 
-        // FB-564 Heathcliff's Gauntlet — boss HP x2, ATK x1.3.
+        // Heathcliff's Gauntlet run modifier — boss HP x2, ATK x1.3.
         if (Systems.RunModifiers.IsActive(Systems.RunModifier.HeathcliffsGauntlet))
         {
             hp = (int)(hp * 2.0);

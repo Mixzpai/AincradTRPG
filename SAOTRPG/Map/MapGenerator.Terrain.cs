@@ -107,46 +107,4 @@ public static partial class MapGenerator
             map.Tiles[mx, my].Type = interior ? TileType.WaterDeep : TileType.Water;
         }
     }
-
-    // ── Biome blend: post-pass that softens edges (GrassTall near forests, GrassSparse near rocks/water).
-    // Fringe conversion chances are biome-tuned via BiomeBlendPass (Bundle 5).
-    internal static void BlendBiomes(GameMap map, Random rng,
-        float forestFringeChance, float rockFringeChance, float shoreFringeChance)
-    {
-        int w = map.Width, h = map.Height;
-
-        // Work on a snapshot so we don't feed back mid-pass.
-        var snapshot = new TileType[w, h];
-        for (int x = 0; x < w; x++)
-        for (int y = 0; y < h; y++)
-            snapshot[x, y] = map.Tiles[x, y].Type;
-
-        for (int x = 1; x < w - 1; x++)
-        for (int y = 1; y < h - 1; y++)
-        {
-            var t = snapshot[x, y];
-            if (t != TileType.Grass) continue;
-
-            int trees = 0, rocks = 0, water = 0;
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                if (dx == 0 && dy == 0) continue;
-                var n = snapshot[x + dx, y + dy];
-                if (n is TileType.Tree or TileType.TreePine or TileType.Bush) trees++;
-                if (n is TileType.Rock or TileType.Mountain) rocks++;
-                if (n is TileType.Water or TileType.WaterDeep) water++;
-            }
-
-            // Forest fringe → tall grass.
-            if (trees >= 3 && rng.NextDouble() < forestFringeChance)
-                map.Tiles[x, y].Type = TileType.GrassTall;
-            // Rocky fringe → sparse grass.
-            else if (rocks >= 2 && rng.NextDouble() < rockFringeChance)
-                map.Tiles[x, y].Type = TileType.GrassSparse;
-            // Shoreline fringe → sparse grass (beach feel).
-            else if (water >= 2 && rng.NextDouble() < shoreFringeChance)
-                map.Tiles[x, y].Type = TileType.GrassSparse;
-        }
-    }
 }

@@ -50,7 +50,7 @@ public static class IngotDefinitions
     private static string Fmt(StatType stat, int v) =>
         $"{stat} {(v >= 0 ? "+" : "")}{v}";
 
-    // ── Bundle 10 — Iron Ingot. Common ore drop from Iron veins (Mining content).
+    // ── Iron Ingot. Common ore drop from Iron veins.
     // Crafting filler / vendor sell. Mild +Defense, mild -Speed (heavy metal flavor).
     public static Ingot CreateIronIngot() => Make(
         "iron_ingot", "Iron Ingot", 150, "Common",
@@ -94,7 +94,7 @@ public static class IngotDefinitions
         StatType.SkillDamage, 6, StatType.Defense, -3,
         StatType.Intelligence, 3);
 
-    // Bundle 9 — Mithril Ingot. Rare refinement ingot; also used for Divine Awakening Lv1 (3x).
+    // Mithril Ingot. Rare refinement ingot; also used for Divine Awakening Lv1 (3x).
     // Drops from Ruin Kobold Miner at a low rate + vendor stock (accessible, not trivial).
     public static Ingot CreateMithrilIngot() => Make(
         "mithril_ingot", "Mithril Ingot", 350, "Rare",

@@ -47,7 +47,7 @@ public class GameMap
             && (uint)y < (uint)CircleMask.GetLength(1)
             && CircleMask[x, y]);
 
-    // Bundle 10 — strikes remaining per ore tile. Seeded by OreVeinPlacementPass,
+    // Strikes remaining per ore tile. Seeded by OreVeinPlacementPass,
     // decremented by mining strike handler, removed on depletion.
     public Dictionary<(int X, int Y), int> VeinStrikesRemaining { get; } = new();
 
@@ -385,15 +385,15 @@ public class GameMap
     public event Action<int, int, TileType, TileType>? TileTypeChanged;
 
     // Hook for direct Tile.Type mutations: invalidates wall glyph + 4 cardinals, rebuilds emissive if boundary crossed,
-    // updates walkable count on walkability change. Wave 2 caches subscribe to this surface.
+    // updates walkable count on walkability change. Visual/frame caches subscribe to this surface.
     public void OnTileTypeChanged(int x, int y, TileType oldType, TileType newType)
     {
-        // === H12 visual cache === fires before internal caches so external subscribers see post-tile-flip state.
+        // External visual-cache subscribers fire first so they see post-tile-flip state.
         TileTypeChanged?.Invoke(x, y, oldType, newType);
-        // === H3 frame cache === Tile mutation invalidates the cached frame buffer.
+        // Frame-buffer cache invalidates on any tile mutation.
         UI.MapView.MarkFrameDirty();
 
-        // Sticky-true once any animated tile appears. Wave 1 — drives 50ms timer gate.
+        // Sticky-true once any animated tile appears — drives the 50ms render timer gate.
         if (!HasAnimatedTiles && TileDefinitions.IsAnimated(newType))
             HasAnimatedTiles = true;
 

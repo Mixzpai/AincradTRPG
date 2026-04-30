@@ -71,7 +71,7 @@ public enum TileType
     Rock,
     Flowers,
 
-    // Nature (Bundle 5 biome-native — APPEND ONLY to preserve int save-compat)
+    // Nature (biome-native — APPEND ONLY to preserve int save-compat)
     Sand,
     DuneSand,
     Snow,
@@ -83,7 +83,7 @@ public enum TileType
     BogWater,
     Reeds,
 
-    // Bundle 10 — ore veins (mineable; depleted variant walkable). Append-only.
+    // Ore veins (mineable; depleted variant walkable). Append-only.
     OreVeinIron,
     OreVeinIronDepleted,
     OreVeinMithril,

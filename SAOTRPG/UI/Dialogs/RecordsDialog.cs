@@ -4,7 +4,7 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Lifetime Records (TitleScreen → Records). 80x30: banner + Summary/Achievement panels + Floor/Win bars, tabbed table (Recent Runs | Victory Leaderboard), Close.
+// Lifetime Records (TitleScreen → Records). 80x30: banner + Summary/Career panels + Floor/Win bars, tabbed table (Recent Runs | Victory Leaderboard), Close.
 // Tab or ←/→ cycle tabs; leaderboard sort via [/] or Sort button (Col/Turns/Level/Kills/PlayTime/Date/Grade).
 public static class RecordsDialog
 {
@@ -68,10 +68,10 @@ public static class RecordsDialog
             ColorScheme = ColorSchemes.Body,
         };
 
-        // ── Achievement panel (right column) ────────────────────────────
+        // ── Career-stats panel (right column) ───────────────────────────
         var achHdr = new Label
         {
-            Text = "┌─ Achievement ─────────────────────┐",
+            Text = "┌─ Career Stats ────────────────────┐",
             X = rightColX, Y = 2, Width = Dim.Auto(), ColorScheme = ColorSchemes.Gold,
         };
         int winRate = data.TotalRuns > 0 ? (data.TotalVictories * 100 / data.TotalRuns) : 0;
@@ -83,13 +83,17 @@ public static class RecordsDialog
                 $"│ Highest Level ... Lv {data.HighestLevel,-11} │\n" +
                 $"│ Col Earned ...... {data.TotalColEarned,-14:N0} │\n" +
                 $"│ Win Rate ........ {winRate,-13}% │\n" +
+                $"│ IF Implements ... {data.IfImplementHighWaterMark,-14} │\n" +
+                $"│ HF Missions ..... {data.HfMissionHighWaterMark,-14} │\n" +
                 "└───────────────────────────────────┘",
-            X = rightColX, Y = 3, Width = Dim.Auto(), Height = 6,
+            X = rightColX, Y = 3, Width = Dim.Auto(), Height = 8,
             ColorScheme = ColorSchemes.Body,
         };
 
         // ── Progress bars ───────────────────────────────────────────────
-        int barRowY = 10;
+        // Career-stats panel grew by 2 rows (IF/HF lifetime hi-water) so the
+        // bar strip + tab strip drop down by 2 to keep clearance.
+        int barRowY = 12;
         var floorBar = new Label
         {
             Text = $"Floor Progress  {MakeBar(data.HighestFloor, 100, 40)}  {data.HighestFloor} / 100",
@@ -103,7 +107,7 @@ public static class RecordsDialog
         };
 
         // ── Tab switcher ────────────────────────────────────────────────
-        int tabRowY = 13;
+        int tabRowY = 15;
         ViewMode mode = ViewMode.Recent;
         SortKey sortKey = SortKey.Col;
 
@@ -121,7 +125,7 @@ public static class RecordsDialog
         var tableLabel = new Label
         {
             Text = "", X = leftColX, Y = tableY,
-            Width = DialogWidth - 4, Height = 12,
+            Width = DialogWidth - 4, Height = 10,
             ColorScheme = ColorSchemes.Body,
         };
 

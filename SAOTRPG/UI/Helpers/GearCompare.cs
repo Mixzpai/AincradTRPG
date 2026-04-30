@@ -115,7 +115,7 @@ public static class GearCompare
         return BuildDiff(eq, equipped);
     }
 
-    // Bundle 13 (Item 10) — multi-line diff for the bottom 4-row compare panel.
+    // Multi-line diff for the bottom 4-row compare panel.
     // Returns up to 4 lines: (1) header "vs <equipped name>" or "(no equipped)";
     // (2) base + stat deltas; (3) special effects diff; (4) net verdict tag.
     // Returns empty array when slot has no equipped counterpart and item is not EquipmentBase

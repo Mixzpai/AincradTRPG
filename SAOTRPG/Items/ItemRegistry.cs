@@ -247,7 +247,7 @@ public static class ItemRegistry
         Register("rap_rosso_rhapsody",       () => RapierDefinitions.CreateRossoRhapsody());
         Register("axe_rosso_dominion",       () => AxeDefinitions.CreateRossoDominion());
 
-        // Yasha Series (F87 Legendary, moved from F85 per collision) — 3 weapons + 1 shield
+        // Yasha Series (F87 Legendary) — 3 weapons + 1 shield
         Register("ohs_yasha_astaroth",       () => OneHandedSwordDefinitions.CreateYashaAstaroth());
         Register("kat_yasha_oratorio",       () => KatanaDefinitions.CreateYashaOratorio());
         Register("dag_yasha_envy",           () => DaggerDefinitions.CreateYashaEnvy());
@@ -257,7 +257,7 @@ public static class ItemRegistry
         Register("kat_gaou_oratorio",        () => KatanaDefinitions.CreateGaouOratorio());
 
         // ── Hollow Fragment Endgame Expansion (39 weapons) ─────────
-        // Implement System gaps (8): F80-F99 canon slots not filled by priority-3 pass.
+        // Implement System gaps (8): F80-F99 canon slots.
         Register("sci_arcaneblade_soul_binder",    () => ScimitarDefinitions.CreateArcanebladeSoulBinder());
         Register("sci_fellblade_ruinous_doom",     () => ScimitarDefinitions.CreateFellbladeRuinousDoom());
         Register("sci_deathglutton_epetamu",       () => ScimitarDefinitions.CreateDeathgluttonEpetamu());
@@ -497,7 +497,7 @@ public static class ItemRegistry
         Register("ore_ash_white",      () => EnhancementOreDefinitions.CreateAshWhite());
 
         // ── Refinement Ingots ──
-        // Bundle 10 — Iron Ingot (Common ore drop from Iron veins via Mining).
+        // Iron Ingot (Common ore drop from Iron veins via Mining).
         Register("iron_ingot",        () => IngotDefinitions.CreateIronIngot());
         Register("sharpening_ingot",  () => IngotDefinitions.CreateSharpeningIngot());
         Register("warden_ingot",      () => IngotDefinitions.CreateWardenIngot());
@@ -511,7 +511,7 @@ public static class ItemRegistry
         Register("sovereign_ingot",   () => IngotDefinitions.CreateSovereignIngot());
         Register("vanguard_ingot",    () => IngotDefinitions.CreateVanguardIngot());
         Register("astral_ingot",      () => IngotDefinitions.CreateAstralIngot());
-        // Bundle 9 — Mithril Ingot (Rare refinement + Divine Awakening Lv1 material).
+        // Mithril Ingot (Rare refinement + Divine Awakening Lv1 material).
         Register("mithril_ingot",     () => IngotDefinitions.CreateMithrilIngot());
 
         // ── Shields ──────────────────────────────────────────────────
@@ -540,7 +540,7 @@ public static class ItemRegistry
         Register("celestial_helmet",       () => ArmorDefinitions.CreateCelestialHelmet());
         Register("celestial_boots",        () => ArmorDefinitions.CreateCelestialBoots());
 
-        // ── Pickaxes (Tool slot — Bundle 10 mining) ──────────────────
+        // ── Pickaxes (Tool slot — mining) ────────────────────────────
         Register("wooden_pickaxe",   () => PickaxeDefinitions.CreateWoodenPickaxe());
         Register("iron_pickaxe",     () => PickaxeDefinitions.CreateIronPickaxe());
         Register("mithril_pickaxe",  () => PickaxeDefinitions.CreateMithrilPickaxe());
@@ -620,8 +620,8 @@ public static class ItemRegistry
         Register("wolf_pelt", () => MobDropDefinitions.CreateWolfPelt());
         Register("dragon_scale", () => MobDropDefinitions.CreateDragonScale());
 
-        // ── Evolution Catalysts (Priority 5 HR chains) ───────────────
-        // One material per weapon-type evolution chain. Upgrade recipes wired in Phase B.
+        // ── Evolution Catalysts (HR chains) ───────────────
+        // One material per weapon-type evolution chain.
         Register("demonic_sigil",    () => EvolutionMaterialDefinitions.CreateDemonicSigil());
         Register("geometric_shard",  () => EvolutionMaterialDefinitions.CreateGeometricShard());
         Register("infernal_gem",     () => EvolutionMaterialDefinitions.CreateInfernalGem());
@@ -701,22 +701,18 @@ public static class ItemRegistry
         Register("immortal_fragment",  () => IngredientDefinitions.CreateImmortalFragment());
         Register("ogres_cleaver",      () => IngredientDefinitions.CreateOgresCleaver());
 
-        // Bundle 9 — Divine Awakening catalysts (Lv1→Lv2 uses divine_fragment, Lv2→Lv3 primordial_shard).
+        // Divine Awakening catalysts (Lv1→Lv2 uses divine_fragment, Lv2→Lv3 primordial_shard).
         Register("divine_fragment",    () => EvolutionMaterialDefinitions.CreateDivineFragment());
         Register("primordial_shard",   () => EvolutionMaterialDefinitions.CreatePrimordialShard());
 
-        // === Bundle 13 Slicing Stones ===
+        // ── Slicing Stones ───────────────────────────────────────────
         Register("slicing_stone_lesser",  () => EvolutionMaterialDefinitions.CreateLesserSlicingStone());
         Register("slicing_stone_greater", () => EvolutionMaterialDefinitions.CreateGreaterSlicingStone());
         Register("slicing_stone_perfect", () => EvolutionMaterialDefinitions.CreatePerfectSlicingStone());
-        // === End Bundle 13 Slicing Stones ===
 
-        // === Bundle 13 Ingots ===
-        // High-tier enhance + Reforge reuse the existing crystallite_ingot (Frost Dragon
-        // F48 drop, registered above at L693). No new ingot DefIds added — the existing
-        // crystallite_ingot already fills the Epic/Legendary mat slot. Block reserved as
-        // Agent B fence under the collision protocol; do not interleave Agent C's block.
-        // === End Bundle 13 Ingots ===
+        // High-tier enhance + Reforge reuse the existing crystallite_ingot (Frost
+        // Dragon F48 drop, registered above). No new ingot DefIds added — the existing
+        // crystallite_ingot fills the Epic/Legendary mat slot.
     }
 
     private static void Register(string id, Func<BaseItem> factory) => _registry[id] = factory;

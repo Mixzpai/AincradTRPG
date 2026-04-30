@@ -51,7 +51,7 @@ public sealed record BiomeGenConfig(
     string? FloorEntryText = null,
     char TreeGlyph = '♣',
     FeatureQuotas? FeatureQuotas = null,
-    // Bundle 10 — ore vein placement multiplier + per-biome ore loot table key.
+    // Ore vein placement multiplier + per-biome ore loot table key.
     float OreVeinDensity = 1.0f,
     string OreTableId = "default")
 {

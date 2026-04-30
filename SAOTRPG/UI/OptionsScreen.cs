@@ -87,7 +87,7 @@ public static class OptionsScreen
         var displayHeader = ScreenHeader.Section("Display", y);
         y += 2;
 
-        // Bundle 13 (Item 8) — Style + Length + Opacity replace the single ShowFootsteps toggle.
+        // Style + Length + Opacity replace the single ShowFootsteps toggle.
         var footstepStyleLabel = FormLabel("Footstep Style", y);
         var footstepStyleRadio = Radio("Footstep Style", y,
             new[] { "Off", "Dots", "Dashes", "Paws", "Boots", "Chevrons" },
@@ -95,7 +95,7 @@ public static class OptionsScreen
             v => settings.FootstepStyle = (FootstepStyle)v);
         y += 2;
 
-        // Length picker maps option index → turn count. 1000 = "unlimited" hard ceiling per Q17.
+        // Length picker maps option index → turn count. 1000 = "unlimited" hard ceiling.
         int[] footstepLengthOptions = { 0, 5, 10, 20, 50, 1000 };
         string[] footstepLengthLabels = { "Off", "5", "10", "20", "50", "Unlim" };
         int currentLengthIdx = Array.IndexOf(footstepLengthOptions, settings.FootstepLength);
@@ -117,7 +117,7 @@ public static class OptionsScreen
         var flashCheck = Toggle("Damage Flash", y, settings.ShowDamageFlash, v => settings.ShowDamageFlash = v);
         y += 2;
 
-        // Bundle 11 — eighth-block bars vs. ASCII fallback for HP/XP/SAT.
+        // Eighth-block bars vs. ASCII fallback for HP/XP/SAT.
         var asciiBarsLabel = FormLabel("ASCII Stat Bars", y);
         var asciiBarsCheck = Toggle("ASCII Stat Bars", y, settings.UseAsciiStatBars,
             v => settings.UseAsciiStatBars = v);
@@ -146,7 +146,7 @@ public static class OptionsScreen
         };
         y += 2;
 
-        // Damage breakdown — 4-mode cycle + 4-line preview box (FB-463).
+        // Damage breakdown — 4-mode cycle + 4-line preview box.
         var breakdownLabel = FormLabel("Damage Breakdown", y);
         var breakdownRadio = Radio("Damage Breakdown", y,
             new[] { "Off", "Concise", "Medium", "Verbose" },
@@ -182,7 +182,7 @@ public static class OptionsScreen
         };
         y += 5;
 
-        // ── Particle Density (FB-450) ────────────────────────────────
+        // ── Particle Density ─────────────────────────────────────────
         var particleLabel = FormLabel("Particle Density", y);
         var particleRadio = Radio("Particle Density", y,
             new[] { "Off", "Subtle", "Moderate", "Pronounced" },
@@ -215,7 +215,7 @@ public static class OptionsScreen
         };
         y += 5;
 
-        // ── Damage Tag Position (FB-452) ─────────────────────────────
+        // ── Damage Tag Position ──────────────────────────────────────
         var tagPosLabel = FormLabel("Damage Tag Position", y);
         var tagPosRadio = Radio("Damage Tag Position", y,
             new[] { "Prefix", "Suffix", "Inline" },
@@ -247,7 +247,7 @@ public static class OptionsScreen
         };
         y += 4;
 
-        // ── Damage Tag Style (FB-452) ────────────────────────────────
+        // ── Damage Tag Style ─────────────────────────────────────────
         var tagStyleLabel = FormLabel("Damage Tag Style", y);
         var tagStyleRadio = Radio("Damage Tag Style", y,
             new[] { "Brackets", "Bare", "Chip" },

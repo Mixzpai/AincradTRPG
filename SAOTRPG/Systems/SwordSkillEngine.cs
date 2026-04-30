@@ -11,8 +11,8 @@ public partial class TurnManager
 {
     public void ExecuteSwordSkill(int slot)
     {
-        // Bundle 13 Item 6 — drop any reticle override on a guard-fail so a future
-        // skill use isn't accidentally retargeted to a stale tile.
+        // Drop any reticle override on a guard-fail so a future skill use isn't
+        // accidentally retargeted to a stale tile.
         if (_player.IsDefeated) { SkillTargetOverride = null; return; }
         if (slot < 0 || slot >= EquippedSkills.Length) { SkillTargetOverride = null; return; }
         var skill = EquippedSkills[slot];
@@ -236,7 +236,7 @@ public partial class TurnManager
         TurnCompleted?.Invoke();
     }
 
-    // Bundle 13 Item 6 — reticle-driven target override. Set by MapView before ExecuteSwordSkill;
+    // Reticle-driven target override. Set by MapView before ExecuteSwordSkill;
     // consumed-and-cleared once on the next FindSkillTargets call.
     public (int X, int Y)? SkillTargetOverride { get; set; }
 
@@ -246,11 +246,11 @@ public partial class TurnManager
     {
         var targets = new List<Entity>();
         int range = skill.Range;
-        // Bundle 12 (C5) — Marksman Eye fork (Bow proficiency 25) extends range on bow skills only.
+        // Marksman Eye fork (Bow proficiency 25) extends range on bow skills only.
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         if (wpn?.WeaponType == "Bow") range += _player.BowRangeOverflow;
 
-        // Bundle 13 Item 6 — reticle override: short-circuit nearest-search and use the player-picked tile.
+        // Reticle override: short-circuit nearest-search and use the player-picked tile.
         // Consumed once; cleared so the next skill use falls back to default targeting.
         if (SkillTargetOverride is { } overrideTile)
         {
@@ -309,56 +309,6 @@ public partial class TurnManager
                 _log.LogCombat($"  {monster.Name} is bleeding!");
                 break;
         }
-    }
-
-    // Per-equipment cache of parsed SpecialEffect key->value. Lazy populate.
-    // Bundle 8: widened from Weapon → EquipmentBase so shields also parse.
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EquipmentBase, Dictionary<string, int>>
-        _specialFxCache = new();
-
-    // Bundle 12 (C3) — legacy string-keyed accessor. Retained for save tolerance:
-    // modded saves with novel keys still need a path. Logs once per session per key.
-    private static readonly HashSet<string> _legacyKeysWarned = new();
-    [Obsolete("Use eq.ParsedEffects.OfType<T>() with the typed EquipmentSpecialEffect.* record.")]
-    internal static int GetSpecialEffectValue(EquipmentBase? eq, string effectName)
-    {
-        if (eq?.SpecialEffect == null) return 0;
-        if (_legacyKeysWarned.Add(effectName))
-            UI.DebugLogger.LogGame("SPECIALEFFECT",
-                $"Legacy GetSpecialEffectValue('{effectName}') — migrate caller to typed record.");
-        var table = _specialFxCache.GetValue(eq, BuildSpecialFxTable);
-        return table.TryGetValue(effectName, out int val) ? val : 0;
-    }
-
-    // Parse SpecialEffect once: "KeyN"/"Key+N"/"Key-N" pairs (letter key, signed int value).
-    private static Dictionary<string, int> BuildSpecialFxTable(EquipmentBase eq)
-    {
-        var dict = new Dictionary<string, int>();
-        var fx = eq.SpecialEffect;
-        if (string.IsNullOrEmpty(fx)) return dict;
-
-        int i = 0;
-        while (i < fx.Length)
-        {
-            // Skip until we hit a letter — start of a key.
-            if (!char.IsLetter(fx[i])) { i++; continue; }
-
-            int keyStart = i;
-            while (i < fx.Length && char.IsLetter(fx[i])) i++;
-            string key = fx.Substring(keyStart, i - keyStart);
-
-            // Collect sign + digits that form the value.
-            int numStart = i;
-            while (i < fx.Length)
-            {
-                char c = fx[i];
-                if (c == '+' || c == '-' || char.IsDigit(c)) i++;
-                else break;
-            }
-            if (i > numStart && int.TryParse(fx.AsSpan(numStart, i - numStart), out int val))
-                dict[key] = val;
-        }
-        return dict;
     }
 
     // Called from AdvanceTurn to tick down skill cooldowns and post-motion.

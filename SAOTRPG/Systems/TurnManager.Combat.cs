@@ -53,7 +53,7 @@ public partial class TurnManager
 
     // Builds a damage-type tag string based on weapon type + SpecialEffect.
     // Returns empty when DamageBreakdownMode == Off OR the weapon is bare
-    // physical with no clear subtype (generic "hit"). Q26=b rule.
+    // physical with no clear subtype (generic "hit").
     internal static string BuildDamageTypeTag(Weapon? weapon)
     {
         if (UserSettings.Current.DamageBreakdownMode == DamageBreakdownMode.Off) return "";
@@ -70,7 +70,7 @@ public partial class TurnManager
         };
     }
 
-    // Builds tag for monster→player incoming damage (Q23=a). Source derived
+    // Builds tag for monster→player incoming damage. Source derived
     // from the monster name keywords — wraith/skeleton=DARK, fire/flame=FIRE, etc.
     internal static string BuildIncomingDamageTag(string? monsterName)
     {
@@ -156,8 +156,8 @@ public partial class TurnManager
         return Math.Max(0, SumWeaponShield<EquipmentSpecialEffect.Barrier>(b => b.Magnitude));
     }
 
-    // Bundle 12 (C3) — typed-generic MH weapon + OH shield aggregator. Sums every parsed
-    // record of T across both slots, applying `get` to extract the int field.
+    // Typed-generic MH weapon + OH shield aggregator. Sums every parsed record of T
+    // across both slots, applying `get` to extract the int field.
     internal int SumWeaponShield<T>(Func<T, int> get) where T : EquipmentSpecialEffect
     {
         int total = 0;
@@ -168,7 +168,7 @@ public partial class TurnManager
         return total;
     }
 
-    // Bundle 12 (C3) — cap-style: max of MH or OH (e.g. CritImmune, non-stacking).
+    // Cap-style: max of MH or OH (e.g. CritImmune, non-stacking).
     internal int MaxWeaponShield<T>(Func<T, int> get) where T : EquipmentSpecialEffect
     {
         int best = 0;
@@ -179,7 +179,7 @@ public partial class TurnManager
         return best;
     }
 
-    // Bundle 10 (B14) — additive defensive keys (BlockChance, ParryChance, EvadeRegen, HPRegen, SPRegen)
+    // Additive defensive keys (BlockChance, ParryChance, EvadeRegen, HPRegen, SPRegen)
     // sum across every equipped slot. On-hit procs (Bleed/Stun/SlowOnHit) stay weapon-only by canon.
     private static readonly EquipmentSlot[] _allEquippedSlots =
     {
@@ -197,44 +197,6 @@ public partial class TurnManager
         }
         return total;
     }
-
-    // Bundle 12 (C3) — legacy string-keyed wrappers, [Obsolete] but live for save tolerance
-    // (modded saves with novel keys still need a path). Delegates to typed-generic helpers.
-    [Obsolete("Use SumWeaponShield<T>/MaxWeaponShield<T>/SumAllSlots<T> with typed records.")]
-    internal int GetEffectSum(string effectName)
-    {
-        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
-        int v = SwordSkillEngine_GetSpecialEffectValueLegacy(wpn, effectName);
-        if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
-            v += SwordSkillEngine_GetSpecialEffectValueLegacy(shield, effectName);
-        return v;
-    }
-    [Obsolete("Use MaxWeaponShield<T> with typed records.")]
-    internal int GetEffectMax(string effectName)
-    {
-        var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as EquipmentBase;
-        int a = SwordSkillEngine_GetSpecialEffectValueLegacy(wpn, effectName);
-        int b = 0;
-        if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
-            b = SwordSkillEngine_GetSpecialEffectValueLegacy(shield, effectName);
-        return Math.Max(a, b);
-    }
-    [Obsolete("Use SumAllSlots<T> with typed records.")]
-    internal int GetEffectSumAllSlots(string effectName)
-    {
-        int total = 0;
-        foreach (var slot in _allEquippedSlots)
-        {
-            if (_player.Inventory.GetEquipped(slot) is EquipmentBase eq)
-                total += SwordSkillEngine_GetSpecialEffectValueLegacy(eq, effectName);
-        }
-        return total;
-    }
-    // Thin alias so [Obsolete] callers in this file don't trigger their own warning chain.
-    private static int SwordSkillEngine_GetSpecialEffectValueLegacy(EquipmentBase? eq, string key)
-#pragma warning disable CS0618
-        => GetSpecialEffectValue(eq, key);
-#pragma warning restore CS0618
 
     // DragonSlayer+N target check. True if LootTag=="dragon" or the name contains
     // a draconic keyword (dragon/wyrm/wyvern/drake). Fatal Scythe is excluded (undead).
@@ -266,11 +228,12 @@ public partial class TurnManager
 
         _lastCombatTurn = TurnCount;
         bool backstab = !_aggroAlerted.Contains(monster.Id);
-        // Bundle 10 (B8) — first-hit bestiary capture (insta-kill safety) + mirror
-        // danger warning. Idempotent with AI.cs aggro-side capture.
+        // First-hit bestiary capture (insta-kill safety) + mirror danger warning.
+        // Idempotent with AI.cs aggro-side capture.
         if (_aggroAlerted.Add(monster.Id))
         {
             Bestiary.RecordMonsterEncounter(monster, CurrentFloor);
+            MilestoneSystem.OnBestiaryDiscovered(_player);
             if (monster.Level >= _player.Level + 3 && _dangerWarned.Add(monster.Id))
             {
                 int diff = monster.Level - _player.Level;
@@ -281,7 +244,7 @@ public partial class TurnManager
         var (baseDmg, playerCrit) = _player.AttackMonster(monster);
 
         // FD Pair Resonance: canonical MH+OH pair → +10% total dmg (per hit), +5% crit
-        // re-roll on FIRST hit only (Bundle 8 fix: was per-hit, stacked with +10% compound).
+        // re-roll on FIRST hit only (per-encounter, not per-hit, to avoid compound).
         var offHandWeapon = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Weapon;
         bool pairResonance = wpn != null && offHandWeapon != null
             && DualWieldPairs.IsCanonicalPair(wpn.DefinitionId, offHandWeapon.DefinitionId);
@@ -295,7 +258,7 @@ public partial class TurnManager
         int damage = baseDmg + profBonus + comboBonus + _shrineBuff + _levelUpBuff
             + SatietyAtkBonus + FatigueAtkPenalty + BiomeSystem.AttackModifier;
 
-        // FB-063 Guild combat — Fuurinkazan: +10 ATK (Katana); LB: +15 vs LC PKers.
+        // Guild combat — Fuurinkazan: +10 ATK (Katana); LB: +15 vs LC PKers.
         damage += GuildSystem.KatanaAttackBonus(_player, wpnType);
         damage += GuildSystem.LegendBravesVsLcBonus(_player, monster.Name);
         if (pairResonance)
@@ -350,7 +313,7 @@ public partial class TurnManager
             int backstabMul = 2 + backstabBonus / 50; // +50% → x3
             damage *= backstabMul;
         }
-        // Bundle 12 (C4) — Iaijutsu first-strike. Suppressed under backstab to avoid 6× compound.
+        // Iaijutsu first-strike. Suppressed under backstab to avoid 6× compound.
         else if (_player.KatanaIaijutsuActive && wpnType == "Katana" && _iaijutsuStruck.Add(monster.Id))
         {
             damage = damage * 125 / 100;
@@ -395,7 +358,7 @@ public partial class TurnManager
         string critTag = playerCrit ? " CRITICAL!" : "";
         if (pairResonance && _pairResonanceLogged.Add(monster.Id))
             _log.LogCombat($"  ◆ Pair Resonance! {wpn!.Name} and {offHandWeapon!.Name} sing together (+10% damage, +5% crit).");
-        // Damage breakdown (FB-463): Off/Concise/Medium/Verbose chosen in Options.
+        // Damage breakdown: Off/Concise/Medium/Verbose chosen in Options.
         // Raw = pre-defense; defShown = monster.Defense mitigation estimate.
         int rawDmg = baseDmg + profBonus + comboBonus + _shrineBuff + _levelUpBuff + SatietyAtkBonus;
         int defShown = Math.Max(0, rawDmg - damage);
@@ -408,13 +371,13 @@ public partial class TurnManager
         if (wpnType == "Bow")
             ProjectileRequested?.Invoke(_player.X, _player.Y, monster.X, monster.Y,
                 '·', Color.BrightYellow, 40, true);
-        // FB-450 sword slash particles — 3-arc spray in the swing direction.
+        // Sword slash particles — 3-arc spray in the swing direction.
         int dxSwing = Math.Sign(monster.X - _player.X);
         int dySwing = Math.Sign(monster.Y - _player.Y);
         ParticleQueue.Emit(ParticleEvent.SwordSlash, monster.X, monster.Y, dxSwing, dySwing);
         if (playerCrit) ParticleQueue.Emit(ParticleEvent.CritShatter, monster.X, monster.Y);
         DamageDealt?.Invoke(monster.X, monster.Y, damage, false, playerCrit);
-        // Screen shake (FB-453): crit = tier 1, boss heavies handled in BossAI.
+        // Screen shake: crit = tier 1, boss heavies handled in BossAI.
         if (playerCrit) MapViewShakeRequested?.Invoke(1);
         if (playerCrit)
         {
@@ -431,8 +394,8 @@ public partial class TurnManager
         {
             int offhandDmg = Math.Max(1, offhand.BaseDamage * 60 / 100 + profBonus / 2);
             if (pairResonance) offhandDmg = offhandDmg * 110 / 100;
-            // Bundle 10 (B3) — OH rolls crit independently. CriticalHitDamage adds
-            // ONCE to the OH damage component (no double-stacking with MH crit).
+            // OH rolls crit independently. CriticalHitDamage adds ONCE to the OH
+            // damage component (no double-stacking with MH crit).
             bool offhandCrit = Random.Shared.Next(100)
                 < Math.Max(0, _player.CriticalRate + WeatherSystem.GetCritModifier());
             if (offhandCrit) offhandDmg += _player.CriticalHitDamage;
@@ -500,7 +463,7 @@ public partial class TurnManager
             _confusedMobs[monster.Id] = 2;
             _log.LogCombat($"  {monster.Name} reels with lunacy from {wpn!.Name}!");
         }
-        // Bundle 10 (B11) — SlowOnHit+N: N% chance to slow target for 3 turns.
+        // SlowOnHit+N: N% chance to slow target for 3 turns.
         // Consumed by AI.cs: slowed mobs act every other turn (skip alternate turns).
         int slowChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.SlowOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
         if (slowChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < slowChance)
@@ -551,7 +514,7 @@ public partial class TurnManager
         if (speciesFirst) SpeciesFirstKilled?.Invoke(monster.Name);
         QuestSystem.OnMobKilled(monster.Name, _log, wpnType);
 
-        // FB-063 Karma — PKer humans +, peaceful -, hostile non-human neutral.
+        // Karma — PKer humans +, peaceful -, hostile non-human neutral.
         // Town Guard kills also grant +20 LC rep.
         string lootTag = monster is Mob mob ? mob.LootTag : "generic";
         int karmaDelta = KarmaSystem.DeltaForMobKill(monster.Name, lootTag);
@@ -562,8 +525,6 @@ public partial class TurnManager
             Story.StorySystem.AdjustRep(Story.Faction.LaughingCoffin, 20);
             _log.Log("  Laughing Coffin notes your handiwork. (+20 LC rep)");
         }
-        // FB-058 Title — check unlocks per kill for immediate milestone banner.
-        CheckTitleUnlocksAfterKill(monster);
         // Player Guide: unmask "Monster/Boss/Field Boss: <name>" entry.
         if (monster is FieldBoss fb)
             Story.PlayerGuideKnowledge.MarkKnown("Field Boss: " + fb.Name);
@@ -620,7 +581,7 @@ public partial class TurnManager
         // Fork threshold crossing (L25/50/75/100) — fires the picker event.
         CheckForkThresholdOnKill(wpnType, profLvlBefore, profLvlAfter);
 
-        // Sword skill unlocks at this kill count. FB-564 Hollow Ingress doubles reqs.
+        // Sword skill unlocks at this kill count. Hollow Ingress doubles reqs.
         int killMult = RunModifiers.IsActive(RunModifier.HollowIngress) ? 2 : 1;
         foreach (var skill in SwordSkillDatabase.ForWeapon(wpnType))
         {
@@ -695,7 +656,7 @@ public partial class TurnManager
                 {
                     _map.AddItem(fieldBoss.X, fieldBoss.Y, drop);
                     _log.LogLoot($"  {fieldBoss.Name} drops: {drop.Name}!");
-                    // Bundle 8: field-boss Divine couriers (F40/F85/F95) also trip the cap + banner.
+                    // Field-boss Divine couriers (F40/F85/F95) also trip the cap + banner.
                     if (drop is Items.Equipment.Weapon fbWpn && drop.Rarity == "Divine")
                         NotifyDivineObtained(fbWpn);
                 }
@@ -763,7 +724,7 @@ public partial class TurnManager
                 new Story.StoryContext(CurrentFloor, KillCount, _player, boss));
 
             // Guaranteed drop (Divine + P4 AL Divine Beast on non-canon bosses). DropItem formats Divine
-            // with ◈; Bundle 8: ResolveFloorBossDropDefId substitutes a Legendary fallback if cap fired.
+            // with ◈; ResolveFloorBossDropDefId substitutes a Legendary fallback if cap fired.
             var resolvedDropId = LootGenerator.ResolveFloorBossDropDefId(CurrentFloor);
             if (resolvedDropId != null)
             {
@@ -789,7 +750,7 @@ public partial class TurnManager
                 }
             }
 
-            // Bundle 9: Divine Fragment — F75-F99 canon boss, ~5% drop (Divine Awakening Lv2 material).
+            // Divine Fragment — F75-F99 canon boss, ~5% drop (Divine Awakening Lv2 material).
             if (CurrentFloor >= 75 && CurrentFloor < 100 && Random.Shared.Next(100) < 5)
             {
                 var frag = Items.ItemRegistry.Create("divine_fragment");
@@ -800,7 +761,7 @@ public partial class TurnManager
                 }
             }
 
-            // Bundle 9: F100 Primordial Shard — guaranteed one-per-run (Divine Awakening Lv3 material).
+            // F100 Primordial Shard — guaranteed one-per-run (Divine Awakening Lv3 material).
             // Bypasses FloorBossGuaranteedDrops to avoid the Divine-cap substitution path.
             if (CurrentFloor >= 100)
             {
@@ -815,8 +776,8 @@ public partial class TurnManager
             // F50+ boss clear → next ShopTierSystem tier. Additive only.
             int tiersGained = ShopTierSystem.RegisterFloorBossClear(CurrentFloor, _log);
             if (tiersGained > 0) ToastQueue.EnqueueShopTier(tiersGained);
-            // Bundle 13 (Q16) — per-floor flag so PG drop reveal stays accurate
-            // when the player skips floors via teleport / Anti-Crystal lifts.
+            // Per-floor flag so PG drop reveal stays accurate when the player skips
+            // floors via teleport / Anti-Crystal lifts.
             DefeatedFloorBosses.Add(CurrentFloor);
             FloorBossCleared?.Invoke(boss.Name);
 
@@ -839,13 +800,8 @@ public partial class TurnManager
         CleanupMobStatus(monster.Id);
         _map.RemoveEntity(monster);
 
-        foreach (var ach in Achievements.CheckCombat(this, _player, monster))
-        {
-            _player.ColOnHand += ach.ColReward;
-            TotalColEarned += ach.ColReward;
-            _log.LogSystem($"  **ACHIEVEMENT: {ach.Name} — {ach.Description} (+{ach.ColReward} Col)");
-            ToastQueue.EnqueueAchievement(ach.Name);
-        }
+        // MilestoneSystem handles unlock detection, toast, and Col reward.
+        MilestoneSystem.CheckCombat(this, _player, monster);
 
         if (GetMonsterCount() == 0)
         {
@@ -861,7 +817,7 @@ public partial class TurnManager
         if (levelDiff >= 5) xp /= 4;
         else if (levelDiff >= 3) xp /= 2;
         xp = xp * _diffTier.XpPercent / 100;
-        // FB-564 Solo modifier +10% XP (compensation for no party).
+        // Solo modifier +10% XP (compensation for no party).
         if (RunModifiers.IsActive(RunModifier.Solo)) xp = xp * 110 / 100;
         return Math.Max(1, xp);
     }
@@ -940,9 +896,9 @@ public partial class TurnManager
         else if (pct <= 25) _log.LogCombat($"  {monster.Name} is barely standing...");
     }
 
-    // Bundle 13 Item 6 — Bow basic-attack via reticle. Validates Bow + tile + range +
-    // target, then routes through HandleCombat (same melee formula per Q12 lock) and
-    // advances the turn. Range mirrors SwordSkillEngine: Weapon.Range + BowRangeOverflow.
+    // Bow basic-attack via reticle. Validates Bow + tile + range + target, then
+    // routes through HandleCombat (same melee formula) and advances the turn.
+    // Range mirrors SwordSkillEngine: Weapon.Range + BowRangeOverflow.
     public void ExecuteBowShot(int tx, int ty)
     {
         if (_player.IsDefeated) return;

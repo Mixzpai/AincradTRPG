@@ -92,22 +92,6 @@ public static class Refinement
         return (list, display);
     }
 
-    // Debug/telemetry: sum ingot bonuses across equipped slots.
-    // Damage-calc path uses EquipmentBase.Bonuses folding instead.
-    public static Dictionary<StatType, int> SumEquipmentBonuses(PlayerInventory inv)
-    {
-        var totals = new Dictionary<StatType, int>();
-        if (inv == null) return totals;
-        foreach (EquipmentSlot slot in Enum.GetValues(typeof(EquipmentSlot)))
-        {
-            var eq = inv.GetEquipped(slot);
-            if (eq == null) continue;
-            foreach (var (stat, val) in GetBonusSummary(eq).Stats)
-                Add(totals, stat, val);
-        }
-        return totals;
-    }
-
     // ── Re-hydration helpers used by SaveManager on load ─────────────────
 
     // Re-apply slotted ingot bonuses post-load. Call ONCE after EnhancementLevel replay.

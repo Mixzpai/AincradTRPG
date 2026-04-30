@@ -14,7 +14,6 @@ namespace SAOTRPG.Systems;
 public static class SaveManager
 {
     public const int MaxSlots = 3;
-    private const string LegacySaveFilename = "save.json";
 
     private static readonly string SaveDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AincradTRPG");
@@ -26,20 +25,6 @@ public static class SaveManager
     };
 
     private static string SlotPath(int slot) => Path.Combine(SaveDir, $"save_{slot}.json");
-
-    static SaveManager()
-    {
-        try
-        {
-            string oldPath = Path.Combine(SaveDir, LegacySaveFilename);
-            if (File.Exists(oldPath) && !File.Exists(SlotPath(1)))
-            {
-                Directory.CreateDirectory(SaveDir);
-                File.Move(oldPath, SlotPath(1));
-            }
-        }
-        catch (Exception ex) { DebugLogger.LogError("SaveManager.Migration", ex); }
-    }
 
     public static bool SaveExists(int slot) => File.Exists(SlotPath(slot));
 
@@ -79,23 +64,8 @@ public static class SaveManager
             string json = File.ReadAllText(path);
             var data = JsonSerializer.Deserialize<SaveData>(json, JsonOpts);
             if (data == null) return null;
-            // Save-version migration: v1 saves have no GlobalSeed. Regenerate from
-            // TickCount and log — visible fallback per fail-loud rule.
-            if (data.SaveVersion < 2 || data.GlobalSeed < 0)
-            {
-                int fallback = Environment.TickCount;
-                DebugLogger.LogGame("SAVE", $"legacy save — globalSeed regenerated (v{data.SaveVersion} → v2, seed={fallback})");
-                data.GlobalSeed = fallback;
-                data.SaveVersion = 2;
-            }
             MapGenerator.SetGlobalSeed(data.GlobalSeed);
-            // Bundle 7: restore per-prefab MAX_PER_GAME counter. Null-coalesces to empty
-            // dict on legacy v2 saves missing the field.
             MapGenerator.SetPrefabUseCounts(data.PrefabUseCounts);
-            // Bundle 8: restore Divine one-per-run gate. Legacy saves default false.
-            LootGenerator.DivineObtainedThisRun = data.DivineObtainedThisRun;
-            // Bundle 13 (Item 1) — hydrate Collectables tracker. Null on legacy = empty.
-            CollectablesTracker.HydrateFromSave(data.CollectedLegendaries);
             return data;
         }
         catch (Exception ex)
@@ -105,9 +75,9 @@ public static class SaveManager
         }
     }
 
-    // Bundle 12 (C6) — current-floor mining vein strikes restore. Called from
-    // TurnManager.LoadFromSave after the floor map is in hand. Null/empty list
-    // = legacy save: leave dict empty so DefaultStrikesForTile re-seeds lazily.
+    // Current-floor mining vein strikes restore. Called from TurnManager.LoadFromSave
+    // after the floor map is in hand. Null/empty list = legacy save: leave dict empty
+    // so DefaultStrikesForTile re-seeds lazily.
     public static void RestoreVeinStrikes(SaveData save, Map.GameMap map)
     {
         if (save.VeinStrikes == null) return;
@@ -180,14 +150,15 @@ public static class SaveManager
         PoisonTurnsLeft = tm.PoisonTurnsLeft, BleedTurnsLeft = tm.BleedTurnsLeft,
         StunTurnsLeft = tm.StunTurnsLeft, SlowTurnsLeft = tm.SlowTurnsLeft,
         ShrineBuffTurns = tm.ShrineBuffTurns, LevelUpBuffTurns = tm.LevelUpBuffTurns,
-        // Bundle 10 (B1) — active food regen buff round-trip.
+        // Active food regen buff round-trip.
         FoodRegenRate = tm.FoodRegenRate, FoodRegenTurnsLeft = tm.FoodRegenTurnsLeft,
         DiscoveredLore = tm.DiscoveredLore.ToList(),
-        UnlockedAchievements = Achievements.Unlocked.ToList(),
         SeenTutorialTips = TutorialSystem.SeenTips.ToList(),
         ActiveQuests = new List<Quest>(QuestSystem.ActiveQuests),
         CompletedQuests = new List<Quest>(QuestSystem.CompletedQuests),
         PinnedQuestId = QuestSystem.PinnedQuestId,
+        IfImplementQuestsCompletedThisRun = tm.IfImplementQuestsCompletedThisRun,
+        HfMissionsCompletedThisRun = tm.HfMissionsCompletedThisRun,
         PartyMembers = PartySystem.Members.Select(a => new AllySaveData
         {
             Name = a.Name, Symbol = a.Symbol, SymbolColor = (int)a.SymbolColor,
@@ -216,7 +187,7 @@ public static class SaveManager
         DefeatedFieldBosses = tm.DefeatedFieldBosses.ToList(),
         ActiveRunModifiers = RunModifiers.ToSaveList(),
         HighestFloorBossCleared = ShopTierSystem.HighestFloorBossCleared,
-        // FB-050 Life Skills — roundtrip the four (or more) skills' state.
+        // Life Skills — roundtrip each skill's state.
         LifeSkills = player.LifeSkills.Skills
             .ToDictionary(kvp => kvp.Key.ToString(),
                           kvp => new LifeSkillStateSave
@@ -224,34 +195,27 @@ public static class SaveManager
                               Level = kvp.Value.Level,
                               CurrentXp = kvp.Value.CurrentXp,
                           }),
-        // FB-058 Titles — unlocked set + active id.
-        UnlockedTitleIds = player.UnlockedTitleIds.ToList(),
+        // Active title id only — unlock set lives in lifetime_stats.json.
         ActiveTitleId = player.ActiveTitleId,
-        // FB-063 Karma + Guild — serialize enum as its name so rename migrations
+        // Karma + Guild — serialize enum as its name so rename migrations
         // (AincradLiberationSquad → AincradLiberationForce) can hook in at load.
         Karma = player.Karma,
         ActiveGuildId = player.ActiveGuildId.ToString(),
         FoundedGuildName = player.FoundedGuildName,
         FoundedGuildPerk = player.FoundedGuildPerk,
-        // FB-072 Investing — snapshot the per-vendor deposit dict. Legacy saves
+        // Investing — snapshot the per-vendor deposit dict. Legacy saves
         // simply omit it; VendorInvestmentSystem.SetForLoad(null) clears state.
         VendorInvestments = VendorInvestmentSystem.Snapshot(),
-        // FB-466 — 10-slot consumable quickbar DefinitionIds.
+        // 10-slot consumable quickbar DefinitionIds.
         QuickbarSlotDefIds = player.Quickbar.SlotItemDefIds.ToList(),
-        // Bundle 7: per-prefab placement counts (MAX_PER_GAME enforcement).
+        // Per-prefab placement counts (MAX_PER_GAME enforcement).
         PrefabUseCounts = MapGenerator.GetCurrentPrefabUseCounts(),
-        // Bundle 8: Divine one-per-run cap — mirrors LootGenerator static gate.
-        DivineObtainedThisRun = LootGenerator.DivineObtainedThisRun,
-        // Bundle 12 (C6) — current-floor mining vein strikes. Discarded on ascent
-        // (next floor's map drops the dict); empty list serializes as omitted.
+        // Current-floor mining vein strikes. Discarded on ascent (next floor's map
+        // drops the dict); empty list serializes as omitted.
         VeinStrikes = tm.Map.VeinStrikesRemaining
             .Select(kvp => new VeinStrikeEntry { X = kvp.Key.X, Y = kvp.Key.Y, Strikes = kvp.Value })
             .ToList(),
-        // Bundle 13 (Item 1) — collected Legendary DefIds. Empty set serializes as null
-        // (DefaultIgnoreCondition WhenWritingNull) so legacy saves stay clean.
-        CollectedLegendaries = CollectablesTracker.Snapshot().Any()
-            ? new HashSet<string>(CollectablesTracker.Snapshot()) : null,
-        // Bundle 13 (Q16) — per-floor boss-clear flags. Empty = null.
+        // Per-floor boss-clear flags. Empty = null.
         DefeatedFloorBosses = tm.DefeatedFloorBosses.Count > 0
             ? new HashSet<int>(tm.DefeatedFloorBosses) : null,
     };
@@ -273,22 +237,22 @@ public static class SaveManager
         // Null/empty on unenhanced weapons to keep saves clean.
         if (item is Weapon weaponSave && weaponSave.EnhancementOreHistory.Count > 0)
             save.EnhancementOreHistory = new List<string>(weaponSave.EnhancementOreHistory);
-        // Bundle 8: persist FD Paired flag only when true. Legacy saves stay lean;
+        // Persist FD Paired flag only when true. Legacy saves stay lean;
         // Corruption Stone transforms round-trip the live state.
         if (item is Weapon pairedSave && pairedSave.IsDualWieldPaired)
             save.IsDualWieldPaired = true;
-        // Bundle 9: persist Divine Awakening level only when awakened. Null on
+        // Persist Divine Awakening level only when awakened. Null on
         // unawakened/non-weapon items keeps legacy save shape untouched.
         if (item is Weapon awakSave && awakSave.AwakeningLevel > 0)
             save.AwakeningLevel = awakSave.AwakeningLevel;
-        // Bundle 10: persist Pickaxe MaxDurability so durability ceiling round-trips.
+        // Persist Pickaxe MaxDurability so durability ceiling round-trips.
         if (item is Pickaxe pickSave && pickSave.MaxDurability > 0)
             save.MaxDurability = pickSave.MaxDurability;
         if (item.DefinitionId == null)
         {
             save.FullItemJson = SerializeFullItem(item);
-            // Bundle 10 (B2) — FullItemJson Bonuses already include refinement/awakening
-            // contributions; load path must skip the runtime-replay used for DefId items.
+            // FullItemJson Bonuses already include refinement/awakening contributions;
+            // load path must skip the runtime-replay used for DefId items.
             save.BonusesAlreadyBaked = true;
         }
         return save;
@@ -375,7 +339,7 @@ public static class SaveManager
             item.ItemDurability = save.Durability;
             if (item is StackableItem stackable && save.Quantity.HasValue)
                 stackable.Quantity = save.Quantity.Value;
-            // Bundle 10 (B2) — if Bonuses are pre-baked at save time, skip the
+            // If Bonuses are pre-baked at save time, skip the
             // enhancement/refinement/awakening replay to avoid double-stacking.
             bool baked = save.BonusesAlreadyBaked == true;
             // Restore enhancement. Weapons: per-level bonus biased by ore consumed.
@@ -419,20 +383,20 @@ public static class SaveManager
             }
             // IF Refinement: restore slot DefIds and fold ingot bonuses back
             // into Bonuses so equipped gear re-grants them. Skip the rehydrate
-            // when Bonuses are already baked (B2 — avoid double-stacking).
+            // when Bonuses are already baked (avoid double-stacking).
             if (item is EquipmentBase eqRef && save.RefinementSlots != null)
             {
                 for (int i = 0; i < EquipmentBase.RefinementSlotCount && i < save.RefinementSlots.Count; i++)
                     eqRef.RefinementSlots[i] = save.RefinementSlots[i];
                 if (!baked) Refinement.RehydrateBonuses(eqRef);
             }
-            // Bundle 8: FD Paired flag round-trip. Null (legacy) → definition value kept
+            // FD Paired flag round-trip. Null (legacy) → definition value kept
             // (ItemRegistry.Create already ran the Paired() wrapper). Non-null → overwrite.
             if (save.IsDualWieldPaired.HasValue && item is Weapon pairedLoad)
                 pairedLoad.IsDualWieldPaired = save.IsDualWieldPaired.Value;
-            // Bundle 9: Divine Awakening round-trip. Null (legacy) → leaves at 0. Non-null →
+            // Divine Awakening round-trip. Null (legacy) → leaves at 0. Non-null →
             // set level + re-fold flat ATK bonus into Bonuses.Attack so re-equip grants it.
-            // Skip the ATK re-fold when Bonuses are already baked (B2).
+            // Skip the ATK re-fold when Bonuses are already baked.
             if (save.AwakeningLevel.HasValue && save.AwakeningLevel.Value > 0 && item is Weapon awakLoad)
             {
                 awakLoad.AwakeningLevel = save.AwakeningLevel.Value;
@@ -442,7 +406,7 @@ public static class SaveManager
                     if (bonus != 0) awakLoad.Bonuses.Add(StatType.Attack, bonus);
                 }
             }
-            // Bundle 10: Pickaxe MaxDurability round-trip. Null (legacy/non-pickaxe) →
+            // Pickaxe MaxDurability round-trip. Null (legacy/non-pickaxe) →
             // fall back to current durability so the ceiling is at least non-zero on load.
             if (item is Pickaxe pickLoad)
                 pickLoad.MaxDurability = save.MaxDurability ?? Math.Max(pickLoad.ItemDurability, 1);

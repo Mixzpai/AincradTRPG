@@ -20,7 +20,7 @@ public static class ShopDialog
     public static void Show(Player player, Vendor vendor, int currentFloor = 1,
         SAOTRPG.UI.IGameLog? log = null)
     {
-        // FB-063 Karma — Outlaw-tier players are refused service outright.
+        // Karma: Outlaw-tier players are refused service outright.
         // Honorable / Shady tiers apply a ±10% markup via BuyPrice() below.
         float karmaMul = KarmaSystem.ShopPriceMultiplier(player.Karma);
         if (karmaMul < 0)
@@ -273,7 +273,7 @@ public static class ShopDialog
             }
 
             player.ColOnHand -= price;
-            // FB-072 — Bargaining XP: +1 per shop transaction (buy).
+            // Bargaining XP: +1 per shop transaction (buy).
             player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Purchased {item.Name} for {price} Col.";
             detailLabel.ColorScheme = ColorSchemes.Success;
@@ -301,7 +301,7 @@ public static class ShopDialog
 
             player.Inventory.RemoveItem(item);
             player.ColOnHand += sellPrice;
-            // FB-072 — Bargaining XP: +1 per shop transaction (sell).
+            // Bargaining XP: +1 per shop transaction (sell).
             player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Sold {item.Name} for {sellPrice} Col.";
             detailLabel.ColorScheme = ColorSchemes.Success;
@@ -389,7 +389,7 @@ public static class ShopDialog
 
             foreach (var item in junkItems) player.Inventory.RemoveItem(item);
             player.ColOnHand += totalCol;
-            // FB-072 — Bargaining XP: +1 per bulk-junk transaction.
+            // Bargaining XP: +1 per bulk-junk transaction.
             player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Sold {junkItems.Count} junk item(s) for {totalCol} Col!";
             detailLabel.ColorScheme = ColorSchemes.Success;

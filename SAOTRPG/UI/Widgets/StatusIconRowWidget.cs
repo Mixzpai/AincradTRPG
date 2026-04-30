@@ -4,7 +4,7 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Widgets;
 
-// Bundle 13 (Item 9) — abbreviated status row.
+// Abbreviated status row.
 // Two visual rows: abbrev row "[BLD] [PSN] [STN]" + countdown row "  3    5    1".
 // Each cell width = bracket+abbrev+bracket+space; longest abbrev is "REGN"/"SHRN" (4 chars → 7-cell cell).
 // Width fallback: when sidebar < 24 cells, render single-letter form (B/P/S/...) to avoid wrap.

@@ -39,8 +39,9 @@ namespace SAOTRPG.Entities
         // Life Skills — per-skill level/XP with milestone bonuses folded into stats. Eager-init so reads skip null checks.
         public LifeSkillSystem LifeSkills { get; private set; } = new();
 
-        // Titles — SetActiveTitle applies bonuses via base-stat pokes; unequip reverses.
-        public HashSet<string> UnlockedTitleIds { get; set; } = new();
+        // Active equipped title (Milestone Id with RewardType.EquippableTitle).
+        // Unlock set itself lives in LifetimeStats.UnlockedMilestones — single
+        // bucket, persists across permadeath.
         public string? ActiveTitleId { get; set; }
 
         // Karma ∈ [-100,+100], default 0. Adjusted via KarmaSystem.Adjust; drives NPC dialogue, shop prices, TOB guard patrol.
@@ -66,26 +67,21 @@ namespace SAOTRPG.Entities
             + LifeSkills.RunningSpeedBonus();
         public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
 
-        // Bundle 10 (B13) — derived stat readers. Equipment Bonuses fold into Base* via ApplyStat;
+        // Derived stat readers. Equipment Bonuses fold into Base* via ApplyStat;
         // GetTotalEquipmentBonus also tallies for display so stats stay live when gear durability hits 0.
         public int EffectiveCritRate => BaseCriticalRate + (Dexterity / 2)
             + Inventory.GetTotalEquipmentBonus(StatType.CritRate);
 
-        // Bundle 10 (B15) — fork passives + (eventually) weapon-mastery layers stack here.
+        // Fork passives + (eventually) weapon-mastery layers stack here.
         public int BaseAttackSpeedBonus { get; set; }
         public int AttackSpeedBonus => BaseAttackSpeedBonus
             + Inventory.GetTotalEquipmentBonus(StatType.AttackSpeed);
 
-        // Bundle 10 (B15) — Katana Iaijutsu fork: +5% damage on first strike vs each new
-        // encounter. Combat layer flips on encounter start; consumer is wave-2 follow-up.
+        // Katana Iaijutsu fork: +5% damage on first strike vs each new encounter.
+        // Combat layer flips on encounter start.
         public bool KatanaIaijutsuActive { get; set; }
-        // Bundle 10 (B15) — Bow Marksman Eye fork: extra effective range overflow on bow shots.
+        // Bow Marksman Eye fork: extra effective range overflow on bow shots.
         public int BowRangeOverflow { get; set; }
-        public int BlockChanceBonus => Inventory.GetTotalEquipmentBonus(StatType.BlockChance);
-        public int HpRegenPerTick => BaseHpRegenPerTick
-            + Inventory.GetTotalEquipmentBonus(StatType.HPRegen);
-        public int EffectiveSkillCooldownReduction => SkillCooldownReduction
-            + Inventory.GetTotalEquipmentBonus(StatType.SkillCooldown);
 
         // New player: Iron Sword + Health Potion, full HP.
         public static Player CreateNewPlayer(string firstName, string lastName, string gender, IGameLog log, IInventoryLogger? inventoryLogger = null)
@@ -159,13 +155,12 @@ namespace SAOTRPG.Entities
                 }
             }
 
-            // Titles: rebuild unlocked set; base stats already include prior session's active title bonus.
-            if (save.UnlockedTitleIds != null)
-                player.UnlockedTitleIds = new HashSet<string>(save.UnlockedTitleIds);
+            // Active title id rehydrated; base stats already contain the baked-in
+            // bonus from prior session, so storing the id only avoids double-apply.
+            // The unlock set itself lives in LifetimeStats.UnlockedMilestones.
             if (!string.IsNullOrEmpty(save.ActiveTitleId)
-                && player.UnlockedTitleIds.Contains(save.ActiveTitleId))
+                && Systems.LifetimeStats.IsMilestoneUnlocked(save.ActiveTitleId))
             {
-                // Base stats already contain baked-in title bonus — storing the id only avoids double-apply.
                 player.ActiveTitleId = save.ActiveTitleId;
             }
 
@@ -181,8 +176,8 @@ namespace SAOTRPG.Entities
             player.FoundedGuildPerk = save.FoundedGuildPerk;
             // Guild perk already baked in at prior-session Join-time; no re-apply (mirrors Title hydration).
 
-            // FB-466 Quickbar — hydrate 10-slot DefinitionId array. Legacy
-            // saves with empty list stay at defaults (all null = empty).
+            // Quickbar — hydrate 10-slot DefinitionId array. Legacy saves
+            // with empty list stay at defaults (all null = empty).
             if (save.QuickbarSlotDefIds != null)
             {
                 for (int qi = 0; qi < Systems.QuickbarState.SlotCount
@@ -203,8 +198,9 @@ namespace SAOTRPG.Entities
         public string EffectiveTitleName()
         {
             if (ActiveTitleId != null
-                && Systems.TitleSystem.Titles.TryGetValue(ActiveTitleId, out var def))
-                return def.DisplayName;
+                && Systems.MilestoneRegistry.ById.TryGetValue(ActiveTitleId, out var ms)
+                && ms.Reward == Systems.RewardType.EquippableTitle)
+                return ms.Name;
             return Title;
         }
 

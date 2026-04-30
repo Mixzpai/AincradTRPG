@@ -5,23 +5,18 @@ using SAOTRPG.Map;
 
 namespace SAOTRPG.Systems;
 
-// Bundle 10 — vein depletion drop tables. Per Q15 trim: iron_ingot is the only
-// NEW material; mithril_ingot / divine_fragment / primordial_shard are reused
-// from Bundle 9, iron_ore / mithril_trace are reused from existing canon mats.
-//
+// Vein depletion drop tables.
 // Drop chance = base + LifeSkill MiningOreDropBonusPercent + Pickaxe.OreQualityBonus.
-// L25+ rolls one BONUS ore (20% chance) on top of base drops. L50 grants a
-// guaranteed +1 mithril_trace bonus on Mithril veins. L99 gives a flat +20%
-// to Divine vein primary drop.
+// L25+ rolls one BONUS ore (20% chance). L50 grants guaranteed +1 mithril_trace on
+// Mithril veins. L99 adds +20% to Divine vein primary drop.
 public static class MiningOreTables
 {
-    // Per-vein primary-ingot drop chances (before bonuses). Iron is generous —
-    // the vein WILL drop ore most strikes. Divine is gated and rare.
+    // Per-vein primary-ingot drop chances (before bonuses). Iron generous; Divine rare.
     private const int IronPrimaryBaseChance    = 75;  // iron_ingot
     private const int MithrilPrimaryBaseChance = 60;  // mithril_ingot
     private const int DivinePrimaryBaseChance  = 30;  // divine_fragment
 
-    // Secondary (flavor) drop chances — existing canon mats, low base.
+    // Secondary (flavor) drop chances — canon mats, low base.
     private const int IronOreBonusChance       = 35;  // iron_ore on top of ingot
     private const int MithrilTraceBonusChance  = 50;  // mithril_trace on top of ingot
     private const int PrimordialShardChance    = 4;   // ultra-rare on Divine deplete
@@ -44,7 +39,7 @@ public static class MiningOreTables
             case TileType.OreVeinMithril:
                 AddRoll(drops, "mithril_ingot", MithrilPrimaryBaseChance + dropBonus);
                 AddRoll(drops, "mithril_trace", MithrilTraceBonusChance + dropBonus);
-                // L50 milestone: guaranteed extra mithril_trace per scout 2.2.
+                // L50 milestone: guaranteed extra mithril_trace.
                 if (player.LifeSkills?.MiningMithrilAdamantBonus == true)
                     AddItemById(drops, "mithril_trace");
                 break;
@@ -56,7 +51,7 @@ public static class MiningOreTables
                 break;
         }
 
-        // L25 bonus-ore roll (20% per scout) — re-rolls primary on success.
+        // L25 bonus-ore roll (20%) — re-rolls primary on success.
         int bonusRoll = player.LifeSkills?.MiningBonusOreRollPercent ?? 0;
         if (bonusRoll > 0 && Random.Shared.Next(100) < bonusRoll)
         {
@@ -85,7 +80,7 @@ public static class MiningOreTables
         if (item != null) drops.Add(item);
     }
 
-    // Mining XP per strike (locked Q10 per scout 2.2).
+    // Mining XP per strike.
     public static int XpForStrike(TileType veinType) => veinType switch
     {
         TileType.OreVeinIron    => 4,

@@ -22,7 +22,7 @@ public class Weapon : EquipmentBase
     // FD Paired — pre-tuned dual-wield, OffHand without DualBlades unlock. Systems.DualWieldPairs lists canon partners → Pair Resonance synergy.
     public bool IsDualWieldPaired { get; set; } = false;
 
-    // Bundle 9 — Divine Awakening level (0-◈3). Selka F65 bumps this via
+    // Divine Awakening level (0-◈3). Selka F65 bumps this via
     // DivineAwakening.Awaken; bonus folds into Bonuses.Attack additively w/ Refinement.
     public int AwakeningLevel { get; set; } = 0;
 

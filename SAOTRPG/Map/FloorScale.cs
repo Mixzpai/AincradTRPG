@@ -20,10 +20,6 @@ public static class FloorScale
         return (dim, dim);
     }
 
-    // Deprecated — towns now share linear disk dims; SpecialAreaPass still stamps
-    // the F1/F48 generators inside the disk via direct floor==1/48 checks.
-    public static bool IsHandBuiltTownFloor(int floor) => false;
-
     // F100 Ruby Palace — bespoke compact throne dims; bypasses the pipeline.
     private static (int Width, int Height) GetCastleDimensions() => (50, 35);
 
@@ -60,7 +56,6 @@ public static class FloorScale
     public static int WanderingMobs(int floor) => Scale(16, floor) + Random.Shared.Next(0, 4);
     public static int WildernessMobsFloor1(int floor) => Scale(16, floor) + Random.Shared.Next(0, 4);
     public static int ChestCount(int floor)    => Scale(10, floor) + Random.Shared.Next(0, 3);
-    public static int TrapCount(int floor)     => Scale(14, floor) + floor * 2;
     public static int DenCount(int floor)      => Math.Max(1, Scale(4, floor));
     public static int ScatteredTrees(int floor) => Scale(80, floor);
     public static int ScatteredBushes(int floor) => Scale(50, floor);
@@ -68,7 +63,6 @@ public static class FloorScale
     public static int DangerClusters(int floor, Random rng) => Scale(6, floor) + rng.Next(0, 3);
     public static int LavaPools(int floor)      => LavaPools(floor, Random.Shared);
     public static int LavaPools(int floor, Random rng) => Math.Max(0, floor - 1) + rng.Next(0, Scale(5, floor));
-    public static int VentCount(int floor)      => Scale(6, floor) + floor;
 
     public static bool IsCastleFloor(int floor) => floor >= 100;
 }

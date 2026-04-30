@@ -16,11 +16,11 @@ public enum DamageTagPosition { Prefix = 0, Suffix = 1, Inline = 2 }
 // FB-452 damage tag bracket style. Brackets = default, Bare strips, Chip wraps ◆.
 public enum DamageTagStyle { Brackets = 0, Bare = 1, Chip = 2 }
 
-// Bundle 13 (Item 8) — footstep trail glyph style. Off = trail disabled.
+// Footstep trail glyph style. Off = trail disabled.
 public enum FootstepStyle { Off = 0, Dots = 1, Dashes = 2, Paws = 3, Bootprints = 4, Chevrons = 5 }
 
-// Bundle 13 (Item 8) — footstep trail opacity (color tier). Subtle = DarkGray,
-// Medium = Gray, Bold = White. Drives RenderFootstepTrail attribute.
+// Footstep trail opacity (color tier). Subtle = DarkGray, Medium = Gray, Bold = White.
+// Drives RenderFootstepTrail attribute.
 public enum FootstepOpacity { Subtle = 0, Medium = 1, Bold = 2 }
 
 // Global settings at %LocalAppData%/AincradTRPG/settings.json (not per-save).
@@ -38,13 +38,13 @@ public class UserSettings
     public int TextSpeed { get; set; } = 1;
 
     // ── Display ──────────────────────────────────────────────────────
-    // Bundle 13 (Item 8) — footstep glyph style. Off = no trail.
+    // Footstep glyph style. Off = no trail.
     public FootstepStyle FootstepStyle { get; set; } = FootstepStyle.Dots;
 
-    // Bundle 13 (Item 8) — trail length (turns). 0 = off; 1000 = "unlimited" hard ceiling per Q17.
+    // Trail length (turns). 0 = off; 1000 = "unlimited" hard ceiling.
     public int FootstepLength { get; set; } = 10;
 
-    // Bundle 13 (Item 8) — opacity tier. Drives Subtle/Medium/Bold gray ramp.
+    // Opacity tier. Drives Subtle/Medium/Bold gray ramp.
     public FootstepOpacity FootstepOpacity { get; set; } = FootstepOpacity.Subtle;
 
     // Backing-compat alias for legacy callers — derived from FootstepStyle.
@@ -77,7 +77,7 @@ public class UserSettings
     // FB-452 damage tag bracket style — default [BRACKETS] for visual anchor.
     public DamageTagStyle DamageTagStyle { get; set; } = DamageTagStyle.Brackets;
 
-    // Bundle 11 — fall back to ASCII stat bars if the terminal font renders
+    // Fall back to ASCII stat bars if the terminal font renders
     // eighth-block unicode (█▉▊▋▌▍▎▏) incorrectly. Default false → unicode.
     public bool UseAsciiStatBars { get; set; } = false;
 

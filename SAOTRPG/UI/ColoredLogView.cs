@@ -3,8 +3,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Log category → base color when no keyword rule matches. Healing collapses visually into Combat.
-public enum LogCategory { General, Combat, System, Item, Healing, Dialog }
+// Log category → base color when no keyword rule matches.
+public enum LogCategory { General, Combat, System, Item, Dialog }
 
 // Terminal.Gui view rendering per-line colored log. Priority: keyword rule > category color.
 // Tab-key cycles the 5-view filter: All → Combat → System → Item → Dialog → All.
@@ -15,14 +15,14 @@ public class ColoredLogView : View
     private int _scrollOffset;
     private const int MaxEntries = 500;
 
-    // Bundle 11 — smooth-scroll-to-end target. When AddEntry would overshoot the
-    // current view, we step _scrollOffset toward _scrollTarget by one row per
-    // frame instead of snapping. Player can read the trailing line before the
-    // next batch of combat output buries it.
+    // Smooth-scroll-to-end target. When AddEntry would overshoot the current view,
+    // we step _scrollOffset toward _scrollTarget by one row per frame instead of
+    // snapping. Player can read the trailing line before the next batch of combat
+    // output buries it.
     private int _scrollTarget = -1;
     private object? _easeToken;
     private const int EaseStepRows = 1;
-    // ~40ms per step ≈ 25 FPS; two-step ease totals ~80ms (Bundle 11 spec).
+    // ~40ms per step ≈ 25 FPS; two-step ease totals ~80ms.
     private static readonly TimeSpan EaseInterval = TimeSpan.FromMilliseconds(40);
 
     // ── Tab filtering ── null = show all.
@@ -40,7 +40,6 @@ public class ColoredLogView : View
         { LogCategory.Combat,  Color.BrightRed },
         { LogCategory.System,  Color.BrightCyan },
         { LogCategory.Item,    Color.BrightYellow },
-        { LogCategory.Healing, Color.BrightGreen },
         { LogCategory.Dialog,  Color.White },
         { LogCategory.General, Color.Gray },
     };
@@ -99,8 +98,6 @@ public class ColoredLogView : View
         SetNeedsDraw();
     }
 
-    public LogCategory? Filter => _filter;
-
     public void SetFilter(LogCategory? category)
     {
         _filter = category;
@@ -112,11 +109,9 @@ public class ColoredLogView : View
         FilterChanged?.Invoke(category);
     }
 
-    // Healing entries map to the Combat tab so the player sees damage+heal in one stream.
     private bool Matches(LogCategory entry)
     {
         if (_filter == null) return true;
-        if (_filter == LogCategory.Combat && entry == LogCategory.Healing) return true;
         return entry == _filter;
     }
 
@@ -134,9 +129,9 @@ public class ColoredLogView : View
 
     // ── Scrolling ── Viewport.Height is the authoritative visible row count; matches
     // the 1080p-tall panel exactly regardless of terminal-cell grid dimensions.
-    // Bundle 11: ease toward the bottom over ~2 frames so trailing lines are
-    // readable before the next batch arrives. Snap immediately if user already
-    // sees the last row (typical case — no jitter).
+    // Ease toward the bottom over ~2 frames so trailing lines are readable
+    // before the next batch arrives. Snap immediately if user already sees
+    // the last row (typical case — no jitter).
     public void ScrollToEnd()
     {
         int visibleLines = Math.Max(1, Viewport.Height);
@@ -225,8 +220,8 @@ public class ColoredLogView : View
         return _wrappedCache;
     }
 
-    // Continuation indent = 2 spaces. Preserves category color (research §5 — dim
-    // continuation reads as "something's broken").
+    // Continuation indent = 2 spaces. Preserves category color so wrap doesn't
+    // visually read as "something's broken".
     private const string ContinuationIndent = "  ";
 
     private List<(string Text, Color Color, bool IsContinuation)> BuildWrappedRows(int width)

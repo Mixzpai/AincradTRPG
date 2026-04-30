@@ -4,8 +4,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Projectile + status-trail rendering (FB-454). Cell-stepped tweens for
-// arrows / sword arcs, stationary 3-frame fades for DoT motes.
+// Projectile + status-trail rendering. Cell-stepped tweens for arrows / sword arcs,
+// stationary 3-frame fades for DoT motes.
 public partial class MapView
 {
     private readonly List<Projectile> _projectiles = new();
@@ -41,8 +41,8 @@ public partial class MapView
         EnqueueProjectile(sx, sy, ex, ey, glyph, color, 40, '·', color);
     }
 
-    // Stationary 3-frame fade for bleed / poison / burn motes. Per research
-    // §2: ◇→·→blank for SAO-theme bleed (no red blood).
+    // Stationary 3-frame fade for bleed / poison / burn motes.
+    // SAO-theme bleed uses ◇→·→blank (no red blood).
     public void EnqueueStatusTrail(int x, int y, char[] glyphs, Color color, int frameMs = 500)
     {
         if (glyphs.Length == 0) return;

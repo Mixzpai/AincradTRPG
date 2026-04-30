@@ -13,7 +13,7 @@ public partial class MapView
     protected override bool OnDrawingContent()
     {
         using var _drawScope = Profiler.Begin("MapView.OnDrawingContent");
-        // Wave 2: single canonical FrameClock tick per frame; dt threaded through render passes.
+        // Single canonical FrameClock tick per frame; dt threaded through render passes.
         int dtMs = FrameClock.Tick();
         var vp = Viewport;
         _camera.ViewWidth = vp.Width;
@@ -24,7 +24,6 @@ public partial class MapView
 
         // FOV radius from smaller viewport dim — terminal chars ~2:1 aspect → height limits.
         int halfH = vp.Height / 2 + 2;
-        Map.DayNightCycle.ViewportRadius = halfH;
         Map.DayNightCycle.FovRadius = halfH * Map.DayNightCycle.FovMultiplier;
 
         TrackFootstep();
@@ -178,7 +177,7 @@ public partial class MapView
         TickHpTweens(dtMs);
     }
 
-    // Wave 2 — advances player HP/XP/SAT + per-monster HP tweens. Raises
+    // Advances player HP/XP/SAT + per-monster HP tweens. Raises
     // PlayerBarsTweenTick so GameScreen can refresh the action-bar labels.
     private void TickHpTweens(int dtMs)
     {
@@ -208,7 +207,7 @@ public partial class MapView
         }
     }
 
-    // Wave 2 — eases _statusTintCurrentColor from source→target over 200ms.
+    // Eases _statusTintCurrentColor from source→target over 200ms.
     // Null transitions fade through black so poison-removed tints retreat smoothly.
     private void TickStatusTintTransition(int dtMs)
     {
@@ -240,20 +239,6 @@ public partial class MapView
             if (_footsteps.Count > FootstepTrailLength) _footsteps.Dequeue();
         }
         _lastPlayerPos = (_player.X, _player.Y);
-    }
-
-    private (char ch, Color fg, Color bg) ResolveTileVisual(int mx, int my)
-    {
-        if (!_map.InBounds(mx, my)) return (' ', Color.Black, Color.Black);
-        if (!_map.IsExplored(mx, my)) return (' ', Color.Black, Color.Black);
-        if (!_map.IsVisible(mx, my)) return ResolveMemoryTile(mx, my);
-
-        var tile = _map.GetTile(mx, my);
-        var (ch, fg, bg) = ResolveVisibleTile(_map, tile, mx, my);
-        ApplyConnectedWalls(tile, mx, my, ref ch);
-        ApplyLighting(mx, my, ref fg, ref bg);
-        ApplyStatusTint(mx, my, ref fg);
-        return (ch, fg, bg);
     }
 
     // Memory tint: explored-but-unseen = deep cool blue; structural (walls/doors/stairs) brighter.

@@ -1,15 +1,10 @@
 using Terminal.Gui;
-using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Shared UI helpers: W/S navigation for menu screens and legacy ButtonScheme reference.
+// Shared UI helpers: W/S navigation for menu screens.
 public static class NavigationHelper
 {
-    // Color scheme for interactive buttons — delegates to centralized ColorSchemes.
-    // Kept for backward compatibility with screens that reference it directly.
-    public static ColorScheme ButtonScheme => ColorSchemes.Button;
-
     // W/S + arrow focus navigation on a container (TitleScreen, DifficultyScreen, other menus).
     // Respects RadioGroup — arrow keys change selection inside radio groups.
     public static void EnableGameNavigation(View container)

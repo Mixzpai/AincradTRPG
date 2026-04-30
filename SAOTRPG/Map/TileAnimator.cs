@@ -9,7 +9,7 @@ public static class TileAnimator
     // A single animation: frame glyphs cycled at IntervalMs per frame, rendered in Color.
     public readonly record struct Animation(char[] Frames, int IntervalMs, Color Color, int Priority);
 
-    // Priority values from research §4 (higher = render first when over the density cap).
+    // Priority values — higher = render first when over the density cap.
     public const int PriorityChest   = 70;
     public const int PriorityTerminal = 60;
     public const int PriorityHearth  = 50;
@@ -50,7 +50,7 @@ public static class TileAnimator
             new[] { ' ' }, IntervalMs: 250, new Color(255, 220, 80), PriorityChest),
     };
 
-    // Hearth/torch categories suppressed during combat (research §4).
+    // Hearth/torch categories suppressed during combat.
     public static bool IsCombatSuppressed(TileType type) =>
         type is TileType.Campfire or TileType.EnchantShrine;
 
@@ -86,6 +86,6 @@ public static class TileAnimator
     // Global on/off. Future Options toggle can set this; default on.
     public static bool Enabled { get; set; } = true;
 
-    // Max concurrent animated tiles within FOV (research §4 density cap).
+    // Max concurrent animated tiles within FOV (density cap).
     public const int MaxConcurrent = 3;
 }

@@ -3,7 +3,7 @@ using SAOTRPG.Systems;
 namespace SAOTRPG.Map.Generation.Passes;
 
 // Biome-native base terrain. Per-tile dispatch; pocket-biome tiles pull their own
-// BiomeGenConfig so pocket thresholds/tile palette match the pocket biome (Bundle 8).
+// BiomeGenConfig so pocket thresholds/tile palette match the pocket biome.
 public sealed class BaseTerrainPass : IGenerationPass
 {
     public string Name => "BaseTerrain";

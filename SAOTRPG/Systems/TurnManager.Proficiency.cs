@@ -29,9 +29,6 @@ public partial class TurnManager
 
     private readonly Dictionary<string, int> _weaponKills = new();
 
-    // Pending fork picks: weapon type → list of levels (25/50/75/100) awaiting choice.
-    private readonly Queue<(string WpnType, int ForkLevel)> _pendingForkPicks = new();
-
     // ── Public API ────────────────────────────────────────────────────
 
     public IReadOnlyDictionary<string, int> WeaponKills => _weaponKills;
@@ -60,24 +57,6 @@ public partial class TurnManager
             }
         }
         return MaxProfLevel;
-    }
-
-    // Inverse of ComputeLevel on anchor points.
-    public static int KillsForLevel(int level)
-    {
-        if (level <= 1) return 0;
-        if (level >= MaxProfLevel) return CurveAnchors[^1].Kills;
-        for (int i = 1; i < CurveAnchors.Length; i++)
-        {
-            var lo = CurveAnchors[i - 1];
-            var hi = CurveAnchors[i];
-            if (level <= hi.Level)
-            {
-                double t = (double)(level - lo.Level) / (hi.Level - lo.Level);
-                return lo.Kills + (int)Math.Ceiling(t * (hi.Kills - lo.Kills));
-            }
-        }
-        return CurveAnchors[^1].Kills;
     }
 
     public int GetProficiencyLevel(string weaponType) =>
@@ -148,21 +127,6 @@ public partial class TurnManager
         return -1;
     }
 
-    public static int LevelForForkIndex(int forkIdx) =>
-        forkIdx >= 0 && forkIdx < ForkLevels.Length ? ForkLevels[forkIdx] : -1;
-
-    // True if weapon has unpicked forks (level ≥ fork threshold).
-    public bool HasPendingFork(string weaponType)
-    {
-        int lvl = GetProficiencyLevel(weaponType);
-        var picks = GetForkChoices(weaponType);
-        for (int i = 0; i < ForkCount; i++)
-        {
-            if (lvl >= ForkLevels[i] && picks[i] == 0) return true;
-        }
-        return false;
-    }
-
     // All pending (weapon, forkLevel) pairs. StatsDialog calls on open.
     public List<(string WpnType, int ForkLevel)> EnumeratePendingForks()
     {
@@ -194,10 +158,10 @@ public partial class TurnManager
     }
 
     // Stat impact of fork picks. Dmg components (L25/L100 opt1) in GetProficiencyBonus;
-    // stat ramps land here. Bundle 10 (B15): L50 forks split by weapon type.
+    // stat ramps land here. L50 forks split by weapon type.
     private void ApplyForkPassive(string weaponType, int forkLevel, int option)
     {
-        // Bundle 10 (B15) — weapon-specific L50 forks for OHS / Katana / Bow.
+        // Weapon-specific L50 forks for OHS / Katana / Bow.
         if (forkLevel == 50 && ApplyWeaponSpecificL50Fork(weaponType, option))
         {
             _player.CurrentHealth = Math.Min(_player.CurrentHealth, _player.MaxHealth);
@@ -225,8 +189,8 @@ public partial class TurnManager
         _player.CurrentHealth = Math.Min(_player.CurrentHealth, _player.MaxHealth);
     }
 
-    // Returns true if weaponType matches a B15-implemented type and the fork was applied.
-    // Apply via Player base fields so saves persist (BaseCriticalRate already snapshotted).
+    // Returns true if weaponType has a specific L50 implementation. Apply via Player
+    // base fields so saves persist (BaseCriticalRate already snapshotted).
     private bool ApplyWeaponSpecificL50Fork(string weaponType, int option)
     {
         switch (weaponType)
@@ -284,11 +248,7 @@ public partial class TurnManager
         }
     }
 
-    // Generic fork options — used when weapon type has no specific Bundle 10 override.
-    public static (ProficiencyFork Opt1, ProficiencyFork Opt2) GetForkOptions(int forkLevel) =>
-        GetForkOptions(forkLevel, "Generic");
-
-    // Bundle 10 (B15) — weapon-specific L50 forks for One-Handed Sword / Katana / Bow.
+    // Weapon-specific L50 forks for One-Handed Sword / Katana / Bow.
     // Other 9 weapon types fall through to the generic table.
     public static (ProficiencyFork Opt1, ProficiencyFork Opt2) GetForkOptions(int forkLevel, string weaponType)
     {
@@ -319,16 +279,6 @@ public partial class TurnManager
                     new("Immortal Vanguard", "+6 END, +2 VIT (+15 DEF, +20 HP)")),
             _   => (new("?", ""), new("?", "")),
         };
-    }
-
-    // Cosmetic level→rank mapping via kill-count anchors.
-    public static string RankTitleForLevel(int level)
-    {
-        int kills = KillsForLevel(level);
-        string rank = "Unranked";
-        foreach (var r in ProficiencyRanks)
-            if (kills >= r.Kills) rank = r.Rank;
-        return rank;
     }
 
     private static string GetRankUpFlavor(string rank) => rank switch

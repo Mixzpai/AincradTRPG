@@ -192,6 +192,9 @@ public static class GuildSystem
     public const int PlayerGuildFoundCost = 5000;
     public const int PlayerGuildNameMaxLen = 20;
 
+    // Fires after Join() successfully seats the player in a guild.
+    public static event Action<Faction>? GuildJoined;
+
     // Apply / reverse a guild's flat passive bonus. Mirrors TitleSystem's
     // base-stat poke pattern so all derived-stat pipelines pick it up.
     public static void ApplyGuildPerk(Player player, GuildDef guild, int sign = +1)
@@ -245,6 +248,7 @@ public static class GuildSystem
             ApplyPlayerGuildPerk(player, player.FoundedGuildPerk, sign: +1);
             string name = string.IsNullOrEmpty(player.FoundedGuildName) ? "your guild" : player.FoundedGuildName!;
             log.LogSystem($"  ** You are now the founder of {name}. **");
+            GuildJoined?.Invoke(newGuild);
             return;
         }
 
@@ -253,6 +257,7 @@ public static class GuildSystem
         StorySystem.AdjustRep(newGuild, 10);
         log.LogSystem($"  ** You are now a member of {def.DisplayName}. **");
         log.Log($"  Perk: {def.PerkFlavor}");
+        GuildJoined?.Invoke(newGuild);
     }
 
     // Leave active guild: -10 rep, -3 karma unless silent=true (Black Cats path).
@@ -311,8 +316,9 @@ public static class GuildSystem
         Leave(player, log, silent: true);
         KarmaSystem.Adjust(player, KarmaSystem.DeltaBlackCatsFall, "Moonlit Black Cats fell on F27", log);
 
-        // Survivor title — early unlock on this path (vs TitleSystem.CheckFloor50).
-        TitleSystem.TryUnlock(player, "title_survivor");
+        // Survivor title — early unlock on this path (Black Cats fate triggers
+        // it before the F50 threshold normally would).
+        MilestoneSystem.TryUnlock("title_survivor", player);
     }
 
     // Convenience accessor for the active guild's display name (for HUD / stats).

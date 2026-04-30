@@ -3,8 +3,8 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Items.Equipment;
 
-// Bundle 10 (B12) — typed-effect parse cache. Walks EquipmentBase.SpecialEffect once
-// per equipment instance, builds the typed record list, caches via ConditionalWeakTable.
+// Typed-effect parse cache. Walks EquipmentBase.SpecialEffect once per equipment
+// instance, builds the typed record list, caches via ConditionalWeakTable.
 // String field on EquipmentBase remains save-format authority; parser is lazy + idempotent.
 public static class EquipmentSpecialEffectRegistry
 {
@@ -16,17 +16,13 @@ public static class EquipmentSpecialEffectRegistry
     public static IReadOnlyList<EquipmentSpecialEffect> GetParsed(EquipmentBase eq)
         => _cache.GetValue(eq, BuildParsed);
 
-    // Convenience: first parsed record of type T, or null. Eq=null is safe (returns null).
-    public static T? Find<T>(EquipmentBase? eq) where T : EquipmentSpecialEffect
-        => eq == null ? null : eq.ParsedEffects.OfType<T>().FirstOrDefault();
-
     private static IReadOnlyList<EquipmentSpecialEffect> BuildParsed(EquipmentBase eq)
     {
         var list = new List<EquipmentSpecialEffect>();
         var fx = eq.SpecialEffect;
         if (string.IsNullOrEmpty(fx)) return list;
 
-        // Tokenizer — same shape as SwordSkillEngine.BuildSpecialFxTable: letter-key + signed int pairs.
+        // Tokenizer — letter-key + signed int pairs (e.g. "C5B10" → Crit+5, Block+10).
         int i = 0;
         while (i < fx.Length)
         {

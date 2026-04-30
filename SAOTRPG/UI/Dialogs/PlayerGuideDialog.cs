@@ -187,7 +187,7 @@ public static class PlayerGuideDialog
         // Custom render surface — paints body content rune-by-rune with
         // per-token color, tracks See-also bullets for yellow-highlight focus.
         // Replaces a TextView so we get inline cyan [[brackets]], Gold section
-        // rules, and per-row focus tinting (impossible in TextView per quirks §5).
+        // rules, and per-row focus tinting (TextView shares one ColorScheme for all content).
         // bodyHeader sits at Y=0; the body fills directly under it (no rule
         // separator — header carries its own category color as the divider).
         // Bottom 2 rows reserved for footerFlash + hint (Close button removed —
@@ -856,6 +856,7 @@ public static class PlayerGuideDialog
 
         var sb = new System.Text.StringBuilder();
         sb.Append(e.Title.ToUpperInvariant()).Append('\n').Append('\n');
+        sb.Append(new string('-', wrapCols)).Append('\n').Append('\n');
         sb.Append(disclosureRendered.TrimEnd());
 
         if (seeAlso.Count > 0)

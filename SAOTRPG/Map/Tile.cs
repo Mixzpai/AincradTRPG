@@ -18,7 +18,7 @@ public struct Tile
     }
 
     // Water + WaterDeep block at tile-level; player bypasses via Swimming skill, aquatic mobs via Monster.CanSwim.
-    // Bundle 10: ore veins block until depleted (mining bump-action diverts before this gate).
+    // Ore veins block until depleted (mining bump-action diverts before this gate).
     public bool BlocksMovement => Type is TileType.Wall or TileType.CrackedWall or TileType.Water
                                     or TileType.WaterDeep or TileType.Mountain or TileType.Tree
                                     or TileType.TreePine or TileType.Rock

@@ -121,8 +121,8 @@ public static class Bestiary
         }
     }
 
-    // Bundle 10 (B8) — type-aware adapter; lifts boss/elite/status-flag boilerplate
-    // out of call sites so insta-kill paths capture without duplicating AI.cs.
+    // Type-aware adapter; lifts boss/elite/status-flag boilerplate out of call
+    // sites so insta-kill paths capture without duplicating AI.cs.
     public static void RecordMonsterEncounter(Monster monster, int floor)
     {
         if (monster == null) return;
@@ -198,7 +198,7 @@ public static class Bestiary
             // DeathsCaused owned by LifetimeStats (RecordDeathCause); don't overwrite.
             known.LastSeenDate = string.IsNullOrEmpty(r.LastSeenDate)
                 ? known.LastSeenDate : r.LastSeenDate;
-            // Bundle 10 (B9) — persist loot tag so cross-run reload preserves it.
+            // Persist loot tag so cross-run reload preserves it.
             if (!string.IsNullOrEmpty(r.LootTag) && r.LootTag != "generic")
                 known.LootTag = r.LootTag;
 
@@ -215,8 +215,8 @@ public static class Bestiary
         foreach (var (name, k) in data.BestiaryKnown)
         {
             if (_entries.ContainsKey(name)) continue;  // session beats lifetime
-            // Bundle 10 (B9) — restore persisted loot tag; fall back to runtime
-            // MobFactory lookup, finally "generic" for unknown species names.
+            // Restore persisted loot tag; fall back to runtime MobFactory lookup,
+            // finally "generic" for unknown species names.
             string lootTag = k.LootTag
                 ?? Map.MobFactory.GetLootTagForName(name)
                 ?? "generic";

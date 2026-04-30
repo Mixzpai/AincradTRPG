@@ -4,12 +4,12 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Bundle 13 Item 6 — Ranged Fire with Reticle.
+// Ranged Fire with Reticle.
 // Modal targeting overlay: arrows move reticle within a Chebyshev radius (max range),
 // Tab cycles between visible monsters in range, Enter/Space confirms (fires at the
 // reticle if a valid target sits there), Esc cancels (no turn consumed).
-// Used for Bow basic-attack (Q14 LOCK) and any sword skill with Range>1; melee
-// (Range=1) bumps remain unchanged. Pattern forks MapView.LookMode.cs.
+// Used for Bow basic-attack and any sword skill with Range>1; melee (Range=1) bumps
+// remain unchanged. Pattern forks MapView.LookMode.cs.
 public partial class MapView
 {
     // Sidebar gating mirrors LookMode — reticle works fine without it on narrow terms.
@@ -31,7 +31,6 @@ public partial class MapView
     private int _rangedSkillSlot = -1;
 
     public bool IsRangedFireModeActive => _rangedFireActive;
-    public event Action<bool>? RangedFireModeChanged;
     // Bow basic-attack confirm: (mapX, mapY) of reticle. GameScreen wires to TurnManager.ExecuteBowShot.
     public event Action<int, int>? RangedFireRequested;
     // Sword-skill confirm: (slotIdx, mapX, mapY). GameScreen sets SkillTargetOverride then ExecuteSwordSkill(slot).
@@ -65,7 +64,6 @@ public partial class MapView
         if (snap.HasValue) (_rangedReticleX, _rangedReticleY) = snap.Value;
         else (_rangedReticleX, _rangedReticleY) = (_player.X, _player.Y);
         _rangedFireActive = true;
-        RangedFireModeChanged?.Invoke(true);
         SetNeedsDraw();
     }
 
@@ -74,7 +72,6 @@ public partial class MapView
         if (!_rangedFireActive) return;
         _rangedFireActive = false;
         _rangedSkillSlot = -1;
-        RangedFireModeChanged?.Invoke(false);
         SetNeedsDraw();
     }
 

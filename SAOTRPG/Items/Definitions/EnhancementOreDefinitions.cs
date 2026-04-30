@@ -40,18 +40,6 @@ public static class EnhancementOreDefinitions
     public static EnhancementOre CreateAshWhite() =>
         Make("ore_ash_white", "Ash White Ore", 115, StatType.Intelligence);
 
-    // Convenience map: stat → ore DefId. Used by CraftingDialog + migration.
-    public static readonly Dictionary<StatType, string> StatToOreDefId = new()
-    {
-        [StatType.Attack]       = "ore_crimson_flame",
-        [StatType.Defense]      = "ore_adamant",
-        [StatType.Vitality]     = "ore_crust",
-        [StatType.Dexterity]    = "ore_sharp_blade",
-        [StatType.Speed]        = "ore_flowing_water",
-        [StatType.Agility]      = "ore_wind_flower",
-        [StatType.Intelligence] = "ore_ash_white",
-    };
-
     // Inverse map: ore DefId → bias stat. Used to apply the per-level bonus.
     public static readonly Dictionary<string, StatType> OreDefIdToStat = new()
     {

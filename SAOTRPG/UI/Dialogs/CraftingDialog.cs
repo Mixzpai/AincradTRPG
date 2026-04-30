@@ -232,6 +232,7 @@ public static class CraftingDialog
         {
             // Weapon path threads oreDefId so per-level bonus biases to ore's stat.
             ApplyEnhancementDelta(player, chosenItem, +1, chosenOreDefId);
+            SAOTRPG.Systems.MilestoneSystem.OnRefinementApplied(player, chosenItem);
 
             string biasMsg = "";
             if (chosenOreDefId != null &&
@@ -352,7 +353,7 @@ public static class CraftingDialog
         player.Inventory.InvalidateStatCache();  // Bonuses mutated on equipped item
     }
 
-    // B12 C2 — Lisbeth iron-ingot path. Mirrors ApplyEnhancementDelta +1 logic but works on
+    // Lisbeth iron-ingot path. Mirrors ApplyEnhancementDelta +1 logic but works on
     // any weapon (equipped or backpack), no ore picker; flat Crimson-Flame Attack bias.
     internal static void ApplyLisbethIronIngotEnhance(Player player, Weapon weapon)
     {
@@ -371,6 +372,7 @@ public static class CraftingDialog
 
         if (wasEquipped) weapon.Equip(player);
         player.Inventory.InvalidateStatCache();
+        SAOTRPG.Systems.MilestoneSystem.OnRefinementApplied(player, weapon);
     }
 
     // Ore DurabilityBonus via prototype. Only Adamant Ore is non-zero today (+10/level).

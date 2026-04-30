@@ -7,6 +7,9 @@ public static class UniqueSkillSystem
 {
     public static HashSet<UniqueSkill> Unlocked { get; set; } = new();
 
+    // Fires when TryUnlock newly adds a skill.
+    public static event Action<UniqueSkill>? UniqueSkillUnlocked;
+
     public static readonly Dictionary<UniqueSkill, UniqueSkillDef> Definitions = new()
     {
         [UniqueSkill.DualBlades] = new(UniqueSkill.DualBlades,
@@ -73,14 +76,16 @@ public static class UniqueSkillSystem
 
     public static bool Has(UniqueSkill skill) => Unlocked.Contains(skill);
 
-    public static bool TryUnlock(UniqueSkill skill) => Unlocked.Add(skill);
+    public static bool TryUnlock(UniqueSkill skill)
+    {
+        if (!Unlocked.Add(skill)) return false;
+        UniqueSkillUnlocked?.Invoke(skill);
+        return true;
+    }
 
     // Convenience: true when Dual Blades is unlocked. Used to gate OffHand
     // one-handed-sword equipping + the bonus offhand swing in combat.
     public static bool HasDualBlades() => Has(UniqueSkill.DualBlades);
-
-    // Convenience: true when Martial Arts is unlocked.
-    public static bool HasMartialArts() => Has(UniqueSkill.MartialArts);
 
     // ── Active-state predicates (checked at combat time) ──────────────
     public static bool IsDualBladesActive(string wpnType)
@@ -108,30 +113,6 @@ public static class UniqueSkillSystem
         if (IsDarknessBladeActive()) bonus += 20;
         return bonus;
     }
-
-    public static int CritChanceBonusPercent(string wpnType)
-    {
-        int bonus = 0;
-        if (IsMartialArtsActive(wpnType)) bonus += 20;
-        if (IsKatanaMasteryActive(wpnType)) bonus += 10;
-        return bonus;
-    }
-
-    public static int BlockChanceBonusPercent(string wpnType, bool hasShield)
-        => IsHolySwordActive(wpnType, hasShield) ? 15 : 0;
-
-    public static int DodgeBonusPercent()
-        => IsDarknessBladeActive() ? 10 : 0;
-
-    // On-hit proc chances (percent out of 100)
-    public static int BleedProcChance(string wpnType)
-        => IsKatanaMasteryActive(wpnType) ? 15 : 0;
-
-    public static int BurnProcChance()
-        => Has(UniqueSkill.BlazingEdge) ? 10 : 0;
-
-    public static int SlowProcChance()
-        => Has(UniqueSkill.FrozenEdge) ? 10 : 0;
 
     // Elemental multipliers against tagged mobs. Mob's Name/Tag is passed in.
     public static int ElementalBonusPercent(string monsterName)

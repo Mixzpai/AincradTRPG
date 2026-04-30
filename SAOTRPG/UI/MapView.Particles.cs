@@ -8,17 +8,17 @@ namespace SAOTRPG.UI;
 // — later passes overwrite conflicting cells, giving popups/projectiles z-order priority.
 public partial class MapView
 {
-    // Bundle 13 (Item 2) — throttle for awakening emission. Banner fires for ~3s but the
-    // emit window is its first half (per DivineObtainBanner.ShouldEmitParticlesThisFrame);
-    // we want one burst per emit window, not one per frame.
+    // Throttle for awakening emission. Banner fires for ~3s but the emit window is
+    // its first half (per DivineObtainBanner.ShouldEmitParticlesThisFrame); we want
+    // one burst per emit window, not one per frame.
     private int _lastAwakeningLevelEmitted;
 
     private void RenderParticles(int w, int h, int dtMs)
     {
         using var _particlesScope = Profiler.Begin("MapView.Particles");
-        // Bundle 13 (Item 2) — fire awakening burst exactly once per emit window.
-        // Edge: ShouldEmit goes true→false as the banner enters its hold half — reset
-        // the latch then so a re-fired awakening (different weapon) emits again.
+        // Fire awakening burst exactly once per emit window. Edge: ShouldEmit goes
+        // true→false as the banner enters its hold half — reset the latch then so a
+        // re-fired awakening (different weapon) emits again.
         if (DivineObtainBanner.ShouldEmitParticlesThisFrame
             && DivineObtainBanner.AwakeningParticleLevel > 0
             && _lastAwakeningLevelEmitted == 0)

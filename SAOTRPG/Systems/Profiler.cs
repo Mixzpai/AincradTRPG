@@ -1,14 +1,17 @@
 using System.Diagnostics;
 using System.IO;
-using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
 // Lightweight named-bucket timer. Compiled to no-ops when PROFILING is off.
-// Use Profiler.Begin("Name") in a using-statement; Shift+F12 dumps, Shift+F11 resets.
+// Runtime-gated by Profiler.Enabled (default false) so production builds carry
+// zero cost — Begin returns default(Scope), no Stopwatch/dictionary touches.
+// Shift+F10 toggles, Shift+F12 dumps to file, Shift+F11 resets.
 public static class Profiler
 {
 #if PROFILING
+    public static bool Enabled { get; set; } = false;
+
     private static readonly Dictionary<string, (long TotalTicks, int Count, long Max)> _buckets = new();
 
     private static IEnumerable<string> FormatLines()
@@ -37,30 +40,25 @@ public static class Profiler
 
     public readonly struct Scope : IDisposable
     {
-        private readonly string _name;
+        private readonly string? _name;
         private readonly long _start;
         public Scope(string name) { _name = name; _start = Stopwatch.GetTimestamp(); }
         public void Dispose()
         {
+            // Default Scope (returned when Enabled=false) has _name=null and is a no-op.
+            if (_name == null) return;
             long t = Stopwatch.GetTimestamp() - _start;
             if (!_buckets.TryGetValue(_name, out var b)) b = default;
             _buckets[_name] = (b.TotalTicks + t, b.Count + 1, Math.Max(b.Max, t));
         }
     }
 
-    public static Scope Begin(string name) => new(name);
-
-    public static void Record(string name, Stopwatch sw)
-    {
-        sw.Stop();
-        long t = sw.ElapsedTicks;
-        if (!_buckets.TryGetValue(name, out var b)) b = default;
-        _buckets[name] = (b.TotalTicks + t, b.Count + 1, Math.Max(b.Max, t));
-    }
+    public static Scope Begin(string name) => Enabled ? new Scope(name) : default;
 
     // Synthetic counter — ticks field carries the count value.
     public static void RecordCount(string name, int count)
     {
+        if (!Enabled) return;
         if (!_buckets.TryGetValue(name, out var b)) b = default;
         _buckets[name] = (b.TotalTicks + count, b.Count + 1, Math.Max(b.Max, count));
     }
@@ -69,14 +67,9 @@ public static class Profiler
     // a per-iteration Scope would dominate. Caller adds Stopwatch.GetTimestamp() deltas.
     public static void RecordRaw(string name, long ticks)
     {
+        if (!Enabled) return;
         if (!_buckets.TryGetValue(name, out var b)) b = default;
         _buckets[name] = (b.TotalTicks + ticks, b.Count + 1, Math.Max(b.Max, ticks));
-    }
-
-    public static void Dump(IGameLog log)
-    {
-        foreach (var line in FormatLines())
-            log.Log(line);
     }
 
     // Writes a timestamped file under %LocalAppData%/AincradTRPG/profiler/.
@@ -91,15 +84,14 @@ public static class Profiler
 
     public static void Reset() => _buckets.Clear();
 #else
+    public static bool Enabled { get; set; } = false;
     public readonly struct Scope : IDisposable
     {
         public void Dispose() { }
     }
     public static Scope Begin(string name) => default;
-    public static void Record(string name, Stopwatch sw) { }
     public static void RecordCount(string name, int count) { }
     public static void RecordRaw(string name, long ticks) { }
-    public static void Dump(IGameLog log) { }
     public static string DumpToFile(string? customPath = null) => string.Empty;
     public static void Reset() { }
 #endif

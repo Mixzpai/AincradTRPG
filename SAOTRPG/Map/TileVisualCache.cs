@@ -16,9 +16,6 @@ public sealed class TileVisualCache
         _buf = new Slot[w * h];
     }
 
-    public int Width => _w;
-    public int Height => _h;
-
     public (char Ch, Color Fg, Color Bg) Get(int x, int y, TileType type)
     {
         if ((uint)x >= (uint)_w || (uint)y >= (uint)_h)
@@ -51,10 +48,5 @@ public sealed class TileVisualCache
     {
         if ((uint)x >= (uint)_w || (uint)y >= (uint)_h) return;
         _buf[y * _w + x].Cached = false;
-    }
-
-    public void InvalidateAll()
-    {
-        for (int i = 0; i < _buf.Length; i++) _buf[i].Cached = false;
     }
 }

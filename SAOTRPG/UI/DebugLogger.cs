@@ -11,9 +11,6 @@ public static class DebugLogger
     private static bool _enabled;
     private static string? _logFilePath;
 
-    // Absolute log-file path, or null if logging disabled.
-    public static string? LogFilePath => _logFilePath;
-
     // ── Session ──
     // Creates/overwrites debug.log in cwd; falls back to timestamped filename on file-lock.
     public static void Init(string path = "debug.log")

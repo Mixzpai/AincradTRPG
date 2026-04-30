@@ -19,7 +19,7 @@ public static class DivineObtainBanner
     private static int  _durationMs;
     private static string _weaponName = "";
     private static string _rarityLabel = "";
-    // Bundle 9: Awakening variant state. Set by TriggerAwakening; Trigger clears it.
+    // Awakening variant state. Set by TriggerAwakening; Trigger clears it.
     private static bool _isAwakening;
     private static int  _awakeningLevel;
 
@@ -58,16 +58,16 @@ public static class DivineObtainBanner
 
     public static string WeaponName  => _weaponName;
     public static string RarityLabel => _rarityLabel;
-    // Bundle 9: true when the active banner is an awakening fire (vs. obtain).
+    // True when the active banner is an awakening fire (vs. obtain).
     public static bool IsAwakening => _isAwakening;
     public static int AwakeningLevel => _awakeningLevel;
 
-    // Bundle 13 — particle level (1/2/3) for Wave 2 saotrpg-ui MapView.Particles consumer.
+    // Particle level (1/2/3) for the MapView.Particles consumer.
     // Set in TriggerAwakening; mirrors _awakeningLevel for explicit particle-system contract.
     public static int AwakeningParticleLevel { get; private set; }
 
-    // Bundle 13 — true when the awakening banner is active and we are still inside the
-    // first half of its duration window (emit phase). Consumed by saotrpg-ui Wave 2.
+    // True when the awakening banner is active and we are still inside the first
+    // half of its duration window (emit phase). Consumed by MapView.Particles.
     public static bool ShouldEmitParticlesThisFrame
     {
         get
@@ -91,7 +91,7 @@ public static class DivineObtainBanner
         IsActive = true;
     }
 
-    // Bundle 9: Awakening variant fire. Swaps header/subtitle to ◈ DIVINE AWAKENED ◈.
+    // Awakening variant fire. Swaps header/subtitle to ◈ DIVINE AWAKENED ◈.
     // Reuses the same fade+hold timer as the obtain banner.
     public static void TriggerAwakening(Weapon divine, int newLevel, int durationMs = DefaultDurationMs)
     {

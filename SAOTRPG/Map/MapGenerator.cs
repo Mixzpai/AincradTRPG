@@ -15,7 +15,7 @@ public static partial class MapGenerator
         UI.DebugLogger.LogGame("MAPGEN", $"CurrentGlobalSeed set to {seed}");
     }
 
-    // Bundle 7: per-prefab-name MAX_PER_GAME tracker. Saved via SaveData.PrefabUseCounts;
+    // Per-prefab-name MAX_PER_GAME tracker. Saved via SaveData.PrefabUseCounts;
     // loaded on save-load, cleared on new-run. NOT reset on floor change — per-game cap.
     private static Dictionary<string, int> _prefabUseCounts = new();
 
@@ -69,7 +69,7 @@ public static partial class MapGenerator
         new Generation.Passes.BaseTerrainPass(),
         new Generation.Passes.BorderPass(),
         new Generation.Passes.ClusterPass(),
-        // Bundle 10 — vein placement seeds Wall tiles before lake/water might wash them.
+        // Vein placement seeds Wall tiles before lake/water might wash them.
         new Generation.Passes.OreVeinPlacementPass(),
         new Generation.Passes.LakePass(),
         new Generation.Passes.AquaticDepthPostPass(),
@@ -334,47 +334,6 @@ public static partial class MapGenerator
             if (Math.Abs(x - spawnX) < townRadius && Math.Abs(y - spawnY) < townRadius) continue;
             if (!IsGrassType(map.Tiles[x, y].Type)) continue;
             map.Tiles[x, y].Type = TileType.Bush;
-        }
-    }
-
-    internal static void ScatterHazards(GameMap map, int count, int spawnX, int spawnY, Random rng)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            int x = rng.Next(8, map.Width - 8), y = rng.Next(8, map.Height - 8);
-            if (!IsGrassType(map.Tiles[x, y].Type) && map.Tiles[x, y].Type != TileType.Path) continue;
-            if (Math.Abs(x - spawnX) < 8 && Math.Abs(y - spawnY) < 8) continue;
-            map.Tiles[x, y].Type = rng.Next(6) switch
-            {
-                0 => TileType.TrapTeleport, 1 => TileType.TrapPoison,
-                2 => TileType.TrapAlarm, _ => TileType.TrapSpike,
-            };
-        }
-    }
-
-    internal static void ScatterVents(GameMap map, int count, int spawnX, int spawnY, Random rng)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            int x = rng.Next(10, map.Width - 10), y = rng.Next(10, map.Height - 10);
-            if (Math.Abs(x - spawnX) < 8 && Math.Abs(y - spawnY) < 8) continue;
-            if (IsGrassType(map.Tiles[x, y].Type) || map.Tiles[x, y].Type == TileType.Floor)
-                map.Tiles[x, y].Type = TileType.GasVent;
-        }
-    }
-
-    // Repeatedly rolls an interior position; stamps `feature` where `accept` passes.
-    internal static void ScatterFeature(GameMap map, int count, int maxTries,
-        int edgeMargin, TileType feature, Func<int, int, bool> accept, Random rng)
-    {
-        for (int i = 0; i < count; i++)
-        for (int attempt = 0; attempt < maxTries; attempt++)
-        {
-            int x = rng.Next(edgeMargin, map.Width - edgeMargin);
-            int y = rng.Next(edgeMargin, map.Height - edgeMargin);
-            if (!accept(x, y)) continue;
-            map.Tiles[x, y].Type = feature;
-            break;
         }
     }
 

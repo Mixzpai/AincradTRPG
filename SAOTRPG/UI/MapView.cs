@@ -20,7 +20,7 @@ public partial class MapView : View
     private Action<int, int, Map.TileType, Map.TileType>? _visualCacheInvalidator;
     private Action<int, int>? _visualCacheTrapInvalidator;
 
-    // Bundle 13 (Item 8) — read from UserSettings.FootstepLength (0..1000).
+    // Read from UserSettings.FootstepLength (0..1000).
     private static int FootstepTrailLength =>
         Math.Clamp(SAOTRPG.Systems.UserSettings.Current.FootstepLength, 0, 1000);
     private readonly Queue<(int X, int Y)> _footsteps = new();
@@ -225,8 +225,8 @@ public partial class MapView : View
     private const int LevelUpFlashMs = 200;
     public void TriggerLevelUpFlash() { _levelUpFlashRemainingMs = LevelUpFlashMs; DirtyFrame(); }
 
-    // Wave 2 — status tint crossfade. _statusTintCurrentColor is what
-    // ApplyStatusTint reads; SetStatusTint kicks off a 200ms ease toward target.
+    // Status tint crossfade. _statusTintCurrentColor is what ApplyStatusTint reads;
+    // SetStatusTint kicks off a 200ms ease toward target.
     private Color? _statusTintCurrentColor;
     private Color? _statusTintTargetColor;
     private Color? _statusTintSourceColor;
@@ -313,17 +313,15 @@ public partial class MapView : View
     public event Action? BestiaryRequested;
     // Fired on Esc from the map view — opens the pause menu.
     public event Action? PauseRequested;
-    // FB-479 Shift+S — flips the status tray between compact / verbose labels.
+    // Shift+S — flips the status tray between compact / verbose labels.
     public event Action? StatusTrayVerboseToggleRequested;
     // F9 — hot-reload biome JSONs + regenerate current floor with same seed.
     public event Action? BiomeReloadRequested;
-    // Bundle 13 Item 6 — `\` keypress raised from MapView.Input.cs. GameScreen reads the
-    // equipped weapon and either opens the Bow reticle or toasts a "no bow" hint.
+    // `\` keypress raised from MapView.Input.cs. GameScreen reads the equipped
+    // weapon and either opens the Bow reticle or toasts a "no bow" hint.
     public event Action? RangedFireKeyPressed;
-    // Bundle 13 Item 1 — Shift+L opens the Legendary Collectables panel.
-    public event Action? LegendaryCollectablesRequested;
 
-    // ── Wave 2 HP/XP/SAT tween state ──────────────────────────────────
+    // ── HP/XP/SAT tween state ────────────────────────────────────────
     // Generic int-tween with start/target/remaining state. ApplyTarget bumps the
     // tween (multi-hit: restart from current displayed value, no jump).
     private struct IntTween
@@ -447,6 +445,10 @@ public partial class MapView : View
         _bossesSeen.Clear();
         _bossEntranceRemainingMs = 0;
         SAOTRPG.Systems.ParticleQueue.Clear();
+        // Reset per-mob DoT-popup gate so popup suppression doesn't leak across floors.
+        ResetDotTracking();
+        // Clear any in-flight Divine drop banner so it doesn't bleed into the next floor.
+        DivineObtainBanner.Clear();
         DirtyFrame();
     }
 

@@ -51,14 +51,24 @@ public static class DialogHelper
     }
 
     // Standard dialog factory — applies the shared color scheme and dimensions
-    // so every popup looks identical from frame inward.
-    public static Dialog Create(string title, int width, int height) => new()
+    // so every popup looks identical from frame inward. Scrollbars are off by
+    // default; TG v2 shows them automatically otherwise even when content fits.
+    // Dialogs that need scrolling can re-enable them on the inner content view.
+    public static Dialog Create(string title, int width, int height)
     {
-        Title = title,
-        Width = width,
-        Height = height,
-        ColorScheme = ColorSchemes.Dialog,
-    };
+        var d = new Dialog
+        {
+            Title = title,
+            Width = width,
+            Height = height,
+            ColorScheme = ColorSchemes.Dialog,
+        };
+        d.VerticalScrollBar.Visible = false;
+        d.VerticalScrollBar.AutoShow = false;
+        d.HorizontalScrollBar.Visible = false;
+        d.HorizontalScrollBar.AutoShow = false;
+        return d;
+    }
 
     // Standardized confirmation dialog. Returns true if the player confirmed.
     // Usage: if (!DialogHelper.ConfirmAction("Drop", "Iron Sword")) return;
@@ -121,7 +131,7 @@ public static class DialogHelper
         }
     }
 
-    // Wave 2 — schedules a per-frame ColorScheme ramp from black→baseline.
+    // Schedules a per-frame ColorScheme ramp from black→baseline.
     // Stopwatch-driven so it runs independently of the paused FrameClock.
     private static void FadeInDialog(Dialog dialog, int durationMs,
         SAOTRPG.Systems.EasingHelper.EasingType easing)

@@ -48,7 +48,7 @@ public partial class TurnManager
         {
             LastKillerName = "a spike trap";
             _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-            PlayerDied?.Invoke();
+            RaisePlayerDied("trap");
             return true;
         }
         return false;
@@ -126,7 +126,7 @@ public partial class TurnManager
             {
                 LastKillerName = ambusher.Name;
                 _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-                PlayerDied?.Invoke();
+                RaisePlayerDied("monster");
                 return true;
             }
         }

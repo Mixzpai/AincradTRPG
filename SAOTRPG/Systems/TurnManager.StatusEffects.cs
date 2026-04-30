@@ -19,7 +19,7 @@ public partial class TurnManager
         // Status mote on the affected tile — bleed uses ◇ shatter per SAO theme.
         string kind = tag switch { "PSN" => "poison", "BLD" => "bleed", _ => "burn" };
         StatusTrailRequested?.Invoke(_player.X, _player.Y, kind);
-        // FB-450 status-inflict particle puff alongside the trail glyph.
+        // Status-inflict particle puff alongside the trail glyph.
         ParticleEvent pev = kind switch
         {
             "poison" => ParticleEvent.PoisonInflict,
@@ -36,7 +36,7 @@ public partial class TurnManager
         if (!_player.IsDefeated) return;
         LastKillerName = killerName;
         _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-        PlayerDied?.Invoke();
+        RaisePlayerDied(killerName);
     }
 
     private void TickPoison() =>
@@ -57,13 +57,8 @@ public partial class TurnManager
         _player.TakeDamage(hemorrhageDmg);
         _log.LogCombat($"*** HEMORRHAGE! Poison and bleed react — {hemorrhageDmg} burst damage! ***");
         CombatTextEvent?.Invoke(_player.X, _player.Y, "HEMORRHAGE!", Color.BrightMagenta);
-        var ach = !_player.IsDefeated ? Achievements.TryUnlock("survive_hemorrhage") : null;
-        if (ach != null)
-        {
-            _player.ColOnHand += ach.ColReward;
-            TotalColEarned += ach.ColReward;
-            _log.LogSystem($"  **ACHIEVEMENT: {ach.Name} — {ach.Description} (+{ach.ColReward} Col)");
-        }
+        if (!_player.IsDefeated)
+            MilestoneSystem.TryUnlock("survive_hemorrhage", _player);
         CheckDotDeath("bleeding");
     }
 
@@ -120,7 +115,7 @@ public partial class TurnManager
         }
 
         // Normal hunger + biome-specific extra drain (desert/volcanic/void).
-        // FB-564 Iron Rank modifier doubles hunger drain.
+        // Iron Rank modifier doubles hunger drain.
         int drainAmount = 1 + BiomeSystem.SatietyDrainBonus;
         if (RunModifiers.IsActive(RunModifier.IronRank)) drainAmount *= 2;
         if (TurnCount % HungerDrainInterval == 0 && Satiety > 0)
@@ -133,7 +128,7 @@ public partial class TurnManager
             _player.TakeDamage(biomeDmg);
             if (TurnCount % (bioInterval * 3) == 0) // log every 3rd tick to reduce spam
                 _log.Log($"The {BiomeSystem.DisplayName} environment wears on you. (-{biomeDmg} HP)");
-            if (_player.IsDefeated) { LastKillerName = $"the {BiomeSystem.DisplayName}"; PlayerDied?.Invoke(); }
+            if (_player.IsDefeated) { LastKillerName = $"the {BiomeSystem.DisplayName}"; RaisePlayerDied("biome"); }
         }
 
         if (Satiety <= 0 && !_player.IsDefeated)
@@ -148,7 +143,7 @@ public partial class TurnManager
             {
                 LastKillerName = "starvation";
                 _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-                PlayerDied?.Invoke();
+                RaisePlayerDied("starvation");
             }
         }
         else if (Satiety == 15 && !_starvingWarned)
@@ -174,17 +169,17 @@ public partial class TurnManager
         int interval = _diffTier.RegenInterval;
         if (_player.IsDefeated || interval <= 0) return;
         if (Satiety < HungerRegenThreshold) return;
-        // FB-051 Sleep L99: regen cadence halves (interval/2) → ~2x heal outside rest.
+        // Sleep L99: regen cadence halves (interval/2) → ~2x heal outside rest.
         if (_player.LifeSkills.SleepFasterRegen && interval > 1) interval = Math.Max(1, interval / 2);
         if (TurnCount % interval != 0) return;
 
         // SpecialEffect regen stacks on top of native regen.
-        // Bundle 10 (B14): HPRegen + SPRegen sum across ALL equipped slots (armor pieces stack).
+        // HPRegen + SPRegen sum across ALL equipped slots (armor pieces stack).
         var regenWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Items.Equipment.Weapon;
         int hpBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.HPRegen>(h => h.Amount);
         int spBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.SPRegen>(s => s.Amount);
 
-        // Bundle 10 (B1) — active food regen buff folds into the same tick.
+        // Active food regen buff folds into the same tick.
         // Consumed once per regen interval; expires when turns reach 0.
         int foodBonus = 0;
         if (_foodRegenTurnsLeft > 0)
@@ -198,7 +193,7 @@ public partial class TurnManager
         {
             int regenAmount = 1 + _player.Vitality / 3 + WeatherSystem.GetRegenBonus() + hpBonus + foodBonus;
             _player.CurrentHealth = Math.Min(_player.CurrentHealth + regenAmount, _player.MaxHealth);
-            // FB-450 healing tick sparkle — subtle +/· pair at player tile.
+            // Healing tick sparkle — subtle +/· pair at player tile.
             ParticleQueue.Emit(ParticleEvent.HealingTick, _player.X, _player.Y);
             if (Random.Shared.Next(100) < 30)
                 _log.Log(FlavorText.RegenFlavors[Random.Shared.Next(FlavorText.RegenFlavors.Length)]);

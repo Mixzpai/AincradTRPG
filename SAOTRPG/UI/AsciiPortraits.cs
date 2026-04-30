@@ -1,7 +1,7 @@
 namespace SAOTRPG.UI;
 
 // Small ASCII portraits keyed by a short identifier. Humans are 8×5; bosses upgrade to 8×7.
-// Glyph-safe per research §3 list — no CJK, no emoji, no combining marks.
+// Glyph-safe palette — no CJK, no emoji, no combining marks.
 public static class AsciiPortraits
 {
     public static readonly Dictionary<string, string[]> All = new()

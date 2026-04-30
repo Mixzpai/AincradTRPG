@@ -15,5 +15,4 @@ public interface IInventoryLogger
     void LogItemUnequipped(EquipmentBase equipment, EquipmentSlot slot);
     void LogItemUsed(Consumable consumable, string effectDescription);
     void LogError(string message);   // Validation failures, full inventory, etc.
-    void LogInfo(string message);    // General inventory info
 }

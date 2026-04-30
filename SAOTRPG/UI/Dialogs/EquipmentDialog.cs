@@ -146,7 +146,7 @@ public static class EquipmentDialog
         }
         else if (eq is Pickaxe pick)
         {
-            // Bundle 10 — pickaxe detail emphasizes mining stats; durability appended below as N/M for context.
+            // Pickaxe detail emphasizes mining stats; durability appended below as N/M for context.
             if (pick.MiningPower != 0) parts.Add($"Power: +{pick.MiningPower}");
             if (pick.OreQualityBonus != 0) parts.Add($"Quality: +{pick.OreQualityBonus}%");
         }
@@ -158,7 +158,7 @@ public static class EquipmentDialog
             bonuses.Add($"{ShortStatName(effect.Type)} {sign}{effect.Potency}");
         }
         if (bonuses.Count > 0) parts.Add(string.Join(", ", bonuses));
-        // Bundle 10 — Pickaxe shows N/M with critical/low tag; other gear keeps the legacy single-number DUR.
+        // Pickaxe shows N/M with critical/low tag; other gear keeps the legacy single-number DUR.
         if (eq is Pickaxe pickDur)
         {
             int max = pickDur.MaxDurability > 0 ? pickDur.MaxDurability : Math.Max(1, pickDur.ItemDurability);

@@ -1,8 +1,7 @@
 namespace SAOTRPG.Items;
 
 // Static citation database for ALL Legendary weapons. Keyed by DefinitionId.
-// Source: LEGENDARY_REDISTRIBUTION_PROPOSAL.md §5 (Bundle 11/12 anchor table).
-// 184/185 coverage (1 gap: stone-craft corrupted variants excluded per Bundle 11 §10).
+// 184/185 coverage (stone-craft corrupted variants excluded).
 public static class CanonCitationData
 {
     public readonly record struct Citation(string Source, string FloorAnchor, string Detail);
@@ -237,7 +236,7 @@ public static class CanonCitationData
         ["axe_snowsunder"] = new("Invented", "F66–F72 chest",
             "AincradTRPG mid-tier filler — non-canon."),
         ["axe_lang"] = new("Last Recollection / Lost Song (canon)", "F44–F48 chest",
-            "LR/LS canon — Bundle 12 lifted to fill F44–47 gap."),
+            "LR/LS canon — fills F44–47 gap."),
         ["axe_nadr"] = new("Last Recollection myth (canon)", "F73–F79 chest",
             "LR mythic axe — late mid-tier band."),
 
@@ -331,7 +330,7 @@ public static class CanonCitationData
         ["dag_whitespark"] = new("Invented", "F86–F92 chest",
             "AincradTRPG late-tier filler — non-canon."),
         ["dag_giardino"] = new("Last Recollection myth (canon)", "F25–F47 chest",
-            "LR mythic dagger — Bundle 12 widened to fill F44–47 gap."),
+            "LR mythic dagger — fills F44–47 gap."),
 
         // ── Bow ──────────────────────────────────────────────────────
         ["bow_zephyros"] = new("Infinity Moment (canon)", "F85 floor-boss LAB",

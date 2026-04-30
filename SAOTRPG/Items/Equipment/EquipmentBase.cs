@@ -17,7 +17,7 @@ public abstract class EquipmentBase : BaseItem
     public int EnhancementLevel { get; set; }
 
     // Display name with enhancement + awakening suffixes:
-    // "Iron Sword" → "Iron Sword +3" → "Night Sky Sword +3 ◈2" (Bundle 9).
+    // "Iron Sword" → "Iron Sword +3" → "Night Sky Sword +3 ◈2".
     public string EnhancedName
     {
         get
@@ -29,12 +29,12 @@ public abstract class EquipmentBase : BaseItem
         }
     }
 
-    // Named effect string — save-format authority. Parsed by SwordSkillEngine.GetSpecialEffectValue
-    // (raw int) and EquipmentSpecialEffectRegistry (typed records, B12). Weapons + shields share
-    // since Bundle 8 (shield effects live-wired); Bundle 10 lifts armor parsing for defensive keys.
+    // Named effect string — save-format authority. Parsed by EquipmentSpecialEffectRegistry
+    // into typed records. Weapons, shields, and armor all parse — defensive keys
+    // (BlockChance/ParryChance/EvadeRegen/HPRegen/SPRegen) sum across slots.
     public string? SpecialEffect { get; set; }
 
-    // Bundle 10 (B12) — typed view of SpecialEffect. Lazy + cached per-instance via ConditionalWeakTable.
+    // Typed view of SpecialEffect. Lazy + cached per-instance via ConditionalWeakTable.
     public IReadOnlyList<EquipmentSpecialEffect> ParsedEffects =>
         EquipmentSpecialEffectRegistry.GetParsed(this);
 

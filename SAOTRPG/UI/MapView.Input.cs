@@ -1,5 +1,6 @@
 using Terminal.Gui;
 using SAOTRPG.Systems;
+using SAOTRPG.UI.Dialogs;
 
 namespace SAOTRPG.UI;
 
@@ -11,13 +12,13 @@ public partial class MapView
         // Any keypress is potential state-change → invalidate frame cache before dispatch.
         DirtyFrame();
         if (HandleLookModeKey(keyEvent)) return true;
-        // Bundle 13 Item 6 — reticle modal swallows keys before any movement/dialog dispatch.
+        // Reticle modal swallows keys before any movement/dialog dispatch.
         if (HandleRangedFireKey(keyEvent)) return true;
 
         int dx = 0, dy = 0;
         var bareKey = keyEvent.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
 
-        // Shift+S — FB-479 status tray verbose toggle. Captured before directional
+        // Shift+S — status tray verbose toggle. Captured before directional
         // dispatch so Shift+S-as-sprint-south is preserved via Shift+Down arrow.
         if (bareKey == KeyCode.S && keyEvent.IsShift
             && (keyEvent.KeyCode & KeyCode.CtrlMask) == 0)
@@ -38,36 +39,57 @@ public partial class MapView
             return true;
         }
 
-        // Shift+F12 — dump profiler to log AND timestamped file; Shift+F11 — reset.
+        // Shift+F10 — toggle profiler on/off (default off; session-only).
+        // Shift+F11 — reset buckets.
+        // Shift+F12 — dump current buckets to a timestamped file.
+        if (bareKey == KeyCode.F10 && keyEvent.IsShift)
+        {
+            Profiler.Enabled = !Profiler.Enabled;
+            Log?.LogSystem(Profiler.Enabled ? "[PROF] Profiler enabled." : "[PROF] Profiler disabled.");
+            keyEvent.Handled = true;
+            return true;
+        }
         if (bareKey == KeyCode.F12 && keyEvent.IsShift)
         {
-            if (Log != null) Profiler.Dump(Log);
             string path = Profiler.DumpToFile();
             if (Log != null && !string.IsNullOrEmpty(path))
-                Log.Log($"Profiler written to: {path}");
+                Log.Log($"[PROF] Profiler dumped to {path}");
             keyEvent.Handled = true;
             return true;
         }
         if (bareKey == KeyCode.F11 && keyEvent.IsShift)
         {
             Profiler.Reset();
-            Log?.LogSystem("Profiler reset.");
+            Log?.LogSystem("[PROF] Profiler reset.");
             keyEvent.Handled = true;
             return true;
         }
 
-        // Bundle 13 (Item 1) — Shift+L opens the Legendary Collectables panel.
-        // Bare L stays Look mode (handled below in the switch). Modifier check is
-        // explicit so quirks §6 modal-shadow concerns don't apply (this is map focus).
+        // Shift+M opens the unified Milestones dialog from anywhere on the map.
+        if (bareKey == KeyCode.M && keyEvent.IsShift
+            && (keyEvent.KeyCode & KeyCode.CtrlMask) == 0)
+        {
+            ClearDamagePopups();
+            MilestonesDialog.Show(_player);
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        // Shift+L re-routes to MilestonesDialog focused on the Collectables tab so
+        // muscle memory from the old Legendary Collectables panel survives the merge.
+        // Bare L still routes to Look mode via the switch below.
         if (bareKey == KeyCode.L && keyEvent.IsShift
             && (keyEvent.KeyCode & KeyCode.CtrlMask) == 0)
         {
-            return FireEvent(LegendaryCollectablesRequested, keyEvent);
+            ClearDamagePopups();
+            MilestonesDialog.Show(_player, initialCategory: "Collectables");
+            keyEvent.Handled = true;
+            return true;
         }
 
-        // Bundle 13 Item 6 — `\` (backslash) opens the ranged-fire reticle. KeyCode
-        // has no Backslash member in v2 — match via the typed rune so the binding
-        // works regardless of host keyboard layout.
+        // `\` (backslash) opens the ranged-fire reticle. KeyCode has no Backslash
+        // member in v2 — match via the typed rune so the binding works regardless
+        // of host keyboard layout.
         if (keyEvent.AsRune.Value == '\\') return FireEvent(RangedFireKeyPressed, keyEvent);
 
         switch (bareKey)

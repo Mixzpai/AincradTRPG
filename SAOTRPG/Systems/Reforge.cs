@@ -5,17 +5,15 @@ using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
-// Bundle 13 (B/4d) — Reforge verb. Re-rolls a weapon's random Bonuses within its
-// rarity tier band; preserves EnhancementLevel/AwakeningLevel/RefinementSlots/sockets.
-// API surface is locked (BUNDLE13_SCOUT.md §5 Lock 2) — saotrpg-ui Wave 2 builds the
-// F4 mode tab in LisbethCraftDialog against this signature.
+// Reforge verb. Re-rolls a weapon's random Bonuses within its rarity tier band;
+// preserves EnhancementLevel/AwakeningLevel/RefinementSlots/sockets. LisbethCraftDialog
+// F4 mode tab binds to the record signatures below.
 public static class Reforge
 {
-    // Locked API records — must not change shape (Wave 2 dialog binds to these).
     public record CostSpec(int ColCost, IReadOnlyList<LisbethRecipes.MaterialRequirement> Mats);
     public record PreviewResult(string CurrentBonusesDescription, string PreviewBonusesDescription, bool IsUpgrade);
 
-    // Per-rarity reforge cost. Mat is mithril for ≤Rare, crystallite for ≥Epic (Q7 Y).
+    // Per-rarity reforge cost. Mat is mithril for ≤Rare, crystallite for ≥Epic.
     public static CostSpec GetCost(Weapon weapon)
     {
         return weapon.Rarity switch
@@ -188,7 +186,7 @@ public static class Reforge
     }
 
     // Mat counting/consumption mirrors LisbethCraftDialog helpers — kept private here
-    // so Reforge stays UI-independent (Wave 2 dialog calls Apply directly).
+    // so Reforge stays UI-independent (the dialog calls Apply directly).
     private static int CountMaterial(Player player, string defId)
     {
         int total = 0;

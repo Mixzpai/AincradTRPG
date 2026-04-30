@@ -47,9 +47,6 @@ public sealed class LightingSystem
                 _light[x, y] = ambient;
     }
 
-    public LightRgb GetLight(int x, int y) =>
-        (uint)x < (uint)Width && (uint)y < (uint)Height ? _light[x, y] : default;
-
     // Fast path for render loops that have already done a bounds check.
     public LightRgb GetLightUnchecked(int x, int y) => _light[x, y];
 

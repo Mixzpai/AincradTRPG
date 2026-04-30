@@ -63,8 +63,4 @@ public static class RecipeData
         new("ragout_rabbit", "Ragout Rabbit Stew", new[] { ("ragout_rabbit_meat", 1), ("high_cream", 1), ("spice", 1), ("wild_greens", 2) },
             "ragout_rabbit_stew", RecipeTier.Legendary, "Asuna's masterpiece. S-class."),
     };
-
-    public static Recipe? Get(string id) => All.FirstOrDefault(r => r.Id == id);
-
-    public static IEnumerable<Recipe> ByTier(RecipeTier tier) => All.Where(r => r.Tier == tier);
 }

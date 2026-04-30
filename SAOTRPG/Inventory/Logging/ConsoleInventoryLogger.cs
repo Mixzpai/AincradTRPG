@@ -14,5 +14,4 @@ public class ConsoleInventoryLogger : IInventoryLogger
     public void LogItemUnequipped(EquipmentBase equipment, EquipmentSlot slot) => Console.WriteLine($"Unequipped {equipment.Name} from {slot} slot.");
     public void LogItemUsed(Consumable consumable, string effectDescription) => Console.WriteLine($"Used {consumable.Name}. {effectDescription}");
     public void LogError(string message) => Console.WriteLine($"[Error] {message}");
-    public void LogInfo(string message) => Console.WriteLine(message);
 }

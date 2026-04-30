@@ -20,20 +20,13 @@ public static class PlayerGuideContent
             "│ Inputs: Attack, proficiency, combo, buffs\n" +
             "│ Trigger: Any successful hit\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Final damage sums your Attack, weapon proficiency bonus, combo\n" +
-            "bonus, shrine buff, level-up surge, satiety/fatigue, and biome\n" +
-            "modifier — then scales by unique-skill multipliers.\n\n" +
-            "USAGE\n" +
-            "Applies automatically on every swing. The log echoes the final\n" +
-            "number; backstabs from unseen enemies double it.\n\n" +
-            "EFFECTS\n" +
-            "Unique skills like Holy Sword, Martial Arts, and elemental\n" +
-            "affinity multiply the summed total. The 5th hit of a combo is a\n" +
-            "Combo Finisher and doubles total damage.\n\n" +
-            "COSTS\n" +
-            "Each swing ticks 1 durability off your weapon. You'll see an\n" +
-            "\"about to break\" warning once durability drops to 5.\n\n" +
+            "Final damage sums Attack + weapon proficiency bonus + combo bonus +\n" +
+            "shrine buff + level-up surge + satiety/fatigue + biome modifier, then\n" +
+            "scales by unique-skill multipliers (Holy Sword, Martial Arts, elemental\n" +
+            "affinity). The 5th consecutive hit on a target is a Combo Finisher\n" +
+            "and doubles total damage. The log echoes the final number; backstabs\n" +
+            "from unseen enemies double it. Each swing ticks 1 durability off the\n" +
+            "weapon and surfaces an \"about to break\" warning at durability 5.\n\n" +
             "TIPS\n" +
             "Stack inputs that multiply (unique skills) before ones that add\n" +
             "(gear). Keep proficiency high — it feeds both the sum and the\n" +
@@ -77,21 +70,13 @@ public static class PlayerGuideContent
             "│ Bonus damage: 10 + Dex\n" +
             "│ Trigger: Per-hit roll\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Crits flash \"CRIT!\" in BrightRed and add flat bonus damage on\n" +
-            "top of the swing. Base rate is 5% plus +1% per 2 points of\n" +
-            "Dexterity.\n\n" +
-            "USAGE\n" +
-            "The roll is automatic per hit. Multi-hit sword skills roll crit\n" +
-            "separately on every hit.\n\n" +
-            "EFFECTS\n" +
-            "Weather can shift crit rate up or down. The Proficiency Tree\n" +
-            "offers +2% crit at the L25 fork and +3% more at the L50 fork\n" +
-            "if you pick the crit branches. Weapons like Lambent Light and\n" +
-            "Masamune add flat CritRate. CritHeal restores a percent of\n" +
-            "damage on crit.\n\n" +
-            "COSTS\n" +
-            "None beyond normal swing costs.\n\n" +
+            "Crits flash \"CRIT!\" in BrightRed and add flat bonus damage on top of\n" +
+            "the swing. Base rate is 5% plus +1% per 2 points of Dexterity. The\n" +
+            "roll is automatic per hit; multi-hit sword skills roll crit separately\n" +
+            "on every hit. Weather can shift crit rate up or down. The Proficiency\n" +
+            "Tree offers +2% crit at the L25 fork and +3% more at L50 if you pick\n" +
+            "the crit branches. Weapons like Lambent Light and Masamune add flat\n" +
+            "CritRate; CritHeal restores a percent of damage on crit.\n\n" +
             "TIPS\n" +
             "Stack Dex for both rate and bonus damage — it scales both sides\n" +
             "at once. Pair Dex investment with crit-flagged weapons for\n" +
@@ -109,19 +94,12 @@ public static class PlayerGuideContent
             "│ Bonus: +2 damage per stack past 1\n" +
             "│ Finisher: 5th hit doubles damage\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Hitting the same target on consecutive turns stacks a combo\n" +
-            "counter. Each stack beyond the first adds +2 flat damage, and\n" +
-            "the 5th consecutive hit is a Combo Finisher.\n\n" +
-            "USAGE\n" +
-            "Keep swinging the same enemy turn after turn. The log labels\n" +
-            "stacks 2/3/4 as Double/Triple/Quad Strike.\n\n" +
-            "EFFECTS\n" +
-            "Combo Finisher DOUBLES your total damage on that hit and\n" +
-            "resets the counter. Weapons with ComboBonus+N scale the combo\n" +
-            "bonus by N percent.\n\n" +
-            "COSTS\n" +
-            "Switching targets resets the combo immediately.\n\n" +
+            "Hitting the same target on consecutive turns stacks a combo counter.\n" +
+            "Each stack beyond the first adds +2 flat damage; the log labels stacks\n" +
+            "2/3/4 as Double/Triple/Quad Strike. The 5th consecutive hit is a Combo\n" +
+            "Finisher — DOUBLES total damage on that hit and resets the counter.\n" +
+            "Switching targets resets the combo immediately. Weapons with\n" +
+            "ComboBonus+N scale the combo bonus by N percent.\n\n" +
             "TIPS\n" +
             "Plan target focus around the 5-hit cadence — finishing on a\n" +
             "high-HP enemy wastes far less damage than on a near-dead mob.\n\n" +
@@ -138,22 +116,16 @@ public static class PlayerGuideContent
             "│ Stats: Shield, Dex, Agi, proficiency\n" +
             "│ Trigger: Incoming monster hit\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "When a monster swings at you, three saves roll in order. Any\n" +
-            "that succeeds cancels the hit before armor mitigation.\n\n" +
-            "USAGE\n" +
-            "Automatic on each incoming attack. Counter Stance forces an\n" +
-            "auto-Parry on your next incoming hit.\n\n" +
-            "EFFECTS\n" +
-            "BLOCK: Shield BlockChance plus weapon BlockChance SpecialEffect\n" +
-            "— full negation, and the shield degrades on success.\n" +
+            "When a monster swings at you, three saves roll in order — any that\n" +
+            "succeeds cancels the hit before armor mitigation. Counter Stance\n" +
+            "forces an auto-Parry on your next incoming hit.\n\n" +
+            "BLOCK: Shield BlockChance plus weapon BlockChance SpecialEffect — full\n" +
+            "negation, and the shield degrades on success.\n" +
             "PARRY: min(Dex, 15)% plus proficiency plus weapon ParryChance;\n" +
             "counter-strikes for 25% of your Attack.\n" +
-            "DODGE: min(Agi x 2, 20)% plus proficiency. Slow halves dodge,\n" +
-            "Naked Ingress grants +25%. Three consecutive dodges trigger\n" +
-            "\"Matrix mode!\"; five trigger \"Untouchable!\".\n\n" +
-            "COSTS\n" +
-            "Successful blocks eat shield durability.\n\n" +
+            "DODGE: min(Agi x 2, 20)% plus proficiency. Slow halves dodge, Naked\n" +
+            "Ingress grants +25%. Three consecutive dodges trigger \"Matrix mode!\";\n" +
+            "five trigger \"Untouchable!\".\n\n" +
             "TIPS\n" +
             "Pick one lane and invest — Agi for dodge, Dex for parry, or a\n" +
             "heavy shield for block. Split investment leaves every save\n" +
@@ -171,19 +143,12 @@ public static class PlayerGuideContent
             "│ Floor: Minimum 1 damage\n" +
             "│ Trigger: After block/parry/dodge miss\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "If all three defensive rolls miss, armor absorbs part of the\n" +
-            "incoming hit. The remaining damage passes to your HP.\n\n" +
-            "USAGE\n" +
-            "Mitigation runs automatically after Defense rolls fail. The\n" +
-            "final number shown in the log is post-mitigation.\n\n" +
-            "EFFECTS\n" +
-            "Enemy crits add their CriticalHitDamage to the raw value before\n" +
-            "mitigation. While in sword-skill post-motion you take +50%\n" +
-            "incoming damage. If the attacker has Vampiric, it heals 25% of\n" +
-            "the damage dealt.\n\n" +
-            "COSTS\n" +
-            "None beyond HP loss.\n\n" +
+            "If all three defensive rolls miss, armor absorbs part of the incoming\n" +
+            "hit and the remainder passes to HP. Final number in the log is\n" +
+            "post-mitigation. Enemy crits add their CriticalHitDamage to the raw\n" +
+            "value before mitigation. While in sword-skill post-motion you take\n" +
+            "+50% incoming damage. Attackers with Vampiric heal 25% of damage\n" +
+            "dealt.\n\n" +
             "TIPS\n" +
             "Stack Defense, shrine buffs, and Well-Fed satiety together —\n" +
             "they all feed the same mitigation bracket. Avoid acting inside\n" +
@@ -201,18 +166,12 @@ public static class PlayerGuideContent
             "│ High-level mobs: 15% chance\n" +
             "│ Release: 1.8x normal damage\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Bosses and mobs at least 2 levels above you may shout \"WINDING\n" +
-            "UP!\" for one turn before unleashing a 1.8x heavy attack. Charge\n" +
-            "mobs are a separate threat that close 2-3 tiles in one hop.\n\n" +
-            "USAGE\n" +
-            "Watch the log. The moment you see the telegraph, move at least\n" +
-            "2 tiles away before the release resolves.\n\n" +
-            "EFFECTS\n" +
-            "Landing the heavy deals 1.8x normal damage. Charge mobs that\n" +
-            "close and connect hit for 1.5x damage.\n\n" +
-            "COSTS\n" +
-            "Spending the turn moving away forfeits your own attack.\n\n" +
+            "Bosses and mobs at least 2 levels above you may shout \"WINDING UP!\"\n" +
+            "for one turn before unleashing a 1.8x heavy attack — watch the log\n" +
+            "and move at least 2 tiles away before the release resolves. Charge\n" +
+            "mobs are a separate threat that close 2-3 tiles in one hop and hit\n" +
+            "for 1.5x damage on connect. Spending the turn moving forfeits your\n" +
+            "own attack.\n\n" +
             "TIPS\n" +
             "Counter Stance trades the attack back with a Parry if you can't\n" +
             "reposition. Keep open ground behind you during boss fights so\n" +
@@ -230,18 +189,14 @@ public static class PlayerGuideContent
             "│ Poison: 35% proc, 5 turns, 1+floor/turn\n" +
             "│ Trigger: Mob CanBleed / CanPoison flag\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Bleed and Poison are damage-over-time statuses. Running both\n" +
-            "simultaneously triggers Hemorrhage, a burst combining the two.\n\n" +
-            "USAGE\n" +
-            "Procs automatically when a qualifying mob hits you. Weapons\n" +
-            "with Bleed+N let you apply 3 turns of bleed on your own hits.\n\n" +
-            "EFFECTS\n" +
-            "Bleed ticks (1 + floor) per turn over 4 turns. Poison ticks\n" +
-            "(1 + floor) per turn over 5 turns and ignores food healing.\n" +
-            "Hemorrhage fires (poisonDmg + bleedDmg) x 2 as instant damage.\n\n" +
-            "COSTS\n" +
-            "Poison only clears with time or an Antidote — food won't help.\n\n" +
+            "Bleed and Poison are damage-over-time statuses; running both\n" +
+            "simultaneously triggers Hemorrhage, a burst combining the two. Procs\n" +
+            "automatically when a qualifying mob hits you. Weapons with Bleed+N\n" +
+            "let you apply 3 turns of bleed on your own hits. Bleed ticks (1 +\n" +
+            "floor) per turn over 4 turns; Poison ticks (1 + floor) per turn over\n" +
+            "5 turns and ignores food healing. Hemorrhage fires (poisonDmg +\n" +
+            "bleedDmg) x 2 as instant damage. Poison only clears with time or an\n" +
+            "Antidote — food won't help.\n\n" +
             "TIPS\n" +
             "Keep Antidotes in quick-use slot 3. Never let both statuses\n" +
             "overlap on yourself — clear Bleed with food before Poison\n" +
@@ -259,20 +214,13 @@ public static class PlayerGuideContent
             "│ Slow proc: 25% mob\n" +
             "│ Trigger: CanStun / CanSlow flag\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Stun freezes your action economy; Slow cripples your evasion.\n" +
-            "Both statuses land from mob hits and qualifying player skills.\n\n" +
-            "USAGE\n" +
-            "Procs on hit. Break Time (30% proc) and Savage Fulcrum (20%\n" +
-            "proc) let you stun enemies for 2 turns. Glacial Slash applies\n" +
-            "Slow.\n\n" +
-            "EFFECTS\n" +
-            "STUN costs you 1-2 turns and blocks sword-skill casting.\n" +
-            "SLOW lasts 3 turns and halves your dodge chance. Slow expires\n" +
-            "with a \"no longer slowed\" log line.\n\n" +
-            "COSTS\n" +
-            "Stun forfeits turns outright; Slow mainly taxes dodge-built\n" +
-            "characters.\n\n" +
+            "Stun freezes your action economy; Slow cripples your evasion. Both\n" +
+            "land from mob hits and qualifying player skills. STUN costs 1-2 turns\n" +
+            "and blocks sword-skill casting. SLOW lasts 3 turns and halves your\n" +
+            "dodge chance, expiring with a \"no longer slowed\" log line. Player-side:\n" +
+            "Break Time (30% proc) and Savage Fulcrum (20% proc) stun enemies for\n" +
+            "2 turns; Glacial Slash applies Slow. Stun forfeits turns outright;\n" +
+            "Slow mainly taxes dodge-built characters.\n\n" +
             "TIPS\n" +
             "Dodge builds should carry a Battle Elixir or repositioning\n" +
             "option to ride out Slow windows. Stack stun skills against\n" +
@@ -290,18 +238,11 @@ public static class PlayerGuideContent
             "│ Legendary/Divine: Never random\n" +
             "│ Trigger: Any item roll\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Random loot rolls across four tiers. Legendary and Divine are\n" +
-            "hand-placed only — you never see them from a random drop.\n\n" +
-            "USAGE\n" +
-            "Applies to standard loot tables. Legendary/Divine come from\n" +
-            "specific bosses, field bosses, or quest rewards.\n\n" +
-            "EFFECTS\n" +
-            "Stat multipliers vs the Common baseline: Uncommon 125% (+10\n" +
-            "dur), Rare 160% (+25 dur), Epic 200% (+50 dur). Value\n" +
-            "multipliers: 100/150/250/400%.\n\n" +
-            "COSTS\n" +
-            "None — drop rates are inherent.\n\n" +
+            "Random loot rolls across four tiers; Legendary and Divine are\n" +
+            "hand-placed only and come from specific bosses, field bosses, or quest\n" +
+            "rewards — never from random drops. Stat multipliers vs the Common\n" +
+            "baseline: Uncommon 125% (+10 dur), Rare 160% (+25 dur), Epic 200%\n" +
+            "(+50 dur). Value multipliers: 100/150/250/400%.\n\n" +
             "TIPS\n" +
             "Don't grind random tables for Legendaries — target the named\n" +
             "sources. For raw stats per Col spent, Epic drops from early\n" +
@@ -319,21 +260,15 @@ public static class PlayerGuideContent
             "│ Display: Log prefix + inventory tint\n" +
             "│ Trigger: Any tiered item\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every rarity tier has a distinct color and bracket glyph for\n" +
-            "log pickups and inventory sort.\n\n" +
-            "USAGE\n" +
-            "Sort-by-rarity lists Divine (6) down to Common (1). Log lines\n" +
-            "for pickups carry the bracketed prefix shown below.\n\n" +
-            "EFFECTS\n" +
+            "Every rarity tier has a distinct color and bracket glyph for log\n" +
+            "pickups and inventory sort. Sort-by-rarity lists Divine (6) down to\n" +
+            "Common (1); log lines for pickups carry the bracketed prefix below.\n\n" +
             "  Common     Gray           (no tag)\n" +
             "  Uncommon   BrightGreen    [U]\n" +
             "  Rare       BrightCyan     [R]\n" +
             "  Epic       BrightMagenta  [E]\n" +
             "  Legendary  BrightYellow   [L]\n" +
             "  Divine     BrightRed      [diamond]  top tier\n\n" +
-            "COSTS\n" +
-            "None.\n\n" +
             "TIPS\n" +
             "Scan the log color, not the text — BrightRed with the diamond\n" +
             "glyph is always a Divine drop worth stopping to look at.\n\n" +
@@ -350,23 +285,15 @@ public static class PlayerGuideContent
             "│ Source: 8 NPC-quest Divines + 9 T4 chain\n" +
             "│ Trigger: Hand-placed, never random\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Peak rarity gear. All 17 Divine weapons are hand-placed — 7\n" +
-            "canon Integrity Knight swords, Dorothy's Starlight Banner\n" +
-            "(Last Recollection, F78), and 9 Evolution Chain T4 apex\n" +
-            "weapons.\n\n" +
-            "USAGE\n" +
-            "Earn via specific named encounters or the T4 evolution craft.\n" +
-            "Drops log a bespoke BrightRed line with the diamond glyph and\n" +
-            "the tag \"Divine Object.\"\n\n" +
-            "EFFECTS\n" +
-            "Divine weapons are UNBREAKABLE — durability never ticks down.\n" +
-            "Canon flavor says Divines bypass enemy block rolls; this flag\n" +
-            "is forward-looking and currently Divines still roll normal\n" +
-            "block/parry math.\n\n" +
-            "COSTS\n" +
-            "The T4 craft demands 20 chain catalysts + 1 rare peak material\n" +
-            "per weapon.\n\n" +
+            "Peak rarity gear. All 17 Divine weapons are hand-placed — 7 canon\n" +
+            "Integrity Knight swords, Dorothy's Starlight Banner (Last Recollection,\n" +
+            "F78), and 9 Evolution Chain T4 apex weapons. Earn via specific named\n" +
+            "encounters or the T4 evolution craft (20 chain catalysts + 1 rare peak\n" +
+            "material per weapon). Drops log a bespoke BrightRed line with the\n" +
+            "diamond glyph and the tag \"Divine Object.\" Divine weapons are\n" +
+            "UNBREAKABLE — durability never ticks down. Canon flavor says Divines\n" +
+            "bypass enemy block rolls; this flag is forward-looking and currently\n" +
+            "Divines still roll normal block/parry math.\n\n" +
             "TIPS\n" +
             "Because Divines don't degrade, they escape every Anvil repair\n" +
             "cost — once earned they pay back forever.\n\n" +
@@ -383,19 +310,12 @@ public static class PlayerGuideContent
             "│ Thresholds: 0,10,25,50,75,100,150,200,300,500\n" +
             "│ Slots: Up to 4 (F1-F4)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Each weapon class has its own skill tree unlocked by kill\n" +
-            "thresholds. Hotkeys F1-F4 fire equipped skills; F opens the\n" +
-            "skill menu.\n\n" +
-            "USAGE\n" +
-            "Rack kills with a given weapon until the next threshold trips.\n" +
-            "Newly unlocked skills auto-fill your first empty skill slot.\n\n" +
-            "EFFECTS\n" +
-            "Thresholds at 0, 10, 25, 50, 75, 100, 150, 200, 300, and 500\n" +
-            "kills. The Hollow Ingress run modifier doubles all required\n" +
-            "kill counts.\n\n" +
-            "COSTS\n" +
-            "None per unlock — just the kill grind.\n\n" +
+            "Each weapon class has its own skill tree unlocked by kill thresholds.\n" +
+            "Hotkeys F1-F4 fire equipped skills; F opens the skill menu. Rack\n" +
+            "kills with a given weapon until the next threshold trips — newly\n" +
+            "unlocked skills auto-fill your first empty skill slot. Thresholds at\n" +
+            "0, 10, 25, 50, 75, 100, 150, 200, 300, and 500 kills. The Hollow\n" +
+            "Ingress run modifier doubles all required kill counts.\n\n" +
             "TIPS\n" +
             "Pick one weapon for the early floors and stick with it — the\n" +
             "500-kill tail unlocks the strongest capstones. Rotate a\n" +
@@ -413,21 +333,13 @@ public static class PlayerGuideContent
             "│ Cooldown: Per-skill turn count\n" +
             "│ Post-motion: +50% incoming for 1-3 turns\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Sword skills multiply your attack through a DamageMultiplier\n" +
-            "and add flat SkillDamage from Intelligence and gear. Each skill\n" +
-            "has its own cooldown and recovery window.\n\n" +
-            "USAGE\n" +
-            "Fire a skill via F1-F4, then wait out cooldown before the\n" +
-            "next cast. Multi-hit skills roll crit separately per hit.\n\n" +
-            "EFFECTS\n" +
-            "Example cooldowns: Starburst Stream 15 turns, The Eclipse 30\n" +
-            "turns. SkillCooldown-N reduces the cooldown. During post-motion\n" +
-            "(1-3 turns) you take +50% incoming damage and cannot chain\n" +
-            "another skill; PostMotion-N shrinks the window.\n\n" +
-            "COSTS\n" +
-            "Post-motion effectively forfeits your defenses for the recovery\n" +
-            "turns.\n\n" +
+            "Sword skills multiply your attack through a DamageMultiplier and add\n" +
+            "flat SkillDamage from Intelligence and gear. Fire via F1-F4, then\n" +
+            "wait out cooldown before the next cast; multi-hit skills roll crit\n" +
+            "separately per hit. Example cooldowns: Starburst Stream 15 turns, The\n" +
+            "Eclipse 30 turns. SkillCooldown-N reduces the cooldown. During\n" +
+            "post-motion (1-3 turns) you take +50% incoming damage and cannot\n" +
+            "chain another skill; PostMotion-N shrinks the window.\n\n" +
             "TIPS\n" +
             "Cast the biggest skill when an enemy is about to die, not\n" +
             "before — overkill damage is wasted but the post-motion\n" +
@@ -445,16 +357,13 @@ public static class PlayerGuideContent
             "│ Reward: Flat ATK + fork passives\n" +
             "│ Cap: Level 110 per weapon type\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Kills per weapon type feed a 110-level Proficiency Tree. The\n" +
-            "existing 15 titles (Novice through The Black Swordsman) still\n" +
-            "ride the curve as cosmetic bands — they are now draped over the\n" +
-            "numeric levels rather than being the system itself.\n\n" +
-            "USAGE\n" +
-            "Stick with one weapon class long enough to accrue kills. Your\n" +
-            "Proficiency Level increments on a geometric curve, and the\n" +
-            "bonus multiplies into the Damage Formula as proficiency bonus.\n\n" +
-            "EFFECTS\n" +
+            "Kills per weapon type feed a 110-level Proficiency Tree. The existing\n" +
+            "15 titles (Novice through The Black Swordsman) still ride the curve\n" +
+            "as cosmetic bands — draped over the numeric levels rather than being\n" +
+            "the system itself. Stick with one weapon class long enough to accrue\n" +
+            "kills; your Proficiency Level increments on a geometric curve, and\n" +
+            "the bonus multiplies into the Damage Formula. Fork choices persist\n" +
+            "per save.\n\n" +
             "  L1 Novice           (10 kills)      +1 ATK\n" +
             "  L25 Journeyman      (~100 kills)    +4 ATK, fork: crit/parry\n" +
             "  L50 Weapon Lord     (~500 kills)    +37 ATK, fork: dodge/skill\n" +
@@ -463,8 +372,6 @@ public static class PlayerGuideContent
             "  L110 Black Swordsman (9999 kills)   +120 ATK\n" +
             "Each of the four forks offers a 1-of-2 passive pick — see the\n" +
             "Proficiency Forks topic for the branch list.\n\n" +
-            "COSTS\n" +
-            "None beyond the kill grind. Fork choices persist per save.\n\n" +
             "TIPS\n" +
             "The forks cluster at L25/50/75/100 — plan grind milestones\n" +
             "around those thresholds, not the raw damage numbers. Pick\n" +
@@ -483,24 +390,17 @@ public static class PlayerGuideContent
             "│ Bonus: Per-mob Col yield\n" +
             "│ Trigger: Consecutive fast kills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Chaining kills in quick succession unlocks banner tiers that\n" +
-            "pad Col rewards. Damage doesn't break the chain — only missing\n" +
-            "the cadence does.\n\n" +
-            "USAGE\n" +
-            "Keep finishing mobs without a long break. Moving, resting, and\n" +
-            "missing swings all preserve the streak.\n\n" +
-            "EFFECTS\n" +
+            "Chaining kills in quick succession unlocks banner tiers that pad Col\n" +
+            "rewards — damage doesn't break the chain, only missing the cadence\n" +
+            "does. Moving, resting, and missing swings all preserve the streak.\n" +
+            "Taking damage breaks Perfect-Kill runs but not the streak. Streak\n" +
+            "tiers contribute to per-mob Col yield (up to 3 tiers every 5 kills).\n\n" +
             "  2 kills   Double Kill\n" +
             "  3 kills   Triple Kill\n" +
             "  4 kills   Multi Kill\n" +
             "  5 kills   RAMPAGE\n" +
             "  7 kills   UNSTOPPABLE\n" +
             "  10 kills  GODLIKE\n\n" +
-            "Streak tiers contribute to per-mob Col yield (up to 3 tiers\n" +
-            "every 5 kills).\n\n" +
-            "COSTS\n" +
-            "Taking damage breaks Perfect-Kill runs but not the streak.\n\n" +
             "TIPS\n" +
             "Clear clustered rooms in one push before resting — the final\n" +
             "Col payout scales more with streak tier than with individual\n" +
@@ -518,26 +418,20 @@ public static class PlayerGuideContent
             "│ Fatigue: Ticks from exertion\n" +
             "│ Trigger: Time, sprint, combat\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Satiety is your food clock; fatigue is your exhaustion clock.\n" +
-            "Both swing combat stats and need regular maintenance at food\n" +
-            "and campfires.\n\n" +
-            "USAGE\n" +
-            "Eat food, rest at campfires (+20 satiety), and sleep to clear\n" +
-            "fatigue. Sprint cycles and heavy combat tick fatigue up.\n\n" +
-            "EFFECTS\n" +
-            "Well Fed (>=80): +1 HP regen, +3 ATK/DEF. Hungry (<20): -2 ATK.\n" +
-            "Starving (0): -5 HP/turn plus STARVING status. Mild Fatigue:\n" +
-            "-1 SPD. Heavy Fatigue: -3 SPD, -5% crit. Food restores satiety\n" +
-            "and HP over turns. The Eating life skill scales food potency by\n" +
-            "+10% / +25% / +50% / +100% at L10 / L25 / L50 / L99. At L99\n" +
-            "Eating also scales food's HP REGEN RATE — the per-turn heal\n" +
-            "ticks higher in addition to the existing Satiety duration boost,\n" +
-            "so Roast Boar with high Eating turns into a passive heal stream\n" +
-            "during exploration rather than a one-shot top-up.\n\n" +
-            "COSTS\n" +
-            "Satiety drains 1 point per N turns (biome- and modifier-\n" +
-            "dependent). The Iron Rank run modifier doubles drain rate.\n\n" +
+            "Satiety is your food clock; fatigue is your exhaustion clock. Both\n" +
+            "swing combat stats and need regular maintenance at food and campfires.\n" +
+            "Eat food, rest at campfires (+20 satiety), and sleep to clear fatigue.\n" +
+            "Sprint cycles and heavy combat tick fatigue up. Well Fed (>=80): +1\n" +
+            "HP regen, +3 ATK/DEF. Hungry (<20): -2 ATK. Starving (0): -5 HP/turn\n" +
+            "plus STARVING status. Mild Fatigue: -1 SPD. Heavy Fatigue: -3 SPD,\n" +
+            "-5% crit. Food restores satiety and HP over turns; the Eating life\n" +
+            "skill scales food potency by +10% / +25% / +50% / +100% at L10 / L25\n" +
+            "/ L50 / L99. At L99 Eating also scales food's HP REGEN RATE — the\n" +
+            "per-turn heal ticks higher in addition to the Satiety duration boost,\n" +
+            "so Roast Boar with high Eating turns into a passive heal stream during\n" +
+            "exploration rather than a one-shot top-up. Satiety drains 1 point per\n" +
+            "N turns (biome- and modifier-dependent); Iron Rank run modifier\n" +
+            "doubles drain rate.\n\n" +
             "TIPS\n" +
             "Hover at Well Fed before any boss — the +3 ATK/DEF feeds right\n" +
             "into Damage Mitigation. Carry at least one stack of cheap bread\n" +
@@ -558,22 +452,15 @@ public static class PlayerGuideContent
             "│ Stealth: Ctrl + dir, 1 tile\n" +
             "│ Trigger: Modifier key on move\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Two movement modifiers beyond the normal step. Sprint\n" +
-            "repositions fast; Stealth Move halves aggro for the turn.\n\n" +
-            "USAGE\n" +
-            "Hold Shift with a direction to sprint 2 tiles. Hold Ctrl with\n" +
-            "a direction to take one quiet step.\n\n" +
-            "EFFECTS\n" +
-            "Sprint cannot cross Lava, Trap, or DangerZone tiles — you'll\n" +
-            "stop short. Stealth Move halves aggro range that turn and\n" +
-            "hides you from mobs farther than 5 tiles; it breaks on attack.\n" +
-            "Neither triggers Extra Search's passive trap-reveal — only\n" +
-            "normal step moves do. Each sprint step banks +2 Running XP;\n" +
-            "each normal step banks +1 Walking XP (sprint and stealth skip\n" +
-            "the Walking track).\n\n" +
-            "COSTS\n" +
-            "Sprint adds +50% satiety drain for the turn spent.\n\n" +
+            "Two movement modifiers beyond the normal step. Hold Shift with a\n" +
+            "direction to sprint 2 tiles; hold Ctrl with a direction to take one\n" +
+            "quiet step. Sprint cannot cross Lava, Trap, or DangerZone tiles —\n" +
+            "you'll stop short — and adds +50% satiety drain for the turn. Stealth\n" +
+            "Move halves aggro range that turn and hides you from mobs farther\n" +
+            "than 5 tiles; it breaks on attack. Neither triggers Extra Search's\n" +
+            "passive trap-reveal — only normal step moves do. Each sprint step\n" +
+            "banks +2 Running XP; each normal step banks +1 Walking XP (sprint\n" +
+            "and stealth skip the Walking track).\n\n" +
             "TIPS\n" +
             "Use Sprint to escape post-motion recovery before the follow-up\n" +
             "hit lands. Use Stealth Move when scouting unfamiliar rooms so\n" +
@@ -593,21 +480,16 @@ public static class PlayerGuideContent
             "│ Bindings: Fixed\n" +
             "│ Trigger: Direct consume, no menu\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Number keys 1-5 fire pre-bound consumables without opening\n" +
-            "the inventory. Each key has a fixed item assignment.\n\n" +
-            "USAGE\n" +
-            "Hit the key mid-combat. One stock is consumed from your pack\n" +
-            "if available; nothing happens if empty.\n\n" +
-            "EFFECTS\n" +
+            "Number keys 1-5 fire pre-bound consumables without opening the\n" +
+            "inventory. Each key has a fixed item assignment. Hit the key\n" +
+            "mid-combat — one stock is consumed from your pack if available;\n" +
+            "nothing happens if empty. The Anti-Crystal Tyranny run modifier\n" +
+            "disables Crystal-based consumables (Revive, Teleport, etc.).\n\n" +
             "  1   Health Potion         (instant +50 HP)\n" +
             "  2   Greater Health Potion (+150 HP)\n" +
             "  3   Antidote              (cures Poison + Bleed)\n" +
             "  4   Battle Elixir         (+15 ATK, +10 SPD for 60 turns)\n" +
             "  5   Escape Rope           (warp to floor entrance)\n\n" +
-            "COSTS\n" +
-            "Anti-Crystal Tyranny run modifier disables Crystal-based\n" +
-            "consumables (Revive, Teleport, etc.).\n\n" +
             "TIPS\n" +
             "Rebuild stock at every vendor visit — the slots are useless\n" +
             "if empty. Battle Elixir (slot 4) on a boss fight almost always\n" +
@@ -625,35 +507,24 @@ public static class PlayerGuideContent
             "│ Keys: 0-9 use · Shift+0-9 bind (in inventory)\n" +
             "│ Trigger: Direct consume, no menu\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "The quickbar is a ten-slot consumable hotbar rendered inline on\n" +
-            "the bottom HUD row, sitting alongside the F1-F4 sword-skill\n" +
-            "slots. Digit keys 0-9 use the bound consumable directly; no\n" +
-            "menu, no turn drop-in, no inventory round-trip.\n\n" +
-            "USAGE\n" +
-            "Number keys 0-9 fire the bound slot mid-combat. One stock is\n" +
-            "consumed from your pack if available; nothing happens if empty.\n" +
-            "Slots auto-fill on first pickup of a new consumable type, so a\n" +
-            "fresh character with an empty bar fills out organically as you\n" +
-            "pick drops up. To rebind a slot manually, open the inventory\n" +
-            "(I), highlight the consumable you want, and press Shift+N — the\n" +
-            "dialog prompts for a slot 0-9. Chest peeks show the pickup\n" +
-            "destination slot inline so you can see where a picked-up item\n" +
-            "will land before you grab it.\n\n" +
-            "EFFECTS\n" +
+            "The quickbar is a ten-slot consumable hotbar rendered inline on the\n" +
+            "bottom HUD row, sitting alongside the F1-F4 sword-skill slots. Digit\n" +
+            "keys 0-9 use the bound consumable directly — no menu, no turn drop-in,\n" +
+            "no inventory round-trip. One stock consumed per press if available;\n" +
+            "nothing happens if empty. Slots auto-fill on first pickup of a new\n" +
+            "consumable type, so a fresh character with an empty bar fills out\n" +
+            "organically. To rebind manually, open the inventory (I), highlight\n" +
+            "the consumable, and press Shift+N — the dialog prompts for a slot\n" +
+            "0-9. Chest peeks show the pickup destination slot inline. The active\n" +
+            "quickbar persists across saves. Anti-Crystal Tyranny run modifier\n" +
+            "disables Crystal-based consumables; bound slots flash a \"blocked\"\n" +
+            "tint on press.\n\n" +
             "The bottom HUD row lays out like this:\n" +
             "  [F1][F2][F3][F4]  [0][1][2][3][4][5][6][7][8][9]\n" +
             "   sword skills      consumable quickbar\n" +
-            "F1-F4 are sword-skill slots; 0-9 are consumable slots. The two\n" +
-            "groups are never overloaded — no key does double duty. Empty\n" +
-            "slots render dim with no glyph; filled slots show the item\n" +
-            "glyph and a stock count. The active quickbar persists across\n" +
-            "saves, so rebinds carry between sessions of the same run.\n\n" +
-            "COSTS\n" +
-            "Quickbar use consumes one stock per press — same as using the\n" +
-            "item from the inventory dialog. The Anti-Crystal Tyranny run\n" +
-            "modifier still disables Crystal-based consumables; bound slots\n" +
-            "for those items flash a brief \"blocked\" tint on press.\n\n" +
+            "F1-F4 are sword-skill slots; 0-9 are consumable slots. The two groups\n" +
+            "are never overloaded — no key does double duty. Empty slots render\n" +
+            "dim with no glyph; filled slots show the item glyph and a stock count.\n\n" +
             "TIPS\n" +
             "Auto-fill picks the first empty slot, so the order you pick\n" +
             "items up becomes your muscle-memory order by default. For a\n" +
@@ -674,19 +545,13 @@ public static class PlayerGuideContent
             "│ Toasts: Center banner, 3s TTL, 1 at a time\n" +
             "│ Trigger: Every hit · milestone events\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Two subtle visual layers keep combat legible without cluttering\n" +
-            "the map. Damage popups float a single cell upward and fade in\n" +
-            "0.4s at the hit tile, tinted by element. Toast banners appear\n" +
-            "center-screen for 3 seconds on milestone events (level ups,\n" +
-            "titles, achievements, etc).\n\n" +
-            "USAGE\n" +
-            "Both are automatic — nothing to bind. Popups show on every\n" +
-            "meaningful swing (yours and theirs); toasts fire on the milestone\n" +
-            "trigger list below. Only one toast is on-screen at a time; a new\n" +
-            "toast of the same category within 500ms merges into the current\n" +
+            "Two subtle visual layers keep combat legible without cluttering the\n" +
+            "map. Damage popups float a single cell upward and fade in 0.4s at\n" +
+            "the hit tile, tinted by element. Toast banners appear center-screen\n" +
+            "for 3 seconds on milestone events (level ups, titles, achievements,\n" +
+            "etc). Both are automatic. Only one toast is on-screen at a time; a\n" +
+            "new toast of the same category within 500ms merges into the current\n" +
             "banner instead of queueing behind it.\n\n" +
-            "EFFECTS\n" +
             "ELEMENT COLOR KEY (popup tint):\n" +
             "  Physical   White        baseline melee/ranged\n" +
             "  Fire       Red          burn, flame, ember hits\n" +
@@ -714,10 +579,6 @@ public static class PlayerGuideContent
             "  - Floor boss cleared\n" +
             "  - Shop tier unlocked (F50+)\n" +
             "  - Bestiary species-first sighting\n\n" +
-            "COSTS\n" +
-            "Zero gameplay cost — both layers are presentation only. No\n" +
-            "turns pass for either popup or toast; they animate in parallel\n" +
-            "with the normal turn clock.\n\n" +
             "TIPS\n" +
             "Use the element tint as a quick sanity check that your weapon's\n" +
             "element is actually applying — if a fire-enchant sword draws\n" +
@@ -737,19 +598,13 @@ public static class PlayerGuideContent
             "│ Projectiles: Arrows · skill arcs · status trails\n" +
             "│ Multi-hit: Per-hit popups + aggregate summary\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "A trio of layered effects sells the weight of a swing without\n" +
-            "slowing the turn clock. Screen shake punches crits, boss heavy\n" +
-            "attacks, explosions, and floor-quakes. Animated projectiles\n" +
-            "trace arrows, multi-hit sword-skill arcs, and status trails\n" +
-            "across the map. Multi-hit cascades (e.g. Starburst Stream's 16\n" +
-            "hits) fire a fast per-popup stream plus a single aggregate\n" +
-            "damage summary at the end.\n\n" +
-            "USAGE\n" +
-            "All three layers are automatic. Each one can be toggled\n" +
-            "independently in Options > Accessibility if motion sensitivity\n" +
-            "or visual noise is a concern.\n\n" +
-            "EFFECTS\n" +
+            "A trio of layered effects sells the weight of a swing without slowing\n" +
+            "the turn clock. Screen shake punches crits, boss heavy attacks,\n" +
+            "explosions, and floor-quakes. Animated projectiles trace arrows,\n" +
+            "multi-hit sword-skill arcs, and status trails. Multi-hit cascades\n" +
+            "(e.g. Starburst Stream's 16 hits) fire a fast per-popup stream plus\n" +
+            "a single aggregate damage summary at the end. All three layers are\n" +
+            "automatic; each can be toggled independently in Options > Accessibility.\n\n" +
             "SCREEN SHAKE (trigger list):\n" +
             "  - Critical hits (yours or theirs)\n" +
             "  - Boss heavy attacks (winding-up release)\n" +
@@ -763,10 +618,9 @@ public static class PlayerGuideContent
             "MULTI-HIT CASCADE:\n" +
             "  - Each hit of a multi-hit skill fires its own damage popup\n" +
             "  - A single bolder aggregate summary prints at the end so the\n" +
-            "    total is legible at a glance\n\n" +
-            "COSTS\n" +
-            "Zero gameplay cost — presentation only. Screen shake is bounded\n" +
-            "to 100ms / 3 frames to stay under motion-sickness thresholds.\n\n" +
+            "    total is legible at a glance\n" +
+            "Screen shake is bounded to 100ms / 3 frames to stay under\n" +
+            "motion-sickness thresholds.\n\n" +
             "TIPS\n" +
             "Turn shake off in Options > Accessibility if it causes\n" +
             "discomfort; the same menu hosts projectile and trail toggles.\n" +
@@ -785,26 +639,20 @@ public static class PlayerGuideContent
             "│ Default: Concise\n" +
             "│ Set via: Options > Accessibility (or Gameplay)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "A four-mode toggle controls how much math the log shows after\n" +
-            "each hit. Off hides the breakdown entirely; Concise shows only\n" +
-            "the final number; Medium adds the major components; Verbose\n" +
-            "exposes every multiplier for theory-crafting.\n\n" +
-            "USAGE\n" +
-            "Cycle the mode in Options > Accessibility or Gameplay. The\n" +
-            "selected format renders in the combat log immediately — no\n" +
-            "restart needed. A live preview of each format sits next to the\n" +
-            "toggle so you can compare before committing.\n\n" +
-            "EFFECTS\n" +
+            "A four-mode toggle controls how much math the log shows after each\n" +
+            "hit. Off hides the breakdown entirely; Concise shows only the final\n" +
+            "number; Medium adds the major components; Verbose exposes every\n" +
+            "multiplier for theory-crafting. Cycle the mode in Options >\n" +
+            "Accessibility or Gameplay; renders in the combat log immediately,\n" +
+            "no restart. A live preview of each format sits next to the toggle.\n\n" +
             "SAMPLE OUTPUT (same 87-damage swing in each mode):\n" +
             "  Off      — no breakdown line, just the kill/hit message\n" +
             "  Concise  — \"87 dmg\"\n" +
             "  Medium   — \"87 dmg (ATK 42 + prof 12 + combo 8, x1.3 crit)\"\n" +
             "  Verbose  — \"87 dmg = (ATK 42 + prof 12 + combo 8 + shrine 4\n" +
-            "             + surge 3) x 1.3 crit x 1.15 biome x 1.0 unique\"\n\n" +
-            "COSTS\n" +
-            "None — log verbosity does not affect combat math. Verbose mode\n" +
-            "does push more log lines per swing, which is the main trade-off.\n\n" +
+            "             + surge 3) x 1.3 crit x 1.15 biome x 1.0 unique\"\n" +
+            "Verbose mode pushes more log lines per swing, which is the main\n" +
+            "trade-off — it does not affect combat math.\n\n" +
             "TIPS\n" +
             "Concise is ideal for fast casual play — the number is all you\n" +
             "need. Medium is the best default for learning the combat system\n" +
@@ -824,17 +672,13 @@ public static class PlayerGuideContent
             "│ Elemental: FIRE · ICE · THUNDER · HOLY · DARK · POISON · BLEED\n" +
             "│ Gate: Breakdown mode ≠ Off\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every combat-log line can tag which damage channel a hit used,\n" +
-            "so [SLASH] reads differently from [PIERCE] and [FIRE] stands out\n" +
-            "from [HOLY]. Tags appear only while Damage Breakdown Format is\n" +
-            "something other than Off.\n\n" +
-            "USAGE\n" +
-            "The tag renders in color next to the damage number — position\n" +
-            "(before vs after the number) and style (bracketed [SLASH] vs\n" +
-            "bare SLASH) are both toggleable in Options. Turn Breakdown Format\n" +
-            "back to Off to hide the tags entirely.\n\n" +
-            "EFFECTS\n" +
+            "Every combat-log line can tag which damage channel a hit used, so\n" +
+            "[SLASH] reads differently from [PIERCE] and [FIRE] stands out from\n" +
+            "[HOLY]. Tags appear only while Damage Breakdown Format is something\n" +
+            "other than Off — turn Breakdown Format back to Off to hide them\n" +
+            "entirely. The tag renders in color next to the damage number;\n" +
+            "position (before vs after) and style (bracketed [SLASH] vs bare\n" +
+            "SLASH) are both toggleable in Options.\n\n" +
             "PHYSICAL SUBTYPES (derived from weapon class):\n" +
             "  SLASH   White       longswords, sabers, katana cuts\n" +
             "  THRUST  Light-gray  rapiers, spears, estoc\n" +
@@ -848,11 +692,9 @@ public static class PlayerGuideContent
             "  HOLY    Gold        divine, sacred, Integrity Knights\n" +
             "  DARK    Magenta     shadow, void, corrupted weapons\n" +
             "  POISON  Green       toxin, venom, spore DoT\n" +
-            "  BLEED   DarkRed     laceration DoT\n\n" +
-            "COSTS\n" +
-            "Presentation only — tags do not alter damage math. Verbose\n" +
-            "breakdown with tags enabled is the densest log mode; switch to\n" +
-            "Concise if the log feels noisy.\n\n" +
+            "  BLEED   DarkRed     laceration DoT\n" +
+            "Verbose breakdown with tags enabled is the densest log mode; switch\n" +
+            "to Concise if the log feels noisy. Tags do not alter damage math.\n\n" +
             "TIPS\n" +
             "Tags are the fastest sanity check that a weapon enchant is\n" +
             "landing — a fire-enchanted katana should show [SLASH][FIRE];\n" +
@@ -872,18 +714,13 @@ public static class PlayerGuideContent
             "│ Format: Letter + color, stack×duration (P×3:4)\n" +
             "│ Verbose toggle: Shift+S (session-local)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "A compact tray beneath the HP bar aggregates every active\n" +
-            "status source — debuffs, buffs, and passive stances — into\n" +
-            "one-letter color-coded icons. Stacks and remaining duration\n" +
-            "render as `P×3:4` meaning 3 poison stacks with 4 turns left.\n\n" +
-            "USAGE\n" +
-            "Automatic — icons appear/expire with their underlying effects.\n" +
-            "Shift+S toggles verbose mode, which swaps the single letters\n" +
-            "for short labels (POISON·3 4t) until you reload the save.\n" +
-            "Ordering is debuff-first severity, so the scariest effect sits\n" +
-            "leftmost and can't hide behind a cosmetic buff.\n\n" +
-            "EFFECTS\n" +
+            "A compact tray beneath the HP bar aggregates every active status\n" +
+            "source — debuffs, buffs, passive stances — into one-letter color-coded\n" +
+            "icons. Stacks and remaining duration render as `P×3:4` (3 poison\n" +
+            "stacks, 4 turns left). Shift+S toggles verbose mode, swapping single\n" +
+            "letters for short labels (`POISON·3 4t`) until reload. Ordering is\n" +
+            "debuff-first severity, so the scariest effect sits leftmost and can't\n" +
+            "hide behind a cosmetic buff.\n\n" +
             "ICON KEY (letter · color · source):\n" +
             "  P  Green      Poison DoT\n" +
             "  B  Red        Bleed DoT\n" +
@@ -901,14 +738,10 @@ public static class PlayerGuideContent
             "  R  Green      Regen tick buff\n" +
             "  C  Yellow     Crit-Up buff\n" +
             "  D  Cyan       Dodge-Up buff\n\n" +
-            "COSTS\n" +
-            "None — display only. The tray never hides behind popups or\n" +
-            "projectiles; it updates in-line each frame.\n\n" +
             "TIPS\n" +
-            "Turn verbose on with Shift+S the first few runs to memorize the\n" +
-            "single-letter key; flip back to compact once the shapes read at\n" +
-            "a glance. If the tray fills, the leftmost slot is always the\n" +
-            "thing about to kill you — clear that first.\n\n" +
+            "Run verbose for the first few runs to learn the key, then flip back\n" +
+            "to compact once the shapes read at a glance. If the tray fills, the\n" +
+            "leftmost slot is the thing about to kill you — clear that first.\n\n" +
             "SEE ALSO\n" +
             "[Status: Bleed & Poison] · [Status: Stun & Slow] · [Hunger, Satiety & Fatigue] · [Look Mode & Counter Stance] · [Paired Dual-Wield Weapons] · [Controls & Keybindings]")
         {
@@ -922,18 +755,12 @@ public static class PlayerGuideContent
             "│ Density: Off · Subtle · Moderate · Pronounced\n" +
             "│ Default: Pronounced\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Short-lived tile particles punctuate combat and world events —\n" +
-            "sparks on metal-on-metal parries, blood specks on a cut, embers\n" +
-            "off a fire hit. Ten event types are wired up; the density slider\n" +
-            "in Options > Accessibility scales how many particles each event\n" +
-            "spawns, or disables them outright.\n\n" +
-            "USAGE\n" +
-            "Automatic. Adjust the slider to taste — Pronounced is the\n" +
-            "default; Moderate trims counts ~40%; Subtle is near-silent;\n" +
-            "Off skips spawning entirely. The setting hot-applies with no\n" +
-            "restart needed.\n\n" +
-            "EFFECTS\n" +
+            "Short-lived tile particles punctuate combat and world events — sparks\n" +
+            "on metal-on-metal parries, blood specks on a cut, embers off a fire\n" +
+            "hit. Density slider in Options > Accessibility scales how many\n" +
+            "particles each event spawns: Pronounced (default), Moderate (~40%\n" +
+            "fewer), Subtle (near-silent), Off (none). The setting hot-applies;\n" +
+            "motion-sensitive players can drop it to Subtle or Off without restart.\n\n" +
             "TEN TRIGGER EVENTS:\n" +
             "  1. Critical-hit spark burst\n" +
             "  2. Block / parry spark trail\n" +
@@ -944,20 +771,11 @@ public static class PlayerGuideContent
             "  7. Mob death dust plume\n" +
             "  8. Level-up rising motes\n" +
             "  9. Biome ambient drift (volcano ash, winter flakes)\n" +
-            " 10. Item-pickup sparkle\n" +
+            " 10. Item-pickup sparkle\n\n" +
             "Z-ORDER (bottom to top):\n" +
-            "  tile glyphs → particles → projectiles → damage popups →\n" +
-            "  toast banner. Particles always yield to the popup stream and\n" +
-            "  projectiles so damage numbers stay legible.\n\n" +
-            "COSTS\n" +
-            "Zero gameplay cost. Motion-sensitive players should drop the\n" +
-            "slider to Subtle or Off — particle motion is the first layer to\n" +
-            "strip before touching screen shake.\n\n" +
-            "TIPS\n" +
-            "Pronounced is tuned to read clearly on a 24x80 viewport; on\n" +
-            "very dense maps (labyrinth interiors, boss rooms) Moderate is\n" +
-            "easier on the eye without losing the feedback. Biome drift is\n" +
-            "the one category you can mute by standing under roofed tiles.\n\n" +
+            "  tile glyphs → particles → projectiles → damage popups → toast\n" +
+            "  banner. Particles always yield to the popup stream and projectiles\n" +
+            "  so damage numbers stay legible.\n\n" +
             "SEE ALSO\n" +
             "[Combat Visual Feedback] · [Damage & Toast Feedback] · [Critical Hits] · [Biomes] · [Weather] · [Controls & Keybindings]")
         {
@@ -971,21 +789,16 @@ public static class PlayerGuideContent
             "│ Night floor: 8 tiles\n" +
             "│ Modifiers: Biome, time, lights\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Your visible area is a shadowcast FOV that shrinks with time\n" +
-            "of day and biome penalties and expands around light sources.\n\n" +
-            "USAGE\n" +
-            "Automatic. Light sources (campfires, shrines, vents) emit warm\n" +
-            "bubbles you can stand next to for expanded sight.\n\n" +
-            "EFFECTS\n" +
+            "Your visible area is a shadowcast FOV that shrinks with time of day\n" +
+            "and biome penalties and expands around light sources (campfires,\n" +
+            "shrines, vents emit warm bubbles for extended sight). Fog-of-war\n" +
+            "persists — previously seen tiles stay dim but don't update mob\n" +
+            "movement until re-seen.\n\n" +
             "  - Base radius:       20 tiles on bright day\n" +
             "  - Time of day:       shrinks to 8 tiles at deep night\n" +
             "  - Biome:              Darkness -20, Forest -8, Swamp -5, Desert -5\n" +
             "  - Weather:           Fog reduces trap detection, not FOV\n" +
             "  - Starless Night:    run modifier locks vision at -20\n\n" +
-            "COSTS\n" +
-            "Fog-of-war persists — previously seen tiles stay dim but don't\n" +
-            "update mob movement until re-seen.\n\n" +
             "TIPS\n" +
             "Hug shrine and campfire bubbles when exploring Darkness or\n" +
             "Forest biomes; the extra radius can reveal traps before you\n" +
@@ -1003,27 +816,18 @@ public static class PlayerGuideContent
             "│ Stance: V key, forces Parry\n" +
             "│ Trigger: Manual hotkey\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Two utility hotkeys: Look Mode inspects tiles and enemies\n" +
-            "without moving; Counter Stance trades your turn for an\n" +
-            "auto-Parry on the next incoming hit.\n\n" +
-            "USAGE\n" +
-            "Press L to enter Look Mode. Yellow brackets wrap the selected\n" +
-            "target; a right-side Target List panel shows all visible\n" +
-            "hostiles with HP bars, distance, and threat color. Tab/Arrows\n" +
-            "cycle, T cycles the sort (Dist -> HP -> Threat -> Level ->\n" +
-            "Index), and 1-9 jump directly to a numbered target. Esc or\n" +
-            "L again exits. Press V to enter Counter Stance.\n\n" +
-            "EFFECTS\n" +
-            "Look Mode shows each target's name, HP, stats, skills, and\n" +
-            "status without advancing time. Threat color reflects the\n" +
-            "target's level versus yours (grey/green/white/yellow/red).\n" +
-            "Counter Stance auto-Parries the next incoming hit for a 25%\n" +
-            "Attack counter-strike.\n\n" +
-            "COSTS\n" +
-            "Look Mode is free (no turn consumed). Counter Stance consumes\n" +
-            "1 turn. The stance ends after one incoming hit or one turn,\n" +
-            "whichever comes first.\n\n" +
+            "Two utility hotkeys: Look Mode (L) inspects tiles and enemies without\n" +
+            "moving; Counter Stance (V) trades your turn for an auto-Parry on the\n" +
+            "next incoming hit. In Look Mode, yellow brackets wrap the selected\n" +
+            "target; a right-side Target List panel shows all visible hostiles\n" +
+            "with HP bars, distance, and threat color. Tab/Arrows cycle; T cycles\n" +
+            "sort (Dist -> HP -> Threat -> Level -> Index); 1-9 jump directly to\n" +
+            "a numbered target; Esc or L again exits. Look shows each target's\n" +
+            "name, HP, stats, skills, and status without advancing time. Threat\n" +
+            "color reflects target level vs yours (grey/green/white/yellow/red).\n" +
+            "Look Mode is free (no turn consumed); Counter Stance consumes 1 turn\n" +
+            "and ends after one incoming hit or one turn, whichever first — the\n" +
+            "auto-Parry counter-strikes for 25% of your Attack.\n\n" +
             "TIPS\n" +
             "Sort by HP to finish off low-HP stragglers first. Sort by\n" +
             "Threat before engaging a mixed group to identify the deadliest\n" +
@@ -1043,17 +847,13 @@ public static class PlayerGuideContent
             "│ Scope: 199 entries — 66 mobs + 100 bosses + 33 field bosses\n" +
             "│ Persistence: Survives permadeath via lifetime_stats.json\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "A browsable compendium of every mob you've fought or even just\n" +
             "glimpsed, cross-referenced with kill counts, drop hints, threat\n" +
-            "rating, and canon SAO flavor lore. The roster is locked\n" +
-            "count at 199 — 66 standard mobs across the floor pool, 100\n" +
-            "floor bosses (one per floor), and 33 field bosses scattered\n" +
-            "across the eras. Entries unlock on first sighting and persist\n" +
-            "permanently across runs — permadeath wipes the save, not the\n" +
-            "Bestiary.\n\n" +
-            "USAGE\n" +
-            "Press Y on the map to open. Navigate with:\n" +
+            "rating, and canon SAO flavor lore. The roster is locked at 199 — 66\n" +
+            "standard mobs, 100 floor bosses (one per floor), and 33 field bosses.\n" +
+            "Entries unlock on first sighting and persist permanently across runs\n" +
+            "— permadeath wipes the save, not the Bestiary. Press Y on the map\n" +
+            "to open. Navigate with:\n" +
             "  Up / Down         Select entry in the left-hand list\n" +
             "  Tab               Cycle detail sub-tabs (Stats / Drops /\n" +
             "                    Lore / Records)\n" +
@@ -1064,28 +864,21 @@ public static class PlayerGuideContent
             "  B                 Toggle boss-only view\n" +
             "  U                 Toggle show-undiscovered placeholders\n" +
             "  C                 Clear all filters and search\n" +
-            "  Y / Esc           Close\n\n" +
-            "EFFECTS\n" +
-            "Each entry tracks:\n" +
+            "  Y / Esc           Close\n" +
+            "Pause-style overlay — no turns pass while it is open. Each entry\n" +
+            "tracks:\n" +
             "  - Floor range where the mob appears\n" +
             "  - Lifetime kills and total encounters\n" +
             "  - Cross-run deaths-caused (how often this mob has killed\n" +
             "    a character of yours)\n" +
             "  - Known drops and their rarity tiers (as you observe them)\n" +
             "  - Threat rating vs. your current level\n" +
-            "  - Canon SAO lore flavor text (unlocked with the sighting)\n\n" +
-            "COSTS\n" +
-            "None. The Bestiary is a pause-style overlay — no turns pass\n" +
-            "while it is open.\n\n" +
-            "BUNDLE 10 IMPROVEMENTS\n" +
-            "  - Loot tags now PERSIST across runs (carried in lifetime_\n" +
-            "    stats.json alongside kills/sightings) — drops you've\n" +
-            "    confirmed in run 3 still show in run 7's Bestiary.\n" +
-            "  - Boss / field-boss / elite flags now stamp on FIRST DAMAGE\n" +
-            "    instead of first aggro. Insta-kill openers (Holy Sword\n" +
-            "    burst, Iaijutsu first-strike, sword-skill alpha on a\n" +
-            "    surprised target) used to skip the flag — these no longer\n" +
-            "    leak past your compendium.\n\n" +
+            "  - Canon SAO lore flavor text (unlocked with the sighting)\n" +
+            "Loot tags persist across runs (carried in lifetime_stats.json) — drops\n" +
+            "confirmed in run 3 still show in run 7's Bestiary. Boss / field-boss\n" +
+            "/ elite flags stamp on FIRST DAMAGE rather than first aggro, so\n" +
+            "insta-kill openers (Holy Sword burst, Iaijutsu first-strike, alpha\n" +
+            "on a surprised target) don't leak past the compendium.\n\n" +
             "TIPS\n" +
             "Sort by kills to see your favorite targets at a glance.\n" +
             "Boss-only filter shows your canon SAO bosses — useful for\n" +
@@ -1108,23 +901,16 @@ public static class PlayerGuideContent
             "│ Consequence: Save file deleted immediately\n" +
             "│ Trigger: HP reaches 0\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every run is a death-game run. When HP hits 0 the DeathScreen\n" +
-            "shows your run stats and the save slot is wiped — there is no\n" +
-            "partial penalty, no respawn, and no reload.\n\n" +
-            "USAGE\n" +
-            "Applies automatically on any death, anywhere on the floor. The\n" +
-            "DeathScreen asks you to confirm a return to the main menu; by\n" +
-            "the time you see it, the save file is already gone from disk.\n\n" +
-            "EFFECTS\n" +
-            "Death deletes save_N.json from %LOCALAPPDATA%/AincradTRPG. The\n" +
-            "run's score still posts to achievements/leaderboard state, but\n" +
-            "the slot itself cannot be reloaded. Equipment, Col, XP, party,\n" +
-            "and quests are all lost with the save. No 25% Col penalty or\n" +
-            "XP rollback — the previous soft-death fallback has been\n" +
-            "replaced by universal permadeath.\n\n" +
-            "COSTS\n" +
-            "The entire run. There is no middle ground.\n\n" +
+            "Every run is a death-game run. When HP hits 0 the DeathScreen shows\n" +
+            "your run stats and the save slot is wiped — no partial penalty, no\n" +
+            "respawn, no reload. Applies automatically on any death, anywhere on\n" +
+            "the floor. The DeathScreen asks you to confirm a return to the main\n" +
+            "menu; by the time you see it, the save file is already gone from\n" +
+            "disk. Death deletes save_N.json from %LOCALAPPDATA%/AincradTRPG. The\n" +
+            "run's score still posts to achievements/leaderboard state, but the\n" +
+            "slot itself cannot be reloaded. Equipment, Col, XP, party, and quests\n" +
+            "are all lost with the save. No 25% Col penalty or XP rollback —\n" +
+            "previous soft-death fallback replaced by universal permadeath.\n\n" +
             "TIPS\n" +
             "Keep a Revive Crystal in a quick-use slot — it intercepts the\n" +
             "fatal hit before the save is deleted. Use Safe Rooms between\n" +
@@ -1145,19 +931,12 @@ public static class PlayerGuideContent
             "│ Reward: +5 SP + 1-of-3 talent pick\n" +
             "│ Unlock: Every level\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "XP needed for the next level scales linearly: Lv2 = 200,\n" +
-            "Lv3 = 300, Lv4 = 400, and so on. Every level-up hands you\n" +
-            "stat points and a passive-talent choice.\n\n" +
-            "USAGE\n" +
-            "Kill mobs and turn in quests. Level-ups fire automatically as\n" +
-            "the XP threshold trips.\n\n" +
-            "EFFECTS\n" +
-            "On level-up: +5 Skill Points, HP fully restored, and a prompt\n" +
-            "to pick 1 of 3 random Passive Talent perks. Excess XP rolls\n" +
-            "over into the next level. Max HP also scales with Vitality.\n\n" +
-            "COSTS\n" +
-            "None — leveling is pure gain.\n\n" +
+            "XP needed for the next level scales linearly: Lv2 = 200, Lv3 = 300,\n" +
+            "Lv4 = 400, and so on. Kill mobs and turn in quests; level-ups fire\n" +
+            "automatically as the XP threshold trips. On level-up: +5 Skill Points,\n" +
+            "HP fully restored, and a prompt to pick 1 of 3 random Passive Talent\n" +
+            "perks. Excess XP rolls over into the next level. Max HP also scales\n" +
+            "with Vitality.\n\n" +
             "TIPS\n" +
             "Don't ignore attributes: Vitality scaling means stat\n" +
             "allocation matters as much as level. Save tough boss attempts\n" +
@@ -1175,22 +954,14 @@ public static class PlayerGuideContent
             "│ Purse: 1000 Col, 10 SP\n" +
             "│ Unlock: New character\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every fresh character starts at Level 1 with the same gear,\n" +
-            "purse, and 10 Skill Points to distribute before the first\n" +
-            "fight.\n\n" +
-            "USAGE\n" +
-            "Allocate the starting SP at the character sheet before leaving\n" +
-            "the Town of Beginnings.\n\n" +
-            "EFFECTS\n" +
+            "Every fresh character starts at Level 1 with the same gear, purse,\n" +
+            "and 10 Skill Points to distribute. Allocate the starting SP at the\n" +
+            "character sheet before leaving the Town of Beginnings.\n\n" +
             "  - 1000 Col, 10 Skill Points\n" +
             "  - Title: \"Adventurer\"\n" +
             "  - Iron Sword equipped, 1 Health Potion in inventory\n" +
-            "Base stats start at 0 for Attack/Defense/Speed/SkillDamage.\n" +
-            "Base CritRate 5%, Base CritHit damage 10. All 6 attributes\n" +
-            "start at 0.\n\n" +
-            "COSTS\n" +
-            "None on creation.\n\n" +
+            "Base stats start at 0 for Attack/Defense/Speed/SkillDamage. Base\n" +
+            "CritRate 5%, Base CritHit damage 10. All 6 attributes start at 0.\n\n" +
             "TIPS\n" +
             "Pick one primary stat (Str for damage, Vit for survival) and\n" +
             "pour most starting SP there. Spread investment leaves every\n" +
@@ -1208,21 +979,16 @@ public static class PlayerGuideContent
             "│ Scaling: Flat per-point bonuses\n" +
             "│ Unlock: Level 1\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Six attributes translate Skill Points into combat stats.\n" +
-            "Every point buys a fixed chunk of one derived stat.\n\n" +
-            "USAGE\n" +
-            "Spend SP on the character sheet. 1 SP equals 1 attribute\n" +
-            "point.\n\n" +
-            "EFFECTS\n" +
+            "Six attributes translate Skill Points into combat stats. Every point\n" +
+            "buys a fixed chunk of one derived stat. Spend SP on the character\n" +
+            "sheet — 1 SP equals 1 attribute point. Skill Points are finite, so\n" +
+            "each allocation locks out another.\n\n" +
             "  VITALITY     +10 MaxHP + faster passive regen (1 + VIT/3 HP/turn)\n" +
             "  STRENGTH     +2 ATK per point\n" +
             "  ENDURANCE    +2 DEF per point\n" +
             "  DEXTERITY    +0.5% CritRate + 1 CritDamage; improves accuracy\n" +
             "  AGILITY      +2 SPD (turn priority) + improves dodge\n" +
             "  INTELLIGENCE +2 SkillDamage (boosts Sword Skill multipliers)\n\n" +
-            "COSTS\n" +
-            "Skill Points are finite — each allocation locks out another.\n\n" +
             "TIPS\n" +
             "Dex double-dips on crit rate and crit damage, so it scales\n" +
             "crit builds twice. Vit is the only defensive stat that also\n" +
@@ -1242,13 +1008,9 @@ public static class PlayerGuideContent
             "│ Scaling: Attribute x 2 + gear\n" +
             "│ Trigger: Automatic recompute\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "The character sheet derives six combat numbers from base\n" +
-            "stats, attributes, and gear bonuses.\n\n" +
-            "USAGE\n" +
-            "Open the sheet to see the current rollup. Numbers refresh\n" +
-            "whenever you re-equip, repair, or spend SP.\n\n" +
-            "EFFECTS\n" +
+            "The character sheet derives six combat numbers from base stats,\n" +
+            "attributes, and gear bonuses. Open the sheet to see the current\n" +
+            "rollup; numbers refresh whenever you re-equip, repair, or spend SP.\n\n" +
             "  ATK = BaseAttack + (STR x 2) + gear bonuses\n" +
             "  DEF = BaseDefense + (END x 2) + gear bonuses\n" +
             "  SPD = BaseSpeed + (AGI x 2) + gear bonuses\n" +
@@ -1263,13 +1025,12 @@ public static class PlayerGuideContent
             "  BlockChance      +N% to shield block roll\n" +
             "  HPRegen          +N HP per passive-regen pulse\n" +
             "  SkillCooldown    -N turns on Sword Skill cooldowns\n" +
-            "Previously these effects only existed via SpecialEffect tag\n" +
-            "strings on weapons (CritRate+N, HPRegen+N, etc.). Now any\n" +
-            "equipment piece — armor, ring, bracelet, necklace — can roll\n" +
-            "them as a direct StatBonus, and the values stack additively\n" +
-            "with any equivalent SpecialEffect tags from other slots.\n\n" +
-            "COSTS\n" +
-            "Broken gear (0 durability) contributes nothing until repaired.\n\n" +
+            "Previously these effects only existed via SpecialEffect tag strings\n" +
+            "on weapons (CritRate+N, HPRegen+N, etc.). Now any equipment piece\n" +
+            "— armor, ring, bracelet, necklace — can roll them as a direct\n" +
+            "StatBonus, and the values stack additively with any equivalent\n" +
+            "SpecialEffect tags from other slots. Broken gear (0 durability)\n" +
+            "contributes nothing until repaired.\n\n" +
             "TIPS\n" +
             "Audit the sheet after repair runs — a dead weapon or armor\n" +
             "slot silently halves your output until you notice. Direct\n" +
@@ -1289,20 +1050,14 @@ public static class PlayerGuideContent
             "│ Offer: 3 random at each level\n" +
             "│ Unlock: On every level-up\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every level-up offers 3 random perks from an 11-option pool.\n" +
-            "All are permanent and stack.\n\n" +
-            "USAGE\n" +
-            "Pick one from the 3 offered at the level-up prompt. The other\n" +
-            "two are not banked — they're gone for that level.\n\n" +
-            "EFFECTS\n" +
+            "Every level-up offers 3 random perks from an 11-option pool. Pick\n" +
+            "one from the 3 offered — the other two are not banked. All picks\n" +
+            "are permanent and stack.\n\n" +
             "  Keen Edge (+3% Crit), Brutal Strikes (+5 CritDmg)\n" +
             "  Iron Will (+2 VIT), Power Surge (+3 BaseATK)\n" +
             "  Fortify (+3 BaseDEF), Quick Step (+2 BaseSPD)\n" +
             "  Brute Force (+2 STR), Endurance (+2 END)\n" +
             "  Nimble Fingers (+2 DEX), Fleet Foot (+2 AGI), Sharp Mind (+2 INT)\n\n" +
-            "COSTS\n" +
-            "None — the pick is free.\n\n" +
             "TIPS\n" +
             "Keen Edge plus Brutal Strikes stacks cleanly on Dex builds.\n" +
             "If all 3 offered perks miss your build, pick the closest\n" +
@@ -1320,19 +1075,13 @@ public static class PlayerGuideContent
             "│ Scaling: offhand.BaseDmg*0.6 + prof/2\n" +
             "│ Unlock: F74 Gleam Eyes or 50 1H kills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Kirito's signature skill. Lets you wield a second 1H Sword in\n" +
-            "OffHand and auto-append an off-hand strike to every main hit.\n\n" +
-            "USAGE\n" +
-            "Equip a second 1H Sword in OffHand after unlock. The off-hand\n" +
-            "swing fires automatically — no new hotkey.\n\n" +
-            "EFFECTS\n" +
-            "Each main-hand swing triggers an off-hand strike for\n" +
-            "max(1, offhand.BaseDamage x 0.6 + prof/2) damage. Plus +15%\n" +
-            "damage on single-hit skills. Unlocks Double Circular (2.0x),\n" +
-            "Starburst Stream (16-hit 8.0x), and The Eclipse (27-hit 12.0x).\n\n" +
-            "COSTS\n" +
-            "OffHand shield slot is forfeited — no more Block rolls.\n\n" +
+            "Kirito's signature skill. Lets you wield a second 1H Sword in OffHand\n" +
+            "and auto-append an off-hand strike to every main hit (the off-hand\n" +
+            "swing fires automatically — no new hotkey). Each main-hand swing\n" +
+            "triggers an off-hand strike for max(1, offhand.BaseDamage x 0.6 +\n" +
+            "prof/2) damage, plus +15% damage on single-hit skills. Unlocks Double\n" +
+            "Circular (2.0x), Starburst Stream (16-hit 8.0x), and The Eclipse\n" +
+            "(27-hit 12.0x). OffHand shield slot is forfeited — no more Block rolls.\n\n" +
             "TIPS\n" +
             "Since off-hand scales on BaseDamage + prof, pick the same\n" +
             "weapon class in both hands to share proficiency grinding\n" +
@@ -1352,19 +1101,12 @@ public static class PlayerGuideContent
             "│ Requires: 1H Sword + true Shield\n" +
             "│ Unlock: Defeat Heathcliff on F75\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Heathcliff's stance. Active only when wielding a 1H Sword\n" +
-            "with a real shield (not a second sword) in OffHand.\n\n" +
-            "USAGE\n" +
-            "Equip a 1H Sword in the main hand and a Shield in the OffHand\n" +
-            "after F75 clears. The stance is passive while the loadout\n" +
-            "holds.\n\n" +
-            "EFFECTS\n" +
-            "+15% Block Chance. Unlocks Sacred Edge (7.0x overhead with\n" +
-            "brief damage reduction) and Divine Cross (2-hit 4.5x).\n\n" +
-            "COSTS\n" +
-            "Loses the off-hand swing and +15% single-hit bonus that Dual\n" +
-            "Blades offers — they're mutually exclusive stances.\n\n" +
+            "Heathcliff's stance. Active only when wielding a 1H Sword with a real\n" +
+            "shield (not a second sword) in OffHand — equip the loadout after F75\n" +
+            "clears and the stance runs passively. +15% Block Chance. Unlocks\n" +
+            "Sacred Edge (7.0x overhead with brief damage reduction) and Divine\n" +
+            "Cross (2-hit 4.5x). Mutually exclusive with Dual Blades — loses the\n" +
+            "off-hand swing and +15% single-hit bonus.\n\n" +
             "TIPS\n" +
             "Because unlock is gated on beating Heathcliff with no grind\n" +
             "fallback, treat the F75 clear as a one-shot — don't skip the\n" +
@@ -1382,20 +1124,13 @@ public static class PlayerGuideContent
             "│ Requires: Empty hands\n" +
             "│ Unlock: Ran's F2 trial or 30 unarmed kills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Unarmed combat stance. Empty hands flip your crit rate and\n" +
-            "damage up and open an unarmed skill tree.\n\n" +
-            "USAGE\n" +
-            "Unequip your main-hand weapon after unlock. Skills auto-fill\n" +
-            "your slots as kill thresholds trip.\n\n" +
-            "EFFECTS\n" +
-            "+10% damage and +20% CritRate while both hands are empty.\n" +
-            "Unarmed skill tree: Smash Knuckle at 0, Gazelle Rush at 10,\n" +
-            "Blazing Blow at 100, Turbulence Rush at 200, Deadly Blow at\n" +
-            "500 kills.\n\n" +
-            "COSTS\n" +
-            "No weapon means no weapon-slot bonuses (ATK, crit, sword\n" +
-            "skills).\n\n" +
+            "Unarmed combat stance. Empty hands flip crit rate and damage up and\n" +
+            "open an unarmed skill tree — unequip the main-hand weapon after\n" +
+            "unlock and skills auto-fill your slots as kill thresholds trip. +10%\n" +
+            "damage and +20% CritRate while both hands are empty. Unarmed skill\n" +
+            "tree: Smash Knuckle at 0, Gazelle Rush at 10, Blazing Blow at 100,\n" +
+            "Turbulence Rush at 200, Deadly Blow at 500 kills. No weapon means\n" +
+            "no weapon-slot bonuses (ATK, crit, sword skills).\n\n" +
             "TIPS\n" +
             "Grind the early unarmed skills against the same packs you'd\n" +
             "use for 1H Sword — the 20% crit rate pairs neatly with Keen\n" +
@@ -1413,17 +1148,11 @@ public static class PlayerGuideContent
             "│ Requires: Katana equipped\n" +
             "│ Unlock: 100 Katana kills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Klein's signature. Buffs every Katana strike with flat damage,\n" +
-            "crit, and a Bleed proc on hit.\n\n" +
-            "USAGE\n" +
-            "Keep a Katana in the main hand after unlock — the passive\n" +
-            "activates automatically.\n\n" +
-            "EFFECTS\n" +
-            "+10% damage, +10% CritRate, and a 15% Bleed proc on hit.\n" +
-            "Adds Tsumujigaeshi and Zekkuu to the Katana skill tree.\n\n" +
-            "COSTS\n" +
-            "None beyond the 100-kill grind gate.\n\n" +
+            "Klein's signature. Buffs every Katana strike with flat damage, crit,\n" +
+            "and a Bleed proc on hit. Keep a Katana in the main hand after unlock\n" +
+            "and the passive activates automatically. +10% damage, +10% CritRate,\n" +
+            "and a 15% Bleed proc on hit. Adds Tsumujigaeshi and Zekkuu to the\n" +
+            "Katana skill tree.\n\n" +
             "TIPS\n" +
             "Stack this with a Bleed+N Katana (Karakurenai, Muramasa, or an\n" +
             "Elemental Dark variant) for constant bleed-tick pressure — the\n" +
@@ -1442,19 +1171,13 @@ public static class PlayerGuideContent
             "│ Requires: Night phase active\n" +
             "│ Unlock: Kill any floor boss at Night\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "\"The Black Swordsman's\" stance. A flat Night-phase buff that\n" +
-            "swings combat in your favor after dusk.\n\n" +
-            "USAGE\n" +
-            "Active only during the Night phase of the day/night cycle.\n" +
-            "The Starless Night run modifier pins the world at Night for a\n" +
-            "permanent buff window.\n\n" +
-            "EFFECTS\n" +
-            "+20% damage and +10% Dodge while Night is active. Unlocks\n" +
-            "Shadow Cleave (3-hit rush 3.5x, range 3).\n\n" +
-            "COSTS\n" +
-            "Zero uptime during Day — the stance lies dormant for more than\n" +
-            "half the clock.\n\n" +
+            "\"The Black Swordsman's\" stance — a flat Night-phase buff that swings\n" +
+            "combat in your favor after dusk. Active only during the Night phase\n" +
+            "of the day/night cycle; the Starless Night run modifier pins the\n" +
+            "world at Night for permanent uptime. +20% damage and +10% Dodge while\n" +
+            "Night is active. Unlocks Shadow Cleave (3-hit rush 3.5x, range 3).\n" +
+            "Zero uptime during Day — the stance lies dormant for more than half\n" +
+            "the clock.\n\n" +
             "TIPS\n" +
             "Bank hard fights for Night cycles. Combine with the Starless\n" +
             "Night modifier for 100% uptime, at the cost of permanent FOV\n" +
@@ -1472,22 +1195,14 @@ public static class PlayerGuideContent
             "│ Requires: Any weapon\n" +
             "│ Unlock: Volcanic / Ice biome boss kill\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Two elemental attunements that work with any weapon. Each\n" +
-            "carries a proc, an anti-element damage bonus, and a signature\n" +
-            "skill.\n\n" +
-            "USAGE\n" +
-            "Fell the biome-specific floor boss to unlock the matching\n" +
-            "edge. Both attunements apply passively once learned.\n\n" +
-            "EFFECTS\n" +
-            "BLAZING EDGE: +10% Burn proc on hit, +25% damage vs ice/\n" +
-            "frost/snow enemies, unlocks Flame Strike (3.5x cone, 50%\n" +
-            "Burn).\n" +
-            "FROZEN EDGE: +10% Slow proc on hit, +25% damage vs fire/\n" +
-            "flame/lava enemies, unlocks Glacial Slash (3.5x line, 50%\n" +
-            "Slow).\n\n" +
-            "COSTS\n" +
-            "None — purely additive.\n\n" +
+            "Two elemental attunements that work with any weapon. Each carries a\n" +
+            "proc, an anti-element damage bonus, and a signature skill. Fell the\n" +
+            "biome-specific floor boss to unlock the matching edge; both apply\n" +
+            "passively once learned.\n" +
+            "BLAZING EDGE: +10% Burn proc on hit, +25% damage vs ice/frost/snow\n" +
+            "enemies, unlocks Flame Strike (3.5x cone, 50% Burn).\n" +
+            "FROZEN EDGE: +10% Slow proc on hit, +25% damage vs fire/flame/lava\n" +
+            "enemies, unlocks Glacial Slash (3.5x line, 50% Slow).\n\n" +
             "TIPS\n" +
             "Chase both edges: the opposing-element bonus means Blazing\n" +
             "carries you through Ice biomes and Frozen carries you through\n" +
@@ -1505,18 +1220,10 @@ public static class PlayerGuideContent
             "│ Requires: Normal step move\n" +
             "│ Unlock: Disarm 10 traps total\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Argo's scouting art. A passive trap-reveal aura that lights\n" +
-            "up hidden hazards around you as you move.\n\n" +
-            "USAGE\n" +
-            "Move normally (step only — sprint and stealth don't trigger).\n" +
-            "Every step refreshes the 3-tile reveal.\n\n" +
-            "EFFECTS\n" +
-            "Passively reveals hidden traps within a 3-tile radius around\n" +
-            "your position every move. No active ability; purely an\n" +
-            "exploration aid.\n\n" +
-            "COSTS\n" +
-            "None after unlock.\n\n" +
+            "Argo's scouting art. A passive trap-reveal aura that lights up hidden\n" +
+            "hazards within a 3-tile radius as you move. Move normally (step only\n" +
+            "— sprint and stealth don't trigger); every step refreshes the reveal.\n" +
+            "No active ability; purely an exploration aid.\n\n" +
             "TIPS\n" +
             "Grind the 10-trap counter early on a Trap-heavy floor; the\n" +
             "total persists across floors, so progress never resets.\n\n" +
@@ -1533,20 +1240,14 @@ public static class PlayerGuideContent
             "│ Range: Adventurer -> Liberator of Aincrad\n" +
             "│ Unlock: Climb specific floors\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Your title auto-updates as you climb Aincrad. Ten named ranks\n" +
-            "span the F1-F100 ascent.\n\n" +
-            "USAGE\n" +
-            "Ascend a qualifying floor; the promotion fires automatically\n" +
-            "and announces \"You have earned the title: <Title>!\"\n\n" +
-            "EFFECTS\n" +
+            "Your title auto-updates as you climb Aincrad. Ten named ranks span\n" +
+            "the F1-F100 ascent — promotions fire automatically on ascend with\n" +
+            "\"You have earned the title: <Title>!\". Purely cosmetic.\n\n" +
             "  F1   Adventurer         F25  Dungeon Scourge\n" +
             "  F2   Blooded             F35  Nightmare Walker\n" +
             "  F5   Survivor            F50  Floor Conqueror\n" +
             "  F10  Seasoned            F75  Clearance Hero\n" +
             "  F15  Proven              F100 Liberator of Aincrad\n\n" +
-            "COSTS\n" +
-            "None. Purely cosmetic.\n\n" +
             "TIPS\n" +
             "The Clearance Hero rank at F75 aligns with the Heathcliff\n" +
             "fight that unlocks Holy Sword — a natural story beat to look\n" +
@@ -1564,16 +1265,11 @@ public static class PlayerGuideContent
             "│ Default: 0 (Neutral)\n" +
             "│ Unlock: Always active from character creation\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Karma is a signed alignment score from -100 to +100 that tracks\n" +
-            "how the world sees you. It gates guild membership, shifts shop\n" +
-            "prices, and at the extremes triggers Town Guard aggro or unlocks\n" +
-            "the Laughing Coffin (LC) hideout.\n\n" +
-            "USAGE\n" +
-            "Karma changes automatically as you play. No menu to spend — the\n" +
-            "value lives on your Player sheet and the StatsDialog shows the\n" +
-            "current score and tier.\n\n" +
-            "EFFECTS\n" +
+            "Karma is a signed alignment score from -100 to +100 that tracks how\n" +
+            "the world sees you. It gates guild membership, shifts shop prices,\n" +
+            "and at the extremes triggers Town Guard aggro or unlocks the Laughing\n" +
+            "Coffin (LC) hideout. No menu to spend — the value lives on your\n" +
+            "Player sheet and the StatsDialog shows the current score and tier.\n\n" +
             "Gain / loss events:\n" +
             "  +3   Quest completion\n" +
             "  +2   Kill a PK mob (Titan's Hand, Crimson Longsword,\n" +
@@ -1588,15 +1284,13 @@ public static class PlayerGuideContent
             "  -50 to    0  Shady — NPC warnings, shop x1.10\n" +
             " -100 to  -50  Outlaw — Town Guards spawn + aggro in F1 plaza,\n" +
             "               LC F75 gate unlocks, shops refuse service\n\n" +
-            "Bargaining Life Skill milestones STACK MULTIPLICATIVELY with\n" +
-            "karma: Honorable (x0.90) × Bargaining L99 (x0.85) = x0.765 →\n" +
-            "23.5% off buys, the maximum discount in the game. Outlaw still\n" +
-            "blocks shop entry BEFORE Bargaining math runs, so no amount of\n" +
-            "Life Skill grinding rescues a -50 karma slot.\n\n" +
-            "COSTS\n" +
-            "Farming karma in either direction has opportunity cost — Honorable\n" +
-            "gets cheaper shops but cannot join LC; Outlaw gains the LC guild\n" +
-            "path but loses all civilian shop access.\n\n" +
+            "Bargaining Life Skill milestones STACK MULTIPLICATIVELY with karma:\n" +
+            "Honorable (x0.90) × Bargaining L99 (x0.85) = x0.765 → 23.5% off buys,\n" +
+            "the maximum discount in the game. Outlaw blocks shop entry BEFORE\n" +
+            "Bargaining math runs, so no amount of Life Skill grinding rescues a\n" +
+            "-50 karma slot. Farming karma in either direction has opportunity\n" +
+            "cost — Honorable gets cheaper shops but cannot join LC; Outlaw gains\n" +
+            "the LC guild path but loses all civilian shop access.\n\n" +
             "TIPS\n" +
             "Plan the swing deliberately. If you want the KoB or Sleeping\n" +
             "Knights end-game guilds (karma >=+30 / +50) grind quest turn-ins\n" +
@@ -1617,19 +1311,15 @@ public static class PlayerGuideContent
             "│ Cap: Level 99 per skill\n" +
             "│ Save: Per-player, in SaveData.LifeSkills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Seven non-combat skills level from everyday play — Sleep,\n" +
-            "Walking, Running, Eating, Bargaining, Swimming, and Mining\n" +
-            ". They sit parallel to Weapon Proficiency:\n" +
-            "proficiency rewards combat with one weapon type, Life Skills\n" +
-            "reward the travel, trade, rest, and resource-extraction loop.\n\n" +
-            "USAGE\n" +
-            "No menu — each skill banks XP from the matching in-world action.\n" +
-            "Milestones at L10/25/50/99 fire a banner and stamp a permanent\n" +
-            "stat passive (or traversal gate) onto your character.\n\n" +
-            "EFFECTS\n" +
-            "XP curve (piecewise geometric): L5=10, L10=100, L25=1000,\n" +
-            "L50=5000, L99=50000.\n\n" +
+            "Seven non-combat skills level from everyday play — Sleep, Walking,\n" +
+            "Running, Eating, Bargaining, Swimming, and Mining. They sit parallel\n" +
+            "to Weapon Proficiency: proficiency rewards combat with one weapon\n" +
+            "type, Life Skills reward the travel, trade, rest, and resource-\n" +
+            "extraction loop. No menu — each skill banks XP from the matching\n" +
+            "in-world action. Milestones at L10/25/50/99 fire a banner and stamp\n" +
+            "a permanent stat passive (or traversal gate) onto your character.\n" +
+            "XP curve (piecewise geometric): L5=10, L10=100, L25=1000, L50=5000,\n" +
+            "L99=50000.\n\n" +
             "  SKILL       XP SOURCE                       L10/25/50/99\n" +
             "  SLEEP       +20 ProcessRest / +10 campfire  MaxHP +5/+15/+35/+80 +regen\n" +
             "  WALKING     +1 per normal step              END  +2/+5/+10/+20\n" +
@@ -1644,11 +1334,10 @@ public static class PlayerGuideContent
             "  MINING      +4 Iron / +9 Mith / +18 Div     L10 +5% drops + free dur every other strike\n" +
             "              (per vein strike)               L25 +10% drops + 20% bonus ore roll\n" +
             "                                              L50 +15% drops + Mith trace +1 + Iron -1 strike\n" +
-            "                                              L99 +25% drops + 20% Divine boost + dur halved\n\n" +
-            "COSTS\n" +
-            "None. Life Skills cost only the time spent doing the activity;\n" +
-            "they never block or gate other progression. Swimming below L10\n" +
-            "charges 2 turn ticks per water step (mobs get a free turn).\n\n" +
+            "                                              L99 +25% drops + 20% Divine boost + dur halved\n" +
+            "Life Skills cost only the time spent doing the activity; they never\n" +
+            "block or gate other progression. Swimming below L10 charges 2 turn\n" +
+            "ticks per water step (mobs get a free turn).\n\n" +
             "TIPS\n" +
             "Running and Walking level in parallel — a mix of sprint bursts\n" +
             "and normal steps feeds both XP pools on the same trip. Rest at\n" +
@@ -1672,30 +1361,22 @@ public static class PlayerGuideContent
             "│ Cap: Level 99 (-15% buy / +15% sell)\n" +
             "│ Save: Per-player, in SaveData.LifeSkills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Bargaining is a Life Skill that tilts shop math in your favor.\n" +
-            "Every buy, sell, or Sell Junk transaction banks +1 XP; milestones\n" +
-            "at L10/25/50/99 STACK MULTIPLICATIVELY with Karma tier and any\n" +
-            "floor/vendor markup to shave Col off buys and pad sells.\n\n" +
-            "USAGE\n" +
-            "Automatic — any ShopDialog transaction feeds XP. Sell Junk grants\n" +
-            "1 XP for the bulk action, not 1-per-item, so split high-volume\n" +
-            "sells across individual transactions if you're grinding the\n" +
-            "curve. Milestone banners fire on level-up.\n\n" +
-            "EFFECTS\n" +
+            "Bargaining is a Life Skill that tilts shop math in your favor. Every\n" +
+            "buy, sell, or Sell Junk transaction banks +1 XP; milestones at\n" +
+            "L10/25/50/99 STACK MULTIPLICATIVELY with Karma tier and any\n" +
+            "floor/vendor markup. Sell Junk grants 1 XP for the bulk action, not\n" +
+            "1-per-item, so split high-volume sells across individual transactions\n" +
+            "if you're grinding the curve. Milestone banners fire on level-up.\n\n" +
             "  LEVEL   BUY PRICE   SELL PRICE   NOTE\n" +
             "  L1-9    x1.00       x1.00        No bonus — grind window\n" +
             "  L10+    x0.97       x1.03        -3% / +3%\n" +
             "  L25+    x0.94       x1.06        -6% / +6%\n" +
             "  L50+    x0.90       x1.10        -10% / +10%\n" +
             "  L99     x0.85       x1.15        -15% / +15% (cap)\n\n" +
-            "Stacking: Honorable karma (x0.9 buy) × L99 Bargaining (x0.85)\n" +
-            "= x0.765 final → 23.5% off. Shady karma (+10% markup) × L99\n" +
-            "bargain still nets ≈x0.935 → 6.5% off. Outlaw karma refuses\n" +
-            "service entirely BEFORE the Bargaining math runs — no discount\n" +
-            "rescues a -50 karma slot.\n\n" +
-            "COSTS\n" +
-            "None. Bargaining XP is pure upside; every shop visit feeds it.\n\n" +
+            "Stacking: Honorable karma (x0.9 buy) × L99 Bargaining (x0.85) = x0.765\n" +
+            "final → 23.5% off. Shady karma (+10% markup) × L99 bargain still nets\n" +
+            "≈x0.935 → 6.5% off. Outlaw karma refuses service entirely BEFORE the\n" +
+            "Bargaining math runs — no discount rescues a -50 karma slot.\n\n" +
             "TIPS\n" +
             "Hit L10 early — the first -3%/+3% swing pays back the inventory\n" +
             "time cost inside two shop runs. If you're Outlaw-drifting for\n" +
@@ -1716,30 +1397,25 @@ public static class PlayerGuideContent
             "│ Gates: L1 Water / L25 WaterDeep\n" +
             "│ Save: Per-player, in SaveData.LifeSkills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Swimming is a Life Skill that turns water tiles from impassable\n" +
-            "walls into traversable terrain. Level gates control WHICH water\n" +
-            "you can enter, and milestone thresholds drop the slow penalty\n" +
-            "that otherwise gives aquatic mobs a free turn on every step.\n\n" +
-            "USAGE\n" +
-            "Step onto a Water or WaterDeep tile to bank XP. Walking XP is\n" +
-            "SUPPRESSED on water steps — no double-dip with the Walking\n" +
-            "skill. Below the speed threshold for a water type, each step\n" +
-            "costs 2 turn ticks instead of 1 (the mob acts between your\n" +
-            "frames).\n\n" +
-            "EFFECTS\n" +
+            "Swimming is a Life Skill that turns water tiles from impassable walls\n" +
+            "into traversable terrain. Level gates control WHICH water you can\n" +
+            "enter; milestone thresholds drop the slow penalty that otherwise gives\n" +
+            "aquatic mobs a free turn on every step. Step onto a Water or WaterDeep\n" +
+            "tile to bank XP. Walking XP is SUPPRESSED on water steps — no double-\n" +
+            "dip with the Walking skill. Below the speed threshold for a water\n" +
+            "type, each step costs 2 turn ticks instead of 1 (the mob acts between\n" +
+            "your frames).\n\n" +
             "  LEVEL   WATER (shallow)       WATERDEEP            XP/STEP\n" +
             "  L1-9    Passable, slow (2t)   Blocked              +2 / n/a\n" +
             "  L10-24  Full speed            Blocked              +2 / n/a\n" +
             "  L25-49  Full speed            Passable, slow (2t)  +2 / +3\n" +
             "  L50-98  Full speed            Full speed           +2 / +3\n" +
-            "  L99     Master swimmer (flavor-only capstone)      +2 / +3\n\n" +
-            "RequiresSwimmingLevel on Tile: Water = 1, WaterDeep = 25.\n\n" +
-            "COSTS\n" +
-            "Below-threshold water steps burn 2 turn ticks — a slow tax that\n" +
-            "lets aquatic mobs (CanSwim = true) reposition or attack between\n" +
-            "your frames. Mob AI IsWalkable is unchanged, so dryland mobs\n" +
-            "still treat water as a wall — rivers remain a choke point.\n\n" +
+            "  L99     Master swimmer (flavor-only capstone)      +2 / +3\n" +
+            "RequiresSwimmingLevel on Tile: Water = 1, WaterDeep = 25. Below-\n" +
+            "threshold water steps burn 2 turn ticks — a slow tax that lets aquatic\n" +
+            "mobs (CanSwim = true) reposition or attack between your frames. Mob\n" +
+            "AI IsWalkable is unchanged, so dryland mobs still treat water as a\n" +
+            "wall — rivers remain a choke point.\n\n" +
             "TIPS\n" +
             "Grind the first 10 levels on shallow rivers before pushing F4 —\n" +
             "the slow penalty alone gives Water Drakes or Lakeshore Crabs\n" +
@@ -1761,23 +1437,16 @@ public static class PlayerGuideContent
             "│ Cap: Level 99 (+25% drops, dur damage halved)\n" +
             "│ Save: Per-player, in SaveData.LifeSkills\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Mining is the seventh Life Skill — a non-combat\n" +
-            "track that levels every time you swing a Pickaxe at an ore\n" +
-            "vein. Each strike banks XP regardless of whether the vein\n" +
-            "depletes that turn, so even a Wooden Pickaxe whittling away\n" +
-            "at a stubborn Mithril vein contributes 9 XP per swing. The\n" +
-            "milestones at L10/25/50/99 progressively boost ore drops,\n" +
-            "save your pickaxe durability, and crank Divine vein yields\n" +
-            "into endgame-relevant territory.\n\n" +
-            "USAGE\n" +
-            "No menu — strike any vein with a Pickaxe equipped to bank XP.\n" +
-            "Unlike Walking and Swimming, Mining is opt-in: you have to\n" +
-            "carry the tool. The Life Skills XP curve is shared with the\n" +
-            "other six skills (L5=10, L10=100, L25=1000, L50=5000,\n" +
-            "L99=50000), so 100 Iron strikes lands you at L10 in a single\n" +
-            "vein-rich floor.\n\n" +
-            "EFFECTS\n" +
+            "Mining is the seventh Life Skill — a non-combat track that levels\n" +
+            "every time you swing a Pickaxe at an ore vein. Each strike banks XP\n" +
+            "regardless of whether the vein depletes that turn, so even a Wooden\n" +
+            "Pickaxe whittling away at a stubborn Mithril vein contributes 9 XP\n" +
+            "per swing. Milestones at L10/25/50/99 progressively boost ore drops,\n" +
+            "save your pickaxe durability, and crank Divine vein yields into\n" +
+            "endgame-relevant territory. No menu — strike any vein with a Pickaxe\n" +
+            "equipped to bank XP. Unlike Walking and Swimming, Mining is opt-in:\n" +
+            "you have to carry the tool. The Life Skills XP curve is shared with\n" +
+            "the other six skills (L5=10, L10=100, L25=1000, L50=5000, L99=50000).\n\n" +
             "XP PER STRIKE:\n" +
             "  Iron      +4 XP\n" +
             "  Mithril   +9 XP\n" +
@@ -1795,21 +1464,18 @@ public static class PlayerGuideContent
             "       Divine vein drop rate +20%\n" +
             "       All durability damage HALVED — every strike now ticks\n" +
             "       0.5 durability (rounded), effectively doubling pickaxe\n" +
-            "       lifespan on top of L10's free-strike effect\n\n" +
-            "COSTS\n" +
-            "Mining XP costs only durability and turns — no Col, no\n" +
-            "stamina drain. Pickaxes SHATTER at 0 durability, so the L10\n" +
-            "every-other-free-strike and L99 dur-halved milestones aren't\n" +
-            "just nice-to-haves; they materially extend the per-pickaxe\n" +
-            "vein count.\n\n" +
+            "       lifespan on top of L10's free-strike effect\n" +
+            "Mining XP costs only durability and turns — no Col, no stamina drain.\n" +
+            "Pickaxes SHATTER at 0 durability, so the L10 every-other-free-strike\n" +
+            "and L99 dur-halved milestones materially extend the per-pickaxe vein\n" +
+            "count.\n\n" +
             "MID-MINING SAVE PERSISTENCE:\n" +
-            "Partially-mined ore veins now preserve their strike-count\n" +
-            "across save/load — quit mid-vein and the chip-counter is\n" +
-            "exactly where you left it. Limited to the CURRENT FLOOR:\n" +
-            "ascending stairs regenerates the next floor and discards\n" +
-            "any prior-floor vein state along with the rest of the map.\n" +
-            "Backtracking down stairs to an earlier floor also regenerates\n" +
-            "that floor — the persistence is live-session-on-floor only.\n\n" +
+            "Partially-mined ore veins preserve their strike-count across save/load\n" +
+            "— quit mid-vein and the chip-counter is exactly where you left it.\n" +
+            "Limited to the CURRENT FLOOR: ascending stairs regenerates the next\n" +
+            "floor and discards any prior-floor vein state. Backtracking down\n" +
+            "stairs to an earlier floor also regenerates that floor — the\n" +
+            "persistence is live-session-on-floor only.\n\n" +
             "TIPS\n" +
             "Power-level on Iron veins through F10-F25 — they're cheap to\n" +
             "strike, the XP is steady, and L10's free-every-other-strike\n" +
@@ -1828,20 +1494,17 @@ public static class PlayerGuideContent
         new("Progression", "Titles & the Active Title Slot",
             "┌─ Progression\n" +
             "│ Topic: Titles & the Active Title Slot\n" +
-            "│ Unlocks: Species, tag, total, floor-clear triggers\n" +
+            "│ Source: Milestone System (Combat / Floor / Canon / etc.)\n" +
             "│ Slot: One equipped title at a time\n" +
-            "│ Manage: Monument of Swordsmen (F1) or StatsDialog\n" +
+            "│ Manage: Monument of Swordsmen (F1), Milestones (Shift+M)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "15 starter titles unlock from kill milestones and floor clears.\n" +
-            "You equip ONE into the Active Title slot for a flat passive\n" +
-            "bonus; swapping is free and can be done any time.\n\n" +
-            "USAGE\n" +
-            "Unlock fires automatically when the trigger resolves — a banner\n" +
-            "notification announces the new title. Equip/unequip at the\n" +
-            "Monument of Swordsmen on F1 or through the Life Skills / Active\n" +
-            "Title section of the character sheet.\n\n" +
-            "EFFECTS\n" +
+            "Equippable titles are a reward type within the unified Milestone\n" +
+            "System. Unlocks fire automatically from kill milestones, floor clears,\n" +
+            "canon achievements, and other triggers — a banner announces the new\n" +
+            "title. You equip ONE into the Active Title slot for a flat passive\n" +
+            "bonus; swapping is free and can be done any time. Equip/unequip at\n" +
+            "the Monument of Swordsmen on F1 or via Shift+M (Milestones dialog);\n" +
+            "press E on a focused unlocked title row to set it active.\n\n" +
             "  Boar Slayer          10 boar kills\n" +
             "  Nepent Cutter        10 nepent kills\n" +
             "  Kobold Crusher       10 kobold kills\n" +
@@ -1856,9 +1519,8 @@ public static class PlayerGuideContent
             "  Insect Crusher       100 insect-tag kills\n" +
             "  Beginner Slayer      100 total kills\n" +
             "  The Black Swordsman  9999 total kills\n" +
-            "  Survivor             F50 cleared\n\n" +
-            "COSTS\n" +
-            "None. Single-slot only — equipping a new title replaces the old.\n\n" +
+            "  Survivor             F50 cleared\n" +
+            "Single-slot only — equipping a new title replaces the old.\n\n" +
             "TIPS\n" +
             "The Black Swordsman title is distinct from the L110 per-weapon\n" +
             "proficiency rank of the same name — the title unlocks at 9999\n" +
@@ -1878,20 +1540,13 @@ public static class PlayerGuideContent
             "│ Milestones: L25 / L50 / L75 / L100 forks\n" +
             "│ Save: Per-save, per-weapon-type\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every weapon type has its own 110-level Proficiency Tree fed\n" +
-            "by kills with that weapon. Kill counts crossed at 25, 100,\n" +
-            "500, and 2000 map to Levels 25, 50, 75, and 100 on a\n" +
-            "geometric curve — each a fork where you pick one of two\n" +
-            "passive branches.\n\n" +
-            "USAGE\n" +
-            "Kill monsters with the chosen weapon equipped. On hitting a\n" +
-            "fork threshold, a prompt asks you to pick one of two passive\n" +
-            "upgrades for that weapon type. Picks are permanent per save.\n\n" +
-            "EFFECTS\n" +
-            "The 15 classic rank titles (Novice through The Black\n" +
-            "Swordsman) are retained as cosmetic bands draped over the\n" +
-            "numeric levels:\n" +
+            "Every weapon type has its own 110-level Proficiency Tree fed by kills\n" +
+            "with that weapon. Kill counts crossed at 25, 100, 500, and 2000 map\n" +
+            "to Levels 25, 50, 75, and 100 on a geometric curve — each a fork\n" +
+            "where you pick one of two passive branches. Picks are permanent per\n" +
+            "save (no respec without a New Game). The 15 classic rank titles\n" +
+            "(Novice through The Black Swordsman) are retained as cosmetic bands\n" +
+            "draped over the numeric levels:\n" +
             "  L1-9    Novice / Apprentice\n" +
             "  L10-24  Journeyman grind\n" +
             "  L25     FORK 1 (crit vs parry focus)\n" +
@@ -1930,10 +1585,7 @@ public static class PlayerGuideContent
             "    existing +2 CritRate). Affects skills only — basic-attack\n" +
             "    ranged-fire is a separate system. The range overflow\n" +
             "    stacks with weapon-line skill range; e.g. a 6-tile skill\n" +
-            "    becomes 11 tiles with Marksman Eye selected.\n" +
-            "Picks remain permanent per save — no respec.\n\n" +
-            "COSTS\n" +
-            "None. Fork choices cannot be respec'd without a New Game.\n\n" +
+            "    becomes 11 tiles with Marksman Eye selected.\n\n" +
             "TIPS\n" +
             "Don't split early kills across 3 weapons. A single primary\n" +
             "weapon reaches L50 long before a split build, giving you the\n" +
@@ -1955,20 +1607,15 @@ public static class PlayerGuideContent
             "│ Landmark: Global 400-turn clock\n" +
             "│ Unlock: Always on\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "A global clock ticks every turn and cycles through Dawn, Day,\n" +
-            "Dusk, and Night on a 400-turn loop. Sun elevation follows a cosine\n" +
-            "curve — SunLevel=1.0 at noon, 0.0 at midnight.\n\n" +
-            "USAGE\n" +
-            "Automatic. Check the HUD or use Look Mode to see current phase.\n\n" +
-            "EFFECTS\n" +
-            "Vision radius scales with sun level: bright day gives the full\n" +
-            "viewport, deep night shrinks FOV to an 18-tile torch bubble.\n" +
-            "Ambient tint shifts cool moonlit blue at night, warm off-white by\n" +
-            "day. Darkness Blade unique skill only activates at Night. The\n" +
-            "Starless Night run modifier pins the cycle at 0 permanently.\n\n" +
-            "COSTS\n" +
-            "None. Time advances whether you act or idle.\n\n" +
+            "A global clock ticks every turn and cycles through Dawn, Day, Dusk,\n" +
+            "and Night on a 400-turn loop. Sun elevation follows a cosine curve —\n" +
+            "SunLevel=1.0 at noon, 0.0 at midnight. Check the HUD or use Look Mode\n" +
+            "to see current phase. Vision radius scales with sun level: bright\n" +
+            "day gives the full viewport, deep night shrinks FOV to an 18-tile\n" +
+            "torch bubble. Ambient tint shifts cool moonlit blue at night, warm\n" +
+            "off-white by day. Darkness Blade unique skill only activates at\n" +
+            "Night; the Starless Night run modifier pins the cycle at 0 permanently.\n" +
+            "Time advances whether you act or idle.\n\n" +
             "TIPS\n" +
             "Save Darkness Blade combat windows for Night; rest at campfires\n" +
             "during dawn to enter Day with a fresh vision radius.\n\n" +
@@ -1985,14 +1632,11 @@ public static class PlayerGuideContent
             "│ Landmark: Rolled on floor entry\n" +
             "│ Unlock: Always visible on map\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Every floor has a BiomeType that shapes vision, hazards, and mob\n" +
-            "spawn tables. Biomes are rolled on floor entry and stay fixed\n" +
-            "until you ascend.\n\n" +
-            "USAGE\n" +
-            "No action needed — biome effects apply passively while you're on\n" +
-            "that floor. Scout the tile legend to spot the biome's hazards.\n\n" +
-            "EFFECTS\n" +
+            "spawn tables. Biomes roll on floor entry and stay fixed until you\n" +
+            "ascend. Biome effects apply passively; scout the tile legend to spot\n" +
+            "the hazards. Biome passives can cost HP (Volcanic/Void), satiety\n" +
+            "(Desert), or stats (Ice/Aquatic) — plan rest stops accordingly.\n\n" +
             "  Grassland     safe\n" +
             "  Forest        -8 vision, ambush in tall grass\n" +
             "  Toxic Swamp   -5 vision, 8% step poison\n" +
@@ -2004,9 +1648,6 @@ public static class PlayerGuideContent
             "  Ancient Ruins trap/chest density bumped\n" +
             "  Settlement    vendors/NPCs common\n" +
             "  The Void      1 dmg every 10 turns, reality-warp flavor\n\n" +
-            "COSTS\n" +
-            "Biome passives can cost HP (Volcanic/Void), satiety (Desert), or\n" +
-            "stats (Ice/Aquatic). Plan rest stops accordingly.\n\n" +
             "TIPS\n" +
             "Carry Antidotes into Swamps, fire resist gear into Volcanic, and\n" +
             "a torch or Extra Skill Search into Darkness floors. Settlement\n" +
@@ -2027,16 +1668,13 @@ public static class PlayerGuideContent
             "│        · water ripples · door creaks · chest sparkles\n" +
             "│ Density cap: Max 3 concurrent ambient tiles\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Select world tiles animate subtly to give the map a heartbeat.\n" +
-            "Each animation is an environmental cue — vents mean airflow,\n" +
-            "sparkling chests mean unlooted treasure, and torches gutter when\n" +
-            "the floor has an active draft or quake event.\n\n" +
-            "USAGE\n" +
-            "Ambient animation runs automatically when tiles enter your FOV.\n" +
-            "Tiles outside the current field-of-view never animate — they\n" +
-            "only come alive when you can actually see them.\n\n" +
-            "EFFECTS\n" +
+            "Select world tiles animate subtly to give the map a heartbeat. Each\n" +
+            "animation is an environmental cue — vents mean airflow, sparkling\n" +
+            "chests mean unlooted treasure, and torches gutter when the floor has\n" +
+            "an active draft or quake event. Ambient animation runs automatically\n" +
+            "when tiles enter your FOV; tiles outside the field of view never\n" +
+            "animate. Presentation only — never changes mob AI, FOV radius, or\n" +
+            "trap-detection rolls.\n\n" +
             "ANIMATED TILE CATALOGUE:\n" +
             "  Vents          steam plume every few frames\n" +
             "  Terminals      cursor blink / glyph cycle\n" +
@@ -2055,9 +1693,6 @@ public static class PlayerGuideContent
             "COMBAT SUPPRESSION:\n" +
             "  Hearth and torch flames auto-disable while combat is active\n" +
             "  so the flicker does not compete with damage popups.\n\n" +
-            "COSTS\n" +
-            "Zero gameplay cost. Ambient animation is presentation only and\n" +
-            "never changes mob AI, FOV radius, or trap-detection rolls.\n\n" +
             "TIPS\n" +
             "Read ambient motion as a scouting layer: a sparkling chest means\n" +
             "unlooted, a fluttering torch means the floor has active weather\n" +
@@ -2077,22 +1712,16 @@ public static class PlayerGuideContent
             "│ Landmark: HUD top-right indicator\n" +
             "│ Unlock: Rolled on each floor ascend\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Weather rolls once on floor entry and holds until you climb\n" +
-            "stairs up. Each pattern modifies combat, trap detection, or\n" +
-            "passive regen for everyone on the floor.\n\n" +
-            "USAGE\n" +
-            "Automatic. Read the HUD tag or open Look Mode to confirm the\n" +
-            "active pattern before engaging a boss.\n\n" +
-            "EFFECTS\n" +
+            "Weather rolls once on floor entry and holds until you climb stairs\n" +
+            "up. Each pattern modifies combat, trap detection, or passive regen\n" +
+            "for everyone on the floor. Read the HUD tag or open Look Mode to\n" +
+            "confirm the active pattern before engaging a boss. Bounty bosses and\n" +
+            "status math respect the current pattern. Rainy and Foggy raise the\n" +
+            "expected damage you'll take by making traps hard to see.\n\n" +
             "  Clear  (40%) +1 passive HP regen\n" +
             "  Rainy  (25%) -3 crit for all, trap detect -10, +1 poison dur.\n" +
             "  Foggy  (15%) trap detection -20 (traps almost invisible)\n" +
             "  Windy  (20%) +5 damage on thrown items\n\n" +
-            "Bounty bosses and status math respect the current pattern.\n\n" +
-            "COSTS\n" +
-            "None directly — but Rainy and Foggy raise the expected damage\n" +
-            "you'll take by making traps hard to see.\n\n" +
             "TIPS\n" +
             "Save Fire Bombs and Flash Bombs for Windy floors (+5 each). If\n" +
             "you roll Foggy on a trap-heavy biome, consider skipping side\n" +
@@ -2110,21 +1739,15 @@ public static class PlayerGuideContent
             "│ Entry: Labyrinth Entrance tile (cyan Pi)\n" +
             "│ Unlock: Always present; find the archway\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Each floor has an overworld wilderness AND a separate labyrinth\n" +
-            "dungeon that houses the floor boss. The two maps are linked by a\n" +
-            "Labyrinth Entrance archway (cyan Pi glyph) in a corner of the\n" +
-            "overworld, usually revealed on the minimap after exploration.\n\n" +
-            "USAGE\n" +
-            "Step onto the archway to enter the labyrinth. Overworld state\n" +
-            "freezes while you're inside. Step onto the archway again (or\n" +
-            "clear the boss) to return. Stairs Up stay sealed until the floor\n" +
-            "boss is dead.\n\n" +
-            "EFFECTS\n" +
-            "Field bosses NEVER spawn inside labyrinths — overworld only.\n" +
-            "Labyrinth layouts lean corridor-and-room; overworld is open.\n\n" +
-            "COSTS\n" +
-            "None to enter. The boss fight itself is the real cost.\n\n" +
+            "dungeon that houses the floor boss. The two are linked by a Labyrinth\n" +
+            "Entrance archway (cyan Pi glyph) in a corner of the overworld,\n" +
+            "usually revealed on the minimap after exploration. Step onto the\n" +
+            "archway to enter; overworld state freezes while you're inside. Step\n" +
+            "on the archway again (or clear the boss) to return. Stairs Up stay\n" +
+            "sealed until the floor boss is dead. Field bosses NEVER spawn inside\n" +
+            "labyrinths — overworld only. Labyrinth layouts lean corridor-and-\n" +
+            "room; overworld is open.\n\n" +
             "TIPS\n" +
             "Clear the overworld first — field-boss drops (and Secret Shrines)\n" +
             "only exist outside. Enter the labyrinth fully rested, at 100%\n" +
@@ -2142,14 +1765,11 @@ public static class PlayerGuideContent
             "│ Landmark: Orange &, cyan O, violet cross, gold +\n" +
             "│ Unlock: Always; usually one-shot per tile\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Scattered utility tiles across each floor. Some purge status,\n" +
-            "some grant buffs, some open crafting UIs. Most are one-shot and\n" +
-            "consume on use; Anvil and Bounty Board re-open freely.\n\n" +
-            "USAGE\n" +
-            "Walk onto the tile to trigger. Campfires offer a cooking menu;\n" +
-            "Anvils open the smithing/repair/evolve screen.\n\n" +
-            "EFFECTS\n" +
+            "Scattered utility tiles across each floor. Some purge status, some\n" +
+            "grant buffs, some open crafting UIs. Most are one-shot and consume\n" +
+            "on use; Anvil and Bounty Board re-open freely. Walk onto the tile to\n" +
+            "trigger — campfires offer a cooking menu; Anvils open the smithing/\n" +
+            "repair/evolve screen. Anvil Repair/Enhance/Evolve burn Col + mats.\n\n" +
             "CAMPFIRE (&/*, orange)    Purge Poison/Bleed/Slow, heal\n" +
             "                           15+5*floor HP, reset rest + fatigue,\n" +
             "                           cooking interaction\n" +
@@ -2159,8 +1779,6 @@ public static class PlayerGuideContent
             "PILLAR (|)                 Reveals 15-tile map radius\n" +
             "ANVIL (+, gold)            Opens smithing/repair/evolve UI\n" +
             "BOUNTY BOARD (diamond)     100+50*floor Col contracts\n\n" +
-            "COSTS\n" +
-            "None to step on. Anvil Repair/Enhance/Evolve burn Col + mats.\n\n" +
             "TIPS\n" +
             "Save Shrines until right before the labyrinth run — 30 turns\n" +
             "of +ATK/+DEF goes a long way in a boss fight. Never ascend a\n" +
@@ -2178,25 +1796,18 @@ public static class PlayerGuideContent
             "│ Floors: All (scattered overworld)\n" +
             "│ Unlock: Walk-on, cooking interaction\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "The standard Safe Room campfire doubles as a Sleep-skill farm.\n" +
-            "Each step onto a campfire tile banks +10 Sleep XP, and the\n" +
-            "ProcessRest action (cook/sleep from the campfire menu) banks\n" +
-            "another +20.\n\n" +
-            "USAGE\n" +
-            "Walk onto an orange & or * tile. The status purge and heal fire\n" +
-            "as with any campfire; the cooking menu opens on bump. Resting\n" +
-            "from the menu counts as ProcessRest for the +20 XP drop.\n\n" +
-            "EFFECTS\n" +
+            "The standard Safe Room campfire doubles as a Sleep-skill farm. Each\n" +
+            "step onto a campfire tile banks +10 Sleep XP; the ProcessRest action\n" +
+            "(cook/sleep from the menu) banks another +20. Walk onto an orange &\n" +
+            "or * tile — the status purge and heal fire as with any campfire; the\n" +
+            "cooking menu opens on bump. Campfire tiles are one-shot per tile\n" +
+            "(consume on use), but Sleep XP banks before the tile is spent.\n\n" +
             "Stacked with the Safe Rooms effect package:\n" +
             "  +10 Sleep XP          on step (campfire tile)\n" +
             "  +20 Sleep XP          on ProcessRest action\n" +
             "  Purge Poison / Bleed / Slow\n" +
             "  Heal 15 + 5*floor HP\n" +
             "  Reset rest + fatigue timers\n\n" +
-            "COSTS\n" +
-            "None. Campfire tiles are one-shot per tile (consume on use), but\n" +
-            "Sleep XP banks before the tile is spent.\n\n" +
             "TIPS\n" +
             "Route through every campfire you pass even when not injured —\n" +
             "the Sleep XP compounds toward L10/25/50/99 MaxHP milestones. The\n" +
@@ -2215,14 +1826,11 @@ public static class PlayerGuideContent
             "│ Landmark: Diamond, =, or gold cross glyphs\n" +
             "│ Unlock: Walk-on; one-shot each\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "A trio of one-shot tiles that reward exploration. Lore Stones and\n" +
             "Journals grant XP + canon flavor; Enchant Shrines stamp permanent\n" +
-            "+2 bonuses onto equipped gear.\n\n" +
-            "USAGE\n" +
-            "Step on the glyph to consume it. Lore text shows in a triple-dot\n" +
-            "reveal; the entry is logged to your Lore set for achievement use.\n\n" +
-            "EFFECTS\n" +
+            "+2 bonuses onto equipped gear. Step on the glyph to consume it. Lore\n" +
+            "text shows in a triple-dot reveal; the entry is logged to your Lore\n" +
+            "set for achievement use.\n\n" +
             "LORE STONE (diamond)       5x floor XP + Lore set entry,\n" +
             "                            one-shot, triple-dot reveal message\n" +
             "JOURNAL (=)                Weathered diary page (in-world tip),\n" +
@@ -2230,8 +1838,6 @@ public static class PlayerGuideContent
             "ENCHANT SHRINE (gold cross) Rolls one equipped piece, stamps +2\n" +
             "                            to random stat (ATK/DEF/SPD);\n" +
             "                            bonus persists through unequip\n\n" +
-            "COSTS\n" +
-            "None. All three are free on contact.\n\n" +
             "TIPS\n" +
             "Equip your best piece before stepping on an Enchant Shrine — the\n" +
             "+2 lives on the item and carries between runs. Hunt every Lore\n" +
@@ -2249,15 +1855,12 @@ public static class PlayerGuideContent
             "│ Landmark: Magenta ! glyph, one per chain\n" +
             "│ Unlock: Walk-on; one-shot, one per floor\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Nine rare shrines scattered across the lower half of Aincrad,\n" +
-            "each gifting the T1 starter weapon of one Evolution Chain.\n" +
-            "Finding all nine is the fastest path to Divine endgame weapons.\n\n" +
-            "USAGE\n" +
-            "Walk onto the magenta ! glyph to receive the T1 weapon. Feed it\n" +
-            "through the Anvil's Evolve Weapon flow to push T1 -> T2 -> T3 ->\n" +
-            "T4 Divine (unbreakable).\n\n" +
-            "EFFECTS\n" +
+            "Nine rare shrines scattered across the lower half of Aincrad, each\n" +
+            "gifting the T1 starter weapon of one Evolution Chain. Finding all\n" +
+            "nine is the fastest path to Divine endgame weapons. Walk onto the\n" +
+            "magenta ! glyph to receive the T1 weapon, then feed it through the\n" +
+            "Anvil's Evolve Weapon flow to push T1 -> T2 -> T3 -> T4 Divine\n" +
+            "(unbreakable). T1 pickup is free; later tiers cost catalysts + Col.\n\n" +
             "  F5   Final Espada      (1H Sword)\n" +
             "  F8   Prima Sabre       (Rapier)\n" +
             "  F12  Moonstruck Saber  (Scimitar)\n" +
@@ -2267,8 +1870,6 @@ public static class PlayerGuideContent
             "  F28  Lunatic Press     (Mace)\n" +
             "  F32  Matamon           (Katana)\n" +
             "  F36  Bardiche          (Axe)\n\n" +
-            "COSTS\n" +
-            "None for the T1 pickup. Later tiers cost catalysts + Col.\n\n" +
             "TIPS\n" +
             "Explore every floor ending in these numbers thoroughly — the\n" +
             "shrine can hide behind a Cracked Wall. Grab the T1 even if\n" +
@@ -2286,17 +1887,13 @@ public static class PlayerGuideContent
             "│ Landmark: Hidden until detect roll succeeds\n" +
             "│ Unlock: Always active; detect needs Dex\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Every floor seeds hidden traps. Dex drives per-step detect rolls,\n" +
-            "weather modifies them downward, and Extra Skill: Search flags\n" +
-            "traps within 3 tiles passively.\n\n" +
-            "USAGE\n" +
-            "Traps reveal as you walk adjacent. Step around visible traps or\n" +
-            "disarm them (if the trap supports it) for progress toward\n" +
-            "Extra Skill: Search.\n\n" +
-            "EFFECTS\n" +
-            "Detection: up to 30% per-step chance + up to 65% confirm.\n" +
-            "Weather modifiers: Rain -10, Fog -20.\n\n" +
+            "weather modifies them downward, and Extra Skill: Search flags traps\n" +
+            "within 3 tiles passively. Traps reveal as you walk adjacent — step\n" +
+            "around visible traps or disarm them (if supported) for Extra Skill:\n" +
+            "Search progress. Detection: up to 30% per-step chance + up to 65%\n" +
+            "confirm. Weather modifiers: Rain -10, Fog -20. HP, status durations,\n" +
+            "and positioning are all on the line — Lava can end a run.\n\n" +
             "  Spike          3 + 2*floor damage, one-shot\n" +
             "  Poison Trap    2 + floor dmg/turn for 3 turns\n" +
             "  Teleport Trap  warps you to random walkable tile\n" +
@@ -2305,8 +1902,6 @@ public static class PlayerGuideContent
             "  Lava (~)       4 + 2*floor dmg per step; can kill outright\n" +
             "  Danger Zone    1 + floor/5 dmg/step (guards monster dens)\n" +
             "  Tall Grass     hides mobs; ambush chance = 25 - Dex\n\n" +
-            "COSTS\n" +
-            "HP, status durations, and positioning. Lava can end a run.\n\n" +
             "TIPS\n" +
             "Pump Dex early if you plan to run Foggy biomes. Stealth Move\n" +
             "does NOT trigger Extra Skill: Search's passive reveal — walk\n" +
@@ -2324,15 +1919,12 @@ public static class PlayerGuideContent
             "│ Landmark: Levers, plates, cracked walls, chests\n" +
             "│ Unlock: Walk-on (plate), bump (lever/wall), open (chest)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Interactive overworld tiles that open shortcuts, hide loot, or\n" +
-            "gate progression. Most are discovered by bumping or walking onto\n" +
-            "them; cracked walls need a hit to break open.\n\n" +
-            "USAGE\n" +
-            "Bump levers, step on pressure plates, attack cracked walls, and\n" +
-            "bump chests to open them. Stairs Up activate after the floor\n" +
-            "boss dies.\n\n" +
-            "EFFECTS\n" +
+            "Interactive overworld tiles that open shortcuts, hide loot, or gate\n" +
+            "progression. Most are discovered by bumping or walking onto them;\n" +
+            "cracked walls need a hit to break open. Stairs Up activate after the\n" +
+            "floor boss dies. Breaking a cracked wall costs 1 weapon durability\n" +
+            "per swing; water tiles below the speed threshold cost 2 turn ticks\n" +
+            "each.\n\n" +
             "LEVER & PRESSURE PLATE   Linked to a wall/door pair. Activating\n" +
             "                          toggles the linked wall into a door\n" +
             "                          (or vice versa). Used for dead-end\n" +
@@ -2350,9 +1942,6 @@ public static class PlayerGuideContent
             "                          penalty. Swimming +3 XP per step.\n" +
             "STAIRS DOWN (<)          Never used (Aincrad climbs up only).\n" +
             "STAIRS UP (>)            Sealed until the floor boss is dead.\n\n" +
-            "COSTS\n" +
-            "Breaking a cracked wall costs 1 weapon durability per swing.\n" +
-            "Water tiles below the speed threshold cost 2 turn ticks each.\n\n" +
             "TIPS\n" +
             "Any lever that seems pointless probably has a linked plate\n" +
             "elsewhere — trace the floor systematically. Cracked walls almost\n" +
@@ -2372,18 +1961,14 @@ public static class PlayerGuideContent
             "│ Landmark: Blue ~ (shallow) / dark ≈ (deep)\n" +
             "│ Unlock: Swimming Life Skill L1+ (shallow), L25+ (deep)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Water tiles are passable terrain gated by the Swimming Life Skill\n" +
-            "— a strategic choke point for most mobs, but an open highway for\n" +
-            "the five aquatic mobs flagged Monster.CanSwim = true. F4 Rovia is\n" +
-            "where the design shows up most clearly, with a river system and\n" +
-            "a roster of swim-capable predators.\n\n" +
-            "USAGE\n" +
-            "Walk onto a Water or WaterDeep tile to cross. Your Swimming level\n" +
-            "sets BOTH the pass gate (L1 shallow, L25 deep) and the speed gate\n" +
-            "(L10 shallow full-speed, L50 deep full-speed). Mob AI checks each\n" +
-            "mob's CanSwim flag against the tile's water type.\n\n" +
-            "EFFECTS\n" +
+            "Water tiles are passable terrain gated by the Swimming Life Skill —\n" +
+            "a strategic choke point for most mobs, but an open highway for the\n" +
+            "five aquatic mobs flagged Monster.CanSwim = true. F4 Rovia is where\n" +
+            "the design shows up most clearly. Walk onto a Water or WaterDeep\n" +
+            "tile to cross. Your Swimming level sets BOTH the pass gate (L1\n" +
+            "shallow, L25 deep) and the speed gate (L10 shallow full-speed, L50\n" +
+            "deep full-speed). Mob AI checks each mob's CanSwim flag against the\n" +
+            "tile's water type.\n\n" +
             "CanSwim = TRUE (Tier 3 / F4 Rovia):\n" +
             "  Water Drake        Draconic aquatic predator\n" +
             "  Lakeshore Crab     Coastal crustacean\n" +
@@ -2393,15 +1978,13 @@ public static class PlayerGuideContent
             "These mobs traverse BOTH Water and WaterDeep — they'll pursue\n" +
             "you into a river and close the gap you thought was a moat.\n" +
             "Both SimpleAI and TurnManager.AI honor the flag.\n\n" +
-            "CanSwim = FALSE (everything else, including F2 Plumed Mist\n" +
-            "Lizard which is flagged as reptile but intentionally land-bound):\n" +
-            "  Water is a hard wall — the mob routes around or pulls up\n" +
-            "  short at the bank. Use this as a kiting aid.\n\n" +
-            "COSTS\n" +
-            "Slow-tick water steps (below swim-speed threshold) cost you a\n" +
-            "free turn to any CanSwim pursuer in range. Waste water crossings\n" +
-            "on low-Swimming chars are the single biggest mid-river death\n" +
-            "vector.\n\n" +
+            "CanSwim = FALSE (everything else, including F2 Plumed Mist Lizard\n" +
+            "which is flagged as reptile but intentionally land-bound):\n" +
+            "  Water is a hard wall — the mob routes around or pulls up short at\n" +
+            "  the bank. Use this as a kiting aid.\n" +
+            "Slow-tick water steps (below swim-speed threshold) give CanSwim\n" +
+            "pursuers a free turn — wasted water crossings on low-Swimming chars\n" +
+            "are the single biggest mid-river death vector.\n\n" +
             "TIPS\n" +
             "Scout the overworld before crossing — a Water Drake on the far\n" +
             "bank turns a 2-tick-per-step swim into a gauntlet. Bank Swimming\n" +
@@ -2422,17 +2005,14 @@ public static class PlayerGuideContent
             "│ Landmark: New Game modifier select screen\n" +
             "│ Unlock: First F100 clear (the only route in)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Twelve stacked toggles that make a run harder in exchange for\n" +
-            "a score multiplier (cap x10). Chosen at run start and frozen\n" +
-            "for the life of the save. Run Modifiers unlock after your\n" +
-            "first F100 clear — before then the screen slot shows [locked].\n\n" +
-            "USAGE\n" +
-            "Finish a full F1-F100 run first; the modifier select screen is\n" +
-            "gated behind that victory. After the unlock, toggle modifiers\n" +
-            "on the New Game screen. Active modifiers show on the HUD and\n" +
-            "save into the slot summary.\n\n" +
-            "EFFECTS\n" +
+            "Twelve stacked toggles that make a run harder in exchange for a\n" +
+            "score multiplier (cap x10). Chosen at run start and frozen for the\n" +
+            "life of the save. Unlock after your first F100 clear — before then\n" +
+            "the screen slot shows [locked]. Toggle modifiers on the New Game\n" +
+            "screen; active modifiers show on the HUD and save into the slot\n" +
+            "summary. Each modifier bites differently: Iron Rank doubles satiety\n" +
+            "drain, Hollow Ingress doubles sword-skill unlock kills, Solo forbids\n" +
+            "recruits, Anti-Crystal Tyranny disables Crystal consumables.\n\n" +
             "EASY (x1.15)\n" +
             "  Starless Night, Iron Rank\n" +
             "MODERATE (x1.25)\n" +
@@ -2442,12 +2022,6 @@ public static class PlayerGuideContent
             "  Hollow Ingress, Naked Ingress\n" +
             "NIGHTMARE (x1.75)\n" +
             "  Gleam Eyes Echo, Sword Art Only (pure Kirito run)\n\n" +
-            "COSTS\n" +
-            "Pre-unlock cost: you can't use any modifier until you clear\n" +
-            "F100 once. Post-unlock, each modifier bites differently: Iron\n" +
-            "Rank doubles satiety drain, Hollow Ingress doubles sword-skill\n" +
-            "unlock kills, Solo forbids recruits, Anti-Crystal Tyranny\n" +
-            "disables Crystal consumables.\n\n" +
             "TIPS\n" +
             "You will see [locked] in the menu slot until you complete your\n" +
             "first F100 run — that clear is the ticket. After that, stack\n" +
@@ -2470,14 +2044,11 @@ public static class PlayerGuideContent
             "│ Landmark: Triggered by real-world date\n" +
             "│ Unlock: Event-window dates; floor-entry check\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "The game reads the real-world system clock and fires seasonal\n" +
-            "events within specific date windows. Only Christmas drives a\n" +
-            "full encounter today; the rest are registered hooks.\n\n" +
-            "USAGE\n" +
-            "Events check on floor entry. Play within the date window to\n" +
-            "trigger the encounter.\n\n" +
-            "EFFECTS\n" +
+            "The game reads the real-world system clock and fires seasonal events\n" +
+            "within specific date windows. Only Christmas drives a full encounter\n" +
+            "today; the rest are registered hooks. Events check on floor entry —\n" +
+            "play within the date window to trigger the encounter; missing the\n" +
+            "window means missing the drop.\n\n" +
             "  Christmas (Dec 20-26)  Nicholas the Renegade on F49\n" +
             "                          -> Divine Stone of Returning Soul\n" +
             "                          (canon LN Vol 2 reward)\n" +
@@ -2488,8 +2059,6 @@ public static class PlayerGuideContent
             "  Summer Festival         Jul 15 - Aug 31\n" +
             "  Tsukimi (Sep 15-18)     hook present\n" +
             "  Halloween (Oct 20-Nov3) hook present\n\n" +
-            "COSTS\n" +
-            "None to participate. Missing the window means missing the drop.\n\n" +
             "TIPS\n" +
             "Plan a December run targeting F49 to grab the Divine Stone of\n" +
             "Returning Soul — it auto-revives you within 10 seconds of death\n" +
@@ -2507,26 +2076,20 @@ public static class PlayerGuideContent
             "│ Landmark: Spawns on entry when karma <= -50\n" +
             "│ Unlock: Player karma reaches Outlaw tier\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Town Guards are the F1 plaza's enforcement response to Outlaw-\n" +
-            "tier karma. They only exist when your karma is at or below -50\n" +
-            "and they spawn specifically in the Town of Beginnings (TOB)\n" +
-            "plaza — not on any other floor.\n\n" +
-            "USAGE\n" +
-            "Drop to karma <= -50, then step into the F1 TOB plaza. 3-5\n" +
-            "guards spawn on entry and aggro immediately. Leave the plaza\n" +
-            "(or raise karma back above -50) to stop the spawn trigger.\n\n" +
-            "EFFECTS\n" +
+            "Town Guards are the F1 plaza's enforcement response to Outlaw-tier\n" +
+            "karma. They only exist when your karma is at or below -50 and they\n" +
+            "spawn specifically in the Town of Beginnings (TOB) plaza — not on\n" +
+            "any other floor. Drop to karma <= -50, then step into the F1 TOB\n" +
+            "plaza: 3-5 guards spawn on entry and aggro immediately. Leave the\n" +
+            "plaza (or raise karma back above -50) to stop the spawn trigger.\n" +
+            "Killing Town Guards is not a karma drop (they are PK-flag enemies,\n" +
+            "not peaceful NPCs). The fight eats durability and consumables on\n" +
+            "every F1 visit until you either raise karma or stay off the plaza.\n\n" +
             "  Glyph     'G' in BrightBlue\n" +
             "  Scaling   ~Level 20 (100 HP / 25 ATK baseline)\n" +
             "  Spawn     3-5 per plaza entry, only while karma <= -50\n" +
             "  LC bonus  Laughing Coffin members gain +20 guild rep per\n" +
             "            Town Guard killed\n\n" +
-            "COSTS\n" +
-            "Killing Town Guards is a named-NPC-class hit in everyone else's\n" +
-            "eyes but not a karma drop (they are PK-flag enemies, not peaceful\n" +
-            "NPCs). The fight eats durability and consumables on every F1\n" +
-            "visit until you either raise karma or stay off the plaza.\n\n" +
             "TIPS\n" +
             "If you're running the LC path, farm Town Guards deliberately —\n" +
             "+20 LC rep per kill is the fastest reputation faucet in the\n" +
@@ -2545,14 +2108,11 @@ public static class PlayerGuideContent
             "│ Landmark: Stairs Up (>) after boss death\n" +
             "│ Unlock: Kill the floor boss first\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Stepping on the Stairs Up tile after the floor boss is dead runs\n" +
-            "a recap sequence, applies bonuses, auto-saves, and drops you onto\n" +
-            "the next floor with fresh biome + weather.\n\n" +
-            "USAGE\n" +
-            "Kill the floor boss, return to the overworld, walk onto Stairs\n" +
-            "Up. The recap screen is automatic.\n\n" +
-            "EFFECTS\n" +
+            "Stepping on the Stairs Up tile after the floor boss is dead runs a\n" +
+            "recap sequence, applies bonuses, auto-saves, and drops you onto the\n" +
+            "next floor with fresh biome + weather. Kill the floor boss, return\n" +
+            "to the overworld, and walk onto Stairs Up — the recap screen is\n" +
+            "automatic.\n\n" +
             "On ascend, the following fire in order:\n" +
             "  1. Floor Recap: Kills / Items / Damage / Turns / Exploration%\n" +
             "  2. Speed Clear bonus if elapsed <= par: 50 + 30*floor Col\n" +
@@ -2560,11 +2120,9 @@ public static class PlayerGuideContent
             "  4. Achievements checked\n" +
             "  5. Floor++, auto-save writes\n" +
             "  6. Weather re-rolls, biome swaps\n" +
-            "  7. Allies revive at 50% HP\n\n" +
-            "Clearing F100 triggers GameWon. You are free.\n\n" +
-            "COSTS\n" +
-            "None. Ascent is pure gain — but overflow XP past 90%/par gates\n" +
-            "is lost if you leave bonus conditions unmet.\n\n" +
+            "  7. Allies revive at 50% HP\n" +
+            "Clearing F100 triggers GameWon — you are free. Overflow XP past 90%/par\n" +
+            "gates is lost if you leave bonus conditions unmet.\n\n" +
             "TIPS\n" +
             "Chase the 90% exploration flag on every floor — the +XP/+Col is\n" +
             "large and compounds. Speed Clear par doubles the reward window;\n" +
@@ -2585,30 +2143,23 @@ public static class PlayerGuideContent
             "│ Biomes: Swamp fringe, ice edges\n" +
             "│ Trigger: Step onto the tile\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Three walkable hazard tiles lurk in biome-native terrain: Mud\n" +
-            "(Swamp fringe — slows for one turn per step), Bog Water (Swamp\n" +
-            "pools — one Poison stack per step, Swim L1 to enter), and\n" +
-            "Cracked Ice (Ice edges — occasional slip, random Slow tick).\n" +
-            "None are lethal alone; most cost a turn and a stack of\n" +
-            "tolerance.\n\n" +
-            "USAGE\n" +
-            "Walk normally. The log line tells you when a tick triggers.\n" +
-            "Antidote clears Poison from Bog Water; Agi-built characters read\n" +
-            "Cracked Ice slips as wasted dodge rolls.\n\n" +
-            "EFFECTS\n" +
+            "Three walkable hazard tiles lurk in biome-native terrain: Mud (Swamp\n" +
+            "fringe — slows for one turn per step), Bog Water (Swamp pools — one\n" +
+            "Poison stack per step, Swim L1 to enter), and Cracked Ice (Ice edges\n" +
+            "— occasional slip, random Slow tick). None are lethal alone; most\n" +
+            "cost a turn and a stack of tolerance. The log line tells you when a\n" +
+            "tick triggers; Antidote clears Poison from Bog Water; Agi-built\n" +
+            "characters read Cracked Ice slips as wasted dodge rolls.\n\n" +
             "  Mud           Slow 2 turns on entry, top-up guarded so\n" +
             "                repeat steps do not stack beyond the cap\n" +
             "  Bog Water     Poison on entry, stacks scale with floor/2\n" +
             "                (F10 ticks 5 dmg, F40 ticks 20); Swim L1\n" +
             "                required or you refuse to enter\n" +
             "  Cracked Ice   25% slip chance per step; a slip applies\n" +
-            "                Stun 1 turn and wastes the move\n\n" +
-            "COSTS\n" +
-            "Mud eats one free action while you dig out. Bog Water bleeds\n" +
-            "HP over the next 3-5 turns per Poison stack. Cracked Ice\n" +
-            "slips waste the turn AND surrender your counter-attack\n" +
-            "window.\n\n" +
+            "                Stun 1 turn and wastes the move\n" +
+            "Mud eats a free action while you dig out. Bog Water bleeds HP over\n" +
+            "the next 3-5 turns per Poison stack. Cracked Ice slips waste the\n" +
+            "turn AND surrender your counter-attack window.\n\n" +
             "TIPS\n" +
             "Keep one Antidote per Swamp floor. A torch or Lantern reveals\n" +
             "Bog Water pools before you wade in — listen for the\n" +
@@ -2627,33 +2178,21 @@ public static class PlayerGuideContent
             "│             Merchant Stalls · Boss Arenas · Vignettes\n" +
             "│ Placement: Dropped into procedural floors\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Some rooms on a floor aren't generated tile-by-tile — they're\n" +
-            "hand-authored templates dropped into the map. Shrines, vaults,\n" +
-            "trap corridors, merchant stalls, and every boss arena are\n" +
-            "prefab rooms. You'll recognize them by their deliberate layout\n" +
-            "and signature decoration.\n\n" +
-            "USAGE\n" +
-            "Explore normally. Prefab rooms intermix with procedural ones.\n" +
-            "A prefab shrine in a Forest floor will look the same as that\n" +
-            "prefab shrine on any other Forest floor (modulo rotation and\n" +
-            "mirroring).\n\n" +
-            "EFFECTS\n" +
-            "Each prefab carries a biome tag and a role tag (shrine, vault,\n" +
-            "trap, merchant, boss, vignette). The generator picks prefabs\n" +
-            "whose biome matches the current floor, rotates them to fit an\n" +
-            "open room, and stamps them. Some prefabs flag MAX_PER_GAME=1\n" +
-            "so you will see them only once across a whole campaign.\n" +
-            "Template-specified mobs and items now spawn at placement:\n" +
-            "MONS slot glyphs (1-7) fill with floor-appropriate monsters\n" +
-            "and ITEM slots (a-d) drop ground items when the prefab lands.\n" +
-            "Earlier builds left these slots empty — they are now wired\n" +
-            "live, so a shrine with altar guards or a stall with stocked\n" +
-            "crates arrives fully populated.\n\n" +
-            "COSTS\n" +
-            "None passively. Interacting with a prefab's contents (altar,\n" +
-            "trap, vendor, chest) costs turns and resources per that\n" +
-            "feature's own rules.\n\n" +
+            "Some rooms on a floor aren't generated tile-by-tile — they're hand-\n" +
+            "authored templates dropped into the map. Shrines, vaults, trap\n" +
+            "corridors, merchant stalls, and every boss arena are prefab rooms.\n" +
+            "You'll recognize them by their deliberate layout and signature\n" +
+            "decoration. Prefab rooms intermix with procedural ones; a prefab\n" +
+            "shrine on a Forest floor will look the same as that prefab shrine\n" +
+            "on any other Forest floor (modulo rotation and mirroring). Each\n" +
+            "prefab carries a biome tag and a role tag (shrine, vault, trap,\n" +
+            "merchant, boss, vignette); the generator picks prefabs whose biome\n" +
+            "matches the current floor, rotates them to fit an open room, and\n" +
+            "stamps them. Some prefabs flag MAX_PER_GAME=1 so you will see them\n" +
+            "only once across a whole campaign. Template-specified mobs and items\n" +
+            "spawn at placement: MONS slot glyphs (1-7) fill with floor-\n" +
+            "appropriate monsters and ITEM slots (a-d) drop ground items when the\n" +
+            "prefab lands.\n\n" +
             "TIPS\n" +
             "Scan every floor for the signature silhouettes: a clean\n" +
             "rectangle of decoration flags a prefab. Search Mode clears\n" +
@@ -2672,26 +2211,20 @@ public static class PlayerGuideContent
             "│ Biome variants: Frost, Forge, Grove, Dune, Void\n" +
             "│ Interaction: Walk onto the altar\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Shrine vault prefabs center on an altar tile — often Shrine\n" +
-            "(temporary buff), EnchantShrine (one-shot enhance), or the\n" +
-            "floor-specific SecretShrine (chain weapon). Biome-themed\n" +
-            "decoration signals what kind: frost spikes in Ice, lava-forge\n" +
-            "anvils in Volcanic, bone rings in the Void.\n\n" +
-            "USAGE\n" +
-            "Walk onto the altar. Buff shrines trigger instantly; enchant\n" +
-            "shrines prompt before consuming a gear slot; secret shrines\n" +
-            "grant the chain weapon and vanish.\n\n" +
-            "EFFECTS\n" +
+            "Shrine vault prefabs center on an altar tile — often Shrine (temporary\n" +
+            "buff), EnchantShrine (one-shot enhance), or the floor-specific\n" +
+            "SecretShrine (chain weapon). Biome-themed decoration signals what\n" +
+            "kind: frost spikes in Ice, lava-forge anvils in Volcanic, bone rings\n" +
+            "in the Void. Walk onto the altar — buff shrines trigger instantly;\n" +
+            "enchant shrines prompt before consuming a gear slot; secret shrines\n" +
+            "grant the chain weapon and vanish. EnchantShrines burn one\n" +
+            "enhancement on one gear piece. Altar sacrifices consume an inventory\n" +
+            "slot permanently. Buff shrines are free.\n\n" +
             "  Shrine          Temporary biome-themed buff, ~50 turns\n" +
             "  EnchantShrine   One-shot +1 enhance on chosen gear\n" +
             "  SecretShrine    Tier-1 chain weapon (floor-locked list)\n" +
             "  Altar (ritual)  Rare sacrifice variant — consumes an\n" +
             "                  item, grants a stat-line bonus\n\n" +
-            "COSTS\n" +
-            "EnchantShrines burn one enhancement on one gear piece. Altar\n" +
-            "sacrifices consume an inventory slot permanently. Buff\n" +
-            "shrines are free.\n\n" +
             "TIPS\n" +
             "Save enchant shrines for a mid-tier piece you'll keep for 10+\n" +
             "floors — the +1 doesn't refund when you upgrade. Secret\n" +
@@ -2711,25 +2244,19 @@ public static class PlayerGuideContent
             "│ Trap mix: Spike · Poison · Teleport · Alarm\n" +
             "│ Reveal: Search Mode (Dex check)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Some corridors are authored trap gauntlets: 3-5 sequential\n" +
-            "traps in a 3-tile-wide passage. Spike, Poison, Teleport, and\n" +
-            "Alarm each have their own prefab variants. Traps here are\n" +
-            "clustered by design — not the scattered randoms.\n\n" +
-            "USAGE\n" +
-            "Search Mode (Dex check) reveals hidden traps. Two thirds of\n" +
-            "trap-corridor traps are hidden; one third is telegraphed\n" +
-            "pressure plates you can see and avoid.\n\n" +
-            "EFFECTS\n" +
+            "Some corridors are authored trap gauntlets: 3-5 sequential traps in\n" +
+            "a 3-tile-wide passage. Spike, Poison, Teleport, and Alarm each have\n" +
+            "their own prefab variants — traps here are clustered by design, not\n" +
+            "scattered. Search Mode (Dex check) reveals hidden traps. Two thirds\n" +
+            "of trap-corridor traps are hidden; one third is telegraphed pressure\n" +
+            "plates you can see and avoid. Each triggered trap costs a turn and\n" +
+            "burns HP or state; a failed Search Mode Dex check still costs the\n" +
+            "action. Corridor prefabs never mix Teleport with Alarm in the same\n" +
+            "run — the combined aggro/relocate combo proved too lethal.\n\n" +
             "  Spike       Flat physical damage on step\n" +
             "  Poison      Poison stacks + small damage\n" +
             "  Teleport    Relocates you elsewhere on the floor\n" +
             "  Alarm       Aggros a wave of nearby monsters\n\n" +
-            "Corridor prefabs never mix Teleport with Alarm in the same\n" +
-            "run — the mixed aggro/relocate combo was too lethal.\n\n" +
-            "COSTS\n" +
-            "Each triggered trap costs a turn and burns HP or state. A\n" +
-            "failed Search Mode Dex check still costs the action.\n\n" +
             "TIPS\n" +
             "Run Search Mode the moment the corridor silhouette shows — a\n" +
             "straight 3-wide hallway with no room branches is the tell.\n" +
@@ -2748,23 +2275,16 @@ public static class PlayerGuideContent
             "│ Signals: Counter layout, BountyBoard, campfire\n" +
             "│ Stock: Scales with floor; layout scales with biome\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Wilderness merchant prefabs house a Vendor NPC with generated\n" +
-            "stock. Look for counter-layouts, BountyBoards, and campfires —\n" +
-            "visual cues that a merchant is near. Stock depth follows\n" +
-            "floor; stall layout follows biome.\n\n" +
-            "USAGE\n" +
-            "Talk to the vendor. Prices match standard shop rules;\n" +
-            "investing stacks across visits, even if the stall is a\n" +
-            "one-off wilderness prefab.\n\n" +
-            "EFFECTS\n" +
-            "Vendor stock rolls from the floor-tier table, so a F20 stall\n" +
-            "shows F20-tier goods. A BountyBoard inside the stall grants\n" +
-            "the same quest options as a town board. Campfires inside the\n" +
-            "stall are rest-legal.\n\n" +
-            "COSTS\n" +
-            "Standard Col prices. Investing locks Col for a stock boost at\n" +
-            "the NEXT visit — not this one.\n\n" +
+            "Wilderness merchant prefabs house a Vendor NPC with generated stock.\n" +
+            "Look for counter-layouts, BountyBoards, and campfires — visual cues\n" +
+            "that a merchant is near. Stock depth follows floor; stall layout\n" +
+            "follows biome. Prices match standard shop rules; investing stacks\n" +
+            "across visits, even if the stall is a one-off wilderness prefab.\n" +
+            "Vendor stock rolls from the floor-tier table (a F20 stall shows F20-\n" +
+            "tier goods); a BountyBoard inside the stall grants the same quest\n" +
+            "options as a town board; campfires inside the stall are rest-legal.\n" +
+            "Investing locks Col for a stock boost at the NEXT visit — not this\n" +
+            "one.\n\n" +
             "TIPS\n" +
             "Wilderness stalls are a chance to off-load heavy junk between\n" +
             "towns. Rest at the campfire before the next pull — the\n" +
@@ -2783,25 +2303,17 @@ public static class PlayerGuideContent
             "│ Non-canon: One of three generic sizes\n" +
             "│ Entry: Via Labyrinth Entrance stairs\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every canon-named boss fights you in a unique hand-authored\n" +
-            "arena keyed to their theme: Illfang in a Kobold Lord throne\n" +
-            "room, Wythege in a flooded colonnade, Skull Reaper in a bone\n" +
-            "dungeon. Non-canon floors use one of three generic arena\n" +
-            "sizes (small 17×13, medium 25×19, large 33×25).\n\n" +
-            "USAGE\n" +
-            "Reached via the Labyrinth Entrance. Arena layout is\n" +
-            "deterministic per boss — repeat runs see the same\n" +
-            "architecture; only boss rolls (HP, ATK mods) vary with run\n" +
-            "modifiers.\n\n" +
-            "EFFECTS\n" +
-            "Canon arenas may include keyed features: Wythege's colonnade\n" +
-            "has Bog Water pools, Skull Reaper's hall has bone spike\n" +
-            "clusters, Gleam Eyes' lair has lava cracks. These are part of\n" +
-            "the arena, not the boss stats, so prep accordingly.\n\n" +
-            "COSTS\n" +
-            "Standard boss-fight stakes. Ascending returns you to the\n" +
-            "post-boss overworld; losing drops you back at the last save.\n\n" +
+            "Every canon-named boss fights you in a unique hand-authored arena\n" +
+            "keyed to their theme: Illfang in a Kobold Lord throne room, Wythege\n" +
+            "in a flooded colonnade, Skull Reaper in a bone dungeon. Non-canon\n" +
+            "floors use one of three generic arena sizes (small 17×13, medium\n" +
+            "25×19, large 33×25). Reached via the Labyrinth Entrance. Arena\n" +
+            "layout is deterministic per boss — repeat runs see the same\n" +
+            "architecture; only boss rolls (HP, ATK mods) vary with run modifiers.\n" +
+            "Canon arenas may include keyed features: Wythege's colonnade has Bog\n" +
+            "Water pools, Skull Reaper's hall has bone spike clusters, Gleam\n" +
+            "Eyes' lair has lava cracks. These are part of the arena, not the\n" +
+            "boss stats, so prep accordingly.\n\n" +
             "TIPS\n" +
             "Memorize the arena after a scouting death — repeat layouts\n" +
             "mean the second attempt is a different fight. On canon\n" +
@@ -2821,16 +2333,14 @@ public static class PlayerGuideContent
             "│         · ambient particles · tree glyph variants\n" +
             "│ Goal: Read a biome in five seconds, no tag peek\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "A floor's biome shows through four layered cues: the base\n" +
-            "tile palette, a global color tint that washes visible tiles,\n" +
-            "entry-line flavor text on arrival, and ambient particles\n" +
-            "that drift across walkable space. Put together, you should\n" +
-            "read a biome in five seconds without looking at any tag.\n\n" +
-            "USAGE\n" +
-            "Automatic on floor entry. Use the Particles setting to tune\n" +
-            "ambient density, or Off to drop the overlay entirely.\n\n" +
-            "EFFECTS\n" +
+            "A floor's biome shows through four layered cues: the base tile\n" +
+            "palette, a global color tint that washes visible tiles, entry-line\n" +
+            "flavor text on arrival, and ambient particles drifting across\n" +
+            "walkable space. Put together, you should read a biome in five\n" +
+            "seconds without looking at any tag. Automatic on floor entry; use\n" +
+            "the Particles setting to tune density, or Off to drop the overlay.\n" +
+            "Particles cost a small amount of render time — turn down to Low or\n" +
+            "Off on slow terminals.\n\n" +
             "  Forest     Green tint, drifting leaves, bushy tree glyphs\n" +
             "  Swamp      Sickly-green tint, gnat motes, drooping glyphs\n" +
             "  Desert     Amber tint, sand grains, scrubby glyphs\n" +
@@ -2840,9 +2350,6 @@ public static class PlayerGuideContent
             "  Ruins      Grey tint, dust, broken-pillar silhouettes\n" +
             "  Darkness   Near-black, no ambient, eye-glint glyphs\n" +
             "  Void       Purple tint, reality-warp motes, glitch glyphs\n\n" +
-            "COSTS\n" +
-            "Ambient particles cost a small amount of render time. Turning\n" +
-            "Particles down to Low or Off is the fix on slow terminals.\n\n" +
             "TIPS\n" +
             "Trust the tint before the tag. If the floor LOOKS like\n" +
             "Swamp, pack Antidote even if you haven't seen a hazard yet.\n" +
@@ -2861,25 +2368,18 @@ public static class PlayerGuideContent
             "│ Biome extras: Anvils (Urban), vents (Volcanic/Swamp)\n" +
             "│ Caps: Max counts prevent noise-y stacking\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every floor guarantees at least one shrine, one chest, and\n" +
-            "one piece of lore (LoreStone or Journal). Biome-specific\n" +
-            "quotas may also guarantee anvils (Urban), gas vents\n" +
-            "(Volcanic/Swamp), or pillars (Ruins). Maximums cap noise-y\n" +
-            "scatter from stacking too thick.\n\n" +
-            "USAGE\n" +
-            "Transparent. Walk the floor; you'll meet quotas without\n" +
-            "trying. Missing a guarantee after exploration >= 80% is a\n" +
-            "bug — report it.\n\n" +
-            "EFFECTS\n" +
+            "Every floor guarantees at least one shrine, one chest, and one piece\n" +
+            "of lore (LoreStone or Journal). Biome-specific quotas may also\n" +
+            "guarantee anvils (Urban), gas vents (Volcanic/Swamp), or pillars\n" +
+            "(Ruins). Maximums cap noise-y scatter. Walk the floor; you'll meet\n" +
+            "quotas without trying. Missing a guarantee after exploration >= 80%\n" +
+            "is a bug — report it.\n\n" +
             "  Shrine          min 1 per floor, max 3\n" +
             "  Chest           min 1 per floor, max 6 (scales w/ floor)\n" +
             "  LoreStone       min 1 of {LoreStone, Journal} per floor\n" +
             "  Anvil           guaranteed on Urban / Ruins floors\n" +
             "  Vent            guaranteed on Volcanic / Swamp floors\n" +
             "  Trap cluster    quota scales with floor tier\n\n" +
-            "COSTS\n" +
-            "None to the player. Quotas are a generator-side contract.\n\n" +
             "TIPS\n" +
             "If you cleared a floor and never saw a shrine, check hidden\n" +
             "rooms — Search Mode can reveal sealed prefab vaults. The\n" +
@@ -2898,27 +2398,20 @@ public static class PlayerGuideContent
             "│          · Integral Factor · Fractured Daydream\n" +
             "│ Canon floors: Get unique arenas + town overlays\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Aincrad's 100 floors trace canon sources (anime, LN,\n" +
-            "Progressive, Hollow Fragment, Integral Factor). Canon-named\n" +
-            "bosses get unique arena prefabs; canon towns get unique\n" +
-            "F1-style overlays. Non-canon floors are era-themed\n" +
-            "interpolations.\n\n" +
-            "USAGE\n" +
-            "Read FLOOR_CANON.md for the full chart. F1 Town of\n" +
-            "Beginnings, F22 Coral Village, F48 Lindarth, F55 Granzam,\n" +
-            "F100 Ruby Palace all have full canon treatment.\n\n" +
-            "EFFECTS\n" +
+            "Aincrad's 100 floors trace canon sources (anime, LN, Progressive,\n" +
+            "Hollow Fragment, Integral Factor). Canon-named bosses get unique\n" +
+            "arena prefabs; canon towns get unique F1-style overlays. Non-canon\n" +
+            "floors are era-themed interpolations. Read FLOOR_CANON.md for the\n" +
+            "full chart. F1 Town of Beginnings, F22 Coral Village, F48 Lindarth,\n" +
+            "F55 Granzam, F100 Ruby Palace all have full canon treatment. Roughly\n" +
+            "16 of 100 floors have fully canon boss arenas; another 6-8 have\n" +
+            "canon town overlays. Canon content is additive — never gates\n" +
+            "progress.\n\n" +
             "  Canon boss floors    Named boss, unique arena prefab\n" +
             "  Canon town floors    Hand-authored settlement overlay\n" +
             "  Era-themed floors    Canon biome + mob table, generic\n" +
             "                       arena and town prefabs\n" +
             "  Fully procedural     No canon hook; random biome roll\n\n" +
-            "Roughly 16 of 100 floors have fully canon boss arenas;\n" +
-            "another 6-8 have canon town overlays. The rest draw from\n" +
-            "era-appropriate biome and mob pools.\n\n" +
-            "COSTS\n" +
-            "None. Canon content is additive — never gates progress.\n\n" +
             "TIPS\n" +
             "Watch the ascend banner: a canon boss title means you're\n" +
             "stepping into a unique arena with themed terrain. Canon\n" +
@@ -2937,26 +2430,20 @@ public static class PlayerGuideContent
             "│ Placement: Wilderness, off main paths\n" +
             "│ Reward: LoreStone or Journal (no combat)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Small 3×3 to 5×5 prefabs scattered across wilderness tell\n" +
-            "micro-stories: a toppled cart with a spilled journal, a\n" +
-            "hermit's shack with a cold campfire, a grave circle ringed\n" +
-            "by pillars. They're ambient worldbuilding — no mandatory\n" +
-            "interaction.\n\n" +
-            "USAGE\n" +
-            "Walk the wilderness. Vignettes appear as unusual clusters\n" +
-            "off main paths. Loot in them is usually a LoreStone or\n" +
-            "Journal, not combat rewards.\n\n" +
-            "EFFECTS\n" +
+            "Small 3×3 to 5×5 prefabs scattered across wilderness tell micro-\n" +
+            "stories: a toppled cart with a spilled journal, a hermit's shack\n" +
+            "with a cold campfire, a grave circle ringed by pillars. Ambient\n" +
+            "worldbuilding — no mandatory interaction. Vignettes appear as\n" +
+            "unusual clusters off main paths; loot is usually a LoreStone or\n" +
+            "Journal, not combat rewards. No traps, no aggro, no turn penalties\n" +
+            "beyond the walk.\n\n" +
             "  Toppled cart      Spilled Journal + 1-2 low-tier items\n" +
             "  Hermit's shack    Cold campfire (re-lightable), 1 Journal\n" +
             "  Grave circle      Ring of Pillars, 1 LoreStone center\n" +
             "  Traveler rest     Bedroll + ash pile + 1 note\n" +
-            "  Wreckage          Broken gear + 1 LoreStone\n\n" +
-            "Vignettes do NOT count toward Feature Quotas — they're a\n" +
-            "bonus layer on top of the guaranteed lore count.\n\n" +
-            "COSTS\n" +
-            "None. No traps, no aggro, no turn penalties beyond the walk.\n\n" +
+            "  Wreckage          Broken gear + 1 LoreStone\n" +
+            "Vignettes do NOT count toward Feature Quotas — they're a bonus layer\n" +
+            "on top of the guaranteed lore count.\n\n" +
             "TIPS\n" +
             "Vignettes are a cheap exploration-percent boost on floors\n" +
             "where the 90% threshold matters. Re-light the hermit's\n" +
@@ -2974,20 +2461,15 @@ public static class PlayerGuideContent
             "│ Floors: Band-edge floors (F2, F5, F10, F15, ...)\n" +
             "│ Trigger: Walk onto the palette swap\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "On the last floor of each biome band, 1-2 small pocket biomes\n" +
-            "intrude into the dominant terrain. Expect a frozen pond on a\n" +
-            "Grassland floor, an overgrown Forest patch cutting through\n" +
-            "Ruins, or a lava vent near Desert dunes. Pockets are always\n" +
-            "climatically-close to the host biome — you will not find Ice\n" +
-            "in a Forest — and they exist only on band-edge floors.\n\n" +
-            "USAGE\n" +
-            "Walk the edges of the floor. Spot the palette swap: a patch of\n" +
-            "sand in your grassland is a Desert pocket, a frozen pond on a\n" +
-            "grass field is an Ice pocket. Borders blend with noise-\n" +
-            "perturbed transitions so the seam is organic rather than\n" +
-            "rectangular. Pocket tiles use the full intruding-biome tileset.\n\n" +
-            "EFFECTS\n" +
+            "On the last floor of each biome band, 1-2 small pocket biomes intrude\n" +
+            "into the dominant terrain — a frozen pond on a Grassland floor, an\n" +
+            "overgrown Forest patch through Ruins, a lava vent near Desert dunes.\n" +
+            "Pockets are always climatically-close to the host biome (no Ice in\n" +
+            "Forest) and exist only on band-edge floors. Walk the floor edges to\n" +
+            "spot the palette swap; borders blend with noise-perturbed transitions\n" +
+            "so the seam is organic rather than rectangular. Pocket tiles use the\n" +
+            "full intruding-biome tileset. Pockets add variety without penalty —\n" +
+            "you pay only the normal hazard cost on entry.\n\n" +
             "  Tileset      Pocket tiles render from the intruding biome\n" +
             "               (ice, dunes, forest canopy, lava) while the\n" +
             "               rest of the floor keeps the host palette.\n" +
@@ -3002,10 +2484,6 @@ public static class PlayerGuideContent
             "  Placement    1-2 pockets per eligible floor; interior band\n" +
             "               floors (e.g. F3, F4 in a Grassland band) have\n" +
             "               none.\n\n" +
-            "COSTS\n" +
-            "None directly. Pockets add variety without penalty — you pay\n" +
-            "only the normal hazard cost if you step into one (a slip, a\n" +
-            "burn tick, a poison stack).\n\n" +
             "TIPS\n" +
             "Band-edge floors (F2, F5, F10, F15, F25, F35, F50, F75, F100)\n" +
             "are the only ones that roll pockets; scout them deliberately\n" +
@@ -3029,23 +2507,18 @@ public static class PlayerGuideContent
             "│ Weapon type: Melee, ranged, offhand\n" +
             "│ Source: All vendors and drops\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Thirteen weapon classes cover every playstyle, from fast\n" +
-            "claw flurries to slow scythe reach. Each lists speed, range,\n" +
-            "and the attributes it scales with. Integral Factor adds named\n" +
-            "series weapons (Integral/Nox/Rosso/Yasha/Gaou) across most of\n" +
-            "these classes, Infinity Moment adds 20 further canon weapons\n" +
-            "— 8 LAB floor-boss drops (F85-F99) and 12 enhanceable shop\n" +
-            "weapons (F76-F99) — and the Memory Defrag (MD, SAO mobile\n" +
-            "game) and Fractured Daydream (FD, Bandai 2024 co-op action\n" +
-            "game) imports add 65 canon weapons. The cross-game sweep\n" +
-            "further adds 55 named weapons from Alicization Lycoris (AL),\n" +
-            "Lost Song (LS), and Last Recollection (LR) — putting the\n" +
-            "named roster at roughly 190 weapons across all 13 classes.\n\n" +
-            "USAGE\n" +
-            "Equip any class in the main-hand slot. The OffHand Shield is\n" +
-            "the only dedicated offhand until Dual Blades unlocks.\n\n" +
-            "EFFECTS\n" +
+            "Thirteen weapon classes cover every playstyle, from fast claw\n" +
+            "flurries to slow scythe reach. Each lists speed, range, and the\n" +
+            "attributes it scales with. Integral Factor adds named series weapons\n" +
+            "(Integral/Nox/Rosso/Yasha/Gaou) across most classes, Infinity Moment\n" +
+            "adds 20 further canon weapons — 8 LAB floor-boss drops (F85-F99)\n" +
+            "and 12 enhanceable shop weapons (F76-F99) — and Memory Defrag (MD,\n" +
+            "SAO mobile) plus Fractured Daydream (FD, Bandai 2024) add 65 canon\n" +
+            "weapons. The cross-game sweep further adds 55 named weapons from\n" +
+            "Alicization Lycoris (AL), Lost Song (LS), and Last Recollection (LR)\n" +
+            "— roster at roughly 190 weapons across all 13 classes. Equip any\n" +
+            "class in the main-hand slot; the OffHand Shield is the only\n" +
+            "dedicated offhand until Dual Blades unlocks.\n\n" +
             "  1H Sword      spd 1, rng 1, Attack/Str/Agi — balanced\n" +
             "  2H Sword      spd 3, rng 1, Str — heavy\n" +
             "  Rapier        spd 0, rng 1, Dex/Spd — precise thrust\n" +
@@ -3059,8 +2532,6 @@ public static class PlayerGuideContent
             "  Claws         spd 3, rng 1, Agi/Dex — dual-fist flurry\n" +
             "  Scythe        spd 0, rng 2, Str — long-reach reaper\n" +
             "  Shield        OffHand — blocks + armor, 3 refine slots\n\n" +
-            "COSTS\n" +
-            "None directly — cost comes from Col at the vendor.\n\n" +
             "TIPS\n" +
             "Match the class to your attribute bias — Str users chew\n" +
             "through Axe/Mace/2H Sword, Dex users should bee-line to\n" +
@@ -3079,13 +2550,11 @@ public static class PlayerGuideContent
             "│ Weapon type: All mundane classes\n" +
             "│ Source: Vendors, floor drops\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Every weapon class has a 5-tier mundane progression from Iron\n" +
-            "up to Celestial. Armor follows the same ladder.\n\n" +
-            "USAGE\n" +
-            "Upgrade at vendors as you cross the listed floor thresholds.\n" +
-            "Material tier sits beneath named Legendaries and Divine gear.\n\n" +
-            "EFFECTS\n" +
+            "Every weapon class has a 5-tier mundane progression from Iron up to\n" +
+            "Celestial. Armor follows the same ladder. Upgrade at vendors as you\n" +
+            "cross the listed floor thresholds. Material tier sits beneath named\n" +
+            "Legendaries and Divine gear. Col scales sharply at the top —\n" +
+            "Celestial is 60x the Iron price.\n\n" +
             "  Common Iron         Lv1    100 Col    +8 ATK\n" +
             "  Uncommon Steel      Lv10   250 Col    +15 ATK\n" +
             "  Rare Mythril        Lv25   800 Col    +25 ATK\n" +
@@ -3104,9 +2573,6 @@ public static class PlayerGuideContent
             "fourth family — they consume on use to transform a specific\n" +
             "target weapon into its Corrupted variant. See Corruption\n" +
             "Stones & Corrupted Weapons.\n\n" +
-            "COSTS\n" +
-            "Col scales sharply at the top — Celestial is 60x the Iron\n" +
-            "price.\n\n" +
             "TIPS\n" +
             "Don't skip a tier — the Col spend curve assumes each bracket\n" +
             "gets bought; jumping straight to Adamantite burns your purse\n" +
@@ -3124,13 +2590,14 @@ public static class PlayerGuideContent
             "│ Weapon type: Various\n" +
             "│ Source: Named bosses and quests\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Legendary weapons are hand-placed drops tied to specific\n" +
-            "characters or encounters — never rolled from random loot.\n\n" +
-            "USAGE\n" +
-            "Earn via the listed source. Each carries a bespoke\n" +
-            "SpecialEffect alongside Legendary-tier base stats.\n\n" +
-            "EFFECTS\n" +
+            "Legendary weapons are hand-placed drops tied to specific characters\n" +
+            "or encounters — never rolled from random loot. Earn via the listed\n" +
+            "source; each carries a bespoke SpecialEffect alongside Legendary-tier\n" +
+            "base stats. The encounter itself is the cost. Lisbeth R6 crafts cost\n" +
+            "3M Col + rare mats each (see Lisbeth craft topic). IM LAB weapons\n" +
+            "carry the IsEnhanceable=false flag — high base stats, no scaling. IM\n" +
+            "Shop weapons enhance normally. MD/FD originals drop from floor-banded\n" +
+            "loot pools.\n\n" +
             "  Elucidator        1H Sword, SkillCooldown-1       Kirito signature\n" +
             "  Dark Repulser     1H Sword, CritHeal+5            Kirito signature\n" +
             "  Remains Heart     1H Sword, SkillCooldown-1       Lisbeth masterwork\n" +
@@ -3189,12 +2656,6 @@ public static class PlayerGuideContent
             "  Rainbow Blade Ex Eterna 1H Sword, LR DLC skin     LR DLC\n" +
             "  Corrupted Elucidator    1H Sword, +Bleed/-Holy    Corruption Stone\n" +
             "  Corrupted Dark Repulser 1H Sword, +Freeze/-Holy   Corruption Stone\n\n" +
-            "COSTS\n" +
-            "None — the encounter itself is the cost. Lisbeth R6 crafts\n" +
-            "cost 3M Col + rare mats each (see Lisbeth craft topic).\n" +
-            "IM LAB weapons carry the IsEnhanceable=false flag — high base\n" +
-            "stats, no scaling. IM Shop weapons enhance normally. MD/FD\n" +
-            "originals drop from floor-banded loot pools.\n\n" +
             "TIPS\n" +
             "Mjolnir is flagged as Divine apex; pair it with stun-heavy\n" +
             "skills for lockdown. Dual Blades users should chase both\n" +
@@ -3217,15 +2678,12 @@ public static class PlayerGuideContent
             "│ Weapon type: Knight-themed + Dorothy's scythe\n" +
             "│ Source: Canon boss / quest hand-placed\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Seven canon Integrity Knight swords plus Dorothy's Starlight\n" +
-            "Banner (Last Recollection, F78) make up the non-chain half of\n" +
-            "the 17-piece Divine Object roster. Each is locked to a\n" +
-            "specific encounter or quest.\n\n" +
-            "USAGE\n" +
-            "Clear the listed boss or quest to claim the weapon. Drops log\n" +
-            "with the Divine BrightRed line and diamond glyph.\n\n" +
-            "EFFECTS\n" +
+            "Seven canon Integrity Knight swords plus Dorothy's Starlight Banner\n" +
+            "(Last Recollection, F78) make up the non-chain half of the 17-piece\n" +
+            "Divine Object roster. Each is locked to a specific encounter or\n" +
+            "quest — clear the listed boss or quest to claim the weapon. Drops\n" +
+            "log with the Divine BrightRed line and diamond glyph. Divine gear\n" +
+            "is unbreakable, so no Anvil repair cost applies.\n\n" +
             "  Night Sky Sword       Kirito     F99 Heathcliff's Shadow   ArmorPierce+30\n" +
             "  Blue Rose Sword       Eugeo      F20 Absolut the Monarch   Freeze+20\n" +
             "  Fragrant Olive Sword  Alice      Selka's quest (F65)       HolyAoE+15, SD+15\n" +
@@ -3234,8 +2692,6 @@ public static class PlayerGuideContent
             "  Conflagrant Flame Bow Deusolbert F40 Phoenix of Smolder P. Burn+30\n" +
             "  Heaven-Piercing Blade Fanatio    Azariya's quest (F50)     PiercingBeam+30 Rng2\n" +
             "  Starlight Banner      Dorothy    Dorothy's quest (F78)     HolyAoE+20, Scythe\n\n" +
-            "COSTS\n" +
-            "Divine gear is unbreakable, so no Anvil repair cost applies.\n\n" +
             "TIPS\n" +
             "Four of the eight are quest-locked — Alice (Selka F65), Fanatio\n" +
             "(Azariya F50), and Dorothy's Starlight Banner (F78) each\n" +
@@ -3255,24 +2711,18 @@ public static class PlayerGuideContent
             "│ Weapon type: 9 of 13 classes\n" +
             "│ Source: Secret Shrine + Anvil Evolve\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Nine of the 13 weapon classes have a 4-tier evolution chain.\n" +
-            "T1 is a free Secret Shrine find; each step up is crafted at\n" +
-            "the Anvil from accumulated catalysts.\n\n" +
-            "USAGE\n" +
-            "Loot the T1 seed at a Secret Shrine, then return to the Anvil\n" +
-            "with catalysts to step up. The chain weapon must be equipped\n" +
-            "to evolve.\n\n" +
-            "EFFECTS\n" +
+            "Nine of the 13 weapon classes have a 4-tier evolution chain. T1 is\n" +
+            "a free Secret Shrine find; each step up is crafted at the Anvil from\n" +
+            "accumulated catalysts. Loot the T1 seed at a Secret Shrine, then\n" +
+            "return to the Anvil with catalysts to step up. The chain weapon must\n" +
+            "be equipped to evolve. Catalysts are farmed from specific mob\n" +
+            "families (see Chain Catalysts topic).\n\n" +
             "  T1 (Rare)       Found at Secret Shrine — free\n" +
             "  T2 (Epic)       Craft: 3 chain catalyst\n" +
             "  T3 (Legendary)  Craft: 8 chain catalyst\n" +
             "  T4 (Divine)     Craft: 20 chain catalyst + 1 rare peak material\n" +
-            "Enhancement level (+N) is preserved through evolution. Old\n" +
-            "weapons are kept in backpack after evolving, not destroyed.\n\n" +
-            "COSTS\n" +
-            "Catalysts are farmed from specific mob families (see Chain\n" +
-            "Catalysts topic).\n\n" +
+            "Enhancement level (+N) is preserved through evolution. Old weapons\n" +
+            "are kept in backpack after evolving, not destroyed.\n\n" +
             "TIPS\n" +
             "Enhance the T1 to +7 or higher BEFORE the T2 craft — the\n" +
             "enhancement carries forward and saves Anvil attempts later.\n\n" +
@@ -3289,14 +2739,9 @@ public static class PlayerGuideContent
             "│ Weapon type: 9 chained classes\n" +
             "│ Source: Anvil Evolve\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Full name table for every chain weapon, T1 through T4. Each\n" +
-            "class has a unique four-name progression ending in a Divine\n" +
-            "capstone.\n\n" +
-            "USAGE\n" +
-            "Use this as a reference sheet when planning catalyst spend —\n" +
-            "know which T4 apex you're aiming for before you commit.\n\n" +
-            "EFFECTS\n" +
+            "Full name table for every chain weapon, T1 through T4. Each class\n" +
+            "has a unique four-name progression ending in a Divine capstone. Use\n" +
+            "this as a reference sheet when planning catalyst spend.\n\n" +
             "Weapon    T1               T2               T3               T4 (Divine)\n" +
             "-----------------------------------------------------------------------\n" +
             "1H Sword  Final Espada     Asmodeus         Final Avalanche  Tyrfing\n" +
@@ -3308,8 +2753,6 @@ public static class PlayerGuideContent
             "2H Sword  Matter Dissolver Titan's Blade    Ifrit            Ascalon\n" +
             "Axe       Bardiche         Archaic Murder   Nidhogg's Fang   Ouroboros\n" +
             "Spear     Heart Piercer    Trishula         Vijaya           Caladbolg\n\n" +
-            "COSTS\n" +
-            "See the chain crafting costs in Weapon Evolution Chains.\n\n" +
             "TIPS\n" +
             "Names repeat from the Named Legendary list where a class\n" +
             "converges (Mjolnir, Masamune). Either source grants the same\n" +
@@ -3327,15 +2770,11 @@ public static class PlayerGuideContent
             "│ Weapon type: 9 chained classes\n" +
             "│ Source: Mob family drops\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Each chain weapon consumes a unique catalyst farmed from a\n" +
-            "specific mob family. T3 -> T4 also requires one Rare Peak\n" +
-            "material.\n\n" +
-            "USAGE\n" +
-            "Farm the listed mob family until you have enough catalysts,\n" +
-            "then visit the Anvil to evolve. Peak materials drop from\n" +
-            "high-tier boss encounters.\n\n" +
-            "EFFECTS\n" +
+            "Each chain weapon consumes a unique catalyst farmed from a specific\n" +
+            "mob family. T3 -> T4 also requires one Rare Peak material. Farm the\n" +
+            "listed mob family, then visit the Anvil to evolve. Peak materials\n" +
+            "drop from high-tier boss encounters. T2 = 3, T3 = 8, T4 = 20\n" +
+            "catalysts (+ 1 peak material at T4).\n\n" +
             "  1H Sword  Demonic Sigil      (humanoid mobs ~3%)\n" +
             "  Rapier    Geometric Shard    (construct mobs)\n" +
             "  Scimitar  Infernal Gem       (dragon mobs)\n" +
@@ -3345,10 +2784,8 @@ public static class PlayerGuideContent
             "  2H Sword  Titan Fragment     (construct mobs)\n" +
             "  Axe       Nidhogg Scale      (dragon mobs)\n" +
             "  Spear     Trishula Tip       (elemental mobs)\n" +
-            "Rare Peak (T3->T4): Dragon Scale, Crystallite Ingot, Bat\n" +
-            "Wing, Flame Core, Venom Gland, Mithril Trace, Ectoplasm.\n\n" +
-            "COSTS\n" +
-            "T2 = 3, T3 = 8, T4 = 20 catalysts (+ 1 peak material at T4).\n\n" +
+            "Rare Peak (T3->T4): Dragon Scale, Crystallite Ingot, Bat Wing, Flame\n" +
+            "Core, Venom Gland, Mithril Trace, Ectoplasm.\n\n" +
             "TIPS\n" +
             "Several catalyst families overlap — farming humanoid mobs\n" +
             "feeds both 1H Sword and Katana chains, making those two\n" +
@@ -3366,14 +2803,11 @@ public static class PlayerGuideContent
             "│ Weapon type: All + armor + accessories\n" +
             "│ Source: Anvil workstation\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "The Anvil is the one-stop shop for gear upkeep: restore\n" +
-            "durability, push +N enhancement levels, evolve chain weapons,\n" +
-            "and socket Refinement Ingots into weapons and shields.\n\n" +
-            "USAGE\n" +
-            "Interact with an Anvil to open the four services. Enhance,\n" +
-            "Evolve, and Refine all confirm via preview before committing.\n\n" +
-            "EFFECTS\n" +
+            "The Anvil is the one-stop shop for gear upkeep: restore durability,\n" +
+            "push +N enhancement levels, evolve chain weapons, and socket\n" +
+            "Refinement Ingots into weapons and shields. Interact with an Anvil\n" +
+            "to open the four services; Enhance, Evolve, and Refine all confirm\n" +
+            "via preview before committing.\n\n" +
             "REPAIR ALL — Restores all equipped gear to cap:\n" +
             "  50 + 10*floor + 5*enhancementLevel durability.\n" +
             "ENHANCE (+0 to +10) — Each level now consumes 1 Enhancement\n" +
@@ -3389,15 +2823,13 @@ public static class PlayerGuideContent
             "enhanced — the menu shows [SEALED].\n" +
             "EVOLVE — Swaps the equipped chain weapon, keeps the old in\n" +
             "backpack, and preserves enhancement level AND ore history.\n" +
-            "REFINE — Socket an Ingot into one of 3 slots on a weapon or\n" +
-            "shield. Override-only: socketing into an occupied slot\n" +
-            "destroys the previous ingot. Divines cannot be refined.\n\n" +
-            "COSTS\n" +
-            "Repair: 50 + 25*floor Col. Enhance attempt: (level+1)*100 +\n" +
-            "50*floor Col plus 1 Enhancement Ore of the chosen bias.\n" +
-            "Evolve: catalysts per Weapon Evolution Chains. Refine: 1/1/\n" +
-            "2/3/5 Red Hot Ore scaling with ingot rarity (Common through\n" +
-            "Legendary).\n\n" +
+            "REFINE — Socket an Ingot into one of 3 slots on a weapon or shield.\n" +
+            "Override-only: socketing into an occupied slot destroys the previous\n" +
+            "ingot. Divines cannot be refined.\n" +
+            "Costs: Repair 50 + 25*floor Col. Enhance attempt: (level+1)*100 +\n" +
+            "50*floor Col plus 1 Enhancement Ore of the chosen bias. Evolve:\n" +
+            "catalysts per Weapon Evolution Chains. Refine: 1/1/2/3/5 Red Hot Ore\n" +
+            "scaling with ingot rarity (Common through Legendary).\n\n" +
             "TIPS\n" +
             "Stop at +6 on everything cheap — the +7 downgrade risk makes\n" +
             "further pushes economically dangerous without a Divine safety\n" +
@@ -3418,15 +2850,13 @@ public static class PlayerGuideContent
             "│ Count: 23 weapons across 5 series\n" +
             "│ Source: Canon SAO: Integral Factor MMO\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Five named weapon series imported from Bandai Namco's SAO:\n" +
-            "Integral Factor. Each series spans multiple weapon types, and\n" +
-            "every series' field boss guarantees one signature drop with\n" +
-            "the rest banded across the floor's Epic/Legendary loot pool.\n\n" +
-            "USAGE\n" +
-            "Hunt the series' field boss on the listed floor. Series\n" +
-            "shield drops as a secondary from the same boss.\n\n" +
-            "EFFECTS\n" +
+            "Five named weapon series imported from Bandai Namco's SAO: Integral\n" +
+            "Factor. Each series spans multiple weapon types; every series' field\n" +
+            "boss guarantees one signature drop with the rest banded across the\n" +
+            "floor's Epic/Legendary loot pool. Hunt the field boss on the listed\n" +
+            "floor; series shield drops as a secondary from the same boss. The\n" +
+            "non-signature drops roll through normal Epic/Legendary loot odds on\n" +
+            "their floor band.\n\n" +
             "INTEGRAL (F14, Epic) — Arc Angel (Bow), Radgrid (1H Sword),\n" +
             "  Gusion (Rapier), After Glow (2H Sword), Fermat (Shield).\n" +
             "NOX (F25, Epic) — Nocturne (Dagger), Radgrid (1H Sword),\n" +
@@ -3439,9 +2869,6 @@ public static class PlayerGuideContent
             "  (Katana), Envy (Dagger), Yasha Kavacha (Shield).\n" +
             "GAOU (F90+, Legendary) — Reginleifr (1H Sword), Oratorio\n" +
             "  (Katana), Gaou Tatari (Shield).\n\n" +
-            "COSTS\n" +
-            "Field-boss fights only. The non-signature drops roll through\n" +
-            "normal Epic/Legendary loot odds on their floor band.\n\n" +
             "TIPS\n" +
             "All 23 IF weapons + 5 shields accept Refinement Ingots. An\n" +
             "F14 Integral weapon with 3 Epic ingots can outperform an\n" +
@@ -3459,27 +2886,21 @@ public static class PlayerGuideContent
             "│ Rule: Override-only (destroys prior ingot)\n" +
             "│ Source: Anvil Refine service\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Weapons and shields each carry 3 Refinement slots. Socket an\n" +
-            "Ingot into a slot to fold its bonuses into the equipped\n" +
-            "piece. Socketing into an occupied slot DESTROYS the previous\n" +
-            "ingot — plan swaps deliberately.\n\n" +
-            "USAGE\n" +
-            "Visit the Anvil, pick Refine. Select the target (weapon,\n" +
-            "off-hand sword, or shield), pick a slot (1/2/3), choose an\n" +
-            "ingot from inventory, preview the +/- effect, confirm.\n\n" +
-            "EFFECTS\n" +
+            "Weapons and shields each carry 3 Refinement slots. Socket an Ingot\n" +
+            "into a slot to fold its bonuses into the equipped piece. Socketing\n" +
+            "into an occupied slot DESTROYS the previous ingot — plan swaps\n" +
+            "deliberately. At the Anvil pick Refine, select the target (weapon,\n" +
+            "off-hand sword, or shield), pick a slot (1/2/3), choose an ingot\n" +
+            "from inventory, preview, confirm. The displaced ingot is destroyed,\n" +
+            "not returned.\n\n" +
             "Slots unlock by spending Red Hot Ore. Socketing consumes one\n" +
             "ingot and scales Ore cost by the ingot's rarity:\n" +
             "  Common ingot     -> 1 Red Hot Ore\n" +
             "  Rare ingot       -> 1 Red Hot Ore (Note: 1st slot free)\n" +
             "  Epic ingot       -> 2-3 Red Hot Ore\n" +
             "  Legendary ingot  -> 5 Red Hot Ore\n" +
-            "DIVINE weapons cannot be refined — their unbreakable nature\n" +
-            "is the tradeoff for the missing socket surface.\n\n" +
-            "COSTS\n" +
-            "One Red Hot Ore per Common socket, scaling to 5 for\n" +
-            "Legendary. The displaced ingot is destroyed, not returned.\n\n" +
+            "DIVINE weapons cannot be refined — their unbreakable nature is the\n" +
+            "tradeoff for the missing socket surface.\n\n" +
             "TIPS\n" +
             "Build two refinement loadouts per weapon class — a farm\n" +
             "setup (Sharpening/Keen for kill speed) and a boss setup\n" +
@@ -3497,15 +2918,12 @@ public static class PlayerGuideContent
             "│ Source: Mob drops (~3%), rare mining yields\n" +
             "│ Use: Socket via Anvil Refine\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Twelve canon-flavored ingots span four rarity tiers. Each\n" +
-            "carries a primary stat gain and a tradeoff penalty; Rare and\n" +
-            "above add a third or fourth stat line. Legendary ingots are\n" +
-            "the only multi-stat picks with a trivial downside.\n\n" +
-            "USAGE\n" +
-            "Farm from qualifying mobs (low-rate drop) or mine high-tier\n" +
-            "veins once the Mining system lands. Socket at the Anvil.\n\n" +
-            "EFFECTS\n" +
+            "Twelve canon-flavored ingots span four rarity tiers. Each carries a\n" +
+            "primary stat gain and a tradeoff penalty; Rare and above add a third\n" +
+            "or fourth stat line. Legendary ingots are the only multi-stat picks\n" +
+            "with a trivial downside. Farm from qualifying mobs (~3% drop rate)\n" +
+            "or mine high-tier veins; Legendary Astral ingots are boss-loot or\n" +
+            "peak mining yields only. Socket at the Anvil.\n\n" +
             "COMMON (big tradeoff)\n" +
             "  Sharpening   ATK +5     / SPD -3\n" +
             "  Warden       DEF +8     / AGI -3\n" +
@@ -3522,9 +2940,6 @@ public static class PlayerGuideContent
             "  Vanguard     ATK +12, VIT+4        / DEX -2\n" +
             "LEGENDARY (multi-stat, minimal downside)\n" +
             "  Astral       ATK +15, DEX+10 / DEF -2\n\n" +
-            "COSTS\n" +
-            "Drop rate is ~3% from qualifying mobs. Legendary Astral\n" +
-            "ingots are boss-loot or peak mining yields only.\n\n" +
             "TIPS\n" +
             "Three Guardian Ingots in a shield give +45 DEF — roughly a\n" +
             "full Celestial armor tier of extra defense on top of the\n" +
@@ -3543,16 +2958,12 @@ public static class PlayerGuideContent
             "│ Weapon type: 18 recipes across most classes\n" +
             "│ Source: F48 Lindarth Lisbeth NPC\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Lisbeth's canon SAO blacksmithing arsenal. Eighteen named\n" +
-            "Rarity 6 weapons, each crafted at the F48 Lindarth Lisbeth NPC.\n" +
-            "Craft-only — these weapons never drop from mobs or bosses. Each\n" +
-            "recipe can be crafted multiple times, self-gated by Col cost.\n\n" +
-            "USAGE\n" +
-            "Reach F48, find Lindarth, bump the BrightMagenta 'L' NPC to\n" +
-            "open the craft dialog. Recipes list AVAILABLE / NEED / CRAFTED\n" +
-            "status per row. Select AVAILABLE rows to spend mats + Col.\n\n" +
-            "EFFECTS\n" +
+            "Lisbeth's canon SAO blacksmithing arsenal. Eighteen named Rarity 6\n" +
+            "weapons, each crafted at the F48 Lindarth Lisbeth NPC. Craft-only —\n" +
+            "these weapons never drop from mobs or bosses. Each recipe can be\n" +
+            "crafted multiple times, self-gated by Col cost. Reach F48, find\n" +
+            "Lindarth, bump the BrightMagenta 'L' NPC to open the craft dialog.\n" +
+            "Recipes list AVAILABLE / NEED / CRAFTED status per row.\n\n" +
             "Eighteen R6 recipes (summary, class in parens):\n" +
             "  Variable V Vice                    Liberator: Astral Legion\n" +
             "  Ogreblade: Over the Cross          Deliverer: Majestic Lord\n" +
@@ -3563,12 +2974,11 @@ public static class PlayerGuideContent
             "  Eldark Radius Sigma                Ingurgitator: Belzericht\n" +
             "  Photon Hammer: XP Smasher          Ambitious Juggernaut\n" +
             "  Avidya Samsara Blade               Marginless Blade\n\n" +
-            "If inventory is full at craft time, Lisbeth REFUNDS mats + Col\n" +
-            "and aborts the craft — no silent loss.\n\n" +
-            "COSTS\n" +
-            "Each recipe costs 3,000,000 Col plus 3-5 rare materials. Mat\n" +
-            "sources cross-cut catalyst drops, field-boss loot, and\n" +
-            "Crystallite Ingots — plan a multi-floor farm run per craft.\n\n" +
+            "If inventory is full at craft time, Lisbeth REFUNDS mats + Col and\n" +
+            "aborts the craft — no silent loss. Each recipe costs 3,000,000 Col\n" +
+            "plus 3-5 rare materials. Mat sources cross-cut catalyst drops, field-\n" +
+            "boss loot, and Crystallite Ingots — plan a multi-floor farm run per\n" +
+            "craft.\n\n" +
             "TIPS\n" +
             "Bank 6M+ Col before every Lindarth run so you can craft two in\n" +
             "a session. These weapons slot 3 Refinement ingots each — pair\n" +
@@ -3596,16 +3006,12 @@ public static class PlayerGuideContent
             "│ Weapon type: One per weapon class (OHS excluded)\n" +
             "│ Source: F70+ field-boss last-attack roll\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Avatar Weapons are canon-flavor Hollow Fragment apex drops. One\n" +
-            "Avatar exists per weapon type (except 1H Sword, which has no\n" +
-            "canon Avatar). The drop is gated by the LAST-ATTACK BONUS: only\n" +
-            "the killing blow's weapon type can receive an Avatar.\n\n" +
-            "USAGE\n" +
-            "Land the killing blow on a F70+ field boss using the weapon\n" +
-            "type whose Avatar you want. The drop rolls automatically —\n" +
-            "2% on any F70+ field boss, 10% on canon HNM bosses.\n\n" +
-            "EFFECTS\n" +
+            "Avatar exists per weapon type (except 1H Sword, which has no canon\n" +
+            "Avatar). The drop is gated by the LAST-ATTACK BONUS: only the killing\n" +
+            "blow's weapon type can receive an Avatar. Land the killing blow on\n" +
+            "a F70+ field boss using the weapon type you want — drop rolls\n" +
+            "automatically at 2% on any F70+ field boss, 10% on canon HNM bosses.\n\n" +
             "Eight Avatars, type-locked:\n" +
             "  Ishvalca Avatar      Rapier\n" +
             "  Genocide Avatar      Dagger\n" +
@@ -3624,14 +3030,11 @@ public static class PlayerGuideContent
             "Infinity Moment Last Attack Bonus Weapons). Avatar rolls fire\n" +
             "on FIELD bosses at 2%/10%. Both hooks can trigger on the same\n" +
             "climb — they don't compete.\n" +
-            "DISTINCT FROM CORRUPTION STONES: F95+ field bosses also roll\n" +
-            "a 10% Corruption Stone drop. Avatar (2%/10%) and Corruption\n" +
-            "Stone (10%) rolls are independent — a single F95+ field-boss\n" +
-            "kill can yield both.\n\n" +
-            "COSTS\n" +
-            "None beyond the field-boss fight itself. A wrong-weapon last\n" +
-            "hit forfeits the Avatar roll for that encounter forever (field\n" +
-            "bosses don't respawn).\n\n" +
+            "DISTINCT FROM CORRUPTION STONES: F95+ field bosses also roll a 10%\n" +
+            "Corruption Stone drop. Avatar (2%/10%) and Corruption Stone (10%)\n" +
+            "rolls are independent — a single F95+ field-boss kill can yield both.\n" +
+            "A wrong-weapon last hit forfeits the Avatar roll for that encounter\n" +
+            "forever (field bosses don't respawn).\n\n" +
             "TIPS\n" +
             "Target a specific Avatar by wielding its weapon type when\n" +
             "closing out canon HNM fights — 10% per HNM is a real chance at\n" +
@@ -3650,25 +3053,19 @@ public static class PlayerGuideContent
             "│ Weapon type: Spread across classes\n" +
             "│ Source: Floor-banded rare drop pool\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Five canon Hollow Fragment weapons imported from the Hollow\n" +
-            "Area subplot (an alt-dimension Aincrad fragment in HF canon).\n" +
-            "They roll as ELEVATED-chance rare drops via the floor-banded\n" +
-            "registered-loot pool — not guaranteed, but the pool weighting\n" +
-            "favors them on the listed floor bands.\n\n" +
-            "USAGE\n" +
-            "Farm mobs within the listed floor band. Drops echo through the\n" +
-            "standard LootGenerator.FloorBandedRegisteredLoot system — you\n" +
-            "may see them from chests, kills, or boss loot rolls.\n\n" +
-            "EFFECTS\n" +
+            "Five canon Hollow Fragment weapons imported from the Hollow Area\n" +
+            "subplot (an alt-dimension Aincrad fragment in HF canon). They roll\n" +
+            "as ELEVATED-chance rare drops via the floor-banded registered-loot\n" +
+            "pool — not guaranteed, but the pool weighting favors them on the\n" +
+            "listed floor bands. Farm mobs within the band; drops echo through\n" +
+            "the standard LootGenerator.FloorBandedRegisteredLoot system, so you\n" +
+            "may see them from chests, kills, or boss loot rolls. Expect multiple\n" +
+            "farm runs per piece.\n\n" +
             "  F30-40 band   Traitorblade: Argute Brand (1H Sword) @ F35\n" +
             "  F50-60 band   Shroudbow: Star Stitcher (Bow)        @ F55\n" +
             "  F65-75 band   Reaper Scythe (Scythe)                 @ F70\n" +
             "  F78-88 band   Fake Sword Velocious Brain (1H Sword)  @ F82\n" +
             "  F92-99 band   Saintblade: Ragnarok (2H Sword)        @ F95\n\n" +
-            "COSTS\n" +
-            "None guaranteed — the pool is probabilistic. Expect multiple\n" +
-            "farm runs per piece.\n\n" +
             "TIPS\n" +
             "Camp the middle of each band (F35/F55/F70/F82/F95) rather than\n" +
             "the edges — the pool weight peaks there. Hollow Area Uniques\n" +
@@ -3687,17 +3084,15 @@ public static class PlayerGuideContent
             "│ Weapon type: 25 weapons across most classes\n" +
             "│ Source: HF questgiver NPCs on each floor\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "The Implement System is Hollow Fragment's canonical late-game\n" +
-            "weapon-grant framework: each F77-F99 floor hosts an NPC who\n" +
-            "hands out a named HF weapon after a floor-locked kill quest.\n" +
-            "The system is now content-complete — 25 Implement weapons span\n" +
-            "the full F77-F99 stretch.\n\n" +
-            "USAGE\n" +
-            "Reference the Hollow Fragment HNM Questgivers topic for the\n" +
-            "full floor-by-floor NPC + kill-count roster. Bump the NPC on\n" +
-            "their floor, rack the kill count, return for the weapon.\n\n" +
-            "EFFECTS\n" +
+            "The Implement System is Hollow Fragment's canonical late-game weapon-\n" +
+            "grant framework: each F77-F99 floor hosts an NPC who hands out a\n" +
+            "named HF weapon after a floor-locked kill quest. Content-complete —\n" +
+            "25 Implement weapons span the full F77-F99 stretch. Reference the\n" +
+            "Hollow Fragment HNM Questgivers topic for the full roster. Bump the\n" +
+            "NPC on their floor, rack the kill count, return for the weapon. Some\n" +
+            "drops are field-boss guaranteed (F80/F83/F86/F93); the rest are quest-\n" +
+            "reward grants. Field-boss versions cost one field-boss fight (no\n" +
+            "respawn).\n\n" +
             "Coverage map (new F80-F99 weapons marked *):\n" +
             "  F79  Infinite Ouroboros          F89  (reserved)\n" +
             "  F80  Jato Onikirimaru *          F90  Eurynome's Holy Sword\n" +
@@ -3709,11 +3104,6 @@ public static class PlayerGuideContent
             "  F85* Crusher: Bond Cyclone       F99* Deathglutton: Epetamu\n" +
             "  F86* Fellaxe: Demon's Scythe\n" +
             "  F88  Starmace Elysium\n\n" +
-            "Some drops are field-boss guaranteed (F80/F83/F86/F93); the\n" +
-            "rest are quest-reward grants.\n\n" +
-            "COSTS\n" +
-            "Kill counts only for questgiver weapons. Field-boss versions\n" +
-            "cost one field-boss fight (no respawn).\n\n" +
             "TIPS\n" +
             "Plan one climb that turns in every Implement quest end-to-end\n" +
             "— they don't respec, don't respawn, and missed turn-ins lock\n" +
@@ -3732,24 +3122,18 @@ public static class PlayerGuideContent
             "│ Weapon type: 1H Sword, crafted starter\n" +
             "│ Source: Agil's General Store, F1\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Three-step Integral Factor starter craft line for new\n" +
-            "players. Each step is a separate 1H sword, not an evolution\n" +
-            "chain — the prior blade stays in your pack when you buy the\n" +
-            "next tier.\n\n" +
-            "USAGE\n" +
-            "Visit Agil's General Store on Floor 1 to craft the Anneal\n" +
-            "Blade. Tough and Pitch-black variants unlock as you climb\n" +
-            "and gather the harder-tempered materials.\n\n" +
-            "EFFECTS\n" +
+            "Three-step Integral Factor starter craft line for new players. Each\n" +
+            "step is a separate 1H sword, not an evolution chain — the prior\n" +
+            "blade stays in your pack. Visit Agil's General Store on Floor 1 to\n" +
+            "craft the Anneal Blade; Tough and Pitch-black variants unlock as you\n" +
+            "climb and gather harder-tempered materials. Col + tempering\n" +
+            "ingredients scale with each step. Pitch-black requires blackened ore\n" +
+            "from F8-10 mobs.\n\n" +
             "  Anneal Blade              Uncommon, F1-2   ATK +10, DEX +2\n" +
             "  Tough Anneal Blade        Rare, F4-5       ATK +18, STR +3\n" +
             "  Pitch-black Anneal Blade  Rare, F8-10      ATK +24, DEX +4,\n" +
             "                                             Bleed+10 effect\n" +
             "Durability ladder: 80 / 120 / 140. Values: 180 / 420 / 780.\n\n" +
-            "COSTS\n" +
-            "Col + tempering ingredients scale with each step. Pitch-black\n" +
-            "requires blackened ore from F8-10 mobs.\n\n" +
             "TIPS\n" +
             "Pitch-black carries you cleanly into the F14 Integral Arc\n" +
             "Angel window. Socket Hunter or Sharpening Ingots into its 3\n" +
@@ -3767,15 +3151,12 @@ public static class PlayerGuideContent
             "│ Weapon type: Main + OffHand rules\n" +
             "│ Source: Character sheet\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Eleven equipment slots cover weapon, armor, accessories, off-\n" +
-            "hand, and the new Tool slot. OffHand rules depend on main-hand\n" +
-            "choice and Dual Blades unlock state.\n\n" +
-            "USAGE\n" +
-            "Equip from inventory. Rings can stack two; necklaces and\n" +
-            "bracelets are one each. The Tool slot is single-occupancy and\n" +
-            "currently accepts pickaxes.\n\n" +
-            "EFFECTS\n" +
+            "Eleven equipment slots cover weapon, armor, accessories, off-hand,\n" +
+            "and the new Tool slot. OffHand rules depend on main-hand choice and\n" +
+            "Dual Blades unlock state. Equip from inventory; rings stack to two;\n" +
+            "necklaces and bracelets are one each. The Tool slot is single-\n" +
+            "occupancy and currently accepts pickaxes. Choosing a 2H weapon\n" +
+            "surrenders the OffHand slot outright.\n\n" +
             "Slots: Weapon, Head, Chest, Legs, Feet, RightRing, LeftRing,\n" +
             "Bracelet, Necklace, OffHand, Tool.\n" +
             "TOOL: Holds non-combat utility gear. Pickaxes\n" +
@@ -3791,11 +3172,9 @@ public static class PlayerGuideContent
             "(3 canonical pairs + 3 solo \"Dual\" weapons) equip to OffHand\n" +
             "without the unlock. Otherwise OffHand accepts shields only.\n" +
             "2H Swords/Bows/Scythes block OffHand entirely.\n" +
-            "REFINEMENT: weapon, off-hand sword, AND shield each carry\n" +
-            "their own 3 Refinement slots. Dual-wielding two IF swords\n" +
-            "effectively stacks 6 ingot bonuses.\n\n" +
-            "COSTS\n" +
-            "Choosing a 2H weapon surrenders the OffHand slot outright.\n\n" +
+            "REFINEMENT: weapon, off-hand sword, AND shield each carry their own\n" +
+            "3 Refinement slots. Dual-wielding two IF swords effectively stacks\n" +
+            "6 ingot bonuses.\n\n" +
             "TIPS\n" +
             "Before Dual Blades, an Iron Shield's 18% block pairs well\n" +
             "with Holy Sword's +15% — stacked you reach 33% flat block\n" +
@@ -3816,27 +3195,23 @@ public static class PlayerGuideContent
             "│ Tiles: OreVeinIron · OreVeinMithril · OreVeinDivine\n" +
             "│ Action: Bump a vein with a Pickaxe equipped\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Mining is the headline non-combat loop. Equip a\n" +
-            "Pickaxe in the new Tool slot, walk up to an ore vein on the\n" +
-            "map, and bump into it the way you'd bump an enemy — your\n" +
-            "swing strikes the vein, costs 1 turn, ticks 1 durability off\n" +
-            "the pickaxe, and chips down the vein's strike counter. When\n" +
-            "the vein hits 0 strikes it converts to a walkable Depleted\n" +
-            "tile and drops its loot stack on you.\n\n" +
-            "USAGE\n" +
-            "1. Find a Pickaxe (vendor in Town of Beginnings sells the\n" +
-            "   Wooden tier; harder tiers gate by floor).\n" +
-            "2. Equip it via Inventory → Tool slot.\n" +
+            "Mining is the headline non-combat loop. Equip a Pickaxe in the new\n" +
+            "Tool slot, walk up to an ore vein, and bump into it the way you'd\n" +
+            "bump an enemy — the swing strikes the vein, costs 1 turn, ticks 1\n" +
+            "durability off the pickaxe, and chips down the vein's strike counter.\n" +
+            "When the vein hits 0 strikes it converts to a walkable Depleted tile\n" +
+            "and drops its loot stack on you.\n" +
+            "1. Find a Pickaxe (vendor in Town of Beginnings sells Wooden; harder\n" +
+            "   tiers gate by floor).\n" +
+            "2. Equip via Inventory → Tool slot.\n" +
             "3. Explore until you spot an ore glyph on the map:\n" +
             "      ◊  OreVeinIron      gray (RGB ~170,170,180)\n" +
             "      ◊  OreVeinMithril   pale blue (RGB ~190,210,255)\n" +
             "      ◈  OreVeinDivine    pulsing gold (RGB ~255,200,80)\n" +
-            "4. Move into the vein tile. Each bump = 1 strike, 1 turn,\n" +
-            "   1 durability tick on the pickaxe.\n" +
-            "5. Keep striking until the vein depletes — it switches to a\n" +
-            "   '·' Depleted tile (walkable) and drops the ore stack.\n\n" +
-            "EFFECTS\n" +
+            "4. Move into the vein tile. Each bump = 1 strike, 1 turn, 1\n" +
+            "   durability tick on the pickaxe.\n" +
+            "5. Keep striking until the vein depletes — it switches to a '·'\n" +
+            "   Depleted tile (walkable) and drops the ore stack.\n\n" +
             "STRIKES TO DEPLETE (subtracted by pickaxe MiningPower, min 1):\n" +
             "  Iron     3 strikes\n" +
             "  Mithril  5 strikes\n" +
@@ -3854,15 +3229,10 @@ public static class PlayerGuideContent
             "                               little ore\n" +
             "FLOOR EXCLUSIONS:\n" +
             "  F1 (Town of Beginnings)      no veins — civic floor\n" +
-            "  F100 (Ruby Palace)           no veins — final boss arena\n\n" +
-            "COSTS\n" +
-            "Each strike spends 1 durability. A pickaxe at 0 durability\n" +
-            "SHATTERS — the item is destroyed, not just disabled, and\n" +
-            "you lose the Tool slot until you equip another. On long\n" +
-            "expeditions to Mithril or Divine bands, carry a SPARE\n" +
-            "pickaxe — chipping a Divine vein with 8 strikes costs at\n" +
-            "minimum 8 of the 30 durability on a Wooden Pickaxe, so\n" +
-            "rookie-tier kit doesn't survive a Divine farming run.\n\n" +
+            "  F100 (Ruby Palace)           no veins — final boss arena\n" +
+            "Each strike spends 1 durability. A pickaxe at 0 durability SHATTERS\n" +
+            "— destroyed, not just disabled — and you lose the Tool slot until\n" +
+            "you equip another. On long expeditions, carry a SPARE pickaxe.\n\n" +
             "TIPS\n" +
             "Veins cluster — generation places them in the same room or\n" +
             "the same lake-edge corridor as part of the same pass. If\n" +
@@ -3886,21 +3256,15 @@ public static class PlayerGuideContent
             "│ Tiers: Wooden · Iron · Mithril (B10 ship) — more in future\n" +
             "│ Source: Town of Beginnings vendor + floor-gated shops\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Pickaxes are Tool-slot equipment that enable mining. Bundle\n" +
-            "10 ships three tiers, gated by floor and Col, each with\n" +
-            "different MaxDurability and MiningPower (the strike-cost\n" +
-            "reducer). Higher tiers chip veins faster AND last longer\n" +
-            "before shattering.\n\n" +
-            "USAGE\n" +
-            "Buy Wooden at every vendor F1-F9 (~96 Col post-markup) and\n" +
-            "Iron at every vendor F10-F50 (~384 Col post-markup). Mithril\n" +
-            "is WORLD-FIND ONLY — no vendor stocks it; loot\n" +
-            "it from chests, ore-cluster rooms, or quest rewards on F50+.\n" +
-            "Equip via Inventory → Tool slot. Repair at the Anvil like\n" +
-            "any equipment piece — pickaxes follow normal durability/repair\n" +
-            "rules.\n\n" +
-            "EFFECTS\n" +
+            "Pickaxes are Tool-slot equipment that enable mining. Three tiers,\n" +
+            "gated by floor and Col, each with different MaxDurability and\n" +
+            "MiningPower (the strike-cost reducer). Higher tiers chip veins faster\n" +
+            "AND last longer before shattering. Buy Wooden at every vendor F1-F9\n" +
+            "(~96 Col post-markup) and Iron at every vendor F10-F50 (~384 Col\n" +
+            "post-markup). Mithril is WORLD-FIND ONLY — no vendor stocks it; loot\n" +
+            "it from chests, ore-cluster rooms, or quest rewards on F50+. Equip\n" +
+            "via Inventory → Tool slot. Repair at the Anvil like any equipment\n" +
+            "piece. Pickaxes SHATTER at 0 durability (destroyed, not disabled).\n\n" +
             "  TIER       VENDOR  COL    MAXDUR   MININGPOWER   NOTE\n" +
             "  Wooden     F1-F9   80     30       0             Starter — vendor stock\n" +
             "  Iron       F10-F50 320    80       1             -1 strike per vein, min 1\n" +
@@ -3908,15 +3272,10 @@ public static class PlayerGuideContent
             "MININGPOWER applies as: actual_strikes = max(1, base_strikes\n" +
             "- MiningPower). Iron Pickaxe vs an Iron vein (3 base) needs\n" +
             "2 strikes; Mithril Pickaxe vs an Iron vein needs 1 strike.\n" +
-            "Mithril's +10% OreQualityBonus rolls higher rarity tiers\n" +
-            "of the dropped ingots — silently improves Anvil refinement\n" +
-            "yield over the run.\n\n" +
-            "COSTS\n" +
-            "Pickaxes SHATTER at 0 durability — destroyed, not disabled.\n" +
-            "A Wooden Pickaxe lasts 30 strikes (≈10 Iron veins or 6\n" +
-            "Mithril, less for Divine). Iron lasts 80, Mithril 200. Plan\n" +
-            "your Col reserve so a long Mithril/Divine farming push\n" +
-            "doesn't strand you toolless mid-floor.\n\n" +
+            "Mithril's +10% OreQualityBonus rolls higher rarity tiers of the\n" +
+            "dropped ingots — silently improves Anvil refinement yield. A Wooden\n" +
+            "Pickaxe lasts 30 strikes (≈10 Iron veins or 6 Mithril, less for\n" +
+            "Divine). Iron lasts 80, Mithril 200.\n\n" +
             "TIPS\n" +
             "Upgrade to Iron the moment you reach F10 — the strike-cost\n" +
             "reduction alone pays back the ~384 Col within ~5 veins, and\n" +
@@ -3939,13 +3298,12 @@ public static class PlayerGuideContent
             "│ Weapon type: All slots\n" +
             "│ Source: Inventory, Shop, Chest peek\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "A side-by-side stat diff that appears whenever you hover an\n" +
-            "equippable item. The panel shows the hovered item next to what\n" +
-            "you currently have in the matching slot, with green +N gains\n" +
-            "and red -N losses per stat line — no mental math required.\n\n" +
-            "USAGE\n" +
-            "The diff shows up automatically in three places:\n" +
+            "equippable item. The panel shows the hovered item next to what you\n" +
+            "currently have in the matching slot, with green +N gains and red -N\n" +
+            "losses per stat line — no mental math required. Pure presentation —\n" +
+            "no cost, no turn consumed, no side effect. Shows up automatically\n" +
+            "in three places:\n" +
             "  - Inventory (I): hover any weapon, armor, or accessory\n" +
             "  - Shop dialog: hover any stocked item before buying\n" +
             "  - Chest peek: hover the chest contents before picking up\n" +
@@ -3954,7 +3312,6 @@ public static class PlayerGuideContent
             "panel compares against the main-hand slot by default — press\n" +
             "the slot-swap key shown at the bottom of the panel to compare\n" +
             "against the off-hand instead.\n\n" +
-            "EFFECTS\n" +
             "Per-stat deltas are color-coded:\n" +
             "  Green  +N     strict upgrade on that line\n" +
             "  Red    -N     strict downgrade on that line\n" +
@@ -3968,11 +3325,8 @@ public static class PlayerGuideContent
             "When the hovered weapon is a different class than your current\n" +
             "(1H Sword vs Katana, etc.) the panel flashes a banner:\n" +
             "  \"Different weapon class — proficiency will not transfer\"\n" +
-            "This is a WARNING only — you can still equip it, but your\n" +
-            "weapon-proficiency rank resets the clock on the new class.\n\n" +
-            "COSTS\n" +
-            "Pure presentation — no cost, no turn consumed, no side effect.\n" +
-            "The panel simply appears while an item is hovered.\n\n" +
+            "This is a WARNING only — you can still equip it, but your weapon-\n" +
+            "proficiency rank resets the clock on the new class.\n\n" +
             "TIPS\n" +
             "In the shop, the diff is your best defense against overpaying:\n" +
             "a Rare stock weapon often reads as flat sidegrade vs the drop\n" +
@@ -3995,17 +3349,13 @@ public static class PlayerGuideContent
             "│ Flag: IsDualWieldPaired=true\n" +
             "│ Source: Canon placements — bosses, quests, drops\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Nine weapons carry the IsDualWieldPaired flag. They equip to\n" +
-            "OffHand without the Dual Blades unlock, and three canonical\n" +
-            "pairs trigger Pair Resonance when both slots are filled.\n\n" +
-            "USAGE\n" +
-            "Equip any paired weapon to OffHand at any level — the unlock\n" +
-            "gate is bypassed. For Pair Resonance, fill BOTH main and off\n" +
-            "with the matched partners; the bonus activates automatically\n" +
-            "and logs '◆ Pair Resonance! ... sing together' once on first\n" +
-            "swing of each encounter.\n\n" +
-            "EFFECTS\n" +
+            "Nine weapons carry the IsDualWieldPaired flag. They equip to OffHand\n" +
+            "without the Dual Blades unlock, and three canonical pairs trigger\n" +
+            "Pair Resonance when both slots are filled. For Pair Resonance, fill\n" +
+            "BOTH main and off with the matched partners; the bonus activates\n" +
+            "automatically and logs '◆ Pair Resonance! ... sing together' once\n" +
+            "on first swing of each encounter. Pair Resonance needs an exact\n" +
+            "match — mixing Elucidator with Flare Pulsar does not trigger.\n\n" +
             "CANONICAL PAIRS (auto-offhand + Pair Resonance synergy):\n" +
             "  Elucidator        ↔ Dark Repulser     Kirito SAO canon (F76)\n" +
             "  Elucidator Rouge  ↔ Flare Pulsar      FD fire variant pair\n" +
@@ -4017,12 +3367,8 @@ public static class PlayerGuideContent
             "PAIR RESONANCE BONUSES (both slots canonical pair):\n" +
             "  +10% damage on both main-hand and offhand swings\n" +
             "  +5% effective CritRate via 5% re-roll on failed crits\n" +
-            "Non-paired 1H Swords still require the Dual Blades unlock\n" +
-            "(F74 Gleam Eyes or 50 1H kills).\n\n" +
-            "COSTS\n" +
-            "None beyond acquiring both halves. Pair Resonance needs an\n" +
-            "exact match — mixing Elucidator with Flare Pulsar does not\n" +
-            "trigger the synergy.\n\n" +
+            "Non-paired 1H Swords still require the Dual Blades unlock (F74 Gleam\n" +
+            "Eyes or 50 1H kills).\n\n" +
             "TIPS\n" +
             "Black Iron A/B is the fastest pair to assemble pre-F76 — both\n" +
             "drop through the Alicization-era banded pool. Elucidator/Dark\n" +
@@ -4042,13 +3388,10 @@ public static class PlayerGuideContent
             "│ Weapon type: Consumable\n" +
             "│ Source: Bakeries, vendors, events\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Food items heal HP over a turn count and restore satiety.\n" +
-            "Drinks grant smaller, longer regens.\n\n" +
-            "USAGE\n" +
-            "Eat from inventory or hotkey. Regens tick each turn while the\n" +
-            "effect is active.\n\n" +
-            "EFFECTS\n" +
+            "Food items heal HP over a turn count and restore satiety. Drinks\n" +
+            "grant smaller, longer regens. Eat from inventory or hotkey; regens\n" +
+            "tick each turn while the effect is active. Poison ignores food\n" +
+            "healing — only time or Antidote clears it.\n\n" +
             "  Bread               2 HP/turn x 10     bakery\n" +
             "  Grilled Meat        5 x 15              common\n" +
             "  Fish Stew           8 x 8               F3+\n" +
@@ -4058,8 +3401,6 @@ public static class PlayerGuideContent
             "  Asuna's Sandwich    5 x 15              F74 field lunch canon\n" +
             "  Gingerbread Cookies 3 x 20              Christmas event\n" +
             "  Ragout Rabbit Stew  20 x 40 turns       F35 LN Vol 1 canon, 3000 Col, max 1\n\n" +
-            "COSTS\n" +
-            "Poison ignores food healing — only time or Antidote clears it.\n\n" +
             "TIPS\n" +
             "Cream-Filled Bread at 5 Col is the best Col-per-HP deal in\n" +
             "the early game. Save Ragout Rabbit Stew for a long dungeon\n" +
@@ -4077,15 +3418,12 @@ public static class PlayerGuideContent
             "│ Weapon type: Consumables\n" +
             "│ Source: Vendors, drops, quests\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Three consumable families: potions for stats and healing,\n" +
-            "SAO-iconic voice-commanded crystals for teleport and utility,\n" +
-            "and throwables for area effects.\n\n" +
-            "USAGE\n" +
-            "Use from inventory or bind the common ones to quick-use slots\n" +
-            "1-5. Crystals respond to voice commands in canon and fire\n" +
-            "instantly in-game.\n\n" +
-            "EFFECTS\n" +
+            "Three consumable families: potions for stats and healing, SAO-iconic\n" +
+            "voice-commanded crystals for teleport and utility, and throwables\n" +
+            "for area effects. Use from inventory or bind the common ones to\n" +
+            "quick-use slots 1-5. Crystals respond to voice commands in canon\n" +
+            "and fire instantly in-game. The Anti-Crystal Tyranny run modifier\n" +
+            "disables every Crystal consumable.\n\n" +
             "POTIONS  Health Potion (+50), Greater (+150), Antidote (cures\n" +
             "         poison/bleed), Battle Elixir (+15 ATK/+10 SPD 60t),\n" +
             "         Speed Potion (+10 SPD 30t), Iron Skin Potion (+10\n" +
@@ -4100,9 +3438,6 @@ public static class PlayerGuideContent
             "         Nicholas F49 drop).\n" +
             "THROWABLES  Fire Bomb (30 fire, 3-rad), Poison Vial (10+\n" +
             "            poison), Smoke Bomb (blinds), Flash Bomb (5+stun).\n\n" +
-            "COSTS\n" +
-            "The Anti-Crystal Tyranny run modifier disables every Crystal\n" +
-            "consumable listed above.\n\n" +
             "TIPS\n" +
             "Keep a Teleport Crystal + Escape Rope stacked for panic\n" +
             "exits. The Divine Stone of Returning Soul is a one-shot\n" +
@@ -4120,22 +3455,16 @@ public static class PlayerGuideContent
             "│ Weapon type: Ring / amulet / band\n" +
             "│ Source: Vendors and drops\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Six standard rings, amulets, and bands that plug into the\n" +
-            "ring, necklace, and bracelet slots with focused attribute +\n" +
-            "derived-stat pairs.\n\n" +
-            "USAGE\n" +
-            "Equip via the character sheet. Rings stack to 2 simultaneous\n" +
-            "copies; necklaces and bracelets are one each.\n\n" +
-            "EFFECTS\n" +
+            "Six standard rings, amulets, and bands that plug into the ring,\n" +
+            "necklace, and bracelet slots with focused attribute + derived-stat\n" +
+            "pairs. Equip via the character sheet; rings stack to 2 simultaneous\n" +
+            "copies, necklaces and bracelets are one each.\n\n" +
             "  Ring of Strength    +10 STR / +5 ATK       max 2 equipped\n" +
             "  Amulet of Agility   +12 AGI / +5 SPD\n" +
             "  Guardian Ring       +8 DEF / +5 VIT\n" +
             "  Scholar's Pendant   +10 INT / +5 SkillDmg\n" +
             "  Swift Band          +8 SPD / +6 AGI\n" +
             "  Vitality Charm      +8 VIT\n\n" +
-            "COSTS\n" +
-            "Standard Col vendor prices; no special crafting cost.\n\n" +
             "TIPS\n" +
             "Ring of Strength is the only piece that explicitly caps at 2\n" +
             "equipped — slot both for +20 STR / +10 ATK. Scholar's Pendant\n" +
@@ -4154,16 +3483,14 @@ public static class PlayerGuideContent
             "│ Weapon type: Bow, 2H Sword, Scimitar, Katana, Dagger, 2H Axe, Spear\n" +
             "│ Source: F85-F99 floor-boss killing blow (100% drop)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Eight canon Infinity Moment weapons that drop at 100% when the\n" +
-            "PLAYER lands the killing blow on a designated floor boss from\n" +
-            "F85 upward. LAB (Last Attack Bonus) weapons are non-enhanceable\n" +
-            "— high base stats are the tradeoff for zero scaling headroom.\n\n" +
-            "USAGE\n" +
-            "Deliver the killing blow yourself on the listed floor boss —\n" +
-            "ally KOs don't count. Drop logs a BrightYellow line alongside\n" +
-            "any existing guaranteed boss drop (additive, not replacing).\n\n" +
-            "EFFECTS\n" +
+            "Eight canon Infinity Moment weapons that drop at 100% when the PLAYER\n" +
+            "lands the killing blow on a designated floor boss from F85 upward.\n" +
+            "LAB (Last Attack Bonus) weapons are non-enhanceable — high base\n" +
+            "stats are the tradeoff for zero scaling headroom. Deliver the killing\n" +
+            "blow yourself; ally KOs don't count. Drop logs a BrightYellow line\n" +
+            "alongside any existing guaranteed boss drop (additive). IsEnhanceable\n" +
+            "=false: Anvil Enhance shows [SEALED]. Durability ticks normally;\n" +
+            "repair at the Anvil like any Legendary piece.\n\n" +
             "  F85  Zephyros          Bow\n" +
             "  F92  Sacred Cross      2H Sword, HolyDamage\n" +
             "  F93  Glow Haze         Scimitar, BlindOnHit\n" +
@@ -4173,9 +3500,6 @@ public static class PlayerGuideContent
             "  F98  Lunatic Roof      Spear, Lunacy\n" +
             "  F99  Artemis           Bow, PiercingShot\n" +
             "F99 drops BOTH Night Sky Sword Divine AND Artemis — additive.\n\n" +
-            "COSTS\n" +
-            "IsEnhanceable=false: Anvil Enhance shows [SEALED]. Durability\n" +
-            "ticks normally; repair at the Anvil like any Legendary piece.\n\n" +
             "TIPS\n" +
             "Wield the weapon type you want a later LAB to replace when\n" +
             "closing the boss — LAB drops are floor-locked and won't repeat\n" +
@@ -4194,17 +3518,14 @@ public static class PlayerGuideContent
             "│ Weapon type: Rapier, 2H Sword, 2H Axe, Katana, Spear, Scimitar, Dagger\n" +
             "│ Source: F50+ Dynamic Shop Tiering stock (tier-unlocked)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Twelve canon Infinity Moment weapons purchasable from vendors\n" +
-            "once their floor tier unlocks via the Dynamic Shop Tiering\n" +
-            "system. Unlike LAB weapons, these ARE enhanceable — each level\n" +
-            "consumes an Enhancement Ore of your chosen bias.\n\n" +
-            "USAGE\n" +
-            "Clear floor bosses at F50+ to push the shop tier counter. When\n" +
-            "the listed floor band unlocks, the weapon appears in EVERY\n" +
-            "vendor's stock with a [NEW] badge on first visit. Buy once and\n" +
-            "it's yours — stock is additive and never shrinks.\n\n" +
-            "EFFECTS\n" +
+            "Twelve canon Infinity Moment weapons purchasable from vendors once\n" +
+            "their floor tier unlocks via the Dynamic Shop Tiering system. Unlike\n" +
+            "LAB weapons, these ARE enhanceable — each level consumes an\n" +
+            "Enhancement Ore of your chosen bias. Clear floor bosses at F50+ to\n" +
+            "push the shop tier counter. When the floor band unlocks, the weapon\n" +
+            "appears in EVERY vendor's stock with a [NEW] badge on first visit.\n" +
+            "Buy once and it's yours — stock is additive. Standard vendor markup\n" +
+            "applies; enhancement ore cost scales as normal.\n\n" +
             "EPIC band (F76-85):\n" +
             "  Edelweiss         Rapier, CritRate\n" +
             "  Fasislawine       2H Sword, Cleave\n" +
@@ -4219,9 +3540,6 @@ public static class PlayerGuideContent
             "  Wave Schneider    Spear, FrostDamage\n" +
             "  Silver Wing       Scimitar, AttackSpeed\n" +
             "  Rue Feuille       Dagger, CritRate\n\n" +
-            "COSTS\n" +
-            "Standard vendor markup. Enhancement ore cost scales as normal\n" +
-            "(see Anvil — Repair, Enhance, Evolve, Refine).\n\n" +
             "TIPS\n" +
             "Muramasa (Katana, Bleed) stacks cleanly with Katana Mastery's\n" +
             "15% bleed passive for constant DoT pressure. Schwarzs Blitz\n" +
@@ -4240,17 +3558,13 @@ public static class PlayerGuideContent
             "│ Weapon type: Consumed by Anvil Enhance\n" +
             "│ Source: Themed mob drops (~3-5%) + boss drops (15-30%)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Seven themed Enhancement Ores replace the old flat +N Enhance.\n" +
-            "Each Anvil Enhance level now consumes exactly one ore, and the\n" +
-            "ore chosen biases that level's BonusPerLevel into a specific\n" +
-            "stat — you pick the stat by picking the ore.\n\n" +
-            "USAGE\n" +
-            "Farm ores from themed mob biomes. At the Anvil, pick Enhance,\n" +
-            "choose a bias ore from inventory, confirm. The ore is consumed\n" +
-            "whether the enhance succeeds or fails. Ore history is stored\n" +
-            "per-weapon and preserved through Evolve.\n\n" +
-            "EFFECTS\n" +
+            "Seven themed Enhancement Ores replace the old flat +N Enhance. Each\n" +
+            "Anvil Enhance level consumes exactly one ore, and the ore chosen\n" +
+            "biases that level's BonusPerLevel into a specific stat — you pick\n" +
+            "the stat by picking the ore. Farm ores from themed mob biomes. At\n" +
+            "the Anvil, pick Enhance, choose a bias ore from inventory, confirm.\n" +
+            "The ore is consumed whether the enhance succeeds or fails. Ore\n" +
+            "history is stored per-weapon and preserved through Evolve.\n\n" +
             "  Crimson Flame Ore  +Attack         fire / demon / volcanic mobs\n" +
             "  Adamant Ore        +Defense        armored / construct / golem mobs\n" +
             "  Crust Ore          +Vitality       earth / giant / undead mobs\n" +
@@ -4258,12 +3572,11 @@ public static class PlayerGuideContent
             "  Flowing Water Ore  +Speed          aquatic / ice mobs\n" +
             "  Wind Flower Ore    +Agility        insect / beast / flying mobs\n" +
             "  Ash White Ore      +Intelligence   hollow mobs F76+\n" +
-            "Prices: 85-120 Col each, Uncommon rarity, stack to 20.\n\n" +
-            "COSTS\n" +
-            "One ore per Enhance attempt (in addition to the normal Col\n" +
-            "cost). Legacy save migration: any pre-existing +N weapon gets\n" +
-            "N × Crimson Flame Ore entries baked into history, so stats\n" +
-            "match pre-session behavior (+Attack-only) — no regression.\n\n" +
+            "Prices: 85-120 Col each, Uncommon rarity, stack to 20. One ore per\n" +
+            "Enhance attempt (in addition to the normal Col cost). Legacy save\n" +
+            "migration: any pre-existing +N weapon gets N × Crimson Flame Ore\n" +
+            "entries baked into history, so stats match pre-session behavior\n" +
+            "(+Attack-only) — no regression.\n\n" +
             "TIPS\n" +
             "Pre-farm 7-10 ores of your primary bias before a major Enhance\n" +
             "push; running out mid-attempt wastes a trip. Boss drops roll\n" +
@@ -4312,22 +3625,17 @@ public static class PlayerGuideContent
             "│ Weapon type: Shop-wide stock injector\n" +
             "│ Source: Floor-boss clears at F50+ (persistent)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Every floor-boss cleared at F50 or higher unlocks a new stock\n" +
             "entry across EVERY vendor. Fifty tiers span F51-F99. Stock is\n" +
             "additive — once unlocked, an item stays available for the rest\n" +
             "of the save.\n\n" +
-            "USAGE\n" +
             "Ascend past F50, then clear each subsequent floor boss. The\n" +
             "shop header shows \"Tier N/50 unlocked\" and the first-visit\n" +
             "items carry a [NEW] badge until inspected.\n\n" +
-            "EFFECTS\n" +
             "Tier count persists via SaveData.HighestFloorBossCleared. The\n" +
             "12 Infinity Moment shop weapons slot into canon F76-F96 tier\n" +
             "bands (Epic at F76-85, Legendary at F86-99). Higher tiers also\n" +
-            "inject future expansion content into the same pipeline.\n\n" +
-            "COSTS\n" +
-            "None for unlocks — the floor-boss climb IS the unlock. Vendor\n" +
+            "inject future expansion content into the same pipeline. Vendor\n" +
             "markup (+20%) applies to the priced item as normal.\n\n" +
             "TIPS\n" +
             "Revisit every vendor after each F50+ boss kill to grab the\n" +
@@ -4347,18 +3655,15 @@ public static class PlayerGuideContent
             "│ Weapon type: 1H Sword, 2H Sword, Katana, Rapier, Dagger, Spear, Bow\n" +
             "│ Source: Floor-banded loot pool (MD canon)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Sixteen MD-exclusive weapons imported from SAO: Memory Defrag\n" +
             "(MD, the canonical SAO mobile game). They are NOT tied to any\n" +
             "named character — MD's event weapons were one-off drops, and\n" +
             "they roll here through the floor-banded loot pool at canon-\n" +
             "appropriate bands.\n\n" +
-            "USAGE\n" +
-            "Farm mobs and chests within each weapon's listed floor band.\n" +
-            "Drops echo through LootGenerator.FloorBandedRegisteredLoot —\n" +
-            "you may see them from any kill, chest, or pool roll on the\n" +
-            "band.\n\n" +
-            "EFFECTS\n" +
+            "Farm mobs and chests within each weapon's listed floor band. Drops\n" +
+            "echo through LootGenerator.FloorBandedRegisteredLoot — you may see\n" +
+            "them from any kill, chest, or pool roll on the band, where they\n" +
+            "compete for pool slots with IF/HF/IM/FD entries.\n\n" +
             "LEGENDARY (5): Sword of Diva (1H), Espada of Sword Dance\n" +
             "(Rapier), Sword of Causality (2H), Shining Nemesisz (Katana).\n" +
             "EPIC (5): Purple Star Baselard (Dagger), Neo Atlantis (Spear),\n" +
@@ -4366,9 +3671,6 @@ public static class PlayerGuideContent
             "RARE (7): Cobalt Tristan (1H), Venus Heart (Rapier), Atlantis\n" +
             "Sword (1H), Bloody Rapier, Holy Flower Rapier, Mithril Rapier,\n" +
             "Cheer of Love Bow.\n\n" +
-            "COSTS\n" +
-            "None guaranteed — the loot pool is probabilistic. MD drops\n" +
-            "compete for pool slots with IF/HF/IM/FD entries on each band.\n\n" +
             "TIPS\n" +
             "MD weapons lean flavor-canon (no unique SpecialEffects beyond\n" +
             "their rarity-tier stats) — if you're building for a specific\n" +
@@ -4387,17 +3689,14 @@ public static class PlayerGuideContent
             "│ Weapon type: 1H Sword (all four)\n" +
             "│ Source: Floor-banded pool, Alicization era bands\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Four Memory Defrag (MD) Alicization canon blades that fill\n" +
             "Underworld-arc gaps alongside the Divine Object Set. They\n" +
             "cover two Kirito pairs and MD's awakened-form variant of\n" +
             "Alice's Fragrant Olive Sword.\n\n" +
-            "USAGE\n" +
             "Three farm through the floor-banded loot pool on Alicization-\n" +
             "era floors (F65+). Unfolding Truth Fragrant Olive Sword is\n" +
             "quest-gated via Selka's chained Quest 2 (The Sword's Awakening).\n" +
             "Red Rose Sword also has a canon field-boss source on F95.\n\n" +
-            "EFFECTS\n" +
             "  Unfolding Truth Fragrant Olive Sword  Selka Q2 reward\n" +
             "                                         (Alice's awakened form)\n" +
             "  Red Rose Sword                         F95 boss drop + pool\n" +
@@ -4406,10 +3705,9 @@ public static class PlayerGuideContent
             "  Black Iron Dual Sword B               offhand of the pair\n" +
             "Black Iron A/B are IsDualWieldPaired — either slot bypasses\n" +
             "the Dual Blades unlock, and equipping both triggers Pair\n" +
-            "Resonance (+10% dmg both swings, +5% crit re-roll).\n\n" +
-            "COSTS\n" +
-            "None beyond the pool roll or quest. Pair A/B don't auto-drop\n" +
-            "together — expect separate rolls for the dual-wield setup.\n\n" +
+            "Resonance (+10% dmg both swings, +5% crit re-roll). Pair A/B\n" +
+            "don't auto-drop together — expect separate rolls for the\n" +
+            "dual-wield setup.\n\n" +
             "TIPS\n" +
             "Dual Blades users building a canon Underworld Kirito run should\n" +
             "chase Black Iron A/B as the matched Pair Resonance pair.\n" +
@@ -4428,18 +3726,18 @@ public static class PlayerGuideContent
             "│ Weapon type: Across 1H, 2H, Katana, Mace, Dagger, Rapier, Axe\n" +
             "│ Source: Floor-banded loot pool (FD canon)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Eighteen character-signature weapons imported from SAO:\n" +
             "Fractured Daydream (FD, the 2024 co-op action game). Each is\n" +
             "canonically wielded by a specific SAO cast member in FD; the\n" +
             "class-lock is flavor only — any player can equip any FD weapon\n" +
             "that fits their loadout.\n\n" +
-            "USAGE\n" +
             "Eight are now canon-placed on field bosses or quest NPCs\n" +
             "(see Fractured Daydream Field Bosses). The remainder farm\n" +
             "through the floor-banded loot pool on F50+, competing for\n" +
-            "slots alongside IF, HF, IM, and MD entries at their band.\n\n" +
-            "EFFECTS\n" +
+            "slots alongside IF, HF, IM, and MD entries at their band.\n" +
+            "Drops are not gated on recruiting the matching ally — you\n" +
+            "can loot Klein's Spirit Sword Susanoo with or without Klein\n" +
+            "in your party.\n\n" +
             "By wielder (★ = canon-placed boss/quest drop):\n" +
             "  Kirito        Elucidator Rouge★ (F98), Chaos Raider Dual,\n" +
             "                Murasama G4 (Katana)\n" +
@@ -4457,10 +3755,6 @@ public static class PlayerGuideContent
             "  Administrator Silvery Ruler★ (F97, 1H)\n" +
             "  Yuuki         Macafitel★ (F85, Rapier)\n" +
             "  (also canon★) Red Rose Sword (F95)\n\n" +
-            "COSTS\n" +
-            "None beyond the pool roll or boss kill. Drops are not gated\n" +
-            "on recruiting the matching ally — you can loot Klein's\n" +
-            "Spirit Sword Susanoo with or without Klein in your party.\n\n" +
             "TIPS\n" +
             "Pair matching weapons with matching allies for canon flavor\n" +
             "runs (Klein wielding Spirit Sword, Agil with Ground Gorge).\n" +
@@ -4480,17 +3774,15 @@ public static class PlayerGuideContent
             "│ Weapon type: Character-base flavor drops\n" +
             "│ Source: Floor-banded pool F50+, 80% stats of base\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Twenty-seven elemental variants of FD and legacy character-\n" +
             "signature weapons. Each variant shifts its base's statline to\n" +
             "80% of the character-base version and adds one element-tied\n" +
-            "SpecialEffect, trading raw power for utility.\n\n" +
-            "USAGE\n" +
+            "SpecialEffect, trading raw power for utility — the 80% tradeoff\n" +
+            "is fixed, so variants never match the character-base's raw damage.\n\n" +
             "Farm the floor-banded loot pool on F50+. Variants spawn in the\n" +
             "same bands as their character-base entries, so a farm pass\n" +
             "hunting Alice's Golden Osmanthus Sword may yield Alice's\n" +
             "Thunderclap variant instead.\n\n" +
-            "EFFECTS\n" +
             "Element → SpecialEffect mapping:\n" +
             "  Fire      Burn +15 / +20\n" +
             "  Water     Freeze +15\n" +
@@ -4506,9 +3798,6 @@ public static class PlayerGuideContent
             "Abyss Keeper), Lisbeth (Blazing Torch, Elemental Hammer), Leafa\n" +
             "(Icicle Blade, Eradicate Saber), Silica (Defeza), Argo (Hermit\n" +
             "Fang), Oberon (Excalibur Bloodthirst).\n\n" +
-            "COSTS\n" +
-            "None beyond the pool roll. The 80%-of-base stat tradeoff is\n" +
-            "fixed — variants never match the character-base's raw damage.\n\n" +
             "TIPS\n" +
             "Pick the variant whose SpecialEffect matches your build gap:\n" +
             "Thunder/Stun for crowd control, Dark/Bleed to feed Hemorrhage,\n" +
@@ -4527,15 +3816,14 @@ public static class PlayerGuideContent
             "│ Weapon type: Spread across classes (F70-F99)\n" +
             "│ Source: AL raid tiers + Relic bosses + DLC\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Twenty-nine canon weapons imported from Alicization Lycoris\n" +
             "(AL), the 2020 action-RPG Underworld entry. Split across four\n" +
             "subgroups: Normal Raid (7 Epic), Extreme Raid (7 Legendary),\n" +
-            "Relic Boss drops (9 Legendary), and DLC (6 Legendary).\n\n" +
-            "USAGE\n" +
+            "Relic Boss drops (9 Legendary), and DLC (6 Legendary). Epic\n" +
+            "Normal-Raid set tops out at F85; the Relic, Extreme, and DLC\n" +
+            "Legendaries cover F85-F99.\n\n" +
             "Drop from the listed floor-banded canon source. All 29 slot\n" +
             "into standard loot pools and enhance normally at the Anvil.\n\n" +
-            "EFFECTS\n" +
             "NORMAL RAID (Epic, F70-85):\n" +
             "  Skyrend (2H Axe), Timestream (Rapier), Veinshredder (Dagger),\n" +
             "  Dragonstar (1H), Heavenstriker (Spear), Superior Blade (1H),\n" +
@@ -4552,9 +3840,6 @@ public static class PlayerGuideContent
             "  Loveblight Bow, Purgatorial Greatsword, Savage Sandstorm\n" +
             "  (Scimitar), Illustrious Sword, Lifestream Greatsword,\n" +
             "  Glitzwood Bow\n\n" +
-            "COSTS\n" +
-            "None beyond the encounter. Epic Normal-Raid set tops out at\n" +
-            "F85, while the Relic/Extreme/DLC Legendaries cover F85-F99.\n\n" +
             "TIPS\n" +
             "If you're deep into a specific class, skim the subgroups for\n" +
             "the right weapon type rather than farming every raid tier —\n" +
@@ -4574,15 +3859,12 @@ public static class PlayerGuideContent
             "│ Weapon type: Spread across classes (F50-F99)\n" +
             "│ Source: LS canon drops / pool rolls\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Twenty-one canon weapons imported from Sword Art Online: Lost\n" +
             "Song (LS), the 2015 ALfheim-set entry with flight combat and\n" +
             "race-gated magic. Split into top-tier-per-type (9 Legendary),\n" +
             "canon mythological (10 Legendary), and 2 Easter-egg Epics.\n\n" +
-            "USAGE\n" +
             "Drop from floor-banded loot pools and canon named sources.\n" +
             "All 21 enhance normally at the Anvil.\n\n" +
-            "EFFECTS\n" +
             "TOP-TIER PER TYPE (Legendary, F80-95):\n" +
             "  Blazing Sword (1H), Glaring Light (Rapier), Fragarach\n" +
             "  (Dagger), Demon Blade Muramasa (Katana), Lang (2H Axe,\n" +
@@ -4595,8 +3877,6 @@ public static class PlayerGuideContent
             "  (2H), Giardino (Dagger), Ancile (Shield)\n" +
             "EASTER EGGS (Epic, F50-70):\n" +
             "  Kagetsu-4 (1H), Laser Sword HG (1H)\n\n" +
-            "COSTS\n" +
-            "None beyond the encounter or floor-pool roll.\n\n" +
             "TIPS\n" +
             "Lang is the highest-ATK canonical LS axe — worth the dedicated\n" +
             "farm on F90+ if you main 2H Axe. Artemis' Fult (LS) and\n" +
@@ -4615,23 +3895,17 @@ public static class PlayerGuideContent
             "│ Weapon type: Scythes + 1H Swords + Katana\n" +
             "│ Source: LR canon / Dorothy F78 quest / DLC\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Five canon weapons imported from Sword Art Online: Last\n" +
             "Recollection (LR), the 2023 entry that caps the Alicization\n" +
             "Aocean arc. Includes the 8th Divine Object (Starlight Banner)\n" +
             "and Eydis's canon katana.\n\n" +
-            "USAGE\n" +
-            "Dorothy's Starlight Banner is a fixed F78 quest reward. The\n" +
-            "other four drop from floor-banded pools or canon sources.\n\n" +
-            "EFFECTS\n" +
+            "Dorothy's Starlight Banner is a fixed F78 quest reward (22 kills on\n" +
+            "F78). The other four drop from floor-banded pools or canon sources.\n\n" +
             "  Starlight Banner       DIVINE Scythe, F78 Dorothy quest  HolyAoE+20\n" +
             "  Azuretear Scythe       Epic Scythe, Dorothy's base, F50-65\n" +
             "  Darkness Rending Blade Legendary Katana, Eydis canon, F80-95\n" +
             "  Rainbow Blade Ex Eterna Legendary 1H Sword, LR DLC skin, F90-99\n" +
             "  Aetherial Glow         Epic 1H Sword, LR DLC skin, F60-80\n\n" +
-            "COSTS\n" +
-            "Starlight Banner costs the Dorothy quest (22 kills on F78);\n" +
-            "the rest cost nothing beyond the encounter or pool roll.\n\n" +
             "TIPS\n" +
             "Starlight Banner is the ONLY Divine Scythe in the game and\n" +
             "the 8th non-chain Divine Object overall — don't skip Dorothy's\n" +
@@ -4651,18 +3925,15 @@ public static class PlayerGuideContent
             "│ Weapon type: Consumable + transformation hook\n" +
             "│ Source: F95+ field-boss 10% drop, random stone\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "A new consumable family that transforms a specific target\n" +
             "weapon into its Corrupted variant — higher base stats with a\n" +
             "HolyDamage penalty. Two stones, two Corrupted weapons, all\n" +
             "canon trade-off flavor.\n\n" +
-            "USAGE\n" +
             "Kill any F95+ field boss; 10% chance to drop a stone (randomly\n" +
             "Night or Shadow). Use the stone from inventory — the game\n" +
             "checks equipped slot, off-hand, and backpack for the matching\n" +
             "target weapon, prompts for confirmation, consumes one stone,\n" +
             "removes the target, and grants the Corrupted variant.\n\n" +
-            "EFFECTS\n" +
             "  Night Corruption Stone  Elucidator     -> Corrupted Elucidator\n" +
             "  Shadow Corruption Stone Dark Repulser  -> Corrupted Dark Repulser\n" +
             "Corrupted Elucidator: Legendary 1H Sword, baseDmg 175,\n" +
@@ -4673,12 +3944,9 @@ public static class PlayerGuideContent
             "are preserved on transformation. IsDualWieldPaired stays true\n" +
             "— Corrupted variants still pair with non-corrupted partners.\n" +
             "If the target weapon is missing, the stone is refunded rather\n" +
-            "than silently consumed.\n\n" +
-            "COSTS\n" +
-            "One stone per transformation. F100 ends the game, so there's\n" +
-            "no post-F100 canon source — F95+ field bosses are the only\n" +
-            "stone tap. Canon trade-off: Corrupted pays a HolyDamage-10\n" +
-            "penalty for its stat boost.\n\n" +
+            "than silently consumed. One stone per transformation, and F95+\n" +
+            "field bosses are the only stone tap (F100 ends the game, so there\n" +
+            "is no post-F100 canon source).\n\n" +
             "TIPS\n" +
             "Enhance Elucidator / Dark Repulser to +7 or higher BEFORE you\n" +
             "apply a Corruption Stone — levels carry forward and you avoid\n" +
@@ -4699,19 +3967,18 @@ public static class PlayerGuideContent
             "│ Weapon type: Any — tag string on SpecialEffect\n" +
             "│ Source: Tooltip SpecialEffect line\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Several weapon SpecialEffect strings now fire live mechanics\n" +
             "beyond the flavor text. Weapons at T3+ rarity carry tags like\n" +
             "DragonSlayer, CritImmune, TrueStrike, Barrier, and friends —\n" +
             "each reads \"Name+N\" where N is the magnitude and the mechanic\n" +
             "fires automatically in combat. These used to be cosmetic; they\n" +
             "are now wired.\n\n" +
-            "USAGE\n" +
             "Equip a weapon, open Inventory, and read the SpecialEffect\n" +
             "line in the tooltip. Effects apply while the weapon is held —\n" +
-            "no toggle, no activation. Multiple equipped pieces (main-hand,\n" +
-            "off-hand, accessories with effect strings) stack their tags.\n\n" +
-            "EFFECTS\n" +
+            "no toggle, no activation, and no extra durability, SP, or\n" +
+            "stamina beyond the normal swing cost. Multiple equipped pieces\n" +
+            "(main-hand, off-hand, accessories with effect strings) stack\n" +
+            "their tags.\n\n" +
             "  HPRegen+N         Heal N HP on the passive-regen tick\n" +
             "  SPRegen+N         Restore N SP on the passive-regen tick\n" +
             "  CritImmune+N      N% chance to downgrade incoming crits\n" +
@@ -4751,10 +4018,6 @@ public static class PlayerGuideContent
             "Slow, Poison, Blind, Lunacy) remain weapon-only by design —\n" +
             "they're swing-themed in canon, and armor-side on-hit procs\n" +
             "would be off-flavor for the death-game tone.\n\n" +
-            "COSTS\n" +
-            "None. SpecialEffects are passive on the equipped weapon and\n" +
-            "do not consume durability, SP, or stamina beyond the normal\n" +
-            "swing cost.\n\n" +
             "TIPS\n" +
             "Always check the SpecialEffect line before selling a T3+ drop\n" +
             "— an unassuming weapon with Barrier+40 is a tank anchor.\n" +
@@ -4778,14 +4041,12 @@ public static class PlayerGuideContent
             "│ Quest: Kill / Collect / Explore / Deliver\n" +
             "│ Reward: Scales with floor + quest count\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Four quest archetypes with deterministic scaling formulas. Caps\n" +
-            "at 5 active quests; non-persistent quests clear on floor change.\n\n" +
-            "USAGE\n" +
+            "at 5 active quests; non-persistent quests clear on floor change,\n" +
+            "and quest progress resets on floor change unless you turn in first.\n\n" +
             "Bump a random NPC (1-in-3 chance) to be offered a floor-\n" +
             "appropriate quest. Canonical Divine-quest givers never layer\n" +
             "random quests on top.\n\n" +
-            "EFFECTS\n" +
             "Types:\n" +
             "  KILL     Defeat N mobs (optionally gated on weapon type)\n" +
             "  COLLECT  Gather N named items from mobs\n" +
@@ -4796,8 +4057,6 @@ public static class PlayerGuideContent
             "  Collect:  80 + F*40 + N*30 Col / 40 + F*25 + N*15 XP\n" +
             "  Explore: 150 + F*60 Col       / 80 + F*35 XP\n" +
             "  Deliver: 120 + F*45 Col       / 60 + F*30 XP\n\n" +
-            "COSTS\n" +
-            "Quest progress resets on floor change unless you turn in first.\n\n" +
             "TIPS\n" +
             "Stack 5 kill quests on the same floor before farming mobs — all\n" +
             "5 count in parallel. Turn in right before ascending so you don't\n" +
@@ -4815,23 +4074,18 @@ public static class PlayerGuideContent
             "│ Quest: Acceptance / completion workflow\n" +
             "│ Reward: See Quest Types & Rewards\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Quests are offered on NPC bump (1-in-3 chance), auto-tracked in\n" +
             "the background, and turned in at any NPC once complete. No\n" +
             "quest-log screen needed.\n\n" +
-            "USAGE\n" +
             "1. Bump an NPC; accept the offered quest.\n" +
             "2. Play; Kill/Collect/Explore auto-track.\n" +
             "3. When [QUEST] complete! fires, bump ANY NPC to resolve. All\n" +
             "   completed quests pay out in a single pop.\n\n" +
-            "EFFECTS\n" +
             "Deliver quests resolve the instant you talk to any NPC after\n" +
             "picking up the package. Weapon-gated kill quests only count\n" +
             "while the required weapon type is equipped. Canonical Divine-\n" +
-            "quest givers never layer random quests on top of their own.\n\n" +
-            "COSTS\n" +
-            "None. Aborting an accepted quest just lets it expire on floor\n" +
-            "change (no penalty).\n\n" +
+            "quest givers never layer random quests on top of their own.\n" +
+            "Aborting just lets the quest expire on floor change — no penalty.\n\n" +
             "TIPS\n" +
             "Keep a Town NPC in reach during long farming runs — turn in\n" +
             "between waves so overflow XP isn't eaten by a level-up mid-quest.\n\n" +
@@ -4848,28 +4102,22 @@ public static class PlayerGuideContent
             "│ Quest: Pinned-quest progress readout\n" +
             "│ Reward: Always-visible objective + turn-in hint\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "A small HUD widget parked top-right (directly below the minimap)\n" +
             "that shows your currently pinned quest: title, short objective,\n" +
             "and live progress counter. On completion it flips to a green\n" +
             "accent and prints \"COMPLETE → return to NPC\".\n\n" +
-            "USAGE\n" +
             "The first quest you accept is auto-pinned. Open the Quest Log\n" +
             "(J) and press P on any other quest to pin/unpin it manually —\n" +
             "only one quest is pinned at a time, so pinning a new one\n" +
-            "replaces the previous. The widget hides itself when no quest\n" +
-            "is pinned.\n\n" +
-            "EFFECTS\n" +
+            "replaces the previous. The widget reserves ~4 rows of the right\n" +
+            "margin and hides itself when no quest is pinned. P only binds\n" +
+            "inside the Quest Log dialog, so the widget never steals input.\n\n" +
             "Widget layout (top-right, below minimap):\n" +
             "  line 1 — quest title (truncated to fit)\n" +
             "  line 2 — objective text\n" +
             "  line 3 — progress counter or COMPLETE banner\n" +
             "On completion the entire frame takes a green accent so peripheral\n" +
             "vision catches the state change without having to read the text.\n\n" +
-            "COSTS\n" +
-            "None — the widget reserves ~4 rows of the right margin and is\n" +
-            "skipped when empty. It never steals input; P only binds inside\n" +
-            "the Quest Log dialog.\n\n" +
             "TIPS\n" +
             "Pin the quest whose progress you actually want to track at a\n" +
             "glance — usually a Kill or Collect quest on the current floor.\n" +
@@ -4888,21 +4136,16 @@ public static class PlayerGuideContent
             "│ Quest: Canonical SAO tactical move\n" +
             "│ Reward: Free position swap\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "The canonical SAO Switch — bump into a friendly ally to swap\n" +
             "positions with them instantly. The signature tactical move of\n" +
-            "SAO's front-line parties.\n\n" +
-            "USAGE\n" +
+            "SAO's front-line parties; party size caps at 2 allies, so at\n" +
+            "most two switch partners are available.\n\n" +
             "Walk into an ally's tile. Positions swap; the ally's current\n" +
             "status effects, cooldowns, and facing carry over intact.\n\n" +
-            "EFFECTS\n" +
             "Useful for:\n" +
             "  - Pulling a wounded ally out of the front line\n" +
             "  - Putting a tank (Agil, Strea) into the path of a heavy attack\n" +
             "  - Repositioning around narrow corridors\n\n" +
-            "Party size caps at 2 allies.\n\n" +
-            "COSTS\n" +
-            "None. The swap is free — no action point, no turn spent.\n\n" +
             "TIPS\n" +
             "Chain Switch with a Heavy-Attack telegraph: swap the tank\n" +
             "forward on the WINDING UP turn, let them Block/Parry, then\n" +
@@ -4920,15 +4163,12 @@ public static class PlayerGuideContent
             "│ Quest: Recruit dialog\n" +
             "│ Reward: Party slot (max 2 allies)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Recruit up to 2 SAO canon allies to fight alongside you. Each\n" +
             "scales to your level, carries a weapon-typed combat role, and\n" +
             "can be commanded via behavior flags.\n\n" +
-            "USAGE\n" +
             "Bump Klein, Asuna, Agil, Silica, or Lisbeth OUTSIDE Floor 1 to\n" +
             "open the recruit dialog. Set behavior (Aggressive / Defensive /\n" +
             "Follow) from the party UI.\n\n" +
-            "EFFECTS\n" +
             "  Klein     Katana, Samurai\n" +
             "  Asuna     Rapier, The Flash\n" +
             "  Agil      Axe\n" +
@@ -4936,9 +4176,8 @@ public static class PlayerGuideContent
             "  Lisbeth   Mace, Blacksmith\n\n" +
             "Ally stats scale to playerLevel-1 with 80 + playerLevel*8 HP.\n" +
             "Bump an ally to perform an SAO Switch (position swap). KO'd\n" +
-            "allies auto-revive at 50% HP on floor change.\n\n" +
-            "COSTS\n" +
-            "No Col or XP. The Solo run modifier forbids recruits entirely.\n\n" +
+            "allies auto-revive at 50% HP on floor change. Recruiting costs\n" +
+            "no Col or XP, but the Solo run modifier forbids recruits entirely.\n\n" +
             "TIPS\n" +
             "Pair Asuna (ranged Rapier pressure) with Agil (Axe tank) for a\n" +
             "front/back composition. Silica's Dragon Tamer extra-hit stacks\n" +
@@ -4956,18 +4195,17 @@ public static class PlayerGuideContent
             "│ Quest: Recruitment + signature per guild\n" +
             "│ Reward: Passive perk, guild rep, quest line\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Eight canon guilds plus a Player-Founded option make up Aincrad's\n" +
             "social spine. You can hold ONE active guild at a time — leaving a\n" +
             "guild costs -3 karma and wipes that guild's passive perk. Each\n" +
             "guild has a level + karma gate, a recruiter NPC, a passive perk,\n" +
-            "and two quests: a 10-kill recruitment and a canon-themed signature.\n\n" +
-            "USAGE\n" +
+            "and two quests: a 10-kill recruitment and a canon-themed signature.\n" +
+            "Joining a canon guild costs no Col — only the karma/level gate\n" +
+            "matters. (Player-Founded creation costs 5000 Col; see its entry.)\n\n" +
             "Open StatsDialog, click \"View All Guilds\" to open the Guild\n" +
             "Roster. Travel to the guild's HQ floor, bump the recruiter, and\n" +
             "accept if you meet the level + karma gate. The single-active-\n" +
             "guild rule is enforced: join a new one and the old one drops you.\n\n" +
-            "EFFECTS\n" +
             "Eight canon guilds (see individual entries for detail):\n" +
             "  KoB (F55)    Knights of the Blood Oath — Heathcliff\n" +
             "  ALF (F1)     Aincrad Liberation Force  — Kibaou\n" +
@@ -4976,11 +4214,8 @@ public static class PlayerGuideContent
             "  Legend Braves (F25)                    — Schmitt\n" +
             "  Sleeping Knights (F60)                 — Siune / Yuuki\n" +
             "  LC  (F75)    Laughing Coffin (hidden)  — PoH's Herald\n" +
-            "  Moonlit Black Cats (F10)               — Keita\n\n" +
-            "Plus Player-Founded Guild — 5000 Col to start your own.\n\n" +
-            "COSTS\n" +
-            "Leaving a guild: -3 karma. Player-Founded creation: 5000 Col.\n" +
-            "No Col cost to join a canon guild — only the karma/level gate.\n\n" +
+            "  Moonlit Black Cats (F10)               — Keita\n" +
+            "  Player-Founded Guild — 5000 Col to start your own\n\n" +
             "TIPS\n" +
             "Pick your alignment target before F10 — the Moonlit Black Cats\n" +
             "join window closes once you take fate-sealed damage on F27, and\n" +
@@ -5000,26 +4235,21 @@ public static class PlayerGuideContent
             "│ Quest: Pick name + perk preset\n" +
             "│ Reward: 1 of 5 passive perk presets\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Player-Founded Guild lets you skip the canon roster and roll\n" +
             "your own. Spend 5000 Col, pick a name, choose 1 of 5 perk\n" +
             "presets — your guild counts as your single active guild for\n" +
-            "every downstream rule.\n\n" +
-            "USAGE\n" +
+            "every downstream rule. The presets are all weaker than the\n" +
+            "strongest canon options (KoB, Sleeping Knights), so the trade-\n" +
+            "off is identity + flexibility vs raw power.\n\n" +
             "Open StatsDialog, click \"View All Guilds\" to open the Guild\n" +
             "Roster, pick the Player-Founded option, pay 5000 Col, enter\n" +
             "a guild name, pick a perk preset. The guild is created in-\n" +
             "place and counts immediately.\n\n" +
-            "EFFECTS\n" +
             "  Cost      5000 Col\n" +
             "  Naming    Freeform string\n" +
             "  Presets   1 of 5 (attack / tank / crit / XP / utility flavor)\n" +
             "  Rule      Counts as your single active guild — joining any\n" +
             "            canon guild drops the Player-Founded one\n\n" +
-            "COSTS\n" +
-            "5000 Col upfront. The perk presets are all weaker than the\n" +
-            "strongest canon options (KoB, Sleeping Knights), so the\n" +
-            "trade-off is identity + flexibility vs raw power.\n\n" +
             "TIPS\n" +
             "Good early-game option if your karma or level locks you out\n" +
             "of the canon guild you want — roll Player-Founded as a\n" +
@@ -5039,15 +4269,12 @@ public static class PlayerGuideContent
             "│ Quest: Rotating shop stock\n" +
             "│ Reward: Consumables, gear, accessories\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "One vendor per non-town floor. Stock rotates per run and scales\n" +
             "with floor — the shop's name even renames as you climb.\n\n" +
-            "USAGE\n" +
             "Bump the green 'V'. Shop name scales:\n" +
             "  F<=5   \"General Store\"\n" +
             "  F<=10  \"Adventurer's Supply\"\n" +
             "  F>10   \"Elite Outfitters\"\n\n" +
-            "EFFECTS\n" +
             "Always stocked:\n" +
             "  2x Health Potion, Antidote, Bread, Grilled Meat\n" +
             "Tier unlocks:\n" +
@@ -5070,7 +4297,6 @@ public static class PlayerGuideContent
             "unlock bonus stock tiers beyond the global ShopTierSystem — see\n" +
             "Vendor Investing for thresholds and the \"Invested +N\" header\n" +
             "badge. Bargaining XP ticks +1 per buy/sell/Sell Junk action.\n\n" +
-            "COSTS\n" +
             "All prices marked up +20% over base. Karma tier and Bargaining\n" +
             "milestones STACK MULTIPLICATIVELY on top:\n" +
             "  Honorable (+50..+100)  x0.90 final price\n" +
@@ -5097,19 +4323,16 @@ public static class PlayerGuideContent
             "│ Quest: Deposit Col to boost that vendor's stock tier\n" +
             "│ Reward: +1 / +2 / +3 bonus stock tiers, per-vendor\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Per-vendor Col deposits that layer on top of the global\n" +
             "ShopTierSystem. Each vendor tracks its OWN cumulative investment\n" +
             "keyed by ShopName — a boost at Lindarth's Elite Outfitters\n" +
             "doesn't carry over to F5 General Store. Cap is 20,000 Col\n" +
             "invested per vendor (+3 tiers).\n\n" +
-            "USAGE\n" +
             "Open ShopDialog → click \"Invest\" → MessageBox picker: 500 /\n" +
             "1,000 / 5,000 / 20,000 / Cancel. The deposit is clamped to\n" +
             "your Col on hand and to the 20,000-per-vendor cap. Header\n" +
             "badge \"Invested +N\" appears once the vendor has earned any\n" +
             "bonus tiers. Persists in SaveData.VendorInvestments.\n\n" +
-            "EFFECTS\n" +
             "  CUMULATIVE COL   BONUS TIERS   RESULT\n" +
             "      1,000 Col    +1 tier       Next unlocked tier added\n" +
             "      5,000 Col    +2 tiers      Two tiers added\n" +
@@ -5119,11 +4342,10 @@ public static class PlayerGuideContent
             "on). If every tier is already globally unlocked, investment\n" +
             "produces no visible stock — the Col is effectively wasted,\n" +
             "which the UI flags in the Invest dialog. Extra stock is marked\n" +
-            "up +20% on top of the base Value.\n\n" +
-            "COSTS\n" +
-            "Col. Investments do NOT refund — once deposited, the Col is\n" +
-            "converted to permanent per-vendor tier progress. Dies with the\n" +
-            "save on permadeath like any other Col sink.\n\n" +
+            "up +20% on top of the base Value. Investments do NOT refund —\n" +
+            "once deposited, the Col is converted to permanent per-vendor\n" +
+            "tier progress and dies with the save on permadeath like any\n" +
+            "other Col sink.\n\n" +
             "TIPS\n" +
             "Front-load the 1,000 Col threshold at a vendor you'll actually\n" +
             "revisit — the +1 tier is a 10x return if the tier unlocks a\n" +
@@ -5143,14 +4365,11 @@ public static class PlayerGuideContent
             "│ Quest: Col source reference\n" +
             "│ Reward: Col faucets; save wipes on death\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Col is earned from mobs, chests, speed and exploration bonuses,\n" +
             "quests, and achievements. Death deletes the entire save slot,\n" +
             "so every Col you bank is backed by the run staying alive.\n\n" +
-            "USAGE\n" +
             "Passive — every income source logs Col to your wallet as it\n" +
             "fires. Open the inventory screen to see totals.\n\n" +
-            "EFFECTS\n" +
             "  Mob kills       ColYield + Perfect Kill +50% (no damage taken)\n" +
             "                  + streak tier (up to 3 tiers every 5 kills)\n" +
             "  Floor boss      ColYield + guaranteed drop\n" +
@@ -5163,9 +4382,6 @@ public static class PlayerGuideContent
             "  Quests          Per quest type formula\n" +
             "  Achievements    50-10000 Col per milestone\n" +
             "  Bounty          100 + 50*floor Col\n\n" +
-            "COSTS\n" +
-            "DEATH: the save file is deleted. Every Col carried is forfeit\n" +
-            "along with the rest of the run.\n\n" +
             "TIPS\n" +
             "Perfect Kill streaks stack on mob yield — don't break cover if\n" +
             "you're farming a floor. Sink Col into Anvil enhance/refine\n" +
@@ -5180,44 +4396,95 @@ public static class PlayerGuideContent
 
         new("Quests & NPCs", "Achievements",
             "┌─ Quests & NPCs\n" +
-            "│ NPC: N/A (milestone system)\n" +
+            "│ NPC: N/A (Milestone System)\n" +
             "│ Floor: All\n" +
             "│ Quest: Auto-unlocked milestones\n" +
-            "│ Reward: 50-10000 Col per milestone\n" +
+            "│ Reward: Col / equippable Title / passive stat / display entry\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "Auto-tracked milestones that pay Col on unlock. No grinding UI —\n" +
-            "the game watches your kill log, floor tally, and streak state\n" +
-            "and fires rewards on the spot.\n\n" +
-            "USAGE\n" +
-            "No action required. Milestones pop on the ascend screen or the\n" +
-            "instant the criterion is met mid-run.\n\n" +
-            "EFFECTS\n" +
-            "  First Blood         first monster kill           50\n" +
-            "  Boss Slayer         first floor boss            200\n" +
-            "  Centurion           100 monsters                500\n" +
-            "  Walking Calamity    500 monsters               2500\n" +
-            "  Untouchable         5-kill perfect streak       300\n" +
-            "  Ascending           reach F5                    150\n" +
-            "  Into the Unknown    reach F10                   300\n" +
-            "  Veteran Climber     reach F25                  1000\n" +
-            "  Halfway There       reach F50                  3000\n" +
-            "  Apex of Aincrad     reach F100                10000\n" +
-            "  Speed Demon         speed-clear a floor         200\n" +
-            "  Loremaster          all lore stones discovered 1500\n" +
-            "  Bounty Hunter       complete a bounty           250\n" +
-            "  Iron Will           survive a hemorrhage        400\n\n" +
-            "COSTS\n" +
-            "None. Achievements are pure upside.\n\n" +
+            "Auto-tracked milestones across ten categories — Combat, Floor, Life\n" +
+            "Skills, Story, Canon, Discovery, Equipment, Karma, Death,\n" +
+            "Collectables. Reward type varies: some pay Col, some unlock\n" +
+            "equippable titles, some grant passive stats, some are display-only\n" +
+            "tracking entries (e.g. all 184 Legendary collectables).\n\n" +
+            "Press Shift+M anywhere on the map to open the Milestones dialog.\n" +
+            "Tab / Shift+Tab cycle the ten category tabs; digits 1-9/0 jump\n" +
+            "directly. The Monument of Swordsmen on F1 shows the same view\n" +
+            "framed as the in-world memorial. Shift+L jumps straight to the\n" +
+            "Collectables tab.\n\n" +
+            "  Combat            first kill / boss kills / kill streaks / crits\n" +
+            "  Floor             F5 / F10 / F25 / F50 / F100, speed clears\n" +
+            "  Life Skills       per-skill 10/25/50/99 (auto passives)\n" +
+            "  Story             quests, guilds, allies, awakenings\n" +
+            "  Canon             SAO IF + HF callbacks (Black Swordsman, Beater…)\n" +
+            "  Discovery         lore stones, Bestiary thresholds\n" +
+            "  Equipment         dual-wield pairs, full kits, sealed weapons\n" +
+            "  Karma             Saint, Outlaw, Town Guard kill\n" +
+            "  Death             cause-of-death tracking (display-only)\n" +
+            "  Collectables      all 184 Legendaries, sortable by source bucket\n\n" +
             "TIPS\n" +
-            "Loremaster is the best-hidden payout (+1500 Col) — comb every\n" +
-            "floor for Lore Stones. Iron Will requires surviving a Bleed +\n" +
-            "Poison hemorrhage burst; pack an Antidote Crystal on biomes\n" +
-            "that proc both.\n\n" +
+            "Loremaster is the best-hidden Col payout — comb every floor for\n" +
+            "Lore Stones. Iron Will requires surviving a Bleed + Poison\n" +
+            "hemorrhage burst; pack an Antidote Crystal on biomes that proc\n" +
+            "both. Equippable titles use ONE active slot — pick the one that\n" +
+            "matches your build at the Monument or via Shift+M's E hotkey.\n\n" +
             "SEE ALSO\n" +
-            "[Kill Streaks] · [Status: Bleed & Poison] · [Lore, Journals & Enchant Shrines] · [Col Economy — How You Earn] · [Damage & Toast Feedback]")
+            "[Kill Streaks] · [Status: Bleed & Poison] · [Lore, Journals & Enchant Shrines] · [Col Economy — How You Earn] · [Titles & the Active Title Slot]")
         {
             Tags = new[] { "economy", "progression", "xp" }
+        },
+
+        new("Quests & NPCs", "IF Implement Research & HF Missions",
+            "┌─ Quests & NPCs\n" +
+            "│ Topic: IF Implement Research & HF Missions\n" +
+            "│ Source: Canon SAO Integral Factor + Hollow Fragment quest lines\n" +
+            "│ Tracker: Per-run counter feeds two Discovery milestones\n" +
+            "│ Reward: hf_element_researcher (100) + hf_debug_field_tester (80)\n" +
+            "└─\n\n" +
+            "Two parallel quest sub-tracks live alongside the regular quest log\n" +
+            "and feed dedicated milestone counters. IF Implement Research is the\n" +
+            "Integral Factor Element-Research mission line — kill-count quests\n" +
+            "from researcher / scholar / cipher-reader NPCs anchored to IF\n" +
+            "weapon-series floor bands. HF Missions are the Hollow Fragment\n" +
+            "Hollow Mission line — kill-count quests from hunter / sentinel /\n" +
+            "anchorite NPCs across the F76-F99 hollow domain.\n\n" +
+            "Every turn-in of a tagged quest bumps the per-run counter for its\n" +
+            "sub-track. Bumps are silent until 25%, 50%, 75% — three progress\n" +
+            "toasts mark the quartiles — and the threshold itself fires the\n" +
+            "milestone unlock toast plus its Col reward.\n\n" +
+            "MECHANICS\n" +
+            "  IF threshold     100 quest turn-ins (hf_element_researcher)\n" +
+            "  HF threshold     80 quest turn-ins (hf_debug_field_tester)\n" +
+            "  Reset            Counter resets on new game / death (per-run\n" +
+            "                   tracker; lives in the active save file)\n" +
+            "  Persistence      Once the threshold trips in any single run,\n" +
+            "                   the milestone unlock is permanent and survives\n" +
+            "                   permadeath via LifetimeStats\n" +
+            "  Lifetime best    Tracked separately as a hi-water mark — visible\n" +
+            "                   on the Records screen and used for bragging\n" +
+            "                   rights even if the threshold isn't reached\n" +
+            "  Tag source       Fixture quests (named questgivers) are tagged\n" +
+            "                   at creation; procgen quests on canon floor\n" +
+            "                   bands are auto-tagged by floor predicate\n" +
+            "TAGGED FLOORS:\n" +
+            "  IF Implement     F5, F10, F14, F25, F61-65, F84-90 (Karluin /\n" +
+            "                   Kagachi / Integral / Nox / Rosso / Yasha+Gaou)\n" +
+            "  HF Mission       F76+ (Hollow Fragment domain) excluding the\n" +
+            "                   F84-90 IF override window\n\n" +
+            "TIPS\n" +
+            "Long single runs reward the climb — the per-run counter resets\n" +
+            "every time you start fresh, so push deep before the threshold\n" +
+            "fires. Fixture-quest density bands cluster at F5 / F10 / F14 /\n" +
+            "F25 / F61-65 / F84-90 (IF) and F77-F99 (HF) — talk to every\n" +
+            "named NPC on those floors. Procgen NPC quests on the same\n" +
+            "bands also feed the counters, so 5 active quest slots\n" +
+            "rotated cleanly stack faster than chasing fixture-only.\n" +
+            "The Discovery tab in the Milestones dialog (Shift+M) shows\n" +
+            "live progress bars — open it mid-run to track how close you\n" +
+            "are to either threshold.\n\n" +
+            "SEE ALSO\n" +
+            "[Achievements] · [Implement System Weapons (F77-F99)] · [Integral Factor Weapon Series] · [Quest Log & Pinning] · [Quest Types & Rewards]")
+        {
+            Tags = new[] { "quests", "milestones", "integral-factor", "hollow-fragment" }
         },
 
         new("Quests & NPCs", "Pause Menu (Esc)",
@@ -5227,26 +4494,21 @@ public static class PlayerGuideContent
             "│ Quest: Mid-run system menu\n" +
             "│ Reward: Save / Load / Options / Exit with confirmations\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Esc on the map view opens a four-option Pause Menu: Save game,\n" +
             "Load game, Options, Exit game. Each action asks for a yes/no\n" +
             "confirmation before it runs. Esc again closes the menu and\n" +
             "returns you to the same turn.\n\n" +
-            "USAGE\n" +
             "Press Esc in the map view to open. Press Esc inside the menu\n" +
             "to close it. Pick an option with arrow keys + Enter, or click.\n" +
             "Esc closes other dialogs (Player Guide, Stats, Inventory) as\n" +
             "normal — it only opens the Pause Menu from the map itself.\n\n" +
-            "EFFECTS\n" +
             "  Save game   Confirmation prompt, then writes the current slot\n" +
             "  Load game   Confirmation prompt, then reloads the last save\n" +
             "  Options     Opens the existing OptionsScreen\n" +
             "  Exit game   Confirmation prompt, then quits the app\n\n" +
             "F5 quick-save still works from the map and bypasses the menu\n" +
-            "with no confirmation prompt.\n\n" +
-            "COSTS\n" +
-            "No in-game time passes while the menu is open — this is a true\n" +
-            "pause, not a turn-consuming action.\n\n" +
+            "with no confirmation prompt. No in-game time passes while the\n" +
+            "menu is open — it is a true pause, not a turn-consuming action.\n\n" +
             "TIPS\n" +
             "Use F5 for fast checkpoints mid-floor, and the Pause Menu's\n" +
             "Save option when you want the confirmation safety net before\n" +
@@ -5266,16 +4528,15 @@ public static class PlayerGuideContent
             "│ Cycle: Tab key (when log focused)\n" +
             "│ History: 500-entry ring buffer (preserved across turns)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "The combat log splits its feed into five filtered tabs so you\n" +
             "can read just the slice you care about. Color per category keeps\n" +
             "the All view scannable, and a 500-entry ring buffer preserves\n" +
-            "recent history across turns, floor changes, and dialog opens.\n\n" +
-            "USAGE\n" +
+            "recent history across turns, floor changes, and dialog opens.\n" +
+            "The log never swallows turns and category filtering is pure\n" +
+            "presentation; dialogs still pause the game as normal.\n\n" +
             "Focus the log pane, then press Tab to cycle forward through the\n" +
             "tabs. Focus returns to the map with Tab or Esc. PageUp/PageDown\n" +
             "scroll history within the active tab.\n\n" +
-            "EFFECTS\n" +
             "TAB CONTENTS:\n" +
             "  All      Every message, uncategorized, original colors\n" +
             "  Combat   Hits, crits, dodges, parries, status applications\n" +
@@ -5290,10 +4551,6 @@ public static class PlayerGuideContent
             "HISTORY BUFFER:\n" +
             "  Ring-buffer of the most recent 500 entries; older entries drop\n" +
             "  off silently so the scroll stays responsive even on long runs.\n\n" +
-            "COSTS\n" +
-            "No gameplay impact — the log never swallows turns, and category\n" +
-            "filtering is pure presentation. Dialogs still pause the game as\n" +
-            "normal when opened.\n\n" +
             "TIPS\n" +
             "Flip to Combat when auditing a boss fight and to Item after\n" +
             "clearing a vault — the noise-to-signal ratio is dramatically\n" +
@@ -5312,15 +4569,14 @@ public static class PlayerGuideContent
             "│ Quest: Save / load / migration flow\n" +
             "│ Reward: Persistence across sessions\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Three save slots, auto-save on every floor ascend, and a legacy-\n" +
-            "save auto-migration path. Every death deletes the active save.\n\n" +
-            "USAGE\n" +
+            "save auto-migration path. Every death deletes the active save —\n" +
+            "the slot file is wiped from disk before the DeathScreen's\n" +
+            "confirmation prompt returns you to the main menu.\n\n" +
             "Files live in %LOCALAPPDATA%/AincradTRPG/save_N.json. Legacy\n" +
             "save.json auto-migrates to slot 1. Auto-save fires on every\n" +
             "floor ascend; F5 is a no-prompt quick-save, and the Esc Pause\n" +
             "Menu offers Save / Load / Options / Exit with confirmations.\n\n" +
-            "EFFECTS\n" +
             "Saved state includes:\n" +
             "  - Player stats / inventory / equipment\n" +
             "  - Kill counts / turn counter\n" +
@@ -5339,10 +4595,6 @@ public static class PlayerGuideContent
             "  - Story flags / events\n\n" +
             "Slot summary shows name, level, floor, difficulty, timestamp,\n" +
             "and playtime.\n\n" +
-            "COSTS\n" +
-            "Every save is permadeath — on death the slot file is deleted\n" +
-            "from disk before the DeathScreen's confirmation prompt returns\n" +
-            "you to the main menu.\n\n" +
             "TIPS\n" +
             "Back up %LOCALAPPDATA%/AincradTRPG manually before a big push\n" +
             "if you want insurance against the permadeath wipe. The auto-\n" +
@@ -5361,16 +4613,16 @@ public static class PlayerGuideContent
             "│ Quest: In-game keyboard reference\n" +
             "│ Reward: One screen, every binding\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Every in-game key in one place. The map view is modal — dialogs\n" +
             "swallow keys while open, so these bindings assume the map has\n" +
             "focus unless noted. The title screen has no rotating hints;\n" +
             "this topic is the single source of truth for controls.\n\n" +
-            "USAGE\n" +
             "Open this page any time with B. Hold Shift + dir to sprint,\n" +
             "Ctrl + dir to stealth-move. Esc closes any open dialog; Esc\n" +
-            "from the map itself opens the Pause Menu.\n\n" +
-            "EFFECTS\n" +
+            "from the map itself opens the Pause Menu. Sprint, Stealth, and\n" +
+            "every action key consume a turn the same way a normal step does.\n" +
+            "UI keys (I, T, P, J, K, B, H) and the Pause Menu pause the game\n" +
+            "— no turns pass while they are open.\n\n" +
             "MOVEMENT\n" +
             "  W A S D / Arrows  Step one tile (cardinal)\n" +
             "  Q E Z C           Step one tile (diagonals)\n" +
@@ -5409,11 +4661,6 @@ public static class PlayerGuideContent
             "  Arrows / Enter    Navigate + pick (Continue / New Game /\n" +
             "                    Records / Options / Exit)\n" +
             "  Esc               Quit with confirmation\n\n" +
-            "COSTS\n" +
-            "Sprint, Stealth, and every action key consume a turn in the\n" +
-            "same way a normal step does. UI keys (I, T, P, J, K, B, H) and\n" +
-            "the Pause Menu pause the game — no turns pass while they are\n" +
-            "open.\n\n" +
             "TIPS\n" +
             "Bind your brain to the shape, not the letters — movement is\n" +
             "the WASD + QEZC 3x3, utilities cluster on the left home row\n" +
@@ -5433,19 +4680,19 @@ public static class PlayerGuideContent
             "│ Cap: None — collect any/all Divines per run\n" +
             "│ Sources: Floor bosses · Quests · Hidden vault · T4 craft\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Seventeen Divine weapons span the 13 weapon classes. Every\n" +
             "Divine is hand-placed — never rolled on a random chest. There\n" +
             "is no per-run cap on Divine drops; clear every gating boss and\n" +
             "complete every named quest to assemble the full set in a single\n" +
-            "run if you can.\n\n" +
-            "USAGE\n" +
+            "run if you can. Each one demands a high-tier boss kill, a long\n" +
+            "quest chain, or a deep T4 craft pipeline — no per-run lockout,\n" +
+            "but the time, durability, and consumable cost of farming the\n" +
+            "full 17 in one run is steep on its own.\n\n" +
             "Clear a listed floor boss, complete the named quest, find the\n" +
             "hidden Conflagrant Vault, or finish the T4 evolution craft.\n" +
             "Divines equip like any weapon — unbreakable, no durability\n" +
             "tick, no Anvil repair cost. The drop logs a BrightRed line\n" +
             "with a diamond glyph and triggers the Divine Obtain Banner.\n\n" +
-            "EFFECTS\n" +
             "FLOOR-BOSS GUARANTEED DROPS (10 Divines, F75-F98):\n" +
             "  F75  Masamune              Skull Reaper\n" +
             "  F82  Hexagramme             Legacy of Grand\n" +
@@ -5468,11 +4715,6 @@ public static class PlayerGuideContent
             "HIDDEN VAULT (1):\n" +
             "  F77-F79  Conflagrant Flame Bow  Conflagrant Vault prefab\n" +
             "         (Volcanic/Ruins/Dark biomes, once-per-game)\n\n" +
-            "COSTS\n" +
-            "Each Divine demands a high-tier boss kill, a long quest chain,\n" +
-            "or a deep T4 craft pipeline — there is no per-run lockout, but\n" +
-            "the time/durability/consumable cost of farming the full 17 in\n" +
-            "one run is steep on its own.\n\n" +
             "TIPS\n" +
             "Plan a Divine route by floor band and weapon class. Canon-\n" +
             "minded Katana mains sprint for F75 Masamune; 2H mains hold for\n" +
@@ -5498,21 +4740,18 @@ public static class PlayerGuideContent
             "│ NPC: Sister Selka the Novice (F65)\n" +
             "│ Materials: Mithril Ingot · Divine Fragment · Primordial Shard\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Once you hold a Divine weapon, Sister Selka on F65 can awaken it\n" +
             "up to three times. Each awakening adds a flat base-damage bonus\n" +
             "(+15%, +30%, +45% cumulative) that stacks ADDITIVELY with\n" +
             "Refinement sockets and Enhancement levels — all three systems\n" +
             "fold into the weapon's Attack contribution separately. Awakening\n" +
             "is forward-only and persists across save/load.\n\n" +
-            "USAGE\n" +
             "Carry a Divine weapon and the required materials to Sister\n" +
             "Selka on F65. Talk to her; her dialogue now offers an extra\n" +
             "option — \"Awaken a Divine weapon.\" Select the option, pick\n" +
             "the Divine from the preview pane (usually one, since the run\n" +
             "cap allows a single Divine), review the material cost, and\n" +
             "confirm. The banner fires a golden awakening variant on success.\n\n" +
-            "EFFECTS\n" +
             "  ◈1  +15% base damage (flat, added to Attack)\n" +
             "  ◈2  +30% base damage (flat, added to Attack)\n" +
             "  ◈3  +45% base damage (flat, added to Attack)\n" +
@@ -5521,7 +4760,6 @@ public static class PlayerGuideContent
             "adds another +45% of base damage on top via Bonuses.Attack).\n" +
             "The awakening bonus flows through Player.Attack alongside\n" +
             "Strength, Enhancement, and Refinement — all additive.\n\n" +
-            "COSTS\n" +
             "  Lv0→Lv1  3× Mithril Ingot       (mithril_ingot)\n" +
             "  Lv1→Lv2  1× Divine Fragment      (divine_fragment)\n" +
             "  Lv2→Lv3  1× Primordial Shard     (primordial_shard)\n" +
@@ -5562,19 +4800,20 @@ public static class PlayerGuideContent
             "│ Shields: Nox Fermat · Rosso Aegis · Yasha Kavacha · Gaou Tatari\n" +
             "│ Effect field: SpecialEffect (shared with weapons)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Four endgame shields carry live SpecialEffect strings matching\n" +
             "the same tag grammar weapons use. Previously flavor-only, the\n" +
             "SpecialEffect field now lives on EquipmentBase — both weapons\n" +
             "and shields parse it through the shared reader, so a shield in\n" +
             "the OffHand adds its tag on top of the main-hand weapon's tag.\n\n" +
-            "USAGE\n" +
             "Equip as OffHand (shields go to the off-hand slot, not the\n" +
             "weapon slot). The effect applies automatically while equipped.\n" +
             "Each shield's tag sums with any matching weapon tag for\n" +
             "additive effects; cap-style effects (CritImmune) take the max\n" +
-            "of the two sources rather than stacking.\n\n" +
-            "EFFECTS\n" +
+            "of the two sources rather than stacking. The shield slot has an\n" +
+            "opportunity cost — you forgo a dual-wield OffHand weapon (no\n" +
+            "+10% Pair Resonance damage, no offhand swing multiplier). Block\n" +
+            "rolls still consume shield durability on successful blocks; the\n" +
+            "four shields here are not Divine-tier (Divine gear is unbreakable).\n\n" +
             "  Nox Fermat      DamageReflect+5  Returns 5% of incoming damage\n" +
             "                                   to the attacker as flat dmg;\n" +
             "                                   minimum 1 per reflected hit.\n" +
@@ -5589,12 +4828,6 @@ public static class PlayerGuideContent
             "STACKING RULES:\n" +
             "  Additive (sum MH + OH): HPRegen · Barrier · DamageReflect\n" +
             "  Cap-style (max MH vs OH): CritImmune\n\n" +
-            "COSTS\n" +
-            "Shield-slot opportunity cost — you forgo a dual-wield OffHand\n" +
-            "weapon (no +10% Pair Resonance damage, no offhand swing\n" +
-            "multiplier). Block rolls still consume shield durability on\n" +
-            "successful blocks; Divine gear is unbreakable but these four\n" +
-            "shields are not Divine-tier.\n\n" +
             "TIPS\n" +
             "Pair Yasha Kavacha (HPRegen+3) with a weapon that also carries\n" +
             "HPRegen+N to double-dip the regen tick — HPRegen is additive.\n" +
@@ -5616,7 +4849,6 @@ public static class PlayerGuideContent
             "│ Damage: +10% on BOTH main-hand and offhand swings\n" +
             "│ Crit: +5% re-roll, FIRST hit per encounter only\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Pair Resonance is the synergy bonus that fires when you equip\n" +
             "a canonical dual-wield pair (e.g. Elucidator + Dark Repulser).\n" +
             "Two effects stack together: a persistent +10% damage rider on\n" +
@@ -5624,14 +4856,16 @@ public static class PlayerGuideContent
             "the FIRST hit of each new encounter. The crit re-roll used to\n" +
             "fire on every swing, which turned resonance into a raw +5%\n" +
             "crit buff — it is now capped to a \"sync burst\" on first hit\n" +
-            "only, matching canon FD resonance flavor.\n\n" +
-            "USAGE\n" +
+            "only, matching canon FD resonance flavor. The canonical pair\n" +
+            "pool is narrow: only 3 pairs exist (Elucidator/Dark Repulser,\n" +
+            "Elucidator Rouge/Flare Pulsar, Black Iron Dual A/B), and mixing\n" +
+            "halves across pairs forfeits the synergy — the game matches by\n" +
+            "exact DefId pair lookup.\n\n" +
             "Fill MH and OH slots with a matched canonical pair (see the\n" +
             "Paired Dual-Wield Weapons topic for the 3 canon pairs). On\n" +
             "first swing against a new monster, the log prints '◆ Pair\n" +
             "Resonance! ... sing together' ONCE per target. The damage\n" +
             "bonus continues silently on every subsequent swing.\n\n" +
-            "EFFECTS\n" +
             "DAMAGE BONUS (persistent, every swing):\n" +
             "  Main-hand damage  *= 1.1\n" +
             "  Offhand damage    *= 1.1\n" +
@@ -5655,11 +4889,6 @@ public static class PlayerGuideContent
             "result, capping pair-burst ceiling. Independent rolls mean a\n" +
             "high-Dex Elucidator/Dark Repulser build can land double-CRIT\n" +
             "openers; expect occasional triple-digit single-turn bursts.\n\n" +
-            "COSTS\n" +
-            "The canonical pair pool is narrow — only 3 pairs exist\n" +
-            "(Elucidator/Dark Repulser, Elucidator Rouge/Flare Pulsar,\n" +
-            "Black Iron Dual A/B). Mixing halves across pairs forfeits the\n" +
-            "synergy — the game matches by exact DefId pair lookup.\n\n" +
             "TIPS\n" +
             "Open every pull with a heavy-hitter sword skill — that first\n" +
             "swing is now the single crit-re-roll window. On long boss\n" +
@@ -5716,29 +4945,22 @@ public static class PlayerGuideContent
 
         new("Items", "Legendary Collectables Panel (Shift+L)",
             "┌─ Items\n" +
-            "│ Topic: Legendary Collectables — completion tracker\n" +
-            "│ Hotkey: Shift+L from the map\n" +
+            "│ Topic: Legendary Collectables — Milestone tab\n" +
+            "│ Hotkey: Shift+L (Collectables tab) or Shift+M (full Milestones)\n" +
             "│ Total: 184 Legendaries across 9 source buckets\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
-            "A run-long completion tracker for the 184 named Legendary\n" +
-            "weapons. Press Shift+L on the map to open the panel; the list\n" +
-            "is grouped by canon source bucket (LN, Hollow Fragment,\n" +
-            "Integral Factor, etc.) with a per-bucket completion count.\n" +
-            "Pickups are recorded automatically — every Legendary that\n" +
-            "ever lands in your inventory is marked collected for the rest\n" +
-            "of the save.\n\n" +
-            "USAGE\n" +
-            "Filter keys (inside the panel):\n" +
-            "  1   Show all entries\n" +
-            "  2   Show only collected entries\n" +
-            "  3   Show only not-yet entries\n" +
-            "  F1  All floors (default)\n" +
-            "  F2  This floor band — current floor ±8\n" +
-            "  Esc Close\n\n" +
-            "Header counter reads \"Collected: N / 184\" with the same\n" +
-            "scope the filters apply.\n\n" +
-            "EFFECTS\n" +
+            "Tracks the 184 named Legendary weapons inside the unified\n" +
+            "Milestones dialog. Press Shift+L on the map to open the dialog\n" +
+            "focused on the Collectables tab; press Shift+M to open at the\n" +
+            "first tab and Tab over. Each Legendary is its own milestone\n" +
+            "entry — pickups are recorded automatically and the unlock\n" +
+            "persists across permadeath.\n\n" +
+            "Inside the Milestones dialog, on the Collectables tab the\n" +
+            "bucket dropdown filters by canon source. Use Tab / Shift+Tab\n" +
+            "to cycle category tabs, digits 1-9/0 to jump directly. Esc\n" +
+            "closes.\n\n" +
+            "Header counter reads \"Collectables: N / 184\" plus the per-tab\n" +
+            "tally and the global milestone tally across all categories.\n\n" +
             "Source buckets (9):\n" +
             "  LN          Light Novel — canon Aincrad arc\n" +
             "  AL          Alicization Lycoris\n" +
@@ -5750,12 +4972,11 @@ public static class PlayerGuideContent
             "  Myth        Mythological (non-SAO references)\n" +
             "  Non-Canon   AincradTRPG-invented blades\n\n" +
             "TIPS\n" +
-            "Use the This-Floor filter (F2) before pushing a new floor —\n" +
-            "the band ±8 surfaces every Legendary anchored anywhere near\n" +
-            "your current depth, so you can plan for chest hunts and\n" +
-            "field-boss farms before ascending.\n\n" +
+            "Collection threshold milestones (25 / 50 / 100 / 184) sit on\n" +
+            "the same tab and reward Col plus the Aincrad Archive title at\n" +
+            "the 184 cap.\n\n" +
             "SEE ALSO\n" +
-            "[Named Legendary Highlights]")
+            "[Named Legendary Highlights] · [Achievements] · [Titles & the Active Title Slot]")
         {
             Tags = new[] { "items", "ui", "collectables" }
         },
@@ -5767,17 +4988,14 @@ public static class PlayerGuideContent
             "│ Cost: 1,000 Col + 3x Mithril Ingot per +1\n" +
             "│ Cap: +7 (this lane); higher tier requires Crystallite\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Mid-tier weapon enhancement at Lisbeth's Lindarth forge.\n" +
             "Accepts Rare and Epic weapons, pushes them up to +7. Sits\n" +
             "between the Common/Uncommon iron lane (+5 cap) and the Epic/\n" +
             "Legendary crystallite lane (+10 cap).\n\n" +
-            "USAGE\n" +
             "Open Lisbeth (F48 Lindarth) and press F3 to switch to the\n" +
             "Mithril Ingot Enhance tab. Pick a Rare or Epic weapon from\n" +
             "your inventory; press Confirm to spend mats. Sealed (LAB)\n" +
             "weapons are rejected.\n\n" +
-            "COSTS\n" +
             "  1,000 Col + 3x Mithril Ingot per +1 attempt.\n" +
             "  Cap: +7 (this tab; higher requires Crystallite tab F5).\n\n" +
             "TIPS\n" +
@@ -5798,16 +5016,13 @@ public static class PlayerGuideContent
             "│ Cost: 5,000 Col + 3x Crystallite Ingot per +1\n" +
             "│ Cap: +10 (the new game-wide ceiling)\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Top-tier weapon enhancement using Crystallite Ingot — the\n" +
             "F48 Frost Dragon signature drop. Accepts Epic and Legendary\n" +
             "weapons; raises the enhancement cap from the legacy +6 limit\n" +
             "to a new game-wide +10 ceiling.\n\n" +
-            "USAGE\n" +
             "Open Lisbeth (F48 Lindarth) and press F5 to switch to the\n" +
             "Crystallite Ingot Enhance tab. Pick an Epic or Legendary\n" +
             "weapon. Sealed (LAB) and Divine weapons are rejected.\n\n" +
-            "COSTS\n" +
             "  5,000 Col + 3x Crystallite Ingot per +1 attempt.\n" +
             "  Cap: +10 (game-wide).\n\n" +
             "TIPS\n" +
@@ -5828,19 +5043,16 @@ public static class PlayerGuideContent
             "│ Cost: scales by rarity — see table\n" +
             "│ Effect: re-rolls Bonuses; preserves enhance + awakening\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Reforge re-rolls a weapon's random Bonuses within its rarity\n" +
             "tier band. Enhance level, Awakening level, refinement slots,\n" +
             "and sockets are all preserved — only the random stat lines\n" +
             "change. The new roll is independent of the preview shown\n" +
             "before confirmation; accepting locks in whatever the seed\n" +
             "produces.\n\n" +
-            "USAGE\n" +
             "Open Lisbeth (F48 Lindarth), press F4 to switch to Reforge.\n" +
             "Pick an eligible weapon. Detail panel shows current bonuses\n" +
             "and a deterministic preview roll. Press Confirm; a second\n" +
             "modal restates before/after and asks for explicit consent.\n\n" +
-            "COSTS\n" +
             "  Common      5,000 Col   + 3x Mithril Ingot\n" +
             "  Uncommon   25,000 Col   + 3x Mithril Ingot\n" +
             "  Rare      100,000 Col   + 3x Mithril Ingot\n" +
@@ -5867,13 +5079,11 @@ public static class PlayerGuideContent
             "│ Hotkey: \\ (backslash)\n" +
             "│ Scope: Bow basic-attack + sword skills with Range > 1\n" +
             "└─\n\n" +
-            "SUMMARY\n" +
             "Bows and long-range sword skills now route through a\n" +
             "dedicated reticle — press \\ on the map to enter aim mode,\n" +
             "move the reticle with arrow keys, press Enter to fire. A\n" +
             "right-edge sidebar shows target coords, distance, and\n" +
             "in-range status while aiming.\n\n" +
-            "USAGE\n" +
             "  \\ (backslash)   Enter reticle (Bow basic only).\n" +
             "  F1-F4           Activate sword skill — auto-opens reticle\n" +
             "                  if the skill's Range > 1; bump-targets\n" +
@@ -5881,7 +5091,6 @@ public static class PlayerGuideContent
             "  Arrows / WASD   Move the reticle.\n" +
             "  Enter           Fire on the targeted tile.\n" +
             "  Esc             Exit aim without firing.\n\n" +
-            "EFFECTS\n" +
             "  Bow basic — same damage formula as melee, gated by FOV /\n" +
             "  line-of-sight and weapon range. AoE and Counter sword\n" +
             "  skills skip the reticle (no single-target).\n\n" +
@@ -6090,8 +5299,11 @@ public static class PlayerGuideContent
             "craft line out of Horunka village.\n" +
             "\n" +
             "Monument of Swordsmen sits in the south plaza park — a tall\n" +
-            "BrightYellow M tile. Step on it to open the species kill log\n" +
-            "and pick the active title shown on your name plate.\n" +
+            "BrightYellow M tile. Step on it to open the unified Milestones\n" +
+            "view (10 category tabs: Combat / Floor / Life Skills / Story /\n" +
+            "Canon / Discovery / Equipment / Karma / Death / Collectables)\n" +
+            "and pick the active title shown on your name plate. Shift+M\n" +
+            "from anywhere on the map opens the same dialog.\n" +
             "\n" +
             "Town Guard outlaw response: drop your karma to -50 or below\n" +
             "and crossing back into the plaza spawns 3-5 Lv20 BrightBlue G\n" +

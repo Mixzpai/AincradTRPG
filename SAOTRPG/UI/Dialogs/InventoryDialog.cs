@@ -20,7 +20,7 @@ public static class InventoryDialog
     private enum SortMode { Default, ByType, ByRarity, ByName, ByValue }
     private static readonly string[] SortLabels = { "Default", "Type", "Rarity", "Name", "Value" };
 
-    // Bundle 11 — category filter tabs. 1-5 cycles selection; All = default.
+    // Category filter tabs. 1-5 cycles selection; All = default.
     private enum FilterMode { All, Weapons, Armor, Materials, Consumables }
     private static readonly string[] FilterLabels = { "All", "Weapons", "Armor", "Materials", "Consumables" };
 
@@ -72,8 +72,8 @@ public static class InventoryDialog
             X = Pos.AnchorEnd(18), Y = 0, Width = 17, ColorScheme = ColorSchemes.Dim,
         };
 
-        // Bundle 11 — filter tab strip on row 1. Label rebuilt on every tab
-        // switch so the active tab reads bright while the rest dim.
+        // Filter tab strip on row 1. Label rebuilt on every tab switch so the
+        // active tab reads bright while the rest dim.
         var tabLabel = new Label
         {
             Text = BuildTabStrip(currentFilter),
@@ -117,9 +117,8 @@ public static class InventoryDialog
         }
         RefreshItemList();
 
-        // Bundle 13 (Item 10) — list shrinks to make room for 4-row compare panel below detail.
-        // Old footprint: Height = Dim.Fill(6) + detail(1) + compare(1) + sortBtn/hint = 6 anchor rows.
-        // New footprint: Height = Dim.Fill(9) + detail(1) + compare(4) + sortBtn/hint = 9 anchor rows.
+        // List shrinks to make room for 4-row compare panel below detail.
+        // Anchor rows: Dim.Fill(9) + detail(1) + compare(4) + sortBtn/hint.
         var listView = new ListView
         {
             X = rightX, Y = 2, Width = Dim.Fill(1), Height = Dim.Fill(9),
@@ -133,7 +132,7 @@ public static class InventoryDialog
             Text = "", X = 1, Y = Pos.AnchorEnd(7),
             Width = Dim.Fill(1), Height = 1,
         };
-        // Bundle 13 (Item 10) — 4-row auto-on-selection compare panel.
+        // 4-row auto-on-selection compare panel.
         var compareLabel = new Label
         {
             Text = "", X = 1, Y = Pos.AnchorEnd(6),
@@ -257,7 +256,7 @@ public static class InventoryDialog
 
             if (item is EquipmentBase eqItem)
             {
-                // Bundle 13 (Item 10) — 4-row compare panel auto-updates on selection.
+                // 4-row compare panel auto-updates on selection.
                 // Empty array = no equipped counterpart (or non-equipment) → hide entirely.
                 var lines = GearCompare.BuildMultiLineDiffForPlayer(player, eqItem);
                 if (lines.Length == 0)
@@ -301,8 +300,8 @@ public static class InventoryDialog
             RefreshAfterChange();
         };
 
-        // Bundle 11 — bare 1-5 cycle filter category. Shift+1-5 stays as
-        // quickbar-bind (next handler), so we must reject any modifier here.
+        // Bare 1-5 cycles filter category. Shift+1-5 stays as quickbar-bind
+        // (next handler), so we must reject any modifier here.
         listView.KeyDown += (s, e) =>
         {
             if (e.IsShift || (e.KeyCode & KeyCode.CtrlMask) != 0
@@ -322,7 +321,7 @@ public static class InventoryDialog
             e.Handled = true;
         };
 
-        // 'L' = Lore: open canon citation popup for selected item. Bundle 11.
+        // 'L' = Lore: open canon citation popup for selected item.
         // Listed before the Shift+N handler so unmodified L is captured first.
         listView.KeyDown += (s, e) =>
         {
@@ -377,8 +376,8 @@ public static class InventoryDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // Bundle 11 — render the 5-tab filter strip. Active tab uppercase + bracketed,
-    // others dimmed by surrounding spaces. Single Label so we don't fight focus.
+    // Render the 5-tab filter strip. Active tab uppercase + bracketed, others
+    // dimmed by surrounding spaces. Single Label so we don't fight focus.
     private static string BuildTabStrip(FilterMode active)
     {
         var sb = new System.Text.StringBuilder();

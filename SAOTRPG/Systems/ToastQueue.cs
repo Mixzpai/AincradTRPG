@@ -28,7 +28,7 @@ public static class ToastQueue
     public const int LifetimeMs = FadeInMs + HoldMs + FadeOutMs;
     private const int CoalesceWindowMs = 500;
 
-    // Cap queue to keep post-boss salvos tolerable (per research §6 anti-pattern).
+    // Cap queue to keep post-boss salvos tolerable.
     private const int MaxQueued = 5;
 
     public class Toast
@@ -129,4 +129,7 @@ public static class ToastQueue
 
     public static void EnqueueBestiaryFirst(string speciesName) =>
         Enqueue($"New species: {speciesName}", Color.Cyan, ToastCategory.BestiarySpeciesFirst);
+
+    public static void EnqueueProgress(string label, int count, int threshold) =>
+        Enqueue($"{label}: {count}/{threshold}", Color.BrightCyan, ToastCategory.StatUp);
 }

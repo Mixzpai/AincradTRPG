@@ -24,7 +24,6 @@ public partial class MapView
     private LookSort _lookSort = LookSort.Dist;
 
     public bool IsLookModeActive => _lookModeActive;
-    public event Action<bool>? LookModeChanged;
 
     public void EnterLookMode(List<Monster> targets)
     {
@@ -34,7 +33,6 @@ public partial class MapView
         _lookModeActive = true;
         // Default sort on entry → closest under cursor, not GetVisibleMonsters order.
         ApplySort(preserveSelection: false);
-        LookModeChanged?.Invoke(true);
         SetNeedsDraw();
     }
 
@@ -118,7 +116,6 @@ public partial class MapView
         _lookModeActive = false;
         _lookTargets.Clear();
         _lookIndex = 0;
-        LookModeChanged?.Invoke(false);
         SetNeedsDraw();
     }
 
@@ -417,7 +414,7 @@ public partial class MapView
         };
 
         int dist = Math.Max(Math.Abs(m.X - _player.X), Math.Abs(m.Y - _player.Y));
-        // Wave 2 — tweened HP for smooth movement when the looked-at mob takes damage.
+        // Tweened HP for smooth movement when the looked-at mob takes damage.
         int displayedHp = GetDisplayedMonsterHp(m.Id, m.CurrentHealth);
         int hpPct = m.MaxHealth > 0 ? displayedHp * 100 / m.MaxHealth : 0;
         string hpBar = BarBuilder.BuildGradient(displayedHp, m.MaxHealth, 12);

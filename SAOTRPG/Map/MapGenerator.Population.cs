@@ -488,6 +488,216 @@ public static partial class MapGenerator
         ((f, r) => f == 75 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('P', Color.Red) { Name = "PoH's Herald",
              Dialogue = "PoH is always listening. When you have earned enough crimson, come back — we'll be watching." }),
+
+        // ── IF Element Research questgivers — kill-count quests on IF anchor floor bands.
+
+        // F5 Karluin cursed-ruins / Pitch-Black Cathedral.
+        ((f, r) => f == 5 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('A', Color.BrightMagenta) { Name = "Archivist Fuscan",
+             Dialogue = "The catacomb dust is the founders' last note. Bring proof of ten cleared chambers." }),
+        ((f, r) => f == 5 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('M', Color.BrightCyan) { Name = "Relic-Keeper Mirine",
+             Dialogue = "Twelve seals on the lower nave. Break them and the cipher closes." }),
+        ((f, r) => f == 5 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('P', Color.Gray) { Name = "Sage Pellan of Karluin",
+             Dialogue = "The undying walk in eight. Take the sample only the fall provides." }),
+        ((f, r) => f == 5 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('V', Color.BrightYellow) { Name = "Cathedral Scribe Vela",
+             Dialogue = "The Colossus's lesser kin echo through the catacombs. Quiet ten and the great echo can be measured." }),
+        ((f, r) => f == 5 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('R', Color.White) { Name = "Ruins-Cipher Aelis",
+             Dialogue = "The cathedral signs the night's work in eight kills. Bring the tally." }),
+
+        // F10 wetlands / Kagachi the Samurai Lord.
+        ((f, r) => f == 10 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('S', Color.BrightYellow) { Name = "Shrine Maiden Suzaha",
+             Dialogue = "The marsh-tide rises and falls with element-flow. Twelve quiet kills give a clean reading." }),
+        ((f, r) => f == 10 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('I', Color.Gray) { Name = "Ronin-Scholar Imai",
+             Dialogue = "The shrine logs ten swords broken for every binding. Make ten and the log fills itself." }),
+        ((f, r) => f == 10 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('J', Color.BrightCyan) { Name = "Element-Hermit Joze",
+             Dialogue = "Eight glow-creatures lit these wetlands. I want eight returned to the index." }),
+
+        // F14 dense forest / IF Integral Series anchor.
+        ((f, r) => f == 14 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('L', Color.BrightGreen) { Name = "Druid-Researcher Lael",
+             Dialogue = "The canopy holds the first IF binding. Twelve deep-wood kills renew it." }),
+        ((f, r) => f == 14 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('C', Color.Green) { Name = "Hermit Cassis",
+             Dialogue = "Ten of the canopy's strangest. The census-line balances or it does not." }),
+        ((f, r) => f == 14 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('Y', Color.BrightYellow) { Name = "Shrine-Naturalist Yorin",
+             Dialogue = "Ten clearings prove the deep roots still remember." }),
+        ((f, r) => f == 14 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('P', Color.BrightGreen) { Name = "Forest-Element Hermit Pell",
+             Dialogue = "The grove quiets at ten, no fewer. Integral listens only to a quiet grove." }),
+
+        // F25 twilight forest ridge / IF Nox Series anchor.
+        ((f, r) => f == 25 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('O', Color.BrightMagenta) { Name = "Twilight-Sage Orune",
+             Dialogue = "The Two-Headed Giant's shadow carries Nox residue. Twelve fall and it fixes." }),
+        ((f, r) => f == 25 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('L', Color.Gray) { Name = "Elf-Blooded Scholar Liraen",
+             Dialogue = "The dusk-blooms grow only where Nox hangs heavy. Ten kills clear the canopy enough." }),
+        ((f, r) => f == 25 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('K', Color.BrightCyan) { Name = "Twilight-Wright Kerel",
+             Dialogue = "The giant's pulse runs the ridge. Ten kills steady the line for the reading." }),
+        ((f, r) => f == 25 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('T', Color.BrightYellow) { Name = "Forest-Cleric Thol",
+             Dialogue = "Eight dread-walkers haunt this ridge. Their fall closes the census." }),
+        ((f, r) => f == 25 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('S', Color.BrightMagenta) { Name = "Twilight-Cipher Senne",
+             Dialogue = "Ten of the lesser dread fall, and the audit closes." }),
+
+        // F61-65 infernal era / IF Rosso Series anchor (Crimson Forneus).
+        ((f, r) => f == 61 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('T', Color.BrightRed) { Name = "Pyromancer-Archivist Tassel",
+             Dialogue = "Forneus's ash hangs in the fog-lake. Twelve kills clear it for a sample." }),
+        ((f, r) => f == 61 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('P', Color.Red) { Name = "Fog-Cult Researcher Pelm",
+             Dialogue = "Selmburg drift carries Rosso residue. Ten kills steady the line." }),
+        ((f, r) => f == 61 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('R', Color.BrightYellow) { Name = "Crimson-Anchorite Renja",
+             Dialogue = "Eight kills are enough to read the lesser pulse against Rosso." }),
+        ((f, r) => f == 62 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('V', Color.BrightRed) { Name = "Smoke-Reader Vail",
+             Dialogue = "Ten of the fog-walkers must fall to break the lesser seal." }),
+        ((f, r) => f == 62 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('V', Color.Red) { Name = "Ash-Cantor Velin",
+             Dialogue = "Ten infernal-walkers must fall to close the chant for the season." }),
+        ((f, r) => f == 63 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('C', Color.BrightYellow) { Name = "Ashbinder Cren",
+             Dialogue = "The ash carries residue from every infernal element. Ten kills clean it." }),
+        ((f, r) => f == 63 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('R', Color.Red) { Name = "Volcanic Hermit Rust",
+             Dialogue = "The infernal spire pulses with Rosso when the heat is steady. Ten kills steady it." }),
+        ((f, r) => f == 64 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('D', Color.BrightMagenta) { Name = "Crimson-Cult Scholar Devra",
+             Dialogue = "Eight of Forneus's lesser kin must fall before the ash-line clears." }),
+        ((f, r) => f == 64 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('H', Color.BrightRed) { Name = "Forge-Cult Reader Hael",
+             Dialogue = "The obsidian fields run with Rosso when the crater settles. Ten kills settle it." }),
+        ((f, r) => f == 65 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('J', Color.BrightYellow) { Name = "Volcano-Cult Mage Jiren",
+             Dialogue = "The caldera pulses every dozen ash-falls. Twelve kills sync the beat." }),
+        ((f, r) => f == 65 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('S', Color.Red) { Name = "Caldera Anchorite Sym",
+             Dialogue = "Twelve must fall before the caldera silences enough to audit." }),
+        ((f, r) => f == 65 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('T', Color.Yellow) { Name = "Forge-Sage Tehan",
+             Dialogue = "Twelve fall before the anvil's call holds steady. The forge does not lie." }),
+
+        // F84-90 demigod era / IF Yasha & Gaou anchors.
+        ((f, r) => f == 84 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('L', Color.BrightCyan) { Name = "Yasha-Anchorite Lien",
+             Dialogue = "The spiral on this floor is Yasha's index point. Ten failed spirals close it." }),
+        ((f, r) => f == 84 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('I', Color.BrightMagenta) { Name = "Demigod-Scholar Iren",
+             Dialogue = "The storm-bond on this floor is the rarest in the index. Ten kills calm it." }),
+        ((f, r) => f == 85 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('A', Color.BrightCyan) { Name = "Demigod-Reader Avos",
+             Dialogue = "Eight corrupted-walkers must fall before the pulse stabilises for a reading." }),
+        ((f, r) => f == 85 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('S', Color.BrightYellow) { Name = "Element-Prophet Sorin",
+             Dialogue = "The prophecy closes only when twelve fall on the floor of its bind." }),
+        ((f, r) => f == 86 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('Q', Color.BrightYellow) { Name = "Gaou-Anchorite Quen",
+             Dialogue = "Ten kills break the lesser seal between Yasha and Gaou. Both indices open." }),
+        ((f, r) => f == 87 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('N', Color.Yellow) { Name = "Gaou-Reader Nimue",
+             Dialogue = "Twelve corruption-bearers must fall on this floor. The cipher takes its last entry." }),
+        ((f, r) => f == 87 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('R', Color.BrightCyan) { Name = "Gaou-Sealer Roen",
+             Dialogue = "Eight of the radiance-eaters must fall before the audit can close." }),
+        ((f, r) => f == 88 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('K', Color.BrightCyan) { Name = "Voidbinder Kael-Sora",
+             Dialogue = "Twelve void-walkers fall before the audit closes on the apex floors." }),
+        ((f, r) => f == 89 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('U', Color.BrightYellow) { Name = "Apex-Reader Nuvo",
+             Dialogue = "The apex pulse runs once a turn at this altitude. Twelve kills steady it." }),
+        ((f, r) => f == 89 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('M', Color.White) { Name = "Ascendant-Sage Maren",
+             Dialogue = "Ten of the ascendant must fall before the trial holds clean." }),
+        ((f, r) => f == 90 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('C', Color.BrightYellow) { Name = "Garden-Sage Calor",
+             Dialogue = "The garden flowers bloom by Gaou-element flow. Ten kills steady it for the catalogue." }),
+
+        // ── HF Hollow Mission gap-fillers — kill-count quests on F77-F97 gap floors.
+
+        // F77 hill-zone, Crystalize Claw band.
+        ((f, r) => f == 77 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('A', Color.BrightCyan) { Name = "Hollow-Knight Aron",
+             Dialogue = "Twelve fall on the hills before the Claw stops feeding. Make twelve quiet." }),
+        ((f, r) => f == 77 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('K', Color.Gray) { Name = "Hill-Hunter Kessen",
+             Dialogue = "The hill-zone needs ten quiet to break the Claw's lesser kin." }),
+        ((f, r) => f == 77 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('N', Color.BrightMagenta) { Name = "Crystal-Veil Anya",
+             Dialogue = "Eight crystal-walkers fall to break the Claw's outer veil." }),
+
+        // F82 nightmare swamp.
+        ((f, r) => f == 82 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('V', Color.Red) { Name = "Crypt-Knight Vorr",
+             Dialogue = "Fifteen of the swamp's risen must fall before I can carry the lantern further." }),
+        ((f, r) => f == 82 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('M', Color.Gray) { Name = "Undead-Hunter Mosca",
+             Dialogue = "Twelve fen-stalkers fall to clear the lantern's last circle." }),
+
+        // F86 corrupted abyss / King of Skeleton band.
+        ((f, r) => f == 86 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('K', Color.White) { Name = "Bone-Champion Karth",
+             Dialogue = "Twelve of the lesser court must fall before the King will hold court." }),
+        ((f, r) => f == 86 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('W', Color.Gray) { Name = "Skeleton-Sage Wrein",
+             Dialogue = "Ten bone-walkers must fall before the pulse steadies enough to walk past." }),
+
+        // F87 corrupted abyss / Radiance Eater band.
+        ((f, r) => f == 87 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('J', Color.BrightRed) { Name = "Radiance-Hunter Jarn",
+             Dialogue = "Twelve of the lesser eaters must fall before the audit closes on the great one." }),
+        ((f, r) => f == 87 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('P', Color.BrightMagenta) { Name = "Lightless-Cleric Pir",
+             Dialogue = "Ten of the lesser circle must fall before the abyss accepts the climber's mark." }),
+
+        // F89 corrupted abyss / Murderer Fang band.
+        ((f, r) => f == 89 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('E', Color.Red) { Name = "Fang-Hunter Eden",
+             Dialogue = "Twelve fall before the Fang's circle quiets. The audit is the only path past." }),
+        ((f, r) => f == 89 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('S', Color.BrightCyan) { Name = "Veil-Breaker Sahn",
+             Dialogue = "Ten veil-walkers must fall before the breach holds open long enough to pass." }),
+
+        // F93-F94 crystal void.
+        ((f, r) => f == 93 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('A', Color.BrightCyan) { Name = "Crystal-Warden Aelis",
+             Dialogue = "Fifteen fall in the crystal cavern. Reflections multiply only true work." }),
+        ((f, r) => f == 93 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('V', Color.White) { Name = "Mirror-Knight Vasa",
+             Dialogue = "Twelve mirror-walkers must fall before the path through the void steadies." }),
+        ((f, r) => f == 93 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('I', Color.BrightMagenta) { Name = "Void-Cantor Iset",
+             Dialogue = "Twelve void-singers must fall before the chant breaks." }),
+        ((f, r) => f == 94 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('P', Color.Yellow) { Name = "Reflection-Hunter Pollin",
+             Dialogue = "Ten reflections must be cut down before the path opens to the next chamber." }),
+        ((f, r) => f == 94 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('R', Color.BrightCyan) { Name = "Crystal-Cantor Reso",
+             Dialogue = "Ten of the resonant must fall to quiet the chamber for passage." }),
+
+        // F96-F97 ruby palace approach / divine ascension.
+        ((f, r) => f == 96 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('A', Color.BrightYellow) { Name = "Heathcliff-Loyalist Ashe",
+             Dialogue = "Fifteen kills clear the path before the throne. The Commander would have wanted no less." }),
+        ((f, r) => f == 96 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('R', Color.White) { Name = "Cloud-Palace Sentinel Rion",
+             Dialogue = "Twelve fall in the cloud halls. The sentinels do not pass cowards through." }),
+        ((f, r) => f == 97 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('K', Color.BrightRed) { Name = "Deicide-Cult Reader Kolm",
+             Dialogue = "Twelve fall before the audit can close. The cult will not write you in until the count is clean." }),
+        ((f, r) => f == 97 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
+         () => new WorldSpawn('H', Color.Yellow) { Name = "Throne-Approach Vassal Hesper",
+             Dialogue = "Ten fall on the last sky-stair. The vassals walk only with proven climbers." }),
     };
 
     // Walks FloorNpcSpawns in order, placing each NPC whose gate passes.
@@ -498,9 +708,9 @@ public static partial class MapGenerator
             if (!spec.Gate(floor, rooms)) continue;
             var npc = spec.Create();
 
-            // Bundle 13 (B/4b) — Lisbeth on F48 Lindarth spawns at deterministic Forge
-            // interior coord (not random), routed through TryPlaceEntityNear so an
-            // occupied tile spirals to the nearest walkable neighbor.
+            // Lisbeth on F48 Lindarth spawns at deterministic Forge interior coord
+            // (not random), routed through TryPlaceEntityNear so an occupied tile
+            // spirals to the nearest walkable neighbor.
             if (floor == 48 && npc.Name == "Lisbeth")
             {
                 int fx = rooms[0].CenterX + LindarthForgeOffsetX;

@@ -16,11 +16,10 @@ public sealed class SpecialAreaPass : IGenerationPass
         ctx.SpawnX = spawnX;
         ctx.SpawnY = spawnY;
 
-        // Non-town floors must spawn the player inside the disk; map center should
-        // always be inside (the disk is centered on bbox), but keep the assert as a
-        // tripwire if FloorMask.Build is ever changed.
+        // Spawn must land inside the disk; map center should always be inside (the disk
+        // is centered on bbox), but keep the assert as a tripwire if FloorMask.Build changes.
         System.Diagnostics.Debug.Assert(
-            FloorScale.IsHandBuiltTownFloor(ctx.FloorNumber) || ctx.IsInsideCircle(spawnX, spawnY),
+            ctx.IsInsideCircle(spawnX, spawnY),
             $"SpecialAreaPass: spawn ({spawnX},{spawnY}) outside disk on F{ctx.FloorNumber}");
 
         if (ctx.FloorNumber == 1)
@@ -31,8 +30,8 @@ public sealed class SpecialAreaPass : IGenerationPass
         }
         else if (ctx.FloorNumber == 48)
         {
-            // Bundle 13 (B/4b) — F48 Lindarth: Lisbeth's smithing hub overrides the default
-            // wilderness town. Early-return after stamping (no Ruins decay; town is prefab).
+            // F48 Lindarth: Lisbeth's smithing hub overrides the default wilderness town.
+            // Early-return after stamping (no Ruins decay; town is prefab).
             var townRect = MapGenerator.BuildLindarth(map, ctx.Rooms, spawnX, spawnY);
             map.SafeZone = townRect;
             ctx.Rooms.Insert(0, new Room(spawnX - 4, spawnY - 4, 9, 9));
@@ -53,7 +52,7 @@ public sealed class SpecialAreaPass : IGenerationPass
             MapGenerator.BuildTown(map, spawnX, spawnY, ctx.Rooms);
         }
 
-        // Bundle 5: Ruins biome decays room walls into overgrowth. F1 is immune (town prefab is load-bearing).
+        // Ruins biome decays room walls into overgrowth. F1 is immune (town prefab is load-bearing).
         if (ctx.Biome == BiomeType.Ruins && ctx.FloorNumber != 1)
             ApplyRuinsDecay(ctx);
     }

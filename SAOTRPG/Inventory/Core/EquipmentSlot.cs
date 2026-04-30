@@ -13,6 +13,6 @@ public enum EquipmentSlot
     Bracelet,   // Wrist accessory
     Necklace,   // Neck accessory
     OffHand,    // Shield slot
-    // Bundle 10 — pickaxe + future utility tools.
+    // Pickaxe + future utility tools.
     Tool
 }

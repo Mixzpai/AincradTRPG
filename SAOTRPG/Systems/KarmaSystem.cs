@@ -13,14 +13,15 @@ public static class KarmaSystem
     // Canonical event deltas (consts so quest/combat hooks match guide).
     public const int DeltaPkKill          = +2;  // PKer (hostile human)
     public const int DeltaPeacefulKill    = -5;  // non-hostile creature
-    public const int DeltaNpcKill         = -20; // named NPC
     public const int DeltaQuestComplete   = +3;
-    public const int DeltaSteal           = -5;
     public const int DeltaLeaveGuild      = -3;
     public const int DeltaBlackCatsFall   = -5;  // Moonlit Black Cats dissolution
 
     // Karma tier used by dialogue/shop/spawn gating.
     public enum Tier { Honorable, Neutral, Shady, Outlaw }
+
+    // Fires after Adjust applies a non-zero clamp delta. (oldKarma, newKarma, oldTier, newTier).
+    public static event Action<int, int, Tier, Tier>? KarmaChanged;
 
     // Hostile-human mob name fragments. Kills here GAIN karma.
     private static readonly string[] PkerFragments =
@@ -78,6 +79,8 @@ public static class KarmaSystem
 
         if (beforeTier != afterTier)
             log?.LogSystem($"  ** Karma threshold crossed: you are now {TierLabel(player.Karma)}. **");
+
+        KarmaChanged?.Invoke(before, player.Karma, beforeTier, afterTier);
     }
 
     // Mob → karma delta. Called from HandleMonsterKill.

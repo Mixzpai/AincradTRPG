@@ -71,5 +71,4 @@ public class TerminalGuiInventoryLogger : IInventoryLogger
 
     // ── General messages ────────────────────────────────────────────
     public void LogError(string message) => _log.Log($"[Error] {message}");
-    public void LogInfo(string message)  => _log.Log(message);
 }

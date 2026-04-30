@@ -10,12 +10,12 @@ public enum LifeSkillType
     Walking,
     Running,
     Eating,
-    // FB-072 — haggling: XP per shop txn; buy-discount/sell-bonus mult
-    // stacks multiplicatively over karma shop mult.
+    // Haggling: XP per shop txn; buy-discount/sell-bonus mult stacks multiplicatively
+    // over karma shop mult.
     Bargaining,
-    // FB-077 — swim: XP per water tile; gates shallow/deep; slow below threshold.
+    // Swimming: XP per water tile; gates shallow/deep; slow below threshold.
     Swimming,
-    // Bundle 10 — pickaxe-strike XP. Iron=4, Mithril=9, Divine=18 per strike.
+    // Pickaxe-strike XP. Iron=4, Mithril=9, Divine=18 per strike.
     // Milestones at 10/25/50/99 ramp drop chance, durability damage reduction, bonus rolls.
     Mining,
 }
@@ -140,7 +140,7 @@ public class LifeSkillSystem
         }
     }
 
-    // FB-072 — buy multiplier: L10=0.97, L25=0.94, L50=0.90, L99=0.85 (cap).
+    // Buy multiplier: L10=0.97, L25=0.94, L50=0.90, L99=0.85 (cap).
     // Stacks multiplicatively with karma shop mult in ShopDialog.
     public float BargainingBuyMultiplier()
     {
@@ -156,7 +156,7 @@ public class LifeSkillSystem
     public static float BargainingDiscount(SAOTRPG.Entities.Player? player)
         => player?.LifeSkills.BargainingBuyMultiplier() ?? 1.0f;
 
-    // FB-077 — Swimming level. Shallow L1+, Deep L25+. Slow tick L<10/L<50.
+    // Swimming level. Shallow L1+, Deep L25+. Slow tick L<10/L<50.
     public int SwimmingLevel => Skills[LifeSkillType.Swimming].Level;
 
     public int SleepMaxHpBonus()
@@ -202,7 +202,7 @@ public class LifeSkillSystem
     public bool SleepFasterRegen =>
         Skills[LifeSkillType.Sleep].Level >= MaxLevel;
 
-    // Bundle 10 — Mining tier helpers. Drop-chance bonus tiered: 0/5/10/15/25.
+    // Mining tier helpers. Drop-chance bonus tiered: 0/5/10/15/25.
     public int MiningOreDropBonusPercent()
     {
         int lvl = Skills[LifeSkillType.Mining].Level;

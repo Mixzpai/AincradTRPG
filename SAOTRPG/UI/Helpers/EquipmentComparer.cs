@@ -9,60 +9,6 @@ namespace SAOTRPG.UI.Helpers;
 // Used in the inventory dialog to show what you'd gain/lose by equipping an item.
 public static class EquipmentComparer
 {
-    // Inventory item vs currently-equipped in matching slot → "ATK: 5→12 (+7)  DEF: 3→2 (-1)".
-    // Appends ▲ UPGRADE / ▼ DOWNGRADE by net diff. Empty when no comparison possible.
-    public static string BuildComparison(Player player, EquipmentBase item)
-    {
-        var slot = ResolveSlot(item);
-        if (slot == null) return "";
-
-        var equipped = player.Inventory.GetEquipped(slot.Value);
-
-        var newStats = SumStats(item);
-        var oldStats = equipped != null ? SumStats(equipped) : new Dictionary<StatType, int>();
-
-        // Build diff strings for each stat that differs
-        var parts = new List<string>();
-
-        foreach (var (stat, newVal) in newStats)
-        {
-            int oldVal = oldStats.GetValueOrDefault(stat, 0);
-            if (newVal != oldVal)
-            {
-                int diff = newVal - oldVal;
-                string sign = diff > 0 ? $"+{diff}" : $"{diff}";
-                string label = ShortStatName(stat);
-                parts.Add($"{label}: {oldVal}→{newVal} ({sign})");
-            }
-        }
-
-        // Check for stats the old item had that the new one doesn't
-        if (equipped != null)
-        {
-            foreach (var (stat, oldVal) in oldStats)
-            {
-                if (oldVal != 0 && !newStats.ContainsKey(stat))
-                {
-                    string label = ShortStatName(stat);
-                    parts.Add($"{label}: {oldVal}→0 (-{oldVal})");
-                }
-            }
-        }
-
-        // Durability comparison
-        if (equipped != null)
-            parts.Add($"DUR: {equipped.ItemDurability}→{item.ItemDurability}");
-
-        if (parts.Count == 0)
-            return equipped == null ? "(slot empty)" : "";
-
-        string comparison = string.Join("  ", parts);
-
-        int netDiff = CalcNetDiff(newStats, oldStats);
-        string verdict = netDiff > 0 ? " ▲ UPGRADE" : netDiff < 0 ? " ▼ DOWNGRADE" : "";
-        return comparison + verdict;
-    }
-
     // Comparison verdict — used for color-coding in the UI.
     public enum CompareResult { Neutral, Upgrade, Downgrade }
 
@@ -122,7 +68,4 @@ public static class EquipmentComparer
         }
         return stats;
     }
-
-    // Short display names for stat types — delegates to shared StatFormatter.
-    private static string ShortStatName(StatType type) => StatFormatter.Short(type);
 }

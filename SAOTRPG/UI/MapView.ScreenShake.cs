@@ -2,7 +2,7 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.UI;
 
-// Grid-native viewport shake (FB-453). Tier-1 = 3f × 33ms × ±1 cell,
+// Grid-native viewport shake. Tier-1 = 3f × 33ms × ±1 cell,
 // tier-2 = 3f × 40ms × ±2 cell. Ignore incoming if active + same-or-lower tier.
 public partial class MapView
 {

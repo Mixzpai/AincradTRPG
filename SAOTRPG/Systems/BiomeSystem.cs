@@ -84,14 +84,18 @@ public static class BiomeSystem
         14 => BiomeType.Forest,      // dense forest
         15 => BiomeType.Volcanic,    // crimson era peak
 
+        // Canon-anchored per-floor overrides inside otherwise-banded ranges.
+        22 => BiomeType.Forest,      // Coral Village — lakeside forest, Forest of Wandering, Yui found here
+        48 => BiomeType.Ice,         // Lindarth — ice canyon, Lisbeth's smithy, snowstorms
+
         // Cycle through biomes in 5-floor brackets for mid-game
         >= 16 and <= 20 => BiomeType.Ice,       // crystal era
-        >= 21 and <= 25 => BiomeType.Dark,      // twilight era
+        >= 21 and <= 25 => BiomeType.Dark,      // twilight era (F22 overridden above)
         >= 26 and <= 30 => BiomeType.Forest,    // jungle era
         >= 31 and <= 35 => BiomeType.Ruins,     // fortress era
         >= 36 and <= 40 => BiomeType.Volcanic,  // volcanic era
         >= 41 and <= 45 => BiomeType.Aquatic,   // ocean era
-        >= 46 and <= 50 => BiomeType.Dark,      // nightmare era
+        >= 46 and <= 50 => BiomeType.Dark,      // nightmare era (F48 overridden above)
         >= 51 and <= 55 => BiomeType.Forest,    // ancient forest
         >= 56 and <= 60 => BiomeType.Ruins,     // mountain era
         >= 61 and <= 65 => BiomeType.Volcanic,  // infernal era

@@ -92,16 +92,6 @@ public static class ColorSchemes
 
     // ── Menu-specific palettes ───────────────────────────────────────
 
-    // Menu frame border — warm yellow.
-    public static readonly ColorScheme MenuFrame = new()
-    {
-        Normal   = Gfx.Attr(Color.Yellow, Color.Black),
-        Focus    = Gfx.Attr(Color.Yellow, Color.Black),
-        HotNormal = Gfx.Attr(Color.Yellow, Color.Black),
-        HotFocus  = Gfx.Attr(Color.Yellow, Color.Black),
-        Disabled  = Gfx.Attr(Color.DarkGray, Color.Black)
-    };
-
     // Menu button — gray idle, bright gold on focus.
     public static readonly ColorScheme MenuButton = new()
     {

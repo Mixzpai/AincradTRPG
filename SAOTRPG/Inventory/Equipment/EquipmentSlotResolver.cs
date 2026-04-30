@@ -13,25 +13,6 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterDefaultMappings();
     }
 
-    // Legal OffHand: shields always; 1H swords only after Dual Blades unlock; IsDualWieldPaired always (FD pre-tuned).
-    // Mirrors Inventory.Equip auto-route logic so UI/validation can ask without duplication.
-    public bool CanGoInOffHand(EquipmentBase equipment)
-    {
-        var resolved = ResolveSlot(equipment);
-        if (resolved == EquipmentSlot.OffHand) return true;  // shields, bucklers, etc.
-        if (equipment is Weapon paired && paired.IsDualWieldPaired)
-        {
-            return true;
-        }
-        if (equipment is Weapon w
-            && string.Equals(w.WeaponType, "One-Handed Sword", StringComparison.OrdinalIgnoreCase)
-            && SAOTRPG.Systems.Skills.UniqueSkillSystem.HasDualBlades())
-        {
-            return true;
-        }
-        return false;
-    }
-
     public EquipmentSlot? ResolveSlot(EquipmentBase equipment)
     {
         if (string.IsNullOrWhiteSpace(equipment.EquipmentType))
@@ -105,7 +86,7 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterMany(EquipmentSlot.Necklace, "necklace", "pendant", "amulet", "chain");
         RegisterMany(EquipmentSlot.OffHand, "shield", "buckler", "kite shield", "tower shield");
 
-        // Bundle 10 — Tool slot for pickaxes (mining bump-action).
+        // Tool slot for pickaxes (mining bump-action).
         RegisterMapping("pickaxe", EquipmentSlot.Tool);
     }
 

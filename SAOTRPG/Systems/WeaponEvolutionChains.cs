@@ -78,10 +78,13 @@ public static class WeaponEvolutionChains
     public static ChainStep? Get(string? defId)
         => defId != null && Chains.TryGetValue(defId, out var step) ? step : null;
 
-    public static bool IsChainWeapon(string? defId)
-        => defId != null && Chains.ContainsKey(defId);
-
-    // Bundle 13 — Slicing Stone alt-path map.
+    // Slicing Stone alt-path map.
+    // STUB-DEFERRED: Slicing Stone alt-evolution UI feature deferred per DEFERRED.md.
+    // Data table preserved for future revival. No active readers — query methods
+    // (IsChainWeapon / GetAlt / HasAltPath / AltStoneFor) were removed in the
+    // 2026-05-01 codebase audit cleanup. To revive: re-add query methods +
+    // surface the alt-evolve choice in CraftingDialog's evolve flow.
+    //
     // Player presents Slicing Stone (tier-matched) instead of canon catalyst → routes to alt DefId.
     // Tier match: Lesser→T1weapon, Greater→T2weapon, Perfect→T3weapon. T4 apex has no alt branch.
     // Stone qty consumed: 1 (single-stone evolve, undercuts canon 3/8/20 by design).
@@ -140,22 +143,6 @@ public static class WeaponEvolutionChains
         ["anneal_blade"]              = new("queens_knightsword", "slicing_stone_greater"),
         ["tough_anneal_blade"]        = new("azure_sky_blade",    "slicing_stone_perfect"),
     };
-
-    // Returns alt-step for (defId, presentedStoneDefId) pair, or null if no alt-path applies.
-    public static AltStep? GetAlt(string? defId, string? stoneDefId)
-    {
-        if (defId == null || stoneDefId == null) return null;
-        if (!AltChains.TryGetValue(defId, out var alt)) return null;
-        return alt.StoneDefId == stoneDefId ? alt : null;
-    }
-
-    // True if presenting any Slicing Stone could route this weapon to an alt-path.
-    public static bool HasAltPath(string? defId)
-        => defId != null && AltChains.ContainsKey(defId);
-
-    // Returns the canonical Slicing Stone DefId expected for this weapon's alt-path.
-    public static string? AltStoneFor(string? defId)
-        => defId != null && AltChains.TryGetValue(defId, out var alt) ? alt.StoneDefId : null;
 
     // Maps floor → T1 chain weapon DefId awarded at that floor's Secret Shrine.
     // Used by MapGenerator.Population (shrine spawn) and TurnManager.Tiles (shrine interact).

@@ -2,16 +2,13 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Systems;
 
-// Wave 2 — shared easing curves + color/scheme helpers for UI motion polish.
+// Shared easing curves + color/scheme helpers for UI motion polish.
 // Keep all curves clamped to [0,1] so callers never see out-of-range values.
 public static class EasingHelper
 {
     public enum EasingType
     {
-        Linear,
-        EaseIn,         // t*t — slow start
         EaseOut,        // 1-(1-t)^2 — fast start, soft settle (alias for EaseOutQuad)
-        EaseInOut,      // smooth both ends
         EaseOutQuad,    // explicit alias
         EaseOutCubic,   // 1-(1-t)^3 — sharper deceleration than EaseOutQuad
     }
@@ -22,12 +19,9 @@ public static class EasingHelper
         t = Math.Clamp(t, 0f, 1f);
         return type switch
         {
-            EasingType.Linear        => t,
-            EasingType.EaseIn        => t * t,
             EasingType.EaseOut       => 1f - (1f - t) * (1f - t),
             EasingType.EaseOutQuad   => 1f - (1f - t) * (1f - t),
             EasingType.EaseOutCubic  => 1f - (1f - t) * (1f - t) * (1f - t),
-            EasingType.EaseInOut     => t < 0.5f ? 2f * t * t : 1f - 2f * (1f - t) * (1f - t),
             _                        => t,
         };
     }

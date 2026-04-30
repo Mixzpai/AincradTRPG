@@ -67,6 +67,16 @@ public static class LifetimeStats
         // Cross-run bestiary knowledge, keyed by mob Name. Legacy saves
         // start empty and get populated the first time Bestiary.Save runs.
         public Dictionary<string, BestiaryKnowledge> BestiaryKnown { get; set; } = new();
+
+        // All milestone IDs the player has unlocked, persisted across permadeath.
+        // Single source of truth for achievements / titles / life-skill bonuses /
+        // collectables. Missing on legacy data → empty list.
+        public List<string> UnlockedMilestones { get; set; } = new();
+
+        // Cross-run best counts for QuestSubCategory turn-ins. Updated on each
+        // tagged turn-in if the current run exceeds the prior best.
+        public int IfImplementHighWaterMark { get; set; }
+        public int HfMissionHighWaterMark { get; set; }
     }
 
     // Load stats from disk. Returns empty stats if file missing or corrupt.
@@ -106,6 +116,13 @@ public static class LifetimeStats
         _ when grade.StartsWith("C")  => 2,
         _ => 1,
     };
+
+    // True if the milestone Id is already unlocked in the persistent set.
+    public static bool IsMilestoneUnlocked(string id)
+    {
+        var data = Load();
+        return data.UnlockedMilestones.Contains(id);
+    }
 
     // Record per-ascent floor reach. No-op when floor <= existing max.
     // Fires from TurnManager.AscendFloor immediately after CurrentFloor++.

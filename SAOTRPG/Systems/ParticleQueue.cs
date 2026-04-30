@@ -17,7 +17,7 @@ public enum ParticleEvent
     HealingTick,
     EnhancementSuccess,
     FloorTransition,
-    // Bundle 13 (Item 2) — Divine Awakening burst. Level 1/2/3 scales count + duration.
+    // Divine Awakening burst. Level 1/2/3 scales count + duration.
     DivineAwakening,
 }
 
@@ -38,7 +38,7 @@ public sealed class Particle
     public bool Active;
 }
 
-// Pre-allocated particle pool with oldest-drop wrap on overflow. Cap 40 concurrent per research §6.
+// Pre-allocated particle pool with oldest-drop wrap on overflow. 40-concurrent cap.
 public static class ParticleQueue
 {
     public const int MaxConcurrent = 40;
@@ -179,7 +179,7 @@ public static class ParticleQueue
         }
     }
 
-    // Bundle 13 (Item 2) — Divine Awakening burst keyed by AwakeningLevel.
+    // Divine Awakening burst keyed by AwakeningLevel.
     // Level 1 = 3 particles / 600ms, Level 2 = 6 / 900ms, Level 3 = 12 / 1200ms.
     // Density scaling overrides count in Subtle/Moderate; Pronounced uses base.
     public static void EmitDivineAwakening(int x, int y, int level)

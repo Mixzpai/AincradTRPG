@@ -18,7 +18,7 @@ public static class FrameClock
     public static long ElapsedMs => _elapsedMs;
 
     // True while either explicit Pause() is held OR a modal Toplevel is on top.
-    public static bool IsPaused => _explicitPause || ModalOnTop();
+    private static bool IsPaused => _explicitPause || ModalOnTop();
 
     // Call once per render frame. Returns dtMs since last call, clamped to 200ms.
     // Returns 0 while paused; resets baseline so the next unpaused call doesn't see the pause as one huge dt.

@@ -159,7 +159,7 @@ public static class MobFactory
     }
 
     // Prefab MONS → Mob; matches Name or snake-case slug ("frenzy_boar" ↔ "Frenzy Boar").
-    // RNG-threaded overload (Bundle 8) keeps F9 hot-reload deterministic via ctx.Rng.
+    // RNG-threaded overload keeps F9 hot-reload deterministic via ctx.Rng.
     public static Mob? CreateByKey(string key, int floor, int statScale, Random rng)
     {
         if (string.IsNullOrWhiteSpace(key)) return null;

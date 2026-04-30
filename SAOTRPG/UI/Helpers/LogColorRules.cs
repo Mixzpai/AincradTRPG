@@ -3,7 +3,7 @@ using Terminal.Gui;
 namespace SAOTRPG.UI.Helpers;
 
 // Keyword → color rules for the game log. ColoredLogView checks in order; first case-insensitive match wins.
-// Category palette (research §5): Combat BrightRed, System BrightCyan, Item Gold, Dialog White, General DimGray.
+// Category palette: Combat BrightRed, System BrightCyan, Item Gold, Dialog White, General DimGray.
 public static class LogColorRules
 {
     // Ordered keyword → color pairs. Each log line is tested against these in sequence;

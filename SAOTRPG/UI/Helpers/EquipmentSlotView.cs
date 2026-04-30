@@ -30,7 +30,7 @@ public class EquipmentSlotView : View
         (EquipmentSlot.LeftRing,  '\u25CB', Color.BrightMagenta,  "Left Ring"),  // ○
         (EquipmentSlot.Bracelet,  '\u25CB', Color.BrightGreen,    "Bracelet"),   // ○
         (EquipmentSlot.Necklace,  '\u25CB', Color.BrightGreen,    "Necklace"),   // ○
-        // Bundle 10 — Pickaxe + future utility tools. Icon ⛏-like '⚒' renders broadly across terminals.
+        // Pickaxe + future utility tools. Icon ⛏-like '⚒' renders broadly across terminals.
         (EquipmentSlot.Tool,      '\u2692', Color.BrightCyan,     "Tool"),       // ⚒
     };
 
@@ -113,16 +113,16 @@ public class EquipmentSlotView : View
             // Item name + rarity abbreviation, or (empty)
             if (eq != null)
             {
-                // Bundle 12 — clamp name + suffixes against the left-pane content budget so long
+                // Clamp name + suffixes against the left-pane content budget so long
                 // Legendary names + rarity tag + durability bar can't bleed into the right pane.
                 int writtenSoFar = 1 + 1 + 1 + LabelPadWidth;
                 int remaining = _contentWidth - writtenSoFar;
-                string rarityTag = $" ({AbbrevRarity(eq.Rarity)})";
+                string rarityTag = $" ({RarityHelper.Abbreviation(eq.Rarity)})";
                 int rarityLen = rarityTag.Length;
 
                 int nameBudget = Math.Max(0, remaining - rarityLen);
                 string nameOut = TextHelpers.Truncate(eq.Name ?? "", nameBudget);
-                SetAttr(GetRarityColor(eq.Rarity), bg);
+                SetAttr(RarityHelper.GetColor(eq.Rarity), bg);
                 Driver!.AddStr(nameOut);
 
                 int afterName = remaining - nameOut.Length;
@@ -143,7 +143,7 @@ public class EquipmentSlotView : View
                 }
                 else if (eq is Pickaxe pick)
                 {
-                    // Bundle 10 — compact 6-cell durability bar + N/M readout, color by % remaining.
+                    // Compact 6-cell durability bar + N/M readout, color by % remaining.
                     int max = pick.MaxDurability > 0 ? pick.MaxDurability : Math.Max(1, pick.ItemDurability);
                     int cur = Math.Clamp(pick.ItemDurability, 0, max);
                     string bar = BarBuilder.BuildGradient(cur, max, 6);
@@ -165,7 +165,7 @@ public class EquipmentSlotView : View
         return true;
     }
 
-    // Bundle 10 — durability gauge palette: green ≥50%, yellow ≥25%, red below.
+    // Durability gauge palette: green ≥50%, yellow ≥25%, red below.
     // Guard: max==0 (misconfigured) treats as critical so the issue is visible, not silent.
     private static Color GetDurabilityColor(int current, int max)
     {
@@ -181,10 +181,4 @@ public class EquipmentSlotView : View
     // Shorthand for setting driver attribute.
     private void SetAttr(Color fg, Color bg)
         => Driver!.SetAttribute(Gfx.Attr(fg, bg));
-
-    // Item name color based on rarity tier. Delegates to RarityHelper.
-    public static Color GetRarityColor(string? rarity) => RarityHelper.GetColor(rarity);
-
-    // Single-letter rarity codes for compact display. Delegates to RarityHelper.
-    public static string AbbrevRarity(string? rarity) => RarityHelper.Abbreviation(rarity);
 }

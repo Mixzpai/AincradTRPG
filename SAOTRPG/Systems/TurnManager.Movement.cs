@@ -1,6 +1,7 @@
 using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Map;
+using SAOTRPG.UI;
 
 namespace SAOTRPG.Systems;
 
@@ -39,7 +40,7 @@ public partial class TurnManager
         _restCounter = 0;
         _fatiguedWarned = false;
         _exhaustedWarned = false;
-        // FB-051 — Sleep XP: one grant per rest action (not per heal tick).
+        // Sleep XP: one grant per rest action (not per heal tick).
         GrantRestSleepXp();
         _log.LogSystem($"You feel refreshed. (+{totalHealed} HP)");
         UpdateVisibility();
@@ -60,7 +61,7 @@ public partial class TurnManager
         { _log.Log("Can't sprint — path blocked!"); return; }
 
         _map.MoveEntity(_player, x2, y2);
-        // FB-053 — Running skill XP per sprint action (covers 2 tiles).
+        // Running skill XP per sprint action (covers 2 tiles).
         GrantSprintRunningXp();
         TurnCount++;
         TickPoison(); TickBleed(); TickSlow();
@@ -126,7 +127,7 @@ public partial class TurnManager
 
         TutorialSystem.ShowTip(_log, "first_move");
 
-        // FB-077 — Swimming gate: level check bypasses water BlocksMovement.
+        // Swimming gate: level check bypasses water BlocksMovement.
         bool swimmingBypass = false;
         bool swimSlowPenalty = false;
         if (tile.RequiresSwimmingLevel > 0)
@@ -142,7 +143,7 @@ public partial class TurnManager
             }
         }
 
-        // Bundle 10 — mining bump-action diverts before the BlocksMovement gate.
+        // Mining bump-action diverts before the BlocksMovement gate.
         // Returns true when the action consumed the turn (or hint logged).
         if (TryHandleMiningStrike(tx, ty)) return;
 
@@ -177,7 +178,7 @@ public partial class TurnManager
 
         _map.MoveEntity(_player, tx, ty);
         _map.IncrementVisit(tx, ty);
-        // FB-077 — Swim XP: +2 shallow / +3 deep. Replaces walking XP.
+        // Swim XP: +2 shallow / +3 deep. Replaces walking XP.
         if (swimmingBypass)
         {
             int swimXp = tile.Type == TileType.WaterDeep ? 3 : 2;
@@ -185,7 +186,7 @@ public partial class TurnManager
             if (swimSlowPenalty)
                 _log.Log("You struggle through the water…");
         }
-        // FB-052 — Walking XP +1/tile (excludes sprint, stealth, water).
+        // Walking XP +1/tile (excludes sprint, stealth, water).
         else if (!_stealthActive && !_lastMoveWasStealth && (dx != 0 || dy != 0))
             GrantWalkingXp();
 
@@ -263,7 +264,7 @@ public partial class TurnManager
         TickPoison(); TickBleed(); TickSlow();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
-        // FB-077 — Swim slow penalty: extra tick + entity round (mobs get free turn).
+        // Swim slow penalty: extra tick + entity round (mobs get free turn).
         if (swimSlowPenalty && !_player.IsDefeated)
         {
             TurnCount++;
@@ -363,9 +364,12 @@ public partial class TurnManager
 
     // Shared Divine-Object quest handler (Azariya F50, Selka F65, Dorothy F78, HF NPCs).
     // First-talk offers floor-kill quest; complete grants Divine; TurnedIn prevents re-grant.
+    // subCategory tags the quest for milestone counters; defaults None for callers that
+    // don't feed IF/HF trackers.
     private bool HandleDivineQuest(Entities.NPC npc, string questId, string questTitle,
         string openingLine, int killCount, string divineDefId, string handOverLine,
-        string inProgressLine, string postCompleteLine, int rewardCol, int rewardXp)
+        string inProgressLine, string postCompleteLine, int rewardCol, int rewardXp,
+        QuestSubCategory subCategory = QuestSubCategory.None)
     {
         if (npc.Name == null) return false;
 
@@ -387,6 +391,7 @@ public partial class TurnManager
                 Persistent = true,
                 RewardCol = rewardCol,
                 RewardXp = rewardXp,
+                SubCategory = subCategory,
             });
             _log.Log($"{npc.Name}: \"{openingLine}\"");
             _log.LogSystem($"  [QUEST] New quest from {npc.Name}: '{questTitle}' — {killCount} kills on this floor.");
@@ -421,7 +426,7 @@ public partial class TurnManager
                     _map.AddItem(_player.X, _player.Y, divine);
                     _log.LogLoot($"  ◈ {divine.Name} — Divine Object. (Inventory full — dropped at your feet.)");
                 }
-                // Bundle 8: fire DivineObtained event + set one-per-run cap when a Divine was granted.
+                // Fire DivineObtained event + set one-per-run cap when a Divine was granted.
                 if (divine is Items.Equipment.Weapon divineWpn && divine.Rarity == "Divine")
                     NotifyDivineObtained(divineWpn);
             }
@@ -485,7 +490,7 @@ public partial class TurnManager
             rewardXp:         600);
     }
 
-    // Bundle 9: Selka awakening hook — short-circuit OR before HandleSelka. Opens dialog when base quest TurnedIn,
+    // Selka awakening hook — short-circuit OR before HandleSelka. Opens dialog when base quest TurnedIn,
     // chain quest isn't mid-turn-in, and Divine is carried; otherwise returns false to fall through untouched.
     private bool HandleSelkaAwakening(Entities.NPC npc)
     {
@@ -564,7 +569,8 @@ public partial class TurnManager
     // HF Legendary weapons gated behind NPC quests. See HollowWeaponQuest.
     private record HollowWeaponQuest(string QuestId, string Title, string Opening,
         int KillCount, string RewardDefId, string HandOver, string InProgress,
-        string PostComplete, int Col, int Xp);
+        string PostComplete, int Col, int Xp,
+        QuestSubCategory SubCategory = QuestSubCategory.None);
 
     private static readonly Dictionary<string, HollowWeaponQuest> _hollowWeaponQuests = new()
     {
@@ -573,55 +579,55 @@ public partial class TurnManager
             15, "infinite_ouroboros",
             "You have broken the coil. Take it — let it remember you.",
             "The coils still turn.", "The Ouroboros answers to you now.",
-            400, 300),
+            400, 300, QuestSubCategory.HfMission),
         ["Hunter Kojiro"] = new("hf_jato_onikirimaru", "The Oni Cutter's Trial",
             "Fifteen kills. Any mob, any make. Then the blade of oni-splitting is yours.",
             15, "jato_onikirimaru",
             "Onikiri-maru has waited long enough. Swing it well.",
             "Fifteen. No fewer.", "The blade remembers every cut now.",
-            400, 300),
+            400, 300, QuestSubCategory.HfMission),
         ["Ranger Torva"] = new("hf_fiendblade_deathbringer", "Thinning the Grove",
             "The grove dies in cycles. Fell fifteen and the blade it buried is yours.",
             15, "fiendblade_deathbringer",
             "The grove gives up its secret. Drink deep — and quickly.",
             "The grove still breathes.", "Deathbringer bleeds in your hand.",
-            450, 320),
+            450, 320, QuestSubCategory.HfMission),
         ["Apiarist Nell"] = new("hf_fayblade_tizona", "The Hornet's Undoing",
             "Fifteen fall, and the fay-blade remembers its owner.",
             15, "fayblade_tizona",
             "Tizona is yours. Let it sing against the wing.",
             "The hornets still hum.", "Fay-steel. Move quickly with it.",
-            450, 320),
+            450, 320, QuestSubCategory.HfMission),
         ["Watcher Kael"] = new("hf_starmace_elysium", "The Shining Swarm",
             "Twenty of the shining ones. Elysium crowns the steady hand.",
             20, "starmace_elysium",
             "Elysium answers. You will not be moved again.",
             "The swarm returns each turn.", "Elysium stands with you.",
-            600, 450),
+            600, 450, QuestSubCategory.HfMission),
         ["High Priestess Sola"] = new("hf_eurynomes_holy_sword", "The Holy Trial",
             "Twenty of the fallen. Then and only then does the holy sword judge you.",
             20, "eurynomes_holy_sword",
             "Eurynome's blessing is yours. The blade obeys the worthy alone.",
             "The trial is not complete.", "Walk in the light, champion.",
-            650, 480),
+            650, 480, QuestSubCategory.HfMission),
         ["Torchbearer Meir"] = new("hf_saintspear_rhongomyniad", "The Dark Lanterns",
             "Twenty lanterns must be broken. The saint's spear judges the rest.",
             20, "saintspear_rhongomyniad",
             "Rhongomyniad lights again. Hold it high.",
             "The dark still pools.", "The spear carries your will now.",
-            700, 520),
+            700, 520, QuestSubCategory.HfMission),
         ["Elder Beastkeeper"] = new("hf_shinto_ama_no_murakumo", "The Restless Herd",
             "Twenty-five. Still them, and the cloud-splitter is yours.",
             25, "shinto_ama_no_murakumo",
             "Ama-no-Murakumo answers the quiet hand. Carry it so.",
             "My charges still rage.", "The cloud parts for you.",
-            800, 600),
+            800, 600, QuestSubCategory.HfMission),
         ["Sentinel Captain"] = new("hf_godspear_gungnir", "The Broken Line",
             "Twenty-five. Hold the line no one else held. Gungnir is its own reward.",
             25, "godspear_gungnir",
             "Gungnir returns to a worthy grip. Strike true.",
             "The line still bleeds.", "Odin's spear rests with you now.",
-            800, 600),
+            800, 600, QuestSubCategory.HfMission),
 
         // ── HF Endgame Implement System questgivers (F84, F85, F92, F99) ──
         ["Spiralist Vey"] = new("hf_spiralblade_rendering_fail", "The Spiral That Fails",
@@ -629,25 +635,25 @@ public partial class TurnManager
             10, "rap_spiralblade_rendering_fail",
             "Rendering Fail is yours. It knows imperfect geometry now.",
             "The spiral still turns true.", "The rapier rests with you.",
-            500, 360),
+            500, 360, QuestSubCategory.IfImplement),
         ["Crusher Drago"] = new("hf_crusher_bond_cyclone", "The Iron Cyclone",
             "Ten storms. Break them all, and the cyclone axe is yours.",
             10, "axe_crusher_bond_cyclone",
             "Bond Cyclone answers the steady haft. Heft it well.",
             "The storm still churns.", "The axe is yours, wielder.",
-            550, 380),
+            550, 380, QuestSubCategory.IfImplement),
         ["Auric Knight Halric"] = new("hf_aurumbrand_hauteclaire", "The Golden Shroud",
             "Fifteen fall to prove the shroud will not shroud a coward. Go.",
             15, "ohs_aurumbrand_hauteclaire",
             "Hauteclaire's gold recognises you. Be as steady as its edge.",
             "The shroud waits on.", "Hauteclaire shines in your hand.",
-            700, 500),
+            700, 500, QuestSubCategory.IfImplement),
         ["Last Herald Xiv"] = new("hf_deathglutton_epetamu", "The Last Hollow Glutton",
             "Twenty. The floor before the top. The blade that feeds on its wielder asks for proof.",
             20, "sci_deathglutton_epetamu",
             "Epetamu will feed. It asks only that you feed it well.",
             "The pact is not yet written.", "The hollow-blade answers no other now.",
-            900, 700),
+            900, 700, QuestSubCategory.IfImplement),
 
         // FD F55 Agil's Apprentice — moves axe_ground_gorge off floor-banded pool
         // onto a dedicated canon source.
@@ -660,7 +666,7 @@ public partial class TurnManager
             500, 400),
 
         // LN F40 Yulier — KoB-era Asuna friend; canon Lambent Light gift.
-        // Bundle 11 anchor: Asuna's signature rapier returns to its KoB-era floor.
+        // Asuna's signature rapier returns to its KoB-era floor.
         ["Yulier"] = new("ln_yulier_lambent_light", "The Lightning Flash's Memory",
             "Asuna gave me her old rapier before the Knights took her. Ten on this floor and Lambent Light is yours — she would have wanted a wielder, not a relic.",
             10, "lambent_light",
@@ -670,7 +676,7 @@ public partial class TurnManager
             450, 350),
 
         // LN MR-arc F76 Jun — Sleeping Knights' tribute; Mother's Rosario handover.
-        // Bundle 11 anchor: Yuuki memorial floor F76.
+        // Yuuki memorial floor F76.
         ["Jun"] = new("ln_jun_mothers_rosario", "The Sleeping Knights' Tribute",
             "Yuuki left her sword to whoever would carry her family's name forward. Fifteen on this floor — prove you have the heart for Mother's Rosario.",
             15, "mothers_rosario",
@@ -678,6 +684,456 @@ public partial class TurnManager
             "Yuuki took on a hundred. Fifteen is not too many.",
             "The Sleeping Knights walk with you now. Yuuki rests easier.",
             700, 550),
+
+        // ── IF Element Research questgivers (F5 Karluin ruins) ────
+        ["Archivist Fuscan"] = new("if_research_karluin_dust", "Karluin Dust Survey",
+            "The catacomb dust holds the Cathedral's old elements. Bring me proof of ten cleared chambers.",
+            10, "ore_crust",
+            "The dust is the same as the founders' notes. The element binds — your work is logged.",
+            "The cathedral keeps its silence until the chambers are truly cleared.",
+            "Karluin's elements are catalogued. You walk lighter for it.",
+            220, 95, QuestSubCategory.IfImplement),
+        ["Relic-Keeper Mirine"] = new("if_research_pitchblack_seals", "Pitch-Black Seal Inventory",
+            "Twelve lesser seals hold the cathedral's lower nave. Break them and the cipher keeps for posterity.",
+            12, "",
+            "The cipher resolves. Element zero — Vacant. Filed for the next archivist who climbs.",
+            "The seals still answer one another. More must fall.",
+            "The naves are quiet. Vacant element confirmed.",
+            240, 100, QuestSubCategory.IfImplement),
+        ["Sage Pellan of Karluin"] = new("if_research_undying_strain", "The Undying Strain",
+            "Eight of the deathless walk this floor. Their fall is the sample we cannot collect anywhere else.",
+            8, "",
+            "The strain is bottled. Karluin's contribution to the element registry is recorded.",
+            "The strain endures while you stand reading.",
+            "The undying gave their data freely. Carry the entry forward.",
+            210, 90, QuestSubCategory.IfImplement),
+        ["Cathedral Scribe Vela"] = new("if_research_colossus_echo", "Echo of the Vacant Colossus",
+            "Ten of the colossus's lesser kin still echo through the catacombs. Quiet them and the great echo can be measured.",
+            10, "ore_crust",
+            "Fuscus's echo is on the page now. The Vacant element is tabulated.",
+            "The echo persists between every cleared room.",
+            "The Colossus is on the page. Karluin remembers.",
+            260, 110, QuestSubCategory.IfImplement),
+
+        // ── IF Element Research questgivers (F10 wetlands / Kagachi domain) ────
+        ["Shrine Maiden Suzaha"] = new("if_research_kagachi_tides", "The Tides of Kagachi",
+            "The samurai-lord's marsh rises and falls with element-flow. Twelve quiet kills give us a clean reading.",
+            12, "ore_flowing_water",
+            "The flow stabilises. Water-element sample taken — you cleared the noise from the channel.",
+            "The marsh churns. The reading drifts.",
+            "Kagachi's tide stays quiet because you walked it.",
+            260, 110, QuestSubCategory.IfImplement),
+        ["Ronin-Scholar Imai"] = new("if_research_kagachi_ten_steel", "Ten Steel for Kagachi",
+            "The shrine logs ten swords broken for every element binding. Make ten kills and the log fills itself.",
+            10, "",
+            "The log signs itself. The samurai-lord's element series is one bind closer to whole.",
+            "Ten yet, no fewer.",
+            "The log accepts you. The shrine remembers a wielder.",
+            230, 95, QuestSubCategory.IfImplement),
+        ["Element-Hermit Joze"] = new("if_research_marsh_glow", "The Marsh-Glow Index",
+            "Eight glow-creatures lit the wetlands before Kagachi quieted them. I want eight returned to the index.",
+            8, "ore_flowing_water",
+            "The glow returns to the page. The hermit's index is closer to closed.",
+            "The glow drifts. Eight is the count.",
+            "The marsh glow is filed. Walk on.",
+            220, 90, QuestSubCategory.IfImplement),
+
+        // ── IF Element Research questgivers (F14 dense forest, IF Integral Series anchor) ────
+        ["Druid-Researcher Lael"] = new("if_research_integral_canopy", "Integral Canopy Survey",
+            "The canopy holds the first IF element-binding. Twelve deep-wood kills and the binding renews.",
+            12, "ore_wind_flower",
+            "Integral element binds. Lael's grove is in your debt — and your weapon is in the registry.",
+            "The canopy still shifts with each step.",
+            "Integral binds quietly. The grove walks easier.",
+            280, 120, QuestSubCategory.IfImplement),
+        ["Hermit Cassis"] = new("if_research_canopy_fauna", "Canopy Fauna Census",
+            "Ten of the canopy's strangest. The census-line balances or it does not.",
+            10, "",
+            "The census closes. The canopy element is fixed for one more cycle.",
+            "Ten is the line. It is not yet drawn.",
+            "The canopy gives its census. Move on.",
+            240, 100, QuestSubCategory.IfImplement),
+        ["Shrine-Naturalist Yorin"] = new("if_research_dense_grove_root", "Roots of the Dense Grove",
+            "The grove's deep roots feed the integral element. Ten clearings prove the roots still remember.",
+            10, "ore_wind_flower",
+            "The roots are recorded. Integral series binds clean tonight.",
+            "The roots go deeper than the count.",
+            "The grove roots are filed. Walk lightly.",
+            250, 105, QuestSubCategory.IfImplement),
+
+        // ── IF Element Research questgivers (F25 twilight forest, IF Nox Series anchor) ────
+        ["Twilight-Sage Orune"] = new("if_research_nox_giant_shadow", "Shadow of the Two-Headed Giant",
+            "The giant's shadow carries Nox-element residue. Twelve fall in the shadow and the residue fixes.",
+            12, "",
+            "Nox binds to the page. The two-headed shadow is yours to cite.",
+            "The shadow shifts. The residue scatters.",
+            "Nox is fixed. The twilight remembers a worker.",
+            300, 130, QuestSubCategory.IfImplement),
+        ["Elf-Blooded Scholar Liraen"] = new("if_research_nox_dusk_bloom", "Nox Dusk-Bloom Sampling",
+            "The dusk-blooms grow only where Nox-element hangs heavy. Ten kills clear the canopy enough for a clean sample.",
+            10, "ore_wind_flower",
+            "The blooms are pressed and labelled. Nox sampling closes for the season.",
+            "The blooms only open where the canopy is silent.",
+            "Nox sampling is closed. The blooms thank you.",
+            290, 125, QuestSubCategory.IfImplement),
+        ["Twilight-Wright Kerel"] = new("if_research_nox_giant_pulse", "Nox Pulse Reading",
+            "The giant's pulse runs the ridge twice an hour. Ten kills steady the line for the reading.",
+            10, "",
+            "The pulse line steadies. Nox readings file at last.",
+            "The pulse swallows the count.",
+            "The reading is clean. The ridge holds quiet.",
+            280, 120, QuestSubCategory.IfImplement),
+        ["Forest-Cleric Thol"] = new("if_research_nox_canopy_dread", "Canopy Dread Census",
+            "Eight of the dread-walkers haunt this ridge. Their fall is the only census-line that closes.",
+            8, "",
+            "The census closes. Nox dread is on the page.",
+            "Dread thickens between the trees.",
+            "Dread is recorded. The ridge breathes.",
+            260, 110, QuestSubCategory.IfImplement),
+
+        // ── IF Element Research questgivers (F61-65 infernal era, IF Rosso Series anchor) ────
+        ["Pyromancer-Archivist Tassel"] = new("if_research_rosso_forneus_ash", "Ash of Crimson Forneus",
+            "The fog-lake holds Forneus's ash. Twelve kills clear the haze enough to take a sample.",
+            12, "ore_crimson_flame",
+            "Rosso element binds. Forneus's ash is in the cipher now.",
+            "The haze does not part for half a count.",
+            "Rosso is bound. The lake quiets a little.",
+            320, 140, QuestSubCategory.IfImplement),
+        ["Fog-Cult Researcher Pelm"] = new("if_research_rosso_selmburg_drift", "Selmburg Drift Census",
+            "The drift carries Rosso residue. Ten kills steady the drift line for a cleaner read.",
+            10, "ore_crimson_flame",
+            "The drift stabilises. Rosso reads clean against Selmburg fog.",
+            "The drift moves around the count.",
+            "The drift is logged. Selmburg breathes.",
+            300, 130, QuestSubCategory.IfImplement),
+        ["Volcano-Cult Mage Jiren"] = new("if_research_rosso_caldera_pulse", "Caldera Pulse Survey",
+            "The caldera pulses every dozen ash-falls. Twelve kills sync the pulse to a measurable beat.",
+            12, "ore_crimson_flame",
+            "The pulse syncs. Rosso element binds against the volcano-line.",
+            "The pulse drifts. The line stays loose.",
+            "The caldera is on the page. Rosso reads sharp.",
+            330, 145, QuestSubCategory.IfImplement),
+        ["Smoke-Reader Vail"] = new("if_research_rosso_fog_seal", "The Fog-Seal of Rosso",
+            "Ten of the fog-walkers must fall to break the lesser seal. Then the index unbinds for the season.",
+            10, "",
+            "The seal breaks. The fog index is open at last.",
+            "The seal holds while the count holds short.",
+            "The seal is broken. Walk on.",
+            290, 125, QuestSubCategory.IfImplement),
+        ["Ashbinder Cren"] = new("if_research_infernal_residue", "Infernal Residue Tally",
+            "The ash carries residue from every infernal element. Ten kills give a tally clean enough to file.",
+            10, "ore_crimson_flame",
+            "The tally signs itself. Infernal residue is in the cipher.",
+            "The residue keeps shifting under the ash.",
+            "The tally is sealed. The ash quiets.",
+            300, 130, QuestSubCategory.IfImplement),
+        ["Volcanic Hermit Rust"] = new("if_research_rosso_spire_pulse", "Spire Pulse Reading",
+            "The infernal spire pulses with Rosso when the heat is steady. Ten kills steady it for a reading.",
+            10, "",
+            "The spire reads. Rosso is bound to the spire-line.",
+            "The pulse is irregular while the count holds short.",
+            "The spire is read. The infernal cipher closes.",
+            290, 125, QuestSubCategory.IfImplement),
+        ["Crimson-Cult Scholar Devra"] = new("if_research_forneus_lesser_kin", "Lesser Kin of Forneus",
+            "Eight of Crimson Forneus's lesser kin must fall before the ash-line clears.",
+            8, "",
+            "The lesser kin are noted. The ash-line is open for greater work.",
+            "The kin keep returning between counts.",
+            "The kin are logged. The line is open.",
+            270, 115, QuestSubCategory.IfImplement),
+        ["Forge-Cult Reader Hael"] = new("if_research_rosso_obsidian_run", "The Obsidian Run",
+            "The obsidian fields run with Rosso when the crater settles. Ten kills settle it.",
+            10, "ore_crimson_flame",
+            "The crater settles. The obsidian run is logged.",
+            "The crater shifts. The run stays untraced.",
+            "The run is logged. The crater breathes easier.",
+            310, 135, QuestSubCategory.IfImplement),
+        ["Caldera Anchorite Sym"] = new("if_research_rosso_caldera_silence", "Caldera Silence Audit",
+            "Twelve must fall before the caldera silences enough to audit.",
+            12, "",
+            "The caldera silences. The audit closes clean.",
+            "The caldera complains while the count holds short.",
+            "The audit is closed. The caldera rests.",
+            320, 140, QuestSubCategory.IfImplement),
+
+        // ── IF Element Research questgivers (F84-90 demigod era, Yasha / Gaou anchors) ────
+        ["Yasha-Anchorite Lien"] = new("if_research_yasha_spiral", "Yasha Spiral Audit",
+            "The spiral on this floor is Yasha's index point. Ten failed spirals, and the index closes.",
+            10, "ore_ash_white",
+            "The spiral closes. Yasha element binds to the audit page.",
+            "The spiral is open while the count holds short.",
+            "The audit closes. Yasha is bound.",
+            380, 165, QuestSubCategory.IfImplement),
+        ["Demigod-Scholar Iren"] = new("if_research_yasha_bond_storm", "Yasha Storm-Bond Reading",
+            "The storm-bond on this floor is the rarest in the index. Ten kills calm the bond enough to read it.",
+            10, "ore_adamant",
+            "The bond reads. Yasha storm element is in the cipher.",
+            "The storm holds against the count.",
+            "Yasha storm is in the cipher. The audit closes.",
+            400, 175, QuestSubCategory.IfImplement),
+        ["Demigod-Reader Avos"] = new("if_research_yasha_corrupted_pulse", "Corrupted Pulse Reading",
+            "Eight of the corrupted-walkers must fall before the pulse stabilises for a reading.",
+            8, "",
+            "The pulse reads. Yasha corruption indexes clean.",
+            "The pulse skips while the count holds short.",
+            "The reading closes. The corruption is filed.",
+            370, 160, QuestSubCategory.IfImplement),
+        ["Gaou-Anchorite Quen"] = new("if_research_gaou_yasha_seal", "Yasha-Gaou Boundary Seal",
+            "Ten kills break the lesser seal between Yasha and Gaou series. Then both indices open.",
+            10, "ore_adamant",
+            "The boundary breaks. Both series open to one cipher tonight.",
+            "The boundary holds against the count.",
+            "The boundary is gone. The cipher is whole.",
+            420, 185, QuestSubCategory.IfImplement),
+        ["Gaou-Reader Nimue"] = new("if_research_gaou_corruption", "Gaou Corruption Sweep",
+            "Twelve corruption-bearers must fall on this floor. Their fall is the cipher's last entry.",
+            12, "ore_ash_white",
+            "Gaou corruption is on the page. The cipher closes for the season.",
+            "The corruption sweeps round. Twelve, no fewer.",
+            "Gaou is filed. The cipher is closed.",
+            440, 195, QuestSubCategory.IfImplement),
+        ["Gaou-Sealer Roen"] = new("if_research_gaou_radiance", "Radiance-Eater Audit",
+            "Eight of the radiance-eaters must fall before the audit can close.",
+            8, "",
+            "The radiance is filed. Gaou indexes clean for the demigod cycle.",
+            "Radiance flickers between the count.",
+            "Gaou audit closes. The radiance keeps for next cycle.",
+            410, 180, QuestSubCategory.IfImplement),
+        ["Garden-Sage Calor"] = new("if_research_celestial_garden", "Celestial Garden Catalogue",
+            "The garden flowers bloom by Gaou-element flow. Ten kills steady the flow for a clean catalogue.",
+            10, "",
+            "The catalogue closes. Garden flowers index by Gaou for the year.",
+            "The flow drifts. The flowers do not bloom on the count.",
+            "The garden is catalogued. Gaou breathes.",
+            390, 170, QuestSubCategory.IfImplement),
+        ["Apex-Reader Nuvo"] = new("if_research_apex_element_pulse", "Apex Element Pulse",
+            "The apex pulse runs once a turn at this altitude. Twelve kills steady it for a reading.",
+            12, "ore_adamant",
+            "The apex reads. The cipher takes its last entry of the demigod cycle.",
+            "The pulse drifts at this altitude.",
+            "The reading is closed. The apex is filed.",
+            420, 185, QuestSubCategory.IfImplement),
+        ["Ascendant-Sage Maren"] = new("if_research_demigod_ascension", "Demigod Ascension Trial",
+            "Ten of the ascendant must fall before the trial holds clean.",
+            10, "",
+            "The trial closes. The ascendant element binds.",
+            "The ascendant still walks.",
+            "The ascendant is bound. Walk on.",
+            400, 175, QuestSubCategory.IfImplement),
+        ["Element-Prophet Sorin"] = new("if_research_yasha_prophecy_close", "Yasha Prophecy Close",
+            "The prophecy closes only when twelve fall on the floor of its bind.",
+            12, "ore_ash_white",
+            "The prophecy closes. Yasha element binds at last.",
+            "The prophecy holds open.",
+            "The prophecy is closed. Walk on.",
+            430, 190, QuestSubCategory.IfImplement),
+        ["Voidbinder Kael-Sora"] = new("if_research_void_element_audit", "Void Element Audit",
+            "Twelve void-walkers fall before the audit closes on the apex floors.",
+            12, "ore_adamant",
+            "The audit closes. Void element binds for the cipher.",
+            "The void walks between counts.",
+            "The audit closes. Void is bound.",
+            440, 195, QuestSubCategory.IfImplement),
+
+        // ── IF Element Research questgivers (additional F61-65 infernal coverage) ────
+        ["Ash-Cantor Velin"] = new("if_research_infernal_chant_close", "Infernal Chant Close",
+            "Ten of the infernal-walkers must fall to close the chant for the season.",
+            10, "ore_crimson_flame",
+            "The chant closes. The infernal cipher signs itself.",
+            "The chant holds open.",
+            "The chant is closed. The cipher rests.",
+            300, 130, QuestSubCategory.IfImplement),
+        ["Crimson-Anchorite Renja"] = new("if_research_rosso_lesser_pulse", "Rosso Lesser Pulse",
+            "Eight kills are enough to read the lesser pulse against Rosso element.",
+            8, "",
+            "The lesser pulse reads. Rosso indexes one mark cleaner.",
+            "The pulse skips while the count holds short.",
+            "The pulse is read. Walk on.",
+            280, 120, QuestSubCategory.IfImplement),
+        ["Forge-Sage Tehan"] = new("if_research_infernal_anvil_call", "Infernal Anvil Call",
+            "Twelve fall before the anvil's call holds steady. The forge does not lie.",
+            12, "ore_crimson_flame",
+            "The anvil holds. The forge writes you in.",
+            "The anvil rings off-rhythm.",
+            "The anvil is steady. The forge remembers.",
+            320, 140, QuestSubCategory.IfImplement),
+
+        // ── IF Element Research questgivers (additional early-floor coverage) ────
+        ["Ruins-Cipher Aelis"] = new("if_research_karluin_cipher_close", "Karluin Cipher Close",
+            "Eight of the cathedral's bound must fall before the cipher closes for the night.",
+            8, "",
+            "The cipher closes. The cathedral signs the night's work.",
+            "The cipher holds while the count holds short.",
+            "The cipher is closed. Walk on.",
+            230, 100, QuestSubCategory.IfImplement),
+        ["Forest-Element Hermit Pell"] = new("if_research_integral_quiet_grove", "Integral Quiet Grove",
+            "The grove quiets at ten, no fewer. The Integral element listens only to a quiet grove.",
+            10, "ore_wind_flower",
+            "The grove quiets. Integral listens. Your work is logged.",
+            "The grove still murmurs.",
+            "The grove is quiet. Walk lightly.",
+            260, 110, QuestSubCategory.IfImplement),
+        ["Twilight-Cipher Senne"] = new("if_research_nox_lesser_audit", "Nox Lesser Audit",
+            "Ten of the lesser dread fall, and the audit closes for the season.",
+            10, "",
+            "The audit closes. Nox indexes one mark cleaner.",
+            "The dread still drifts.",
+            "The audit is sealed. Walk on.",
+            280, 120, QuestSubCategory.IfImplement),
+
+        // ── HF Hollow Mission gap-fillers (F77 hill zone, Crystalize Claw band) ────
+        ["Hollow-Knight Aron"] = new("hf_mission_crystalize_claw_audit", "The Crystalize Claw Audit",
+            "Twelve fall on the hills before the Claw stops feeding. Make twelve quiet.",
+            12, "",
+            "The hills quiet. The Claw can be approached now — though that is not my work to take.",
+            "The Claw still feeds.",
+            "The hills are quiet. You walked them well.",
+            340, 150, QuestSubCategory.HfMission),
+        ["Hill-Hunter Kessen"] = new("hf_mission_f77_hill_clearance", "Hill Clearance Run",
+            "The hill-zone needs ten quiet to break the Claw's lesser kin.",
+            10, "ore_adamant",
+            "The kin are broken. Carry the clearance up the climb.",
+            "The kin still walk between counts.",
+            "The hill is clear. Walk on.",
+            320, 140, QuestSubCategory.HfMission),
+        ["Crystal-Veil Anya"] = new("hf_mission_crystalize_lesser", "The Lesser Crystal Veil",
+            "Eight crystal-walkers fall to break the Claw's outer veil.",
+            8, "",
+            "The veil breaks. The Claw is reachable.",
+            "The veil holds.",
+            "The veil is broken. Walk on.",
+            300, 130, QuestSubCategory.HfMission),
+
+        // ── HF Hollow Mission gap-fillers (F82 nightmare swamp) ────
+        ["Crypt-Knight Vorr"] = new("hf_mission_swamp_undead_purge", "Swamp Undead Purge",
+            "Fifteen of the swamp's risen must fall before I can carry the lantern further.",
+            15, "ore_adamant",
+            "The purge closes. The lantern walks on with you.",
+            "The risen still walk.",
+            "The swamp is quiet. Carry the lantern up.",
+            380, 165, QuestSubCategory.HfMission),
+        ["Undead-Hunter Mosca"] = new("hf_mission_nightmare_fen_cull", "Nightmare Fen Cull",
+            "Twelve fen-stalkers fall to clear the lantern's last circle.",
+            12, "",
+            "The fen quiets. The circle closes.",
+            "The fen-stalkers still circle.",
+            "The fen is quiet. Walk on.",
+            350, 155, QuestSubCategory.HfMission),
+
+        // ── HF Hollow Mission gap-fillers (F86 corrupted abyss, King of Skeleton band) ────
+        ["Bone-Champion Karth"] = new("hf_mission_skeleton_lesser_court", "Lesser Court of Skeletons",
+            "Twelve of the lesser court must fall before the King will hold court.",
+            12, "ore_adamant",
+            "The court quiets. The King will see the next climber clean.",
+            "The court still gathers.",
+            "The court is quiet. Walk to the throne.",
+            420, 180, QuestSubCategory.HfMission),
+        ["Skeleton-Sage Wrein"] = new("hf_mission_abyss_bone_pulse", "Abyssal Bone Pulse",
+            "Ten bone-walkers must fall before the pulse steadies enough to walk past.",
+            10, "",
+            "The pulse steadies. The path opens.",
+            "The pulse swallows the count.",
+            "The path is open. Walk it.",
+            400, 170, QuestSubCategory.HfMission),
+
+        // ── HF Hollow Mission gap-fillers (F87 corrupted abyss, Radiance Eater band) ────
+        ["Radiance-Hunter Jarn"] = new("hf_mission_radiance_eater_audit", "Radiance Eater Audit",
+            "Twelve of the lesser eaters must fall before the audit closes on the great one.",
+            12, "ore_ash_white",
+            "The audit closes. The eater can be approached.",
+            "The eaters still feed.",
+            "The audit is sealed. Walk on.",
+            440, 190, QuestSubCategory.HfMission),
+        ["Lightless-Cleric Pir"] = new("hf_mission_radiance_lesser_circle", "Lesser Circle of Light",
+            "Ten of the lesser circle must fall before the abyss accepts the climber's mark.",
+            10, "",
+            "The circle is broken. The mark holds.",
+            "The circle still binds.",
+            "The mark holds. Walk on.",
+            410, 175, QuestSubCategory.HfMission),
+
+        // ── HF Hollow Mission gap-fillers (F89 corrupted abyss, Murderer Fang band) ────
+        ["Fang-Hunter Eden"] = new("hf_mission_murderer_fang_audit", "Murderer Fang Audit",
+            "Twelve fall before the Fang's circle quiets. The audit is the only path past.",
+            12, "ore_ash_white",
+            "The circle quiets. The audit closes for the climb.",
+            "The Fang still feeds.",
+            "The audit is closed. Walk on.",
+            450, 195, QuestSubCategory.HfMission),
+        ["Veil-Breaker Sahn"] = new("hf_mission_abyss_veil_breach", "Abyssal Veil Breach",
+            "Ten veil-walkers must fall before the breach holds open long enough to pass.",
+            10, "",
+            "The breach holds. Carry the mark through.",
+            "The veil heals between counts.",
+            "The breach is yours. Walk it.",
+            420, 180, QuestSubCategory.HfMission),
+
+        // ── HF Hollow Mission gap-fillers (F93-94 crystal void) ────
+        ["Crystal-Warden Aelis"] = new("hf_mission_crystal_warden_trial", "Crystal Warden's Trial",
+            "Fifteen fall in the crystal cavern. Reflections multiply only true work.",
+            15, "ore_ash_white",
+            "The reflections still. The trial passes through you.",
+            "The reflections still multiply.",
+            "The trial closes. The cavern remembers.",
+            480, 210, QuestSubCategory.HfMission),
+        ["Mirror-Knight Vasa"] = new("hf_mission_void_mirror_clearance", "Void Mirror Clearance",
+            "Twelve mirror-walkers must fall before the path through the void steadies.",
+            12, "",
+            "The mirrors steady. The path is yours.",
+            "The mirrors keep multiplying.",
+            "The path holds. Walk it.",
+            460, 200, QuestSubCategory.HfMission),
+        ["Void-Cantor Iset"] = new("hf_mission_void_chant_silencer", "The Chant That Silences",
+            "Twelve void-singers must fall before the chant breaks.",
+            12, "ore_ash_white",
+            "The chant breaks. The void quiets for one climber.",
+            "The chant fills the void each turn.",
+            "The chant is broken. Walk on.",
+            470, 205, QuestSubCategory.HfMission),
+        ["Reflection-Hunter Pollin"] = new("hf_mission_void_reflection_cull", "Reflection Cull",
+            "Ten reflections must be cut down before the path opens to the next chamber.",
+            10, "",
+            "The reflections fall. The chamber opens.",
+            "The reflections answer their own count.",
+            "The chamber is open. Walk on.",
+            440, 190, QuestSubCategory.HfMission),
+        ["Crystal-Cantor Reso"] = new("hf_mission_void_crystal_resonance", "Crystal Resonance Quiet",
+            "Ten of the resonant must fall to quiet the chamber for passage.",
+            10, "",
+            "The resonance quiets. Pass through.",
+            "The resonance fills the chamber again.",
+            "The chamber is quiet. Walk on.",
+            450, 195, QuestSubCategory.HfMission),
+
+        // ── HF Hollow Mission gap-fillers (F96-97 ruby palace approach, divine ascension) ────
+        ["Heathcliff-Loyalist Ashe"] = new("hf_mission_ruby_approach_purge", "Ruby Approach Purge",
+            "Fifteen kills clear the path before the throne. The Commander would have wanted no less.",
+            15, "ore_ash_white",
+            "The path is clear. Heathcliff would have noted you.",
+            "The path is not yet clear.",
+            "The path is yours. The throne waits.",
+            520, 230, QuestSubCategory.HfMission),
+        ["Cloud-Palace Sentinel Rion"] = new("hf_mission_cloud_palace_clearance", "Cloud Palace Clearance",
+            "Twelve fall in the cloud halls. The sentinels do not pass cowards through.",
+            12, "",
+            "The halls quiet. Walk through.",
+            "The halls do not yet recognise you.",
+            "The halls are yours. Walk to the throne.",
+            500, 220, QuestSubCategory.HfMission),
+        ["Deicide-Cult Reader Kolm"] = new("hf_mission_deicide_audit", "Deicide Audit",
+            "Twelve fall before the audit can close. The cult will not write you in until the count is clean.",
+            12, "ore_adamant",
+            "The audit signs your name. The cult notes you for the throne.",
+            "The audit holds short.",
+            "The audit is closed. The throne is open.",
+            510, 225, QuestSubCategory.HfMission),
+        ["Throne-Approach Vassal Hesper"] = new("hf_mission_throne_approach_clear", "Throne Approach Clearance",
+            "Ten fall on the last sky-stair. The vassals walk only with proven climbers.",
+            10, "",
+            "The stair is clear. The vassals walk with you to the throne.",
+            "The stair is not yet quiet.",
+            "The stair is yours. The throne is one step further.",
+            490, 215, QuestSubCategory.HfMission),
     };
 
     // Generic dispatcher for all Hollow Fragment quest NPCs.
@@ -695,7 +1151,8 @@ public partial class TurnManager
             inProgressLine:   q.InProgress,
             postCompleteLine: q.PostComplete,
             rewardCol:        q.Col,
-            rewardXp:         q.Xp);
+            rewardXp:         q.Xp,
+            subCategory:      q.SubCategory);
     }
 
     // Guild Recruiter: trial (10 kills) → induct + rep + perk → signature quest.
@@ -826,7 +1283,7 @@ public partial class TurnManager
             _player.GainExperience(existing.RewardXp);
             if (_player.Level > lvlBefore) LeveledUp?.Invoke();
             Story.StorySystem.AdjustRep(def.Id, 30);
-            // FB-063 — LC Crimson Letter excluded (its 5 NPC kills already took -100).
+            // LC Crimson Letter excluded (its 5 NPC kills already took -100).
             if (def.Id != Story.Faction.LaughingCoffin)
                 KarmaSystem.Adjust(_player, KarmaSystem.DeltaQuestComplete, $"{def.DisplayName} signature quest", _log);
             _log.LogSystem($"  [QUEST] '{sig.Title}' turned in! +30 {def.DisplayName} rep, +{existing.RewardCol} Col, +{existing.RewardXp} XP.");
@@ -844,7 +1301,7 @@ public partial class TurnManager
 
     // Lisbeth at Lindarth (F48) — Rarity 6 craft dialog in place of generic flow.
     // Gated on floor 48 so Town-of-Beginnings Lisbeth (F1) stays normal.
-    // Bundle 11 — F55-boss-cleared one-time Dark Repulser handover (LN canon Lisbeth gift).
+    // F55-boss-cleared one-time Dark Repulser handover (LN canon Lisbeth gift).
     private bool HandleLisbethLindarth(Entities.NPC npc)
     {
         if (npc.Name != "Lisbeth") return false;
@@ -942,7 +1399,7 @@ public partial class TurnManager
 
             bool handledByRan = HandleRanTheBrawler(npc);
             bool handledByAzariya = HandleSisterAzariya(npc);
-            // Bundle 9: awakening hook runs BEFORE HandleSelka; short-circuit OR falls through
+            // Awakening hook runs BEFORE HandleSelka; short-circuit OR falls through
             // to HandleSelka (preserving base + chain dialogue) when awakening conditions fail.
             bool handledBySelka = HandleSelkaAwakening(npc) || HandleSelka(npc);
             bool handledByDorothy = HandleDorothy(npc);
@@ -953,7 +1410,7 @@ public partial class TurnManager
             bool handledByDivineNpc = handledByRan || handledByAzariya || handledBySelka || handledByDorothy || handledByVesper || handledByHollowNpc || handledByLisbeth || handledByGuildRecruiter;
 
             QuestSystem.OnNpcTalk(_log);
-            // FB-063 — karma scales with completion count (+3 per turn-in).
+            // Karma scales with completion count (+3 per turn-in).
             int turnInCount = QuestSystem.ActiveQuests.Count(q => q.Status == QuestStatus.Complete);
             var (qCol, qXp) = QuestSystem.TurnInCompleted();
             if (qCol > 0 || qXp > 0)
@@ -964,7 +1421,7 @@ public partial class TurnManager
                 _player.GainExperience(qXp);
                 _log.LogSystem($"  [QUEST] Rewards: +{qCol} Col, +{qXp} XP!");
                 if (_player.Level > lvlBefore) LeveledUp?.Invoke();
-                // FB-063 — +3 karma per quest completed (generic turn-ins).
+                // +3 karma per quest completed (generic turn-ins).
                 for (int k = 0; k < turnInCount; k++)
                     KarmaSystem.Adjust(_player, KarmaSystem.DeltaQuestComplete, "quest complete", _log);
             }
@@ -975,6 +1432,22 @@ public partial class TurnManager
                 && npc.CanInteract && Random.Shared.Next(3) == 0)
             {
                 var quest = QuestSystem.GenerateQuest(CurrentFloor, npc.Name);
+
+                // IF Implement quests are tagged on canon floor bands (Integral / Nox /
+                // Rosso / Yasha / Gaou anchors); HF Missions are tagged from the broader
+                // Hollow Fragment domain (F76+). IF wins on overlap.
+                int floor = CurrentFloor;
+                if (floor == 14 || floor == 25
+                    || (floor >= 61 && floor <= 65)
+                    || (floor >= 84 && floor <= 90))
+                {
+                    quest.SubCategory = QuestSubCategory.IfImplement;
+                }
+                else if (floor >= 76)
+                {
+                    quest.SubCategory = QuestSubCategory.HfMission;
+                }
+
                 QuestSystem.AddQuest(quest);
                 _log.LogSystem($"  [QUEST] New quest from {npc.Name}: '{quest.Title}'");
                 _log.Log($"  {quest.Description}");
@@ -1029,46 +1502,64 @@ public partial class TurnManager
         { "Lisbeth",        ('L', Terminal.Gui.Color.BrightMagenta, "Mace",              "Blacksmith") },
     };
 
+    // PATH-D-PORT: recruit-confirm dialog routes through this event so game logic
+    // never calls a TG widget directly. UI subscriber renders the prompt with the
+    // current backend (TG MessageBox today; Path D port replaces the subscriber)
+    // and calls Respond(accepted) synchronously with the user's choice. Synchronous
+    // modal semantics are preserved — the subscriber blocks inside its own modal,
+    // then invokes Respond before returning.
+    public event Action<RecruitDialogContext>? RecruitDialogRequested;
+
+    // TODO: subscribe in UI layer (see PATH-D-PORT marker). Until wired the
+    // recruit prompt is silently skipped — flag rather than fall back, per
+    // fail-loud rule.
     private void TryRecruitNpc(NPC npc)
     {
         if (!RecruitableNpcs.TryGetValue(npc.Name, out var info)) return;
         if (PartySystem.Members.Any(a => a.Name == npc.Name)) return;
         if (PartySystem.Members.Count >= PartySystem.MaxPartySize) return;
-        // FB-564 Solo modifier — no recruits allowed.
         if (RunModifiers.IsActive(RunModifier.Solo))
         {
             _log.Log($"{npc.Name} offers to join you, but Solo modifier forbids company.");
             return;
         }
 
-        int choice = Terminal.Gui.MessageBox.Query(
-            $"Recruit {npc.Name}?",
-            $"{npc.Name} ({info.Title}) wants to join your party!\n" +
-            $"Weapon: {info.Wpn}  |  Party: {PartySystem.Members.Count}/{PartySystem.MaxPartySize}",
-            "Welcome aboard!", "Not now");
-
-        if (choice != 0) return;
-
-        PartySystem.TryRecruit(npc.Name, info.Sym, info.Col, info.Wpn, info.Title, _player.Level, _log);
-
-        // Place the ally adjacent to the player and remove the NPC.
-        var ally = PartySystem.Members.LastOrDefault();
-        if (ally != null)
-        {
-            _map.RemoveEntity(npc);
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
+        var ctx = new RecruitDialogContext(
+            NpcName: npc.Name,
+            Title: info.Title,
+            Weapon: info.Wpn,
+            PartySize: PartySystem.Members.Count,
+            PartyMax: PartySystem.MaxPartySize,
+            Respond: accepted =>
             {
-                if (dx == 0 && dy == 0) continue;
-                int nx = _player.X + dx, ny = _player.Y + dy;
-                if (_map.InBounds(nx, ny) && !_map.GetTile(nx, ny).BlocksMovement
-                    && _map.GetTile(nx, ny).Occupant == null)
+                if (!accepted) return;
+                PartySystem.TryRecruit(npc.Name, info.Sym, info.Col, info.Wpn, info.Title, _player.Level, _log);
+
+                var ally = PartySystem.Members.LastOrDefault();
+                if (ally == null) return;
+                _map.RemoveEntity(npc);
+                for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
                 {
-                    _map.PlaceEntity(ally, nx, ny);
-                    return;
+                    if (dx == 0 && dy == 0) continue;
+                    int nx = _player.X + dx, ny = _player.Y + dy;
+                    if (_map.InBounds(nx, ny) && !_map.GetTile(nx, ny).BlocksMovement
+                        && _map.GetTile(nx, ny).Occupant == null)
+                    {
+                        _map.PlaceEntity(ally, nx, ny);
+                        return;
+                    }
                 }
-            }
+            });
+
+        if (RecruitDialogRequested == null)
+        {
+            DebugLogger.LogError("TurnManager.RecruitDialog",
+                new InvalidOperationException(
+                    $"RecruitDialogRequested has no subscriber — recruit prompt for {npc.Name} skipped."));
+            return;
         }
+        RecruitDialogRequested.Invoke(ctx);
     }
 
     private void PushNpcAside(NPC npc, int playerTargetX, int playerTargetY)
@@ -1120,3 +1611,14 @@ public partial class TurnManager
         _lastSoundCueTurn = TurnCount;
     }
 }
+
+// PATH-D-PORT: payload for RecruitDialogRequested. UI subscriber synthesizes a
+// modal accept/decline prompt and calls Respond(true) on accept, Respond(false)
+// (or simply returns without calling) on decline. Respond is invoked synchronously.
+public sealed record RecruitDialogContext(
+    string NpcName,
+    string Title,
+    string Weapon,
+    int PartySize,
+    int PartyMax,
+    Action<bool> Respond);

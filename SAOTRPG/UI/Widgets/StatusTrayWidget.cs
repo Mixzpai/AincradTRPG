@@ -12,7 +12,7 @@ public class StatusTrayWidget : View
 {
     private readonly TurnManager _tm;
     private readonly Player _player;
-    // Session-local verbose toggle — Shift+S flips. Research §6 says don't persist.
+    // Session-local verbose toggle — Shift+S flips. Not persisted across sessions.
     public bool VerboseMode { get; set; }
 
     private enum TrayClass { Debuff, Buff, Cooldown }

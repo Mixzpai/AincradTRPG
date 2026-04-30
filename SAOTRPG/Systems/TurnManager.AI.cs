@@ -40,8 +40,8 @@ public partial class TurnManager
             if (entity is not Monster monster) continue;
             if (!TickMobStatuses(monster)) continue;
 
-            // Bundle 10 (B11) — SlowOnHit consumer. Slowed mobs act every other turn;
-            // mob.Id-XOR-TurnCount parity ensures different mobs skip on different turns.
+            // SlowOnHit consumer. Slowed mobs act every other turn; mob.Id-XOR-TurnCount
+            // parity ensures different mobs skip on different turns.
             if (_slowedMobs.ContainsKey(monster.Id) && ((monster.Id + TurnCount) & 1) == 0)
                 continue;
 
@@ -153,7 +153,7 @@ public partial class TurnManager
         // Boss special ability check -- may use a phase ability instead of normal attack.
         if (monster is Boss boss2 && TryBossAbility(boss2))
         {
-            if (_player.IsDefeated) { LastKillerName = monster.Name; PlayerDied?.Invoke(); }
+            if (_player.IsDefeated) { LastKillerName = monster.Name; RaisePlayerDied("monster"); }
             return;
         }
 
@@ -181,7 +181,7 @@ public partial class TurnManager
                     {
                         LastKillerName = monster.Name;
                         _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-                        PlayerDied?.Invoke();
+                        RaisePlayerDied("monster");
                     }
                     return;
                 }
@@ -222,7 +222,7 @@ public partial class TurnManager
             {
                 LastKillerName = monster.Name;
                 _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-                PlayerDied?.Invoke();
+                RaisePlayerDied("monster");
             }
             return;
         }
@@ -249,7 +249,7 @@ public partial class TurnManager
 
         bool monsterCrit = Random.Shared.Next(100) < Math.Max(0, monster.CriticalRate + WeatherSystem.GetCritModifier());
         // CritImmune+N — at ≥100 cancels the crit outright; lower values roll.
-        // Bundle 8: MH + OH shield contribute, picking the max (cap-like, non-stacking).
+        // MH + OH shield contribute, picking the max (cap-like, non-stacking).
         var playerWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         int critImmune = MaxWeaponShield<EquipmentSpecialEffect.CritImmune>(c => c.ChancePercent);
         if (monsterCrit && critImmune > 0
@@ -290,16 +290,16 @@ public partial class TurnManager
         int rawDamage = monster.BaseAttack;
         if (_blindedMobs.ContainsKey(monster.Id)) rawDamage /= 2;
 
-        // FB-564 Starless Night — enemies hit +10% harder.
+        // Starless Night — enemies hit +10% harder.
         if (RunModifiers.IsActive(RunModifier.StarlessNight)) rawDamage = rawDamage * 110 / 100;
-        // FB-564 Heathcliff's Gauntlet — boss damage ×1.3 in addition to stat boost.
+        // Heathcliff's Gauntlet — boss damage ×1.3 in addition to stat boost.
         if (monster is Boss && RunModifiers.IsActive(RunModifier.HeathcliffsGauntlet))
             rawDamage = rawDamage * 130 / 100;
 
         if (monster is Boss boss && boss.IsEnraged)
         {
             double enrageMul = Boss.EnrageAtkMultiplier;
-            // FB-564 Gleam Eyes Echo — enrage hits +50% harder.
+            // Gleam Eyes Echo — enrage hits +50% harder.
             if (RunModifiers.IsActive(RunModifier.GleamEyesEcho)) enrageMul *= 1.5;
             rawDamage = (int)(rawDamage * enrageMul);
             if (!boss.EnrageAnnounced)
@@ -315,7 +315,7 @@ public partial class TurnManager
     {
         var shield = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Armor;
         var mainWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        // Bundle 10 (B14) — BlockChance is additive across all equipped slots (armor pieces too).
+        // BlockChance is additive across all equipped slots (armor pieces too).
         int blockFx = SumAllSlots<EquipmentSpecialEffect.BlockChanceBonus>(b => b.Percent);
         int totalBlock = (shield?.BlockChance ?? 0) + blockFx;
         if (totalBlock <= 0) return false;
@@ -337,7 +337,7 @@ public partial class TurnManager
     private bool TryParry(Monster monster)
     {
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        // Bundle 10 (B14) — ParryChance additive across all slots; armor with parry-flavor stacks.
+        // ParryChance additive across all slots; armor with parry-flavor stacks.
         int parryFx = SumAllSlots<EquipmentSpecialEffect.ParryChance>(p => p.Percent);
         int parryChance = Math.Min(15, _player.Dexterity) + GetActiveWeaponPerks().Parry + parryFx;
         if (parryChance <= 0 || Random.Shared.Next(100) >= parryChance) return false;
@@ -359,7 +359,7 @@ public partial class TurnManager
     {
         int dodgeChance = Math.Min(20, _player.Agility * 2) + GetActiveWeaponPerks().Dodge;
         if (_slowTurnsLeft > 0) dodgeChance /= 2;
-        // FB-564 Naked Ingress — +25% evasion compensation for no armor.
+        // Naked Ingress — +25% evasion compensation for no armor.
         if (RunModifiers.IsActive(RunModifier.NakedIngress)) dodgeChance = dodgeChance * 125 / 100;
         if (Random.Shared.Next(100) >= dodgeChance) return false;
 
@@ -374,7 +374,7 @@ public partial class TurnManager
         else if (_dodgeStreak == 5) _log.LogCombat("*** Untouchable! 5 dodges! ***");
         else if (_dodgeStreak >= 7 && _dodgeStreak % 2 == 1) _log.LogCombat($"*** Phantom! {_dodgeStreak} dodge streak! ***");
 
-        // EvadeRegen+N — heal N HP on a clean dodge. B14: additive across all slots.
+        // EvadeRegen+N — heal N HP on a clean dodge. Additive across all slots.
         var dodgeWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         int evadeRegen = SumAllSlots<EquipmentSpecialEffect.EvadeRegen>(e => e.Percent);
         if (evadeRegen > 0)
@@ -415,7 +415,7 @@ public partial class TurnManager
         string incomingTag = BuildIncomingDamageTag(monster.Name);
         _log.LogCombat(ApplyDamageTag(incomingLine, incomingTag));
 
-        // Bundle 8: DamageReflect+N — return N% of post-mitigation damage to attacker.
+        // DamageReflect+N — return N% of post-mitigation damage to attacker.
         // Sourced from MH weapon + OH shield (e.g. Nox Fermat +5). Pre-HP-deduct for counter flavor.
         int reflectPct = SumWeaponShield<EquipmentSpecialEffect.DamageReflect>(r => r.Percent);
         if (reflectPct > 0 && finalDamage > 0 && !monster.IsDefeated)
@@ -457,7 +457,7 @@ public partial class TurnManager
         {
             LastKillerName = monster.Name;
             _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
-            PlayerDied?.Invoke();
+            RaisePlayerDied("monster");
         }
     }
 
@@ -544,6 +544,7 @@ public partial class TurnManager
                 glyph: monster.Symbol, glyphColor: monster.SymbolColor,
                 isBoss: isBoss, isFieldBoss: isFieldBoss, isElite: isElite,
                 canPoison: pz, canBleed: bl, canStun: st, canSlow: sl);
+            MilestoneSystem.OnBestiaryDiscovered(_player);
             if (monster.Level >= _player.Level + 3 && _dangerWarned.Add(monster.Id))
             {
                 int diff = monster.Level - _player.Level;
@@ -556,7 +557,7 @@ public partial class TurnManager
             _map.MoveEntity(monster, newX, newY);
     }
 
-    // FB-077 — Mob passability. Land uses Tile.IsWalkable; CanSwim adds Water/WaterDeep.
+    // Mob passability. Land uses Tile.IsWalkable; CanSwim adds Water/WaterDeep.
     private bool IsMonsterWalkable(Monster monster, int x, int y)
     {
         var tile = _map.GetTile(x, y);

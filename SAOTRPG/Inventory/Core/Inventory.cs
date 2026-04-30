@@ -59,7 +59,6 @@ public class Inventory
         if (IsFull)
         {
             _logger.LogError($"Inventory is full. Cannot add item: {item.Name}");
-            Events.RaiseInventoryFull();
             return false;
         }
 
@@ -87,7 +86,6 @@ public class Inventory
         if (_items.Remove(item))
         {
             _logger.LogItemRemoved(item);
-            Events.RaiseItemRemoved(item);
             return true;
         }
         return false;
@@ -166,7 +164,6 @@ public class Inventory
         if (IsFull)
         {
             _logger.LogError("Cannot unequip - inventory is full!");
-            Events.RaiseInventoryFull();
             return false;
         }
 
@@ -176,7 +173,6 @@ public class Inventory
         _statBonusCache = null;
 
         _logger.LogItemUnequipped(equipment, slot);
-        Events.RaiseItemUnequipped(equipment, slot);
         return true;
     }
 

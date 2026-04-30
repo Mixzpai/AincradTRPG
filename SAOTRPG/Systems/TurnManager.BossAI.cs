@@ -121,7 +121,11 @@ public partial class TurnManager
                 int allyDmg = Math.Max(1, baseDmg / 2);
                 bool ko = ally.TakeDamage(allyDmg);
                 _log.LogCombat($"  {ally.Name} takes {allyDmg} from the shockwave!");
-                if (ko) _log.LogCombat($"  {ally.Name} has been knocked out!");
+                if (ko)
+                {
+                    _log.LogCombat($"  {ally.Name} has been knocked out!");
+                    AnyAllyKOdThisRun = true;
+                }
             }
         }
     }

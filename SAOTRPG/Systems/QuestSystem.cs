@@ -5,6 +5,11 @@ namespace SAOTRPG.Systems;
 public enum QuestType { Kill, Collect, Explore, Deliver }
 public enum QuestStatus { Active, Complete, TurnedIn }
 
+// Milestone subcategory tag. None = generic procgen quest with no milestone affinity.
+// IfImplement counts toward hf_element_researcher (100); HfMission counts toward
+// hf_debug_field_tester (80). Default None ensures legacy quests round-trip cleanly.
+public enum QuestSubCategory { None, IfImplement, HfMission }
+
 public class Quest
 {
     public string Id { get; set; } = "";
@@ -37,6 +42,10 @@ public class Quest
     // If true, the quest survives floor changes (e.g. multi-floor story quests).
     public bool Persistent { get; set; }
 
+    // Milestone affinity. None on legacy/untagged quests; set at creation time
+    // (fixture handlers, procgen predicates) to feed run-counter increments on turn-in.
+    public QuestSubCategory SubCategory { get; set; } = QuestSubCategory.None;
+
     public bool IsComplete => Status == QuestStatus.Complete || Status == QuestStatus.TurnedIn;
 
     public string ProgressText => Type switch
@@ -56,7 +65,10 @@ public static class QuestSystem
     public static List<Quest> CompletedQuests { get; set; } = new();
     public const int MaxActiveQuests = 5;
 
-    // FB-474 HUD tracker pin. Null = no pinned quest (widget hidden).
+    // Fires per quest as TurnInCompleted moves it into the TurnedIn state.
+    public static event Action<Quest>? QuestTurnedIn;
+
+    // HUD tracker pin. Null = no pinned quest (widget hidden).
     // Auto-pins on first accept; stays pinned through completion until turn-in.
     public static string? PinnedQuestId { get; set; }
 
@@ -129,9 +141,6 @@ public static class QuestSystem
 
     // Single dispatcher -- parameterizes over per-type target pool, count formula,
     // template set, id tag, and reward formula. Exact per-type reward math preserved.
-    public static Quest Generate(QuestType type, int floor)
-        => Generate(type, floor, giver: "");
-
     private static Quest Generate(QuestType type, int floor, string giver)
     {
         // Per-type target string (mob name, item name, or literal) + target count.
@@ -284,6 +293,7 @@ public static class QuestSystem
             ActiveQuests.Remove(q);
             CompletedQuests.Add(q);
             if (PinnedQuestId == q.Id) PinnedQuestId = null;
+            QuestTurnedIn?.Invoke(q);
         }
         // Auto-repin to next active quest if we lost our pin.
         if (PinnedQuestId == null && ActiveQuests.Count > 0)

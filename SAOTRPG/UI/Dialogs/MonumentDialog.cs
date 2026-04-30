@@ -6,195 +6,79 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Monument of Swordsmen — kill milestones + title unlocks. Left: fought species w/ kill counts and 10/100/1000 checkpoints.
-// Right: selected title desc, requirement, Equip/Unequip. Title worn via title list below species list.
+// Monument of Swordsmen — canonical NPC view of the unified milestone system.
+// Top: NPC flavor. Middle: shared 10-tab milestone view (same renderer as MilestonesDialog).
+// Bottom: per-species kill log preserved from the legacy Monument layout.
 public static class MonumentDialog
 {
-    private const int DialogWidth  = 92;
-    private const int DialogHeight = 32;
-
     public static void Show(Player player)
     {
-        var dialog = DialogHelper.Create("Monument of Swordsmen", DialogWidth, DialogHeight);
+        int screenW = Application.Screen.Width;
+        int screenH = Application.Screen.Height;
+        int dlgW = Math.Min(Math.Max(96, screenW - 6), 130);
+        int dlgH = Math.Min(Math.Max(36, screenH - 4), 50);
 
-        // ── Header ───────────────────────────────────────────────────
-        dialog.Add(new Label
+        var dialog = DialogHelper.Create("Monument of Swordsmen", dlgW, dlgH);
+
+        // ── NPC framing ──────────────────────────────────────────────
+        var flavorLabel = new Label
         {
             Text = "The black iron remembers every blade raised in its shadow.",
-            X = Pos.Center(), Y = 0, ColorScheme = ColorSchemes.Dim,
-        });
+            X = Pos.Center(), Y = 0,
+            ColorScheme = ColorSchemes.Dim,
+        };
+        dialog.Add(flavorLabel);
 
-        // ── Species kill list (left pane) ────────────────────────────
-        dialog.Add(new Label
+        // ── Shared milestone tab view ────────────────────────────────
+        MilestoneTabbedView.Build(dialog, player, initialCategory: null);
+
+        // ── Kill log preview at the bottom (unique to Monument) ──────
+        // The legacy Monument's species kill log lives here as a compact 6-row
+        // strip beneath the milestone area. Full per-species detail still lives
+        // on the Bestiary screen.
+        AddKillLogStrip(dialog);
+
+        DialogHelper.AddCloseFooter(dialog);
+        DialogHelper.RunModal(dialog);
+    }
+
+    // 6-row scrolling strip showing top-killed species + 10/100/1000 checkmarks.
+    private static void AddKillLogStrip(Dialog dialog)
+    {
+        var header = new Label
         {
             Text = "[ Kill Log — Species & Milestones ]",
-            X = 1, Y = 2, ColorScheme = ColorSchemes.Gold,
-        });
+            X = 1, Y = Pos.AnchorEnd(11),
+            ColorScheme = ColorSchemes.Gold,
+        };
+        dialog.Add(header);
 
         var entries = Bestiary.GetAll();
-        var speciesLines = new List<string>();
+        var lines = new List<string>();
         if (entries.Count == 0)
         {
-            speciesLines.Add("  No kills recorded yet. The monument waits.");
+            lines.Add("  No kills recorded yet. The monument waits.");
         }
         else
         {
-            foreach (var e in entries)
+            // Sort by kills descending — Monument is canonical kill log surface.
+            var ordered = entries.OrderByDescending(e => e.TimesKilled).Take(64);
+            foreach (var e in ordered)
             {
                 string m10  = e.TimesKilled >= 10   ? "[10✓]"   : "[10 ]";
                 string m100 = e.TimesKilled >= 100  ? "[100✓]"  : "[100 ]";
                 string m1k  = e.TimesKilled >= 1000 ? "[1000✓]" : "[1000 ]";
-                speciesLines.Add($"  {e.Name,-32} x{e.TimesKilled,-5} {m10} {m100} {m1k}");
+                lines.Add($"  {e.Name,-32} x{e.TimesKilled,-5} {m10} {m100} {m1k}");
             }
         }
 
-        var speciesList = new ListView
+        var killList = new ListView
         {
-            X = 1, Y = 3,
-            Width = DialogWidth / 2 - 2,
-            Height = DialogHeight - 10,
+            X = 1, Y = Pos.AnchorEnd(10), Width = Dim.Fill(2), Height = 6,
             ColorScheme = ColorSchemes.ListSelection,
+            CanFocus = true,
         };
-        speciesList.SetSource(new ObservableCollection<string>(speciesLines));
-        dialog.Add(speciesList);
-
-        // ── Titles pane (right) ──────────────────────────────────────
-        int rightX = DialogWidth / 2 + 1;
-        dialog.Add(new Label
-        {
-            Text = "[ Titles ]",
-            X = rightX, Y = 2, ColorScheme = ColorSchemes.Gold,
-        });
-
-        // Build title line list with unlocked/locked state and active marker.
-        var titleDefs = TitleSystem.Titles.Values.ToList();
-        string BuildTitleLine(TitleSystem.TitleDef def)
-        {
-            bool unlocked = player.UnlockedTitleIds.Contains(def.Id);
-            bool active = player.ActiveTitleId == def.Id;
-            string marker = active ? "★" : (unlocked ? "◆" : "·");
-            string name = unlocked ? def.DisplayName : "???";
-            return $"  {marker} {name}";
-        }
-
-        var titleLines = titleDefs.Select(BuildTitleLine).ToList();
-        var titleList = new ListView
-        {
-            X = rightX, Y = 3,
-            Width = DialogWidth / 2 - 2,
-            Height = DialogHeight - 14,
-            ColorScheme = ColorSchemes.ListSelection,
-        };
-        titleList.SetSource(new ObservableCollection<string>(titleLines));
-        dialog.Add(titleList);
-
-        // ── Title detail panel ───────────────────────────────────────
-        int detailY = DialogHeight - 11;
-        var detailHeader = new Label
-        {
-            Text = "[ Title Detail ]",
-            X = rightX, Y = detailY, ColorScheme = ColorSchemes.Gold,
-        };
-        var detailName = new Label
-        {
-            Text = "", X = rightX, Y = detailY + 1,
-            Width = DialogWidth / 2 - 2,
-            ColorScheme = ColorSchemes.Title,
-        };
-        var detailDesc = new Label
-        {
-            Text = "", X = rightX, Y = detailY + 2,
-            Width = DialogWidth / 2 - 2,
-        };
-        var detailReq = new Label
-        {
-            Text = "", X = rightX, Y = detailY + 3,
-            Width = DialogWidth / 2 - 2,
-            ColorScheme = ColorSchemes.Dim,
-        };
-        var activeStatus = new Label
-        {
-            Text = "", X = rightX, Y = detailY + 4,
-            Width = DialogWidth / 2 - 2,
-            ColorScheme = ColorSchemes.Dim,
-        };
-        dialog.Add(detailHeader, detailName, detailDesc, detailReq, activeStatus);
-
-        // ── Equip/Unequip button ─────────────────────────────────────
-        var equipBtn = new Button
-        {
-            Text = "[Enter] Equip",
-            X = rightX, Y = detailY + 5,
-            ColorScheme = ColorSchemes.Button,
-        };
-        dialog.Add(equipBtn);
-
-        void RefreshDetail()
-        {
-            int idx = titleList.SelectedItem;
-            if (idx < 0 || idx >= titleDefs.Count) return;
-            var def = titleDefs[idx];
-            bool unlocked = player.UnlockedTitleIds.Contains(def.Id);
-            bool active = player.ActiveTitleId == def.Id;
-
-            detailName.Text = unlocked ? def.DisplayName : "??? (Locked)";
-            detailDesc.Text = unlocked ? def.Description
-                : "This title has not been earned yet.";
-            detailReq.Text  = def.RequirementNote != null
-                ? $"Requirement: {def.RequirementNote}"
-                : "";
-            activeStatus.Text = active ? "Currently Equipped." : "";
-            equipBtn.Text = !unlocked ? "[—] Locked"
-                : active ? "[Enter] Unequip"
-                : "[Enter] Equip";
-        }
-
-        void RefreshTitleList()
-        {
-            for (int i = 0; i < titleDefs.Count; i++)
-                titleLines[i] = BuildTitleLine(titleDefs[i]);
-            titleList.SetSource(new ObservableCollection<string>(titleLines));
-        }
-
-        titleList.SelectedItemChanged += (s, e) => RefreshDetail();
-        equipBtn.Accepting += (s, e) =>
-        {
-            e.Cancel = true;
-            int idx = titleList.SelectedItem;
-            if (idx < 0 || idx >= titleDefs.Count) return;
-            var def = titleDefs[idx];
-            if (!player.UnlockedTitleIds.Contains(def.Id)) return;
-
-            if (player.ActiveTitleId == def.Id)
-                TitleSystem.SetActiveTitle(player, null);
-            else
-                TitleSystem.SetActiveTitle(player, def.Id);
-
-            RefreshTitleList();
-            RefreshDetail();
-        };
-
-        // Pressing Enter on the title list equips/unequips too.
-        titleList.OpenSelectedItem += (s, e) =>
-        {
-            int idx = titleList.SelectedItem;
-            if (idx < 0 || idx >= titleDefs.Count) return;
-            var def = titleDefs[idx];
-            if (!player.UnlockedTitleIds.Contains(def.Id)) return;
-
-            if (player.ActiveTitleId == def.Id)
-                TitleSystem.SetActiveTitle(player, null);
-            else
-                TitleSystem.SetActiveTitle(player, def.Id);
-
-            RefreshTitleList();
-            RefreshDetail();
-        };
-
-        // Initial render.
-        if (titleDefs.Count > 0) RefreshDetail();
-
-        DialogHelper.AddCloseFooter(dialog);
-        DialogHelper.RunModal(dialog);
+        killList.SetSource(new ObservableCollection<string>(lines));
+        dialog.Add(killList);
     }
 }

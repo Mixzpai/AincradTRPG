@@ -16,7 +16,7 @@ public enum StoryFlag
     RefusedDuel,         // F75: refused — triggers alternate F100 path
 }
 
-// Faction/guild IDs used by StorySystem rep + FB-063 GuildSystem. None = no guild.
+// Faction/guild IDs used by StorySystem rep + GuildSystem. None = no guild.
 public enum Faction
 {
     None,

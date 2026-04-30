@@ -201,7 +201,7 @@ public static class StatsDialog
             profEndRow = profY + 2;
         }
 
-        // ── FB-050 Life Skills section ────────────────────────────────
+        // ── Life Skills section ───────────────────────────────────────
         int lsY = profEndRow + 1;
         dialog.Add(new Label
         {
@@ -229,7 +229,7 @@ public static class StatsDialog
             lsRow++;
         }
 
-        // ── FB-058 Active Title section ───────────────────────────────
+        // ── Active Title section ──────────────────────────────────────
         int tY = lsRow + 1;
         dialog.Add(new Label
         {
@@ -240,9 +240,9 @@ public static class StatsDialog
         string titleText;
         ColorScheme titleScheme;
         if (player.ActiveTitleId != null
-            && Systems.TitleSystem.Titles.TryGetValue(player.ActiveTitleId, out var activeDef))
+            && MilestoneRegistry.ById.TryGetValue(player.ActiveTitleId, out var activeDef))
         {
-            titleText = $"  ★ {activeDef.DisplayName} — {activeDef.Description}";
+            titleText = $"  ★ {activeDef.Name} — {activeDef.Description}";
             titleScheme = ColorSchemes.Gold;
         }
         else
@@ -258,8 +258,11 @@ public static class StatsDialog
             Width = Dim.Fill(1),
             ColorScheme = titleScheme,
         });
-        int unlockedCount = player.UnlockedTitleIds.Count;
-        int totalTitles = Systems.TitleSystem.Titles.Count;
+        int unlockedCount = MilestoneRegistry.All
+            .Count(m => m.Reward == RewardType.EquippableTitle
+                && LifetimeStats.IsMilestoneUnlocked(m.Id));
+        int totalTitles = MilestoneRegistry.All
+            .Count(m => m.Reward == RewardType.EquippableTitle);
         dialog.Add(new Label
         {
             Text = $"  Titles unlocked: {unlockedCount}/{totalTitles}",
@@ -267,7 +270,7 @@ public static class StatsDialog
             ColorScheme = ColorSchemes.Dim,
         });
 
-        // ── FB-063 Guild Affiliation + Karma section ──────────────────
+        // ── Guild Affiliation + Karma section ─────────────────────────
         int gY = tY + 4;
         dialog.Add(new Label
         {

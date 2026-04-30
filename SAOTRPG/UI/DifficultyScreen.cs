@@ -103,7 +103,7 @@ public static class DifficultyScreen
             Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger,
         };
 
-        // ── Run Modifiers row (FB-564) — unlocked after first F100 victory.
+        // ── Run Modifiers row — unlocked after first F100 victory.
         int modY = hcY + 2;
         bool modifiersUnlocked = ProfileData.HasCompletedGame;
         var modifierBtn = new Button

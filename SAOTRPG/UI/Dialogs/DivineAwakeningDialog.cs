@@ -7,7 +7,7 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Bundle 9 — Divine Awakening modal. Opened via Selka F65 when player carries a Divine.
+// Divine Awakening modal. Opened via Selka F65 when player carries a Divine.
 // Per-run cap means usually 1 Divine; picker used defensively if >1.
 public static class DivineAwakeningDialog
 {

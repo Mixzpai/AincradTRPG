@@ -102,8 +102,8 @@ public static class ShopTierSystem
                     yield return id;
     }
 
-    // FB-072 — all tiers ascending. VendorInvestmentSystem synthesizes per-vendor
-    // bonus stock from tiers not yet globally unlocked.
+    // All tiers ascending. VendorInvestmentSystem synthesizes per-vendor bonus stock
+    // from tiers not yet globally unlocked.
     public static IEnumerable<(int Floor, string[] DefIds)> EnumerateAllTiers()
     {
         foreach (var kv in TierUnlocks.OrderBy(x => x.Key))

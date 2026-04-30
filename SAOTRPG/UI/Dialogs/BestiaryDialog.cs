@@ -37,9 +37,9 @@ public static class BestiaryDialog
         string sortKey = Bestiary.SessionSort;
         string activeTab = Bestiary.SessionActiveTab;
 
-        // Bundle 12 — chip strip is now two-line: row 0 = tag chips (Label per chip, color-only
-        // active marker), row 1 = B/U/F/Sort indicator. Drops the [x]/[ ] markers per Risk R7
-        // so the strip fits inside 120-col terminals without silently clipping Sort:.
+        // Two-line chip strip: row 0 = tag chips (Label per chip, color-only active marker),
+        // row 1 = B/U/F/Sort indicator. No [x]/[ ] markers so the strip fits inside
+        // 120-col terminals without silently clipping Sort:.
         var chipLabels = new List<Label>(KnownTags.Length);
         for (int i = 0; i < KnownTags.Length; i++)
         {

@@ -11,6 +11,9 @@ public static class PartySystem
     public static List<Ally> Members { get; set; } = new();
     public const int MaxPartySize = 2;
 
+    // Fires when TryRecruit successfully adds a new ally to Members.
+    public static event Action<Ally>? AllyRecruited;
+
     // Recruit an ally from an NPC interaction. Returns true if recruited.
     public static bool TryRecruit(string name, char symbol, Color color,
         string weaponType, string title, int playerLevel, IGameLog log)
@@ -44,6 +47,7 @@ public static class PartySystem
         ally.CurrentHealth = ally.MaxHealth;
         Members.Add(ally);
         log.LogSystem($"{name} has joined your party!");
+        AllyRecruited?.Invoke(ally);
         return true;
     }
 

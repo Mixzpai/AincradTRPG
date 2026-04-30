@@ -67,7 +67,7 @@ public static class KillStatsDialog
         dialog.Add(ScreenHeader.Section("Weapon Proficiency", y++));
         if (turnManager.WeaponKills.Count > 0)
         {
-            // Bundle 12 — count entries dropped to footer-clip so the player gets a "+N more" hint
+            // Count entries dropped to footer-clip so the player gets a "+N more" hint
             // instead of a silent truncation at 8+ weapon types.
             int shown = 0;
             int total = turnManager.WeaponKills.Count;

@@ -15,7 +15,6 @@ public sealed class PrefabLibrary
     private bool _loaded;
 
     public int Count => _byName.Count;
-    public bool Loaded => _loaded;
 
     public void LoadAll()
     {
@@ -56,16 +55,6 @@ public sealed class PrefabLibrary
         sw.Stop();
         DebugLogger.LogGame("PREFAB",
             $"loaded {parsed}/{files} prefabs ({dup} duplicates) in {sw.Elapsed.TotalMilliseconds:F1}ms");
-    }
-
-    // Forces a reload — used by dev tools only. Not thread-safe.
-    public void Reload()
-    {
-        _byName.Clear();
-        _byBiome.Clear();
-        _byTag.Clear();
-        _loaded = false;
-        LoadAll();
     }
 
     private void Index(PrefabDefinition def)
@@ -112,6 +101,4 @@ public sealed class PrefabLibrary
             }
         }
     }
-
-    public IReadOnlyCollection<string> AllNames() => _byName.Keys;
 }

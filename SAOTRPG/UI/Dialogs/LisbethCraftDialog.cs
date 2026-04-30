@@ -10,13 +10,12 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Lisbeth R6 crafting (F48 Lindarth). 18 canon HF recipes + B12 C2 iron-ingot enhance lane.
+// Lisbeth R6 crafting (F48 Lindarth). 18 canon HF recipes + iron-ingot enhance lane.
 // F1/F2 swap section. R6 = 3M Col + rare mats; Iron Ingot Enhance = 200 Col + 3 iron_ingot per +1.
 public static class LisbethCraftDialog
 {
     private const int DialogWidth = 86, DialogHeight = 26;
 
-    // Bundle 13 (Items 4a/4c/4d) — three new tabs sit alongside R6 + Iron.
     // F1 R6Craft / F2 Iron / F3 Mithril / F4 Reforge / F5 Crystallite.
     private enum Mode { R6Craft, IronIngotEnhance, MithrilEnhance, Reforge, CrystalliteEnhance }
 
@@ -287,12 +286,8 @@ public static class LisbethCraftDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // Common/Uncommon weapons in inventory (equipped or backpack), excluding sealed LAB weapons.
-    private static List<Weapon> GatherEnhanceCandidates(Player player)
-        => GatherEnhanceCandidatesForRarities(player, "Common", "Uncommon");
-
-    // Bundle 13 — generic gather: any weapon whose rarity is in the allow set,
-    // including equipped slots. Used by Iron/Mithril/Crystallite enhance tabs.
+    // Generic gather: any weapon whose rarity is in the allow set, including
+    // equipped slots. Used by Iron/Mithril/Crystallite enhance tabs.
     private static List<Weapon> GatherEnhanceCandidatesForRarities(Player player, params string[] allowed)
     {
         var allow = new HashSet<string>(allowed);
@@ -315,7 +310,7 @@ public static class LisbethCraftDialog
     private static bool IsLowTierRarity(string? rarity) =>
         rarity == "Common" || rarity == "Uncommon";
 
-    // Bundle 13 — Reforge candidates: every weapon (equipped + bag) where Reforge.IsEligible.
+    // Reforge candidates: every weapon (equipped + bag) where Reforge.IsEligible.
     private static List<Weapon> GatherReforgeCandidates(Player player)
     {
         var seen = new HashSet<Weapon>();
@@ -381,7 +376,7 @@ public static class LisbethCraftDialog
         return string.Join("\n", lines);
     }
 
-    // Bundle 13 (Item 4d) — Reforge with explicit before/after confirmation modal (R8 mitigation).
+    // Reforge with explicit before/after confirmation modal.
     // Player MUST accept the new roll — never auto-applied because random rolls can wipe good ones.
     private static void TryReforge(Player player, Weapon weapon, IGameLog log,
         Label detailLabel, Action refresh)
@@ -493,23 +488,7 @@ public static class LisbethCraftDialog
         refresh();
     }
 
-    private static string BuildEnhanceDetail(Player player, Weapon weapon)
-    {
-        var recipe = LisbethRecipes.LowTierEnhanceRecipes[0];
-        int haveIron = CountMaterial(player, "iron_ingot");
-        var lines = new List<string>
-        {
-            $"{weapon.EnhancedName} ({weapon.Rarity}) — current +{weapon.EnhancementLevel}",
-            $"Cost: 3x Iron Ingot ({haveIron} owned), {recipe.ColCost} Col → +{weapon.EnhancementLevel + 1}",
-        };
-        if (weapon.EnhancementLevel >= recipe.MaxEnhancementCap)
-            lines.Add($"At Lisbeth cap (+{recipe.MaxEnhancementCap}). Push +6..+10 at Anvil with Enhancement Ores.");
-        else if (!weapon.IsEnhanceable)
-            lines.Add("[SEALED] Last-Attack-Bonus weapon — cannot be enhanced.");
-        return string.Join("\n", lines);
-    }
-
-    // B12 C2 — order: rarity → seal → cap → mats → Col. Routes through CraftingDialog helper for R9 mitigation.
+    // Order: rarity → seal → cap → mats → Col. Routes through CraftingDialog helper.
     private static void TryIronIngotEnhance(Player player, Weapon weapon, IGameLog log,
         Label detailLabel, Action refresh)
     {
@@ -559,7 +538,7 @@ public static class LisbethCraftDialog
 
         ConsumeMaterial(player, "iron_ingot", ironReq.Qty);
         player.ColOnHand -= recipe.ColCost;
-        // R9 mitigation: routes through CraftingDialog.ApplyLisbethIronIngotEnhance — same Bonuses.Add +
+        // Routes through CraftingDialog.ApplyLisbethIronIngotEnhance — same Bonuses.Add +
         // EnhancementLevel + Equip/Unequip + InvalidateStatCache flow as the Anvil enhance path.
         CraftingDialog.ApplyLisbethIronIngotEnhance(player, weapon);
 

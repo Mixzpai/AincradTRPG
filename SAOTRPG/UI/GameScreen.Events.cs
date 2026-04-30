@@ -23,7 +23,7 @@ public static partial class GameScreen
             // Player crits trigger a single-frame screen-wide brightness boost.
             if (isCrit && !isPlayer) mapView.TriggerCritScreenFlash();
 
-            // Subtle tween popup (research §1): dim element tint, crit = bright+◇.
+            // Subtle tween popup: dim element tint, crit = bright+◇.
             int maxHp = ResolveMaxHpAt(turnManager, turnManager.Player, x, y);
             Color tint = ResolveDamageTint(turnManager, turnManager.Player, isPlayer);
             mapView.EnqueueDamagePopup(x, y, dmg, isCrit, tint, maxHp);
@@ -37,7 +37,7 @@ public static partial class GameScreen
             PartySystem.ScaleToPlayer(turnManager.Player.Level);
             turnManager.RequestTalentPick();
             ToastQueue.EnqueueLevelUp(turnManager.Player.Level);
-            // FB-450 rising column of sparkles from player tile.
+            // Rising column of sparkles from player tile.
             ParticleQueue.Emit(ParticleEvent.LevelUp, turnManager.Player.X, turnManager.Player.Y);
         };
         turnManager.MonsterKilled += (x, y) =>
@@ -80,10 +80,9 @@ public static partial class GameScreen
         {
             mapView.AddSkillFlash(x, y, color);
             mapView.FlashBorder(color, 33);
-            // FB-450 skill-cast ring of particles at the caster tile.
+            // Skill-cast ring of particles at the caster tile.
             ParticleQueue.Emit(ParticleEvent.SkillCastStart, x, y, tint: color);
         };
-        // FB-453 shake + FB-454 projectiles/status motes.
         turnManager.MapViewShakeRequested += tier => mapView.RequestShake(tier);
         turnManager.ProjectileRequested += (sx, sy, ex, ey, glyph, color, msPerCell, isArrow) =>
         {
@@ -152,7 +151,7 @@ public static partial class GameScreen
 
         turnManager.GameWon += () =>
         {
-            // Permanent unlock: Run Modifiers (FB-564) + future post-clear features.
+            // Permanent unlock: Run Modifiers + future post-clear features.
             SAOTRPG.Systems.Story.ProfileData.MarkGameCompleted();
             InvokeDialog(() => VictoryScreen.Show(
                 mainWindow, player, turnManager.KillCount, turnManager.TurnCount, turnManager), false);
@@ -186,10 +185,23 @@ public static partial class GameScreen
         turnManager.NpcDialogRequested += (npc) =>
             InvokeDialog(() => NpcDialogDialog.Show(npc), false);
 
+        // Recruit prompt — UI subscriber for TurnManager.RecruitDialogRequested.
+        // Respond(true) accepts the recruit; Respond(false) declines.
+        turnManager.RecruitDialogRequested += (ctx) =>
+            InvokeDialog(() =>
+            {
+                string body = $"{ctx.NpcName} — \"{ctx.Title}\"\n" +
+                              $"Weapon: {ctx.Weapon}\n\n" +
+                              $"Party {ctx.PartySize}/{ctx.PartyMax}.\n" +
+                              "Invite to your party?";
+                int choice = MessageBox.Query("Recruit Ally", body, "Accept", "Decline");
+                ctx.Respond(choice == 0);
+            }, false);
+
         turnManager.LisbethInteraction += () =>
             InvokeDialog(() => LisbethCraftDialog.Show(player, gameLog));
 
-        // FB-057 Monument of Swordsmen — opens kill log + title browser.
+        // Monument of Swordsmen — opens kill log + title browser.
         turnManager.MonumentInteraction += () =>
             InvokeDialog(() => { MonumentDialog.Show(player); refreshHud(); });
 
@@ -296,12 +308,6 @@ public static partial class GameScreen
         mapView.StatsRequested += () => { mapView.ClearDamagePopups(); StatsDialog.Show(player, turnManager); refreshHud(); };
         mapView.HelpRequested += () => { mapView.ClearDamagePopups(); HelpDialog.Show(); };
         mapView.PlayerGuideRequested += () => { mapView.ClearDamagePopups(); PlayerGuideDialog.Show(turnManager, player); };
-        // Bundle 13 (Item 1) — Shift+L opens the Legendary Collectables panel.
-        mapView.LegendaryCollectablesRequested += () =>
-        {
-            mapView.ClearDamagePopups();
-            LegendaryCollectablesDialog.Show(turnManager.CurrentFloor);
-        };
         mapView.KillStatsRequested += () => { mapView.ClearDamagePopups(); KillStatsDialog.Show(player, turnManager); };
         mapView.BestiaryRequested += () => { mapView.ClearDamagePopups(); BestiaryDialog.Show(player, turnManager); };
         mapView.EquipmentRequested += () => { mapView.ClearDamagePopups(); EquipmentDialog.Show(player); refreshHud(); };
@@ -311,10 +317,10 @@ public static partial class GameScreen
         mapView.SprintRequested += (dx, dy) => { turnManager.ProcessSprint(dx, dy); refreshHud(); };
         mapView.StealthMoveRequested += (dx, dy) => { turnManager.ProcessStealthMove(dx, dy); refreshHud(); };
 
-        // Bundle 13 Item 6 — sword skill activation. Range>1 skills route through the reticle
-        // first; Range=1 (melee bump-skills) keep the legacy nearest-target path. Eligibility
-        // (stun/post-motion/cooldown/weapon) is rechecked inside ExecuteSwordSkill on confirm,
-        // so we only gate reticle entry on the cheap structural facts.
+        // Sword skill activation. Range>1 skills route through the reticle first;
+        // Range=1 (melee bump-skills) keep the legacy nearest-target path. Eligibility
+        // (stun/post-motion/cooldown/weapon) is rechecked inside ExecuteSwordSkill on
+        // confirm, so we only gate reticle entry on the cheap structural facts.
         mapView.SwordSkillRequested += (slot) =>
         {
             if (slot >= 0 && slot < turnManager.EquippedSkills.Length
@@ -341,7 +347,7 @@ public static partial class GameScreen
         mapView.SwordSkillMenuRequested += () => { SwordSkillDialog.Show(turnManager); refreshHud(); };
         mapView.QuestLogRequested += () => { QuestLogDialog.Show(player); };
 
-        // Bundle 13 Item 6 — `\` opens the Bow basic-attack reticle when a Bow is equipped.
+        // `\` opens the Bow basic-attack reticle when a Bow is equipped.
         // Anything else (melee weapon, unarmed, already-aiming) silently no-ops with a hint line.
         mapView.RangedFireKeyPressed += () =>
         {
@@ -470,8 +476,8 @@ public static partial class GameScreen
             return true;
         });
 
-        // Fast 50ms ticker redraws while any real-time animation is active (Wave 1).
-        // Gate now covers tile animations, particles, popups, toasts, flashes, shake.
+        // Fast 50ms ticker redraws while any real-time animation is active.
+        // Gate covers tile animations, particles, popups, toasts, flashes, shake.
         Application.AddTimeout(TimeSpan.FromMilliseconds(50), () =>
         {
             if (mapView.HasActiveRealtimeAnimations())
