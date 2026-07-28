@@ -14,8 +14,8 @@ public static class MilestonesDialog
 {
     public static void Show(Player player, string? initialCategory = null)
     {
-        int screenW = Application.Screen.Width;
-        int screenH = Application.Screen.Height;
+        int screenW = AppHost.App.Screen.Width;
+        int screenH = AppHost.App.Screen.Height;
         int dlgW = Math.Min(Math.Max(96, screenW - 6), 130);
         int dlgH = Math.Min(Math.Max(32, screenH - 4), 46);
 
@@ -25,7 +25,7 @@ public static class MilestonesDialog
         {
             Text = "[ Milestones ]",
             X = Pos.Center(), Y = 0,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         dialog.Add(headerLabel);
 
@@ -110,7 +110,7 @@ internal static class MilestoneTabbedView
             }
             btn.Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 SwitchTab(state, TabOrder[idx]);
             };
             tabButtons[i] = btn;
@@ -122,7 +122,7 @@ internal static class MilestoneTabbedView
         var tallyLabel = new Label
         {
             Text = "", X = 1, Y = 5, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         parent.Add(tallyLabel);
         state.TallyLabel = tallyLabel;
@@ -146,7 +146,7 @@ internal static class MilestoneTabbedView
             bb.Y = 0;
             bb.Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 state.Bucket = BucketOrder[idx];
                 RefreshBucketRow(state);
                 RefreshList(state);
@@ -164,19 +164,17 @@ internal static class MilestoneTabbedView
         // y=6/y=7 strip the Collectables bucket row uses; the two are mutually
         // exclusive because they live on different tabs.
         // PATH-D-PORT: pure Label text — block-character bars (█/░) draw via
-        // standard ColorScheme paint; no custom AddRune calls.
+        // standard Scheme paint; no custom AddRune calls.
         var ifProgress = new Label
         {
             Text = "", X = 1, Y = 6, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.FromColor(Color.BrightCyan),
             Visible = false,
-        };
+        }.WithScheme(ColorSchemes.FromColor(Color.BrightCyan));
         var hfProgress = new Label
         {
             Text = "", X = 1, Y = 7, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.FromColor(Color.BrightYellow),
             Visible = false,
-        };
+        }.WithScheme(ColorSchemes.FromColor(Color.BrightYellow));
         parent.Add(ifProgress, hfProgress);
         state.IfProgressBar = ifProgress;
         state.HfProgressBar = hfProgress;
@@ -185,7 +183,7 @@ internal static class MilestoneTabbedView
         var listView = new ListView
         {
             X = 1, Y = 8, Width = Dim.Fill(2), Height = Dim.Fill(6),
-            ColorScheme = ColorSchemes.ListSelection,
+            SchemeName = ColorSchemes.ListSelectionName,
             CanFocus = true,
         };
         // PATH-D-PORT: ListView uses ObservableCollection<string> source; replace each refresh.
@@ -196,17 +194,17 @@ internal static class MilestoneTabbedView
         var detailLine = new Label
         {
             Text = "", X = 1, Y = Pos.AnchorEnd(5), Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
         var rewardLine = new Label
         {
             Text = "", X = 1, Y = Pos.AnchorEnd(4), Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         var equipHint = new Label
         {
             Text = "", X = 1, Y = Pos.AnchorEnd(3), Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         parent.Add(detailLine, rewardLine, equipHint);
         state.DetailLine = detailLine;
@@ -214,7 +212,7 @@ internal static class MilestoneTabbedView
         state.EquipHint = equipHint;
 
         // ── List interactions ─────────────────────────────────────────
-        listView.SelectedItemChanged += (s, e) => RefreshDetail(state);
+        listView.ValueChanged += (s, e) => RefreshDetail(state);
 
         // PATH-D-PORT: KeyDown handler on ListView for Equip/Unequip hotkeys (E / U).
         // Tab/Shift+Tab cycles tabs; 1-9/0 jumps directly to a tab.
@@ -429,7 +427,7 @@ internal static class MilestoneTabbedView
 
     private static void RefreshDetail(TabState state)
     {
-        int idx = state.ListView.SelectedItem;
+        int idx = state.ListView.SelectedItem ?? -1;
         if (idx < 0 || idx >= state.CurrentRows.Count)
         {
             state.DetailLine.Text = "";
@@ -497,7 +495,7 @@ internal static class MilestoneTabbedView
 
     private static void TryEquipFocused(TabState state)
     {
-        int idx = state.ListView.SelectedItem;
+        int idx = state.ListView.SelectedItem ?? -1;
         if (idx < 0 || idx >= state.CurrentRows.Count) return;
         var m = state.CurrentRows[idx];
         if (m.Reward != RewardType.EquippableTitle) return;
@@ -509,7 +507,7 @@ internal static class MilestoneTabbedView
 
     private static void TryUnequipFocused(TabState state)
     {
-        int idx = state.ListView.SelectedItem;
+        int idx = state.ListView.SelectedItem ?? -1;
         if (idx < 0 || idx >= state.CurrentRows.Count) return;
         var m = state.CurrentRows[idx];
         if (m.Reward != RewardType.EquippableTitle) return;

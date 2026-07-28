@@ -57,7 +57,7 @@ public static class CraftingDialog
         var header = new Label
         {
             Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}",
-            X = 2, Y = 0, Width = Dim.Fill(2), ColorScheme = ColorSchemes.Gold,
+            X = 2, Y = 0, Width = Dim.Fill(2), SchemeName = ColorSchemes.GoldName,
         };
 
         var repairBtn = DialogHelper.CreateButton("Repair All");
@@ -75,18 +75,18 @@ public static class CraftingDialog
         var resultLabel = new Label
         {
             Text = "", X = 2, Y = 10,
-            Width = Dim.Fill(2), Height = 12, ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(2), Height = 12, SchemeName = ColorSchemes.BodyName,
         };
 
         int repairCost = 50 + floor * 25;
 
         repairBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             if (player.ColOnHand < repairCost)
             {
                 resultLabel.Text = $"Repairs cost {repairCost} Col. You only have {player.ColOnHand}.";
-                resultLabel.ColorScheme = ColorSchemes.Danger;
+                resultLabel.SchemeName = ColorSchemes.DangerName;
                 return;
             }
             int repaired = 0;
@@ -102,39 +102,39 @@ public static class CraftingDialog
             if (repaired == 0)
             {
                 resultLabel.Text = "All equipment is in good condition.";
-                resultLabel.ColorScheme = ColorSchemes.Dim;
+                resultLabel.SchemeName = ColorSchemes.DimName;
             }
             else
             {
                 player.ColOnHand -= repairCost;
                 resultLabel.Text = $"Repaired {repaired} item(s)! (-{repairCost} Col)";
-                resultLabel.ColorScheme = ColorSchemes.Gold;
+                resultLabel.SchemeName = ColorSchemes.GoldName;
                 header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
             }
         };
 
         enhanceBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             ShowEnhanceMenu(player, floor, resultLabel, header);
         };
 
         evolveBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             TryEvolveWeapon(player, resultLabel, header);
         };
 
         refineBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             ShowRefineMenu(player, resultLabel, header);
         };
 
         var hintLabel = new Label
         {
             Text = "Enter: select | Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         dialog.Add(header, repairBtn, enhanceBtn, evolveBtn, refineBtn, resultLabel, hintLabel);
@@ -157,7 +157,7 @@ public static class CraftingDialog
         if (candidates.Count == 0)
         {
             resultLabel.Text = "No equipment to enhance. Equip gear first, or all items are at +10.";
-            resultLabel.ColorScheme = ColorSchemes.Dim;
+            resultLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
 
@@ -174,7 +174,7 @@ public static class CraftingDialog
                          $"({cost} Col, {mats} mats, {rate}% chance)";
         }
 
-        int choice = MessageBox.Query("Enhance Which?",
+        int choice = DialogHelper.Query("Enhance Which?",
             string.Join("\n", labels),
             labels.Select((_, i) => candidates[i].Slot.ToString()).Append("Cancel").ToArray());
 
@@ -187,7 +187,7 @@ public static class CraftingDialog
         {
             resultLabel.Text = $"{weaponCheck.EnhancedName} cannot be enhanced.\n" +
                                "This Last-Attack Bonus weapon is sealed by its forging.";
-            resultLabel.ColorScheme = ColorSchemes.Dim;
+            resultLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
 
@@ -199,14 +199,14 @@ public static class CraftingDialog
         if (player.ColOnHand < enhCost)
         {
             resultLabel.Text = $"Not enough Col! Need {enhCost}, have {player.ColOnHand}.";
-            resultLabel.ColorScheme = ColorSchemes.Danger;
+            resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (matCount < matsNeeded)
         {
             resultLabel.Text = $"Not enough materials! Need {matsNeeded}, have {matCount}.\n" +
                                "Defeat monsters to collect crafting materials.";
-            resultLabel.ColorScheme = ColorSchemes.Danger;
+            resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
@@ -243,7 +243,7 @@ public static class CraftingDialog
             resultLabel.Text = $"SUCCESS! {chosenItem.EnhancedName}{biasMsg}\n" +
                                $"(-{enhCost} Col, -{matsNeeded} materials" +
                                (chosenOreDefId != null ? $", -1 ore" : "") + ")";
-            resultLabel.ColorScheme = ColorSchemes.Gold;
+            resultLabel.SchemeName = ColorSchemes.GoldName;
         }
         else
         {
@@ -254,13 +254,13 @@ public static class CraftingDialog
 
                 resultLabel.Text = $"FAILURE! Enhancement dropped to +{chosenItem.EnhancementLevel}!\n" +
                                    $"Materials and Col consumed. High-level enhancement is risky!";
-                resultLabel.ColorScheme = ColorSchemes.Danger;
+                resultLabel.SchemeName = ColorSchemes.DangerName;
             }
             else
             {
                 resultLabel.Text = $"FAILURE! The enhancement didn't take.\n" +
                                    $"Materials and Col consumed. Try again?";
-                resultLabel.ColorScheme = ColorSchemes.Danger;
+                resultLabel.SchemeName = ColorSchemes.DangerName;
             }
         }
 
@@ -284,7 +284,7 @@ public static class CraftingDialog
         {
             resultLabel.Text = "Enhancement requires an Enhancement Ore.\n" +
                                "Defeat themed mobs or bosses to collect one.";
-            resultLabel.ColorScheme = ColorSchemes.Dim;
+            resultLabel.SchemeName = ColorSchemes.DimName;
             return null;
         }
 
@@ -293,7 +293,7 @@ public static class CraftingDialog
             .Select(t => $"{t.Sample.Name} x{t.Qty} (+{t.Sample.BiasStat})")
             .Append("Cancel")
             .ToArray();
-        int which = MessageBox.Query(
+        int which = DialogHelper.Query(
             "Choose Enhancement Ore",
             "Pick an ore — its theme biases this level's bonus:",
             labels);
@@ -391,7 +391,7 @@ public static class CraftingDialog
         if (equipped is not Weapon weapon)
         {
             resultLabel.Text = "Equip a weapon first to check for evolution paths.";
-            resultLabel.ColorScheme = ColorSchemes.Dim;
+            resultLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
 
@@ -399,14 +399,14 @@ public static class CraftingDialog
         if (step == null)
         {
             resultLabel.Text = $"{weapon.Name}\nThis weapon is not part of an evolution chain.";
-            resultLabel.ColorScheme = ColorSchemes.Dim;
+            resultLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
 
         if (step.Tier == ChainTier.T4 || step.NextDefId == null)
         {
             resultLabel.Text = $"{weapon.Name}\nThis weapon is already at its peak evolution.";
-            resultLabel.ColorScheme = ColorSchemes.Gold;
+            resultLabel.SchemeName = ColorSchemes.GoldName;
             return;
         }
 
@@ -430,20 +430,20 @@ public static class CraftingDialog
             $"Evolve {weapon.EnhancedName} into {nextName}?\n\n" +
             $"Cost: {costLine}";
 
-        int choice = MessageBox.Query("Evolve Weapon", promptBody, "Confirm", "Cancel");
+        int choice = DialogHelper.Query("Evolve Weapon", promptBody, "Confirm", "Cancel");
         if (choice != 0) return;
 
         // Validate materials after confirm so the player sees the full prompt first.
         if (haveMat < step.MaterialQty)
         {
             resultLabel.Text = $"Not enough {matName}! Need {step.MaterialQty}, have {haveMat}.";
-            resultLabel.ColorScheme = ColorSchemes.Danger;
+            resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (step.PeakExtraMatId != null && havePeak < 1)
         {
             resultLabel.Text = $"Apex evolution requires 1x {peakName}. You have {havePeak}.";
-            resultLabel.ColorScheme = ColorSchemes.Danger;
+            resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
@@ -452,7 +452,7 @@ public static class CraftingDialog
         if (created is not Weapon nextWeapon)
         {
             resultLabel.Text = $"Internal error: next weapon '{step.NextDefId}' could not be created.";
-            resultLabel.ColorScheme = ColorSchemes.Danger;
+            resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
@@ -498,7 +498,7 @@ public static class CraftingDialog
             $"◈ Your {oldName} evolves into {nextWeapon.EnhancedName}!\n" +
             $"Consumed {step.MaterialQty}x {matName}" +
             (step.PeakExtraMatId != null ? $" + 1x {peakName}." : ".");
-        resultLabel.ColorScheme = ColorSchemes.Gold;
+        resultLabel.SchemeName = ColorSchemes.GoldName;
 
         header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
     }
@@ -555,7 +555,7 @@ public static class CraftingDialog
         if (candidates.Count == 0)
         {
             resultLabel.Text = "Refinement requires an equipped weapon or shield.";
-            resultLabel.ColorScheme = ColorSchemes.Dim;
+            resultLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
 
@@ -573,7 +573,7 @@ public static class CraftingDialog
                 .Select(c => $"{c.Label}: {c.Item.EnhancedName}")
                 .Append("Cancel")
                 .ToArray();
-            int which = MessageBox.Query("Refine Which?",
+            int which = DialogHelper.Query("Refine Which?",
                 "Choose equipment to refine:", btnLabels);
             if (which < 0 || which >= candidates.Count) return;
             target = candidates[which].Item;
@@ -584,7 +584,7 @@ public static class CraftingDialog
         if (target.Rarity == "Divine")
         {
             resultLabel.Text = $"{target.EnhancedName}: Divine weapons cannot be refined.";
-            resultLabel.ColorScheme = ColorSchemes.Gold;
+            resultLabel.SchemeName = ColorSchemes.GoldName;
             return;
         }
 
@@ -599,7 +599,7 @@ public static class CraftingDialog
         }
         slotChoices[EquipmentBase.RefinementSlotCount] = "Cancel";
         var summary = Refinement.GetBonusSummary(target);
-        int slotIdx = MessageBox.Query(
+        int slotIdx = DialogHelper.Query(
             $"Refine — {targetLabel}",
             $"{target.EnhancedName}\nCurrent refinement: {summary.DisplayText}\n\nChoose a slot:",
             slotChoices);
@@ -619,7 +619,7 @@ public static class CraftingDialog
         if (ingotStacks.Count == 0)
         {
             resultLabel.Text = "You have no Ingots to socket.";
-            resultLabel.ColorScheme = ColorSchemes.Dim;
+            resultLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
 
@@ -633,7 +633,7 @@ public static class CraftingDialog
             })
             .Append("Cancel")
             .ToArray();
-        int which2 = MessageBox.Query(
+        int which2 = DialogHelper.Query(
             $"Slot {slotIdx + 1} — Pick an Ingot",
             $"{target.EnhancedName} slot {slotIdx + 1}:",
             ingotLabels);
@@ -652,11 +652,11 @@ public static class CraftingDialog
         {
             resultLabel.Text =
                 $"Need {cost}x {pick.Sample.Name}, have {pick.Qty}.";
-            resultLabel.ColorScheme = ColorSchemes.Danger;
+            resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
-        int confirm = MessageBox.Query("Confirm Refinement",
+        int confirm = DialogHelper.Query("Confirm Refinement",
             $"Socket {pick.Sample.Name} into slot {slotIdx + 1} of\n" +
             $"{target.EnhancedName}?\n\n" +
             $"{oldLine}" +
@@ -672,7 +672,7 @@ public static class CraftingDialog
             if (!player.Inventory.ConsumeByDefinitionId(ingotDefId, extra))
             {
                 resultLabel.Text = "Failed to consume extra ingots — aborted.";
-                resultLabel.ColorScheme = ColorSchemes.Danger;
+                resultLabel.SchemeName = ColorSchemes.DangerName;
                 return;
             }
         }
@@ -681,7 +681,7 @@ public static class CraftingDialog
         if (!ok)
         {
             resultLabel.Text = "Refinement failed (sealed gear or inventory mismatch).";
-            resultLabel.ColorScheme = ColorSchemes.Danger;
+            resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
@@ -689,7 +689,7 @@ public static class CraftingDialog
         resultLabel.Text =
             $"◈ {pick.Sample.Name} socketed into {target.EnhancedName} slot {slotIdx + 1}.\n" +
             $"New refinement: {newSummary.DisplayText}";
-        resultLabel.ColorScheme = ColorSchemes.Gold;
+        resultLabel.SchemeName = ColorSchemes.GoldName;
         header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";
     }
 

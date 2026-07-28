@@ -23,7 +23,7 @@ public static class GuildRosterDialog
             Text = $"Karma: {player.Karma} [{KarmaSystem.TierLabel(player.Karma)}]   "
                  + $"Active: {GuildSystem.ActiveGuildDisplayName(player)}",
             X = 1, Y = 0, Width = Dim.Fill(1),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
 
         var names = new ObservableCollection<string>();
@@ -60,12 +60,12 @@ public static class GuildRosterDialog
             Text = "",
             X = 1, Y = Pos.AnchorEnd(5),
             Width = Dim.Fill(1), Height = 2,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         void Refresh()
         {
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             if (idx < 0 || idx >= ids.Count) { detail.Text = ""; reqLabel.Text = ""; return; }
             if (!GuildSystem.Guilds.TryGetValue(ids[idx], out var def)) return;
             detail.Text =
@@ -76,30 +76,30 @@ public static class GuildRosterDialog
             string memTag = player.ActiveGuildId == def.Id ? "You are a member." : reason;
             reqLabel.Text = $"Requirements: Lv.{def.MinLevel}, karma {def.MinKarma}..{def.MaxKarma}\n{memTag}";
         }
-        listView.SelectedItemChanged += (s, e) => Refresh();
+        listView.ValueChanged += (s, e) => Refresh();
 
         var foundBtn = DialogHelper.CreateButton("Found Your Own Guild");
         foundBtn.X = 1;
         foundBtn.Y = Pos.AnchorEnd(3);
         foundBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             // Already in a guild? Require leaving first.
             if (player.ActiveGuildId == Faction.PlayerGuild)
             {
-                MessageBox.Query("Founded Guild", "You already lead a founded guild. Use the Dissolve button to step down first.", "OK");
+                DialogHelper.Query("Founded Guild", "You already lead a founded guild. Use the Dissolve button to step down first.", "OK");
                 return;
             }
             if (player.ActiveGuildId != Faction.None)
             {
-                int c = MessageBox.Query("Leave Current Guild?",
+                int c = DialogHelper.Query("Leave Current Guild?",
                     "Founding a new guild requires leaving your current one (-10 rep, -3 karma). Proceed?",
                     "Yes", "Cancel");
                 if (c != 0) return;
             }
             if (player.ColOnHand < GuildSystem.PlayerGuildFoundCost)
             {
-                MessageBox.Query("Not Enough Col",
+                DialogHelper.Query("Not Enough Col",
                     $"Founding a guild costs {GuildSystem.PlayerGuildFoundCost} Col. You have {player.ColOnHand}.", "OK");
                 return;
             }
@@ -116,10 +116,10 @@ public static class GuildRosterDialog
             // Leave quietly via throwaway log — penalty still applied, but old-guild -10 rep/-3 karma
             // lines are swallowed since the modal intercepts the game log.
             GuildSystem.Join(player, Faction.PlayerGuild, silentLog);
-            MessageBox.Query("Guild Founded",
+            DialogHelper.Query("Guild Founded",
                 $"{name} is born!\nPerk: {GuildSystem.FoundedPresets[preset].Flavor}\nCost: {GuildSystem.PlayerGuildFoundCost} Col",
                 "For glory!");
-            Application.RequestStop();
+            AppHost.App.RequestStop();
         };
 
         dialog.Add(header, listView, detail, reqLabel, foundBtn);
@@ -133,9 +133,9 @@ public static class GuildRosterDialog
             dissolveBtn.Y = Pos.AnchorEnd(3);
             dissolveBtn.Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 string guildName = player.FoundedGuildName ?? "your guild";
-                int confirm = MessageBox.Query("Dissolve Guild",
+                int confirm = DialogHelper.Query("Dissolve Guild",
                     $"Disband {guildName}? The perk is lost. No rep or karma penalty.",
                     "Dissolve", "Cancel");
                 if (confirm != 0) return;
@@ -143,9 +143,9 @@ public static class GuildRosterDialog
                 GuildSystem.Leave(player, silentLog, silent: true);
                 player.FoundedGuildName = null;
                 player.FoundedGuildPerk = 0;
-                MessageBox.Query("Guild Dissolved",
+                DialogHelper.Query("Guild Dissolved",
                     $"{guildName} is no more. The banner falls.", "OK");
-                Application.RequestStop();
+                AppHost.App.RequestStop();
             };
             dialog.Add(dissolveBtn);
         }
@@ -162,7 +162,7 @@ public static class GuildRosterDialog
         var hint = new Label
         {
             Text = $"1-{GuildSystem.PlayerGuildNameMaxLen} chars, letters/digits/space only.",
-            X = 1, Y = 1, ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = 1, SchemeName = ColorSchemes.DimName,
         };
         var field = new TextField
         {
@@ -173,17 +173,17 @@ public static class GuildRosterDialog
         okBtn.X = Pos.Center() - 8; okBtn.Y = Pos.AnchorEnd(2);
         okBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             string raw = field.Text?.ToString()?.Trim() ?? "";
             if (raw.Length == 0 || raw.Length > GuildSystem.PlayerGuildNameMaxLen) return;
             foreach (char c in raw)
                 if (!char.IsLetterOrDigit(c) && c != ' ') return;
             result = raw;
-            Application.RequestStop();
+            AppHost.App.RequestStop();
         };
         var cancelBtn = DialogHelper.CreateButton("Cancel");
         cancelBtn.X = Pos.Center() + 2; cancelBtn.Y = Pos.AnchorEnd(2);
-        cancelBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+        cancelBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
         d.Add(hint, field, okBtn, cancelBtn);
         DialogHelper.CloseOnEscape(d);
         DialogHelper.RunModal(d);
@@ -196,18 +196,18 @@ public static class GuildRosterDialog
         var d = DialogHelper.Create("Choose a Perk", 58, 13);
         var hint = new Label { Text = "Your founded guild's signature bonus:", X = 1, Y = 0 };
         var presets = GuildSystem.FoundedPresets;
-        var rg = new RadioGroup
+        var rg = new OptionSelector
         {
             X = 1, Y = 2,
-            RadioLabels = presets.Select(p => $"{p.Name} — {p.Flavor}").ToArray(),
+            Labels = presets.Select(p => $"{p.Name} — {p.Flavor}").ToArray(),
         };
         int result = -1;
         var okBtn = DialogHelper.CreateButton("Select", isDefault: true);
         okBtn.X = Pos.Center() - 8; okBtn.Y = Pos.AnchorEnd(2);
-        okBtn.Accepting += (s, e) => { e.Cancel = true; result = rg.SelectedItem; Application.RequestStop(); };
+        okBtn.Accepting += (s, e) => { e.Handled = true; result = rg.Value ?? 0; AppHost.App.RequestStop(); };
         var cancelBtn = DialogHelper.CreateButton("Cancel");
         cancelBtn.X = Pos.Center() + 2; cancelBtn.Y = Pos.AnchorEnd(2);
-        cancelBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+        cancelBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
         d.Add(hint, rg, okBtn, cancelBtn);
         DialogHelper.CloseOnEscape(d);
         DialogHelper.RunModal(d);

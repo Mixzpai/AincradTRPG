@@ -46,7 +46,7 @@ public static class InventoryDialog
         var equipHeader = new Label
         {
             Text = "[ Equipped ]", X = 1, Y = 0,
-            Width = LeftPaneWidth, ColorScheme = ColorSchemes.Gold,
+            Width = LeftPaneWidth, SchemeName = ColorSchemes.GoldName,
         };
         var slotView = new EquipmentSlotView(player, LeftPaneWidth - 2)
         {
@@ -56,7 +56,7 @@ public static class InventoryDialog
         {
             Text = EquipmentDialog.BuildStatTotals(player),
             X = 1, Y = EquipmentSlotView.SlotCount + 2,
-            Width = LeftPaneWidth, ColorScheme = ColorSchemes.Gold,
+            Width = LeftPaneWidth, SchemeName = ColorSchemes.GoldName,
         };
 
         // ── Right pane: item list ────────────────────────────────────
@@ -64,12 +64,12 @@ public static class InventoryDialog
         var itemHeader = new Label
         {
             Text = $"[ Items ({player.Inventory.ItemCount}/{player.Inventory.MaxSlots}) ]",
-            X = rightX, Y = 0, Width = Dim.Fill(1), ColorScheme = ColorSchemes.Gold,
+            X = rightX, Y = 0, Width = Dim.Fill(1), SchemeName = ColorSchemes.GoldName,
         };
         var sortLabel = new Label
         {
             Text = $"[Sort: {SortLabels[0]}]",
-            X = Pos.AnchorEnd(18), Y = 0, Width = 17, ColorScheme = ColorSchemes.Dim,
+            X = Pos.AnchorEnd(18), Y = 0, Width = 17, SchemeName = ColorSchemes.DimName,
         };
 
         // Filter tab strip on row 1. Label rebuilt on every tab switch so the
@@ -77,7 +77,7 @@ public static class InventoryDialog
         var tabLabel = new Label
         {
             Text = BuildTabStrip(currentFilter),
-            X = rightX, Y = 1, Width = Dim.Fill(1), ColorScheme = ColorSchemes.Body,
+            X = rightX, Y = 1, Width = Dim.Fill(1), SchemeName = ColorSchemes.BodyName,
         };
 
         var itemNames = new ObservableCollection<string>();
@@ -87,7 +87,7 @@ public static class InventoryDialog
         {
             Text = "  Your inventory is empty.",
             X = rightX, Y = 4, Width = Dim.Fill(), Height = 1,
-            Visible = false, ColorScheme = ColorSchemes.Dim,
+            Visible = false, SchemeName = ColorSchemes.DimName,
         };
 
         int rightWidth = DialogWidth - LeftPaneWidth - 4;
@@ -147,13 +147,13 @@ public static class InventoryDialog
         var hintLabel = new Label
         {
             Text = "Enter: act | L: lore | 1-5: filter | Shift+N: bind slot | Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         var sellLabel = new Label
         {
             Text = "", X = Pos.Right(sortBtn) + 2, Y = Pos.AnchorEnd(2),
-            Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         // ── Refresh helpers ──────────────────────────────────────────
@@ -164,9 +164,9 @@ public static class InventoryDialog
             bool nearFull = count >= (int)(max * 0.75);
             string fullTag = nearFull ? " [NEARLY FULL]" : "";
             itemHeader.Text = $"[ Items ({count}/{max}){fullTag} ]";
-            itemHeader.ColorScheme = nearFull ? ColorSchemes.Danger : ColorSchemes.Gold;
+            itemHeader.SchemeName = nearFull ? ColorSchemes.DangerName : ColorSchemes.GoldName;
             sortLabel.Text = $"[Sort: {SortLabels[(int)currentSort]}]";
-            sortLabel.ColorScheme = currentSort != SortMode.Default ? ColorSchemes.Gold : ColorSchemes.Dim;
+            sortLabel.SchemeName = currentSort != SortMode.Default ? ColorSchemes.GoldName : ColorSchemes.DimName;
             int total = player.Inventory.Items.Sum(i => i.Value);
             sellLabel.Text = $"Total value: {total} Col";
             gearLabel.Text = EquipmentDialog.BuildStatTotals(player);
@@ -175,7 +175,7 @@ public static class InventoryDialog
 
         BaseItem? GetSelectedItem()
         {
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             return idx >= 0 && idx < itemRefs.Count ? itemRefs[idx] : null;
         }
 
@@ -208,21 +208,21 @@ public static class InventoryDialog
 
             if (item is Consumable consumable)
             {
-                int choice = MessageBox.Query(name, $"What do you want to do?", "Use", "Drop", "Cancel");
+                int choice = DialogHelper.Query(name, $"What do you want to do?", "Use", "Drop", "Cancel");
                 if (choice == 0) { player.UseItem(consumable); detailLabel.Text = $"Used {name}."; }
                 else if (choice == 1 && DialogHelper.ConfirmAction("Drop", name)) player.Inventory.RemoveItem(item);
                 else return;
             }
             else if (item is EquipmentBase equipment)
             {
-                int choice = MessageBox.Query(name, $"What do you want to do?", "Equip", "Drop", "Cancel");
+                int choice = DialogHelper.Query(name, $"What do you want to do?", "Equip", "Drop", "Cancel");
                 if (choice == 0) { player.EquipItem(equipment); detailLabel.Text = $"Equipped {name}."; }
                 else if (choice == 1 && DialogHelper.ConfirmAction("Drop", name)) player.Inventory.RemoveItem(item);
                 else return;
             }
             else
             {
-                int choice = MessageBox.Query(name, $"What do you want to do?", "Drop", "Cancel");
+                int choice = DialogHelper.Query(name, $"What do you want to do?", "Drop", "Cancel");
                 if (choice == 0 && DialogHelper.ConfirmAction("Drop", name)) player.Inventory.RemoveItem(item);
                 else return;
             }
@@ -231,15 +231,15 @@ public static class InventoryDialog
 
         // ── Event wiring ── Enter → context popup.
         // OpenSelectedItem is the Terminal.Gui 2.0.0 hook; migrate to Accepting past v2.2.
-        listView.OpenSelectedItem += (s, e) =>
+        listView.Activated += (s, e) =>
         {
             // Defer so the Enter keypress that triggered OpenSelectedItem
             // doesn't propagate into the MessageBox and auto-select.
-            Application.Invoke(() => ActOnSelectedItem());
+            AppHost.App.Invoke(() => ActOnSelectedItem());
         };
 
         // Detail label updates as the user browses.
-        listView.SelectedItemChanged += (s, e) =>
+        listView.ValueChanged += (s, e) =>
         {
             var item = GetSelectedItem();
             if (item == null) { detailLabel.Text = ""; compareLabel.Text = ""; return; }
@@ -252,7 +252,7 @@ public static class InventoryDialog
                 EquipmentBase eq => $"{rarityTag}Lv.{eq.RequiredLevel} {eq.EquipmentType} | Sell: {sellVal}c",
                 _ => $"{rarityTag}Value: {item.Value} Col | Sell: {sellVal}c",
             };
-            detailLabel.ColorScheme = ColorSchemes.FromColor(RarityHelper.GetColor(item.Rarity));
+            detailLabel.SetScheme(ColorSchemes.FromColor(RarityHelper.GetColor(item.Rarity)));
 
             if (item is EquipmentBase eqItem)
             {
@@ -269,15 +269,15 @@ public static class InventoryDialog
                     compareLabel.Visible = true;
                     compareLabel.Text = string.Join("\n", lines);
                     var verdict = EquipmentComparer.GetVerdict(player, eqItem);
-                    compareLabel.ColorScheme = verdict switch
+                    compareLabel.SchemeName = verdict switch
                     {
-                        EquipmentComparer.CompareResult.Upgrade => ColorSchemes.Success,
-                        EquipmentComparer.CompareResult.Downgrade => ColorSchemes.Danger,
-                        _ => ColorSchemes.Dim,
+                        EquipmentComparer.CompareResult.Upgrade => ColorSchemes.SuccessName,
+                        EquipmentComparer.CompareResult.Downgrade => ColorSchemes.DangerName,
+                        _ => ColorSchemes.DimName,
                     };
                 }
             }
-            else { compareLabel.Text = ""; compareLabel.Visible = false; compareLabel.ColorScheme = ColorSchemes.Dim; }
+            else { compareLabel.Text = ""; compareLabel.Visible = false; compareLabel.SchemeName = ColorSchemes.DimName; }
         };
 
         // Equipment slot selection shows detail for the equipped item.
@@ -295,7 +295,7 @@ public static class InventoryDialog
 
         sortBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             currentSort = (SortMode)(((int)currentSort + 1) % SortLabels.Length);
             RefreshAfterChange();
         };
@@ -351,13 +351,13 @@ public static class InventoryDialog
             if (selected is not Consumable cons || string.IsNullOrEmpty(cons.DefinitionId))
             {
                 detailLabel.Text = "Only consumables with a definition can be bound.";
-                detailLabel.ColorScheme = ColorSchemes.Danger;
+                detailLabel.SchemeName = ColorSchemes.DangerName;
                 e.Handled = true;
                 return;
             }
             player.Quickbar.Bind(slot - 1, cons.DefinitionId);
             detailLabel.Text = $"Bound {cons.Name} to quickbar slot {(slot == 10 ? "0" : slot.ToString())}.";
-            detailLabel.ColorScheme = ColorSchemes.Success;
+            detailLabel.SchemeName = ColorSchemes.SuccessName;
             e.Handled = true;
         };
 

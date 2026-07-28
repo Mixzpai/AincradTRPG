@@ -39,7 +39,7 @@ public static class SwordSkillDialog
             dialog.Add(new Label
             {
                 Text = $"No sword skills exist for '{wtype}'. Try a different weapon!",
-                X = 2, Y = 2, Width = Dim.Fill(2), ColorScheme = ColorSchemes.Dim,
+                X = 2, Y = 2, Width = Dim.Fill(2), SchemeName = ColorSchemes.DimName,
             });
             DialogHelper.AddCloseFooter(dialog);
             DialogHelper.RunModal(dialog);
@@ -60,7 +60,7 @@ public static class SwordSkillDialog
         var header = new Label
         {
             Text = $"Kills: {kills}   |   Proficiency: {tm.GetProficiencyInfo(wtype).Rank}   |   {allSkills.Count} skills total",
-            X = 2, Y = 0, Width = Dim.Fill(2), ColorScheme = ColorSchemes.Gold,
+            X = 2, Y = 0, Width = Dim.Fill(2), SchemeName = ColorSchemes.GoldName,
         };
 
         var listView = new ListView
@@ -73,37 +73,37 @@ public static class SwordSkillDialog
         var detailLabel = new Label
         {
             Text = "", X = 2, Y = Pos.AnchorEnd(6),
-            Width = Dim.Fill(2), Height = 2, ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(2), Height = 2, SchemeName = ColorSchemes.BodyName,
         };
 
         var slotLabel = new Label
         {
             Text = BuildSlotSummary(tm),
-            X = 2, Y = Pos.AnchorEnd(4), Width = Dim.Fill(2), ColorScheme = ColorSchemes.Gold,
+            X = 2, Y = Pos.AnchorEnd(4), Width = Dim.Fill(2), SchemeName = ColorSchemes.GoldName,
         };
 
         var hint = new Label
         {
             Text = "Enter: assign to slot  |  1-4: assign to specific slot  |  Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
-        listView.SelectedItemChanged += (s, e) =>
+        listView.ValueChanged += (s, e) =>
         {
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             if (idx < 0 || idx >= allSkills.Count) return;
             var skill = allSkills[idx];
             bool unlocked = kills >= skill.RequiredProfKills;
             string status = unlocked ? "UNLOCKED" : $"Requires {skill.RequiredProfKills} kills ({skill.RequiredProfKills - kills} more)";
             string delay = skill.PostMotionDelay > 0 ? $"  Post-motion: {skill.PostMotionDelay}T vulnerability" : "";
             detailLabel.Text = $"{skill.Description}\n{status}{delay}";
-            detailLabel.ColorScheme = unlocked ? ColorSchemes.Body : ColorSchemes.Dim;
+            detailLabel.SchemeName = unlocked ? ColorSchemes.BodyName : ColorSchemes.DimName;
         };
 
         // Assign to next available slot on Enter
-        listView.OpenSelectedItem += (s, e) =>
+        listView.Activated += (s, e) =>
         {
-            Application.Invoke(() => TryAssignSkill(tm, allSkills, listView.SelectedItem, kills, -1,
+            AppHost.App.Invoke(() => TryAssignSkill(tm, allSkills, listView.SelectedItem ?? 0, kills, -1,
                 names, slotLabel, detailLabel, wtype));
         };
 
@@ -117,7 +117,7 @@ public static class SwordSkillDialog
             };
             if (slot >= 0)
             {
-                TryAssignSkill(tm, allSkills, listView.SelectedItem, kills, slot,
+                TryAssignSkill(tm, allSkills, listView.SelectedItem ?? 0, kills, slot,
                     names, slotLabel, detailLabel, wtype);
                 e.Handled = true;
             }
@@ -138,7 +138,7 @@ public static class SwordSkillDialog
         if (kills < skill.RequiredProfKills)
         {
             detailLabel.Text = $"Not yet unlocked! Need {skill.RequiredProfKills - kills} more kills.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
@@ -170,7 +170,7 @@ public static class SwordSkillDialog
         RefreshNames(names, allSkills, kills, tm, wtype);
         slotLabel.Text = BuildSlotSummary(tm);
         detailLabel.Text = $"{skill.Name} assigned to F{targetSlot + 1}!";
-        detailLabel.ColorScheme = ColorSchemes.Gold;
+        detailLabel.SchemeName = ColorSchemes.GoldName;
     }
 
     private static void RefreshNames(ObservableCollection<string> names,

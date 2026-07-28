@@ -40,6 +40,12 @@ public static class TitleScreen
     public static void Show(Window mainWindow)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
+        // Title is the hub every menu path returns to, so clear the menu Esc handlers here
+        // as well — each re-enters the screen that installed it.
+        DifficultyScreen.UnhookEscHandler(mainWindow);
+        CharacterCreationScreen.UnhookEscHandler(mainWindow);
+        ModifierSelectScreen.UnhookEscHandler(mainWindow);
         var sw = DebugLogger.StartTimer("TitleScreen.Show");
         DebugLogger.LogScreen("TitleScreen");
 
@@ -47,21 +53,21 @@ public static class TitleScreen
         var stars = new Label
         {
             Text = StarsArt, X = Pos.Center(), Y = 1,
-            Width = Dim.Auto(), Height = Dim.Auto(), ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Auto(), Height = Dim.Auto(), SchemeName = ColorSchemes.DimName,
         };
 
         // Title
         var title = new Label
         {
             Text = TitleText, X = Pos.Center(), Y = 6,
-            Width = Dim.Auto(), Height = Dim.Auto(), ColorScheme = ColorSchemes.Title,
+            Width = Dim.Auto(), Height = Dim.Auto(), SchemeName = ColorSchemes.TitleName,
         };
 
         // Subtitle
         var subtitle = new Label
         {
             Text = SubTitle, X = Pos.Center(), Y = 13,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.GoldName,
         };
 
         // Quote
@@ -69,7 +75,7 @@ public static class TitleScreen
         {
             Text = Quotes[_tipRng.Next(Quotes.Length)],
             X = Pos.Center(), Y = 15,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName,
         };
 
         // Menu buttons (bracket-free). ► … ► markers toggle on focus via HasFocusChanged below.
@@ -88,7 +94,7 @@ public static class TitleScreen
             saveLabel = new Label
             {
                 Text = savePreview, X = Pos.Center(), Y = menuY + 10,
-                Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim,
+                Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName,
             };
         }
 
@@ -110,48 +116,48 @@ public static class TitleScreen
             btn.Text = $"  {StripMarkers(btn.Text?.ToString() ?? "")}  ";
 
         // Button actions
-        newGameBtn.Accepting += (s, e) => { DifficultyScreen.Show(mainWindow); e.Cancel = true; };
+        newGameBtn.Accepting += (s, e) => { DifficultyScreen.Show(mainWindow); e.Handled = true; };
         loadGameBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            if (!SaveManager.AnySaveExists()) { MessageBox.Query("Load Game", "No save data found.", "OK"); return; }
+            e.Handled = true;
+            if (!SaveManager.AnySaveExists()) { DialogHelper.Query("Load Game", "No save data found.", "OK"); return; }
             var result = Dialogs.SaveSlotDialog.ShowLoad();
             if (result.HasValue) GameScreen.ShowFromSave(mainWindow, result.Value.Data, result.Value.Slot);
         };
-        recordsBtn.Accepting += (s, e) => { e.Cancel = true; ShowRecords(); };
-        optionsBtn.Accepting += (s, e) => { OptionsScreen.Show(mainWindow); e.Cancel = true; };
-        exitBtn.Accepting += (s, e) => { Application.RequestStop(); e.Cancel = true; };
+        recordsBtn.Accepting += (s, e) => { e.Handled = true; ShowRecords(); };
+        optionsBtn.Accepting += (s, e) => { OptionsScreen.Show(mainWindow); e.Handled = true; };
+        exitBtn.Accepting += (s, e) => { AppHost.App.RequestStop(); e.Handled = true; };
 
         // Footer
         var footerRule = new Label
         {
             Text = "------------------------------------------------------------",
             X = Pos.Center(), Y = Pos.AnchorEnd(6),
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         };
         var tip = new Label
         {
             Text = $"Tip: {Tips[_tipRng.Next(Tips.Length)]}",
             X = Pos.Center(), Y = Pos.AnchorEnd(5),
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         };
         var tribute = new Label
         {
             Text = "Crafted by NoDice99 & Mixzpai -- A Fan-Made Tribute to Sword Art Online",
             X = Pos.Center(), Y = Pos.AnchorEnd(4),
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Body
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.BodyName
         };
         var controls = new Label
         {
             Text = "[W/S] Navigate   [Enter] Select   [Esc] Quit",
             X = Pos.Center(), Y = Pos.AnchorEnd(3),
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         };
         var versionLabel = new Label
         {
             Text = Version,
             X = Pos.AnchorEnd(Version.Length + 1), Y = Pos.AnchorEnd(1),
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         };
 
         // Assemble
@@ -188,7 +194,7 @@ public static class TitleScreen
     private static Button MakeBtn(string text, int y, bool isDefault) => new()
     {
         Text = text, X = Pos.Center(), Y = y,
-        IsDefault = isDefault, ColorScheme = ColorSchemes.MenuButton,
+        IsDefault = isDefault, SchemeName = ColorSchemes.MenuButtonName,
         // Strip Terminal.Gui's own [ ] button chrome so the only decoration
         // is the `► … ►` focus marker we manage via HasFocusChanged.
         NoDecorations = true, NoPadding = true,

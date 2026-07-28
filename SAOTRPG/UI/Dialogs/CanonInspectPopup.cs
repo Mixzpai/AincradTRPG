@@ -23,18 +23,18 @@ public static class CanonInspectPopup
         var nameLabel = new Label
         {
             Text = nameLine, X = 1, Y = 0,
-            Width = Dim.Fill(1), ColorScheme = RarityScheme(item.Rarity),
-        };
+            Width = Dim.Fill(1),
+        }.WithScheme(RarityScheme(item.Rarity));
 
         var rule = new Label
         {
             Text = DialogHelper.Separator(DialogWidth, 4),
-            X = 0, Y = 1, Width = Dim.Fill(), ColorScheme = ColorSchemes.Dim,
+            X = 0, Y = 1, Width = Dim.Fill(), SchemeName = ColorSchemes.DimName,
         };
 
         var citation = CanonCitationData.Lookup(item.DefinitionId);
         string sourceText, anchorText, detailText;
-        ColorScheme sourceScheme;
+        Scheme sourceScheme;
 
         if (citation.HasValue)
         {
@@ -63,22 +63,23 @@ public static class CanonInspectPopup
         var sourceLabel = new Label
         {
             Text = sourceText, X = 1, Y = 3,
-            Width = Dim.Fill(1), ColorScheme = sourceScheme,
-        };
+            Width = Dim.Fill(1),
+        }.WithScheme(sourceScheme);
         var anchorLabel = new Label
         {
             Text = anchorText, X = 1, Y = 4,
-            Width = Dim.Fill(1), ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(1), SchemeName = ColorSchemes.BodyName,
         };
 
-        // Detail: word-wrapped via TextView (no scroll — fits 4 lines at width 56).
-        var detailView = new TextView
+        // Detail: word-wrapped, no scroll — fits 4 lines at width 56.
+        var detailView = new Label
         {
             Text = detailText, X = 1, Y = 6,
             Width = Dim.Fill(1), Height = 4,
-            ReadOnly = true, WordWrap = true,
-            ColorScheme = ColorSchemes.Body,
+            CanFocus = false,
+            SchemeName = ColorSchemes.BodyName,
         };
+        detailView.TextFormatter.WordWrap = true;
 
         dialog.Add(nameLabel, rule, sourceLabel, anchorLabel, detailView);
         DialogHelper.AddCloseFooter(dialog);
@@ -86,7 +87,7 @@ public static class CanonInspectPopup
     }
 
     // Rarity-tinted name color so the popup header reads at a glance.
-    private static ColorScheme RarityScheme(string? rarity) => rarity switch
+    private static Scheme RarityScheme(string? rarity) => rarity switch
     {
         "Legendary" => ColorSchemes.FromColor(Color.BrightMagenta),
         "Divine"    => ColorSchemes.FromColor(Color.BrightYellow),

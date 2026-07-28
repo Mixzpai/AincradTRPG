@@ -24,7 +24,7 @@ public static class PauseMenuDialog
         {
             Text = "  Game Paused",
             X = 0, Y = 0, Width = Dim.Fill(), Height = 1,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
 
         // Four vertical buttons, centered. Each row is one action.
@@ -37,13 +37,13 @@ public static class PauseMenuDialog
         {
             Text = "Enter: select   Esc: resume",
             X = Pos.Center(), Y = Pos.AnchorEnd(1),
-            Width = Dim.Auto(), ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Auto(), SchemeName = ColorSchemes.DimName,
         };
 
         saveBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            int choice = MessageBox.Query("Save Game", $"Save to slot {saveSlot}?", "Yes", "No");
+            e.Handled = true;
+            int choice = DialogHelper.Query("Save Game", $"Save to slot {saveSlot}?", "Yes", "No");
             if (choice != 0) return;
 
             if (SaveManager.SaveGame(player, turnManager, saveSlot))
@@ -55,33 +55,33 @@ public static class PauseMenuDialog
             {
                 gameLog.LogSystem("[Save failed!]");
             }
-            Application.RequestStop();
+            AppHost.App.RequestStop();
         };
 
         loadBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             if (!SaveManager.SaveExists(saveSlot))
             {
-                MessageBox.Query("Load Game",
+                DialogHelper.Query("Load Game",
                     $"No save in slot {saveSlot}.", "OK");
                 return;
             }
-            int choice = MessageBox.Query("Load Game",
+            int choice = DialogHelper.Query("Load Game",
                 "Load last save? Current progress will be lost.", "Yes", "No");
             if (choice != 0) return;
             loadRequested = true;
-            Application.RequestStop();
+            AppHost.App.RequestStop();
         };
 
         optionsBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             // OptionsScreen rebuilds mainWindow → auto-save first, reload via onBack callback.
             SaveManager.SaveGame(player, turnManager, saveSlot);
             gameLog.LogSystem("[Auto-saved for Options]");
             saveFlash[0] = 5;
-            Application.RequestStop();
+            AppHost.App.RequestStop();
             OptionsScreen.Show(mainWindow, onBack: () =>
             {
                 var save = SaveManager.LoadGame(saveSlot);
@@ -92,12 +92,12 @@ public static class PauseMenuDialog
 
         exitBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            int choice = MessageBox.Query("Exit Game",
+            e.Handled = true;
+            int choice = DialogHelper.Query("Exit Game",
                 "Exit to desktop? Unsaved progress will be lost.", "Yes", "No");
             if (choice != 0) return;
             exitRequested = true;
-            Application.RequestStop();
+            AppHost.App.RequestStop();
         };
 
         // Up/Down isn't wired by default on buttons — attach to buttons (not Dialog) so presses land.
@@ -114,7 +114,7 @@ public static class PauseMenuDialog
         // Post-close: runs after dialog exits so modal state is torn down first.
         if (exitRequested)
         {
-            Application.RequestStop();
+            AppHost.App.RequestStop();
             return;
         }
 

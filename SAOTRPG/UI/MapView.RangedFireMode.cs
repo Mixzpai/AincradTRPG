@@ -231,9 +231,9 @@ public partial class MapView
             if (d == _rangedFireMaxRange)
             {
                 bool inFov = _map.IsVisible(mx, my);
-                Driver!.SetAttribute(inFov ? inAttr : outAttr);
+                SetAttribute(inFov ? inAttr : outAttr);
                 Move(vx, vy);
-                Driver!.AddRune(new System.Text.Rune('·'));
+                AddRune(new System.Text.Rune('·'));
             }
         }
 
@@ -241,9 +241,9 @@ public partial class MapView
         int rvx = MapToVx(_rangedReticleX), rvy = MapToVy(_rangedReticleY);
         if (rvx >= 0 && rvy >= 0 && rvx < vpWidth && rvy < vpHeight)
         {
-            Driver!.SetAttribute(retAttr);
+            SetAttribute(retAttr);
             Move(rvx, rvy);
-            Driver!.AddRune(new System.Text.Rune('+'));
+            AddRune(new System.Text.Rune('+'));
         }
 
         // Aim sidebar — mirrors LookMode panel placement when terminal is wide enough.
@@ -270,12 +270,12 @@ public partial class MapView
         var headerAt = Gfx.Attr(Color.BrightYellow, bg);
         var dimAt    = Gfx.Attr(Color.DarkGray,     bg);
 
-        Driver!.SetAttribute(boxAttr);
+        SetAttribute(boxAttr);
         for (int r = 0; r < panelH && panelY + r < vpHeight; r++)
         for (int c = 0; c < RangedSidebarW && panelX + c < vpWidth; c++)
         {
             Move(panelX + c, panelY + r);
-            Driver!.AddRune(new System.Text.Rune(' '));
+            AddRune(new System.Text.Rune(' '));
         }
         DrawHLine(panelX, panelY, RangedSidebarW, '─', borderAt);
 

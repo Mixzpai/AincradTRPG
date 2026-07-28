@@ -37,8 +37,15 @@ public class MinimapView : View
 
     public MinimapView(GameMap map, Player player) { _map = map; _player = player; }
 
-    protected override bool OnDrawingContent()
+    // Every cell of the minimap is painted each pass; skip the framework clear so the
+    // previous frame survives for diffing.
+    protected override bool OnClearingViewport() => true;
+
+    protected override bool OnDrawingContent(DrawContext? context)
     {
+        // A modal above us has already painted this pass; drawing now would erase it.
+        if (AppHost.IsBeneathTopSession(this)) return true;
+
         var vp = Viewport;
         int viewW = vp.Width, viewH = vp.Height;
         if (viewW <= 0 || viewH <= 0) return true;
@@ -76,6 +83,9 @@ public class MinimapView : View
         }
 
         // Blit cache + overlay player marker + reveal flash tint.
+        // Batched: every cell of the pane is written each pass, and PutCell would resolve the
+        // screen origin and walk the clip region — under a lock — once per cell.
+        var batch = Gfx.Begin(this);
         for (int vy = 0; vy < viewH; vy++)
         for (int vx = 0; vx < viewW; vx++)
         {
@@ -91,9 +101,7 @@ public class MinimapView : View
                 if (ch != ' ' && _revealedCells.Contains((vx, vy)))
                     fg = Color.BrightCyan;
             }
-            Driver!.SetAttribute(Gfx.Attr(fg, Color.Black));
-            Move(vx, vy);
-            Driver!.AddRune(new System.Text.Rune(ch));
+            batch.Put(vx, vy, ch, Gfx.Attr(fg, Color.Black));
         }
 
         if (_revealFlashCounter > 0)

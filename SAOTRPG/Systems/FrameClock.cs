@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Terminal.Gui;
+using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.Systems;
 
@@ -11,14 +12,25 @@ public static class FrameClock
     private static long _lastTimestamp;
     // Total wall-clock ms accumulated. Excludes paused intervals.
     private static long _elapsedMs;
-    // True while explicit Pause() was called and Resume() not yet seen.
-    private static bool _explicitPause;
+    // Outstanding Pause() calls. A counter rather than a flag so a dialog opened from another
+    // dialog does not unpause the clock when only the inner one closes.
+    private static int _pauseDepth;
 
     // Total wall-clock ms accumulated since program start, excluding paused intervals.
     public static long ElapsedMs => _elapsedMs;
 
-    // True while either explicit Pause() is held OR a modal Toplevel is on top.
-    private static bool IsPaused => _explicitPause || ModalOnTop();
+    // Clock for ambient, continuously-looping visuals — flickering tiles, water flow, rain,
+    // shrine sparkle. Pinned by --freeze-anim so a perf run can separate timed animation from
+    // other sources of per-frame cell churn.
+    //
+    // Event-scoped timers (toasts, banners, effect lifetimes) must keep reading ElapsedMs:
+    // freezing those would stop them ever expiring, which is the failure the paused-clock bug
+    // already produced once.
+    public static long AmbientMs =>
+        SAOTRPG.UI.DebugMode.FreezeAnimations ? 0L : _elapsedMs;
+
+    // True while an explicit Pause() is held OR something is stacked above the root session.
+    private static bool IsPaused => _pauseDepth > 0 || ModalOnTop();
 
     // Call once per render frame. Returns dtMs since last call, clamped to 200ms.
     // Returns 0 while paused; resets baseline so the next unpaused call doesn't see the pause as one huge dt.
@@ -37,17 +49,19 @@ public static class FrameClock
     }
 
     // Explicit pause hooks (DialogHelper.RunModal). Belt-and-suspenders alongside ModalOnTop().
-    public static void Pause() => _explicitPause = true;
-    public static void Resume() => _explicitPause = false;
+    public static void Pause() => _pauseDepth++;
+    public static void Resume() { if (_pauseDepth > 0) _pauseDepth--; }
 
-    // Detects "modal currently visible" via Terminal.Gui v2 Application state.
-    // When Application.Run(modal) is active, Application.Top points at the modal Toplevel,
-    // distinct from the main game window pushed first.
+    // True when a dialog or overlay sits above the root session.
+    //
+    // Depth, not IRunnable.IsModal: Terminal.Gui sets IsModal on EVERY runnable it pushes —
+    // including the main window at startup — and restores it on the runnable beneath a closing
+    // dialog. Testing it therefore reports "modal" during ordinary gameplay, which pinned this
+    // clock paused permanently: Tick returned 0 forever, so ElapsedMs never advanced, every
+    // wall-clock animation froze, and every timer that decrements by dt stopped expiring.
     private static bool ModalOnTop()
     {
-        var top = Application.Top;
-        if (top == null) return false;
-        if (top.Modal) return true;
-        return false;
+        int depth = AppHost.App.SessionStack?.Count ?? 0;
+        return depth > 1;
     }
 }

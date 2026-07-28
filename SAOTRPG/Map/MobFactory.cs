@@ -320,7 +320,7 @@ public static class MobFactory
             AttackRange = 1,
             LeashRange = 25,
         };
-        guard.SetAppearance('G', Terminal.Gui.Color.BrightBlue);
+        guard.SetAppearance('G', Color.BrightBlue);
         guard.CurrentHealth = guard.MaxHealth;
         guard.Id = Random.Shared.Next(20000, 99999);
         return guard;

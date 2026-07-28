@@ -14,13 +14,13 @@ public static class ScreenHeader
         {
             Text = title, X = Pos.Center(), Y = y,
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = ColorSchemes.Title,
+            SchemeName = ColorSchemes.TitleName,
         };
         var ruleLabel = new Label
         {
             Text = new string('─', width), X = Pos.Center(), Y = y + 1,
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         return (titleLabel, ruleLabel);
     }
@@ -31,7 +31,7 @@ public static class ScreenHeader
         Text = $"[ {text} ]",
         X = Pos.Center(), Y = y,
         Width = Dim.Auto(), Height = 1,
-        ColorScheme = ColorSchemes.Gold,
+        SchemeName = ColorSchemes.GoldName,
     };
 
     // Right-aligned form label used for label/field rows. Caller supplies
@@ -42,6 +42,6 @@ public static class ScreenHeader
         X = x, Y = y,
         Width = width, Height = 1,
         TextAlignment = Alignment.End,
-        ColorScheme = ColorSchemes.Body,
+        SchemeName = ColorSchemes.BodyName,
     };
 }

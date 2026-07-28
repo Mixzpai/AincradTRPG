@@ -8,9 +8,21 @@ namespace SAOTRPG.UI;
 // writes RunModifiers.Active on Apply. Gated behind F100 clear in DifficultyScreen.
 public static class ModifierSelectScreen
 {
+    private static EventHandler<Key>? _escHandler;
+
+    // Unhook before transitioning AWAY. The handler re-enters DifficultyScreen, so leaving it
+    // attached means a later Esc — in character creation or mid-run — tears down the screen and
+    // rebuilds the difficulty picker.
+    public static void UnhookEscHandler(Window mainWindow)
+    {
+        if (_escHandler != null) { mainWindow.KeyDown -= _escHandler; _escHandler = null; }
+    }
+
     public static void Show(Window mainWindow, Action onApplied)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
+        if (_escHandler != null) mainWindow.KeyDown -= _escHandler;
         DebugLogger.LogScreen("ModifierSelectScreen");
 
         var (header, headerRule) = ScreenHeader.Create("Run Modifiers", 1, 24);
@@ -38,7 +50,7 @@ public static class ModifierSelectScreen
             {
                 Text = $"[ {tierLabel} tier ]",
                 X = LabelX, Y = y,
-                Width = LabelWidth, ColorScheme = ColorSchemes.Gold,
+                Width = LabelWidth, SchemeName = ColorSchemes.GoldName,
             };
             views.Add(tierHeader);
             y++;
@@ -54,13 +66,13 @@ public static class ModifierSelectScreen
                     Text = $" {def.Name} (×{def.ScoreMultiplier:F2})",
                     X = LabelX, Y = y,
                     Width = LabelWidth,
-                    CheckedState = RunModifiers.IsActive(def.Id)
+                    Value = RunModifiers.IsActive(def.Id)
                         ? CheckState.Checked : CheckState.UnChecked,
-                    ColorScheme = tier switch
+                    SchemeName = tier switch
                     {
-                        ModifierTier.Nightmare => ColorSchemes.Danger,
-                        ModifierTier.Hard      => ColorSchemes.Gold,
-                        _                       => ColorSchemes.Body,
+                        ModifierTier.Nightmare => ColorSchemes.DangerName,
+                        ModifierTier.Hard      => ColorSchemes.GoldName,
+                        _                       => ColorSchemes.BodyName,
                     },
                 };
                 checkboxes[def.Id] = check;
@@ -76,26 +88,26 @@ public static class ModifierSelectScreen
         {
             Text = "Details",
             X = LabelX + LabelWidth + 2, Y = 4,
-            Width = Dim.Fill(2), ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Fill(2), SchemeName = ColorSchemes.GoldName,
         };
         var detailName = new Label
         {
             Text = "",
             X = LabelX + LabelWidth + 2, Y = 6,
-            Width = Dim.Fill(2), ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(2), SchemeName = ColorSchemes.BodyName,
         };
         var detailTier = new Label
         {
             Text = "",
             X = LabelX + LabelWidth + 2, Y = 7,
-            Width = Dim.Fill(2), ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Fill(2), SchemeName = ColorSchemes.DimName,
         };
         var detailDesc = new Label
         {
             Text = "Select a modifier to see its effect.",
             X = LabelX + LabelWidth + 2, Y = 9,
             Width = Dim.Fill(2), Height = 8,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
         views.Add(detailHeader);
         views.Add(detailName);
@@ -119,7 +131,7 @@ public static class ModifierSelectScreen
         {
             Text = "",
             X = LabelX, Y = y,
-            Width = LabelWidth, ColorScheme = ColorSchemes.Gold,
+            Width = LabelWidth, SchemeName = ColorSchemes.GoldName,
         };
         void RefreshScore()
         {
@@ -127,14 +139,14 @@ public static class ModifierSelectScreen
             var before = new HashSet<RunModifier>(RunModifiers.Active);
             RunModifiers.Active.Clear();
             foreach (var (mod, cb) in checkboxes)
-                if (cb.CheckedState == CheckState.Checked) RunModifiers.Active.Add(mod);
+                if (cb.Value == CheckState.Checked) RunModifiers.Active.Add(mod);
             double mul = RunModifiers.TotalScoreMultiplier();
             int count = RunModifiers.Active.Count;
             scoreLabel.Text = $"Active: {count}    Score multiplier: ×{mul:F2}";
             RunModifiers.Active = before;  // restore until Apply
         }
         foreach (var cb in checkboxes.Values)
-            cb.CheckedStateChanged += (s, e) => RefreshScore();
+            cb.ValueChanged += (s, e) => RefreshScore();
         RefreshScore();
         views.Add(scoreLabel);
         y += 2;
@@ -143,36 +155,36 @@ public static class ModifierSelectScreen
         var applyBtn = new Button
         {
             Text = " Apply ", X = LabelX, Y = Pos.AnchorEnd(2),
-            IsDefault = true, ColorScheme = ColorSchemes.MenuButton,
+            IsDefault = true, SchemeName = ColorSchemes.MenuButtonName,
         };
         var clearBtn = new Button
         {
             Text = " Clear All ", X = LabelX + 12, Y = Pos.AnchorEnd(2),
-            ColorScheme = ColorSchemes.MenuButton,
+            SchemeName = ColorSchemes.MenuButtonName,
         };
         var cancelBtn = new Button
         {
             Text = " Cancel ", X = LabelX + 26, Y = Pos.AnchorEnd(2),
-            ColorScheme = ColorSchemes.MenuButton,
+            SchemeName = ColorSchemes.MenuButtonName,
         };
 
         applyBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             RunModifiers.Active.Clear();
             foreach (var (mod, cb) in checkboxes)
-                if (cb.CheckedState == CheckState.Checked) RunModifiers.Active.Add(mod);
+                if (cb.Value == CheckState.Checked) RunModifiers.Active.Add(mod);
             onApplied();
         };
 
         clearBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            foreach (var cb in checkboxes.Values) cb.CheckedState = CheckState.UnChecked;
+            e.Handled = true;
+            foreach (var cb in checkboxes.Values) cb.Value = CheckState.UnChecked;
             RefreshScore();
         };
 
-        cancelBtn.Accepting += (s, e) => { e.Cancel = true; onApplied(); };
+        cancelBtn.Accepting += (s, e) => { e.Handled = true; onApplied(); };
 
         views.Add(applyBtn);
         views.Add(clearBtn);
@@ -182,16 +194,19 @@ public static class ModifierSelectScreen
         {
             Text = "Space: toggle   Tab: next   Enter: Apply   Esc: Cancel",
             X = LabelX, Y = Pos.AnchorEnd(1), Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         views.Add(hint);
 
         mainWindow.Add(views.ToArray());
 
-        mainWindow.KeyDown += (s, e) =>
+        // Stored rather than inline so it can be detached — an anonymous lambda has no
+        // reference to unsubscribe with, which is how this outlived the screen.
+        _escHandler = (s, e) =>
         {
             if (e.KeyCode == KeyCode.Esc) { onApplied(); e.Handled = true; }
         };
+        mainWindow.KeyDown += _escHandler;
     }
 
     // Simple word-wrap for the detail panel description.

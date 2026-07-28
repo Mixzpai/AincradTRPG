@@ -19,7 +19,7 @@ public sealed class LightingSystem
     // Ambient via DayNightCycle.Ambient. Player torch: warm white, flickers (radius 11-13, color warm/cool, real-time @ 4Hz).
     private static LightRgb TorchColor()
     {
-        int phase = (int)(FrameClock.ElapsedMs / 250) % 4;
+        int phase = (int)(FrameClock.AmbientMs / 250) % 4;
         return phase switch
         {
             0 => LightRgb.Of(220, 200, 160),
@@ -28,9 +28,13 @@ public sealed class LightingSystem
             _ => LightRgb.Of(225, 195, 155),
         };
     }
-    private static int TorchRadius() => 11 + (int)(FrameClock.ElapsedMs / 250) % 3;
+    private static int TorchRadius() =>
+        11 + (int)(FrameClock.AmbientMs / 250) % 3;
 
-    private readonly LightRgb[,] _light;
+    // Row-major (y*Width + x). Was [x, y], which strided by Height in all three hot loops:
+    // the ambient refill, AddSource's merge, and the map tile loop's per-cell read. Row-major
+    // makes each of them a contiguous walk and lets the refill go through Span.Fill.
+    private readonly LightRgb[] _light;
 
     // Emissive coords owned by GameMap.EmissiveTiles; we only cache per-type (color, radius).
 
@@ -38,17 +42,14 @@ public sealed class LightingSystem
     {
         Width = width;
         Height = height;
-        _light = new LightRgb[width, height];
+        _light = new LightRgb[width * height];
         // Fill entire map with default ambient once at construction.
         var (ar, ag, ab) = DayNightCycle.Ambient;
-        var ambient = LightRgb.Of(ar, ag, ab);
-        for (int x = 0; x < width; x++)
-            for (int y = 0; y < height; y++)
-                _light[x, y] = ambient;
+        _light.AsSpan().Fill(LightRgb.Of(ar, ag, ab));
     }
 
     // Fast path for render loops that have already done a bounds check.
-    public LightRgb GetLightUnchecked(int x, int y) => _light[x, y];
+    public LightRgb GetLightUnchecked(int x, int y) => _light[y * Width + x];
 
     // ROI radius matches active FOV so all visible tiles are lit (FOV 4× the viewport).
     private static int LightingRoiRadius => DayNightCycle.FovRadius + 10;
@@ -61,10 +62,10 @@ public sealed class LightingSystem
 
         int roiSq = LightingRoiRadius * LightingRoiRadius;
         // Shrine/Fountain radius breathes ±1 on a slow real-time sine (3-second cycle).
-        double pulsePhase = (FrameClock.ElapsedMs % 3000L) / 3000.0 * Math.PI * 2.0;
+        double pulsePhase = (FrameClock.AmbientMs % 3000L) / 3000.0 * Math.PI * 2.0;
         int pulseDelta = (int)Math.Round(Math.Sin(pulsePhase));
         int emissiveCount = 0;
-        // Bucket radius 2 (5x5 64-cell buckets) covers ROI≈92 with margin.
+        // Enough 64-cell buckets to span the ROI, +1 so a partially-covered edge bucket is kept.
         int bucketRadius = (LightingRoiRadius >> GameMap.EmissiveBucketShift) + 1;
         foreach (var (sx, sy, stype) in map.EmissiveTilesNear(playerX, playerY, bucketRadius))
         {
@@ -91,9 +92,9 @@ public sealed class LightingSystem
         int x1 = Math.Min(Width, px + LightingRoiRadius);
         int y0 = Math.Max(0, py - LightingRoiRadius);
         int y1 = Math.Min(Height, py + LightingRoiRadius);
-        for (int x = x0; x < x1; x++)
+        var light = _light.AsSpan();
         for (int y = y0; y < y1; y++)
-            _light[x, y] = ambient;
+            light.Slice(y * Width + x0, x1 - x0).Fill(ambient);
     }
 
     // Scratch per-source — diagonals visited by two quadrants don't double-light.
@@ -171,9 +172,10 @@ public sealed class LightingSystem
             float sr = _scratchR[idx], sg = _scratchG![idx], sb = _scratchB![idx];
             if (sr > 0 || sg > 0 || sb > 0)
             {
-                _light[x, y].R = Math.Min(255f, _light[x, y].R + sr);
-                _light[x, y].G = Math.Min(255f, _light[x, y].G + sg);
-                _light[x, y].B = Math.Min(255f, _light[x, y].B + sb);
+                ref LightRgb cell = ref _light[y * Width + x];
+                cell.R = Math.Min(255f, cell.R + sr);
+                cell.G = Math.Min(255f, cell.G + sg);
+                cell.B = Math.Min(255f, cell.B + sb);
                 _scratchR[idx] = 0; _scratchG[idx] = 0; _scratchB[idx] = 0;
             }
         }

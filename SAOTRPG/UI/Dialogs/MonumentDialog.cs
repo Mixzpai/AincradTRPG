@@ -13,8 +13,8 @@ public static class MonumentDialog
 {
     public static void Show(Player player)
     {
-        int screenW = Application.Screen.Width;
-        int screenH = Application.Screen.Height;
+        int screenW = AppHost.App.Screen.Width;
+        int screenH = AppHost.App.Screen.Height;
         int dlgW = Math.Min(Math.Max(96, screenW - 6), 130);
         int dlgH = Math.Min(Math.Max(36, screenH - 4), 50);
 
@@ -25,7 +25,7 @@ public static class MonumentDialog
         {
             Text = "The black iron remembers every blade raised in its shadow.",
             X = Pos.Center(), Y = 0,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         dialog.Add(flavorLabel);
 
@@ -49,7 +49,7 @@ public static class MonumentDialog
         {
             Text = "[ Kill Log — Species & Milestones ]",
             X = 1, Y = Pos.AnchorEnd(11),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         dialog.Add(header);
 
@@ -75,7 +75,7 @@ public static class MonumentDialog
         var killList = new ListView
         {
             X = 1, Y = Pos.AnchorEnd(10), Width = Dim.Fill(2), Height = 6,
-            ColorScheme = ColorSchemes.ListSelection,
+            SchemeName = ColorSchemes.ListSelectionName,
             CanFocus = true,
         };
         killList.SetSource(new ObservableCollection<string>(lines));

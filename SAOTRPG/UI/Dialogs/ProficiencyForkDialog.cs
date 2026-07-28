@@ -19,7 +19,7 @@ public static class ProficiencyForkDialog
         {
             Text = $"Pick one passive for {weaponType}:",
             X = 2, Y = 1, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
 
         var opt1Btn = DialogHelper.CreateMenuButton(opt1.Name, isDefault: true);
@@ -28,7 +28,7 @@ public static class ProficiencyForkDialog
         {
             Text = $"  {opt1.Description}",
             X = 2, Y = 4, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         var opt2Btn = DialogHelper.CreateMenuButton(opt2.Name);
@@ -37,23 +37,23 @@ public static class ProficiencyForkDialog
         {
             Text = $"  {opt2.Description}",
             X = 2, Y = 7, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         opt1Btn.Accepting += (s, e) =>
         {
-            e.Cancel = true; picked = 1; Application.RequestStop();
+            e.Handled = true; picked = 1; AppHost.App.RequestStop();
         };
         opt2Btn.Accepting += (s, e) =>
         {
-            e.Cancel = true; picked = 2; Application.RequestStop();
+            e.Handled = true; picked = 2; AppHost.App.RequestStop();
         };
 
         var hintLbl = new Label
         {
             Text = "Enter: pick | Esc: decide later",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         dlg.Add(headerLbl, opt1Btn, opt1Desc, opt2Btn, opt2Desc, hintLbl);

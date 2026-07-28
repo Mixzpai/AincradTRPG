@@ -30,17 +30,17 @@ public static class CutsceneDialog
         var portraitLabel = new Label
         {
             X = 2, Y = 1, Width = 10, Height = 7,
-            Text = "", ColorScheme = ColorSchemes.Body
+            Text = "", SchemeName = ColorSchemes.BodyName
         };
         var speakerLabel = new Label
         {
             X = 2, Y = 8, Width = 12, Height = 1,
-            Text = "", ColorScheme = ColorSchemes.Body
+            Text = "", SchemeName = ColorSchemes.BodyName
         };
         var textLabel = new Label
         {
             X = 13, Y = 1, Width = Dim.Fill(2), Height = 9,
-            Text = "", ColorScheme = ColorSchemes.Body
+            Text = "", SchemeName = ColorSchemes.BodyName
         };
         var choiceArea = new View
         {
@@ -56,7 +56,7 @@ public static class CutsceneDialog
             Text = script.Unskippable
                 ? "Enter: continue | Space: finish line"
                 : "Enter: continue | Space: finish | Esc: skip",
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         void FinishCurrentLine()
@@ -74,9 +74,12 @@ public static class CutsceneDialog
             int idx = 0;
             lineDone = false;
             textLabel.Text = "";
-            Application.AddTimeout(TimeSpan.FromMilliseconds(charMs), () =>
+            AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(charMs), () =>
             {
-                if (myGen != typingGen) return false;
+                // Skipping a beat retires this generation; closing the cutscene retires the
+                // dialog. Without the second check the typewriter keeps writing to a disposed
+                // label for the remainder of the line.
+                if (myGen != typingGen || !DialogHelper.IsOpen(dialog)) return false;
                 if (idx >= revealText.Length) { lineDone = true; return false; }
                 idx++;
                 textLabel.Text = revealText[..idx];
@@ -99,7 +102,7 @@ public static class CutsceneDialog
                 btn.Y = y++;
                 btn.Accepting += (s, e) =>
                 {
-                    e.Cancel = true;
+                    e.Handled = true;
                     captured.Apply?.Invoke();
                     choiceArea.RemoveAll();
                     choicesShown = false;
@@ -119,12 +122,12 @@ public static class CutsceneDialog
                 };
                 choiceArea.Add(btn);
             }
-            if (choiceArea.Subviews.Any()) choiceArea.Subviews.First().SetFocus();
+            if (choiceArea.SubViews.Any()) choiceArea.SubViews.First().SetFocus();
         }
 
         void ShowBeat(int idx)
         {
-            if (idx >= script.Beats.Length) { Application.RequestStop(); return; }
+            if (idx >= script.Beats.Length) { AppHost.App.RequestStop(); return; }
             beat = script.Beats[idx];
             revealText = beat.Text;
             choicesShown = false;
@@ -134,11 +137,11 @@ public static class CutsceneDialog
             {
                 var portrait = AsciiPortraits.Get(beat.PortraitKey);
                 portraitLabel.Text = string.Join("\n", portrait);
-                portraitLabel.ColorScheme = ColorSchemes.FromColor(beat.NameColor);
+                portraitLabel.SetScheme(ColorSchemes.FromColor(beat.NameColor));
             }
             else portraitLabel.Text = "";
             speakerLabel.Text = beat.Speaker ?? "";
-            speakerLabel.ColorScheme = ColorSchemes.FromColor(beat.NameColor);
+            speakerLabel.SetScheme(ColorSchemes.FromColor(beat.NameColor));
 
             StartTyping();
             continueBtn.Visible = true;
@@ -158,7 +161,7 @@ public static class CutsceneDialog
             ShowBeat(beatIdx);
         }
 
-        continueBtn.Accepting += (s, e) => { e.Cancel = true; AdvanceBeat(); };
+        continueBtn.Accepting += (s, e) => { e.Handled = true; AdvanceBeat(); };
 
         dialog.KeyDown += (s, e) =>
         {
@@ -170,7 +173,7 @@ public static class CutsceneDialog
             else if (e.KeyCode == KeyCode.Esc && !script.Unskippable)
             {
                 typingGen++;
-                Application.RequestStop();
+                AppHost.App.RequestStop();
                 e.Handled = true;
             }
         };

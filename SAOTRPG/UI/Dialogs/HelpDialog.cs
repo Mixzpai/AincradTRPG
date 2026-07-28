@@ -131,7 +131,7 @@ public static class HelpDialog
 
         // Render the Content as a stack of per-line Labels. Static read-only
         // reference — Labels give per-token color (TG v2 TextView shares one
-        // ColorScheme across all its content, which is the wrong primitive here).
+        // Scheme across all its content, which is the wrong primitive here).
         var lines = Content.Replace("\r\n", "\n").Split('\n');
         for (int row = 0; row < lines.Length; row++)
         {
@@ -143,8 +143,7 @@ public static class HelpDialog
             {
                 Text = line,
                 X = 0, Y = row,
-                ColorScheme = whiteScheme,
-            });
+            }.WithScheme(whiteScheme));
 
             // Gold overlay for every "[...]" bracket title on the line.
             int scan = 0;
@@ -158,8 +157,7 @@ public static class HelpDialog
                 {
                     Text = line.Substring(br1, br2 - br1 + 1),
                     X = br1, Y = row,
-                    ColorScheme = goldScheme,
-                });
+                }.WithScheme(goldScheme));
                 scan = br2 + 1;
             }
 
@@ -181,8 +179,7 @@ public static class HelpDialog
             {
                 Text = keybind,
                 X = firstChar, Y = row,
-                ColorScheme = goldScheme,
-            });
+            }.WithScheme(goldScheme));
         }
 
         // Status-tag colored overlays — appear over the white base label rows
@@ -193,8 +190,7 @@ public static class HelpDialog
             {
                 Text = abbrev,
                 X = x, Y = y,
-                ColorScheme = SolidScheme(fg),
-            });
+            }.WithScheme(SolidScheme(fg)));
         }
 
         // Map Legend / Items / Mob Tier glyph + word overlays — colored to
@@ -205,21 +201,20 @@ public static class HelpDialog
             {
                 Text = token,
                 X = x, Y = y,
-                ColorScheme = SolidScheme(fg),
-            });
+            }.WithScheme(SolidScheme(fg)));
         }
 
         DialogHelper.AddCloseFooter(dialog);
         DialogHelper.RunModal(dialog);
     }
 
-    // Build a ColorScheme where every state (Normal / Focus / HotNormal /
+    // Build a Scheme where every state (Normal / Focus / HotNormal /
     // HotFocus / Disabled) renders fg-on-Black. Used for static-content Labels
     // so TG v2 doesn't fall back to a Disabled-state DarkGray.
-    private static ColorScheme SolidScheme(Color fg)
+    private static Scheme SolidScheme(Color fg)
     {
         var attr = Gfx.Attr(fg, Color.Black);
-        return new ColorScheme
+        return new Scheme
         {
             Normal    = attr,
             Focus     = attr,

@@ -35,7 +35,9 @@ public static class Profiler
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AincradTRPG",
             "profiler");
-        return Path.Combine(baseDir, $"profiler_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+        // Milliseconds included: two dumps in the same second used to resolve to one path, and
+        // the second silently overwrote the first — easy to hit via dump, reset, dump.
+        return Path.Combine(baseDir, $"profiler_{DateTime.Now:yyyyMMdd_HHmmss_fff}.txt");
     }
 
     public readonly struct Scope : IDisposable

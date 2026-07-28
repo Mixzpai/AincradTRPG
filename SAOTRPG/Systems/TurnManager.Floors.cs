@@ -152,7 +152,7 @@ public partial class TurnManager
             var pker = MobFactory.CreateFloorMob(CurrentFloor, _diffTier.MobStatPercent);
             pker.Name = $"Laughing Coffin PKer";
             pker.LootTag = "humanoid";
-            pker.SetAppearance('P', Terminal.Gui.Color.BrightRed);
+            pker.SetAppearance('P', Color.BrightRed);
             int tries = 0;
             while (tries < 40)
             {

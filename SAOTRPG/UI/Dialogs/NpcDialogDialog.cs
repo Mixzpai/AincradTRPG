@@ -20,7 +20,7 @@ public static class NpcDialogDialog
         var lines = npc.DialogueLines;
         if (lines == null || lines.Length == 0)
         {
-            MessageBox.Query(npc.Name, "The NPC has nothing to say.", "OK");
+            DialogHelper.Query(npc.Name, "The NPC has nothing to say.", "OK");
             return;
         }
 
@@ -35,8 +35,7 @@ public static class NpcDialogDialog
             Text = $"  {npc.Symbol}  {npc.Name}",
             X = 1, Y = 0,
             Width = Dim.Fill(1), Height = 1,
-            ColorScheme = ColorSchemes.FromColor(npc.SymbolColor)
-        };
+        }.WithScheme(ColorSchemes.FromColor(npc.SymbolColor));
 
         // ── Separator ───────────────────────────────────────────────
         var separator = new Label
@@ -44,7 +43,7 @@ public static class NpcDialogDialog
             Text = DialogHelper.Separator(DialogWidth),
             X = 1, Y = 1,
             Width = Dim.Fill(1), Height = 1,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
 
         // ── Optional ASCII portrait (Klein/Asuna/Silica/Argo/etc.) ──
@@ -55,9 +54,8 @@ public static class NpcDialogDialog
         {
             Text = hasPortrait ? string.Join("\n", portrait) : "",
             X = 2, Y = 2, Width = 10, Height = hasPortrait ? portrait.Length : 0,
-            ColorScheme = ColorSchemes.FromColor(npc.SymbolColor),
             Visible = hasPortrait,
-        };
+        }.WithScheme(ColorSchemes.FromColor(npc.SymbolColor));
 
         // ── NPC dialogue text area ──────────────────────────────────
         // Shift right when a portrait is shown so text doesn't overlap.
@@ -68,7 +66,7 @@ public static class NpcDialogDialog
             X = textX, Y = 2,
             Width = Dim.Fill(2),
             Height = 4,
-            ColorScheme = ColorSchemes.Body
+            SchemeName = ColorSchemes.BodyName
         };
 
         // ── Choice button area ──────────────────────────────────────
@@ -89,7 +87,7 @@ public static class NpcDialogDialog
         {
             if (idx >= lines.Length)
             {
-                Application.RequestStop();
+                AppHost.App.RequestStop();
                 return;
             }
 
@@ -110,7 +108,7 @@ public static class NpcDialogDialog
                     var capturedChoice = choice;
                     btn.Accepting += (s, e) =>
                     {
-                        e.Cancel = true;
+                        e.Handled = true;
                         // Show NPC response, then advance
                         npcText.Text = $"\"{capturedChoice.Response}\"";
                         choiceArea.RemoveAll();
@@ -120,8 +118,8 @@ public static class NpcDialogDialog
                     };
                     choiceArea.Add(btn);
                 }
-                if (choiceArea.Subviews.Any())
-                    choiceArea.Subviews.First().SetFocus();
+                if (choiceArea.SubViews.Any())
+                    choiceArea.SubViews.First().SetFocus();
             }
             else
             {
@@ -133,7 +131,7 @@ public static class NpcDialogDialog
 
         continueBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             lineIndex++;
             ShowLine(lineIndex);
         };
@@ -141,7 +139,7 @@ public static class NpcDialogDialog
         var hintLabel = new Label
         {
             Text = "Enter: continue | Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         dialog.Add(nameHeader, separator, portraitLabel, npcText, choiceArea, continueBtn, hintLabel);

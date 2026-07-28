@@ -85,7 +85,7 @@ public class EquipmentSlotView : View
 
     // ── Rendering ────────────────────────────────────────────────────
 
-    protected override bool OnDrawingContent()
+    protected override bool OnDrawingContent(DrawContext? context)
     {
         var vp = Viewport;
         for (int i = 0; i < _slots.Length && i < vp.Height; i++)
@@ -98,17 +98,17 @@ public class EquipmentSlotView : View
             // Clear the line
             SetAttr(Color.Gray, bg);
             Move(0, i);
-            Driver!.AddStr(new string(' ', _contentWidth));
+            AddStr(new string(' ', _contentWidth));
 
             // " " prefix + colored icon + " " + padded label
             Move(0, i);
-            Driver!.AddStr(" ");
+            AddStr(" ");
 
             SetAttr(iconColor, bg);
-            Driver!.AddRune((System.Text.Rune)icon);
+            AddRune((System.Text.Rune)icon);
 
             SetAttr(Color.Gray, bg);
-            Driver!.AddStr($" {label.PadRight(LabelPadWidth)}");
+            AddStr($" {label.PadRight(LabelPadWidth)}");
 
             // Item name + rarity abbreviation, or (empty)
             if (eq != null)
@@ -123,13 +123,13 @@ public class EquipmentSlotView : View
                 int nameBudget = Math.Max(0, remaining - rarityLen);
                 string nameOut = TextHelpers.Truncate(eq.Name ?? "", nameBudget);
                 SetAttr(RarityHelper.GetColor(eq.Rarity), bg);
-                Driver!.AddStr(nameOut);
+                AddStr(nameOut);
 
                 int afterName = remaining - nameOut.Length;
                 if (afterName >= rarityLen)
                 {
                     SetAttr(Color.DarkGray, bg);
-                    Driver!.AddStr(rarityTag);
+                    AddStr(rarityTag);
                     afterName -= rarityLen;
                 }
 
@@ -138,7 +138,7 @@ public class EquipmentSlotView : View
                     if (afterName >= 7)
                     {
                         SetAttr(Color.BrightRed, bg);
-                        Driver!.AddStr(" BROKEN");
+                        AddStr(" BROKEN");
                     }
                 }
                 else if (eq is Pickaxe pick)
@@ -152,14 +152,14 @@ public class EquipmentSlotView : View
                     if (afterName >= durability.Length && afterName >= 14)
                     {
                         SetAttr(GetDurabilityColor(cur, max), bg);
-                        Driver!.AddStr(durability);
+                        AddStr(durability);
                     }
                 }
             }
             else
             {
                 SetAttr(Color.DarkGray, bg);
-                Driver!.AddStr(EmptySlotText);
+                AddStr(EmptySlotText);
             }
         }
         return true;
@@ -180,5 +180,5 @@ public class EquipmentSlotView : View
 
     // Shorthand for setting driver attribute.
     private void SetAttr(Color fg, Color bg)
-        => Driver!.SetAttribute(Gfx.Attr(fg, bg));
+        => SetAttribute(Gfx.Attr(fg, bg));
 }

@@ -34,7 +34,7 @@ public static class EquipmentDialog
         var slotsHeader = new Label
         {
             Text = "[ Equipped Gear ]", X = 1, Y = 0,
-            Width = Dim.Fill(1), ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Fill(1), SchemeName = ColorSchemes.GoldName,
         };
         var slotView = new EquipmentSlotView(player, dialogWidth - 4)
         {
@@ -45,12 +45,12 @@ public static class EquipmentDialog
         var statsHeader = new Label
         {
             Text = "[ Stats ]", X = 1, Y = EquipmentSlotView.SlotCount + 2,
-            Width = Dim.Fill(1), ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Fill(1), SchemeName = ColorSchemes.GoldName,
         };
         var statsLabel = new Label
         {
             Text = BuildStatTotals(player), X = 1, Y = EquipmentSlotView.SlotCount + 3,
-            Width = Dim.Fill(1), ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(1), SchemeName = ColorSchemes.BodyName,
         };
         var durText = BuildDurabilitySummary(player);
         bool durCritical = durText.StartsWith("[LOW]");
@@ -58,19 +58,19 @@ public static class EquipmentDialog
         {
             Text = durText, X = 1, Y = EquipmentSlotView.SlotCount + 4,
             Width = Dim.Fill(1),
-            ColorScheme = durCritical ? ColorSchemes.Danger : ColorSchemes.Dim,
+            SchemeName = durCritical ? ColorSchemes.DangerName : ColorSchemes.DimName,
         };
 
         // ── Detail + preview lines ───────────────────────────────────
         var detailLabel = new Label
         {
             Text = "", X = 1, Y = Pos.AnchorEnd(5),
-            Width = Dim.Fill(1), Height = 1, ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(1), Height = 1, SchemeName = ColorSchemes.BodyName,
         };
         var previewLabel = new Label
         {
             Text = "", X = 1, Y = Pos.AnchorEnd(4),
-            Width = Dim.Fill(1), Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Fill(1), Height = 1, SchemeName = ColorSchemes.DimName,
         };
 
         // ── Unequip button ───────────────────────────────────────────
@@ -90,7 +90,7 @@ public static class EquipmentDialog
 
         unequipBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             int idx = slotView.SelectedIndex;
             if (idx < 0 || idx >= slots.Length) return;
             var slot = slots[idx].Slot;
@@ -107,14 +107,14 @@ public static class EquipmentDialog
                 statsLabel.Text = BuildStatTotals(player);
                 var newDurText = BuildDurabilitySummary(player);
                 durLabel.Text = newDurText;
-                durLabel.ColorScheme = newDurText.StartsWith("[LOW]") ? ColorSchemes.Danger : ColorSchemes.Dim;
+                durLabel.SchemeName = newDurText.StartsWith("[LOW]") ? ColorSchemes.DangerName : ColorSchemes.DimName;
             }
         };
 
         var hintLabel = new Label
         {
             Text = "Enter: unequip | Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         // ── Assemble ─────────────────────────────────────────────────

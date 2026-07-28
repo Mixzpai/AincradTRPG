@@ -23,7 +23,7 @@ public static class RecordsDialog
         var bannerTop = new Label
         {
             Text = "╔══════════════════════ ⚔ AINCRAD CHRONICLE ⚔ ══════════════════════╗",
-            X = Pos.Center(), Y = 0, Width = Dim.Auto(), ColorScheme = ColorSchemes.Gold,
+            X = Pos.Center(), Y = 0, Width = Dim.Auto(), SchemeName = ColorSchemes.GoldName,
         };
 
         // Empty-state short-circuit.
@@ -33,11 +33,11 @@ public static class RecordsDialog
             {
                 Text = "⚔  The pages await your deeds.  ⚔\n\n  Begin your climb — every run is chronicled here.",
                 X = Pos.Center(), Y = Pos.Center(), Width = Dim.Auto(), Height = 3,
-                ColorScheme = ColorSchemes.Dim,
+                SchemeName = ColorSchemes.DimName,
             };
             var emptyClose = DialogHelper.CreateMenuButton("Close", isDefault: true);
             emptyClose.X = Pos.Center(); emptyClose.Y = Pos.AnchorEnd(2);
-            emptyClose.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+            emptyClose.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
             dialog.Add(bannerTop, empty, emptyClose);
             DialogHelper.CloseOnEscape(dialog);
             DialogHelper.RunModal(dialog);
@@ -52,7 +52,7 @@ public static class RecordsDialog
         var summaryHdr = new Label
         {
             Text = "┌─ Summary ─────────────────────────┐",
-            X = leftColX, Y = 2, Width = Dim.Auto(), ColorScheme = ColorSchemes.Gold,
+            X = leftColX, Y = 2, Width = Dim.Auto(), SchemeName = ColorSchemes.GoldName,
         };
         string totalTime = FormatTime(data.TotalPlayTimeSeconds);
         var summaryBody = new Label
@@ -65,14 +65,14 @@ public static class RecordsDialog
                 $"│ Play Time ....... {totalTime,-14} │\n" +
                 "└───────────────────────────────────┘",
             X = leftColX, Y = 3, Width = Dim.Auto(), Height = 6,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         // ── Career-stats panel (right column) ───────────────────────────
         var achHdr = new Label
         {
             Text = "┌─ Career Stats ────────────────────┐",
-            X = rightColX, Y = 2, Width = Dim.Auto(), ColorScheme = ColorSchemes.Gold,
+            X = rightColX, Y = 2, Width = Dim.Auto(), SchemeName = ColorSchemes.GoldName,
         };
         int winRate = data.TotalRuns > 0 ? (data.TotalVictories * 100 / data.TotalRuns) : 0;
         var achBody = new Label
@@ -87,7 +87,7 @@ public static class RecordsDialog
                 $"│ HF Missions ..... {data.HfMissionHighWaterMark,-14} │\n" +
                 "└───────────────────────────────────┘",
             X = rightColX, Y = 3, Width = Dim.Auto(), Height = 8,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         // ── Progress bars ───────────────────────────────────────────────
@@ -98,12 +98,12 @@ public static class RecordsDialog
         {
             Text = $"Floor Progress  {MakeBar(data.HighestFloor, 100, 40)}  {data.HighestFloor} / 100",
             X = leftColX, Y = barRowY, Width = Dim.Auto(),
-            ColorScheme = data.HighestFloor >= 100 ? ColorSchemes.Gold : ColorSchemes.Body,
+            SchemeName = data.HighestFloor >= 100 ? ColorSchemes.GoldName : ColorSchemes.BodyName,
         };
         var winBar = new Label
         {
             Text = $"Win Rate        {MakeBar(data.TotalVictories, data.TotalRuns, 40)}  {data.TotalVictories} / {data.TotalRuns}",
-            X = leftColX, Y = barRowY + 1, Width = Dim.Auto(), ColorScheme = ColorSchemes.Body,
+            X = leftColX, Y = barRowY + 1, Width = Dim.Auto(), SchemeName = ColorSchemes.BodyName,
         };
 
         // ── Tab switcher ────────────────────────────────────────────────
@@ -126,7 +126,7 @@ public static class RecordsDialog
         {
             Text = "", X = leftColX, Y = tableY,
             Width = DialogWidth - 4, Height = 10,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         void RefreshTable()
@@ -139,11 +139,11 @@ public static class RecordsDialog
             sortBtn.Visible = mode == ViewMode.Leaderboard;
         }
 
-        recentTab.Accepting += (s, e) => { e.Cancel = true; mode = ViewMode.Recent; RefreshTable(); };
-        leaderTab.Accepting += (s, e) => { e.Cancel = true; mode = ViewMode.Leaderboard; RefreshTable(); };
+        recentTab.Accepting += (s, e) => { e.Handled = true; mode = ViewMode.Recent; RefreshTable(); };
+        leaderTab.Accepting += (s, e) => { e.Handled = true; mode = ViewMode.Leaderboard; RefreshTable(); };
         sortBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             sortKey = (SortKey)(((int)sortKey + 1) % Enum.GetValues(typeof(SortKey)).Length);
             RefreshTable();
         };
@@ -153,7 +153,7 @@ public static class RecordsDialog
         // ── Close button ────────────────────────────────────────────────
         var closeBtn = DialogHelper.CreateMenuButton("Close");
         closeBtn.X = Pos.Center(); closeBtn.Y = Pos.AnchorEnd(2);
-        closeBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+        closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
         // ── Nav: Tab + Left/Right cycles tabs; `[`/`]` cycles sort ──────
         dialog.KeyDown += (s, e) =>

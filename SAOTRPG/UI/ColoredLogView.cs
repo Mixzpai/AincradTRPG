@@ -169,7 +169,7 @@ public class ColoredLogView : View
     private void StartEaseTimer()
     {
         if (_easeToken != null) return;
-        _easeToken = Application.AddTimeout(EaseInterval, EaseTick);
+        _easeToken = AppHost.App.AddTimeout(EaseInterval, EaseTick);
     }
 
     private bool EaseTick()
@@ -232,8 +232,13 @@ public class ColoredLogView : View
             Color color = ResolveColor(text, category);
             if (text.Length <= width) { rows.Add((text, color, false)); continue; }
             bool first = true;
+            // Every segment wraps to the continuation budget, not just the continuations:
+            // the ternary that used to select per-segment widths was evaluated once when
+            // the enumerable was built, so continuations came back full-width and then grew
+            // by the indent, overflowing the pane and losing their tail to the render clip.
+            // Wrapping uniformly costs the first row two columns and keeps every row inside.
             int wrapWidth = Math.Max(1, width - ContinuationIndent.Length);
-            foreach (var segment in WrapText(text, first ? width : wrapWidth))
+            foreach (var segment in WrapText(text, wrapWidth))
             {
                 if (first) { rows.Add((segment, color, false)); first = false; }
                 else       { rows.Add((ContinuationIndent + segment, color, true)); }
@@ -263,10 +268,21 @@ public class ColoredLogView : View
 
     // ── Rendering ── Draws each visible wrapped row with its resolved color.
     // Viewport.Height drives both scroll math and render loop (fixes 1080p rendering bug).
-    protected override bool OnDrawingContent()
+    // Every row is painted each pass (RenderBlankRow covers empty ones), so the
+    // framework clear only duplicates output and defeats diffing.
+    protected override bool OnClearingViewport() => true;
+
+    protected override bool OnDrawingContent(DrawContext? context)
     {
+        // A modal above us has already painted this pass; drawing now would erase it.
+        if (AppHost.IsBeneathTopSession(this)) return true;
+
         var vp = Viewport;
         var rows = GetWrappedRows(vp.Width);
+
+        // Batched: this pass writes every cell of the pane, and PutCell resolves the screen
+        // origin and walks the clip region — under a lock — once per cell.
+        var batch = Gfx.Begin(this);
 
         for (int row = 0; row < vp.Height; row++)
         {
@@ -274,31 +290,29 @@ public class ColoredLogView : View
 
             if (idx < 0 || idx >= rows.Count)
             {
-                RenderBlankRow(row, vp.Width);
+                RenderBlankRow(batch, row, vp.Width);
                 continue;
             }
 
             var (text, fg, _) = rows[idx];
-            Driver!.SetAttribute(Gfx.Attr(fg, Color.Black));
-            Move(0, row);
+            var attr = Gfx.Attr(fg, Color.Black);
 
             for (int c = 0; c < vp.Width; c++)
             {
                 char ch = c < text.Length ? text[c] : ' ';
                 if (char.IsSurrogate(ch)) ch = '?';
-                Driver!.AddRune(new System.Text.Rune(ch));
+                batch.Put(c, row, ch, attr);
             }
         }
 
         return true;
     }
 
-    private void RenderBlankRow(int row, int width)
+    private static void RenderBlankRow(Gfx.Batch batch, int row, int width)
     {
-        Driver!.SetAttribute(Gfx.Attr(Color.DarkGray, Color.Black));
-        Move(0, row);
+        var attr = Gfx.Attr(Color.DarkGray, Color.Black);
         for (int c = 0; c < width; c++)
-            Driver!.AddRune(new System.Text.Rune(' '));
+            batch.Put(c, row, ' ', attr);
     }
 
     // ── Color resolution ── LogColorRules keyword (first match, case-insensitive),

@@ -223,7 +223,7 @@ public class AllySaveData
 {
     public string Name { get; set; } = "";
     public char Symbol { get; set; }
-    public int SymbolColor { get; set; } // Terminal.Gui.Color cast to int
+    public int SymbolColor { get; set; } // Color cast to int
     public string WeaponType { get; set; } = "";
     public string Title { get; set; } = "";
     public int Level { get; set; }

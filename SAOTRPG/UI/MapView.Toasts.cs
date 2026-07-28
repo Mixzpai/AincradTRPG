@@ -72,29 +72,29 @@ public partial class MapView
         var textAttr = Gfx.Attr(textCol, Color.Black);
 
         // Top border
-        Driver!.SetAttribute(borderAttr);
-        Move(x0, y0); Driver!.AddRune(new System.Text.Rune(tl));
+        SetAttribute(borderAttr);
+        Move(x0, y0); AddRune(new System.Text.Rune(tl));
         for (int x = x0 + 1; x < x1; x++)
-        { Move(x, y0); Driver!.AddRune(new System.Text.Rune(hz)); }
-        Move(x1, y0); Driver!.AddRune(new System.Text.Rune(tr));
+        { Move(x, y0); AddRune(new System.Text.Rune(hz)); }
+        Move(x1, y0); AddRune(new System.Text.Rune(tr));
 
         // Sides + body
         for (int y = y0 + 1; y < y1; y++)
         {
-            Move(x0, y); Driver!.AddRune(new System.Text.Rune(vt));
+            Move(x0, y); AddRune(new System.Text.Rune(vt));
             for (int x = x0 + 1; x < x1; x++)
-            { Move(x, y); Driver!.AddRune(new System.Text.Rune(' ')); }
-            Move(x1, y); Driver!.AddRune(new System.Text.Rune(vt));
+            { Move(x, y); AddRune(new System.Text.Rune(' ')); }
+            Move(x1, y); AddRune(new System.Text.Rune(vt));
         }
 
         // Bottom border
-        Move(x0, y1); Driver!.AddRune(new System.Text.Rune(bl));
+        Move(x0, y1); AddRune(new System.Text.Rune(bl));
         for (int x = x0 + 1; x < x1; x++)
-        { Move(x, y1); Driver!.AddRune(new System.Text.Rune(hz)); }
-        Move(x1, y1); Driver!.AddRune(new System.Text.Rune(br));
+        { Move(x, y1); AddRune(new System.Text.Rune(hz)); }
+        Move(x1, y1); AddRune(new System.Text.Rune(br));
 
         // Render each line independently centered. Skip lines that would overflow box height.
-        Driver!.SetAttribute(textAttr);
+        SetAttribute(textAttr);
         int maxRows = boxHeight - VerticalPad;
         int rendered = Math.Min(lines.Length, maxRows);
         for (int li = 0; li < rendered; li++)
@@ -105,7 +105,7 @@ public partial class MapView
             for (int i = 0; i < line.Length; i++)
             {
                 Move(mx + i, my);
-                Driver!.AddRune(new System.Text.Rune(line[i]));
+                AddRune(new System.Text.Rune(line[i]));
             }
         }
     }

@@ -26,7 +26,7 @@ public static class CookingScreen
                 ? "Asuna is here — Gold + Legendary recipes unlocked."
                 : "No one with Cooking Extra Skill. Bronze + Silver only.",
             X = 2, Y = 0, Width = Dim.Fill(2),
-            ColorScheme = hasAsuna ? ColorSchemes.Gold : ColorSchemes.Dim,
+            SchemeName = hasAsuna ? ColorSchemes.GoldName : ColorSchemes.DimName,
         };
 
         var names = new ObservableCollection<string>();
@@ -43,7 +43,7 @@ public static class CookingScreen
         var detailLabel = new Label
         {
             Text = "", X = 2, Y = Pos.AnchorEnd(7),
-            Width = Dim.Fill(2), Height = 5, ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(2), Height = 5, SchemeName = ColorSchemes.BodyName,
         };
 
         var cookBtn = DialogHelper.CreateButton("Cook", isDefault: true);
@@ -53,39 +53,39 @@ public static class CookingScreen
         var hint = new Label
         {
             Text = "Enter: cook selected  |  Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
-        listView.SelectedItemChanged += (s, e) =>
+        listView.ValueChanged += (s, e) =>
         {
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             if (idx < 0 || idx >= recipes.Length) return;
             var r = recipes[idx];
             detailLabel.Text = BuildDetail(r, player, hasAsuna);
-            detailLabel.ColorScheme = CookingSystem.CanCook(r, player, out _) ? ColorSchemes.Body : ColorSchemes.Dim;
+            detailLabel.SchemeName = CookingSystem.CanCook(r, player, out _) ? ColorSchemes.BodyName : ColorSchemes.DimName;
         };
 
         void TryCook()
         {
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             if (idx < 0 || idx >= recipes.Length) return;
             var r = recipes[idx];
             var output = CookingSystem.Cook(r, player, log);
             if (output != null)
             {
                 detailLabel.Text = $"Cooked {r.Name}! Added {output.Name} to inventory.";
-                detailLabel.ColorScheme = ColorSchemes.Gold;
+                detailLabel.SchemeName = ColorSchemes.GoldName;
                 names[idx] = FormatRecipeLine(r, player, hasAsuna);
             }
             else
             {
                 detailLabel.Text = CookingSystem.CanCook(r, player, out var reason) ? "Cooking failed." : reason;
-                detailLabel.ColorScheme = ColorSchemes.Dim;
+                detailLabel.SchemeName = ColorSchemes.DimName;
             }
         }
 
-        cookBtn.Accepting += (s, e) => { e.Cancel = true; TryCook(); };
-        listView.OpenSelectedItem += (s, e) => TryCook();
+        cookBtn.Accepting += (s, e) => { e.Handled = true; TryCook(); };
+        listView.Activated += (s, e) => TryCook();
 
         dialog.Add(header, listView, detailLabel, cookBtn, hint);
         DialogHelper.AddCloseFooter(dialog);

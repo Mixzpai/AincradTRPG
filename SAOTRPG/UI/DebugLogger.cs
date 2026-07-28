@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using Terminal.Gui;
+using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
 // File-based debug log. Timestamped lines → debug.log with category tags (SESSION/INPUT/SCREEN/COMBAT/SYSTEM/LOG/STATE/PERF/ERROR).
-// Lifecycle: Init() at startup, AttachKeyLogger() after Application.Init(), Shutdown() on exit. No-op until Init().
+// Lifecycle: Init() at startup, AttachKeyLogger() after the app instance exists, Shutdown() on exit. No-op until Init().
 public static class DebugLogger
 {
     private static StreamWriter? _writer;
@@ -42,11 +43,32 @@ public static class DebugLogger
         _enabled = false;
     }
 
-    // ── Input ── Hooks Terminal.Gui's global KeyDown; must run after Application.Init().
+    // ── Input ── Hooks Terminal.Gui's global KeyDown; must run after AppHost.Start().
     public static void AttachKeyLogger()
     {
         if (!_enabled) return;
-        Application.KeyDown += (s, e) => Write("INPUT", $"Key: {e}");
+        // The focus chain is appended under --debug only. A key that never reaches its
+        // intended view is otherwise indistinguishable from one that was ignored, and
+        // this names the view that actually consumed it.
+        bool traceFocus = DebugMode.IsEnabled;
+        AppHost.App.Keyboard.KeyDown += (s, e) =>
+            Write("INPUT", traceFocus ? $"Key: {e}  focus: {DescribeFocusChain()}" : $"Key: {e}");
+    }
+
+    // Walks Top -> Focused down the tree, naming each view that holds focus.
+    private static string DescribeFocusChain()
+    {
+        if (AppHost.App.TopRunnable is not View top) return "<no top>";
+
+        var chain = new System.Text.StringBuilder(top.GetType().Name);
+        var node = top;
+        for (int depth = 0; depth < 12 && node.Focused is { } next; depth++)
+        {
+            chain.Append(" > ").Append(next.GetType().Name);
+            node = next;
+        }
+
+        return chain.ToString();
     }
 
     // ── Game Output ──

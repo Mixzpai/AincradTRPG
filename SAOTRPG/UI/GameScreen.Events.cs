@@ -122,7 +122,7 @@ public static partial class GameScreen
         int[] saveFlash, int saveSlot, Action refreshHud)
     {
         void InvokeDialog(Action action, bool refresh = true) =>
-            Application.Invoke(() =>
+            AppHost.App.Invoke(() =>
             {
                 // Modal dialog opening: flush any in-flight damage popup so
                 // the overlay layer doesn't leak past the dialog's z-order.
@@ -194,7 +194,7 @@ public static partial class GameScreen
                               $"Weapon: {ctx.Weapon}\n\n" +
                               $"Party {ctx.PartySize}/{ctx.PartyMax}.\n" +
                               "Invite to your party?";
-                int choice = MessageBox.Query("Recruit Ally", body, "Accept", "Decline");
+                int choice = DialogHelper.Query("Recruit Ally", body, "Accept", "Decline");
                 ctx.Respond(choice == 0);
             }, false);
 
@@ -250,7 +250,7 @@ public static partial class GameScreen
             mainWindow.Title = $"Aincrad TRPG — Floor {floor}";
             mapTitleLabel.Text = $"Floor {floor} — Aincrad";
             minimapTitleLabel.Text = $"Minimap — F{floor}";
-            mapTitleLabel.ColorScheme = FloorThemeColor(floor);
+            mapTitleLabel.SetScheme(FloorThemeColor(floor));
             mapView.SetMap(turnManager.Map);
             minimapView.SetMap(turnManager.Map);
             gameLog.Log($"Welcome to Floor {floor}, {player.FirstName}.");
@@ -303,7 +303,7 @@ public static partial class GameScreen
         };
 
         mapView.WaitRequested += () => { turnManager.ProcessPlayerMove(0, 0); refreshHud(); };
-        inventoryBtn.Accepting += (s, e) => { mapView.ClearDamagePopups(); InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); e.Cancel = true; };
+        inventoryBtn.Accepting += (s, e) => { mapView.ClearDamagePopups(); InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); e.Handled = true; };
         mapView.InventoryRequested += () => { mapView.ClearDamagePopups(); InventoryDialog.Show(player, turnManager.CurrentFloor); refreshHud(); };
         mapView.StatsRequested += () => { mapView.ClearDamagePopups(); StatsDialog.Show(player, turnManager); refreshHud(); };
         mapView.HelpRequested += () => { mapView.ClearDamagePopups(); HelpDialog.Show(); };
@@ -415,14 +415,31 @@ public static partial class GameScreen
         mapView.LogScrollUpRequested += () => coloredLog.ScrollPageUp();
         mapView.LogScrollDownRequested += () => coloredLog.ScrollPageDown();
 
+        // One stepper at a time. Each request used to register another timeout, so N presses of
+        // the key ran N concurrent explorers — N turns and N full HUD rebuilds per tick, which
+        // collapses the frame rate. A second press now stops the run instead of stacking on it.
+        bool[] autoExploring = { false };
         mapView.AutoExploreRequested += () =>
         {
-            Application.AddTimeout(TimeSpan.FromMilliseconds(AutoExploreStepMs), () =>
+            if (autoExploring[0])
             {
-                if (player.IsDefeated) return false;
+                autoExploring[0] = false;
+                gameLog.Log("Auto-explore stopped.");
+                return;
+            }
+            autoExploring[0] = true;
+            // Captured at request time: leaving the screen mid-explore would otherwise keep
+            // stepping the abandoned run's TurnManager until exploration happened to finish.
+            int generation = s_screenGeneration;
+            AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(AutoExploreStepMs), () =>
+            {
+                if (generation != s_screenGeneration) return false;
+                if (!autoExploring[0]) return false;
+                if (player.IsDefeated) { autoExploring[0] = false; return false; }
                 bool moved = turnManager.AutoExploreStep();
                 refreshHud();
                 minimapView.SetNeedsDraw();
+                if (!moved) autoExploring[0] = false;
                 return moved;
             });
         };
@@ -440,7 +457,7 @@ public static partial class GameScreen
             if (tile.Type == SAOTRPG.Map.TileType.Door)
             {
                 mapView.MarkDoorOpened(player.X, player.Y);
-                turnManager.Map.OpenedDoors.Add((player.X, player.Y));
+                turnManager.Map.OpenDoor(player.X, player.Y);
             }
 
             if (turnManager.IsPoisoned && turnManager.IsBleeding) mapView.SetStatusTint(Color.Magenta);
@@ -470,17 +487,29 @@ public static partial class GameScreen
             }
         };
 
-        Application.AddTimeout(TimeSpan.FromMilliseconds(AnimationIntervalMs), () =>
+        // Both tickers repeat for the life of the screen and are never unregistered, so they
+        // retire on the next screen build instead — otherwise each run leaves another pair
+        // running, holding its MapView and map alive.
+        int generation = s_screenGeneration;
+
+        // Medium ticker for clock-driven tiles (lava, campfire, divine ore, water). Their steps
+        // are 500ms+, so this samples them cleanly; the fast ticker below would repaint the same
+        // phase ten times for no visible gain. Only useful while something time-based is running;
+        // an unconditional redraw here would stall the loop in the console write.
+        AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(AnimationIntervalMs), () =>
         {
-            mapView.SetNeedsDraw();
+            if (generation != s_screenGeneration) return false;
+            if (mapView.HasActiveRealtimeAnimations())
+                mapView.SetNeedsDraw();
             return true;
         });
 
-        // Fast 50ms ticker redraws while any real-time animation is active.
-        // Gate covers tile animations, particles, popups, toasts, flashes, shake.
-        Application.AddTimeout(TimeSpan.FromMilliseconds(50), () =>
+        // Fast 50ms ticker for time-bounded effects: particles, popups, toasts, flashes, shake.
+        // Deliberately does NOT cover animated tiles — see HasActiveEffects.
+        AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(50), () =>
         {
-            if (mapView.HasActiveRealtimeAnimations())
+            if (generation != s_screenGeneration) return false;
+            if (mapView.HasActiveEffects)
                 mapView.SetNeedsDraw();
             return true;
         });

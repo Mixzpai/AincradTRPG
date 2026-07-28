@@ -37,9 +37,10 @@ public static class TileAnimator
         [TileType.EnchantShrine] = new Animation(
             new[] { '¤', '*' }, IntervalMs: 700, new Color(255, 220, 80), PriorityTorch),
 
-        // Mechanical fan — rotating blade; fast 4-frame cycle.
+        // Mechanical fan — rotating blade. Slowest step that still reads as rotation; the
+        // original 200ms was the fastest loop in the game and registered as a strobe.
         [TileType.Lever] = new Animation(
-            new[] { '|', '/', '-', '\\' }, IntervalMs: 200, new Color(180, 180, 180), PriorityFan),
+            new[] { '|', '/', '-', '\\' }, IntervalMs: 400, new Color(180, 180, 180), PriorityFan),
 
         // Terminal (BountyBoard stand-in) — blinking cursor.
         [TileType.BountyBoard] = new Animation(
@@ -63,7 +64,7 @@ public static class TileAnimator
     {
         if (!Registry.TryGetValue(type, out var anim) || anim.Frames.Length == 0)
             return ('?', Color.White);
-        long now = SAOTRPG.Systems.FrameClock.ElapsedMs;
+        long now = SAOTRPG.Systems.FrameClock.AmbientMs;
         int idx = (int)((now / anim.IntervalMs) % anim.Frames.Length);
         return (anim.Frames[idx], anim.Color);
     }
@@ -72,7 +73,7 @@ public static class TileAnimator
     // sparkle is in the "off" phase of its cycle.
     public static (char Glyph, Color Color)? ChestSparkle()
     {
-        long now = SAOTRPG.Systems.FrameClock.ElapsedMs;
+        long now = SAOTRPG.Systems.FrameClock.AmbientMs;
         long phase = now % 2000;
         if (phase > 200) return null;
         char[] glyphs = { '·', '◇', '*' };

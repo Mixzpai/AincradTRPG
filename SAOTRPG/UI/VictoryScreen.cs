@@ -30,6 +30,7 @@ public static class VictoryScreen
         int kills, int turns, TurnManager? turnManager = null)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
 
         // ── Victory banner (gold/yellow) ──────────────────────────────
         var bannerLabel = new Label
@@ -37,7 +38,7 @@ public static class VictoryScreen
             Text = VictoryArt,
             X = Pos.Center(), Y = BannerY,
             Width = Dim.Auto(), Height = Dim.Auto(),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
 
         // ── Player identity line ──────────────────────────────────────
@@ -47,7 +48,7 @@ public static class VictoryScreen
             Text = identity,
             X = Pos.Center(), Y = NameY,
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = ColorSchemes.Title
+            SchemeName = ColorSchemes.TitleName
         };
 
         // ── Lifetime stats — persistent cross-run tracking ─────────
@@ -65,7 +66,7 @@ public static class VictoryScreen
             Text = summaryText,
             X = Pos.Center(), Y = SummaryY,
             Width = Dim.Auto(), Height = Dim.Auto(),
-            ColorScheme = ColorSchemes.Body
+            SchemeName = ColorSchemes.BodyName
         };
 
         // ── Dynamic button Y based on summary height ─────────────────
@@ -77,11 +78,11 @@ public static class VictoryScreen
             Text = " Return to Title ",
             X = Pos.Center(), Y = buttonY,
             IsDefault = true,
-            ColorScheme = ColorSchemes.Button
+            SchemeName = ColorSchemes.ButtonName
         };
         returnBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             TitleScreen.Show(mainWindow);
         };
         var hint = new Label
@@ -89,7 +90,7 @@ public static class VictoryScreen
             Text = "[ Press Enter to continue ]",
             X = Pos.Center(), Y = buttonY + 2,
             Width = Dim.Auto(), Height = 1,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
 
         mainWindow.Add(bannerLabel, nameLabel, summaryLabel, returnBtn, hint);

@@ -26,7 +26,7 @@ public static class DivineAwakeningDialog
         else
         {
             var labels = divines.Select(w => w.EnhancedName).Append("Cancel").ToArray();
-            int pick = MessageBox.Query("Divine Awakening",
+            int pick = DialogHelper.Query("Divine Awakening",
                 "Selka: \"Which blade calls to be awakened?\"", labels);
             if (pick < 0 || pick >= divines.Count) return;
             target = divines[pick];
@@ -56,7 +56,7 @@ public static class DivineAwakeningDialog
     // Fallback — HandleSelkaAwakening gates this path, so reaching here means a race/data gap.
     private static void ShowEmpty()
     {
-        MessageBox.Query("Divine Awakening",
+        DialogHelper.Query("Divine Awakening",
             "Selka: \"I sense no divine blade in your keeping.\"", "Close");
     }
 
@@ -64,24 +64,24 @@ public static class DivineAwakeningDialog
     private static void ShowAwakenDialog(Player player, Weapon target)
     {
         var dialog = DialogHelper.Create(" * Divine Awakening -- Sister Selka * ", DialogWidth, DialogHeight);
-        dialog.ColorScheme = ColorSchemes.Gold;
+        dialog.SchemeName = ColorSchemes.GoldName;
 
         var header = new Label
         {
             Text = $"Target: {target.EnhancedName}",
-            X = 2, Y = 0, Width = Dim.Fill(2), ColorScheme = ColorSchemes.Title,
+            X = 2, Y = 0, Width = Dim.Fill(2), SchemeName = ColorSchemes.TitleName,
         };
 
         var body = new Label
         {
             Text = "", X = 2, Y = 2, Width = Dim.Fill(2), Height = 12,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         var footerHint = new Label
         {
             Text = "Enter: Awaken  |  Esc: Cancel",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         // Bottom-row buttons. Confirm sits left-of-center so focus lands there first.
@@ -104,7 +104,7 @@ public static class DivineAwakeningDialog
                 body.Text =
                     $"Maximum awakening reached (◈{target.AwakeningLevel}).\n\n" +
                     "Selka smiles. \"The blade has unfolded all it can.\"";
-                body.ColorScheme = ColorSchemes.Gold;
+                body.SchemeName = ColorSchemes.GoldName;
                 confirmBtn.Enabled = false;
                 canAfford = false;
                 return;
@@ -152,14 +152,14 @@ public static class DivineAwakeningDialog
             }
 
             body.Text = sb.ToString();
-            body.ColorScheme = haveAll ? ColorSchemes.Body : ColorSchemes.Dim;
+            body.SchemeName = haveAll ? ColorSchemes.BodyName : ColorSchemes.DimName;
             confirmBtn.Enabled = haveAll;
             canAfford = haveAll;
         }
 
         confirmBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             if (!target.CanAwaken || !canAfford) return;
             int newLevel = target.AwakeningLevel + 1;
             DivineAwakening.Awaken(target, player);
@@ -167,7 +167,7 @@ public static class DivineAwakeningDialog
             if (target.AwakeningLevel == newLevel)
             {
                 DivineObtainBanner.TriggerAwakening(target, newLevel);
-                Application.RequestStop();
+                AppHost.App.RequestStop();
             }
             else
             {
@@ -176,7 +176,7 @@ public static class DivineAwakeningDialog
             }
         };
 
-        cancelBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+        cancelBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
         dialog.Add(header, body, confirmBtn, cancelBtn, footerHint);
         DialogHelper.CloseOnEscape(dialog);

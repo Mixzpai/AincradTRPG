@@ -292,7 +292,7 @@ public static class BossFactory
         clone.MaxHealth = (int)(player.MaxHealth * 1.5);
         clone.CurrentHealth = clone.MaxHealth;
         clone.SetSymbol('@');
-        clone.SetColor(Terminal.Gui.Color.BrightRed);
+        clone.SetColor(Color.BrightRed);
         return clone;
     }
 }
@@ -302,5 +302,5 @@ public class GenericBoss : Boss
 {
     public void SetBossTitle(string title) => BossTitle = title;
     public void SetSymbol(char sym) => Symbol = sym;
-    public void SetColor(Terminal.Gui.Color col) => SymbolColor = col;
+    public void SetColor(Color col) => SymbolColor = col;
 }

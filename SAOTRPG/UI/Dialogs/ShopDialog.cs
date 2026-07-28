@@ -25,7 +25,7 @@ public static class ShopDialog
         float karmaMul = KarmaSystem.ShopPriceMultiplier(player.Karma);
         if (karmaMul < 0)
         {
-            MessageBox.Query(vendor.ShopName ?? "Shop",
+            DialogHelper.Query(vendor.ShopName ?? "Shop",
                 $"{vendor.Name ?? "The shopkeep"} will not serve an outlaw.\n\n" +
                 $"Your karma is {player.Karma} ({KarmaSystem.TierLabel(player.Karma)}).\n" +
                 "Come back when the world sees you differently.",
@@ -82,8 +82,7 @@ public static class ShopDialog
             {
                 Text = string.Join("\n", vendorPortrait),
                 X = 0, Y = 0, Width = 9, Height = vendorPortrait.Length,
-                ColorScheme = ColorSchemes.FromColor(vendor.SymbolColor),
-            };
+            }.WithScheme(ColorSchemes.FromColor(vendor.SymbolColor));
             dialog.Add(portraitLabel);
         }
 
@@ -98,7 +97,7 @@ public static class ShopDialog
         {
             Text = "", X = Pos.Center(), Y = 6,
             Width = Dim.Auto(), Height = 1, Visible = false,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
 
         var buyNames = new ObservableCollection<string>();
@@ -142,7 +141,7 @@ public static class ShopDialog
         var compareLabel = new Label
         {
             Text = "", X = 0, Y = Pos.AnchorEnd(4),
-            Width = Dim.Fill(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Fill(), Height = 1, SchemeName = ColorSchemes.DimName
         };
 
         var buyBtn = DialogHelper.CreateButton("Buy");
@@ -209,10 +208,10 @@ public static class ShopDialog
             emptyLabel.Visible = sellNames.Count == 0;
         }
 
-        listView.SelectedItemChanged += (s, e) =>
+        listView.ValueChanged += (s, e) =>
         {
-            int idx = listView.SelectedItem;
-            detailLabel.ColorScheme = ColorSchemes.Body;
+            int idx = listView.SelectedItem ?? -1;
+            detailLabel.SchemeName = ColorSchemes.BodyName;
 
             if (!sellMode && idx >= 0 && idx < buyRefs.Count)
             {
@@ -226,11 +225,11 @@ public static class ShopDialog
                 if (item is EquipmentBase eqItem)
                 {
                     var verdict = EquipmentComparer.GetVerdict(player, eqItem);
-                    compareLabel.ColorScheme = verdict switch
+                    compareLabel.SchemeName = verdict switch
                     {
-                        EquipmentComparer.CompareResult.Upgrade => ColorSchemes.Gold,
-                        EquipmentComparer.CompareResult.Downgrade => ColorSchemes.Danger,
-                        _ => ColorSchemes.Dim
+                        EquipmentComparer.CompareResult.Upgrade => ColorSchemes.GoldName,
+                        EquipmentComparer.CompareResult.Downgrade => ColorSchemes.DangerName,
+                        _ => ColorSchemes.DimName
                     };
                 }
             }
@@ -238,21 +237,21 @@ public static class ShopDialog
             {
                 detailLabel.Text = $"Press Sell to sell for {CalcSellPrice(sellRefs[idx], currentFloor, player)} Col.";
                 compareLabel.Text = "";
-                compareLabel.ColorScheme = ColorSchemes.Dim;
+                compareLabel.SchemeName = ColorSchemes.DimName;
             }
             else
             {
                 detailLabel.Text = "";
                 compareLabel.Text = "";
-                compareLabel.ColorScheme = ColorSchemes.Dim;
+                compareLabel.SchemeName = ColorSchemes.DimName;
             }
         };
 
         buyBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             if (sellMode) { SwitchToBuy(); return; }
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             if (idx < 0 || idx >= buyRefs.Count) return;
 
             var item = buyRefs[idx];
@@ -260,7 +259,7 @@ public static class ShopDialog
             if (player.ColOnHand < price)
             {
                 detailLabel.Text = "Not enough Col!";
-                detailLabel.ColorScheme = ColorSchemes.Danger;
+                detailLabel.SchemeName = ColorSchemes.DangerName;
                 return;
             }
 
@@ -268,7 +267,7 @@ public static class ShopDialog
             if (!player.Inventory.AddItem(bought))
             {
                 detailLabel.Text = "Inventory full!";
-                detailLabel.ColorScheme = ColorSchemes.Danger;
+                detailLabel.SchemeName = ColorSchemes.DangerName;
                 return;
             }
 
@@ -276,15 +275,15 @@ public static class ShopDialog
             // Bargaining XP: +1 per shop transaction (buy).
             player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Purchased {item.Name} for {price} Col.";
-            detailLabel.ColorScheme = ColorSchemes.Success;
+            detailLabel.SchemeName = ColorSchemes.SuccessName;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
         };
 
         sellBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             if (!sellMode) { SwitchToSell(); return; }
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             if (idx < 0 || idx >= sellRefs.Count) return;
 
             var item = sellRefs[idx];
@@ -295,7 +294,7 @@ public static class ShopDialog
             if (item.Value >= 100 || item is StackableItem { Quantity: > 1 } || isRarePlus)
             {
                 string rarityWarn = isRarePlus ? $" [{item.Rarity}]" : "";
-                int confirm = MessageBox.Query("Sell", $"Sell{rarityWarn} {item.Name}{qtyTag} for {sellPrice} Col?", "Yes", "No");
+                int confirm = DialogHelper.Query("Sell", $"Sell{rarityWarn} {item.Name}{qtyTag} for {sellPrice} Col?", "Yes", "No");
                 if (confirm != 0) return;
             }
 
@@ -304,7 +303,7 @@ public static class ShopDialog
             // Bargaining XP: +1 per shop transaction (sell).
             player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Sold {item.Name} for {sellPrice} Col.";
-            detailLabel.ColorScheme = ColorSchemes.Success;
+            detailLabel.SchemeName = ColorSchemes.SuccessName;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
             sellHeader.Text = $"Items: {player.Inventory.ItemCount}/{player.Inventory.MaxSlots}";
             RefreshSellList();
@@ -315,7 +314,7 @@ public static class ShopDialog
 
         repairBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             var repairSlots = new[] {
                 EquipmentSlot.Weapon, EquipmentSlot.Chest, EquipmentSlot.Head,
                 EquipmentSlot.Feet, EquipmentSlot.OffHand
@@ -344,7 +343,7 @@ public static class ShopDialog
                 breakdown.AppendLine($"  {eq.Name}: {eq.ItemDurability}/{maxDur} (+{maxDur - eq.ItemDurability})");
             }
 
-            int confirm = MessageBox.Query("Repair All",
+            int confirm = DialogHelper.Query("Repair All",
                 $"{breakdown}Total: {totalCost} Col for {itemsToRepair} item(s)\nYour Col: {player.ColOnHand}",
                 "Repair", "Cancel");
             if (confirm != 0) return;
@@ -367,23 +366,23 @@ public static class ShopDialog
                 repaired = true;
             }
             detailLabel.Text = repaired ? $"Repaired all gear for {totalCost} Col!" : "Not enough Col to repair anything!";
-            detailLabel.ColorScheme = repaired ? ColorSchemes.Success : ColorSchemes.Danger;
+            detailLabel.SchemeName = repaired ? ColorSchemes.SuccessName : ColorSchemes.DangerName;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
         };
 
         junkBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             var junkItems = player.Inventory.Items.Where(i => i.Rarity == "Common").ToList();
             if (junkItems.Count == 0)
             {
                 detailLabel.Text = "No Common items to sell!";
-                detailLabel.ColorScheme = ColorSchemes.Dim;
+                detailLabel.SchemeName = ColorSchemes.DimName;
                 return;
             }
 
             int totalCol = junkItems.Sum(i => CalcSellPrice(i, currentFloor, player));
-            int confirm = MessageBox.Query("Sell Junk",
+            int confirm = DialogHelper.Query("Sell Junk",
                 $"Sell {junkItems.Count} Common item(s) for {totalCol} Col?", "Sell All", "Cancel");
             if (confirm != 0) return;
 
@@ -392,7 +391,7 @@ public static class ShopDialog
             // Bargaining XP: +1 per bulk-junk transaction.
             player.LifeSkills.GrantXp(LifeSkillType.Bargaining, 1);
             detailLabel.Text = $"Sold {junkItems.Count} junk item(s) for {totalCol} Col!";
-            detailLabel.ColorScheme = ColorSchemes.Success;
+            detailLabel.SchemeName = ColorSchemes.SuccessName;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
 
             if (sellMode)
@@ -409,7 +408,7 @@ public static class ShopDialog
         // Tier-up + running total piped into the game log.
         investBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             string shop = vendor.ShopName ?? "Shop";
             int current = VendorInvestmentSystem.GetInvested(vendor);
             int tiers = VendorInvestmentSystem.GetInvestedTiers(vendor);
@@ -417,7 +416,7 @@ public static class ShopDialog
             string nextLine = nextCost > 0
                 ? $"Next tier at {current + nextCost} Col invested (need {nextCost} more)."
                 : "Maxed — 20,000 Col invested, +3 stock tiers unlocked.";
-            int choice = MessageBox.Query("Invest in Shop",
+            int choice = DialogHelper.Query("Invest in Shop",
                 $"Deposit Col at {shop}.\n\n" +
                 $"Invested: {current}/{VendorInvestmentSystem.MaxInvestmentPerVendor} Col\n" +
                 $"Bonus stock tiers: +{tiers}\n" +
@@ -433,14 +432,14 @@ public static class ShopDialog
             if (actual <= 0)
             {
                 detailLabel.Text = "Investment failed — not enough Col or vendor at cap.";
-                detailLabel.ColorScheme = ColorSchemes.Danger;
+                detailLabel.SchemeName = ColorSchemes.DangerName;
                 return;
             }
 
             int newTiers = VendorInvestmentSystem.GetInvestedTiers(vendor);
             string tierMsg = newTiers > tiers ? $" (+{newTiers - tiers} new stock tier!)" : "";
             detailLabel.Text = $"Invested {actual} Col at {shop}.{tierMsg}";
-            detailLabel.ColorScheme = ColorSchemes.Success;
+            detailLabel.SchemeName = ColorSchemes.SuccessName;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
             // Update header readout so the +Invested badge refreshes live.
             investTiers = VendorInvestmentSystem.GetInvestedTiers(vendor);
@@ -450,12 +449,12 @@ public static class ShopDialog
                 : $"[ For Sale ]{tierInfo}{newInvestInfo}";
         };
 
-        closeBtn.Accepting += (s, e) => { Application.RequestStop(); e.Cancel = true; };
+        closeBtn.Accepting += (s, e) => { AppHost.App.RequestStop(); e.Handled = true; };
 
         var hintLabel = new Label
         {
             Text = "Enter: buy/sell | Tab: switch | Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         dialog.Add(colLabel, modeHeader, listView, emptyLabel, detailLabel, compareLabel,

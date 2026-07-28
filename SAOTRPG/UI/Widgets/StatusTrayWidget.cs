@@ -40,7 +40,7 @@ public class StatusTrayWidget : View
         _tm = tm;
         _player = player;
         CanFocus = false;
-        ColorScheme = ColorSchemes.Body;
+        SchemeName = ColorSchemes.BodyName;
     }
 
     public void ToggleVerbose() { VerboseMode = !VerboseMode; SetNeedsDraw(); }
@@ -159,18 +159,27 @@ public class StatusTrayWidget : View
         return $"{e.Letter}{compactStacks}{compactDur}";
     }
 
-    protected override bool OnDrawingContent()
+    // Children repaint every cell they own, and the framework clear would otherwise blank
+    // this widget during the window where it skips painting beneath a dialog.
+    protected override bool OnClearingViewport() => true;
+
+    protected override bool OnDrawingContent(DrawContext? context)
     {
+        // A modal above us has already painted this pass; drawing now would erase it.
+        if (AppHost.IsBeneathTopSession(this)) return true;
+
         var vp = Viewport;
         if (vp.Width <= 0 || vp.Height <= 0) return true;
 
+        // Batched rather than the framework's SetAttribute/Move/AddRune trio, which re-parses
+        // the grapheme and allocates per cell. Identical output: same glyphs, attributes and
+        // columns.
+        var batch = Gfx.Begin(this);
+        var blank = Gfx.Attr(Color.Black, Color.Black);
+
         // Blank out both rows so stale glyphs don't bleed through.
         for (int row = 0; row < vp.Height; row++)
-        {
-            Driver!.SetAttribute(Gfx.Attr(Color.Black, Color.Black));
-            Move(0, row);
-            for (int c = 0; c < vp.Width; c++) Driver!.AddRune(new System.Text.Rune(' '));
-        }
+            for (int c = 0; c < vp.Width; c++) batch.Put(c, row, ' ', blank);
 
         var entries = CollectEntries();
         if (entries.Count == 0) return true;
@@ -190,17 +199,15 @@ public class StatusTrayWidget : View
                 if (curRow == row1 && vp.Height > 1) { curRow = row2; col = 0; }
                 else break; // out of rows — drop remaining
             }
-            DrawText(col, curRow, token, e.Color);
+            DrawText(batch, col, curRow, token, e.Color);
             col += tokenLen;
         }
         return true;
     }
 
-    private void DrawText(int x, int y, string text, Color fg)
+    private static void DrawText(Gfx.Batch batch, int x, int y, string text, Color fg)
     {
-        Driver!.SetAttribute(Gfx.Attr(fg, Color.Black));
-        Move(x, y);
-        foreach (var ch in text)
-            Driver!.AddRune(new System.Text.Rune(ch));
+        var attr = Gfx.Attr(fg, Color.Black);
+        for (int i = 0; i < text.Length; i++) batch.Put(x + i, y, text[i], attr);
     }
 }

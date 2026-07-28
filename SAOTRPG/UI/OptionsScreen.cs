@@ -20,6 +20,7 @@ public static class OptionsScreen
     public static void Show(Window mainWindow, Action? onBack = null)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
         var settings = UserSettings.Current;
 
         var (header, headerRule) = ScreenHeader.Create("Options", 2, 20);
@@ -27,7 +28,7 @@ public static class OptionsScreen
         var saveLabel = new Label
         {
             Text = "", X = Pos.Center(), Y = 4,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.GoldName,
         };
 
         // Local helpers — capture saveLabel so individual call sites don't
@@ -38,9 +39,9 @@ public static class OptionsScreen
             {
                 Text = "",
                 X = Pos.Center() + ControlOffset, Y = y,
-                CheckedState = initial ? CheckState.Checked : CheckState.UnChecked,
+                Value = initial ? CheckState.Checked : CheckState.UnChecked,
             };
-            check.CheckedStateChanging += (s, e) =>
+            check.ValueChanging += (s, e) =>
             {
                 bool v = e.NewValue == CheckState.Checked;
                 apply(v);
@@ -50,19 +51,19 @@ public static class OptionsScreen
             return check;
         }
 
-        RadioGroup Radio(string name, int y, string[] labels, int initial, Action<int> apply)
+        OptionSelector Radio(string name, int y, string[] labels, int initial, Action<int> apply)
         {
-            var radio = new RadioGroup
+            var radio = new OptionSelector
             {
-                X = Pos.Center() + ControlOffset, Y = y, RadioLabels = labels,
+                X = Pos.Center() + ControlOffset, Y = y, Labels = labels,
                 Orientation = Orientation.Horizontal,
-                SelectedItem = Math.Clamp(initial, 0, labels.Length - 1),
+                Value = Math.Clamp(initial, 0, labels.Length - 1),
             };
-            radio.SelectedItemChanged += (s, e) =>
+            radio.ValueChanged += (s, e) =>
             {
-                apply(radio.SelectedItem);
+                apply(radio.Value ?? 0);
                 UserSettings.Save();
-                saveLabel.Text = $"{name}: {labels[radio.SelectedItem]}  [OK] Saved";
+                saveLabel.Text = $"{name}: {labels[radio.Value ?? 0]}  [OK] Saved";
             };
             return radio;
         }
@@ -126,7 +127,7 @@ public static class OptionsScreen
         {
             Text = "Use ASCII bars if eighth-block (▏▎▍▌▋▊▉) misrenders.",
             X = Pos.Center() + ControlOffset, Y = y,
-            Width = 56, Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = 56, Height = 1, SchemeName = ColorSchemes.DimName,
         };
         y += 2;
 
@@ -142,7 +143,7 @@ public static class OptionsScreen
         {
             Text = "Brief viewport jitter on crits and heavy hits.",
             X = Pos.Center() + ControlOffset, Y = y,
-            Width = 50, Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = 50, Height = 1, SchemeName = ColorSchemes.DimName,
         };
         y += 2;
 
@@ -170,15 +171,15 @@ public static class OptionsScreen
             {
                 Text = previewLines[i], X = Pos.Center() + LabelOffset,
                 Y = y + i, Width = 60, Height = 1,
-                ColorScheme = i == (int)settings.DamageBreakdownMode
-                    ? ColorSchemes.Gold : ColorSchemes.Dim,
+                SchemeName = i == (int)settings.DamageBreakdownMode
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName,
             };
         }
-        breakdownRadio.SelectedItemChanged += (s, e) =>
+        breakdownRadio.ValueChanged += (s, e) =>
         {
             for (int i = 0; i < 4; i++)
-                previewLabels[i].ColorScheme = i == breakdownRadio.SelectedItem
-                    ? ColorSchemes.Gold : ColorSchemes.Dim;
+                previewLabels[i].SchemeName = i == breakdownRadio.Value
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName;
         };
         y += 5;
 
@@ -203,15 +204,15 @@ public static class OptionsScreen
             {
                 Text = particlePreview[i], X = Pos.Center() + LabelOffset,
                 Y = y + i, Width = 60, Height = 1,
-                ColorScheme = i == (int)settings.ParticleDensity
-                    ? ColorSchemes.Gold : ColorSchemes.Dim,
+                SchemeName = i == (int)settings.ParticleDensity
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName,
             };
         }
-        particleRadio.SelectedItemChanged += (s, e) =>
+        particleRadio.ValueChanged += (s, e) =>
         {
             for (int i = 0; i < 4; i++)
-                particleLabels[i].ColorScheme = i == particleRadio.SelectedItem
-                    ? ColorSchemes.Gold : ColorSchemes.Dim;
+                particleLabels[i].SchemeName = i == particleRadio.Value
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName;
         };
         y += 5;
 
@@ -235,15 +236,15 @@ public static class OptionsScreen
             {
                 Text = tagPosPreview[i], X = Pos.Center() + LabelOffset,
                 Y = y + i, Width = 60, Height = 1,
-                ColorScheme = i == (int)settings.DamageTagPosition
-                    ? ColorSchemes.Gold : ColorSchemes.Dim,
+                SchemeName = i == (int)settings.DamageTagPosition
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName,
             };
         }
-        tagPosRadio.SelectedItemChanged += (s, e) =>
+        tagPosRadio.ValueChanged += (s, e) =>
         {
             for (int i = 0; i < 3; i++)
-                tagPosLabels[i].ColorScheme = i == tagPosRadio.SelectedItem
-                    ? ColorSchemes.Gold : ColorSchemes.Dim;
+                tagPosLabels[i].SchemeName = i == tagPosRadio.Value
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName;
         };
         y += 4;
 
@@ -267,15 +268,15 @@ public static class OptionsScreen
             {
                 Text = tagStylePreview[i], X = Pos.Center() + LabelOffset,
                 Y = y + i, Width = 40, Height = 1,
-                ColorScheme = i == (int)settings.DamageTagStyle
-                    ? ColorSchemes.Gold : ColorSchemes.Dim,
+                SchemeName = i == (int)settings.DamageTagStyle
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName,
             };
         }
-        tagStyleRadio.SelectedItemChanged += (s, e) =>
+        tagStyleRadio.ValueChanged += (s, e) =>
         {
             for (int i = 0; i < 3; i++)
-                tagStyleLabels[i].ColorScheme = i == tagStyleRadio.SelectedItem
-                    ? ColorSchemes.Gold : ColorSchemes.Dim;
+                tagStyleLabels[i].SchemeName = i == tagStyleRadio.Value
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName;
         };
         y += 4;
 
@@ -287,9 +288,9 @@ public static class OptionsScreen
         var keybindBtn = new Button
         {
             Text = " Open (H) ", X = Pos.Center() + ControlOffset, Y = y,
-            ColorScheme = ColorSchemes.Button,
+            SchemeName = ColorSchemes.ButtonName,
         };
-        keybindBtn.Accepting += (s, e) => { e.Cancel = true; HelpDialog.Show(); };
+        keybindBtn.Accepting += (s, e) => { e.Handled = true; HelpDialog.Show(); };
         y += 3;
 
         // ── About ────────────────────────────────────────────────────
@@ -300,13 +301,13 @@ public static class OptionsScreen
         {
             Text = $"AincradTRPG {AppVersion.Display}",
             X = Pos.Center(), Y = y, Width = Dim.Auto(), Height = 1,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
         var tributeLabel = new Label
         {
             Text = "An SAO-themed ASCII roguelike",
             X = Pos.Center(), Y = y + 1, Width = Dim.Auto(), Height = 1,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         y += 4;
 
@@ -314,11 +315,11 @@ public static class OptionsScreen
         var resetBtn = new Button
         {
             Text = " Reset Defaults ", X = Pos.Center() - 15, Y = y,
-            ColorScheme = ColorSchemes.Button,
+            SchemeName = ColorSchemes.ButtonName,
         };
         resetBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             if (!DialogHelper.ConfirmAction("Reset", "all settings to defaults")) return;
             UserSettings.ResetToDefaults();
             Show(mainWindow);
@@ -327,11 +328,11 @@ public static class OptionsScreen
         var backBtn = new Button
         {
             Text = " Back ", X = Pos.Center() + 5, Y = y,
-            IsDefault = true, ColorScheme = ColorSchemes.Button,
+            IsDefault = true, SchemeName = ColorSchemes.ButtonName,
         };
         backBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             if (onBack != null) onBack();
             else TitleScreen.Show(mainWindow);
         };

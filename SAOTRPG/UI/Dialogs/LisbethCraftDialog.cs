@@ -31,8 +31,7 @@ public static class LisbethCraftDialog
             {
                 Text = string.Join("\n", lisbethPortrait),
                 X = 0, Y = 0, Width = 9, Height = lisbethPortrait.Length,
-                ColorScheme = ColorSchemes.FromColor(Terminal.Gui.Color.BrightMagenta),
-            };
+            }.WithScheme(ColorSchemes.FromColor(Color.BrightMagenta));
             dialog.Add(portraitLabel);
         }
 
@@ -42,7 +41,7 @@ public static class LisbethCraftDialog
         {
             Text = "",
             X = 10, Y = 0, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
 
         // Tab strip: highlights active section (F1 R6 | F2 Iron Ingot Enhance).
@@ -50,13 +49,13 @@ public static class LisbethCraftDialog
         {
             Text = "",
             X = 10, Y = 1, Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         var subheader = new Label
         {
             Text = "",
-            X = 2, Y = 2, Width = Dim.Fill(2), ColorScheme = ColorSchemes.Dim,
+            X = 2, Y = 2, Width = Dim.Fill(2), SchemeName = ColorSchemes.DimName,
         };
 
         var names = new ObservableCollection<string>();
@@ -71,7 +70,7 @@ public static class LisbethCraftDialog
         {
             Text = "Select an entry to see its details.",
             X = 1, Y = Pos.AnchorEnd(6), Width = Dim.Fill(1), Height = 3,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         // Cached enhance candidate snapshot — refreshed per RefreshList in enhance/reforge modes.
@@ -174,15 +173,15 @@ public static class LisbethCraftDialog
             }
         }
 
-        listView.SelectedItemChanged += (s, e) =>
+        listView.ValueChanged += (s, e) =>
         {
-            int idx = listView.SelectedItem;
+            int idx = listView.SelectedItem ?? -1;
             switch (mode)
             {
                 case Mode.R6Craft:
                     if (idx < 0 || idx >= LisbethRecipes.All.Length) { detailLabel.Text = ""; return; }
                     detailLabel.Text = BuildRecipeDetail(player, LisbethRecipes.All[idx]);
-                    detailLabel.ColorScheme = ColorSchemes.Body;
+                    detailLabel.SchemeName = ColorSchemes.BodyName;
                     break;
                 case Mode.IronIngotEnhance:
                 case Mode.MithrilEnhance:
@@ -191,14 +190,14 @@ public static class LisbethCraftDialog
                     if (idx < 0 || idx >= enhanceCandidates.Count) { detailLabel.Text = ""; return; }
                     var rec = ActiveEnhanceRecipe(mode);
                     detailLabel.Text = BuildEnhanceDetailGeneric(player, enhanceCandidates[idx], rec);
-                    detailLabel.ColorScheme = ColorSchemes.Body;
+                    detailLabel.SchemeName = ColorSchemes.BodyName;
                     break;
                 }
                 case Mode.Reforge:
                 {
                     if (idx < 0 || idx >= reforgeCandidates.Count) { detailLabel.Text = ""; return; }
                     detailLabel.Text = BuildReforgeDetail(player, reforgeCandidates[idx]);
-                    detailLabel.ColorScheme = ColorSchemes.Body;
+                    detailLabel.SchemeName = ColorSchemes.BodyName;
                     break;
                 }
             }
@@ -209,8 +208,8 @@ public static class LisbethCraftDialog
         craftBtn.Y = Pos.AnchorEnd(2);
         craftBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            int idx = listView.SelectedItem;
+            e.Handled = true;
+            int idx = listView.SelectedItem ?? -1;
             switch (mode)
             {
                 case Mode.R6Craft:
@@ -243,13 +242,13 @@ public static class LisbethCraftDialog
         var closeBtn = DialogHelper.CreateButton("Leave");
         closeBtn.X = Pos.Center() + 3;
         closeBtn.Y = Pos.AnchorEnd(2);
-        closeBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+        closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
         var escHint = new Label
         {
             Text = "[F1-F5] Switch  [Esc] Leave",
             X = Pos.AnchorEnd(28), Y = Pos.AnchorEnd(1),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         // F1-F5 toggle modes — capture at dialog level so list focus doesn't swallow.
@@ -384,14 +383,14 @@ public static class LisbethCraftDialog
         if (!Reforge.IsEligible(weapon, out var reason))
         {
             detailLabel.Text = reason ?? "Not eligible.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         var cost = Reforge.GetCost(weapon);
         if (player.ColOnHand < cost.ColCost)
         {
             detailLabel.Text = $"Not enough Col! Need {cost.ColCost:N0}, have {player.ColOnHand:N0}.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         foreach (var mat in cost.Mats)
@@ -401,7 +400,7 @@ public static class LisbethCraftDialog
             {
                 string matName = ItemRegistry.Create(mat.DefId)?.Name ?? mat.DefId;
                 detailLabel.Text = $"Missing {mat.Qty - have}x {matName}.";
-                detailLabel.ColorScheme = ColorSchemes.Danger;
+                detailLabel.SchemeName = ColorSchemes.DangerName;
                 return;
             }
         }
@@ -415,18 +414,18 @@ public static class LisbethCraftDialog
             $"ROLL: {preview.PreviewBonusesDescription}\n\n" +
             $"Cost: {cost.ColCost:N0} Col + materials.\n" +
             $"NOTE: actual roll on apply is independent of this preview — accepts random outcome.";
-        int confirm = MessageBox.Query("Confirm Reforge", body, "Reforge", "Cancel");
+        int confirm = DialogHelper.Query("Confirm Reforge", body, "Reforge", "Cancel");
         if (confirm != 0) return;
 
         if (Reforge.Apply(weapon, player, log))
         {
             detailLabel.Text = $"◈ Reforged {weapon.EnhancedName}!";
-            detailLabel.ColorScheme = ColorSchemes.Gold;
+            detailLabel.SchemeName = ColorSchemes.GoldName;
         }
         else
         {
             detailLabel.Text = "Reforge failed — see log.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
         }
         refresh();
     }
@@ -440,19 +439,19 @@ public static class LisbethCraftDialog
         if (Array.IndexOf(recipe.AllowedRarities, weapon.Rarity) < 0)
         {
             detailLabel.Text = $"{weapon.Name}: only {string.Join("/", recipe.AllowedRarities)} weapons accept this tier.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (!weapon.IsEnhanceable)
         {
             detailLabel.Text = $"{weapon.EnhancedName} is sealed (LAB drop) — cannot be enhanced.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (weapon.EnhancementLevel >= recipe.MaxEnhancementCap)
         {
             detailLabel.Text = $"{weapon.EnhancedName} is at +{recipe.MaxEnhancementCap} cap for this tier.";
-            detailLabel.ColorScheme = ColorSchemes.Dim;
+            detailLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
         var matReq = recipe.Materials[0];
@@ -460,17 +459,17 @@ public static class LisbethCraftDialog
         if (have < matReq.Qty)
         {
             detailLabel.Text = $"Missing {matReq.Qty - have}x {matName}.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (player.ColOnHand < recipe.ColCost)
         {
             detailLabel.Text = $"Not enough Col! Need {recipe.ColCost:N0}, have {player.ColOnHand:N0}.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
-        int confirm = MessageBox.Query("Confirm Enhance",
+        int confirm = DialogHelper.Query("Confirm Enhance",
             $"Lisbeth will burn {matReq.Qty}x {matName} + {recipe.ColCost:N0} Col to push\n" +
             $"{weapon.EnhancedName} → +{weapon.EnhancementLevel + 1}.\n\nConfirm?",
             "Enhance", "Cancel");
@@ -484,7 +483,7 @@ public static class LisbethCraftDialog
 
         log.LogLoot($"  ◈ Lisbeth bumps {weapon.Name} to +{weapon.EnhancementLevel}! (-{matReq.Qty} {matName}, -{recipe.ColCost:N0} Col)");
         detailLabel.Text = $"◈ {weapon.EnhancedName} forged!";
-        detailLabel.ColorScheme = ColorSchemes.Gold;
+        detailLabel.SchemeName = ColorSchemes.GoldName;
         refresh();
     }
 
@@ -497,20 +496,20 @@ public static class LisbethCraftDialog
         if (!IsLowTierRarity(weapon.Rarity))
         {
             detailLabel.Text = $"{weapon.Name}: only Common/Uncommon weapons accept iron-ingot enhance.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (!weapon.IsEnhanceable)
         {
             detailLabel.Text = $"{weapon.EnhancedName} is sealed (LAB drop) — cannot be enhanced.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (weapon.EnhancementLevel >= recipe.MaxEnhancementCap)
         {
             detailLabel.Text = $"{weapon.EnhancedName} is at Lisbeth's cap (+{recipe.MaxEnhancementCap}). " +
                 "Use the Anvil to push +6..+10.";
-            detailLabel.ColorScheme = ColorSchemes.Dim;
+            detailLabel.SchemeName = ColorSchemes.DimName;
             return;
         }
 
@@ -519,17 +518,17 @@ public static class LisbethCraftDialog
         if (haveIron < ironReq.Qty)
         {
             detailLabel.Text = $"Missing {ironReq.Qty - haveIron}x Iron Ingot.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         if (player.ColOnHand < recipe.ColCost)
         {
             detailLabel.Text = $"Not enough Col! Need {recipe.ColCost}, have {player.ColOnHand:N0}.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
-        int confirm = MessageBox.Query(
+        int confirm = DialogHelper.Query(
             "Confirm Enhance",
             $"Lisbeth will burn 3x Iron Ingot + {recipe.ColCost} Col to push\n" +
             $"{weapon.EnhancedName} → +{weapon.EnhancementLevel + 1}.\n\nConfirm?",
@@ -544,7 +543,7 @@ public static class LisbethCraftDialog
 
         log.LogLoot($"  ◈ Lisbeth bumps {weapon.Name} to +{weapon.EnhancementLevel}! (-3 Iron Ingot, -{recipe.ColCost} Col)");
         detailLabel.Text = $"◈ {weapon.EnhancedName} forged! Lisbeth wipes her brow.";
-        detailLabel.ColorScheme = ColorSchemes.Gold;
+        detailLabel.SchemeName = ColorSchemes.GoldName;
         refresh();
     }
 
@@ -587,7 +586,7 @@ public static class LisbethCraftDialog
         if (player.ColOnHand < recipe.ColCost)
         {
             detailLabel.Text = $"Not enough Col! Need {recipe.ColCost:N0}, have {player.ColOnHand:N0}.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
         // Material check
@@ -598,7 +597,7 @@ public static class LisbethCraftDialog
             {
                 string name = ItemRegistry.Create(mat.DefId)?.Name ?? mat.DefId;
                 detailLabel.Text = $"Missing {mat.Qty - have}x {name}.";
-                detailLabel.ColorScheme = ColorSchemes.Danger;
+                detailLabel.SchemeName = ColorSchemes.DangerName;
                 return;
             }
         }
@@ -608,11 +607,11 @@ public static class LisbethCraftDialog
         if (crafted == null)
         {
             detailLabel.Text = $"Internal error: unknown DefId '{recipe.WeaponDefId}'.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
-        int confirm = MessageBox.Query(
+        int confirm = DialogHelper.Query(
             "Confirm Craft",
             $"Lisbeth will craft {recipe.DisplayName} for {recipe.ColCost:N0} Col and your listed materials.\n\n" +
             "Confirm?",
@@ -630,14 +629,14 @@ public static class LisbethCraftDialog
         {
             log.LogLoot($"  ◈ Lisbeth crafts {crafted.Name} for you! (-{recipe.ColCost:N0} Col)");
             detailLabel.Text = $"◈ {crafted.Name} crafted! The forge rings with its birth.";
-            detailLabel.ColorScheme = ColorSchemes.Gold;
+            detailLabel.SchemeName = ColorSchemes.GoldName;
         }
         else
         {
             log.LogLoot($"  ◈ Lisbeth crafts {crafted.Name} — inventory full, she sets it aside for you.");
             detailLabel.Text = $"◈ {crafted.Name} crafted, but your pack is full. " +
                 "Make room and talk to Lisbeth to take it.";
-            detailLabel.ColorScheme = ColorSchemes.Danger;
+            detailLabel.SchemeName = ColorSchemes.DangerName;
             // No pickup-later persistence, so refund materials if AddItem fails (fail-loud path).
             foreach (var mat in recipe.Materials)
             {

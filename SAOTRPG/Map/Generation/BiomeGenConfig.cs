@@ -57,7 +57,7 @@ public sealed record BiomeGenConfig(
 {
     // Parse TintColor ("#RRGGBB" or "#RRGGBBAA") into Color + alpha byte; returns null
     // when unset/malformed. Alpha defaults to 160 (~63%) when only 6 hex digits given.
-    public Terminal.Gui.Color? GetTintColor(out byte alpha)
+    public Color? GetTintColor(out byte alpha)
     {
         alpha = 0;
         if (string.IsNullOrWhiteSpace(TintColor) || !TintColor.StartsWith('#')) return null;
@@ -69,7 +69,7 @@ public sealed record BiomeGenConfig(
             byte g = Convert.ToByte(s.Substring(2, 2), 16);
             byte b = Convert.ToByte(s.Substring(4, 2), 16);
             alpha = s.Length == 8 ? Convert.ToByte(s.Substring(6, 2), 16) : (byte)160;
-            return new Terminal.Gui.Color(r, g, b);
+            return new Color(r, g, b);
         }
         catch { return null; }
     }

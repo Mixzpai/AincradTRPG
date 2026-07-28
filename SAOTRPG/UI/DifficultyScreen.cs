@@ -20,7 +20,11 @@ public static class DifficultyScreen
     public static void Show(Window mainWindow)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
         if (_escHandler != null) mainWindow.KeyDown -= _escHandler;
+        // The modifier picker returns here via its own Esc handler, which would otherwise
+        // stay attached and fire alongside this screen's.
+        ModifierSelectScreen.UnhookEscHandler(mainWindow);
         var sw = DebugLogger.StartTimer("DifficultyScreen.Show");
         DebugLogger.LogScreen("DifficultyScreen");
 
@@ -42,13 +46,13 @@ public static class DifficultyScreen
             labels[i] = $"{tiers[i].Name,-14}{desc}";
         }
 
-        var tierRadio = new RadioGroup
+        var tierRadio = new OptionSelector
         {
             X = Pos.Center() - 26, Y = 4,
-            RadioLabels = labels,
-            SelectedItem = DefaultTier,
+            Labels = labels,
+            Value = DefaultTier,
             Width = 54, Height = count,
-            ColorScheme = ColorSchemes.TierRadio,
+            SchemeName = ColorSchemes.TierRadioName,
         };
 
         // ── Thin rule between tier list and modifiers ─────────────────
@@ -57,7 +61,7 @@ public static class DifficultyScreen
         {
             Text = "--------------------------------------",
             X = Pos.Center(), Y = previewY,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName,
         };
         previewY += 1;
 
@@ -68,27 +72,27 @@ public static class DifficultyScreen
         {
             Text = FormatModifiers(tiers[DefaultTier]),
             X = Pos.Center(), Y = previewY + 1,
-            Width = Dim.Auto(), ColorScheme = ColorSchemes.Body,
+            Width = Dim.Auto(), SchemeName = ColorSchemes.BodyName,
         };
 
         var modDescRule = new Label
         {
             Text = "---",
             X = Pos.Center(), Y = previewY + 2,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName,
         };
 
         var descLabel = new Label
         {
             Text = tiers[DefaultTier].Description,
             X = Pos.Center(), Y = previewY + 3,
-            Width = 60, Height = 2, ColorScheme = ColorSchemes.Dim,
+            Width = 60, Height = 2, SchemeName = ColorSchemes.DimName,
         };
 
         // Update preview on every tier change.
-        tierRadio.SelectedItemChanged += (s, e) =>
+        tierRadio.ValueChanged += (s, e) =>
         {
-            int idx = tierRadio.SelectedItem;
+            int idx = tierRadio.Value ?? 0;
             if (idx < 0 || idx >= count) return;
             modLabel.Text = FormatModifiers(tiers[idx]);
             descLabel.Text = tiers[idx].Description;
@@ -100,7 +104,7 @@ public static class DifficultyScreen
         {
             Text = "All runs are permadeath — death deletes your save.",
             X = Pos.Center(), Y = hcY,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger,
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DangerName,
         };
 
         // ── Run Modifiers row — unlocked after first F100 victory.
@@ -110,18 +114,18 @@ public static class DifficultyScreen
         {
             Text = modifiersUnlocked ? " Run Modifiers " : " Run Modifiers (locked) ",
             X = Pos.Center() - 26, Y = modY,
-            ColorScheme = modifiersUnlocked ? ColorSchemes.MenuButton : ColorSchemes.Dim,
+            SchemeName = modifiersUnlocked ? ColorSchemes.MenuButtonName : ColorSchemes.DimName,
             Enabled = modifiersUnlocked,
         };
         var modifierChipLabel = new Label
         {
             Text = FormatModifierChips(),
             X = Pos.Center() + 0, Y = modY,
-            Width = 40, ColorScheme = ColorSchemes.Dim,
+            Width = 40, SchemeName = ColorSchemes.DimName,
         };
         modifierBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             ModifierSelectScreen.Show(mainWindow, () =>
             {
                 // Re-render DifficultyScreen after modifier picker closes.
@@ -136,24 +140,24 @@ public static class DifficultyScreen
         var continueBtn = new Button
         {
             Text = " Continue ", X = Pos.Center() - 18, Y = btnY,
-            ColorScheme = ColorSchemes.MenuButton,
+            SchemeName = ColorSchemes.MenuButtonName,
         };
         var detailsBtn = new Button
         {
             Text = " Details ", X = Pos.Center() - 3, Y = btnY,
-            ColorScheme = ColorSchemes.MenuButton,
+            SchemeName = ColorSchemes.MenuButtonName,
         };
         var backBtn = new Button
         {
             Text = " Back ", X = Pos.Center() + 11, Y = btnY,
-            ColorScheme = ColorSchemes.MenuButton,
+            SchemeName = ColorSchemes.MenuButtonName,
         };
 
         var hint = new Label
         {
             Text = "Up/Down: select   Enter: continue   Esc: back",
             X = Pos.Center(), Y = btnY + 2,
-            Width = Dim.Auto(), ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Auto(), SchemeName = ColorSchemes.DimName,
         };
 
         foreach (var btn in new[] { continueBtn, detailsBtn, backBtn })
@@ -161,19 +165,19 @@ public static class DifficultyScreen
 
         detailsBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            int sel = tierRadio.SelectedItem;
-            MessageBox.Query($"{tiers[sel].Name} — Details",
+            e.Handled = true;
+            int sel = tierRadio.Value ?? 0;
+            DialogHelper.Query($"{tiers[sel].Name} — Details",
                 DifficultyData.GetStatsTooltip(sel), "OK");
         };
 
         continueBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            CharacterCreationScreen.Show(mainWindow, tierRadio.SelectedItem);
+            e.Handled = true;
+            CharacterCreationScreen.Show(mainWindow, tierRadio.Value ?? 0);
         };
 
-        backBtn.Accepting += (s, e) => { e.Cancel = true; TitleScreen.Show(mainWindow); };
+        backBtn.Accepting += (s, e) => { e.Handled = true; TitleScreen.Show(mainWindow); };
 
         _escHandler = (s, e) =>
         {
@@ -186,12 +190,12 @@ public static class DifficultyScreen
         tierRadio.KeyDown += (s, e) =>
         {
             if (e.KeyCode is KeyCode.CursorDown or KeyCode.S
-                && tierRadio.SelectedItem == count - 1)
+                && tierRadio.Value == count - 1)
             {
                 modifierBtn.SetFocus(); e.Handled = true;
             }
             else if (e.KeyCode is KeyCode.CursorUp or KeyCode.W
-                && tierRadio.SelectedItem == 0)
+                && tierRadio.Value == 0)
             {
                 backBtn.SetFocus(); e.Handled = true;
             }

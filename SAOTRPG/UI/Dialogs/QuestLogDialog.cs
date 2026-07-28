@@ -19,12 +19,12 @@ public static class QuestLogDialog
         bool showCompleted = false;
 
         // ── Tab buttons ──────────────────────────────────────────────
-        var activeTab = new Button { Text = " Active ", X = 2, Y = 0, NoPadding = true, ColorScheme = ColorSchemes.Gold };
-        var completedTab = new Button { Text = " Completed ", X = 14, Y = 0, NoPadding = true, ColorScheme = ColorSchemes.Dim };
+        var activeTab = new Button { Text = " Active ", X = 2, Y = 0, NoPadding = true, SchemeName = ColorSchemes.GoldName };
+        var completedTab = new Button { Text = " Completed ", X = 14, Y = 0, NoPadding = true, SchemeName = ColorSchemes.DimName };
         var countLabel = new Label
         {
             Text = $"{QuestSystem.ActiveQuests.Count}/{QuestSystem.MaxActiveQuests} active",
-            X = Pos.AnchorEnd(18), Y = 0, Width = 16, ColorScheme = ColorSchemes.Dim,
+            X = Pos.AnchorEnd(18), Y = 0, Width = 16, SchemeName = ColorSchemes.DimName,
         };
 
         // ── Quest list (left panel) ──────────────────────────────────
@@ -41,40 +41,41 @@ public static class QuestLogDialog
         var detailHeader = new Label
         {
             Text = "[ Details ]", X = 41, Y = 2,
-            Width = Dim.Fill(2), ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Fill(2), SchemeName = ColorSchemes.GoldName,
         };
         var detailTitle = new Label
         {
             Text = "", X = 41, Y = 4,
-            Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Title,
+            Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.TitleName,
         };
-        // TextView with WordWrap + Height=6 so long HF quest descriptions don't clip
+        // Word-wrapped over Height=6 so long HF quest descriptions don't clip
         // mid-sentence. CanFocus=false so Tab cycling stays on the listView.
-        var detailDesc = new TextView
+        var detailDesc = new Label
         {
             Text = "Select a quest to view details.", X = 41, Y = 6,
-            Width = Dim.Fill(2), Height = 6, ColorScheme = ColorSchemes.Body,
-            ReadOnly = true, WordWrap = true, CanFocus = false,
+            Width = Dim.Fill(2), Height = 6, SchemeName = ColorSchemes.BodyName,
+            CanFocus = false,
         };
+        detailDesc.TextFormatter.WordWrap = true;
         var detailProgress = new Label
         {
             Text = "", X = 41, Y = 11,
-            Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.GoldName,
         };
         var detailReward = new Label
         {
             Text = "", X = 41, Y = 13,
-            Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.DimName,
         };
         var detailGiver = new Label
         {
             Text = "", X = 41, Y = 14,
-            Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.DimName,
         };
         var detailStatus = new Label
         {
             Text = "", X = 41, Y = 16,
-            Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Body,
+            Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.BodyName,
         };
 
         // Terminal.Gui Label with Width=1 only renders the FIRST char of Text. Build
@@ -83,13 +84,13 @@ public static class QuestLogDialog
         {
             Text = string.Join("\n", Enumerable.Repeat("│", 20)),
             X = 40, Y = 2,
-            Width = 1, Height = Dim.Fill(4), ColorScheme = ColorSchemes.Dim,
+            Width = 1, Height = Dim.Fill(4), SchemeName = ColorSchemes.DimName,
         };
 
         var hint = new Label
         {
             Text = "Tab: switch | P: pin/unpin tracker | Talk to NPCs for quests | Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         // ── Refresh logic ────────────────────────────────────────────
@@ -156,31 +157,31 @@ public static class QuestLogDialog
                 QuestStatus.TurnedIn => "-- COMPLETED --",
                 _ => "",
             };
-            detailStatus.ColorScheme = q.Status == QuestStatus.Complete
-                ? ColorSchemes.Gold : ColorSchemes.Dim;
+            detailStatus.SchemeName = q.Status == QuestStatus.Complete
+                ? ColorSchemes.GoldName : ColorSchemes.DimName;
         }
 
         RefreshList();
 
         // ── Event wiring ─────────────────────────────────────────────
-        listView.SelectedItemChanged += (s, e) => ShowDetail(listView.SelectedItem);
+        listView.ValueChanged += (s, e) => ShowDetail(listView.SelectedItem ?? -1);
 
         activeTab.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             showCompleted = false;
-            activeTab.ColorScheme = ColorSchemes.Gold;
-            completedTab.ColorScheme = ColorSchemes.Dim;
+            activeTab.SchemeName = ColorSchemes.GoldName;
+            completedTab.SchemeName = ColorSchemes.DimName;
             RefreshList();
             listView.SetFocus();
         };
 
         completedTab.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             showCompleted = true;
-            activeTab.ColorScheme = ColorSchemes.Dim;
-            completedTab.ColorScheme = ColorSchemes.Gold;
+            activeTab.SchemeName = ColorSchemes.DimName;
+            completedTab.SchemeName = ColorSchemes.GoldName;
             RefreshList();
             listView.SetFocus();
         };
@@ -191,15 +192,15 @@ public static class QuestLogDialog
             if (e.KeyCode == KeyCode.Tab)
             {
                 showCompleted = !showCompleted;
-                activeTab.ColorScheme = showCompleted ? ColorSchemes.Dim : ColorSchemes.Gold;
-                completedTab.ColorScheme = showCompleted ? ColorSchemes.Gold : ColorSchemes.Dim;
+                activeTab.SchemeName = showCompleted ? ColorSchemes.DimName : ColorSchemes.GoldName;
+                completedTab.SchemeName = showCompleted ? ColorSchemes.GoldName : ColorSchemes.DimName;
                 RefreshList();
                 e.Handled = true;
             }
             else if ((e.KeyCode & ~KeyCode.ShiftMask) == KeyCode.P && !showCompleted)
             {
                 var src = QuestSystem.ActiveQuests;
-                int idx = listView.SelectedItem;
+                int idx = listView.SelectedItem ?? -1;
                 if (idx >= 0 && idx < src.Count)
                 {
                     QuestSystem.TogglePin(src[idx].Id);

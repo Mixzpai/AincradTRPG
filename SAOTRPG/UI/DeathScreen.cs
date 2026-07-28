@@ -28,25 +28,26 @@ public static class DeathScreen
         TurnManager? turnManager = null, ColoredLogView? logView = null)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
 
         var deathLabel = new Label
         {
             Text = DeathArt, X = Pos.Center(), Y = BannerY,
-            Width = Dim.Auto(), Height = Dim.Auto(), ColorScheme = ColorSchemes.Danger
+            Width = Dim.Auto(), Height = Dim.Auto(), SchemeName = ColorSchemes.DangerName
         };
 
         mainWindow.Add(new Label
         {
             Text = "This death is permanent.  Your save has been deleted.",
             X = Pos.Center(), Y = BannerY - 1,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Danger
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DangerName
         });
 
         string flavor = FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)];
         var flavorLabel = new Label
         {
             Text = $"\"{flavor}\"", X = Pos.Center(), Y = FlavorY,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         };
 
         string identity = $"{player.FirstName} {player.LastName}  —  Level {player.Level} {player.Title}";
@@ -54,7 +55,7 @@ public static class DeathScreen
         var nameLabel = new Label
         {
             Text = identity, X = Pos.Center(), Y = NameY,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Title
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.TitleName
         };
 
         string grade = RunGradeHelper.Rate(floor, kills, turns);
@@ -75,7 +76,7 @@ public static class DeathScreen
         var summaryLabel = new Label
         {
             Text = summaryText, X = Pos.Center(), Y = SummaryY,
-            Width = Dim.Auto(), Height = Dim.Auto(), ColorScheme = ColorSchemes.Body
+            Width = Dim.Auto(), Height = Dim.Auto(), SchemeName = ColorSchemes.BodyName
         };
 
         int summaryLines = summaryText.Split('\n').Length;
@@ -100,7 +101,7 @@ public static class DeathScreen
                 mainWindow.Add(new Label
                 {
                     Text = recap, X = Pos.Center(), Y = recapStartY,
-                    Width = Dim.Auto(), Height = Dim.Auto(), ColorScheme = ColorSchemes.Dim
+                    Width = Dim.Auto(), Height = Dim.Auto(), SchemeName = ColorSchemes.DimName
                 });
                 buttonY = recapStartY + recentLines.Count + 3;
             }
@@ -110,7 +111,7 @@ public static class DeathScreen
         mainWindow.Add(new Label
         {
             Text = $"Tip: {tip}", X = Pos.Center(), Y = buttonY,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         });
         buttonY += 2;
 
@@ -119,19 +120,19 @@ public static class DeathScreen
         var returnBtn = new Button
         {
             Text = " Return to Title ", X = Pos.Center(), Y = buttonY,
-            IsDefault = true, ColorScheme = ColorSchemes.Button
+            IsDefault = true, SchemeName = ColorSchemes.ButtonName
         };
         returnBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
-            int choice = MessageBox.Query("Return to Title", "Return to main menu?", "Yes", "No");
+            e.Handled = true;
+            int choice = DialogHelper.Query("Return to Title", "Return to main menu?", "Yes", "No");
             if (choice == 0) TitleScreen.Show(mainWindow);
         };
         var hint = new Label
         {
             Text = "[ Permadeath — save deleted.  Enter — Title ]",
             X = Pos.Center(), Y = buttonY + 2,
-            Width = Dim.Auto(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         };
 
         mainWindow.Add(deathLabel, flavorLabel, nameLabel, summaryLabel, returnBtn, hint);

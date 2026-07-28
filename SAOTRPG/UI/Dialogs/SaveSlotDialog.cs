@@ -20,7 +20,7 @@ public static class SaveSlotDialog
         var header = new Label
         {
             Text = "  Select a save slot to load:",
-            X = 0, Y = 0, Width = Dim.Fill(), Height = 1, ColorScheme = ColorSchemes.Body
+            X = 0, Y = 0, Width = Dim.Fill(), Height = 1, SchemeName = ColorSchemes.BodyName
         };
 
         var slotLabels = new Label[SaveManager.MaxSlots];
@@ -38,24 +38,24 @@ public static class SaveSlotDialog
             slotButtons[i] = new Button
             {
                 Text = " Load ", X = Pos.AnchorEnd(10), Y = rowY,
-                ColorScheme = ColorSchemes.Button, Visible = hasData
+                SchemeName = ColorSchemes.ButtonName, Visible = hasData
             };
 
             int capturedSlot = slot;
             slotButtons[i].Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 var save = SaveManager.LoadGame(capturedSlot);
-                if (save != null) { result = (capturedSlot, save); Application.RequestStop(); }
+                if (save != null) { result = (capturedSlot, save); AppHost.App.RequestStop(); }
                 else
                 {
-                    int fix = MessageBox.Query("Error", "Save file appears corrupted.\nDelete this save?", "Delete", "Cancel");
+                    int fix = DialogHelper.Query("Error", "Save file appears corrupted.\nDelete this save?", "Delete", "Cancel");
                     if (fix == 0)
                     {
                         SaveManager.DeleteSave(capturedSlot);
                         summaries[capturedSlot - 1] = null;
                         slotLabels[capturedSlot - 1].Text = FormatSlotLine(capturedSlot, null);
-                        slotLabels[capturedSlot - 1].ColorScheme = ColorSchemes.Dim;
+                        slotLabels[capturedSlot - 1].SchemeName = ColorSchemes.DimName;
                         slotDetails[capturedSlot - 1].Text = "";
                         slotButtons[capturedSlot - 1].Visible = false;
                     }
@@ -65,20 +65,20 @@ public static class SaveSlotDialog
 
         var deleteBtn = new Button
         {
-            Text = " Delete ", X = 1, Y = Pos.AnchorEnd(1), ColorScheme = ColorSchemes.Button
+            Text = " Delete ", X = 1, Y = Pos.AnchorEnd(1), SchemeName = ColorSchemes.ButtonName
         };
         deleteBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             ShowDeletePicker(summaries, slotLabels, slotDetails, slotButtons);
         };
 
         var closeBtn = new Button
         {
             Text = " Cancel ", X = Pos.AnchorEnd(12), Y = Pos.AnchorEnd(1),
-            IsDefault = true, ColorScheme = ColorSchemes.Button
+            IsDefault = true, SchemeName = ColorSchemes.ButtonName
         };
-        closeBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+        closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
         dialog.Add(header);
         for (int i = 0; i < SaveManager.MaxSlots; i++)
@@ -103,7 +103,7 @@ public static class SaveSlotDialog
         var header = new Label
         {
             Text = "  Select a slot for your new character:",
-            X = 0, Y = 0, Width = Dim.Fill(), Height = 1, ColorScheme = ColorSchemes.Body
+            X = 0, Y = 0, Width = Dim.Fill(), Height = 1, SchemeName = ColorSchemes.BodyName
         };
 
         var slotLabels = new Label[SaveManager.MaxSlots];
@@ -121,39 +121,39 @@ public static class SaveSlotDialog
             slotButtons[i] = new Button
             {
                 Text = hasData ? " Overwrite " : "  Select   ",
-                X = Pos.AnchorEnd(15), Y = rowY, ColorScheme = ColorSchemes.Button
+                X = Pos.AnchorEnd(15), Y = rowY, SchemeName = ColorSchemes.ButtonName
             };
 
             int capturedSlot = slot;
             var capturedSummary = summaries[i];
             slotButtons[i].Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 if (capturedSummary != null)
                 {
-                    int confirm = MessageBox.Query("Overwrite Save",
+                    int confirm = DialogHelper.Query("Overwrite Save",
                         $"This will overwrite:\n{capturedSummary.Name} (Lv.{capturedSummary.Level} Floor {capturedSummary.Floor})\n\nContinue?",
                         "Overwrite", "Cancel");
                     if (confirm != 0) return;
                 }
                 chosenSlot = capturedSlot;
-                Application.RequestStop();
+                AppHost.App.RequestStop();
             };
         }
 
         var closeBtn = new Button
         {
             Text = " Cancel ", X = Pos.AnchorEnd(12), Y = Pos.AnchorEnd(1),
-            ColorScheme = ColorSchemes.Button
+            SchemeName = ColorSchemes.ButtonName
         };
-        closeBtn.Accepting += (s, e) => { e.Cancel = true; Application.RequestStop(); };
+        closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
         dialog.Add(header);
         for (int i = 0; i < SaveManager.MaxSlots; i++)
             dialog.Add(slotLabels[i], slotDetails[i], slotButtons[i]);
         dialog.Add(closeBtn);
 
-        dialog.Loaded += (s, e) => slotButtons[0].SetFocus();
+        dialog.Initialized += (s, e) => slotButtons[0].SetFocus();
         DialogHelper.RunModal(dialog);
         return chosenSlot;
     }
@@ -167,13 +167,13 @@ public static class SaveSlotDialog
         {
             Text = FormatSlotLine(slot, summary), X = 2, Y = rowY,
             Width = Dim.Fill(15), Height = 1,
-            ColorScheme = hasData ? ColorSchemes.Body : ColorSchemes.Dim
+            SchemeName = hasData ? ColorSchemes.BodyName : ColorSchemes.DimName
         };
         detailLabel = new Label
         {
             Text = hasData ? FormatSlotDetail(summary!) : "",
             X = 2, Y = rowY + 1, Width = Dim.Fill(2), Height = 1,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
 
         if (hasData)
@@ -182,8 +182,7 @@ public static class SaveSlotDialog
             {
                 Text = $"{summary!.Difficulty}", X = 13, Y = rowY + 1,
                 Width = Dim.Auto(),
-                ColorScheme = ColorSchemes.FromColor(GetDifficultyColor(summary.Difficulty))
-            });
+            }.WithScheme(ColorSchemes.FromColor(GetDifficultyColor(summary.Difficulty))));
         }
 
         if (slot < SaveManager.MaxSlots)
@@ -191,7 +190,7 @@ public static class SaveSlotDialog
             dialog.Add(new Label
             {
                 Text = new string('─', 60), X = 2, Y = rowY + 2,
-                Width = Dim.Fill(2), Height = 1, ColorScheme = ColorSchemes.Dim
+                Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.DimName
             });
         }
     }
@@ -231,7 +230,7 @@ public static class SaveSlotDialog
     {
         if (!summaries.Any(s => s != null))
         {
-            MessageBox.Query("Delete", "No saves to delete.", "OK");
+            DialogHelper.Query("Delete", "No saves to delete.", "OK");
             return;
         }
 
@@ -243,11 +242,11 @@ public static class SaveSlotDialog
         }
         options[SaveManager.MaxSlots] = "Cancel";
 
-        int choice = MessageBox.Query("Delete Save", "Which slot do you want to delete?", options);
+        int choice = DialogHelper.Query("Delete Save", "Which slot do you want to delete?", options);
         if (choice < 0 || choice >= SaveManager.MaxSlots) return;
         if (summaries[choice] == null) return;
 
-        int confirm = MessageBox.Query("Confirm Delete",
+        int confirm = DialogHelper.Query("Confirm Delete",
             $"Delete {summaries[choice]!.Name}'s save?\nThis cannot be undone.", "Delete", "Cancel");
         if (confirm != 0) return;
 
@@ -255,7 +254,7 @@ public static class SaveSlotDialog
         SaveManager.DeleteSave(deletedSlot);
         summaries[choice] = null;
         slotLabels[choice].Text = FormatSlotLine(deletedSlot, null);
-        slotLabels[choice].ColorScheme = ColorSchemes.Dim;
+        slotLabels[choice].SchemeName = ColorSchemes.DimName;
         slotDetails[choice].Text = "";
         slotButtons[choice].Visible = false;
     }

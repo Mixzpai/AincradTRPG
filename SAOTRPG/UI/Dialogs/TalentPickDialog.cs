@@ -21,7 +21,7 @@ public static class TalentPickDialog
             Text = "",
             X = Pos.Center(), Y = Pos.AnchorEnd(3),
             Width = 44,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         dlg.Add(descLabel);
 
@@ -32,7 +32,7 @@ public static class TalentPickDialog
             btn.X = 1;
             btn.Y = 1 + i * 3;
             btn.HasFocusChanged += (s, e) => { if (e.NewValue) descLabel.Text = perk.Description; };
-            btn.Accepting += (s, e) => { e.Cancel = true; picked = perk; Application.RequestStop(); };
+            btn.Accepting += (s, e) => { e.Handled = true; picked = perk; AppHost.App.RequestStop(); };
             dlg.Add(btn);
             if (i == 0)
             {
@@ -44,7 +44,7 @@ public static class TalentPickDialog
         var hintLabel = new Label
         {
             Text = "Enter: choose talent",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
         dlg.Add(hintLabel);
 

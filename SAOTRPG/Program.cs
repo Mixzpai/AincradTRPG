@@ -59,13 +59,28 @@ namespace SAOTRPG
                 DebugLogger.Shutdown();
             };
 
-            // Initialize Terminal.Gui with black color scheme
-            Application.Init();
+            // Flags are parsed before any UI type is touched: the render instrumentation
+            // latches DebugMode.PerfSampling at type-init, so it has to be final by then.
+            if (args.Contains("--debug")) DebugMode.Enable();
+            if (args.Contains("--freeze-anim")) DebugMode.EnableFreezeAnimations();
+            if (args.Contains("--perf")) DebugMode.EnablePerfSampling();
+
+            // Create and initialize the Terminal.Gui application instance.
+            // --driver <windows|ansi|dotnet> overrides the backend; the platform
+            // default on Windows is "ansi", which routes all console I/O through
+            // escape sequences instead of the native Console API.
+            int driverArg = Array.IndexOf(args, "--driver");
+            string? driverName = driverArg >= 0 && driverArg + 1 < args.Length ? args[driverArg + 1] : null;
+            var app = AppHost.Start(driverName);
+
+            // Register the game's named palettes with SchemeManager so views can
+            // bind via SchemeName. Must run before any UI construction.
+            ColorSchemes.RegisterAll();
 
             // Attach keystroke logger to capture all input
             DebugLogger.AttachKeyLogger();
 
-            var blackScheme = new ColorScheme
+            var blackScheme = new Scheme
             {
                 Normal = Gfx.Attr(Color.DarkGray, Color.Black),
                 Focus = Gfx.Attr(Color.Gray, Color.Black),
@@ -75,20 +90,17 @@ namespace SAOTRPG
             };
 
             // Main window fills entire terminal — all screens render inside this
-            var mainWindow = new Window
+            var mainWindow = new GameWindow
             {
                 Title = "Aincrad TRPG",
                 X = 0, Y = 0,
                 Width = Dim.Fill(), Height = Dim.Fill(),
-                ColorScheme = blackScheme
-            };
-
-            if (args.Contains("--debug")) DebugMode.Enable();
+            }.WithScheme(blackScheme);
 
             TitleScreen.Show(mainWindow);
-            Application.Run(mainWindow);
+            app.Run(mainWindow);
             mainWindow.Dispose();
-            Application.Shutdown();
+            AppHost.Stop();
             DebugLogger.Shutdown();
         }
     }

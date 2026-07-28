@@ -39,7 +39,7 @@ public static class FloorTransitionOverlay
         {
             Text = new string('-', OverlayWidth - 6),
             X = Pos.Center(), Y = row++,
-            ColorScheme = ColorSchemes.Gold
+            SchemeName = ColorSchemes.GoldName
         };
 
         // ── "Teleporting to..." flavor ────────────────────────────
@@ -47,7 +47,7 @@ public static class FloorTransitionOverlay
         {
             Text = "Teleporting to the next floor...",
             X = Pos.Center(), Y = row++,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
 
         row++; // spacer
@@ -57,7 +57,7 @@ public static class FloorTransitionOverlay
         {
             Text = $"Floor {nextFloor}",
             X = Pos.Center(), Y = row++,
-            ColorScheme = ColorSchemes.Gold
+            SchemeName = ColorSchemes.GoldName
         };
 
         // ── Floor subtitle (from FloorRegions table) ──────────────
@@ -70,7 +70,7 @@ public static class FloorTransitionOverlay
         {
             Text = subtitle,
             X = Pos.Center(), Y = row++,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
 
         // ── Floor intro flavor text ─────────────────────────────────
@@ -79,7 +79,7 @@ public static class FloorTransitionOverlay
             Text = $"\"{FlavorText.GetFloorEntryMessage(nextFloor)}\"",
             X = 1, Y = row,
             Width = OverlayWidth - 4, Height = 2,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
         dialog.Add(introLabel);
         row += 2;
@@ -91,7 +91,7 @@ public static class FloorTransitionOverlay
             {
                 Text = $"[ Floor {recap.Floor} Recap ]",
                 X = Pos.Center(), Y = row++,
-                ColorScheme = ColorSchemes.Body
+                SchemeName = ColorSchemes.BodyName
             };
             dialog.Add(recapHeader);
 
@@ -99,7 +99,7 @@ public static class FloorTransitionOverlay
             {
                 Text = $"Kills: {recap.Kills}    Items: {recap.Items}    DMG taken: {recap.DamageTaken}",
                 X = Pos.Center(), Y = row++,
-                ColorScheme = ColorSchemes.Body
+                SchemeName = ColorSchemes.BodyName
             };
             string timeStr = recap.RealTime.TotalMinutes >= 1
                 ? $"{(int)recap.RealTime.TotalMinutes}m {recap.RealTime.Seconds:D2}s"
@@ -108,7 +108,7 @@ public static class FloorTransitionOverlay
             {
                 Text = $"Turns: {recap.Turns}    Explored: {recap.ExplorePercent}%    Col: +{recap.ColEarned}",
                 X = Pos.Center(), Y = row++,
-                ColorScheme = ColorSchemes.Body
+                SchemeName = ColorSchemes.BodyName
             };
             int floorPar = TurnManager.GetFloorPar(recap.Floor);
             string parTag = recap.Turns <= floorPar ? " FAST!" : "";
@@ -116,16 +116,16 @@ public static class FloorTransitionOverlay
             {
                 Text = $"Clear Time: {timeStr}  ({recap.Turns}/{floorPar} turns{parTag})",
                 X = Pos.Center(), Y = row++,
-                ColorScheme = recap.Turns <= floorPar ? ColorSchemes.Gold : ColorSchemes.Dim
+                SchemeName = recap.Turns <= floorPar ? ColorSchemes.GoldName : ColorSchemes.DimName
             };
             string floorGrade = RunGradeHelper.Rate(recap.Floor, recap.Kills, recap.Turns);
             var gradeLabel = new Label
             {
                 Text = $"Grade: {floorGrade}",
                 X = Pos.Center(), Y = row++,
-                ColorScheme = floorGrade.StartsWith("S") ? ColorSchemes.Gold
-                    : floorGrade.StartsWith("A") ? ColorSchemes.Body
-                    : ColorSchemes.Dim
+                SchemeName = floorGrade.StartsWith("S") ? ColorSchemes.GoldName
+                    : floorGrade.StartsWith("A") ? ColorSchemes.BodyName
+                    : ColorSchemes.DimName
             };
             dialog.Add(statsLine1, statsLine2, statsLine3, gradeLabel);
 
@@ -139,7 +139,7 @@ public static class FloorTransitionOverlay
                 {
                     Text = bountyResult,
                     X = Pos.Center(), Y = row++,
-                    ColorScheme = recap.BountyDone ? ColorSchemes.Gold : ColorSchemes.Body
+                    SchemeName = recap.BountyDone ? ColorSchemes.GoldName : ColorSchemes.BodyName
                 };
                 dialog.Add(bountyLabel);
             }
@@ -151,7 +151,7 @@ public static class FloorTransitionOverlay
         {
             Text = $"Speed par: {par} turns",
             X = Pos.Center(), Y = row++,
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
         dialog.Add(parLabel);
 
@@ -171,9 +171,9 @@ public static class FloorTransitionOverlay
         {
             Text = $"Danger: {danger}",
             X = Pos.Center(), Y = row++,
-            ColorScheme = danger is "Deadly" or "Dangerous" ? ColorSchemes.Danger
-                : danger == "Hard" ? ColorSchemes.Body
-                : ColorSchemes.Dim
+            SchemeName = danger is "Deadly" or "Dangerous" ? ColorSchemes.DangerName
+                : danger == "Hard" ? ColorSchemes.BodyName
+                : ColorSchemes.DimName
         };
         dialog.Add(dangerLabel);
 
@@ -184,7 +184,7 @@ public static class FloorTransitionOverlay
             {
                 Text = $"Weather: {WeatherSystem.GetLabel()}",
                 X = Pos.Center(), Y = row++,
-                ColorScheme = ColorSchemes.Dim
+                SchemeName = ColorSchemes.DimName
             };
             dialog.Add(weatherLabel);
         }
@@ -194,7 +194,7 @@ public static class FloorTransitionOverlay
         {
             Text = new string('-', OverlayWidth - 6),
             X = Pos.Center(), Y = Pos.AnchorEnd(4),
-            ColorScheme = ColorSchemes.Gold
+            SchemeName = ColorSchemes.GoldName
         };
 
         // ── Buttons ───────────────────────────────────────────────
@@ -202,24 +202,24 @@ public static class FloorTransitionOverlay
         {
             Text = " Ascend ",
             X = Pos.Center() - 9, Y = Pos.AnchorEnd(2),
-            ColorScheme = ColorSchemes.Button
+            SchemeName = ColorSchemes.ButtonName
         };
         var cancelBtn = new Button
         {
             Text = " Stay ",
             X = Pos.Right(ascendBtn) + 1, Y = Pos.AnchorEnd(2),
             IsDefault = true,
-            ColorScheme = ColorSchemes.Button
+            SchemeName = ColorSchemes.ButtonName
         };
 
-        ascendBtn.Accepting += (s, e) => { confirmed = true; Application.RequestStop(); e.Cancel = true; };
-        cancelBtn.Accepting += (s, e) => { Application.RequestStop(); e.Cancel = true; };
+        ascendBtn.Accepting += (s, e) => { confirmed = true; AppHost.App.RequestStop(); e.Handled = true; };
+        cancelBtn.Accepting += (s, e) => { AppHost.App.RequestStop(); e.Handled = true; };
 
         var hintLabel = new Label
         {
             Text = "Enter: continue to next floor",
             X = Pos.Center(), Y = Pos.AnchorEnd(1),
-            ColorScheme = ColorSchemes.Dim
+            SchemeName = ColorSchemes.DimName
         };
 
         dialog.Add(topDiv, flavorLabel, floorLabel, subtitleLabel,

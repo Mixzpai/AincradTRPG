@@ -33,8 +33,10 @@ public static class CharacterCreationScreen
     public static void Show(Window mainWindow, int difficulty = 3)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
         if (_escHandler != null) mainWindow.KeyDown -= _escHandler;
         DifficultyScreen.UnhookEscHandler(mainWindow);
+        ModifierSelectScreen.UnhookEscHandler(mainWindow);
         var sw = DebugLogger.StartTimer("CharacterCreationScreen.Show");
         DebugLogger.LogScreen("CharacterCreationScreen");
 
@@ -51,17 +53,17 @@ public static class CharacterCreationScreen
 
         var firstLabel = ScreenHeader.FormLabel("First Name:", leftCol, 4, labelW);
         var firstField = new TextField { X = Pos.Right(firstLabel) + gap, Y = 4, Width = inputW };
-        var firstHint  = new Label { Text = $"(max {MaxNameLength})", X = Pos.Right(firstField) + 1, Y = 4, ColorScheme = ColorSchemes.Dim };
+        var firstHint  = new Label { Text = $"(max {MaxNameLength})", X = Pos.Right(firstField) + 1, Y = 4, SchemeName = ColorSchemes.DimName };
 
         var lastLabel = ScreenHeader.FormLabel("Last Name:", leftCol, 6, labelW);
         var lastField = new TextField { X = Pos.Right(lastLabel) + gap, Y = 6, Width = inputW };
-        var lastHint  = new Label { Text = $"(max {MaxNameLength})", X = Pos.Right(lastField) + 1, Y = 6, ColorScheme = ColorSchemes.Dim };
+        var lastHint  = new Label { Text = $"(max {MaxNameLength})", X = Pos.Right(lastField) + 1, Y = 6, SchemeName = ColorSchemes.DimName };
 
         var genderLabel = ScreenHeader.FormLabel("Gender:", leftCol, 8, labelW);
-        var genderRadio = new RadioGroup
+        var genderRadio = new OptionSelector
         {
-            X = Pos.Right(genderLabel) + gap, Y = 8, RadioLabels = GenderOptions,
-            Orientation = Orientation.Horizontal, SelectedItem = 0,
+            X = Pos.Right(genderLabel) + gap, Y = 8, Labels = GenderOptions,
+            Orientation = Orientation.Horizontal, Value = 0,
         };
 
         // ── Stats section ────────────────────────────────────────────
@@ -69,7 +71,7 @@ public static class CharacterCreationScreen
         var pointsLabel = new Label
         {
             Text = FormatPointsRemaining(skillPoints),
-            X = Pos.Center(), Y = 12, Width = Dim.Auto(), ColorScheme = ColorSchemes.Gold,
+            X = Pos.Center(), Y = 12, Width = Dim.Auto(), SchemeName = ColorSchemes.GoldName,
         };
 
         int statY0 = 14;
@@ -84,11 +86,11 @@ public static class CharacterCreationScreen
         void Refresh()
         {
             pointsLabel.Text = FormatPointsRemaining(skillPoints);
-            pointsLabel.ColorScheme = skillPoints == 0 ? ColorSchemes.Dim : ColorSchemes.Gold;
+            pointsLabel.SchemeName = skillPoints == 0 ? ColorSchemes.DimName : ColorSchemes.GoldName;
             for (int j = 0; j < Stats.Length; j++)
             {
                 valueLabels[j].Text = $"{allocated[j],2}";
-                valueLabels[j].ColorScheme = allocated[j] > 0 ? ColorSchemes.Gold : ColorSchemes.Body;
+                valueLabels[j].SchemeName = allocated[j] > 0 ? ColorSchemes.GoldName : ColorSchemes.BodyName;
             }
             previewLabel.Text = FormatPreview(allocated);
         }
@@ -102,35 +104,35 @@ public static class CharacterCreationScreen
             mainWindow.Add(new Label
             {
                 Text = $"{Stats[i].Name,-14}", X = leftCol, Y = rowY,
-                ColorScheme = ColorSchemes.Body,
+                SchemeName = ColorSchemes.BodyName,
             });
 
             valueLabels[i] = new Label
             {
                 Text = $" 0", X = leftCol + 15, Y = rowY, Width = 3,
-                ColorScheme = ColorSchemes.Body,
+                SchemeName = ColorSchemes.BodyName,
             };
 
             plusBtns[i] = new Button
             {
                 Text = " + ", X = leftCol + 19, Y = rowY,
-                NoPadding = true, ColorScheme = ColorSchemes.Button,
+                NoPadding = true, SchemeName = ColorSchemes.ButtonName,
             };
             minusBtns[i] = new Button
             {
                 Text = " - ", X = leftCol + 24, Y = rowY,
-                NoPadding = true, ColorScheme = ColorSchemes.Button,
+                NoPadding = true, SchemeName = ColorSchemes.ButtonName,
             };
 
             mainWindow.Add(new Label
             {
                 Text = Stats[i].Effect, X = leftCol + 29, Y = rowY,
-                ColorScheme = ColorSchemes.Dim,
+                SchemeName = ColorSchemes.DimName,
             });
 
             plusBtns[i].Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 if (skillPoints <= 0) { ShowMsg(feedbackLabel, "No points left!", ColorSchemes.Danger); return; }
                 allocated[idx]++;
                 skillPoints--;
@@ -140,7 +142,7 @@ public static class CharacterCreationScreen
 
             minusBtns[i].Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 if (allocated[idx] <= 0) { ShowMsg(feedbackLabel, "Already at zero.", ColorSchemes.Dim); return; }
                 allocated[idx]--;
                 skillPoints++;
@@ -158,13 +160,13 @@ public static class CharacterCreationScreen
         {
             Text = FormatPreview(allocated),
             X = Pos.Center(), Y = previewY + 1,
-            Width = Dim.Auto(), Height = 2, ColorScheme = ColorSchemes.Body,
+            Width = Dim.Auto(), Height = 2, SchemeName = ColorSchemes.BodyName,
         };
 
         feedbackLabel = new Label
         {
             Text = "", X = Pos.Center(), Y = previewY + 4,
-            Width = Dim.Auto(), ColorScheme = ColorSchemes.Gold,
+            Width = Dim.Auto(), SchemeName = ColorSchemes.GoldName,
         };
 
         // ── Footer ───────────────────────────────────────────────────
@@ -172,18 +174,18 @@ public static class CharacterCreationScreen
         var continueBtn = new Button
         {
             Text = " Continue ", X = Pos.Center() - 12, Y = footerY,
-            ColorScheme = ColorSchemes.MenuButton,
+            SchemeName = ColorSchemes.MenuButtonName,
         };
         var backBtn = new Button
         {
             Text = " Back ", X = Pos.Center() + 4, Y = footerY,
-            ColorScheme = ColorSchemes.MenuButton,
+            SchemeName = ColorSchemes.MenuButtonName,
         };
 
         var navHint = new Label
         {
             Text = "Tab: next field   Up/Down: stat rows   Enter: press button   Esc: back",
-            X = Pos.Center(), Y = footerY + 2, Width = Dim.Auto(), ColorScheme = ColorSchemes.Dim,
+            X = Pos.Center(), Y = footerY + 2, Width = Dim.Auto(), SchemeName = ColorSchemes.DimName,
         };
 
         foreach (var btn in new[] { continueBtn, backBtn })
@@ -191,10 +193,10 @@ public static class CharacterCreationScreen
 
         continueBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             var firstName = firstField.Text?.Trim() ?? "";
             var lastName  = lastField.Text?.Trim()  ?? "";
-            int gIdx = genderRadio.SelectedItem;
+            int gIdx = genderRadio.Value ?? 0;
             string gender = gIdx >= 0 && gIdx < GenderOptions.Length ? GenderOptions[gIdx] : "";
 
             if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
@@ -209,7 +211,7 @@ public static class CharacterCreationScreen
             }
             if (skillPoints > 0)
             {
-                int confirm = MessageBox.Query("Unspent Points",
+                int confirm = DialogHelper.Query("Unspent Points",
                     $"You have {skillPoints} skill point(s) remaining.\nContinue anyway?",
                     "Go Back", "Continue");
                 if (confirm != 1) return;
@@ -228,7 +230,7 @@ public static class CharacterCreationScreen
             GameScreen.Show(mainWindow, player, difficulty, saveSlot: slot);
         };
 
-        backBtn.Accepting += (s, e) => { e.Cancel = true; DifficultyScreen.Show(mainWindow); };
+        backBtn.Accepting += (s, e) => { e.Handled = true; DifficultyScreen.Show(mainWindow); };
 
         // ── Arrow key navigation ─────────────────────────────────────
         // Full vertical chain: names → gender → stats → footer → wrap.
@@ -284,10 +286,10 @@ public static class CharacterCreationScreen
         };
     }
 
-    private static void ShowMsg(Label label, string text, ColorScheme scheme)
+    private static void ShowMsg(Label label, string text, Scheme scheme)
     {
         label.Text = text;
-        label.ColorScheme = scheme;
+        label.SetScheme(scheme);
     }
 
     private static string FormatPointsRemaining(int pts) =>

@@ -22,14 +22,14 @@ public partial class MapView
         // Biome tint overlay disabled — overwrote ASCII glyph contrast. Kept method for potential revival at subtle alpha.
         if (SAOTRPG.Systems.UserSettings.Current.ShowFootsteps) RenderFootstepTrail(w, h);
         RenderBossBar(w);
-        RenderCorpseMarkers(w, h, dtMs);
+        RenderCorpseMarkers(w, h);
         RenderLootSparkle(w, h);
         RenderDoorFlashes(w, h);
         RenderGasVentParticles(w, h);
         RenderShrineGlow(w, h);
         RenderWeaponSwings(w, h, dtMs);
         if (SAOTRPG.Systems.UserSettings.Current.ShowDamageFlash) RenderDamageFlashes(w, h, dtMs);
-        RenderScorchMarks(w, h, dtMs);
+        RenderScorchMarks(w, h);
         RenderMobTrails(w, h);
         RenderAggroIndicators(w, h);
         // Ambient tile layer (implemented by TileAnimations partial — stub here).
@@ -77,19 +77,19 @@ public partial class MapView
         var nameAttr   = Gfx.Attr(whiteFaded, Color.Black);
 
         // ── Frame borders (double-box for weight) ────────────────────
-        Driver!.SetAttribute(borderAttr);
-        Move(x0, y0); Driver!.AddRune(new System.Text.Rune('╔'));
-        for (int x = x0 + 1; x < x1; x++) { Move(x, y0); Driver!.AddRune(new System.Text.Rune('═')); }
-        Move(x1, y0); Driver!.AddRune(new System.Text.Rune('╗'));
+        SetAttribute(borderAttr);
+        Move(x0, y0); AddRune(new System.Text.Rune('╔'));
+        for (int x = x0 + 1; x < x1; x++) { Move(x, y0); AddRune(new System.Text.Rune('═')); }
+        Move(x1, y0); AddRune(new System.Text.Rune('╗'));
         for (int y = y0 + 1; y < y1; y++)
         {
-            Move(x0, y); Driver!.AddRune(new System.Text.Rune('║'));
-            for (int x = x0 + 1; x < x1; x++) { Move(x, y); Driver!.AddRune(new System.Text.Rune(' ')); }
-            Move(x1, y); Driver!.AddRune(new System.Text.Rune('║'));
+            Move(x0, y); AddRune(new System.Text.Rune('║'));
+            for (int x = x0 + 1; x < x1; x++) { Move(x, y); AddRune(new System.Text.Rune(' ')); }
+            Move(x1, y); AddRune(new System.Text.Rune('║'));
         }
-        Move(x0, y1); Driver!.AddRune(new System.Text.Rune('╚'));
-        for (int x = x0 + 1; x < x1; x++) { Move(x, y1); Driver!.AddRune(new System.Text.Rune('═')); }
-        Move(x1, y1); Driver!.AddRune(new System.Text.Rune('╝'));
+        Move(x0, y1); AddRune(new System.Text.Rune('╚'));
+        for (int x = x0 + 1; x < x1; x++) { Move(x, y1); AddRune(new System.Text.Rune('═')); }
+        Move(x1, y1); AddRune(new System.Text.Rune('╝'));
 
         // ── Row 1: header banner ─────────────────────────────────────
         // Awakening variant swaps header + flavor; obtain variant unchanged.
@@ -229,25 +229,25 @@ public partial class MapView
     }
 
     // Draws a centered text banner on the given row (viewport-space).
-    private void DrawCenteredBanner(string text, int row, Terminal.Gui.Attribute attr, int w)
+    private void DrawCenteredBanner(string text, int row, Attribute attr, int w)
     {
         int startX = Math.Max(0, (w - text.Length) / 2);
         for (int i = 0; i < text.Length && startX + i < w; i++)
         {
-            Driver!.SetAttribute(attr); Move(startX + i, row);
-            Driver!.AddRune(new System.Text.Rune(text[i]));
+            SetAttribute(attr); Move(startX + i, row);
+            AddRune(new System.Text.Rune(text[i]));
         }
     }
 
     // Draws the same glyph pair across the top (row 0) and bottom (row h-1) edges.
-    private void DrawEdgeBar(char topGlyph, char bottomGlyph, Terminal.Gui.Attribute attr, int w, int h)
+    private void DrawEdgeBar(char topGlyph, char bottomGlyph, Attribute attr, int w, int h)
     {
         for (int x = 0; x < w; x++)
         {
-            Driver!.SetAttribute(attr); Move(x, 0);
-            Driver!.AddRune(new System.Text.Rune(topGlyph));
+            SetAttribute(attr); Move(x, 0);
+            AddRune(new System.Text.Rune(topGlyph));
             Move(x, h - 1);
-            Driver!.AddRune(new System.Text.Rune(bottomGlyph));
+            AddRune(new System.Text.Rune(bottomGlyph));
         }
     }
 
@@ -270,19 +270,18 @@ public partial class MapView
         }
     }
 
-    private void RenderCorpseMarkers(int w, int h, int dtMs)
+    // Render-only; TickFrameEffects owns the timers so markers expire even while
+    // out of view or covered.
+    private void RenderCorpseMarkers(int w, int h)
     {
-        for (int i = _corpseMarkers.Count - 1; i >= 0; i--)
+        foreach (var (cx, cy, remainingMs) in _corpseMarkers)
         {
-            var (cx, cy, remainingMs) = _corpseMarkers[i];
             if (!_map.InBounds(cx, cy) || !_map.IsVisible(cx, cy)) continue;
             var tile = _map.GetTile(cx, cy);
             if (tile.Occupant != null || _map.HasItemsAt(cx, cy)) continue;
             double life = (double)remainingMs / CorpseMarkerMs;
             Color c = life > 0.66 ? Color.Red : life > 0.33 ? Color.Gray : Color.DarkGray;
             DrawGlyph(cx, cy, '†', Gfx.Attr(c, Color.Black), w, h);
-            if (remainingMs <= dtMs) _corpseMarkers.RemoveAt(i);
-            else _corpseMarkers[i] = (cx, cy, remainingMs - dtMs);
         }
     }
 
@@ -300,17 +299,15 @@ public partial class MapView
         }
     }
 
-    private void RenderScorchMarks(int w, int h, int dtMs)
+    // Render-only; TickFrameEffects owns the timers.
+    private void RenderScorchMarks(int w, int h)
     {
-        for (int i = _scorchMarks.Count - 1; i >= 0; i--)
+        foreach (var (sx, sy, remainingMs) in _scorchMarks)
         {
-            var (sx, sy, remainingMs) = _scorchMarks[i];
             if (!_map.InBounds(sx, sy) || !_map.IsVisible(sx, sy)) continue;
             if (_map.GetTile(sx, sy).Occupant != null) continue;
             Color c = remainingMs > ScorchMarkMs / 2 ? Color.Red : Color.DarkGray;
             DrawGlyph(sx, sy, '░', Gfx.Attr(c, Color.Black), w, h);
-            if (remainingMs <= dtMs) _scorchMarks.RemoveAt(i);
-            else _scorchMarks[i] = (sx, sy, remainingMs - dtMs);
         }
     }
 
@@ -444,24 +441,49 @@ public partial class MapView
         }
     }
 
-    // Cyan apostrophes scattered randomly — gives Rain weather a visible overlay.
-    // Fog removed (visual noise vs ASCII map).
+    // Cyan apostrophes give Rain weather a visible overlay. Fog removed (visual noise).
+    //
+    // Anchored to the WORLD, not the viewport. Drops fall down a fixed lattice of map columns, so
+    // walking scrolls the rain lines past you the way terrain scrolls; picking viewport columns
+    // instead dragged the whole pattern along with the camera. Position is also a pure function of
+    // the wall-clock step rather than Random.Shared per frame — re-rolling every frame ran the rain
+    // at whatever the frame rate happened to be, which read as a strobe and ignored --freeze-anim.
+    //
+    // Spacing and period are the density dials: roughly (viewportW / spacing) lines, each carrying
+    // (viewportH / period) drops.
+    private const int RainStepMs = 320;
+    private const int RainColumnSpacing = 47;
+    private const int RainFallPeriod = 41;
+
     private void RenderRainOverlay(int w, int h)
     {
         if (Systems.WeatherSystem.Current != Systems.WeatherType.Rain) return;
+        if (w <= 0 || h <= 0) return;
         var attr = Gfx.Attr(Color.Cyan, Color.Black);
-        var rng = Random.Shared;
-        for (int i = 0; i < 8; i++)
+        int step = (int)(FrameClock.AmbientMs / RainStepMs);
+
+        // Walk the lattice in map space, starting from the map cell under the viewport's corner.
+        int mx0 = VxToMap(0), my0 = VyToMap(0);
+        int firstCol = mx0 + FloorMod(-mx0, RainColumnSpacing);
+
+        for (int mx = firstCol; mx < mx0 + w; mx += RainColumnSpacing)
         {
-            int vx = rng.Next(0, w), vy = rng.Next(0, h);
-            int mx = VxToMap(vx), my = VyToMap(vy);
-            if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
-            var tile = _map.GetTile(mx, my);
-            if (tile.Occupant != null) continue;
-            Driver!.SetAttribute(attr); Move(vx, vy);
-            Driver!.AddRune(new System.Text.Rune('\''));
+            // Per-column phase, advanced one row per step: the drops on a line fall, and adjacent
+            // lines stay out of phase so they don't form a horizontal rank.
+            int phase = FloorMod(mx * 7 + step, RainFallPeriod);
+            int firstRow = my0 + FloorMod(phase - my0, RainFallPeriod);
+            for (int my = firstRow; my < my0 + h; my += RainFallPeriod)
+            {
+                if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
+                if (_map.GetTile(mx, my).Occupant != null) continue;
+                DrawGlyph(mx, my, '\'', attr, w, h);
+            }
         }
     }
+
+    // Non-negative remainder. C#'s % keeps the sign of the dividend, and map coords next to the
+    // origin go negative once the shake offset is applied.
+    private static int FloorMod(int a, int m) => ((a % m) + m) % m;
 
     // Brief yellow | flash on a door when first opened.
     private void RenderDoorFlashes(int w, int h)
@@ -480,7 +502,7 @@ public partial class MapView
     private void RenderGasVentParticles(int w, int h)
     {
         var attr = Gfx.Attr(new Color(120, 255, 120), Color.Black);
-        int turn = (int)(SAOTRPG.Systems.FrameClock.ElapsedMs / 500);
+        int turn = (int)(SAOTRPG.Systems.FrameClock.AmbientMs / 500);
         var vents = _map.GasVents;
         for (int i = 0; i < vents.Count; i++)
         {
@@ -502,7 +524,7 @@ public partial class MapView
     // the colored ground light a breathing feel without changing radius.
     private void RenderShrineGlow(int w, int h)
     {
-        int turn = (int)(SAOTRPG.Systems.FrameClock.ElapsedMs / 500);
+        int turn = (int)(SAOTRPG.Systems.FrameClock.AmbientMs / 500);
         int phase = turn % 8;
         if (phase > 1) return; // Sparkle for 1 of every 4 seconds.
 
@@ -531,10 +553,10 @@ public partial class MapView
     }
 
     // Viewport-space glyph draw (no map coords needed).
-    private void DrawGlyph_View(int vx, int vy, char glyph, Terminal.Gui.Attribute attr)
+    private void DrawGlyph_View(int vx, int vy, char glyph, Attribute attr)
     {
-        Driver!.SetAttribute(attr); Move(vx, vy);
-        Driver!.AddRune(new System.Text.Rune(glyph));
+        SetAttribute(attr); Move(vx, vy);
+        AddRune(new System.Text.Rune(glyph));
     }
 
     // Centered banner announcing a newly-sighted boss. Renders a portrait above

@@ -383,7 +383,8 @@ public partial class MapView : View
         bool a = _playerHpTween.ApplyTarget(hp, HpTweenDurationMs);
         bool b = _playerXpTween.ApplyTarget(xp, HpTweenDurationMs);
         bool c = _playerSatTween.ApplyTarget(sat, HpTweenDurationMs);
-        if (a || b || c) DirtyFrame();
+        // Bar targets only drive HUD labels and overlay bars, never the tile loop.
+        if (a || b || c) DirtyOverlays();
     }
 
     // Boss/look-mode mob HP read path. Caller passes id+target each render;
@@ -400,7 +401,8 @@ public partial class MapView : View
         {
             tw.ApplyTarget(targetHp, HpTweenDurationMs);
             _monsterHpTween[id] = tw;
-            DirtyFrame();
+            // Read from the boss bar and look-mode panel — both overlay passes.
+            DirtyOverlays();
         }
         return tw.Displayed;
     }

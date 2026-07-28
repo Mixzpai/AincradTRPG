@@ -17,5 +17,5 @@ public class FieldBoss : Boss
     // Factory glyph/color customization (mirrors GenericBoss).
     public void SetBossTitle(string title) => BossTitle = title;
     public void SetSymbol(char sym) => Symbol = sym;
-    public void SetColor(Terminal.Gui.Color col) => SymbolColor = col;
+    public void SetColor(Color col) => SymbolColor = col;
 }

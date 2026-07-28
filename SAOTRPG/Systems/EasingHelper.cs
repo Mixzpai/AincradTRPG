@@ -43,11 +43,11 @@ public static class EasingHelper
         return new Color((byte)(c.R * alpha), (byte)(c.G * alpha), (byte)(c.B * alpha));
     }
 
-    // Returns a NEW ColorScheme with all four Attributes' fg + bg scaled by alpha.
+    // Returns a NEW Scheme with all five Attributes' fg + bg scaled by alpha.
     // Used by the dialog fade-in to ramp the whole scheme up from black.
-    public static ColorScheme ScaleScheme(ColorScheme baseScheme, float alpha)
+    public static Scheme ScaleScheme(Scheme baseScheme, float alpha)
     {
-        return new ColorScheme
+        return new Scheme
         {
             Normal    = ScaleAttr(baseScheme.Normal, alpha),
             Focus     = ScaleAttr(baseScheme.Focus, alpha),
@@ -57,6 +57,6 @@ public static class EasingHelper
         };
     }
 
-    private static Terminal.Gui.Attribute ScaleAttr(Terminal.Gui.Attribute a, float alpha)
+    private static Attribute ScaleAttr(Attribute a, float alpha)
         => new(ScaleColor(a.Foreground, alpha), ScaleColor(a.Background, alpha));
 }

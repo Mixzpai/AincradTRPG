@@ -1493,13 +1493,13 @@ public partial class TurnManager
     }
 
     // Recruitble NPCs: named SAO characters that can join the party.
-    private static readonly Dictionary<string, (char Sym, Terminal.Gui.Color Col, string Wpn, string Title)> RecruitableNpcs = new()
+    private static readonly Dictionary<string, (char Sym, Color Col, string Wpn, string Title)> RecruitableNpcs = new()
     {
-        { "Klein",          ('K', Terminal.Gui.Color.BrightRed,     "Katana",            "Samurai") },
-        { "Asuna",          ('A', Terminal.Gui.Color.BrightYellow,  "Rapier",            "The Flash") },
-        { "Agil",           ('G', Terminal.Gui.Color.BrightGreen,   "Axe",               "Axe Fighter") },
-        { "Silica",         ('S', Terminal.Gui.Color.BrightCyan,    "Dagger",            "Dragon Tamer") },
-        { "Lisbeth",        ('L', Terminal.Gui.Color.BrightMagenta, "Mace",              "Blacksmith") },
+        { "Klein",          ('K', Color.BrightRed,     "Katana",            "Samurai") },
+        { "Asuna",          ('A', Color.BrightYellow,  "Rapier",            "The Flash") },
+        { "Agil",           ('G', Color.BrightGreen,   "Axe",               "Axe Fighter") },
+        { "Silica",         ('S', Color.BrightCyan,    "Dagger",            "Dragon Tamer") },
+        { "Lisbeth",        ('L', Color.BrightMagenta, "Mace",              "Blacksmith") },
     };
 
     // PATH-D-PORT: recruit-confirm dialog routes through this event so game logic

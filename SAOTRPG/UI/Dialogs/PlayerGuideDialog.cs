@@ -46,7 +46,7 @@ public static class PlayerGuideDialog
     };
 
     // Per-category sidebar tint. Body header borrows the same scheme.
-    private static ColorScheme CategoryColor(string category) => category switch
+    private static Scheme CategoryColor(string category) => category switch
     {
         "Combat & Rarity"  => ColorSchemes.FromColor(Color.BrightRed),
         "Progression"      => ColorSchemes.FromColor(Color.BrightCyan),
@@ -92,8 +92,8 @@ public static class PlayerGuideDialog
         _activeTm = turnManager;
         _activePlayer = player;
 
-        int screenW = Application.Screen.Width;
-        int screenH = Application.Screen.Height;
+        int screenW = AppHost.App.Screen.Width;
+        int screenH = AppHost.App.Screen.Height;
         // Clamp shape: at least MinWidth/MinHeight, at most MaxWidth/MaxHeight, and
         // always small enough to leave a 2-col/row terminal margin.
         int w = Math.Min(Math.Min(MaxWidth, Math.Max(MinWidth, (int)(screenW * 0.7))),
@@ -137,21 +137,21 @@ public static class PlayerGuideDialog
             Text = "/",
             X = 1, Y = 0,
             Width = 2,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         var searchField = new TextField
         {
             Text = "",
             X = 3, Y = 0,
             Width = LeftPaneWidth - 4,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
         var searchHint = new Label
         {
             Text = "type to filter",
             X = 3, Y = 1,
             Width = LeftPaneWidth - 4,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         // List of sidebar rows. Items are display strings; Row metadata kept in parallel array.
@@ -160,7 +160,7 @@ public static class PlayerGuideDialog
             X = 1, Y = SidebarHeaderRows,
             Width = LeftPaneWidth - 2,
             Height = Dim.Fill(3),
-            ColorScheme = ColorSchemes.ListSelection,
+            SchemeName = ColorSchemes.ListSelectionName,
         };
 
         // Vertical separator between sidebar and body.
@@ -168,7 +168,7 @@ public static class PlayerGuideDialog
         {
             X = LeftPaneWidth, Y = 0,
             Width = 1, Height = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         sep.DrawingContent += (s, e) =>
         {
@@ -182,12 +182,12 @@ public static class PlayerGuideDialog
             Text = "",
             X = LeftPaneWidth + 2, Y = 0,
             Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         // Custom render surface — paints body content rune-by-rune with
         // per-token color, tracks See-also bullets for yellow-highlight focus.
         // Replaces a TextView so we get inline cyan [[brackets]], Gold section
-        // rules, and per-row focus tinting (TextView shares one ColorScheme for all content).
+        // rules, and per-row focus tinting (TextView shares one Scheme for all content).
         // bodyHeader sits at Y=0; the body fills directly under it (no rule
         // separator — header carries its own category color as the divider).
         // Bottom 2 rows reserved for footerFlash + hint (Close button removed —
@@ -205,7 +205,7 @@ public static class PlayerGuideDialog
             Text = "[/] search · [←→] panes · [↑↓] move · [Enter] follow · [1-5] category · [?] help · [Esc] close",
             X = 1, Y = Pos.AnchorEnd(1),
             Width = Dim.Fill(1),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         // Transient flash for stat-dump confirm / search status. Floats one
@@ -215,16 +215,18 @@ public static class PlayerGuideDialog
             Text = "",
             X = LeftPaneWidth + 2, Y = Pos.AnchorEnd(2),
             Width = Dim.Fill(2),
-            ColorScheme = ColorSchemes.Success,
+            SchemeName = ColorSchemes.SuccessName,
             Visible = false,
         };
-        void Flash(string msg, ColorScheme? scheme = null)
+        void Flash(string msg, Scheme? scheme = null)
         {
             footerFlash.Text = msg;
-            footerFlash.ColorScheme = scheme ?? ColorSchemes.Success;
+            footerFlash.SetScheme(scheme ?? ColorSchemes.Success);
             footerFlash.Visible = true;
-            Application.AddTimeout(TimeSpan.FromSeconds(3), () =>
+            AppHost.App.AddTimeout(TimeSpan.FromSeconds(3), () =>
             {
+                // Outlives the guide if it closes inside the 3s window.
+                if (!DialogHelper.IsOpen(dialog)) return false;
                 footerFlash.Visible = false;
                 footerFlash.Text = "";
                 return false;
@@ -325,7 +327,7 @@ public static class PlayerGuideDialog
         // ── Body rendering ────────────────────────────────────────────
         void ShowSelectedSidebar()
         {
-            int idx = sidebar.SelectedItem;
+            int idx = sidebar.SelectedItem ?? -1;
             if (idx < 0 || idx >= rows.Count)
             {
                 bodyHeader.Text = "";
@@ -337,14 +339,14 @@ public static class PlayerGuideDialog
             {
                 case RowKind.Header:
                     bodyHeader.Text = row.Category;
-                    bodyHeader.ColorScheme = CategoryColor(row.Category);
+                    bodyHeader.SetScheme(CategoryColor(row.Category));
                     bodyText.SetMessage(row.Expanded
                         ? $"{row.Visible} topic(s) shown. Use Up/Down to browse, Enter to view a topic."
                         : $"Press Enter or Right to expand. ({row.Visible}{(row.CategoryHasSpoilers ? "/??" : $"/{row.Total}")} topics)");
                     return;
                 case RowKind.Spoiler:
                     bodyHeader.Text = $"{row.Category} > ??? (Unknown)";
-                    bodyHeader.ColorScheme = ColorSchemes.Dim;
+                    bodyHeader.SchemeName = ColorSchemes.DimName;
                     bodyText.SetMessage(WrapTo(
                         "This topic is still hidden.\n\n" +
                         "You have not yet encountered the subject of this entry.\n" +
@@ -355,7 +357,7 @@ public static class PlayerGuideDialog
                 case RowKind.Topic:
                     var e = row.Entry!;
                     bodyHeader.Text = $"{e.Category} > {e.Title}";
-                    bodyHeader.ColorScheme = CategoryColor(e.Category);
+                    bodyHeader.SetScheme(CategoryColor(e.Category));
                     bodyText.SetContent(RenderEntryBody(e, bodyWrapCols, referencedBy));
                     return;
             }
@@ -455,7 +457,7 @@ public static class PlayerGuideDialog
             // Capture current selection for nav stack.
             if (pushStack)
             {
-                int cur = sidebar.SelectedItem;
+                int cur = sidebar.SelectedItem ?? -1;
                 if (cur >= 0 && cur < rows.Count && rows[cur].Kind == RowKind.Topic && rows[cur].Entry != null)
                     navStack.Push((rows[cur].Entry!.Category, rows[cur].Entry!.Title));
             }
@@ -571,7 +573,7 @@ public static class PlayerGuideDialog
         };
 
         // ── Sidebar selection / activation wiring ─────────────────────
-        sidebar.SelectedItemChanged += (s, e) => { ShowSelectedSidebar(); };
+        sidebar.ValueChanged += (s, e) => { ShowSelectedSidebar(); };
 
         sidebar.KeyDown += (s, e) =>
         {
@@ -583,7 +585,7 @@ public static class PlayerGuideDialog
                 return;
             }
 
-            int idx = sidebar.SelectedItem;
+            int idx = sidebar.SelectedItem ?? -1;
             switch (e.KeyCode)
             {
                 case KeyCode.Tab:
@@ -678,7 +680,7 @@ public static class PlayerGuideDialog
         {
             // BodyRenderView has no cursor concept (it's a paint surface), so
             // <details:> toggling is best-effort: try the first collapsed block.
-            int idx = sidebar.SelectedItem;
+            int idx = sidebar.SelectedItem ?? -1;
             if (idx < 0 || idx >= rows.Count) return false;
             if (rows[idx].Kind != RowKind.Topic || rows[idx].Entry == null) return false;
             var entry = rows[idx].Entry!;
@@ -710,7 +712,7 @@ public static class PlayerGuideDialog
         };
 
         // ── Layout-driven wrap recompute ──────────────────────────────
-        dialog.SubviewsLaidOut += (s, e) =>
+        dialog.SubViewsLaidOut += (s, e) =>
         {
             int newWrap = ComputeBodyWrapCols(dialog.Frame.Width);
             if (newWrap != bodyWrapCols)
@@ -729,7 +731,7 @@ public static class PlayerGuideDialog
         {
             Text = "[Esc] Close",
             X = Pos.AnchorEnd(13), Y = Pos.AnchorEnd(1),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         dialog.Add(escHint);
         DialogHelper.CloseOnEscape(dialog);
@@ -1564,7 +1566,7 @@ public static class PlayerGuideDialog
             var lbl = new Label
             {
                 Text = s, X = 2, Y = y, Width = Dim.Fill(2),
-                ColorScheme = isHeader ? ColorSchemes.Gold : ColorSchemes.Body,
+                SchemeName = isHeader ? ColorSchemes.GoldName : ColorSchemes.BodyName,
             };
             overlay.Add(lbl);
             y++;
@@ -1574,22 +1576,22 @@ public static class PlayerGuideDialog
         {
             Text = "Press any key to dismiss",
             X = Pos.Center(), Y = Pos.AnchorEnd(1),
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         overlay.Add(hintLabel);
 
         overlay.KeyDown += (s, e) =>
         {
-            Application.RequestStop();
+            AppHost.App.RequestStop();
             e.Handled = true;
         };
 
-        Application.Run(overlay);
+        AppHost.App.Run(overlay);
         overlay.Dispose();
     }
 
     // ── Run-summary clipboard dump ──
-    private static void ShowStatDump(Action<string, ColorScheme?> flash)
+    private static void ShowStatDump(Action<string, Scheme?> flash)
     {
         var tm = _activeTm;
         var p = _activePlayer;
@@ -1643,7 +1645,7 @@ public static class PlayerGuideDialog
         string text = dump.ToString();
         try
         {
-            if (Clipboard.TrySetClipboardData(text))
+            if (AppHost.App.Clipboard?.TrySetClipboardData(text) == true)
                 flash("Stat dump copied to clipboard", ColorSchemes.Success);
             else
                 flash("Clipboard unavailable", ColorSchemes.Danger);

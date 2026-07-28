@@ -13,6 +13,10 @@ public static class BestiaryDialog
     private const int MaxWidth = 130;
     private const int MaxHeight = 45;
     private const int ListPaneWidth = 38;
+    // Columns the detail pane loses relative to the dialog width: 2 dialog borders,
+    // ListPaneWidth + 2 for the list pane and gutter, 2 for the pane's own Fill margin,
+    // and 2 for the body indent.
+    private const int DetailPaneInset = ListPaneWidth + 8;
 
     private static readonly string[] KnownTags =
     {
@@ -23,8 +27,8 @@ public static class BestiaryDialog
 
     public static void Show(Player player, TurnManager turnManager)
     {
-        int w = Math.Min(Math.Max(60, Application.Screen.Size.Width  - 6), MaxWidth);
-        int h = Math.Min(Math.Max(24, Application.Screen.Size.Height - 6), MaxHeight);
+        int w = Math.Min(Math.Max(60, AppHost.App.Screen.Size.Width  - 6), MaxWidth);
+        int h = Math.Min(Math.Max(24, AppHost.App.Screen.Size.Height - 6), MaxHeight);
 
         int total = Bestiary.TotalRosterCount();
         int discovered = Bestiary.DiscoveredCount();
@@ -46,14 +50,14 @@ public static class BestiaryDialog
             chipLabels.Add(new Label
             {
                 Text = "", X = 0, Y = 0, Width = 1, Height = 1,
-                ColorScheme = ColorSchemes.Dim,
+                SchemeName = ColorSchemes.DimName,
             });
         }
         var indicatorLabel = new Label
         {
             Text = "", X = 1, Y = 1,
             Width = Dim.Fill(2), Height = 1,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         // ── List pane ──
@@ -61,14 +65,13 @@ public static class BestiaryDialog
         {
             Text = "[ Entries ]", X = 1, Y = 3,
             Width = ListPaneWidth, Height = 1,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         var listView = new ListView
         {
             X = 1, Y = 4,
             Width = ListPaneWidth, Height = Dim.Fill(3),
-            ColorScheme = ColorSchemes.ListSelection,
-            AllowsMarking = false,
+            SchemeName = ColorSchemes.ListSelectionName,
         };
 
         // ── Detail pane ──
@@ -77,14 +80,14 @@ public static class BestiaryDialog
         {
             Text = "", X = detailX, Y = 3,
             Width = Dim.Fill(2), Height = 1,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
-        var detailView = new TextView
+        var detailView = new Label
         {
             X = detailX, Y = 4,
             Width = Dim.Fill(2), Height = Dim.Fill(3),
-            ReadOnly = true, WordWrap = false,
-            ColorScheme = ColorSchemes.Body,
+            CanFocus = false,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         // ── Footer hint ──
@@ -93,20 +96,20 @@ public static class BestiaryDialog
             Text = "[Y/Esc] Close  [↑↓] Nav  [Tab] Tab  [S] Sort  [/] Search  [B] Boss  [U] Undisc  [C] Clear",
             X = 1, Y = Pos.AnchorEnd(1),
             Width = Dim.Fill(1), Height = 1,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         // ── Search box (hidden until /) ──
         var searchLabel = new Label
         {
             Text = "Search:", X = 1, Y = Pos.AnchorEnd(2),
-            Width = 8, ColorScheme = ColorSchemes.Gold, Visible = false,
+            Width = 8, SchemeName = ColorSchemes.GoldName, Visible = false,
         };
         var searchField = new TextField
         {
             Text = filter.Search,
             X = 9, Y = Pos.AnchorEnd(2), Width = ListPaneWidth - 7,
-            ColorScheme = ColorSchemes.Body, Visible = false,
+            SchemeName = ColorSchemes.BodyName, Visible = false,
         };
 
         foreach (var c in chipLabels) dialog.Add(c);
@@ -169,7 +172,7 @@ public static class BestiaryDialog
                 chipLabels[i].Text = t;
                 chipLabels[i].X = x;
                 chipLabels[i].Width = t.Length;
-                chipLabels[i].ColorScheme = active ? ColorSchemes.Gold : ColorSchemes.Dim;
+                chipLabels[i].SchemeName = active ? ColorSchemes.GoldName : ColorSchemes.DimName;
                 x += t.Length + 1;
             }
             string bossMark = filter.BossOnly ? "[x]" : "[ ]";
@@ -186,7 +189,7 @@ public static class BestiaryDialog
                 return;
             }
 
-            int idx = Math.Clamp(listView.SelectedItem, 0, rows.Count - 1);
+            int idx = Math.Clamp(listView.SelectedItem ?? 0, 0, rows.Count - 1);
             var (_, key, entry) = rows[idx];
             Bestiary.SessionSelectedName = key;
 
@@ -206,7 +209,7 @@ public static class BestiaryDialog
             {
                 "Overview" => BuildOverview(entry, player),
                 "Combat"   => BuildCombat(entry, player),
-                "Lore"     => BuildLore(entry),
+                "Lore"     => BuildLore(entry, w),
                 "History"  => BuildHistory(entry),
                 _          => BuildOverview(entry, player),
             };
@@ -232,7 +235,7 @@ public static class BestiaryDialog
             RefreshDetail();
         }
 
-        listView.SelectedItemChanged += (s, e) => RefreshDetail();
+        listView.ValueChanged += (s, e) => RefreshDetail();
 
         // Search-field handler: Enter commits, Esc cancels.
         // Wired separately — listView.KeyDown stops firing once search has focus.
@@ -291,7 +294,7 @@ public static class BestiaryDialog
                 case KeyCode.Esc:
                     Bestiary.SessionSort = sortKey;
                     Bestiary.SessionActiveTab = activeTab;
-                    Application.RequestStop();
+                    AppHost.App.RequestStop();
                     e.Handled = true;
                     return;
                 case KeyCode.Tab:
@@ -308,7 +311,7 @@ public static class BestiaryDialog
                 case 'y':
                     Bestiary.SessionSort = sortKey;
                     Bestiary.SessionActiveTab = activeTab;
-                    Application.RequestStop();
+                    AppHost.App.RequestStop();
                     e.Handled = true;
                     return;
                 case 's':
@@ -455,13 +458,21 @@ public static class BestiaryDialog
         return sb.ToString();
     }
 
-    private static string BuildLore(Bestiary.Entry e)
+    // dialogWidth drives the wrap column: the detail pane starts at ListPaneWidth + 2 and
+    // fills the rest, so a fixed wrap column overflows once the dialog is narrower than the
+    // text. The Label that renders this does not wrap or scroll, so overflow is a hard clip.
+    private static string BuildLore(Bestiary.Entry e, int dialogWidth)
     {
         string flavor = BestiaryFlavor.Lookup(
             e.Name, e.LootTag, e.FirstFloorEncountered, e.LastFloorEncountered);
         if (string.IsNullOrEmpty(flavor)) flavor = "(No recorded lore.)";
-        return "  " + WrapParagraph(flavor, 70, indent: "  ");
+        return "  " + WrapParagraph(flavor, LoreWrapColumns(dialogWidth), indent: "  ");
     }
+
+    // Detail pane inner width less the two-space indent, floored so a very narrow
+    // terminal still wraps rather than emitting one unbroken line.
+    private static int LoreWrapColumns(int dialogWidth)
+        => Math.Max(20, dialogWidth - DetailPaneInset);
 
     private static string BuildHistory(Bestiary.Entry e)
     {

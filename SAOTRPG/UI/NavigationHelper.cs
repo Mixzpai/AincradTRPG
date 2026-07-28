@@ -13,7 +13,7 @@ public static class NavigationHelper
         {
             // Let RadioGroup handle arrow keys internally for changing selection
             var focused = container.MostFocused;
-            bool inRadioGroup = focused is RadioGroup || focused?.SuperView is RadioGroup;
+            bool inRadioGroup = focused is OptionSelector || focused?.SuperView is OptionSelector;
 
             if (inRadioGroup && (e.KeyCode == KeyCode.CursorUp || e.KeyCode == KeyCode.CursorDown))
                 return;

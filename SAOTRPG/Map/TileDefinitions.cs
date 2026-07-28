@@ -57,11 +57,18 @@ public static class TileDefinitions
     private static readonly Color OreDivineFg        = new(255, 200, 80);
     private static readonly Color OreDivineDepFg     = new(140, 120, 80);
 
-    // Tiles whose visual depends on FrameClock.ElapsedMs — bypass per-cell visual cache
-    // and drive HasAnimatedTiles so the 50ms render timer fires when in viewport.
+    // Wall clock driving animated tile phases; pinned by --freeze-anim via AmbientMs.
+    private static long AnimClockMs => FrameClock.AmbientMs;
+
+    // Tiles whose visual depends on the wall clock: they bypass the per-cell visual cache and
+    // drive the realtime repaint gate when in the viewport.
+    //
+    // Water and WaterDeep are deliberately absent: their visuals here are pure functions of the
+    // position hash with no clock input, so listing them only cost work — every water cell
+    // skipped the visual cache and held the repaint gate open. Water's clock dependency comes
+    // from MapView.ResolveWater instead, and the frame cache tracks it separately.
     public static bool IsAnimated(TileType type) =>
-        type is TileType.Lava or TileType.Campfire or TileType.OreVeinDivine
-        or TileType.Water or TileType.WaterDeep;
+        type is TileType.Lava or TileType.Campfire or TileType.OreVeinDivine;
 
     public static (char Glyph, Color Foreground, Color Background) GetVisual(TileType type, int x = 0, int y = 0)
     {
@@ -252,29 +259,37 @@ public static class TileDefinitions
             FlowerColors[hash % FlowerColors.Length],
             Color.Black);
 
-    // Lava pulses between orange and yellow on real-time @ 4Hz.
+    // Step lengths for the clock-driven tile visuals. Deliberately slow: these tiles are
+    // re-resolved on idle frames now, so every phase turnover writes cells and costs a terminal
+    // flush. They also read as a nervous flicker at anything much quicker. The `+ hash` offsets
+    // below keep neighbouring tiles out of lockstep so the field breathes instead of pulsing.
+    private const int LavaStepMs     = 500;
+    private const int CampfireStepMs = 600;
+    private const int DivineStepMs   = 600;
+
+    // Lava pulses between orange and yellow.
     private static (char, Color, Color) LavaVisual(int hash)
     {
-        int phase = ((int)(FrameClock.ElapsedMs / 250) + hash) % 4;
+        int phase = ((int)(AnimClockMs / LavaStepMs) + hash) % 4;
         char glyph = phase < 2 ? '~' : '-';
         // Pulse color between orange and bright yellow
         Color c = phase % 2 == 0 ? LavaOrange : new Color(255, 160, 40);
         return (glyph, c, Color.Black);
     }
 
-    // Campfire flickers between glyphs and warm colors on real-time @ 3Hz.
+    // Campfire flickers between glyphs and warm colors.
     private static (char, Color, Color) CampfireVisual(int hash)
     {
-        int phase = ((int)(FrameClock.ElapsedMs / 333) + hash) % 3;
+        int phase = ((int)(AnimClockMs / CampfireStepMs) + hash) % 3;
         char glyph = phase == 0 ? '&' : phase == 1 ? '*' : '&';
         Color c = phase == 1 ? new Color(255, 150, 50) : FireYellow;
         return (glyph, c, Color.Black);
     }
 
-    // Divine vein pulses between '◈' (cool) and '◊' (warm) on real-time @ 4Hz.
+    // Divine vein pulses between '◈' (cool) and '◊' (warm).
     private static (char, Color, Color) DivineVeinVisual(int hash)
     {
-        int phase = ((int)(FrameClock.ElapsedMs / 250) + hash) % 4;
+        int phase = ((int)(AnimClockMs / DivineStepMs) + hash) % 4;
         char glyph = phase < 2 ? '◈' : '◊';
         Color c = phase % 2 == 0 ? OreDivineFg : new Color(255, 230, 130);
         return (glyph, c, Color.Black);

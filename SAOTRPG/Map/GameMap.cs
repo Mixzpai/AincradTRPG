@@ -25,7 +25,11 @@ public class GameMap
     public TileAccessor Tiles => new(this);
     public List<Entity> Entities { get; } = new();
     public HashSet<(int X, int Y)> NewlyRevealed { get; } = new();
-    public HashSet<(int X, int Y)> OpenedDoors { get; } = new();
+
+    // Doors the player has walked through. A closed door blocks sight and an open one does
+    // not, so the opacity table below has to move with this set — mutate only via OpenDoor.
+    private readonly HashSet<(int X, int Y)> _openedDoors = new();
+    public IReadOnlyCollection<(int X, int Y)> OpenedDoors => _openedDoors;
     public int ExploredTileCount { get; private set; }
     public LightingSystem Lighting { get; }
 
@@ -55,10 +59,25 @@ public class GameMap
     // Coarse: never flips back to false on tile removal — false-positive 50ms timer ticks are harmless.
     public bool HasAnimatedTiles { get; private set; }
 
-    private readonly bool[,] _visible;
-    private readonly bool[,] _explored;
-    private readonly int[,] _visitCounts;
-    private readonly int[,] _lastSeenTurn;
+    // Sight-blocking flag per cell, y*Width + x to match _tiles.
+    //
+    // The shadowcaster calls BlocksSight once per visited cell — around 75,000 per move in
+    // open terrain at the runtime FOV radius — and resolving it from _tiles costs one cache
+    // miss per cell across a 15 MB array (Tile is 16 bytes, floors run to 1000x1000). The
+    // identical scan against this 1 MB table measured 2.1x faster. Rebuilt lazily because
+    // mapgen writes tile types straight through the Tiles indexer without raising
+    // OnTileTypeChanged; every runtime mutation goes through SetTileType and updates in place.
+    private readonly bool[] _opaque;
+    private bool _opaqueStale = true;
+
+    // Row-major (y*Width + x), matching _tiles and _opaque. These were [x, y], which strides
+    // by Height between adjacent columns — and every hot consumer walks x fastest: the
+    // shadowcaster's north/south scans, and the map tile loop. On a 1000x1000 floor
+    // _lastSeenTurn alone is 4 MB, so that stride cost a cache line per revealed cell.
+    private readonly bool[] _visible;
+    private readonly bool[] _explored;
+    private readonly int[] _visitCounts;
+    private readonly int[] _lastSeenTurn;
 
     // Wall-glyph cache; '\0' = uncomputed. Invalidate via InvalidateWallGlyph when wall-like tiles change.
     private readonly char[,] _wallGlyphCache;
@@ -135,10 +154,11 @@ public class GameMap
     {
         Width = width; Height = height;
         _tiles = new Tile[width * height];
-        _visible = new bool[width, height];
-        _explored = new bool[width, height];
-        _visitCounts = new int[width, height];
-        _lastSeenTurn = new int[width, height];
+        _opaque = new bool[width * height];
+        _visible = new bool[width * height];
+        _explored = new bool[width * height];
+        _visitCounts = new int[width * height];
+        _lastSeenTurn = new int[width * height];
         _wallGlyphCache = new char[width, height];
         _transitionCache = new byte[width, height];
         Lighting = new LightingSystem(width, height);
@@ -159,17 +179,17 @@ public class GameMap
     public bool InBounds(int x, int y) => (uint)x < (uint)Width && (uint)y < (uint)Height;
     // Strictly inside the map (one-tile border excluded). Used by mapgen.
     public bool InInterior(int x, int y) => x > 0 && y > 0 && x < Width - 1 && y < Height - 1;
-    public bool IsVisible(int x, int y) => InBounds(x, y) && _visible[x, y];
-    public bool IsExplored(int x, int y) => InBounds(x, y) && _explored[x, y];
-    public void IncrementVisit(int x, int y) { if (InBounds(x, y)) _visitCounts[x, y]++; }
-    public int GetVisitCount(int x, int y) => InBounds(x, y) ? _visitCounts[x, y] : 0;
-    public int GetLastSeenTurn(int x, int y) => InBounds(x, y) ? _lastSeenTurn[x, y] : 0;
+    public bool IsVisible(int x, int y) => InBounds(x, y) && _visible[Idx(x, y)];
+    public bool IsExplored(int x, int y) => InBounds(x, y) && _explored[Idx(x, y)];
+    public void IncrementVisit(int x, int y) { if (InBounds(x, y)) _visitCounts[Idx(x, y)]++; }
+    public int GetVisitCount(int x, int y) => InBounds(x, y) ? _visitCounts[Idx(x, y)] : 0;
+    public int GetLastSeenTurn(int x, int y) => InBounds(x, y) ? _lastSeenTurn[Idx(x, y)] : 0;
 
     public void SetExplored(int x, int y)
     {
-        if (InBounds(x, y) && !_explored[x, y])
+        if (InBounds(x, y) && !_explored[Idx(x, y)])
         {
-            _explored[x, y] = true;
+            _explored[Idx(x, y)] = true;
             ExploredTileCount++;
             if (IsWalkableForExploration(_tiles[Idx(x, y)].Type)) _exploredCount++;
         }
@@ -178,17 +198,22 @@ public class GameMap
     // Called by MapGenerator after terrain placement; refreshed on runtime walkability changes (e.g. CrackedWall destroy).
     public void RecountWalkableTiles()
     {
+        // Mapgen passes reach tile types through the Tiles indexer, bypassing OnTileTypeChanged,
+        // so the opacity table has to be thrown away whenever one of them finishes.
+        _opaqueStale = true;
         _walkableCount = 0;
         _exploredCount = 0;
         bool anyAnimated = false;
-        for (int x = 0; x < Width; x++)
+        // y-outer so both _tiles and _explored are walked in storage order.
         for (int y = 0; y < Height; y++)
+        for (int x = 0; x < Width; x++)
         {
-            var t = _tiles[Idx(x, y)].Type;
+            int i = Idx(x, y);
+            var t = _tiles[i].Type;
             if (!anyAnimated && TileDefinitions.IsAnimated(t)) anyAnimated = true;
             if (!IsWalkableForExploration(t)) continue;
             _walkableCount++;
-            if (_explored[x, y]) _exploredCount++;
+            if (_explored[i]) _exploredCount++;
         }
         HasAnimatedTiles = anyAnimated;
     }
@@ -206,13 +231,14 @@ public class GameMap
     public void UpdateVisibility(int playerX, int playerY, int radius = 80)
     {
         using var _ = Profiler.Begin("Visibility.Update");
+        if (_opaqueStale) RebuildOpacity();
         // Clear visibility only in the player's visible region (avoids 125K bool clear on 500x250 map).
         int clearR = radius + 2;
         int x0 = Math.Max(0, playerX - clearR), x1 = Math.Min(Width, playerX + clearR + 1);
         int y0 = Math.Max(0, playerY - clearR), y1 = Math.Min(Height, playerY + clearR + 1);
-        for (int x = x0; x < x1; x++)
-            for (int y = y0; y < y1; y++)
-                _visible[x, y] = false;
+        // One contiguous span per row now that _visible is row-major.
+        for (int y = y0; y < y1; y++)
+            Array.Clear(_visible, y * Width + x0, x1 - x0);
 
         NewlyRevealed.Clear();
         using (Profiler.Begin("FOV.Compute"))
@@ -220,32 +246,58 @@ public class GameMap
         Lighting.Update(this, playerX, playerY);
     }
 
-    // Public opacity test used by LightingSystem for light propagation.
-    public bool IsOpaque(int x, int y) => BlocksSight(x, y);
+    // Public opacity test used by LightingSystem for light propagation. Ensures the table is
+    // built, since a caller can reach this before the first UpdateVisibility.
+    public bool IsOpaque(int x, int y)
+    {
+        if (_opaqueStale) RebuildOpacity();
+        return BlocksSight(x, y);
+    }
+
+    // Marks a door open. Sight through it is table-backed, so the set and the table move together.
+    public void OpenDoor(int x, int y)
+    {
+        if (!InBounds(x, y) || !_openedDoors.Add((x, y))) return;
+        _opaque[Idx(x, y)] = ComputeOpaque(x, y);
+    }
+
+    private void RebuildOpacity()
+    {
+        using var _ = Profiler.Begin("Visibility.RebuildOpacity");
+        for (int y = 0; y < Height; y++)
+        for (int x = 0; x < Width; x++)
+            _opaque[y * Width + x] = ComputeOpaque(x, y);
+        _opaqueStale = false;
+    }
+
+    private bool ComputeOpaque(int x, int y)
+    {
+        var t = _tiles[Idx(x, y)].Type;
+        if (t == TileType.Door) return !_openedDoors.Contains((x, y));
+        return t is TileType.Wall or TileType.Mountain
+                 or TileType.Tree or TileType.TreePine or TileType.Rock;
+    }
 
     private void MarkVisible(int x, int y)
     {
         if (!InBounds(x, y)) return;
-        _visible[x, y] = true;
-        _lastSeenTurn[x, y] = DayNightCycle.CurrentTurn;
-        if (!_explored[x, y])
+        // One index for all four row-major grids — this runs tens of thousands of times per move.
+        int i = Idx(x, y);
+        _visible[i] = true;
+        _lastSeenTurn[i] = DayNightCycle.CurrentTurn;
+        if (!_explored[i])
         {
-            _explored[x, y] = true;
+            _explored[i] = true;
             ExploredTileCount++;
-            if (IsWalkableForExploration(_tiles[Idx(x, y)].Type)) _exploredCount++;
+            if (IsWalkableForExploration(_tiles[i].Type)) _exploredCount++;
             NewlyRevealed.Add((x, y));
         }
     }
 
+    // Hot path: one table lookup per visited cell. Out of bounds blocks, matching the
+    // sentinel Wall that GetTile returns there.
     private bool BlocksSight(int x, int y)
-    {
-        if (!InBounds(x, y)) return true;
-        var t = _tiles[Idx(x, y)].Type;
-        if (t is TileType.Wall or TileType.Mountain or TileType.Tree or TileType.TreePine or TileType.Rock)
-            return true;
-        if (t == TileType.Door && !OpenedDoors.Contains((x, y))) return true;
-        return false;
-    }
+        => (uint)x >= (uint)Width || (uint)y >= (uint)Height || _opaque[y * Width + x];
 
     // --- Entity placement ---
 
@@ -392,6 +444,7 @@ public class GameMap
         TileTypeChanged?.Invoke(x, y, oldType, newType);
         // Frame-buffer cache invalidates on any tile mutation.
         UI.MapView.MarkFrameDirty();
+        _opaque[Idx(x, y)] = ComputeOpaque(x, y);
 
         // Sticky-true once any animated tile appears — drives the 50ms render timer gate.
         if (!HasAnimatedTiles && TileDefinitions.IsAnimated(newType))
@@ -436,12 +489,12 @@ public class GameMap
             if (isWalkable)
             {
                 _walkableCount++;
-                if (_explored[x, y]) _exploredCount++;
+                if (_explored[Idx(x, y)]) _exploredCount++;
             }
             else
             {
                 _walkableCount--;
-                if (_explored[x, y]) _exploredCount--;
+                if (_explored[Idx(x, y)]) _exploredCount--;
             }
         }
     }

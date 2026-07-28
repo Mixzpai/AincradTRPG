@@ -683,7 +683,7 @@ public partial class TurnManager
         {
             foreach (var ad in save.PartyMembers)
             {
-                var ally = new Entities.Ally(ad.Symbol, (Terminal.Gui.Color)ad.SymbolColor)
+                var ally = new Entities.Ally(ad.Symbol, (Color)ad.SymbolColor)
                 {
                     Name = ad.Name, WeaponType = ad.WeaponType, Title = ad.Title,
                     Level = ad.Level, MaxHealth = ad.MaxHealth, CurrentHealth = ad.CurrentHealth,

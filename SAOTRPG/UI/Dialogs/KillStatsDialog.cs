@@ -21,11 +21,11 @@ public static class KillStatsDialog
         dialog.Add(new Label
         {
             Text = $"{player.FirstName} {player.LastName}  —  Lv.{player.Level}",
-            X = Pos.Center(), Y = y++, ColorScheme = ColorSchemes.Title,
+            X = Pos.Center(), Y = y++, SchemeName = ColorSchemes.TitleName,
         });
         dialog.Add(new Label
         {
-            Text = player.Title, X = Pos.Center(), Y = y++, ColorScheme = ColorSchemes.Dim,
+            Text = player.Title, X = Pos.Center(), Y = y++, SchemeName = ColorSchemes.DimName,
         });
         y++;
 
@@ -42,8 +42,8 @@ public static class KillStatsDialog
         dialog.Add(new Label
         {
             Text = $"  Diff     {tier.Name}",
-            X = 1, Y = y++, ColorScheme = ColorSchemes.FromColor(tier.ThemeColor),
-        });
+            X = 1, Y = y++,
+        }.WithScheme(ColorSchemes.FromColor(tier.ThemeColor)));
 
         // Play time
         var elapsed = turnManager.TotalPlayTime;
@@ -56,7 +56,7 @@ public static class KillStatsDialog
         string grade = RunGradeHelper.Rate(turnManager.CurrentFloor, turnManager.KillCount, turnManager.TurnCount);
         dialog.Add(new Label
         {
-            Text = $"  Rating   {grade}", X = 1, Y = y++, ColorScheme = ColorSchemes.Gold,
+            Text = $"  Rating   {grade}", X = 1, Y = y++, SchemeName = ColorSchemes.GoldName,
         });
 
         // Day/night phase
@@ -91,7 +91,7 @@ public static class KillStatsDialog
                 dialog.Add(new Label
                 {
                     Text = $"  +{dropped} more (open Stats with P for full list)",
-                    X = 1, Y = y++, ColorScheme = ColorSchemes.Dim,
+                    X = 1, Y = y++, SchemeName = ColorSchemes.DimName,
                 });
             }
         }
@@ -99,14 +99,14 @@ public static class KillStatsDialog
         {
             dialog.Add(new Label
             {
-                Text = "  No weapon kills yet.", X = 1, Y = y++, ColorScheme = ColorSchemes.Dim,
+                Text = "  No weapon kills yet.", X = 1, Y = y++, SchemeName = ColorSchemes.DimName,
             });
         }
 
         var hintLabel = new Label
         {
             Text = "Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
         dialog.Add(hintLabel);
 

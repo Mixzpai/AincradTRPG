@@ -20,7 +20,7 @@ public static class StatsDialog
 
     // Clamp preferred height to terminal, 4-row margin keeps border inside screen bounds.
     private static int DialogHeight() =>
-        Math.Min(PreferredDialogHeight, Math.Max(20, Application.Screen.Height - 4));
+        Math.Min(PreferredDialogHeight, Math.Max(20, AppHost.App.Screen.Height - 4));
 
     // Stat definition — name, getter, and tooltip describing what it does.
     // Add new stats here to extend the dialog automatically.
@@ -73,7 +73,7 @@ public static class StatsDialog
 
             var nameLabel  = new Label { Text = $"{Stats[idx].Name}:",   X = 1,  Y = row, Width = 14 };
             var valLabel   = new Label { Text = $"{Stats[idx].GetValue(player),3}", X = 16, Y = row, Width = 4 };
-            var addBtn     = new Button { Text = "+1", X = 21, Y = row, ColorScheme = ColorSchemes.Button };
+            var addBtn     = new Button { Text = "+1", X = 21, Y = row, SchemeName = ColorSchemes.ButtonName };
             var effectLabel = new Label { Text = Stats[idx].Effect,       X = 28, Y = row };
 
             valueLabels.Add(valLabel);
@@ -82,7 +82,7 @@ public static class StatsDialog
             // ── +1 button handler ────────────────────────────────────
             addBtn.Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 if (player.SkillPoints <= 0) return;
 
                 player.SpendSkillPoints(Stats[idx].Name, 1);
@@ -92,7 +92,7 @@ public static class StatsDialog
                 for (int j = 0; j < Stats.Length; j++)
                 {
                     valueLabels[j].Text = $"{Stats[j].GetValue(player),3}";
-                    valueLabels[j].ColorScheme = j == idx ? ColorSchemes.Gold : ColorSchemes.Body;
+                    valueLabels[j].SchemeName = j == idx ? ColorSchemes.GoldName : ColorSchemes.BodyName;
                 }
 
                 // Vitality special: heal to new max
@@ -129,7 +129,7 @@ public static class StatsDialog
             {
                 Text = $"Lore Discovered: {loreFound}/{loreTotal}",
                 X = 1, Y = Stats.Length + 5,
-                ColorScheme = loreFound >= loreTotal ? ColorSchemes.Gold : ColorSchemes.Dim
+                SchemeName = loreFound >= loreTotal ? ColorSchemes.GoldName : ColorSchemes.DimName
             };
             dialog.Add(loreLabel);
         }
@@ -140,7 +140,7 @@ public static class StatsDialog
         {
             Text = "[ Unique Skills ]",
             X = 1, Y = usY,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         });
         int usRow = usY + 1;
         foreach (var kvp in Skills.UniqueSkillSystem.Definitions)
@@ -157,8 +157,7 @@ public static class StatsDialog
                 Text = line,
                 X = 1, Y = usRow,
                 Width = Dim.Fill(1),
-                ColorScheme = unlocked ? ColorSchemes.FromColor(def.DisplayColor) : ColorSchemes.Dim,
-            });
+            }.WithScheme(unlocked ? ColorSchemes.FromColor(def.DisplayColor) : ColorSchemes.Dim));
             usRow++;
         }
 
@@ -168,7 +167,7 @@ public static class StatsDialog
         {
             Text = "[ Weapon Proficiency ]",
             X = 1, Y = profY,
-            ColorScheme = ColorSchemes.Gold
+            SchemeName = ColorSchemes.GoldName
         };
         dialog.Add(profHeader);
 
@@ -196,7 +195,7 @@ public static class StatsDialog
             {
                 Text = "  No weapon kills yet.",
                 X = 1, Y = profY + 1,
-                ColorScheme = ColorSchemes.Dim
+                SchemeName = ColorSchemes.DimName
             });
             profEndRow = profY + 2;
         }
@@ -207,7 +206,7 @@ public static class StatsDialog
         {
             Text = "[ Life Skills ]",
             X = 1, Y = lsY,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         });
         int lsRow = lsY + 1;
         foreach (var skill in Enum.GetValues<Systems.LifeSkillType>())
@@ -224,7 +223,7 @@ public static class StatsDialog
                 Text = line,
                 X = 1, Y = lsRow,
                 Width = Dim.Fill(1),
-                ColorScheme = lvl > 1 ? ColorSchemes.Body : ColorSchemes.Dim,
+                SchemeName = lvl > 1 ? ColorSchemes.BodyName : ColorSchemes.DimName,
             });
             lsRow++;
         }
@@ -235,10 +234,10 @@ public static class StatsDialog
         {
             Text = "[ Active Title ]",
             X = 1, Y = tY,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         });
         string titleText;
-        ColorScheme titleScheme;
+        Scheme titleScheme;
         if (player.ActiveTitleId != null
             && MilestoneRegistry.ById.TryGetValue(player.ActiveTitleId, out var activeDef))
         {
@@ -256,8 +255,7 @@ public static class StatsDialog
             Text = titleText,
             X = 1, Y = tY + 1,
             Width = Dim.Fill(1),
-            ColorScheme = titleScheme,
-        });
+        }.WithScheme(titleScheme));
         int unlockedCount = MilestoneRegistry.All
             .Count(m => m.Reward == RewardType.EquippableTitle
                 && LifetimeStats.IsMilestoneUnlocked(m.Id));
@@ -267,7 +265,7 @@ public static class StatsDialog
         {
             Text = $"  Titles unlocked: {unlockedCount}/{totalTitles}",
             X = 1, Y = tY + 2,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         });
 
         // ── Guild Affiliation + Karma section ─────────────────────────
@@ -276,19 +274,19 @@ public static class StatsDialog
         {
             Text = "[ Guild & Karma ]",
             X = 1, Y = gY,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         });
         string karmaTier = Systems.KarmaSystem.TierLabel(player.Karma);
         string karmaLine = $"  Karma: {player.Karma,+4} [{karmaTier}]";
         dialog.Add(new Label
         {
             Text = karmaLine, X = 1, Y = gY + 1, Width = Dim.Fill(1),
-            ColorScheme = karmaTier switch
+            SchemeName = karmaTier switch
             {
-                "Honorable" => ColorSchemes.Gold,
-                "Outlaw"    => ColorSchemes.Danger,
-                "Shady"     => ColorSchemes.Dim,
-                _           => ColorSchemes.Body,
+                "Honorable" => ColorSchemes.GoldName,
+                "Outlaw"    => ColorSchemes.DangerName,
+                "Shady"     => ColorSchemes.DimName,
+                _           => ColorSchemes.BodyName,
             },
         });
         string guildName = Systems.GuildSystem.ActiveGuildDisplayName(player);
@@ -297,8 +295,8 @@ public static class StatsDialog
         {
             Text = $"  Guild: {guildName}", X = 1, Y = gY + 2,
             Width = Dim.Fill(1),
-            ColorScheme = player.ActiveGuildId == Systems.Story.Faction.None
-                ? ColorSchemes.Dim : ColorSchemes.Body,
+            SchemeName = player.ActiveGuildId == Systems.Story.Faction.None
+                ? ColorSchemes.DimName : ColorSchemes.BodyName,
         });
         if (!string.IsNullOrEmpty(guildPerk))
         {
@@ -307,14 +305,14 @@ public static class StatsDialog
             dialog.Add(new Label
             {
                 Text = perkLine, X = 1, Y = gY + 3, Width = Dim.Fill(1),
-                ColorScheme = ColorSchemes.Dim,
+                SchemeName = ColorSchemes.DimName,
             });
         }
         var rosterBtn = DialogHelper.CreateButton("View All Guilds");
         rosterBtn.X = 1; rosterBtn.Y = gY + 4;
         rosterBtn.Accepting += (s, e) =>
         {
-            e.Cancel = true;
+            e.Handled = true;
             GuildRosterDialog.Show(player);
         };
         dialog.Add(rosterBtn);
@@ -322,7 +320,7 @@ public static class StatsDialog
         var hintLabel = new Label
         {
             Text = "Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = ColorSchemes.Dim,
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
         dialog.Add(spLabel, combatLabel, hintLabel);

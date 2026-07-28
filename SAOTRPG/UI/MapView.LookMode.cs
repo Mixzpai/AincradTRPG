@@ -209,11 +209,11 @@ public partial class MapView
         int bracketLeft = sx - 1, bracketRight = sx + 1;
         if (bracketLeft >= 0 && bracketRight < vpWidth && sy >= 0 && sy < vpHeight)
         {
-            Driver!.SetAttribute(bracketAttr);
+            SetAttribute(bracketAttr);
             Move(bracketLeft, sy);
-            Driver!.AddRune(new System.Text.Rune('['));
+            AddRune(new System.Text.Rune('['));
             Move(bracketRight, sy);
-            Driver!.AddRune(new System.Text.Rune(']'));
+            AddRune(new System.Text.Rune(']'));
         }
 
         // Sidebar visible → shrink stat-panel width so it prefers left-of-target and skips overdraw.
@@ -250,13 +250,13 @@ public partial class MapView
         var dimAt    = Gfx.Attr(Color.DarkGray, bg);
 
         // Fill background so map glyphs don't bleed through.
-        Driver!.SetAttribute(boxAttr);
+        SetAttribute(boxAttr);
         for (int r = 0; r < panelH && panelY + r < vpHeight; r++)
         {
             for (int c = 0; c < LookPanelW && panelX + c < vpWidth; c++)
             {
                 Move(panelX + c, panelY + r);
-                Driver!.AddRune(new System.Text.Rune(' '));
+                AddRune(new System.Text.Rune(' '));
             }
         }
 
@@ -351,7 +351,7 @@ public partial class MapView
     }
 
     // Pull fg Color so we can re-pair it with the dim panel bg for unselected rows.
-    private static Color ExtractFg(Terminal.Gui.Attribute a) => a.Foreground;
+    private static Color ExtractFg(Attribute a) => a.Foreground;
 
     private void RenderStatPanel(Monster monster, int sx, int sy, int vpWidth, int vpHeight)
     {
@@ -382,17 +382,17 @@ public partial class MapView
             if (rowY >= vpHeight) break;
             var attr = r == 0 ? threatAttr : boxAttr;
 
-            Driver!.SetAttribute(attr);
+            SetAttribute(attr);
             for (int col = 0; col < panelW && px + col < vpWidth; col++)
             {
                 Move(px + col, rowY);
-                Driver!.AddRune(new System.Text.Rune(' '));
+                AddRune(new System.Text.Rune(' '));
             }
             string text = lines[r];
             for (int ci = 0; ci < text.Length && px + 1 + ci < vpWidth; ci++)
             {
                 Move(px + 1 + ci, rowY);
-                Driver!.AddRune(new System.Text.Rune(text[ci]));
+                AddRune(new System.Text.Rune(text[ci]));
             }
         }
 
@@ -442,7 +442,7 @@ public partial class MapView
         return lines.ToArray();
     }
 
-    private Terminal.Gui.Attribute GetThreatAttribute(Monster m)
+    private Attribute GetThreatAttribute(Monster m)
     {
         int diff = m.Level - _player.Level;
         Color fg = diff switch
@@ -457,13 +457,13 @@ public partial class MapView
         return Gfx.Attr(fg, new Color(20, 20, 30));
     }
 
-    private void DrawHLine(int x, int y, int width, char ch, Terminal.Gui.Attribute attr)
+    private void DrawHLine(int x, int y, int width, char ch, Attribute attr)
     {
-        Driver!.SetAttribute(attr);
+        SetAttribute(attr);
         for (int i = 0; i < width; i++)
         {
             Move(x + i, y);
-            Driver!.AddRune(new System.Text.Rune(ch));
+            AddRune(new System.Text.Rune(ch));
         }
     }
 }

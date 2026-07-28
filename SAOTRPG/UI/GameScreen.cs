@@ -15,7 +15,16 @@ namespace SAOTRPG.UI;
 // Borderless panels + inline titles; the outer window frame is the only container border.
 public static partial class GameScreen
 {
-    private const int AnimationIntervalMs = 750, AutoExploreStepMs = 80;
+    // AnimationIntervalMs paces the clock-driven-tile repaint. Must stay at or below half the
+    // shortest tile animation step (TileDefinitions.LavaStepMs, 500ms) or phases get skipped.
+    private const int AnimationIntervalMs = 250, AutoExploreStepMs = 80;
+
+    // Bumped every time the game screen is built. Repeating timeouts capture the value
+    // current at wiring time and retire themselves once it moves on: they are never
+    // unregistered otherwise, so each new run — and permadeath makes those frequent —
+    // would leave another pair firing forever, each pinning its run's MapView and, through
+    // it, that run's GameMap (a 1000x1000 tile array on Floor 1).
+    private static int s_screenGeneration;
     private const int HpBarWidth = 16, XpBarWidth = 10;
 
     // Fixed sidebar width so stats layout is stable across terminal widths.
@@ -39,7 +48,7 @@ public static partial class GameScreen
         catch (Exception ex)
         {
             DebugLogger.LogError("GameScreen.Show", ex);
-            MessageBox.ErrorQuery("Crash", $"{ex.GetType().Name}: {ex.Message}\n\n{ex.StackTrace?[..Math.Min(ex.StackTrace?.Length ?? 0, 500)]}", "OK");
+            DialogHelper.ErrorQuery("Crash", $"{ex.GetType().Name}: {ex.Message}\n\n{ex.StackTrace?[..Math.Min(ex.StackTrace?.Length ?? 0, 500)]}", "OK");
         }
     }
 
@@ -47,9 +56,12 @@ public static partial class GameScreen
         SaveData? saveData, int saveSlot)
     {
         mainWindow.RemoveAll();
+        SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
+        s_screenGeneration++;
         // Unhook menu-screen Esc handlers so they don't shadow MapView's PauseRequested routing.
         DifficultyScreen.UnhookEscHandler(mainWindow);
         CharacterCreationScreen.UnhookEscHandler(mainWindow);
+        ModifierSelectScreen.UnhookEscHandler(mainWindow);
         var sw = DebugLogger.StartTimer("GameScreen.Show");
         DebugLogger.LogScreen("GameScreen");
 
@@ -78,11 +90,11 @@ public static partial class GameScreen
         DebugLogger.LogGame("GAME", $"Map generated: {map.Width}x{map.Height}, {rooms.Count} rooms");
 
         // ── Right column container ── Fixed-width, right-anchored; stats never depend on terminal width.
-        var rightPanel = new View
+        var rightPanel = new PanelView
         {
             X = Pos.AnchorEnd(SidebarWidth), Y = 0,
             Width = Dim.Fill(), Height = Dim.Fill(4),
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
             CanFocus = true,
         };
 
@@ -91,7 +103,7 @@ public static partial class GameScreen
         {
             Text = $"Minimap — F{startFloor}",
             X = 1, Y = 0, Width = Dim.Fill(1), Height = 1,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         var minimapView = new MinimapView(map, player)
         { X = 1, Y = 1, Width = Dim.Fill(1), Height = MinimapHeight };
@@ -99,7 +111,7 @@ public static partial class GameScreen
         {
             Text = "@ you  * mob  ! item  ◊ stairs",
             X = 1, Y = MinimapHeight + 1, Width = Dim.Fill(1), Height = 1,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
 
         // Quest tracker — anchored 2-row gap below minimap legend so 80×24 terminals
@@ -116,28 +128,29 @@ public static partial class GameScreen
         var ruleA = new Label
         {
             Text = RuleLine, X = 1, Y = ruleAY, Width = Dim.Fill(1), Height = 1,
-            ColorScheme = ColorSchemes.Dim,
+            SchemeName = ColorSchemes.DimName,
         };
         var statsTitleLabel = new Label
         {
             Text = "Status", X = 1, Y = statsTitleY, Width = Dim.Fill(1), Height = 1,
-            ColorScheme = ColorSchemes.Gold,
+            SchemeName = ColorSchemes.GoldName,
         };
         // Shrink stats text by 2 rows to make room for the status icon row
         // underneath (instantiated after turnManager exists below). The
         // [Effects] sidebar section now renders only when icon row hides.
         const int IconRowHeight = 2;
-        var playerStatsText = new TextView
+        var playerStatsText = new Label
         {
             X = 1, Y = statsTextY, Width = Dim.Fill(1), Height = StatsHeight - IconRowHeight,
-            ReadOnly = true, Text = player.GetStatsDisplay(),
-            ColorScheme = ColorSchemes.Body,
+            Text = player.GetStatsDisplay(),
+            CanFocus = false,
+            SchemeName = ColorSchemes.BodyName,
         };
 
         var ruleB = new Label
         {
             Text = RuleLine, X = 1, Y = Pos.Bottom(playerStatsText) + IconRowHeight,
-            Width = Dim.Fill(1), Height = 1, ColorScheme = ColorSchemes.Dim,
+            Width = Dim.Fill(1), Height = 1, SchemeName = ColorSchemes.DimName,
         };
 
         var tabDefs = new (string Label, LogCategory? Filter)[]
@@ -150,7 +163,7 @@ public static partial class GameScreen
         var messagesTitleLabel = new Label
         {
             Text = "Messages", X = 1, Y = Pos.Bottom(ruleB),
-            Width = 10, Height = 1, ColorScheme = ColorSchemes.Gold
+            Width = 10, Height = 1, SchemeName = ColorSchemes.GoldName
         };
 
         var tabButtons = new Button[tabDefs.Length];
@@ -161,7 +174,7 @@ public static partial class GameScreen
             {
                 Text = tabDefs[i].Label,
                 X = tabX, Y = Pos.Bottom(ruleB),
-                ColorScheme = i == 0 ? ColorSchemes.Gold : ColorSchemes.Dim,
+                SchemeName = i == 0 ? ColorSchemes.GoldName : ColorSchemes.DimName,
                 NoPadding = true
             };
             tabX += tabDefs[i].Label.Length + 3;
@@ -178,7 +191,7 @@ public static partial class GameScreen
             int idx = i;
             tabButtons[i].Accepting += (s, e) =>
             {
-                e.Cancel = true;
+                e.Handled = true;
                 coloredLog.SetFilter(tabDefs[idx].Filter);
             };
         }
@@ -187,8 +200,8 @@ public static partial class GameScreen
         coloredLog.FilterChanged += (filter) =>
         {
             for (int j = 0; j < tabButtons.Length; j++)
-                tabButtons[j].ColorScheme = tabDefs[j].Filter.Equals(filter)
-                    ? ColorSchemes.Gold : ColorSchemes.Dim;
+                tabButtons[j].SchemeName = tabDefs[j].Filter.Equals(filter)
+                    ? ColorSchemes.GoldName : ColorSchemes.DimName;
         };
 
         rightPanel.Add(minimapTitleLabel, minimapView, minimapLegend, questTracker,
@@ -210,19 +223,18 @@ public static partial class GameScreen
 
         // ── Map area (left) ── Fills width minus right sidebar.
         var camera = new Camera();
-        var mapArea = new View
+        var mapArea = new PanelView
         {
             X = 0, Y = 0,
             Width = Dim.Fill(SidebarWidth), Height = Dim.Fill(4),
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
             CanFocus = true,
         };
         var mapTitleLabel = new Label
         {
             Text = $"Floor {startFloor} — Aincrad",
             X = 1, Y = 0, Width = Dim.Fill(), Height = 1,
-            ColorScheme = FloorThemeColor(startFloor)
-        };
+        }.WithScheme(FloorThemeColor(startFloor));
         var mapView = new MapView(map, camera, player)
         { X = 0, Y = 1, Width = Dim.Fill(), Height = Dim.Fill(), Log = gameLog };
         mapArea.Add(mapTitleLabel, mapView);
@@ -231,25 +243,25 @@ public static partial class GameScreen
         var ruleBottom = new Label
         {
             Text = RuleLine, X = 0, Y = Pos.AnchorEnd(4),
-            Width = Dim.Fill(), Height = 1, ColorScheme = ColorSchemes.Dim
+            Width = Dim.Fill(), Height = 1, SchemeName = ColorSchemes.DimName
         };
-        var actionBar = new View
+        var actionBar = new PanelView
         {
             X = 0, Y = Pos.AnchorEnd(3),
             Width = Dim.Fill(), Height = 3,
-            ColorScheme = ColorSchemes.Body,
+            SchemeName = ColorSchemes.BodyName,
             CanFocus = true,
         };
         // Row 0: HP/XP/Status bars + Inventory button (right)
-        var hpLabel = new Label { Text = "", X = 1, Y = 0, Width = 62, ColorScheme = ColorSchemes.Body };
+        var hpLabel = new Label { Text = "", X = 1, Y = 0, Width = 62, SchemeName = ColorSchemes.BodyName };
         var inventoryBtn = new Button
-        { Text = " Inventory ", X = Pos.AnchorEnd(16), Y = 0, ColorScheme = ColorSchemes.Button };
+        { Text = " Inventory ", X = Pos.AnchorEnd(16), Y = 0, SchemeName = ColorSchemes.ButtonName };
         // Row 1: Floor info + weapon + context
-        var infoLabel = new Label { Text = "", X = 1, Y = 1, Width = 62, ColorScheme = ColorSchemes.Dim };
+        var infoLabel = new Label { Text = "", X = 1, Y = 1, Width = 62, SchemeName = ColorSchemes.DimName };
         // Row 2: Consumable quickbar (left, 29 cols) + sword-skill indicator
         // (right, ~32 cols with F1-F4 shrunk to [FN]).
-        var hotbarLabel = new Label { Text = "", X = 1, Y = 2, Width = 30, ColorScheme = ColorSchemes.Body };
-        var skillBarLabel = new Label { Text = "", X = Pos.AnchorEnd(34), Y = 2, Width = 32, ColorScheme = ColorSchemes.Gold };
+        var hotbarLabel = new Label { Text = "", X = 1, Y = 2, Width = 30, SchemeName = ColorSchemes.BodyName };
+        var skillBarLabel = new Label { Text = "", X = Pos.AnchorEnd(34), Y = 2, Width = 32, SchemeName = ColorSchemes.GoldName };
         actionBar.Add(hpLabel, inventoryBtn, infoLabel, hotbarLabel, skillBarLabel);
 
         // Seed session bestiary from lifetime store — completion counter spans all runs.
@@ -261,6 +273,9 @@ public static partial class GameScreen
         turnManager.ActiveSaveSlot = saveSlot;
         mainWindow.Title = $"Aincrad TRPG — Floor {turnManager.CurrentFloor}";
         int[] saveFlash = { 0 };
+        // Last HP zone colour applied to hpLabel. Swapping the scheme builds a new
+        // Scheme, so only do it when the zone actually changes.
+        Color[] lastHpZone = { Color.Black };
 
         // Status tray — starts col 64 (right of HP bars), 2-row tall.
         // Second-row wrap handled inside the widget when col budget exceeded.
@@ -295,9 +310,18 @@ public static partial class GameScreen
             // and updates titles via GameScreen.Events.cs — do not double-call SetMap.
             turnManager.ReplaceMap(reMap, player);
             mapTitleLabel.Text = $"Floor {turnManager.CurrentFloor} — Aincrad";
-            mapTitleLabel.ColorScheme = FloorThemeColor(turnManager.CurrentFloor);
+            mapTitleLabel.SetScheme(FloorThemeColor(turnManager.CurrentFloor));
             ToastQueue.Enqueue($"Biomes reloaded — {BiomeSystem.DisplayName}", Color.BrightCyan, ToastCategory.StatUp);
         };
+
+        // Assigning View.Text re-runs text formatting and marks the view for redraw.
+        // RefreshHud runs every frame while a stat bar tween is in flight, so writing
+        // unchanged text would repaint the whole HUD each frame.
+        static void SetTextIfChanged(View view, string text)
+        {
+            if (!string.Equals(view.Text, text, StringComparison.Ordinal))
+                view.Text = text;
+        }
 
         void RefreshHud()
         {
@@ -360,7 +384,7 @@ public static partial class GameScreen
                 }
             }
 
-            playerStatsText.Text = sidebar.ToString();
+            SetTextIfChanged(playerStatsText, sidebar.ToString());
 
             // Eighth-block stat bar resolution (8x ASCII), with green/yellow/red
             // zones via StatBarHelper.ZoneColor. Bars read tweened "displayed"
@@ -381,15 +405,19 @@ public static partial class GameScreen
                 ? $"  [{WeatherSystem.GetLabel()}]" : "";
 
             // Row 0: HP | XP | SAT | Status effects (numerator uses tweened display).
-            hpLabel.Text = $"HP {hpBar} {dispHp}/{player.MaxHealth}" +
+            SetTextIfChanged(hpLabel, $"HP {hpBar} {dispHp}/{player.MaxHealth}" +
                            $" | XP {xpBar} Lv{player.Level}" +
-                           $" | SAT {satBar}" + statusTags + weatherTag + saveTag;
+                           $" | SAT {satBar}" + statusTags + weatherTag + saveTag);
             // HP zone color drives the row tint. Critical (<25%) escalates to
             // ColorSchemes.Danger so the existing low-HP redline behavior persists.
             var hpZone = StatBarHelper.ZoneColor(dispHp, player.MaxHealth);
-            hpLabel.ColorScheme = hpZone == Color.BrightRed
-                ? ColorSchemes.Danger
-                : (hpZone == Color.BrightYellow ? ColorSchemes.FromColor(Color.BrightYellow) : ColorSchemes.Body);
+            if (hpZone != lastHpZone[0])
+            {
+                lastHpZone[0] = hpZone;
+                hpLabel.SetScheme(hpZone == Color.BrightRed
+                    ? ColorSchemes.Danger
+                    : (hpZone == Color.BrightYellow ? ColorSchemes.FromColor(Color.BrightYellow) : ColorSchemes.Body));
+            }
 
             // Row 1: Floor context line
             var wpn = player.Inventory.GetEquipped(SAOTRPG.Inventory.Core.EquipmentSlot.Weapon);
@@ -404,12 +432,12 @@ public static partial class GameScreen
             string ctxHint = turnManager.GetContextHint();
             string hintTag = ctxHint.Length > 0 ? $" | {ctxHint}" : "";
 
-            infoLabel.Text = $"F{turnManager.CurrentFloor}" +
+            SetTextIfChanged(infoLabel, $"F{turnManager.CurrentFloor}" +
                              $" | {player.ColOnHand}c" +
                              $" | WPN: {wpnName}" +
                              $" | Mobs: {mobsLeft}" +
                              $" | T{turnManager.TurnCount}" +
-                             hintTag;
+                             hintTag);
 
             // Row 2 left: 10-slot quickbar. "N G" pairs separated by 1-col gutter
             // (29 cols total). Slot number dim-gray, glyph bright when filled / `·` dim when empty.
@@ -423,7 +451,7 @@ public static partial class GameScreen
                 qb.Append(slotDigit); qb.Append(glyph);
                 _ = filled; // glyph already encodes state (· when empty)
             }
-            hotbarLabel.Text = qb.ToString();
+            SetTextIfChanged(hotbarLabel, qb.ToString());
 
             // Row 2 right: F1-F4 shrunk to 4-cell [FN] labels so quickbar fits.
             // Full skill name surfaces in the game log on use; cooldown turns
@@ -438,15 +466,19 @@ public static partial class GameScreen
                 sb.Append($"[F{si + 1}]{tag} ");
             }
             if (turnManager.PostMotionDelay > 0) sb.Append($"!DLY{turnManager.PostMotionDelay}");
-            skillBarLabel.Text = sb.ToString();
+            SetTextIfChanged(skillBarLabel, sb.ToString());
 
-            inventoryBtn.Text = $" Inventory ({player.Inventory.Items.Count}) ";
+            SetTextIfChanged(inventoryBtn, $" Inventory ({player.Inventory.Items.Count}) ");
             int explored = turnManager.Map.GetExplorationPercent();
-            minimapTitleLabel.Text = $"Minimap — F{turnManager.CurrentFloor} ({explored}%)";
+            SetTextIfChanged(minimapTitleLabel, $"Minimap — F{turnManager.CurrentFloor} ({explored}%)");
             // Tracker + tray repaint every HUD refresh tick.
             questTracker.SetNeedsDraw();
             statusTray.SetNeedsDraw();
-            mapView.SetNeedsDraw();
+            // The map is deliberately not marked here. Handing a frame to the terminal
+            // blocks the loop — and therefore input — for as long as the console takes
+            // to parse and repaint it, so a redraw per HUD tick costs responsiveness for
+            // nothing when the map is unchanged. Player actions mark it dirty directly,
+            // and the animation ticker covers time-based effects.
         }
 
         WireVisualEffects(turnManager, mapView);
@@ -498,7 +530,7 @@ public static partial class GameScreen
         // automatically if the event is already in FiredEventIds (save-loaded run).
         if (saveData == null)
         {
-            Application.AddTimeout(TimeSpan.FromMilliseconds(250), () =>
+            AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(250), () =>
             {
                 Story.StorySystem.TryFire(Story.StoryTrigger.GameStart,
                     new Story.StoryContext(startFloor, 0, player));
@@ -553,7 +585,7 @@ public static partial class GameScreen
         Show(mainWindow, player, save.Difficulty, saveData: save, saveSlot: slot);
     }
 
-    private static ColorScheme FloorThemeColor(int floor) => ColorSchemes.FromColor(floor switch
+    private static Scheme FloorThemeColor(int floor) => ColorSchemes.FromColor(floor switch
     {
         <= 10 => Color.Green,
         <= 25 => Color.Yellow,

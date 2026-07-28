@@ -18,21 +18,31 @@ public class StatusIconRowWidget : View
     {
         _tm = tm;
         CanFocus = false;
-        ColorScheme = ColorSchemes.Body;
+        SchemeName = ColorSchemes.BodyName;
     }
 
-    protected override bool OnDrawingContent()
+    // Children repaint every cell they own, and the framework clear would otherwise blank
+    // this widget during the window where it skips painting beneath a dialog.
+    protected override bool OnClearingViewport() => true;
+
+    protected override bool OnDrawingContent(DrawContext? context)
     {
+        // A modal above us has already painted this pass; drawing now would erase it.
+        if (AppHost.IsBeneathTopSession(this)) return true;
+
         var vp = Viewport;
         if (vp.Width < MinSidebarWidth || vp.Height <= 0) return true;
 
+        // Batched rather than the framework's SetAttribute/Move/AddRune trio, which re-parses
+        // the grapheme and allocates per cell. Identical output: same glyphs, attributes and
+        // columns — the explicit x cursor reproduces AddRune's implicit column advance.
+        var batch = Gfx.Begin(this);
+        var blank = Gfx.Attr(Color.Black, Color.Black);
+        var bracket = Gfx.Attr(Color.DarkGray, Color.Black);
+
         // Blank both lines so stale glyphs from prior status sets don't smear.
         for (int row = 0; row < vp.Height; row++)
-        {
-            Driver!.SetAttribute(Gfx.Attr(Color.Black, Color.Black));
-            Move(0, row);
-            for (int c = 0; c < vp.Width; c++) Driver!.AddRune(new System.Text.Rune(' '));
-        }
+            for (int c = 0; c < vp.Width; c++) batch.Put(c, row, ' ', blank);
 
         var icons = StatusIconMap.Collect(_tm);
         if (icons.Count == 0) return true;
@@ -46,14 +56,11 @@ public class StatusIconRowWidget : View
             if (col + cellWidth - 1 > vp.Width) break;
 
             // Row 0: bracketed abbrev in the icon's color.
-            Driver!.SetAttribute(Gfx.Attr(Color.DarkGray, Color.Black));
-            Move(col, 0);
-            Driver!.AddRune(new System.Text.Rune('['));
-            Driver!.SetAttribute(Gfx.Attr(icon.Color, Color.Black));
-            for (int i = 0; i < label.Length; i++)
-                Driver!.AddRune(new System.Text.Rune(label[i]));
-            Driver!.SetAttribute(Gfx.Attr(Color.DarkGray, Color.Black));
-            Driver!.AddRune(new System.Text.Rune(']'));
+            var iconAttr = Gfx.Attr(icon.Color, Color.Black);
+            int x = col;
+            batch.Put(x++, 0, '[', bracket);
+            for (int i = 0; i < label.Length; i++) batch.Put(x++, 0, label[i], iconAttr);
+            batch.Put(x, 0, ']', bracket);
 
             // Row 1: countdown, centered under the abbrev (label-width window).
             // 0 = duration-less, render as middle dot.
@@ -62,10 +69,9 @@ public class StatusIconRowWidget : View
                 string count = icon.Count > 0 ? icon.Count.ToString() : "·";
                 if (count.Length > 3) count = "9+";
                 int dx = Math.Max(0, (label.Length - count.Length) / 2) + 1; // +1 for the leading '['
-                Driver!.SetAttribute(Gfx.Attr(Color.Gray, Color.Black));
-                Move(col + dx, 1);
-                foreach (var ch in count)
-                    Driver!.AddRune(new System.Text.Rune(ch));
+                var countAttr = Gfx.Attr(Color.Gray, Color.Black);
+                for (int i = 0; i < count.Length; i++)
+                    batch.Put(col + dx + i, 1, count[i], countAttr);
             }
 
             col += cellWidth;

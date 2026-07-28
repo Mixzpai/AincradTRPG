@@ -16,20 +16,28 @@ public class QuestTrackerWidget : View
         Width = TrackerWidth;
         Height = TrackerHeight;
         CanFocus = false;
-        ColorScheme = ColorSchemes.Body;
+        SchemeName = ColorSchemes.BodyName;
     }
 
-    protected override bool OnDrawingContent()
+    // Children repaint every cell they own, and the framework clear would otherwise blank
+    // this widget during the window where it skips painting beneath a dialog.
+    protected override bool OnClearingViewport() => true;
+
+    protected override bool OnDrawingContent(DrawContext? context)
     {
+        // A modal above us has already painted this pass; drawing now would erase it.
+        if (AppHost.IsBeneathTopSession(this)) return true;
+
         var vp = Viewport;
         if (vp.Width <= 0 || vp.Height <= 0) return true;
 
+        var batch = Gfx.Begin(this);
         var quest = QuestSystem.PinnedQuest();
         // Empty-state: blank both rows (widget effectively hides).
         if (quest == null)
         {
-            BlankRow(0, vp.Width);
-            if (vp.Height > 1) BlankRow(1, vp.Width);
+            BlankRow(batch, 0, vp.Width);
+            if (vp.Height > 1) BlankRow(batch, 1, vp.Width);
             return true;
         }
 
@@ -40,11 +48,11 @@ public class QuestTrackerWidget : View
             ? TextHelpers.Truncate($"COMPLETE — return to {quest.GiverName}", TrackerWidth)
             : BuildProgressLine(quest);
 
-        DrawRow(0, line1, nameColor, vp.Width);
+        DrawRow(batch, 0, line1, nameColor, vp.Width);
         if (vp.Height > 1)
         {
             Color line2Color = complete ? Color.BrightGreen : Color.Gray;
-            DrawRow(1, line2, line2Color, vp.Width);
+            DrawRow(batch, 1, line2, line2Color, vp.Width);
         }
         return true;
     }
@@ -66,20 +74,19 @@ public class QuestTrackerWidget : View
     private static string Pluralize(string noun, int count)
         => count == 1 || string.IsNullOrEmpty(noun) ? noun : noun + "s";
 
-    private void DrawRow(int row, string text, Color fg, int width)
+    // Batched rather than the framework's SetAttribute/Move/AddRune trio, which re-parses the
+    // grapheme and allocates per cell. Identical output: same glyphs, attributes and columns.
+    private static void DrawRow(Gfx.Batch batch, int row, string text, Color fg, int width)
     {
-        Driver!.SetAttribute(Gfx.Attr(fg, Color.Black));
-        Move(0, row);
+        var attr = Gfx.Attr(fg, Color.Black);
         int i = 0;
-        for (; i < text.Length && i < width; i++)
-            Driver!.AddRune(new System.Text.Rune(text[i]));
-        for (; i < width; i++) Driver!.AddRune(new System.Text.Rune(' '));
+        for (; i < text.Length && i < width; i++) batch.Put(i, row, text[i], attr);
+        for (; i < width; i++) batch.Put(i, row, ' ', attr);
     }
 
-    private void BlankRow(int row, int width)
+    private static void BlankRow(Gfx.Batch batch, int row, int width)
     {
-        Driver!.SetAttribute(Gfx.Attr(Color.Black, Color.Black));
-        Move(0, row);
-        for (int i = 0; i < width; i++) Driver!.AddRune(new System.Text.Rune(' '));
+        var attr = Gfx.Attr(Color.Black, Color.Black);
+        for (int i = 0; i < width; i++) batch.Put(i, row, ' ', attr);
     }
 }
