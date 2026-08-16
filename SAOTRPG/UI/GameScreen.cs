@@ -41,10 +41,12 @@ public static partial class GameScreen
         "  Combat: Bump to attack  |  F1-F4: Sword Skills  |  V: Counter",
     };
 
+    // runSeed: null mints one. Character creation passes a player-entered seed through so a run
+    // can be replayed or shared.
     public static void Show(Window mainWindow, Player player, int difficulty = 3,
-        SaveData? saveData = null, int saveSlot = 1)
+        SaveData? saveData = null, int saveSlot = 1, int? runSeed = null)
     {
-        try { ShowInternal(mainWindow, player, difficulty, saveData, saveSlot); }
+        try { ShowInternal(mainWindow, player, difficulty, saveData, saveSlot, runSeed); }
         catch (Exception ex)
         {
             DebugLogger.LogError("GameScreen.Show", ex);
@@ -53,15 +55,13 @@ public static partial class GameScreen
     }
 
     private static void ShowInternal(Window mainWindow, Player player, int difficulty,
-        SaveData? saveData, int saveSlot)
+        SaveData? saveData, int saveSlot, int? runSeed = null)
     {
         mainWindow.RemoveAll();
         SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
         s_screenGeneration++;
         // Unhook menu-screen Esc handlers so they don't shadow MapView's PauseRequested routing.
-        DifficultyScreen.UnhookEscHandler(mainWindow);
-        CharacterCreationScreen.UnhookEscHandler(mainWindow);
-        ModifierSelectScreen.UnhookEscHandler(mainWindow);
+        NavigationHelper.UnhookScreenEscHandlers(mainWindow);
         var sw = DebugLogger.StartTimer("GameScreen.Show");
         DebugLogger.LogScreen("GameScreen");
 
@@ -77,15 +77,25 @@ public static partial class GameScreen
             Skills.UniqueSkillSystem.TrapsDisarmed = 0;
             // Fresh run → zero out per-prefab MAX_PER_GAME counts.
             MapGenerator.SetPrefabUseCounts(null);
+
+            // Mint the run's seed here, before anything generates. Nothing else did: the seed was
+            // a static initialiser, so every run in one process shared a world until the player
+            // relaunched the executable.
+            int seed = runSeed ?? RunRng.NewSeed();
+            MapGenerator.SetGlobalSeed(seed);
+            RunRng.Reseed(seed);
         }
         else
         {
-            // Save load — RunModifiers restored by TurnManager.LoadFromSave.
+            // Save load — RunModifiers restored by TurnManager.LoadFromSave, and the map seed by
+            // SaveManager.LoadGame. The gameplay stream restarts from that same seed.
+            RunRng.Reseed(saveData.GlobalSeed);
         }
         Story.StorySystem.Handler = Dialogs.CutsceneDialog.Show;
 
         int startFloor = saveData?.CurrentFloor ?? 1;
-        DebugLogger.LogGame("GAME", $"ShowInternal: floor={startFloor} diff={difficulty} save={saveData != null}");
+
+        DebugLogger.LogGame("GAME", $"ShowInternal: floor={startFloor} diff={difficulty} save={saveData != null} seed={RunRng.Seed}");
         var (map, rooms) = MapGenerator.GenerateFloor(startFloor);
         DebugLogger.LogGame("GAME", $"Map generated: {map.Width}x{map.Height}, {rooms.Count} rooms");
 
@@ -175,7 +185,7 @@ public static partial class GameScreen
                 Text = tabDefs[i].Label,
                 X = tabX, Y = Pos.Bottom(ruleB),
                 SchemeName = i == 0 ? ColorSchemes.GoldName : ColorSchemes.DimName,
-                NoPadding = true
+                NoPadding = true, ShadowStyle = null
             };
             tabX += tabDefs[i].Label.Length + 3;
         }
@@ -255,7 +265,8 @@ public static partial class GameScreen
         // Row 0: HP/XP/Status bars + Inventory button (right)
         var hpLabel = new Label { Text = "", X = 1, Y = 0, Width = 62, SchemeName = ColorSchemes.BodyName };
         var inventoryBtn = new Button
-        { Text = " Inventory ", X = Pos.AnchorEnd(16), Y = 0, SchemeName = ColorSchemes.ButtonName };
+        { Text = " Inventory ", X = Pos.AnchorEnd(16), Y = 0, SchemeName = ColorSchemes.ButtonName,
+          ShadowStyle = null };
         // Row 1: Floor info + weapon + context
         var infoLabel = new Label { Text = "", X = 1, Y = 1, Width = 62, SchemeName = ColorSchemes.DimName };
         // Row 2: Consumable quickbar (left, 29 cols) + sword-skill indicator
@@ -432,10 +443,17 @@ public static partial class GameScreen
             string ctxHint = turnManager.GetContextHint();
             string hintTag = ctxHint.Length > 0 ? $" | {ctxHint}" : "";
 
+            // The tips list tells the player "the danger compass points toward nearby threats",
+            // and nothing called GetDangerCompass — the feature was written and never shown.
+            // It returns "" with no monster on the floor, so it self-suppresses like the hint.
+            string compass = turnManager.GetDangerCompass();
+            string compassTag = compass.Length > 0 ? $" | {compass}" : "";
+
             SetTextIfChanged(infoLabel, $"F{turnManager.CurrentFloor}" +
                              $" | {player.ColOnHand}c" +
                              $" | WPN: {wpnName}" +
                              $" | Mobs: {mobsLeft}" +
+                             compassTag +
                              $" | T{turnManager.TurnCount}" +
                              hintTag);
 

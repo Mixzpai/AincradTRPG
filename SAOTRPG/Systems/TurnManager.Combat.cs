@@ -156,15 +156,36 @@ public partial class TurnManager
         return Math.Max(0, SumWeaponShield<EquipmentSpecialEffect.Barrier>(b => b.Magnitude));
     }
 
+    // Indexed type-filtered fold over one item's parsed effects. ParsedEffects is an
+    // IReadOnlyList, so this walks it directly; OfType<T>() would allocate an iterator plus a
+    // boxed list enumerator per call, and SumAllSlots alone calls it once per equipped slot.
+    private static int SumTyped<T>(EquipmentBase eq, Func<T, int> get) where T : EquipmentSpecialEffect
+    {
+        int total = 0;
+        var fx = eq.ParsedEffects;
+        for (int i = 0; i < fx.Count; i++)
+            if (fx[i] is T rec) total += get(rec);
+        return total;
+    }
+
+    private static int MaxTyped<T>(EquipmentBase eq, Func<T, int> get) where T : EquipmentSpecialEffect
+    {
+        int best = 0;
+        var fx = eq.ParsedEffects;
+        for (int i = 0; i < fx.Count; i++)
+            if (fx[i] is T rec) best = Math.Max(best, get(rec));
+        return best;
+    }
+
     // Typed-generic MH weapon + OH shield aggregator. Sums every parsed record of T
     // across both slots, applying `get` to extract the int field.
     internal int SumWeaponShield<T>(Func<T, int> get) where T : EquipmentSpecialEffect
     {
         int total = 0;
         if (_player.Inventory.GetEquipped(EquipmentSlot.Weapon) is EquipmentBase wpn)
-            foreach (var rec in wpn.ParsedEffects.OfType<T>()) total += get(rec);
+            total += SumTyped(wpn, get);
         if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
-            foreach (var rec in shield.ParsedEffects.OfType<T>()) total += get(rec);
+            total += SumTyped(shield, get);
         return total;
     }
 
@@ -173,9 +194,9 @@ public partial class TurnManager
     {
         int best = 0;
         if (_player.Inventory.GetEquipped(EquipmentSlot.Weapon) is EquipmentBase wpn)
-            foreach (var rec in wpn.ParsedEffects.OfType<T>()) best = Math.Max(best, get(rec));
+            best = Math.Max(best, MaxTyped(wpn, get));
         if (_player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Armor shield)
-            foreach (var rec in shield.ParsedEffects.OfType<T>()) best = Math.Max(best, get(rec));
+            best = Math.Max(best, MaxTyped(shield, get));
         return best;
     }
 
@@ -193,7 +214,7 @@ public partial class TurnManager
         foreach (var slot in _allEquippedSlots)
         {
             if (_player.Inventory.GetEquipped(slot) is EquipmentBase eq)
-                foreach (var rec in eq.ParsedEffects.OfType<T>()) total += get(rec);
+                total += SumTyped(eq, get);
         }
         return total;
     }
@@ -221,7 +242,7 @@ public partial class TurnManager
         else { _comboTarget = monster.Id; _comboCount = 1; _pairResonanceLogged.Clear(); }
         int comboBonus = Math.Max(0, (_comboCount - 1) * 2);
         // SpecialEffect: ComboBonus+N increases combo damage by N%
-        int comboMulPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ComboBonus>().FirstOrDefault()?.Percent ?? 0;
+        int comboMulPct = wpn?.FirstEffect<EquipmentSpecialEffect.ComboBonus>()?.Percent ?? 0;
         if (comboMulPct > 0 && comboBonus > 0)
             comboBonus = comboBonus * (100 + comboMulPct) / 100;
         bool isFinisher = _comboCount == 5;
@@ -250,7 +271,7 @@ public partial class TurnManager
             && DualWieldPairs.IsCanonicalPair(wpn.DefinitionId, offHandWeapon.DefinitionId);
         // Gate the 5% re-roll by the same banner-hash-set: single-shot per encounter.
         if (pairResonance && !playerCrit && !_pairResonanceLogged.Contains(monster.Id)
-            && Random.Shared.Next(100) < 5)
+            && RunRng.Next(100) < 5)
         {
             playerCrit = true;
         }
@@ -275,33 +296,33 @@ public partial class TurnManager
 
         // SpecialEffect damage multipliers — HolyDamage vs undead/demon,
         // DragonSlayer vs dragons, FrostDamage generic elemental bonus.
-        int holyPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.HolyDamage>().FirstOrDefault()?.Percent ?? 0;
+        int holyPct = wpn?.FirstEffect<EquipmentSpecialEffect.HolyDamage>()?.Percent ?? 0;
         if (holyPct > 0 && monster is Mob hm
             && (hm.LootTag == "undead" || hm.LootTag == "demon"))
             damage = damage * (100 + holyPct) / 100;
-        int dragonPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.DragonSlayer>().FirstOrDefault()?.Percent ?? 0;
+        int dragonPct = wpn?.FirstEffect<EquipmentSpecialEffect.DragonSlayer>()?.Percent ?? 0;
         if (dragonPct > 0 && IsDragonType(monster))
             damage = damage * (100 + dragonPct) / 100;
-        int frostPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.FrostDamage>().FirstOrDefault()?.Percent ?? 0;
+        int frostPct = wpn?.FirstEffect<EquipmentSpecialEffect.FrostDamage>()?.Percent ?? 0;
         if (frostPct > 0) damage = damage * (100 + frostPct) / 100;
         // NightDamage+N — only applies during night (SunLevel < 0.35).
-        int nightPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.NightDamage>().FirstOrDefault()?.Percent ?? 0;
+        int nightPct = wpn?.FirstEffect<EquipmentSpecialEffect.NightDamage>()?.Percent ?? 0;
         if (nightPct > 0 && SAOTRPG.Map.DayNightCycle.SunLevel < 0.35f)
             damage = damage * (100 + nightPct) / 100;
         // ArmorPierce+N — ignore N% of monster defense (bonus damage add).
-        int armorPiercePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ArmorPierce>().FirstOrDefault()?.Percent ?? 0;
+        int armorPiercePct = wpn?.FirstEffect<EquipmentSpecialEffect.ArmorPierce>()?.Percent ?? 0;
         if (armorPiercePct > 0)
             damage += Math.Max(0, monster.BaseDefense) * armorPiercePct / 100;
         // PiercingShot+N — bow-only variant. Stacks with ArmorPierce on bows.
-        int piercePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.PiercingShot>().FirstOrDefault()?.Percent ?? 0;
+        int piercePct = wpn?.FirstEffect<EquipmentSpecialEffect.PiercingShot>()?.Percent ?? 0;
         if (piercePct > 0 && wpnType == "Bow")
             damage += Math.Max(0, monster.BaseDefense) * piercePct / 100;
         // TrueStrike+N — on proc, bypass any mitigation: raw+profBonus,
         // crit-quality clean hit. Current engine has no monster evade on
         // player swings, so we honor intent by ensuring no-floor damage.
-        int trueStrikeChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.TrueStrike>().FirstOrDefault()?.ChancePercent ?? 0;
+        int trueStrikeChance = wpn?.FirstEffect<EquipmentSpecialEffect.TrueStrike>()?.ChancePercent ?? 0;
         bool trueStrikeProc = trueStrikeChance > 0
-            && Random.Shared.Next(100) < trueStrikeChance;
+            && RunRng.Next(100) < trueStrikeChance;
         if (trueStrikeProc)
         {
             damage = Math.Max(damage, baseDmg + profBonus + comboBonus);
@@ -309,7 +330,7 @@ public partial class TurnManager
         }
         if (backstab)
         {
-            int backstabBonus = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.BackstabDmg>().FirstOrDefault()?.BonusPercent ?? 0;
+            int backstabBonus = wpn?.FirstEffect<EquipmentSpecialEffect.BackstabDmg>()?.BonusPercent ?? 0;
             int backstabMul = 2 + backstabBonus / 50; // +50% → x3
             damage *= backstabMul;
         }
@@ -323,7 +344,7 @@ public partial class TurnManager
         if (isFinisher)
         {
             damage *= 2;
-            string finisher = FlavorText.ComboFinisherFlavors[Random.Shared.Next(FlavorText.ComboFinisherFlavors.Length)];
+            string finisher = FlavorText.ComboFinisherFlavors[RunRng.Next(FlavorText.ComboFinisherFlavors.Length)];
             _log.LogCombat(finisher);
             _log.LogCombat($"  5-hit combo finisher! (x2 damage = {damage})");
             _comboCount = 0;
@@ -345,7 +366,7 @@ public partial class TurnManager
         var reward = monster.TakeDamage(damage);
         // ExecuteThreshold+N — if surviving HP% is below N, force-kill. Applies
         // post-damage, pre-defeat-check so loot/xp flow through HandleMonsterKill.
-        int executePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ExecuteThreshold>().FirstOrDefault()?.HpPercent ?? 0;
+        int executePct = wpn?.FirstEffect<EquipmentSpecialEffect.ExecuteThreshold>()?.HpPercent ?? 0;
         if (executePct > 0 && !monster.IsDefeated && monster.MaxHealth > 0
             && monster.CurrentHealth * 100 / monster.MaxHealth < executePct)
         {
@@ -366,7 +387,8 @@ public partial class TurnManager
         string tag = BuildDamageTypeTag(wpn);
         hitLine = ApplyDamageTag(hitLine, tag);
         _log.LogCombat(hitLine + critTag);
-        WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(wpn, playerCrit));
+        WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(wpn, playerCrit),
+            GetSwingDurationMs(wpn));
         // Bow/ranged: emit animated arrow projectile from player→target.
         if (wpnType == "Bow")
             ProjectileRequested?.Invoke(_player.X, _player.Y, monster.X, monster.Y,
@@ -396,20 +418,21 @@ public partial class TurnManager
             if (pairResonance) offhandDmg = offhandDmg * 110 / 100;
             // OH rolls crit independently. CriticalHitDamage adds ONCE to the OH
             // damage component (no double-stacking with MH crit).
-            bool offhandCrit = Random.Shared.Next(100)
+            bool offhandCrit = RunRng.Next(100)
                 < Math.Max(0, _player.CriticalRate + WeatherSystem.GetCritModifier());
             if (offhandCrit) offhandDmg += _player.CriticalHitDamage;
             monster.TakeDamage(offhandDmg);
             string ohCritTag = offhandCrit ? " CRITICAL!" : "";
             _log.LogCombat($"You strike again with {offhand.Name} for {offhandDmg} damage!{ohCritTag}");
-            WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(offhand, offhandCrit));
+            WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y, GetSwingColor(offhand, offhandCrit),
+                GetSwingDurationMs(offhand));
             if (offhandCrit) ParticleQueue.Emit(ParticleEvent.CritShatter, monster.X, monster.Y);
             DamageDealt?.Invoke(monster.X, monster.Y, offhandDmg, false, offhandCrit);
             DegradeEquipment(EquipmentSlot.OffHand);
         }
 
         // SpecialEffect: CritHeal — heal a % of damage on crit
-        int critHealPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.CritHeal>().FirstOrDefault()?.Percent ?? 0;
+        int critHealPct = wpn?.FirstEffect<EquipmentSpecialEffect.CritHeal>()?.Percent ?? 0;
         if (playerCrit && critHealPct > 0)
         {
             int heal = Math.Max(1, damage * critHealPct / 100);
@@ -419,7 +442,7 @@ public partial class TurnManager
 
         // SpecialEffect: Invisibility+N — crit conceals player for N turns.
         // Consumed by AI.cs via _invisibilityTurnsLeft > 0 cutting aggro range.
-        int invisTurns = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Invisibility>().FirstOrDefault()?.Turns ?? 0;
+        int invisTurns = wpn?.FirstEffect<EquipmentSpecialEffect.Invisibility>()?.Turns ?? 0;
         if (playerCrit && invisTurns > 0)
         {
             _invisibilityTurnsLeft = Math.Max(_invisibilityTurnsLeft, invisTurns);
@@ -427,52 +450,52 @@ public partial class TurnManager
         }
 
         // SpecialEffect: Bleed — chance to apply bleed on normal attacks
-        int bleedChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.BleedOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
-        if (bleedChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < bleedChance)
+        int bleedChance = wpn?.FirstEffect<EquipmentSpecialEffect.BleedOnHit>()?.ChancePercent ?? 0;
+        if (bleedChance > 0 && !monster.IsDefeated && RunRng.Next(100) < bleedChance)
         {
             _burningMobs[monster.Id] = (3, 1 + CurrentFloor);
             _log.LogCombat($"  {monster.Name} is bleeding from {wpn!.Name}!");
         }
 
         // SpecialEffect: Stun+N — chance to stun on normal attacks (2-turn).
-        int stunChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.StunOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
-        if (stunChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < stunChance)
+        int stunChance = wpn?.FirstEffect<EquipmentSpecialEffect.StunOnHit>()?.ChancePercent ?? 0;
+        if (stunChance > 0 && !monster.IsDefeated && RunRng.Next(100) < stunChance)
         {
             _stunnedMobs[monster.Id] = 2;
             _log.LogCombat($"  {monster.Name} is stunned by {wpn!.Name}!");
         }
         // SpecialEffect: Poison+N — chance to poison on hit (floor-scaled dmg).
-        int poisonChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.PoisonOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
-        if (poisonChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < poisonChance)
+        int poisonChance = wpn?.FirstEffect<EquipmentSpecialEffect.PoisonOnHit>()?.ChancePercent ?? 0;
+        if (poisonChance > 0 && !monster.IsDefeated && RunRng.Next(100) < poisonChance)
         {
             _poisonedMobs[monster.Id] = (4, 1 + CurrentFloor);
             _log.LogCombat($"  {monster.Name} is poisoned by {wpn!.Name}!");
         }
         // SpecialEffect: BlindOnHit+N — chance to blind on hit (halves atk).
-        int blindChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.BlindOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
-        if (blindChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < blindChance)
+        int blindChance = wpn?.FirstEffect<EquipmentSpecialEffect.BlindOnHit>()?.ChancePercent ?? 0;
+        if (blindChance > 0 && !monster.IsDefeated && RunRng.Next(100) < blindChance)
         {
             _blindedMobs[monster.Id] = 3;
             _log.LogCombat($"  {monster.Name} is blinded by {wpn!.Name}!");
         }
         // SpecialEffect: Lunacy+N — N% chance to confuse target AI for 2 turns.
         // Consumed by AI.cs: confused mobs pick a random adjacent tile.
-        int lunacyChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.LunacyOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
-        if (lunacyChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < lunacyChance)
+        int lunacyChance = wpn?.FirstEffect<EquipmentSpecialEffect.LunacyOnHit>()?.ChancePercent ?? 0;
+        if (lunacyChance > 0 && !monster.IsDefeated && RunRng.Next(100) < lunacyChance)
         {
             _confusedMobs[monster.Id] = 2;
             _log.LogCombat($"  {monster.Name} reels with lunacy from {wpn!.Name}!");
         }
         // SlowOnHit+N: N% chance to slow target for 3 turns.
         // Consumed by AI.cs: slowed mobs act every other turn (skip alternate turns).
-        int slowChance = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.SlowOnHit>().FirstOrDefault()?.ChancePercent ?? 0;
-        if (slowChance > 0 && !monster.IsDefeated && Random.Shared.Next(100) < slowChance)
+        int slowChance = wpn?.FirstEffect<EquipmentSpecialEffect.SlowOnHit>()?.ChancePercent ?? 0;
+        if (slowChance > 0 && !monster.IsDefeated && RunRng.Next(100) < slowChance)
         {
             _slowedMobs[monster.Id] = 3;
             _log.LogCombat($"  {monster.Name} is slowed by {wpn!.Name}!");
         }
         // SpecialEffect: Cleave+N — splash N% damage to up-to-2 adjacent foes.
-        int cleavePct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Cleave>().FirstOrDefault()?.SplashPercent ?? 0;
+        int cleavePct = wpn?.FirstEffect<EquipmentSpecialEffect.Cleave>()?.SplashPercent ?? 0;
         if (cleavePct > 0 && damage > 0)
         {
             int splashDmg = Math.Max(1, damage * cleavePct / 100);
@@ -600,7 +623,7 @@ public partial class TurnManager
         }
 
         string defeatMsg = string.Format(
-            FlavorText.DefeatFlavors[Random.Shared.Next(FlavorText.DefeatFlavors.Length)], monster.Name);
+            FlavorText.DefeatFlavors[RunRng.Next(FlavorText.DefeatFlavors.Length)], monster.Name);
         _log.LogCombat(defeatMsg);
 
         if (KillCount == 1) _log.LogSystem("Your first kill in Aincrad! The journey begins.");
@@ -638,7 +661,7 @@ public partial class TurnManager
         if (reward.WasOverkill)
         {
             string okMsg = string.Format(
-                FlavorText.OverkillFlavors[Random.Shared.Next(FlavorText.OverkillFlavors.Length)],
+                FlavorText.OverkillFlavors[RunRng.Next(FlavorText.OverkillFlavors.Length)],
                 reward.OverkillDamage * 2);
             _log.LogCombat(okMsg);
         }
@@ -680,7 +703,7 @@ public partial class TurnManager
                 bool isHnm = !string.IsNullOrEmpty(fieldBoss.FieldBossId)
                     && LootGenerator.CanonHnmBosses.Contains(fieldBoss.FieldBossId);
                 int rollThreshold = isHnm ? 10 : 2;
-                if (Random.Shared.Next(100) < rollThreshold)
+                if (RunRng.Next(100) < rollThreshold)
                 {
                     var avatar = Items.ItemRegistry.Create(avatarDefId);
                     if (avatar != null)
@@ -698,9 +721,9 @@ public partial class TurnManager
 
             // F95+ field boss: 10% chance to drop a Corruption Stone (HF
             // workaround — post-F100 boss unavailable, stones route corruption).
-            if (CurrentFloor >= 95 && Random.Shared.Next(100) < 10)
+            if (CurrentFloor >= 95 && RunRng.Next(100) < 10)
             {
-                string stoneId = Random.Shared.Next(2) == 0
+                string stoneId = RunRng.Next(2) == 0
                     ? "night_corruption_stone" : "shadow_corruption_stone";
                 var stoneDrop = Items.ItemRegistry.Create(stoneId);
                 if (stoneDrop != null)
@@ -751,7 +774,7 @@ public partial class TurnManager
             }
 
             // Divine Fragment — F75-F99 canon boss, ~5% drop (Divine Awakening Lv2 material).
-            if (CurrentFloor >= 75 && CurrentFloor < 100 && Random.Shared.Next(100) < 5)
+            if (CurrentFloor >= 75 && CurrentFloor < 100 && RunRng.Next(100) < 5)
             {
                 var frag = Items.ItemRegistry.Create("divine_fragment");
                 if (frag != null)
@@ -805,7 +828,7 @@ public partial class TurnManager
 
         if (GetMonsterCount() == 0)
         {
-            _log.LogSystem(FlavorText.FloorClearedMessages[Random.Shared.Next(FlavorText.FloorClearedMessages.Length)]);
+            _log.LogSystem(FlavorText.FloorClearedMessages[RunRng.Next(FlavorText.FloorClearedMessages.Length)]);
             RevealStairs();
         }
     }
@@ -853,6 +876,16 @@ public partial class TurnManager
         if (streakMsg != null) _log.LogCombat($"*** {streakMsg} ***");
     }
 
+    // Swing-arc duration per weapon, so weight is legible in the animation rather than only in
+    // the numbers: a scythe or greatsword (AttackSpeed 0) hangs, claws (AttackSpeed 3) snap. The
+    // old flat 66 ms sits in the middle of this range, so the average swing feels unchanged.
+    private const int SwingBaseMs = 100, SwingPerSpeedMs = 15, SwingMinMs = 45;
+    private static int GetSwingDurationMs(Weapon? wpn)
+    {
+        int speed = Math.Clamp(wpn?.AttackSpeed ?? 1, 0, 3);
+        return Math.Max(SwingMinMs, SwingBaseMs - speed * SwingPerSpeedMs);
+    }
+
     // Signature swing color per weapon type.
     private static Color GetSwingColor(Weapon? wpn, bool crit)
     {
@@ -898,7 +931,7 @@ public partial class TurnManager
 
     // Bow basic-attack via reticle. Validates Bow + tile + range + target, then
     // routes through HandleCombat (same melee formula) and advances the turn.
-    // Range mirrors SwordSkillEngine: Weapon.Range + BowRangeOverflow.
+    // Range mirrors the sword-skill path in SwordSkillEngine.cs: Weapon.Range + BowRangeOverflow.
     public void ExecuteBowShot(int tx, int ty)
     {
         if (_player.IsDefeated) return;

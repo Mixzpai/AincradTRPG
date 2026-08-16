@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "wind_motes", "densityPermille": 3 },
   "pocketCandidates": ["Forest", "Desert"],
   "primaryPaletteId": "Body",
-  "tintColor": "#8CC85080",
+  "tintColor": "#8CC8501A",
   "floorEntryText": "A breeze stirs the tall grass. The sky is wide and unhurried.",
   "treeGlyph": "♣",
   "oreVeinDensity": 0.8,

@@ -33,12 +33,9 @@ public static class PauseMenuDialog
         var optionsBtn = MakeMenuButton("Options", 6);
         var exitBtn = MakeMenuButton("Exit Game", 8);
 
-        var hint = new Label
-        {
-            Text = "Enter: select   Esc: resume",
-            X = Pos.Center(), Y = Pos.AnchorEnd(1),
-            Width = Dim.Auto(), SchemeName = ColorSchemes.DimName,
-        };
+        var hintPairs = new[] { ("enter", "select"), ("esc", "resume") };
+        var hint = ScreenHeader.KeyHints(
+            Pos.Percent(50) - ScreenHeader.KeyHintsWidth(hintPairs) / 2, Pos.AnchorEnd(1), hintPairs);
 
         saveBtn.Accepting += (s, e) =>
         {
@@ -106,7 +103,8 @@ public static class PauseMenuDialog
         NavigationHelper.WireUpDown(optionsBtn, loadBtn, exitBtn);
         NavigationHelper.WireUpDown(exitBtn, optionsBtn, saveBtn);
 
-        dialog.Add(header, saveBtn, loadBtn, optionsBtn, exitBtn, hint);
+        dialog.Add(header, saveBtn, loadBtn, optionsBtn, exitBtn);
+        dialog.Add(hint.ToArray());
         DialogHelper.CloseOnEscape(dialog);
         saveBtn.SetFocus();
         DialogHelper.RunModal(dialog);
@@ -129,7 +127,7 @@ public static class PauseMenuDialog
     // Shared CreateMenuButton ► label ◄ marker — consistent with TitleScreen/DifficultyScreen/etc.
     private static Button MakeMenuButton(string text, int y, bool isDefault = false)
     {
-        var btn = DialogHelper.CreateMenuButton(text, isDefault);
+        var btn = DialogHelper.CreateMenuRow(text, isDefault: isDefault);
         btn.X = Pos.Center();
         btn.Y = y;
         return btn;

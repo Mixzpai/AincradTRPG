@@ -239,6 +239,14 @@ public static class LisbethCraftDialog
             }
         };
 
+        // Enter is Command.Accept; unclaimed it bubbles past the Confirm button and closes the
+        // dialog even though Confirm's own handler ran first.
+        listView.Accepting += (s, e) =>
+        {
+            e.Handled = true;
+            craftBtn.InvokeCommand(Command.Accept);
+        };
+
         var closeBtn = DialogHelper.CreateButton("Leave");
         closeBtn.X = Pos.Center() + 3;
         closeBtn.Y = Pos.AnchorEnd(2);
@@ -251,7 +259,9 @@ public static class LisbethCraftDialog
             SchemeName = ColorSchemes.DimName,
         };
 
-        // F1-F5 toggle modes — capture at dialog level so list focus doesn't swallow.
+        // F1-F5 toggle modes. Dialog level is safe here only because these are function keys: a
+        // focused ListView consumes printable runes before its own KeyDown is raised, but not
+        // F-keys. A rune binding would have to live on the list itself.
         // Selection reset (D4) — heterogeneous lists across modes; out-of-range guards
         // exist in handlers but resetting to 0 prevents an obviously-wrong row stickying.
         dialog.KeyDown += (s, k) =>
@@ -282,6 +292,7 @@ public static class LisbethCraftDialog
         DialogHelper.CloseOnEscape(dialog);
         RefreshList();
         listView.SetFocus();
+        DialogHelper.SelectFirstRow(listView);
         DialogHelper.RunModal(dialog);
     }
 

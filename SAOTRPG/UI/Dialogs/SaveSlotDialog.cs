@@ -38,7 +38,8 @@ public static class SaveSlotDialog
             slotButtons[i] = new Button
             {
                 Text = " Load ", X = Pos.AnchorEnd(10), Y = rowY,
-                SchemeName = ColorSchemes.ButtonName, Visible = hasData
+                SchemeName = ColorSchemes.ButtonName, Visible = hasData,
+                ShadowStyle = null,
             };
 
             int capturedSlot = slot;
@@ -65,7 +66,8 @@ public static class SaveSlotDialog
 
         var deleteBtn = new Button
         {
-            Text = " Delete ", X = 1, Y = Pos.AnchorEnd(1), SchemeName = ColorSchemes.ButtonName
+            Text = " Delete ", X = 1, Y = Pos.AnchorEnd(1), SchemeName = ColorSchemes.ButtonName,
+            ShadowStyle = null,
         };
         deleteBtn.Accepting += (s, e) =>
         {
@@ -76,7 +78,8 @@ public static class SaveSlotDialog
         var closeBtn = new Button
         {
             Text = " Cancel ", X = Pos.AnchorEnd(12), Y = Pos.AnchorEnd(1),
-            IsDefault = true, SchemeName = ColorSchemes.ButtonName
+            IsDefault = true, SchemeName = ColorSchemes.ButtonName,
+            ShadowStyle = null,
         };
         closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
@@ -121,7 +124,8 @@ public static class SaveSlotDialog
             slotButtons[i] = new Button
             {
                 Text = hasData ? " Overwrite " : "  Select   ",
-                X = Pos.AnchorEnd(15), Y = rowY, SchemeName = ColorSchemes.ButtonName
+                X = Pos.AnchorEnd(15), Y = rowY, SchemeName = ColorSchemes.ButtonName,
+                ShadowStyle = null,
             };
 
             int capturedSlot = slot;
@@ -144,7 +148,8 @@ public static class SaveSlotDialog
         var closeBtn = new Button
         {
             Text = " Cancel ", X = Pos.AnchorEnd(12), Y = Pos.AnchorEnd(1),
-            SchemeName = ColorSchemes.ButtonName
+            SchemeName = ColorSchemes.ButtonName,
+            ShadowStyle = null,
         };
         closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
@@ -189,7 +194,7 @@ public static class SaveSlotDialog
         {
             dialog.Add(new Label
             {
-                Text = new string('─', 60), X = 2, Y = rowY + 2,
+                Text = new string(ScreenHeader.Hairline, 60), X = 2, Y = rowY + 2,
                 Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.DimName
             });
         }

@@ -99,7 +99,7 @@ public partial class TurnManager
         int baseAtk = _player.Attack + profBonus + _shrineBuff + _levelUpBuff + SatietyAtkBonus + FatigueAtkPenalty;
         // ThrustDmg+N — thrust-class skill multiplier (Rapier/Spear thrusts).
         double skillMul = skill.DamageMultiplier;
-        int thrustPct = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.ThrustDmg>().FirstOrDefault()?.Percent ?? 0;
+        int thrustPct = wpn?.FirstEffect<EquipmentSpecialEffect.ThrustDmg>()?.Percent ?? 0;
         if (thrustPct > 0 && (skill.Name.Contains("Thrust", StringComparison.OrdinalIgnoreCase)
                               || skill.Id.StartsWith("thrust_")))
             skillMul *= (100 + thrustPct) / 100.0;
@@ -128,7 +128,7 @@ public partial class TurnManager
             int critHits = 0;
             for (int h = 0; h < skill.Hits; h++)
             {
-                if (Random.Shared.Next(100) < Math.Max(0, _player.CriticalRate + WeatherSystem.GetCritModifier()))
+                if (RunRng.Next(100) < Math.Max(0, _player.CriticalRate + WeatherSystem.GetCritModifier()))
                     critHits++;
             }
             if (critHits > 0)
@@ -142,7 +142,7 @@ public partial class TurnManager
             _log.LogCombat($"  {skill.Name} hits {monster.Name} for {dmg} damage!{critTag}");
 
             WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y,
-                GetSwingColor(wpn, anyCrit));
+                GetSwingColor(wpn, anyCrit), GetSwingDurationMs(wpn));
             // Multi-hit cascade (Starburst Stream 16 / Eclipse 27 / MR 11):
             // emit MultiHitStream-flagged popups at 40ms stagger so they
             // bypass the 3-per-tile coalesce and register as a visible storm.
@@ -180,7 +180,7 @@ public partial class TurnManager
 
             // Status effect application
             if (skill.StatusEffect != null && skill.StatusChance > 0
-                && Random.Shared.NextDouble() < skill.StatusChance)
+                && RunRng.NextDouble() < skill.StatusChance)
             {
                 ApplySkillStatus(monster, skill.StatusEffect);
             }
@@ -193,11 +193,11 @@ public partial class TurnManager
 
         // ── Cooldown + post-motion ───────────────────────────────────
         // SkillCooldownReduction.Turns is negative (e.g. -1) — flat add to cd.
-        int cdReduction = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.SkillCooldownReduction>().FirstOrDefault()?.Turns ?? 0;
+        int cdReduction = wpn?.FirstEffect<EquipmentSpecialEffect.SkillCooldownReduction>()?.Turns ?? 0;
         int cd = Math.Max(0, skill.CooldownTurns + cdReduction);
         if (cd > 0)
             _skillCooldowns[skill.Id] = cd;
-        int pmReduction = wpn?.ParsedEffects.OfType<EquipmentSpecialEffect.PostMotionReduction>().FirstOrDefault()?.Turns ?? 0;
+        int pmReduction = wpn?.FirstEffect<EquipmentSpecialEffect.PostMotionReduction>()?.Turns ?? 0;
         int pm = Math.Max(0, skill.PostMotionDelay + pmReduction);
         if (pm > 0)
         {

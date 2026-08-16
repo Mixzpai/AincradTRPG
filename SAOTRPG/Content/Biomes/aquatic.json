@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "rain_mote", "densityPermille": 5 },
   "pocketCandidates": ["Ice", "Swamp"],
   "primaryPaletteId": "Dialog",
-  "tintColor": "#4080C080",
+  "tintColor": "#4080C024",
   "floorEntryText": "Sea-spray dusts the stones. The horizon is water all the way to the wall.",
   "treeGlyph": "♣",
   "oreVeinDensity": 0.2,

@@ -4,16 +4,16 @@ using System.Text.Json.Serialization;
 namespace SAOTRPG.Systems;
 
 // Combat log breakdown mode — cycled via OptionsScreen, consumed in
-// TurnManager.Combat.FormatHitLog. Order matches OptionsScreen radio.
+// TurnManager.Combat.FormatPlayerHitLog. Order matches OptionsScreen radio.
 public enum DamageBreakdownMode { Off = 0, Concise = 1, Medium = 2, Verbose = 3 }
 
-// FB-450 particle density. Off=disabled; Pronounced=default (5-10 particles, 800ms).
+// particle density. Off=disabled; Pronounced=default (5-10 particles, 800ms).
 public enum ParticleDensity { Off = 0, Subtle = 1, Moderate = 2, Pronounced = 3 }
 
-// FB-452 damage tag position in log lines. Prefix = default, reads best dense.
+// damage tag position in log lines. Prefix = default, reads best dense.
 public enum DamageTagPosition { Prefix = 0, Suffix = 1, Inline = 2 }
 
-// FB-452 damage tag bracket style. Brackets = default, Bare strips, Chip wraps ◆.
+// damage tag bracket style. Brackets = default, Bare strips, Chip wraps ◆.
 public enum DamageTagStyle { Brackets = 0, Bare = 1, Chip = 2 }
 
 // Footstep trail glyph style. Off = trail disabled.
@@ -27,9 +27,6 @@ public enum FootstepOpacity { Subtle = 0, Medium = 1, Bold = 2 }
 // Add: property + OptionsScreen control + system wiring + Save() on change.
 public class UserSettings
 {
-    // ── Versioning ───────────────────────────────────────────────────
-    public int SettingsVersion { get; set; } = 2;
-
     // ── Gameplay ─────────────────────────────────────────────────────
     // Automatically pick up items when stepping on them.
     public bool AutoPickup { get; set; } = false;
@@ -68,17 +65,25 @@ public class UserSettings
     // Combat-log breakdown verbosity for player-initiated hits.
     public DamageBreakdownMode DamageBreakdownMode { get; set; } = DamageBreakdownMode.Off;
 
-    // FB-450 particle density. Default Pronounced (5-10 particles @ 800ms).
+    // particle density. Default Pronounced (5-10 particles @ 800ms).
     public ParticleDensity ParticleDensity { get; set; } = ParticleDensity.Pronounced;
 
-    // FB-452 damage tag position — Prefix reads best in dense combat logs.
+    // damage tag position — Prefix reads best in dense combat logs.
     public DamageTagPosition DamageTagPosition { get; set; } = DamageTagPosition.Prefix;
 
-    // FB-452 damage tag bracket style — default [BRACKETS] for visual anchor.
+    // damage tag bracket style — default [BRACKETS] for visual anchor.
     public DamageTagStyle DamageTagStyle { get; set; } = DamageTagStyle.Brackets;
 
     // Fall back to ASCII stat bars if the terminal font renders
     // eighth-block unicode (█▉▊▋▌▍▎▏) incorrectly. Default false → unicode.
+    // Stops everything that moves on its own: looping tile and weather visuals, screen shake,
+    // particles, dialog fades and the HUD bar tweens. Event lifetimes are untouched — a toast
+    // still appears and still expires, it just does not fade.
+    public bool ReduceMotion { get; set; } = false;
+
+    // Interface colour theme. UI layer only — the map keeps its own palette.
+    public UI.Helpers.ThemeId ColorTheme { get; set; } = UI.Helpers.ThemeId.Default;
+
     public bool UseAsciiStatBars { get; set; } = false;
 
     // Player Guide — fall back to ASCII disclosure glyphs ('>' / 'v') instead

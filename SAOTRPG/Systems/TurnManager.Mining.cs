@@ -100,6 +100,11 @@ public partial class TurnManager
 
         int floor = MinStrikesAfterPower(type);
         int reduction = 1 + Math.Max(0, miningPower);
+
+        // Mining L50: Iron veins cost one fewer strike to deplete. The clamp below still bounds
+        // the single-hit drop, so this cannot skip past the tier's floor.
+        if (type == TileType.OreVeinIron && _player.LifeSkills.MiningIronStrikeDiscount)
+            reduction++;
         int next = Math.Max(0, strikes - reduction);
         int largestDrop = Math.Max(1, DefaultStrikesForTile(type) - floor);
         if (strikes - next > largestDrop) next = strikes - largestDrop;
@@ -109,10 +114,22 @@ public partial class TurnManager
         return next;
     }
 
+    // Counts strikes for the Mining L10 perk below. Per-run, not persisted: the perk halves an
+    // ongoing cost, so which side of the parity a loaded run resumes on does not matter.
+    private int _miningStrikeCount;
+
     // Pickaxe-specific durability tick. Mirrors DegradeEquipment but Pickaxe is non-Divine.
     private void DegradePickaxe(Pickaxe pick)
     {
         if (pick.ItemDurability <= 0) return;
+
+        // Mining L10: every other strike is free. This is the perk the Player Guide advertises as
+        // "free dur every other strike", and it is also what makes the L99 milestone's "durability
+        // damage halved" true — both strings described a perk nothing read.
+        _miningStrikeCount++;
+        if (_player.LifeSkills.MiningEveryOtherStrikeFree && _miningStrikeCount % 2 == 0)
+            return;
+
         pick.ItemDurability--;
         if (pick.ItemDurability == 5)
             _log.Log($"Your {pick.Name} is about to break! ({pick.ItemDurability} durability)");

@@ -36,6 +36,11 @@ public enum TileType
     // Additional Hazards
     TrapPoison,
     TrapAlarm,
+    // Three later hazards, each reusing an existing status rather than inventing one:
+    // Web slows, Rune stuns on top of burst damage, Magnet drags nearby mobs onto you.
+    TrapWeb,
+    TrapMagnet,
+    TrapRune,
 
     // Hidden
     CrackedWall,

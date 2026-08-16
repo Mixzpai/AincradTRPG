@@ -1,3 +1,5 @@
+using SAOTRPG.Systems;
+
 namespace SAOTRPG.Map;
 
 // BSP labyrinth: separate denser-than-overworld map, wall-filled, carved into rooms + L-corridors.
@@ -11,6 +13,11 @@ public static partial class MapGenerator
     // Returns (map, rooms) with rooms[0]=entrance, rooms[^1]=boss room.
     public static (GameMap Map, List<Room> Rooms) GenerateLabyrinth(int floor)
     {
+        // Derived from the run seed and the floor, NOT drawn inline from the run stream: a floor's
+        // labyrinth must be the same one every time the player steps back into it, and it must
+        // reproduce for a given seed regardless of how many turns preceded entry.
+        var rng = RunRng.StreamFor("labyrinth", floor);
+
         var map = new GameMap(LabWidth, LabHeight);
 
         // Fill everything with Wall — rooms and corridors are carved out.
@@ -20,16 +27,16 @@ public static partial class MapGenerator
 
         // BSP partition into leaf nodes.
         var leaves = new List<(int X, int Y, int W, int H)>();
-        SplitBsp(2, 2, LabWidth - 4, LabHeight - 4, leaves);
+        SplitBsp(2, 2, LabWidth - 4, LabHeight - 4, leaves, rng);
 
         // Carve a room inside each leaf.
         var rooms = new List<Room>();
         foreach (var (lx, ly, lw, lh) in leaves)
         {
-            int rw = Random.Shared.Next(Math.Max(4, lw / 2), lw - 1);
-            int rh = Random.Shared.Next(Math.Max(4, lh / 2), lh - 1);
-            int rx = lx + Random.Shared.Next(1, Math.Max(2, lw - rw));
-            int ry = ly + Random.Shared.Next(1, Math.Max(2, lh - rh));
+            int rw = rng.Next(Math.Max(4, lw / 2), lw - 1);
+            int rh = rng.Next(Math.Max(4, lh / 2), lh - 1);
+            int rx = lx + rng.Next(1, Math.Max(2, lw - rw));
+            int ry = ly + rng.Next(1, Math.Max(2, lh - rh));
             CarveRoom(map, rx, ry, rw, rh);
             rooms.Add(new Room(rx, ry, rw, rh));
         }
@@ -53,7 +60,7 @@ public static partial class MapGenerator
         // Scatter campfire light sources for atmosphere.
         for (int i = 1; i < rooms.Count - 1; i++)
         {
-            if (Random.Shared.Next(3) == 0)
+            if (rng.Next(3) == 0)
             {
                 int cx = rooms[i].X + 1, cy = rooms[i].Y + 1;
                 if (map.InBounds(cx, cy) && map.Tiles[cx, cy].Type == TileType.Floor)
@@ -65,8 +72,8 @@ public static partial class MapGenerator
         int trapCount = 3 + floor * 2;
         for (int i = 0; i < trapCount; i++)
         {
-            int tx = Random.Shared.Next(3, LabWidth - 3);
-            int ty = Random.Shared.Next(3, LabHeight - 3);
+            int tx = rng.Next(3, LabWidth - 3);
+            int ty = rng.Next(3, LabHeight - 3);
             if (map.Tiles[tx, ty].Type == TileType.Floor)
             {
                 // Don't trap the entrance or boss room centers.
@@ -82,7 +89,8 @@ public static partial class MapGenerator
 
     // ── BSP helpers ──────────────────────────────────────────────────
 
-    private static void SplitBsp(int x, int y, int w, int h, List<(int, int, int, int)> leaves)
+    private static void SplitBsp(int x, int y, int w, int h, List<(int, int, int, int)> leaves,
+                                 Random rng)
     {
         if (w < MinLeaf * 2 && h < MinLeaf * 2)
         {
@@ -92,19 +100,19 @@ public static partial class MapGenerator
 
         bool splitH = w < MinLeaf * 2 ? true
                      : h < MinLeaf * 2 ? false
-                     : Random.Shared.Next(2) == 0;
+                     : rng.Next(2) == 0;
 
         if (splitH)
         {
-            int splitY = y + Random.Shared.Next(MinLeaf, Math.Max(MinLeaf + 1, h - MinLeaf));
-            SplitBsp(x, y, w, splitY - y, leaves);
-            SplitBsp(x, splitY, w, y + h - splitY, leaves);
+            int splitY = y + rng.Next(MinLeaf, Math.Max(MinLeaf + 1, h - MinLeaf));
+            SplitBsp(x, y, w, splitY - y, leaves, rng);
+            SplitBsp(x, splitY, w, y + h - splitY, leaves, rng);
         }
         else
         {
-            int splitX = x + Random.Shared.Next(MinLeaf, Math.Max(MinLeaf + 1, w - MinLeaf));
-            SplitBsp(x, y, splitX - x, h, leaves);
-            SplitBsp(splitX, y, x + w - splitX, h, leaves);
+            int splitX = x + rng.Next(MinLeaf, Math.Max(MinLeaf + 1, w - MinLeaf));
+            SplitBsp(x, y, splitX - x, h, leaves, rng);
+            SplitBsp(splitX, y, x + w - splitX, h, leaves, rng);
         }
     }
 

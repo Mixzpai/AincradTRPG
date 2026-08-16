@@ -68,7 +68,6 @@ public class LifeSkillSystem
     }
 
     public int GetLevel(LifeSkillType skill) => Skills[skill].Level;
-    public int GetXp(LifeSkillType skill) => Skills[skill].CurrentXp;
 
     // (XP into level, XP span to next) for progress bar. At max, both = full.
     public (int Current, int Next) GetLevelProgress(LifeSkillType skill)
@@ -81,7 +80,7 @@ public class LifeSkillSystem
         return (s.CurrentXp - cur, nxt - cur);
     }
 
-    // Grants XP, rolls up levels, fires MilestoneReached per 10/25/50/99 crossing.
+    // Grants XP, rolls up levels, fires LifeSkillMilestoneReached per 10/25/50/99 crossing.
     public void GrantXp(LifeSkillType skill, int amount)
     {
         if (amount <= 0) return;
@@ -194,10 +193,6 @@ public class LifeSkillSystem
         return 0;
     }
 
-    // Running L99: -30% sprint stamina. Display-only until stamina system lands.
-    public bool RunningSprintStaminaReduced =>
-        Skills[LifeSkillType.Running].Level >= MaxLevel;
-
     // Sleep L99: faster passive regen counter in TurnManager.PassiveRegen.
     public bool SleepFasterRegen =>
         Skills[LifeSkillType.Sleep].Level >= MaxLevel;
@@ -213,10 +208,6 @@ public class LifeSkillSystem
         return 0;
     }
 
-    // L99: durability damage halved overall (consumer rounds odd strikes up).
-    public bool MiningDurabilityHalved =>
-        Skills[LifeSkillType.Mining].Level >= MaxLevel;
-
     // L10: skip durability tick on every other strike.
     public bool MiningEveryOtherStrikeFree =>
         Skills[LifeSkillType.Mining].Level >= 10;
@@ -225,7 +216,7 @@ public class LifeSkillSystem
     public int MiningBonusOreRollPercent =>
         Skills[LifeSkillType.Mining].Level >= 25 ? 20 : 0;
 
-    // L50: Iron veins cost one fewer strike to deplete; mining content layer reads this.
+    // L50: Iron veins cost one fewer strike to deplete. Read by DecrementVeinStrikes.
     public bool MiningIronStrikeDiscount =>
         Skills[LifeSkillType.Mining].Level >= 50;
 
@@ -258,7 +249,7 @@ public class LifeSkillSystem
         (LifeSkillType.Running, 10) => "+2 Speed",
         (LifeSkillType.Running, 25) => "+5 Speed",
         (LifeSkillType.Running, 50) => "+10 Speed",
-        (LifeSkillType.Running, 99) => "+20 Speed, -30% sprint cost",
+        (LifeSkillType.Running, 99) => "+20 Speed",
         (LifeSkillType.Eating,  10) => "+10% food potency",
         (LifeSkillType.Eating,  25) => "+25% food potency",
         (LifeSkillType.Eating,  50) => "+50% food potency",

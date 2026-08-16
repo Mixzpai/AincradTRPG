@@ -2,7 +2,7 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Systems;
 
-// FB-450 particle effect types. Each enqueues a spawn pattern at a tile.
+// particle effect types. Each enqueues a spawn pattern at a tile.
 public enum ParticleEvent
 {
     SwordSlash,
@@ -36,6 +36,9 @@ public sealed class Particle
     public bool UseFade;
     // True while this slot holds a live particle. Pool slots toggle this on Push and on expiry in Tick.
     public bool Active;
+    // Biome atmosphere rather than an event effect. Lets ClearAmbient drop only the atmosphere,
+    // and lets the ambient top-up know how many of its own are alive without scanning categories.
+    public bool Ambient;
 }
 
 // Pre-allocated particle pool with oldest-drop wrap on overflow. 40-concurrent cap.
@@ -45,6 +48,15 @@ public static class ParticleQueue
     private static readonly Particle[] _pool = BuildPool();
     private static int _writeIdx;
     private static int _activeCount;
+    private static int _ambientCount;
+
+    // Atmosphere must never crowd out event effects. The pool is a ring with oldest-drop, so
+    // without a ceiling a continuous ambient top-up would evict death bursts and crit shatters.
+    // Combat may still evict ambient — that is the right way round, since ambient tops back up.
+    public const int MaxAmbient = 14;
+
+    // Live atmosphere particles, so the render layer can top up to a target without scanning.
+    public static int AmbientCount => _ambientCount;
 
     private static Particle[] BuildPool()
     {
@@ -68,18 +80,27 @@ public static class ParticleQueue
 
     public static void Clear()
     {
-        for (int i = 0; i < _pool.Length; i++) _pool[i].Active = false;
+        for (int i = 0; i < _pool.Length; i++) { _pool[i].Active = false; _pool[i].Ambient = false; }
         _activeCount = 0;
+        _ambientCount = 0;
         _writeIdx = 0;
     }
 
-    // F9 hot-reload latch reset — conservative full clear since Particle has no
-    // Ambient category flag today. AmbientOverlayPass reseeds on map entry.
+    // Drops only the biome atmosphere, leaving event effects alone. Used by the F9 hot-reload so a
+    // biome swap does not also delete a death burst mid-flight; the render layer tops the
+    // atmosphere back up on its next frame.
     public static void ClearAmbient()
     {
-        int before = _activeCount;
-        Clear();
-        UI.DebugLogger.LogGame("RELOAD", $"ParticleQueue.ClearAmbient dropped {before}");
+        int before = _ambientCount;
+        for (int i = 0; i < _pool.Length; i++)
+        {
+            if (!_pool[i].Active || !_pool[i].Ambient) continue;
+            _pool[i].Active = false;
+            _pool[i].Ambient = false;
+            _activeCount--;
+        }
+        _ambientCount = 0;
+        UI.DebugLogger.LogGame("RELOAD", $"ParticleQueue.ClearAmbient dropped {before} ambient");
     }
 
     // Pull next slot in the ring. If full, overwrite the next slot (oldest-drop semantic).
@@ -88,7 +109,9 @@ public static class ParticleQueue
         var p = _pool[_writeIdx];
         _writeIdx = (_writeIdx + 1) % MaxConcurrent;
         if (!p.Active) _activeCount++;
+        else if (p.Ambient) _ambientCount--;   // recycling an ambient slot releases its reservation
         p.Active = true;
+        p.Ambient = false;
         p.AgeMs = 0f;
         return p;
     }
@@ -126,23 +149,41 @@ public static class ParticleQueue
         ["void_spark"]   = ('*', new Color(180, 100, 220), Color.Black,    0.0005f, 0.0005f,  30000f),
     };
 
-    // Seed ambient particles across walkable tiles. Caller computes `count` from
-    // biome densityPermille * UserSettings multiplier. No-op if id unknown or count <= 0.
-    public static void SeedAmbient(string particleId, IList<(int X, int Y)> tiles, Random rng, int count)
+    // How long one atmosphere particle lives. Deliberately far shorter than the 30 s this used to
+    // be: the layer is topped up around the CAMERA now, so a particle the player has walked away
+    // from has to expire on its own — that is what lets the atmosphere follow the viewport without
+    // anything having to cull by position. Drift velocities are ~1 cell/second, so this is still a
+    // slow, quiet mote rather than a blink.
+    public const float AmbientLifetimeMs = 11000f;
+
+    // Spawn ONE atmosphere particle at a tile. Returns false when the budget is full, which is the
+    // signal for the caller to stop topping up this frame.
+    //
+    // The caller supplies the position, and it must come from the COSMETIC rng stream: this is
+    // pure decoration, and drawing it from a gameplay or worldgen stream would let a visual
+    // setting move the draw position of everything after it.
+    public static bool SpawnAmbient(string particleId, int x, int y)
     {
-        if (count <= 0 || tiles.Count == 0) return;
-        if (!_ambientSpecs.TryGetValue(particleId, out var spec)) return;
-        int cap = Math.Min(count, Math.Max(0, MaxConcurrent - 5));
-        for (int i = 0; i < cap; i++)
-        {
-            var (tx, ty) = tiles[rng.Next(tiles.Count)];
-            Push(tx, ty, spec.Glyph, spec.Color, spec.FadeTo, true, spec.DurMs, spec.Vx, spec.Vy);
-        }
+        if (!Motion.Animate) return false;
+        if (_ambientCount >= MaxAmbient) return false;
+        // Leave headroom so a burst still has slots even while the atmosphere is at target.
+        if (_activeCount >= MaxConcurrent - 4) return false;
+        if (!_ambientSpecs.TryGetValue(particleId, out var spec)) return false;
+
+        Push(x, y, spec.Glyph, spec.Color, spec.FadeTo, true,
+             AmbientLifetimeMs, spec.Vx, spec.Vy);
+        // Push went through NextSlot, which cleared the flag; claim the slot as ambient.
+        int justWritten = (_writeIdx - 1 + MaxConcurrent) % MaxConcurrent;
+        _pool[justWritten].Ambient = true;
+        _ambientCount++;
+        return true;
     }
 
     // Per-density tuning. Count scales + duration scales. Subtle has no hold.
     private static (int countMin, int countMax, float duration) Tuning()
     {
+        if (!Motion.Animate) return (0, 0, 0f);
+
         return UserSettings.Current.ParticleDensity switch
         {
             ParticleDensity.Off => (0, 0, 0f),
@@ -343,6 +384,8 @@ public static class ParticleQueue
             {
                 p.Active = false;
                 if (_activeCount > 0) _activeCount--;
+                // Without this the ambient count leaks upward and the top-up quietly starves.
+                if (p.Ambient) { p.Ambient = false; if (_ambientCount > 0) _ambientCount--; }
             }
         }
     }

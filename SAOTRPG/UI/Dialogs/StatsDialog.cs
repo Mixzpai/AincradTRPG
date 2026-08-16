@@ -12,8 +12,16 @@ public static class StatsDialog
 {
     // ── Layout constants ─────────────────────────────────────────────
 
-    // Dialog width in columns.
+    // Single-column width, and the widest the two-column form is allowed to grow.
     private const int DialogWidth  = 64;
+    private const int WideDialogWidth = 116;
+    // Below this the second column has nowhere to go and the layout stays single-column. A
+    // bounded region that clips its own content horizontally is the same defect as clipping it
+    // vertically, so the reflow is opt-in on measured width rather than always on.
+    private const int TwoColumnMinWidth = 100;
+
+    private static int DialogWidthFor() =>
+        Math.Min(WideDialogWidth, Math.Max(DialogWidth, AppHost.App.Screen.Width - 4));
     // Preferred height houses Life Skills / Titles / Guild / Karma / Bargaining / Swimming
     // without squeezing the stat grid; clamped at open time via DialogHeight() for small terminals.
     private const int PreferredDialogHeight = 60;
@@ -41,6 +49,16 @@ public static class StatsDialog
     {
         // Resolve pending proficiency forks first (L25/50/75/100 thresholds the player Esc'd past).
         // Each opens its own modal so displayed stats reflect the fresh fork bonuses.
+        // Talents owed from earlier level-ups, re-offering the exact three that level rolled.
+        if (turnManager != null)
+        {
+            foreach (var pending in turnManager.EnumeratePendingTalents())
+            {
+                var picked = TalentPickDialog.Show(pending.Choices);
+                if (picked != null) turnManager.ResolveTalentPick(pending.Id, picked);
+            }
+        }
+
         if (turnManager != null)
         {
             foreach (var (wpnType, forkLevel) in turnManager.EnumeratePendingForks())
@@ -53,7 +71,13 @@ public static class StatsDialog
         }
 
         int dlgH = DialogHeight();
-        var dialog = DialogHelper.Create("Allocate Skill Points", DialogWidth, dlgH);
+        int dlgW = DialogWidthFor();
+        // Two columns halve the height: the stat grid and Unique Skills on the left, everything
+        // below them on the right. That is what lets the whole sheet fit a 30-row terminal.
+        bool twoCol = dlgW >= TwoColumnMinWidth;
+        int colW = twoCol ? (dlgW - 5) / 2 : dlgW - 4;
+        int rightX = twoCol ? colW + 3 : 1;
+        var dialog = DialogHelper.Create("Allocate Skill Points", dlgW, dlgH);
 
         // ── Available points header ──────────────────────────────────
         var spLabel = new Label
@@ -73,7 +97,8 @@ public static class StatsDialog
 
             var nameLabel  = new Label { Text = $"{Stats[idx].Name}:",   X = 1,  Y = row, Width = 14 };
             var valLabel   = new Label { Text = $"{Stats[idx].GetValue(player),3}", X = 16, Y = row, Width = 4 };
-            var addBtn     = new Button { Text = "+1", X = 21, Y = row, SchemeName = ColorSchemes.ButtonName };
+            var addBtn     = new Button { Text = "+1", X = 21, Y = row, SchemeName = ColorSchemes.ButtonName,
+                                           ShadowStyle = null };
             var effectLabel = new Label { Text = Stats[idx].Effect,       X = 28, Y = row };
 
             valueLabels.Add(valLabel);
@@ -112,8 +137,15 @@ public static class StatsDialog
             Width = Dim.Fill(1)
         };
 
-        void RefreshCombat() =>
-            combatLabel.Text = $"ATK:{player.Attack} DEF:{player.Defense} SPD:{player.Speed} HP:{player.CurrentHealth}/{player.MaxHealth}";
+        void RefreshCombat()
+        {
+            // Speed is a DISPLAY-ONLY stat — Player.Speed is read by this label and one debug
+            // line, by no mechanic — so showing the penalty is the whole of applying it. The ATK
+            // and DEF thirds of fatigue were both live; only SPD was never read, while the Guide
+            // states that fatigue drains it.
+            int spd = player.Speed + (turnManager?.FatigueSpdPenalty ?? 0);
+            combatLabel.Text = $"ATK:{player.Attack} DEF:{player.Defense} SPD:{spd} HP:{player.CurrentHealth}/{player.MaxHealth}";
+        }
         RefreshCombat();
 
         // Wire combat refresh to every +1 button
@@ -151,7 +183,7 @@ public static class StatsDialog
             string line = unlocked
                 ? $"  {glyph} {def.Name} — {def.Description}"
                 : $"  {glyph} {def.Name} — [{def.UnlockHint}]";
-            if (line.Length > DialogWidth - 4) line = line[..(DialogWidth - 5)] + "…";
+            if (line.Length > colW) line = line[..(colW - 1)] + "…";
             dialog.Add(new Label
             {
                 Text = line,
@@ -162,11 +194,12 @@ public static class StatsDialog
         }
 
         // ── Weapon proficiency section ────────────────────────────────
-        int profY = usRow + 1;
+        // Second column when there is width for one, otherwise straight on below.
+        int profY = twoCol ? 2 : usRow + 1;
         var profHeader = new Label
         {
             Text = "[ Weapon Proficiency ]",
-            X = 1, Y = profY,
+            X = rightX, Y = profY,
             SchemeName = ColorSchemes.GoldName
         };
         dialog.Add(profHeader);
@@ -180,12 +213,12 @@ public static class StatsDialog
                 dialog.Add(new Label
                 {
                     Text = ProficiencyHelper.BuildDetailLineExpanded(turnManager, wpnType),
-                    X = 1, Y = row,
-                    Width = Dim.Fill(1)
+                    X = rightX, Y = row,
+                    Width = colW
                 });
                 row++;
                 // Stop just before the life-skills section kicks in.
-                if (row >= dlgH - 18) break;
+                if (row >= profY + 6) break;
             }
             profEndRow = row;
         }
@@ -194,7 +227,7 @@ public static class StatsDialog
             dialog.Add(new Label
             {
                 Text = "  No weapon kills yet.",
-                X = 1, Y = profY + 1,
+                X = rightX, Y = profY + 1,
                 SchemeName = ColorSchemes.DimName
             });
             profEndRow = profY + 2;
@@ -205,7 +238,7 @@ public static class StatsDialog
         dialog.Add(new Label
         {
             Text = "[ Life Skills ]",
-            X = 1, Y = lsY,
+            X = rightX, Y = lsY,
             SchemeName = ColorSchemes.GoldName,
         });
         int lsRow = lsY + 1;
@@ -217,12 +250,12 @@ public static class StatsDialog
             string bonus = ActiveBonusSummary(player.LifeSkills, skill);
             string line = $"  {Systems.LifeSkillSystem.Label(skill),-8} L{lvl,2}/99 {bar} "
                 + $"{cur}/{Math.Max(1, nxt)}  {bonus}";
-            if (line.Length > DialogWidth - 4) line = line[..(DialogWidth - 5)] + "…";
+            if (line.Length > colW) line = line[..(colW - 1)] + "…";
             dialog.Add(new Label
             {
                 Text = line,
-                X = 1, Y = lsRow,
-                Width = Dim.Fill(1),
+                X = rightX, Y = lsRow,
+                Width = colW,
                 SchemeName = lvl > 1 ? ColorSchemes.BodyName : ColorSchemes.DimName,
             });
             lsRow++;
@@ -233,7 +266,7 @@ public static class StatsDialog
         dialog.Add(new Label
         {
             Text = "[ Active Title ]",
-            X = 1, Y = tY,
+            X = rightX, Y = tY,
             SchemeName = ColorSchemes.GoldName,
         });
         string titleText;
@@ -253,8 +286,8 @@ public static class StatsDialog
         dialog.Add(new Label
         {
             Text = titleText,
-            X = 1, Y = tY + 1,
-            Width = Dim.Fill(1),
+            X = rightX, Y = tY + 1,
+            Width = colW,
         }.WithScheme(titleScheme));
         int unlockedCount = MilestoneRegistry.All
             .Count(m => m.Reward == RewardType.EquippableTitle
@@ -264,7 +297,7 @@ public static class StatsDialog
         dialog.Add(new Label
         {
             Text = $"  Titles unlocked: {unlockedCount}/{totalTitles}",
-            X = 1, Y = tY + 2,
+            X = rightX, Y = tY + 2,
             SchemeName = ColorSchemes.DimName,
         });
 
@@ -273,14 +306,14 @@ public static class StatsDialog
         dialog.Add(new Label
         {
             Text = "[ Guild & Karma ]",
-            X = 1, Y = gY,
+            X = rightX, Y = gY,
             SchemeName = ColorSchemes.GoldName,
         });
         string karmaTier = Systems.KarmaSystem.TierLabel(player.Karma);
         string karmaLine = $"  Karma: {player.Karma,+4} [{karmaTier}]";
         dialog.Add(new Label
         {
-            Text = karmaLine, X = 1, Y = gY + 1, Width = Dim.Fill(1),
+            Text = karmaLine, X = rightX, Y = gY + 1, Width = colW,
             SchemeName = karmaTier switch
             {
                 "Honorable" => ColorSchemes.GoldName,
@@ -293,23 +326,25 @@ public static class StatsDialog
         string guildPerk = Systems.GuildSystem.ActiveGuildPerkFlavor(player);
         dialog.Add(new Label
         {
-            Text = $"  Guild: {guildName}", X = 1, Y = gY + 2,
-            Width = Dim.Fill(1),
+            Text = $"  Guild: {guildName}", X = rightX, Y = gY + 2,
+            Width = colW,
             SchemeName = player.ActiveGuildId == Systems.Story.Faction.None
                 ? ColorSchemes.DimName : ColorSchemes.BodyName,
         });
         if (!string.IsNullOrEmpty(guildPerk))
         {
             string perkLine = $"    Perk: {guildPerk}";
-            if (perkLine.Length > DialogWidth - 4) perkLine = perkLine[..(DialogWidth - 5)] + "…";
+            if (perkLine.Length > colW) perkLine = perkLine[..(colW - 1)] + "…";
             dialog.Add(new Label
             {
-                Text = perkLine, X = 1, Y = gY + 3, Width = Dim.Fill(1),
+                Text = perkLine, X = rightX, Y = gY + 3, Width = colW,
                 SchemeName = ColorSchemes.DimName,
             });
         }
+        // Anchored, not placed after the guild block: at gY + 4 it fell below the clamped
+        // height at EVERY terminal size, and it is the only route to the guild roster.
         var rosterBtn = DialogHelper.CreateButton("View All Guilds");
-        rosterBtn.X = 1; rosterBtn.Y = gY + 4;
+        rosterBtn.X = rightX; rosterBtn.Y = Pos.AnchorEnd(4);
         rosterBtn.Accepting += (s, e) =>
         {
             e.Handled = true;
@@ -317,14 +352,11 @@ public static class StatsDialog
         };
         dialog.Add(rosterBtn);
 
-        var hintLabel = new Label
-        {
-            Text = "Esc: close",
-            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
-        };
-
-        dialog.Add(spLabel, combatLabel, hintLabel);
+        // No hint label here: AddCloseFooter already draws an esc hint on AnchorEnd(1), and a
+        // second one occupied the same row.
+        dialog.Add(spLabel, combatLabel);
         DialogHelper.AddCloseFooter(dialog);
+        DialogHelper.DiscloseClippedContent(dialog);
         DialogHelper.RunModal(dialog);
     }
 

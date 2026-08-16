@@ -8,7 +8,8 @@ public static class PoissonDiskSampler
     // acceptTile = optional predicate (e.g. "only walkable tiles").
     public static List<(int X, int Y)> Sample(
         int width, int height, float minRadius, Random rng, int k = 30,
-        Func<int, int, bool>? acceptTile = null)
+        Func<int, int, bool>? acceptTile = null,
+        int maxSamples = int.MaxValue)
     {
         if (width <= 0 || height <= 0 || minRadius <= 0f)
             return new List<(int, int)>();
@@ -36,7 +37,10 @@ public static class PoissonDiskSampler
         active.Add(seed);
         grid[(int)(sx / cellSize), (int)(sy / cellSize)] = seed;
 
-        while (active.Count > 0)
+        // maxSamples stops a maximal packing we do not need. Bridson only ever APPENDS to
+        // `samples`, so truncating here leaves every earlier point exactly as it would have
+        // been -- callers that consume a prefix get identical results for far less work.
+        while (active.Count > 0 && samples.Count < maxSamples)
         {
             int idx = rng.Next(active.Count);
             var center = active[idx];

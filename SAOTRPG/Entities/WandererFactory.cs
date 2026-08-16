@@ -16,10 +16,10 @@ public static class WandererFactory
         new[] { "I used to be an adventurer like you...", "Press V to enter counter stance — riposte incoming attacks!", "Keep fighting!" },
     };
 
-    public static WorldSpawn CreateWanderer(int floor)
+    public static WorldSpawn CreateWanderer(int floor, Random rng)
     {
-        string name = Names[Random.Shared.Next(Names.Length)];
-        var tips = TipSets[Random.Shared.Next(TipSets.Length)];
+        string name = Names[rng.Next(Names.Length)];
+        var tips = TipSets[rng.Next(TipSets.Length)];
         var dialogueLines = tips.Select(t => new DialogueLine(t)).ToArray();
         var npc = new WorldSpawn('N', Color.BrightCyan)
         {

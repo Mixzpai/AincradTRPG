@@ -109,9 +109,6 @@ public static class ToastQueue
     public static void EnqueueTitle(string title) =>
         Enqueue($"Title: {title}", Color.BrightYellow, ToastCategory.TitleAcquired);
 
-    public static void EnqueueStatUp(string statShort, int delta) =>
-        Enqueue($"Stat up: {statShort} +{delta}", Color.Cyan, ToastCategory.StatUp);
-
     public static void EnqueueSwordSkill(string name) =>
         Enqueue($"Sword Skill: {name}", Color.BrightMagenta, ToastCategory.SwordSkillUnlocked);
 

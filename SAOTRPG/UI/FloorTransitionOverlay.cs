@@ -202,14 +202,14 @@ public static class FloorTransitionOverlay
         {
             Text = " Ascend ",
             X = Pos.Center() - 9, Y = Pos.AnchorEnd(2),
-            SchemeName = ColorSchemes.ButtonName
+            SchemeName = ColorSchemes.ButtonName, ShadowStyle = null
         };
         var cancelBtn = new Button
         {
             Text = " Stay ",
             X = Pos.Right(ascendBtn) + 1, Y = Pos.AnchorEnd(2),
             IsDefault = true,
-            SchemeName = ColorSchemes.ButtonName
+            SchemeName = ColorSchemes.ButtonName, ShadowStyle = null
         };
 
         ascendBtn.Accepting += (s, e) => { confirmed = true; AppHost.App.RequestStop(); e.Handled = true; };

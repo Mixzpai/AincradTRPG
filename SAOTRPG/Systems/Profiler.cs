@@ -40,16 +40,51 @@ public static class Profiler
         return Path.Combine(baseDir, $"profiler_{DateTime.Now:yyyyMMdd_HHmmss_fff}.txt");
     }
 
+    // Wall-clock ticks spent inside a nested modal run loop, accumulated process-wide.
+    //
+    // A scope that stays open across a dialog otherwise measures the player's reading time as
+    // compute time — and Terminal.Gui keeps firing Iteration inside a nested Run, so the
+    // main-loop sampler shows nothing unusual and the inflated figure looks entirely credible.
+    // That combination produced a wrong diagnosis once already: a 663ms "player move" that no
+    // frame ever stalled for. Scopes subtract whatever accumulated here during their lifetime.
+    private static long _excludedTicks;
+    private static long _exclusionStart;
+    private static int _exclusionDepth;
+
+    // Bracketed by DialogHelper.RunModal around AppHost.App.Run. Depth-counted so a dialog
+    // opened from another dialog does not end the exclusion when only the inner one closes.
+    public static void BeginExclusion()
+    {
+        if (_exclusionDepth++ == 0) _exclusionStart = Stopwatch.GetTimestamp();
+    }
+
+    public static void EndExclusion()
+    {
+        if (_exclusionDepth == 0) return;
+        if (--_exclusionDepth == 0) _excludedTicks += Stopwatch.GetTimestamp() - _exclusionStart;
+    }
+
     public readonly struct Scope : IDisposable
     {
         private readonly string? _name;
         private readonly long _start;
-        public Scope(string name) { _name = name; _start = Stopwatch.GetTimestamp(); }
+        private readonly long _excludedAtStart;
+
+        public Scope(string name)
+        {
+            _name = name;
+            _start = Stopwatch.GetTimestamp();
+            _excludedAtStart = _excludedTicks;
+        }
+
         public void Dispose()
         {
             // Default Scope (returned when Enabled=false) has _name=null and is a no-op.
             if (_name == null) return;
-            long t = Stopwatch.GetTimestamp() - _start;
+            // A scope that opened *inside* a modal over-subtracts and clamps to zero, which is
+            // the conservative direction: better to under-report than to invent compute time.
+            long t = Stopwatch.GetTimestamp() - _start - (_excludedTicks - _excludedAtStart);
+            if (t < 0) t = 0;
             if (!_buckets.TryGetValue(_name, out var b)) b = default;
             _buckets[_name] = (b.TotalTicks + t, b.Count + 1, Math.Max(b.Max, t));
         }
@@ -96,5 +131,7 @@ public static class Profiler
     public static void RecordRaw(string name, long ticks) { }
     public static string DumpToFile(string? customPath = null) => string.Empty;
     public static void Reset() { }
+    public static void BeginExclusion() { }
+    public static void EndExclusion() { }
 #endif
 }

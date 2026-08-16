@@ -4,10 +4,21 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI;
 
-// Run Modifier picker — tier-grouped checkbox grid, live score multiplier preview,
-// writes RunModifiers.Active on Apply. Gated behind F100 clear in DifficultyScreen.
+// Run Modifier picker — a tier-grouped checkbox card beside a detail card that follows focus,
+// with the score multiplier beside the buttons it applies to. Tab moves between modifiers.
+// Writes RunModifiers.Active on Apply. Gated behind an F100 clear in DifficultyScreen.
 public static class ModifierSelectScreen
 {
+    // Card block geometry, matching DifficultyScreen so the two screens sit on the same grid.
+    private const int ListCardWidth   = 50;
+    private const int DetailCardWidth = 40;
+    private const int CardGap         = 2;
+    private const int TotalCardsWidth = ListCardWidth + CardGap + DetailCardWidth;
+
+    // Columns the Apply / Clear All / Cancel row occupies, so the score readout can share that
+    // row without their frames overlapping.
+    private const int ButtonsWidth = 40;
+
     private static EventHandler<Key>? _escHandler;
 
     // Unhook before transitioning AWAY. The handler re-enters DifficultyScreen, so leaving it
@@ -22,7 +33,9 @@ public static class ModifierSelectScreen
     {
         mainWindow.RemoveAll();
         SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
-        if (_escHandler != null) mainWindow.KeyDown -= _escHandler;
+        // Reached from DifficultyScreen, whose handler is still live and would send Esc to the
+        // title screen alongside this screen's own return-to-difficulty.
+        NavigationHelper.UnhookScreenEscHandlers(mainWindow);
         DebugLogger.LogScreen("ModifierSelectScreen");
 
         var (header, headerRule) = ScreenHeader.Create("Run Modifiers", 1, 24);
@@ -35,24 +48,36 @@ public static class ModifierSelectScreen
             (ModifierTier.Nightmare, "Nightmare"),
         };
 
-        // ── Build checkbox grid, grouped by tier ─────────────────────
-        // Compact label on checkbox; full desc in focus-driven detail panel (avoids overflow on narrow terminals).
+        // ── Two cards, centred on the axis ───────────────────────────
+        // This screen used to be the only one anchored to a left margin, so entering it shunted
+        // the whole interface leftward. It now shares the axis with its siblings.
         var checkboxes = new Dictionary<RunModifier, CheckBox>();
         var defsByCheckbox = new Dictionary<CheckBox, ModifierDef>();
-        int y = 4;
-        const int LabelX = 4;       // left margin rather than center — predictable width
-        const int LabelWidth = 44;  // fits on any 60+ column terminal
-        var views = new List<View> { header, headerRule };
 
+        Pos cardsLeft = ScreenHeader.Axis - TotalCardsWidth / 2;
+        int listInner = ListCardWidth - Card.ChromeWidth;
+        int detailInner = DetailCardWidth - Card.ChromeWidth;
+
+        // Height the list needs: a header plus its rows per tier, and a blank row between tiers.
+        int rows = tierOrder.Length * 2 - 1;   // a caption per tier, a blank row between tiers
+        foreach (var (tier, _) in tierOrder)
+            rows += RunModifiers.Definitions.Count(kv => kv.Value.Tier == tier);
+
+        const int CardsTop = 4;
+        Pos detailLeft = cardsLeft + ListCardWidth + CardGap;
+        var listCard = new Card("MODIFIERS", cardsLeft, CardsTop, ListCardWidth, rows + Card.ChromeHeight);
+        var detailCard = new Card("DETAILS", detailLeft, CardsTop,
+            DetailCardWidth, rows + Card.ChromeHeight);
+        // Frames first so they paint under their content, which is added as siblings — nesting
+        // controls inside a card traps Tab traversal, and Tab is how this screen is driven.
+        var views = new List<View> { header, headerRule, listCard, detailCard };
+
+        int y = Card.InsideY(CardsTop);
         foreach (var (tier, tierLabel) in tierOrder)
         {
-            var tierHeader = new Label
-            {
-                Text = $"[ {tierLabel} tier ]",
-                X = LabelX, Y = y,
-                Width = LabelWidth, SchemeName = ColorSchemes.GoldName,
-            };
-            views.Add(tierHeader);
+            var (caption, rule) = ScreenHeader.Section(tierLabel, Card.InsideX(cardsLeft), y, listInner);
+            views.Add(caption);
+            views.Add(rule);
             y++;
 
             foreach (var kv in RunModifiers.Definitions)
@@ -61,55 +86,43 @@ public static class ModifierSelectScreen
                 if (def.Tier != tier) continue;
 
                 // Short label: " Name (×1.15)" — always fits.
+                // Tier is carried by the section header and the detail pane, not by recolouring
+                // every row: two saturated hues in one list makes the accent mean nothing.
                 var check = new CheckBox
                 {
                     Text = $" {def.Name} (×{def.ScoreMultiplier:F2})",
-                    X = LabelX, Y = y,
-                    Width = LabelWidth,
+                    X = Card.InsideX(cardsLeft), Y = y,
+                    Width = listInner,
                     Value = RunModifiers.IsActive(def.Id)
                         ? CheckState.Checked : CheckState.UnChecked,
-                    SchemeName = tier switch
-                    {
-                        ModifierTier.Nightmare => ColorSchemes.DangerName,
-                        ModifierTier.Hard      => ColorSchemes.GoldName,
-                        _                       => ColorSchemes.BodyName,
-                    },
+                    SchemeName = ColorSchemes.BodyName,
                 };
                 checkboxes[def.Id] = check;
                 defsByCheckbox[check] = def;
                 views.Add(check);
                 y++;
             }
-            y++;
+            // Blank row between tier groups, but not after the last one.
+            if (tier != tierOrder[^1].Item1) y++;
         }
 
-        // ── Detail panel (right side) — updates on focus change ──────
-        var detailHeader = new Label
-        {
-            Text = "Details",
-            X = LabelX + LabelWidth + 2, Y = 4,
-            Width = Dim.Fill(2), SchemeName = ColorSchemes.GoldName,
-        };
+        // ── Detail card — updates on focus change ────────────────────
         var detailName = new Label
         {
-            Text = "",
-            X = LabelX + LabelWidth + 2, Y = 6,
-            Width = Dim.Fill(2), SchemeName = ColorSchemes.BodyName,
+            Text = "", X = Card.InsideX(detailLeft), Y = Card.InsideY(CardsTop),
+            Width = detailInner, Height = 1, SchemeName = ColorSchemes.TitleName,
         };
         var detailTier = new Label
         {
-            Text = "",
-            X = LabelX + LabelWidth + 2, Y = 7,
-            Width = Dim.Fill(2), SchemeName = ColorSchemes.DimName,
+            Text = "", X = Card.InsideX(detailLeft), Y = Card.InsideY(CardsTop) + 1,
+            Width = detailInner, Height = 1, SchemeName = ColorSchemes.DimName,
         };
         var detailDesc = new Label
         {
             Text = "Select a modifier to see its effect.",
-            X = LabelX + LabelWidth + 2, Y = 9,
-            Width = Dim.Fill(2), Height = 8,
-            SchemeName = ColorSchemes.BodyName,
+            X = Card.InsideX(detailLeft), Y = Card.InsideY(CardsTop) + 3,
+            Width = detailInner, Height = 8, SchemeName = ColorSchemes.BodyName,
         };
-        views.Add(detailHeader);
         views.Add(detailName);
         views.Add(detailTier);
         views.Add(detailDesc);
@@ -122,16 +135,18 @@ public static class ModifierSelectScreen
                 if (!e.NewValue) return;
                 detailName.Text = captured.Name;
                 detailTier.Text = $"{captured.Tier} tier · score ×{captured.ScoreMultiplier:F2}";
-                detailDesc.Text = WrapText(captured.Description, 34);
+                detailDesc.Text = WrapText(captured.Description, detailInner);
             };
         }
 
-        // ── Live score multiplier preview ────────────────────────────
+        // ── Score readout — the point of the screen, so it gets its own line ──
+        int footerY = CardsTop + rows + Card.ChromeHeight + 1;
         var scoreLabel = new Label
         {
-            Text = "",
-            X = LabelX, Y = y,
-            Width = LabelWidth, SchemeName = ColorSchemes.GoldName,
+            Text = "", X = cardsLeft + ButtonsWidth, Y = footerY,
+            Width = TotalCardsWidth - ButtonsWidth, Height = 1,
+            TextAlignment = Alignment.End,
+            SchemeName = ColorSchemes.GoldName,
         };
         void RefreshScore()
         {
@@ -141,41 +156,32 @@ public static class ModifierSelectScreen
             foreach (var (mod, cb) in checkboxes)
                 if (cb.Value == CheckState.Checked) RunModifiers.Active.Add(mod);
             double mul = RunModifiers.TotalScoreMultiplier();
-            int count = RunModifiers.Active.Count;
-            scoreLabel.Text = $"Active: {count}    Score multiplier: ×{mul:F2}";
+            int active = RunModifiers.Active.Count;
+            scoreLabel.Text = $"{active} active      score ×{mul:F2}";
             RunModifiers.Active = before;  // restore until Apply
         }
         foreach (var cb in checkboxes.Values)
             cb.ValueChanged += (s, e) => RefreshScore();
         RefreshScore();
         views.Add(scoreLabel);
-        y += 2;
 
         // ── Buttons (bottom row, left-anchored with detail-pane clear) ──
-        var applyBtn = new Button
-        {
-            Text = " Apply ", X = LabelX, Y = Pos.AnchorEnd(2),
-            IsDefault = true, SchemeName = ColorSchemes.MenuButtonName,
-        };
-        var clearBtn = new Button
-        {
-            Text = " Clear All ", X = LabelX + 12, Y = Pos.AnchorEnd(2),
-            SchemeName = ColorSchemes.MenuButtonName,
-        };
-        var cancelBtn = new Button
-        {
-            Text = " Cancel ", X = LabelX + 26, Y = Pos.AnchorEnd(2),
-            SchemeName = ColorSchemes.MenuButtonName,
-        };
+        var applyBtn = DialogHelper.CreateMenuButton("Apply");
+        applyBtn.X = cardsLeft; applyBtn.Y = footerY;
+        var clearBtn = DialogHelper.CreateMenuButton("Clear All");
+        clearBtn.X = Pos.Right(applyBtn) + 3; clearBtn.Y = footerY;
+        var cancelBtn = DialogHelper.CreateMenuButton("Cancel");
+        cancelBtn.X = Pos.Right(clearBtn) + 3; cancelBtn.Y = footerY;
 
-        applyBtn.Accepting += (s, e) =>
+        void Apply()
         {
-            e.Handled = true;
             RunModifiers.Active.Clear();
             foreach (var (mod, cb) in checkboxes)
                 if (cb.Value == CheckState.Checked) RunModifiers.Active.Add(mod);
             onApplied();
-        };
+        }
+
+        applyBtn.Accepting += (s, e) => { e.Handled = true; Apply(); };
 
         clearBtn.Accepting += (s, e) =>
         {
@@ -190,13 +196,10 @@ public static class ModifierSelectScreen
         views.Add(clearBtn);
         views.Add(cancelBtn);
 
-        var hint = new Label
-        {
-            Text = "Space: toggle   Tab: next   Enter: Apply   Esc: Cancel",
-            X = LabelX, Y = Pos.AnchorEnd(1), Width = Dim.Fill(2),
-            SchemeName = ColorSchemes.DimName,
-        };
-        views.Add(hint);
+        // Four pairs rather than three: Tab is how this screen is navigated, so omitting it
+        // leaves the player with no stated way to move between modifiers.
+        var hintPairs = new[] { ("tab", "next"), ("space", "toggle"), ("enter", "apply"), ("esc", "cancel") };
+        views.AddRange(ScreenHeader.KeyHints(cardsLeft, footerY + 1, hintPairs));
 
         mainWindow.Add(views.ToArray());
 
@@ -205,6 +208,7 @@ public static class ModifierSelectScreen
         _escHandler = (s, e) =>
         {
             if (e.KeyCode == KeyCode.Esc) { onApplied(); e.Handled = true; }
+            else if (e.KeyCode == KeyCode.Enter) { Apply(); e.Handled = true; }
         };
         mainWindow.KeyDown += _escHandler;
     }

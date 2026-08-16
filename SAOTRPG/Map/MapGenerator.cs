@@ -79,7 +79,10 @@ public static partial class MapGenerator
         new Generation.Passes.SpecialAreaPass(),
         new Generation.Passes.PrefabPlacementPass(),
         new Generation.Passes.FeatureScatterPass(),
-        new Generation.Passes.AmbientOverlayPass(),
+        // AmbientOverlayPass was here and is gone. It seeded biome particles straight into
+        // ParticleQueue — a render system — from inside generation, read a UI setting to decide
+        // how many, and drew ~500k rng values doing it. The atmosphere is maintained around the
+        // camera by MapView now; generation has no opinion about it.
         new Generation.Passes.ConnectivityAuditPass(),
     };
 
@@ -144,6 +147,10 @@ public static partial class MapGenerator
             for (int y = trY; y < trY + trH; y++)
                 if (map.InBounds(x, y)) map.Tiles[x, y].Type = TileType.Floor;
         rooms.Add(new Room(trX, trY, trW, trH));
+        // The way out of Aincrad. GameWon fires only from AscendFloor, which is reachable only by
+        // stepping on StairsUp -- and the palace had none, so the game could not be finished at all.
+        // Placed at the throne itself, which is also where the player-clone is posted.
+        if (map.InBounds(cx, trY + trH / 2)) map.Tiles[cx, trY + trH / 2].Type = TileType.StairsUp;
         if (map.InBounds(cx, trY + trH - 1)) map.Tiles[cx, trY + trH - 1].Type = TileType.Door;
         if (map.InBounds(trX + 2, trY + 1)) map.Tiles[trX + 2, trY + 1].Type = TileType.Campfire;
         if (map.InBounds(trX + trW - 3, trY + 1)) map.Tiles[trX + trW - 3, trY + 1].Type = TileType.Campfire;
@@ -173,9 +180,16 @@ public static partial class MapGenerator
             for (int y = 0; y < h; y++)
             {
                 var t = map.Tiles[x, y].Type;
+                // EXITS COUNT AS OPEN. Omitting them meant a StairsUp written above was judged
+                // "not open", found to touch floor, and WALLED OVER — the tile was created and
+                // destroyed within the same function. Same shape as the archway that FeatureScatter
+                // carved away with its own approach road: a whitelist that does not know about a
+                // tile silently deletes it.
                 isOpen[x, y] = t == TileType.Floor || t == TileType.Door
                     || t == TileType.Campfire || t == TileType.Shrine
-                    || t == TileType.Chest || t == TileType.Pillar;
+                    || t == TileType.Chest || t == TileType.Pillar
+                    || t == TileType.StairsUp || t == TileType.StairsDown
+                    || t == TileType.LabyrinthEntrance;
             }
         for (int x = 0; x < w; x++)
             for (int y = 0; y < h; y++)

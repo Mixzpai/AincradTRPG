@@ -70,16 +70,4 @@ public static class DifficultyData
 
     // Tier name for index (SaveManager slot summaries etc.).
     public static string GetName(int index) => Get(index).Name;
-
-    // Formatted stat breakdown for the [?] tooltip dialog.
-    public static string GetStatsTooltip(int index)
-    {
-        var t = Get(index);
-        string regen = t.RegenInterval > 0 ? $"Every {t.RegenInterval} turns" : "None";
-
-        return $"  Enemy Stats:   {t.MobStatPercent}%\n" +
-               $"  XP Rewards:    {t.XpPercent}%\n" +
-               $"  HP Regen:      {regen}\n" +
-               $"  Col Bonus:     +{t.ColStreakBonus}% per streak";
-    }
 }

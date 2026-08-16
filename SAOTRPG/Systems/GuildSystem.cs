@@ -9,7 +9,7 @@ namespace SAOTRPG.Systems;
 // stat perk; swap = karma+rep penalty. HQ NPCs gate Prove-Yourself + signature quests.
 public static class GuildSystem
 {
-    // Stat bonus applied by ApplyGuildPerk. Weapon-conditional via WeaponTypeBonus
+    // Stat bonus applied by ApplyGuildPerk. Weapon-conditional via the perk's WeaponType
     // (combat hook checks ActiveGuildId instead).
     public record GuildDef(
         Faction Id,

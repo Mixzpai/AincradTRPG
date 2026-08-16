@@ -21,13 +21,12 @@ public static class FrameClock
 
     // Clock for ambient, continuously-looping visuals — flickering tiles, water flow, rain,
     // shrine sparkle. Pinned by --freeze-anim so a perf run can separate timed animation from
-    // other sources of per-frame cell churn.
+    // other sources of per-frame cell churn, and by the reduce-motion setting.
     //
     // Event-scoped timers (toasts, banners, effect lifetimes) must keep reading ElapsedMs:
     // freezing those would stop them ever expiring, which is the failure the paused-clock bug
     // already produced once.
-    public static long AmbientMs =>
-        SAOTRPG.UI.DebugMode.FreezeAnimations ? 0L : _elapsedMs;
+    public static long AmbientMs => Motion.Animate ? _elapsedMs : 0L;
 
     // True while an explicit Pause() is held OR something is stacked above the root session.
     private static bool IsPaused => _pauseDepth > 0 || ModalOnTop();

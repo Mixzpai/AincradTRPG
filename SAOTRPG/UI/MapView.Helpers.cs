@@ -11,16 +11,16 @@ public partial class MapView
     // Shake offset applied to every mapping so the viewport jitters in lockstep.
 
     // Map tile X → viewport column.
-    private int MapToVx(int mx) => mx - _camera.OffsetX + ShakeOffsetX;
+    private int MapToVx(int mx) => mx - EffOffsetX;
 
     // Map tile Y → viewport row.
-    private int MapToVy(int my) => my - _camera.OffsetY + ShakeOffsetY;
+    private int MapToVy(int my) => my - EffOffsetY;
 
     // Viewport column → map tile X.
-    private int VxToMap(int vx) => vx + _camera.OffsetX - ShakeOffsetX;
+    private int VxToMap(int vx) => vx + EffOffsetX;
 
     // Viewport row → map tile Y.
-    private int VyToMap(int vy) => vy + _camera.OffsetY - ShakeOffsetY;
+    private int VyToMap(int vy) => vy + EffOffsetY;
 
     // ── Drawing primitives ─────────────────────────────────────────────
     // The overlay passes were written against the framework's SetAttribute/Move/AddRune

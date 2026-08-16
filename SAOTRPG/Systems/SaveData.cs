@@ -3,13 +3,12 @@ namespace SAOTRPG.Systems;
 // Root save data DTO — serialized to JSON.
 public class SaveData
 {
-    // Schema version — bump when save format changes to enable migration.
-    public int SaveVersion { get; set; } = 2;
     public DateTime Timestamp { get; set; }
     public long PlayTimeSeconds { get; set; }
 
-    // Persisted master seed so F9 hot-reload regenerates the same floor deterministically.
-    // -1 sentinel for legacy saves — migration at load fills with TickCount.
+    // Persisted master seed so a load regenerates the same world — the save stores the seed,
+    // not the map. -1 only ever means "never written"; SaveManager passes the value through
+    // unchecked, because a save produced by this build always carries a real seed.
     public int GlobalSeed { get; set; } = -1;
 
     // Player identity
@@ -63,6 +62,10 @@ public class SaveData
     // Per-weapon fork picks at L25/50/75/100. int[] length-4: 0=unpicked,
     // 1|2=chosen option. Empty/null on legacy saves.
     public Dictionary<string, int[]> WeaponProficiencyForks { get; set; } = [];
+
+    // Level-up talents offered but not yet taken. Each entry keeps the perk ids it offered so
+    // resuming re-presents the same three rather than rolling again.
+    public List<PendingTalentSave> PendingTalents { get; set; } = [];
 
     // Turns since last rest (exhaustion counter).
     public int RestCounter { get; set; }
@@ -242,3 +245,12 @@ public class SaveSlotSummary
     public DateTime Timestamp { get; set; }
     public TimeSpan PlayTime { get; set; }
 }
+
+// One level-up talent still owed, with the three perk ids that level offered.
+public class PendingTalentSave
+{
+    public int Id { get; set; }
+    public int Level { get; set; }
+    public List<string> PerkIds { get; set; } = [];
+}
+

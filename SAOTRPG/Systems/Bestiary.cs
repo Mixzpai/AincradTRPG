@@ -272,22 +272,47 @@ public static class Bestiary
 // Filter state for the dialog. Persists across opens within a run.
 public class BestiaryFilterState
 {
+    // Quarter-castle bands. Index 0 is "no filter" and has no range; a preset cycle rather than
+    // two editable numbers, because one key cannot sensibly edit a pair.
+    public static readonly (int Min, int Max)[] FloorBands =
+        { (0, 0), (1, 25), (26, 50), (51, 75), (76, 100) };
+
     public HashSet<string> ActiveTags = new();   // loot tags the user toggled on
     public bool BossOnly;
     public bool ShowUndiscovered;
-    public int FloorMin = 1;
-    public int FloorMax = 100;
+
+    // 0 = every floor. Anything else indexes FloorBands.
+    public int FloorBand;
+
     public string Search = "";
+
+    public bool BandActive => FloorBand > 0 && FloorBand < FloorBands.Length;
+
+    public string BandLabel =>
+        BandActive ? $"F{FloorBands[FloorBand].Min}-{FloorBands[FloorBand].Max}" : "";
+
+    public void CycleBand() => FloorBand = (FloorBand + 1) % FloorBands.Length;
+
+    // Overlap, not containment: a mob seen from F20 to F30 belongs to both the F1-25 and the
+    // F26-50 band. LastFloorEncountered is 0 when it has only ever been seen on one floor.
+    public bool BandIncludes(int firstFloor, int lastFloor)
+    {
+        if (!BandActive) return true;
+        var (min, max) = FloorBands[FloorBand];
+        int last = lastFloor == 0 ? firstFloor : lastFloor;
+        return firstFloor <= max && last >= min;
+    }
+
     public bool HasAnyActive =>
-        ActiveTags.Count > 0 || BossOnly || ShowUndiscovered ||
-        FloorMin > 1 || FloorMax < 100 || !string.IsNullOrEmpty(Search);
+        ActiveTags.Count > 0 || BossOnly || ShowUndiscovered || BandActive
+        || !string.IsNullOrEmpty(Search);
+
     public void Clear()
     {
         ActiveTags.Clear();
         BossOnly = false;
         ShowUndiscovered = false;
-        FloorMin = 1;
-        FloorMax = 100;
+        FloorBand = 0;
         Search = "";
     }
 }

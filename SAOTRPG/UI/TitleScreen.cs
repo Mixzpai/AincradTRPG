@@ -7,19 +7,62 @@ namespace SAOTRPG.UI;
 // Main title screen -- Aincrad floating castle with menu.
 public static class TitleScreen
 {
-    private const string StarsArt =
-        "        .            *            .                   *          .          *     \n" +
-        "  *              .          .              *       .           .                  \n" +
-        "       .    *        .            .    *              .           *      .        \n" +
-        "  .              .          *                 .              .                    ";
+    // Solid letterforms. The font this came from draws a 3D edge with box-drawing glyphs; those
+    // are gone, which is what dated it, and it also freed a row — the old last line was pure
+    // shadow. Each row is its own Label so it can carry one step of a vertical gradient.
+    private static readonly string[] BannerRows =
+    {
+        " █████  ██ ███    ██  ██████ ██████   █████  ██████  ",
+        "██   ██ ██ ████   ██ ██      ██   ██ ██   ██ ██   ██ ",
+        "███████ ██ ██ ██  ██ ██      ██████  ███████ ██   ██ ",
+        "██   ██ ██ ██  ██ ██ ██      ██   ██ ██   ██ ██   ██ ",
+        "██   ██ ██ ██   ████  ██████ ██   ██ ██   ██ ██████  ",
+    };
 
-    private const string TitleText =
-        " █████╗ ██╗███╗   ██╗ ██████╗██████╗  █████╗ ██████╗ \n" +
-        "██╔══██╗██║████╗  ██║██╔════╝██╔══██╗██╔══██╗██╔══██╗\n" +
-        "███████║██║██╔██╗ ██║██║     ██████╔╝███████║██║  ██║\n" +
-        "██╔══██║██║██║╚██╗██║██║     ██╔══██╗██╔══██║██║  ██║\n" +
-        "██║  ██║██║██║ ╚████║╚██████╗██║  ██║██║  ██║██████╔╝\n" +
-        "╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝";
+    private const int BannerWidth = 53;
+
+    // Vertical rhythm. The banner sits high, the cards under it, and the footer keeps its
+    // bottom anchor — the star field is what makes the space between them read as sky.
+    private const int BannerY      = 6;
+    private const int SubTitleRow  = 13;
+    private const int QuoteRow     = 15;
+    private const int CardsTop     = 17;
+
+    // Card block: the menu column plus a last-run summary beside it.
+    private const int MenuCardWidth  = DialogHelper.MenuRowWidth + Card.ChromeWidth;
+    private const int RunCardWidth   = 34;
+    private const int CardGap        = 2;
+    private const int TotalCardsWidth = MenuCardWidth + CardGap + RunCardWidth;
+
+    // Five menu rows plus the frame.
+    private const int CardHeight = 5 + Card.ChromeHeight;
+
+    // Rows the anchored footer block occupies at the bottom of the screen: rule, tip, credit,
+    // hints and the version corner mark, plus a row of clearance.
+    private const int FooterRows = 7;
+
+    // How far the whole upper block has to move up to clear the footer.
+    //
+    // The rows above are a design for a terminal with room for the banner, the cards and the
+    // bottom-anchored footer. The footer keeps its anchor whatever the height, so on a short
+    // terminal the fixed rows walk into it — at the documented 120x30 minimum the card block
+    // landed exactly on the footer rule. Everything above the footer shifts up by however many
+    // rows are missing, and nothing moves at all once there is room.
+    private static int Squeeze(int interiorHeight) =>
+        interiorHeight <= 0
+            ? 0
+            : Math.Max(0, CardsTop + CardHeight - 1 - (interiorHeight - FooterRows));
+
+    // A design row, resolved against the host at layout time rather than at build time, so the
+    // screen survives a terminal resize instead of only being right when it was created.
+    private static Pos Row(int designRow, View host) =>
+        Pos.Func(v => designRow - Squeeze(v?.Viewport.Height ?? 0), host);
+
+    // Gradient endpoints for the banner, top to bottom: the SAO system-window cyan falling into
+    // the interface accent.
+    // PATH-D-PORT: a per-row colour ramp. A renderer swap reimplements the lerp, nothing else.
+    private static readonly Color BannerTop    = new(0x4F, 0xC3, 0xF7);
+    private static readonly Color BannerBottom = new(0xFF, 0xB4, 0x54);
 
     private const string SubTitle = "T U R N - B A S E D   R O G U E L I K E";
 
@@ -27,7 +70,7 @@ public static class TitleScreen
 
     private static readonly string[] Quotes =
     {
-        "\"There is one thing I've learned here -- to keep fighting.\"",
+        "\"There is one thing I've learned here — to keep fighting.\"",
         "\"In this world, a single blade can take you anywhere.\"",
         "\"Levels are just numbers. Strength is just numbers.\"",
         "\"Real strength is not about how much you can lift.\"",
@@ -43,30 +86,43 @@ public static class TitleScreen
         SAOTRPG.UI.Helpers.GameWindow.RequestFullClear();
         // Title is the hub every menu path returns to, so clear the menu Esc handlers here
         // as well — each re-enters the screen that installed it.
-        DifficultyScreen.UnhookEscHandler(mainWindow);
-        CharacterCreationScreen.UnhookEscHandler(mainWindow);
-        ModifierSelectScreen.UnhookEscHandler(mainWindow);
+        NavigationHelper.UnhookScreenEscHandlers(mainWindow);
         var sw = DebugLogger.StartTimer("TitleScreen.Show");
         DebugLogger.LogScreen("TitleScreen");
 
-        // Stars background
+        // Aincrad floats, so there is sky above and below it. The field spans the whole screen
+        // and thins towards the middle, which is what turns the empty rows into composed space
+        // rather than the void a four-row scatter at the top left behind. Static and sparse: it
+        // never animates and never rises above one glyph in forty cells.
         var stars = new Label
         {
-            Text = StarsArt, X = Pos.Center(), Y = 1,
-            Width = Dim.Auto(), Height = Dim.Auto(), SchemeName = ColorSchemes.DimName,
+            Text = "", Id = "starfield", X = 0, Y = 0,
+            Width = Dim.Fill(), Height = Dim.Fill(), SchemeName = ColorSchemes.DimName,
+        };
+        stars.SubViewsLaidOut += (s, e) =>
+        {
+            if (stars.Viewport.Width > 0 && stars.Viewport.Height > 0 && stars.Text.Length == 0)
+                stars.Text = StarField(stars.Viewport.Width, stars.Viewport.Height);
         };
 
-        // Title
-        var title = new Label
+        // Banner — one Label per row, all sharing one X so the letterforms line up, each tinted
+        // a step along the vertical gradient.
+        var bannerRows = new Label[BannerRows.Length];
+        for (int i = 0; i < BannerRows.Length; i++)
         {
-            Text = TitleText, X = Pos.Center(), Y = 6,
-            Width = Dim.Auto(), Height = Dim.Auto(), SchemeName = ColorSchemes.TitleName,
-        };
+            float t = BannerRows.Length == 1 ? 0f : (float)i / (BannerRows.Length - 1);
+            bannerRows[i] = new Label
+            {
+                Text = BannerRows[i],
+                X = ScreenHeader.Axis - BannerWidth / 2, Y = Row(BannerY + i, mainWindow),
+                Width = BannerWidth, Height = 1,
+            }.WithScheme(ColorSchemes.FromColor(Lerp(BannerTop, BannerBottom, t)));
+        }
 
         // Subtitle
         var subtitle = new Label
         {
-            Text = SubTitle, X = Pos.Center(), Y = 13,
+            Text = SubTitle, X = Pos.Center(), Y = Row(SubTitleRow, mainWindow),
             Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.GoldName,
         };
 
@@ -74,46 +130,41 @@ public static class TitleScreen
         var quote = new Label
         {
             Text = Quotes[_tipRng.Next(Quotes.Length)],
-            X = Pos.Center(), Y = 15,
+            X = Pos.Center(), Y = Row(QuoteRow, mainWindow),
             Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName,
         };
 
-        // Menu buttons (bracket-free). ► … ► markers toggle on focus via HasFocusChanged below.
-        int menuY = 18;
-        var newGameBtn  = MakeBtn("New Game",  menuY,     true);
-        var loadGameBtn = MakeBtn("Load Game", menuY + 2, false);
-        var recordsBtn  = MakeBtn("Records",   menuY + 4, false);
-        var optionsBtn  = MakeBtn("Options",   menuY + 6, false);
-        var exitBtn     = MakeBtn("Exit",      menuY + 8, false);
+        // ── Menu and last-run cards, side by side and centred ────────
+        // The cards are frames; their content is added to the screen as siblings, because a
+        // focusable container traps Tab traversal (see Card).
+        Pos cardsLeft = ScreenHeader.Axis - TotalCardsWidth / 2;
+        Pos runLeft = cardsLeft + MenuCardWidth + CardGap;
 
-        // Save preview
-        string savePreview = BuildSavePreview();
-        Label? saveLabel = null;
-        if (savePreview.Length > 0)
+        Pos cardsTop = Row(CardsTop, mainWindow);
+        var menuCard = new Card("MENU", cardsLeft, cardsTop, MenuCardWidth, CardHeight);
+        var runCard = new Card("LAST RUN", runLeft, cardsTop, RunCardWidth, CardHeight);
+
+        Pos menuY = Card.InsideY(cardsTop);
+        Pos menuX = Card.InsideX(cardsLeft);
+        var newGameBtn  = MenuBtn("New Game",  menuX, menuY,     true);
+        var loadGameBtn = MenuBtn("Load Game", menuX, menuY + 1, false);
+        var recordsBtn  = MenuBtn("Records",   menuX, menuY + 2, false);
+        var optionsBtn  = MenuBtn("Options",   menuX, menuY + 3, false);
+        var exitBtn     = MenuBtn("Exit",      menuX, menuY + 4, false);
+
+        // Last-run card: turns a dead status line into the reason to press Load.
+        var runLines = BuildRunCard(RunCardWidth - Card.ChromeWidth);
+        var runLabels = new Label[runLines.Length];
+        for (int i = 0; i < runLines.Length; i++)
         {
-            saveLabel = new Label
+            runLabels[i] = new Label
             {
-                Text = savePreview, X = Pos.Center(), Y = menuY + 10,
-                Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName,
+                Text = runLines[i],
+                X = Card.InsideX(runLeft), Y = Card.InsideY(cardsTop) + i,
+                Width = RunCardWidth - Card.ChromeWidth, Height = 1,
+                SchemeName = i == 0 ? ColorSchemes.TitleName : ColorSchemes.DimName,
             };
         }
-
-        // Focus wiring: wrap focused row in ► Label ◄, strip on blur, pad idle rows 2 spaces each side.
-        // IsDefault stays synced so Enter activates the currently-highlighted row.
-        foreach (var btn in new[] { newGameBtn, loadGameBtn, recordsBtn, optionsBtn, exitBtn })
-        {
-            btn.HasFocusChanged += (s, e) =>
-            {
-                if (s is not Button b) return;
-                b.IsDefault = e.NewValue;
-                string core = StripMarkers(b.Text?.ToString() ?? "");
-                b.Text = e.NewValue ? $"► {core} ◄" : $"  {core}  ";
-            };
-        }
-        // Initialize the triangle markers on the default-focused row.
-        newGameBtn.Text = $"► {StripMarkers(newGameBtn.Text?.ToString() ?? "")} ◄";
-        foreach (var btn in new[] { loadGameBtn, recordsBtn, optionsBtn, exitBtn })
-            btn.Text = $"  {StripMarkers(btn.Text?.ToString() ?? "")}  ";
 
         // Button actions
         newGameBtn.Accepting += (s, e) => { DifficultyScreen.Show(mainWindow); e.Handled = true; };
@@ -131,7 +182,7 @@ public static class TitleScreen
         // Footer
         var footerRule = new Label
         {
-            Text = "------------------------------------------------------------",
+            Text = new string(ScreenHeader.Hairline, 60),
             X = Pos.Center(), Y = Pos.AnchorEnd(6),
             Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
         };
@@ -143,16 +194,14 @@ public static class TitleScreen
         };
         var tribute = new Label
         {
-            Text = "Crafted by NoDice99 & Mixzpai -- A Fan-Made Tribute to Sword Art Online",
+            Text = "Crafted by NoDice99 & Mixzpai — A Fan-Made Tribute to Sword Art Online",
             X = Pos.Center(), Y = Pos.AnchorEnd(4),
             Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.BodyName
         };
-        var controls = new Label
-        {
-            Text = "[W/S] Navigate   [Enter] Select   [Esc] Quit",
-            X = Pos.Center(), Y = Pos.AnchorEnd(3),
-            Width = Dim.Auto(), Height = 1, SchemeName = ColorSchemes.DimName
-        };
+        var hintPairs = new[] { ("↑↓", "navigate"), ("enter", "select"), ("esc", "quit") };
+        var controls = ScreenHeader.KeyHints(
+            ScreenHeader.Axis - ScreenHeader.KeyHintsWidth(hintPairs) / 2,
+            Pos.AnchorEnd(3), hintPairs);
         var versionLabel = new Label
         {
             Text = Version,
@@ -161,10 +210,14 @@ public static class TitleScreen
         };
 
         // Assemble
-        mainWindow.Add(stars, title, subtitle, quote,
+        mainWindow.Add(stars);
+        mainWindow.Add(bannerRows);
+        mainWindow.Add(subtitle, quote,
+            menuCard, runCard,
             newGameBtn, loadGameBtn, recordsBtn, optionsBtn, exitBtn,
-            footerRule, tip, tribute, controls, versionLabel);
-        if (saveLabel != null) mainWindow.Add(saveLabel);
+            footerRule, tip, tribute, versionLabel);
+        mainWindow.Add(runLabels);
+        mainWindow.Add(controls.ToArray());
 
         NavigationHelper.EnableGameNavigation(mainWindow);
         newGameBtn.SetFocus();
@@ -184,33 +237,93 @@ public static class TitleScreen
         "Every floor has a unique named boss waiting in the Labyrinth.",
         "Press I for inventory, P for stats, T for equipment.",
         "Dexterity increases crit rate. Agility increases dodge chance.",
-        "Death costs 25% of your Col and 10% of your XP. Prepare well.",
+        "Death is permanent — your save is deleted. Retreat while you still can.",
         "Vendors sell better gear on higher floors. Check their stock.",
-        "Floor 100 awaits the final challenge -- your own reflection.",
+        "Floor 100 awaits the final challenge — your own reflection.",
     };
 
     private static readonly Random _tipRng = new();
 
-    private static Button MakeBtn(string text, int y, bool isDefault) => new()
+    // Positions a menu row inside the menu card. The bar, tint, chrome and focus behaviour all
+    // live in DialogHelper.CreateMenuRow; every row is the same width, so the labels share a
+    // left edge instead of each being centred on its own length.
+    private static Button MenuBtn(string text, Pos x, Pos y, bool isDefault)
     {
-        Text = text, X = Pos.Center(), Y = y,
-        IsDefault = isDefault, SchemeName = ColorSchemes.MenuButtonName,
-        // Strip Terminal.Gui's own [ ] button chrome so the only decoration
-        // is the `► … ►` focus marker we manage via HasFocusChanged.
-        NoDecorations = true, NoPadding = true,
-    };
-
-    // Strip triangles + surrounding spaces (idempotent); handles ► … ◄ mirror + legacy variants.
-    private static string StripMarkers(string text)
-    {
-        var s = text.Trim();
-        if (s.StartsWith("► ")) s = s[2..];
-        if (s.EndsWith(" ◄")) s = s[..^2];
-        if (s.EndsWith(" ►")) s = s[..^2];  // legacy guard
-        return s.Trim();
+        var btn = DialogHelper.CreateMenuRow(text, MenuCardWidth - Card.ChromeWidth,
+            isDefault: isDefault);
+        btn.X = x;
+        btn.Y = y;
+        return btn;
     }
 
-    private static string BuildSavePreview()
+    // Linear interpolation between two colours, for the banner's vertical ramp.
+    private static Color Lerp(Color a, Color b, float t) => new(
+        (int)(a.R + (b.R - a.R) * t),
+        (int)(a.G + (b.G - a.G) * t),
+        (int)(a.B + (b.B - a.B) * t));
+
+    // A deterministic star field. A hash of the coordinates picks the cells, so it is identical
+    // every time the screen is built and never animates.
+    //
+    // Rows carrying text are left empty rather than relied on being painted over. Most content
+    // does cover the sky behind it, but a row built from several small labels does not: the key
+    // hints have a one-column gap between each key and its action, and a star landing in that gap
+    // renders as "↑↓·navigate", which reads as a typo.
+    private static string StarField(int width, int height)
+    {
+        var sb = new System.Text.StringBuilder(width * height + height);
+        for (int y = 0; y < height; y++)
+        {
+            if (y > 0) sb.Append('\n');
+
+            int squeeze = Squeeze(height);
+            bool contentBand = y >= BannerY - squeeze - 1 && y <= CardsTop - squeeze + CardHeight;
+            bool footerBand = y >= height - FooterRows;
+            if (contentBand || footerBand)
+            {
+                sb.Append(' ', width);
+                continue;
+            }
+
+            // 0 at the vertical centre of the content band, rising towards both edges.
+            float edge = Math.Abs(y - height * 0.35f) / Math.Max(1f, height * 0.65f);
+            int oneIn = (int)(90 - 60 * Math.Clamp(edge, 0f, 1f));
+            for (int x = 0; x < width; x++)
+            {
+                int h = (x * 73856093) ^ (y * 19349663);
+                h = (h ^ (h >> 13)) & 0x7FFFFFFF;
+                sb.Append(h % oneIn == 0 ? (h % 3 == 0 ? '\u00b7' : '.') : ' ');
+            }
+        }
+        return sb.ToString();
+    }
+
+    // Rows for the last-run card. Returns a "no save" line when nothing is stored, rather than
+    // vanishing — an absent card reads as a missing feature.
+    private static string[] BuildRunCard(int width)
+    {
+        SaveSlotSummary? best = LatestSave();
+        if (best is null) return new[] { "No save data", "", "Start a new game to", "begin your climb." };
+
+        string time = best.PlayTime.TotalHours >= 1
+            ? $"{(int)best.PlayTime.TotalHours}h {best.PlayTime.Minutes:D2}m"
+            : $"{best.PlayTime.Minutes}m";
+        int bar = Math.Max(4, width - 10);
+        int filled = Math.Clamp(best.Floor * bar / 100, 0, bar);
+        return new[]
+        {
+            best.Name,
+            $"Lv.{best.Level}  ·  {best.Difficulty}",
+            $"{time} played",
+            new string('\u2588', filled) + new string('\u2591', bar - filled) + $" {best.Floor}/100",
+        };
+    }
+
+    // Newest save across all slots, or null when there is none.
+    //
+    // A bad slot must not take the title screen down, but swallowing the error silently would
+    // hide a corrupt or unreadable save behind a missing card, which reads as "no save exists".
+    private static SaveSlotSummary? LatestSave()
     {
         try
         {
@@ -218,14 +331,13 @@ public static class TitleScreen
             SaveSlotSummary? best = null;
             foreach (var s in summaries)
                 if (s != null && (best == null || s.Timestamp > best.Timestamp)) best = s;
-            if (best == null) return "";
-
-            string timeStr = best.PlayTime.TotalHours >= 1
-                ? $"{(int)best.PlayTime.TotalHours}h {best.PlayTime.Minutes:D2}m"
-                : $"{best.PlayTime.Minutes}m";
-            return $"Last save: {best.Name} Lv.{best.Level}  Floor {best.Floor}  {timeStr}";
+            return best;
         }
-        catch { return ""; }
+        catch (Exception ex)
+        {
+            DebugLogger.LogError("TitleScreen.LatestSave", ex);
+            return null;
+        }
     }
 
     // Routes to RecordsDialog — 80x30 summary + achievements + recent runs + leaderboard.

@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "sand_drift", "densityPermille": 7 },
   "pocketCandidates": ["Grassland", "Volcanic"],
   "primaryPaletteId": "Gold",
-  "tintColor": "#C8A05080",
+  "tintColor": "#C8A05022",
   "floorEntryText": "Heat ripples distort the horizon. Your canteen feels too light.",
   "treeGlyph": "♠",
   "oreVeinDensity": 1.2,

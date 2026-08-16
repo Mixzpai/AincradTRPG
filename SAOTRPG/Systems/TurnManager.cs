@@ -38,6 +38,11 @@ public partial class TurnManager
     private int _shrineBuff, _shrineBuffTurns;
     public int ShrineBuffTurns => _shrineBuffTurns;
 
+    // Remaining Barrier+N absorb for this floor. Exposed so the status tray can show it: the
+    // pool is live (refilled per floor from equipped Barrier effects, spent in ProcessMonsterTurn)
+    // and the Player Guide tells the player to build around it, but nothing displayed it.
+    public int BarrierRemaining => _barrierRemaining;
+
     public int Satiety { get; private set; } = 100;
     public const int MaxSatiety = 100;
     private const int HungerDrainInterval = 3, HungerRegenThreshold = 30;
@@ -194,7 +199,8 @@ public partial class TurnManager
     public event Action? GameWon;
     public event Action<NPC>? NpcDialogRequested;
     public event Action<int, int, int, bool, bool>? DamageDealt;
-    public event Action<int, int, int, int, Color>? WeaponSwing;
+    // (fromX, fromY, toX, toY, colour, durationMs) — duration carries the weapon's weight.
+    public event Action<int, int, int, int, Color, int>? WeaponSwing;
     public event Action<int, int>? MonsterKilled;
     // Tiered death-burst request: tier 0=standard, 1=elite, 2=floor boss.
     public event Action<int, int, int>? MonsterDeathBurstRequested;
@@ -202,7 +208,7 @@ public partial class TurnManager
     public event Action? LeveledUp;
     public event Action<int, int, Color>? SkillActivated;
     // Fires on level-up with 3 perk choices. UI should show picker, then call ApplyTalent.
-    public event Action<PassiveTalents.Perk[]>? TalentPickRequested;
+    public event Action<PendingTalent>? TalentPickRequested;
 
     // Fires when the active map swaps (enter/exit labyrinth). UI refreshes map references.
     public event Action? MapSwapped;
@@ -231,15 +237,6 @@ public partial class TurnManager
 
     public int GetSkillCooldown(string skillId) =>
         _skillCooldowns.TryGetValue(skillId, out int cd) ? cd : 0;
-
-    public IReadOnlyList<SwordSkill> GetUnlockedSkills()
-    {
-        var wpn = _player.Inventory.GetEquipped(Inventory.Core.EquipmentSlot.Weapon)
-            as Items.Equipment.Weapon;
-        string wtype = wpn?.WeaponType ?? "Unarmed";
-        int kills = GetWeaponKills(wtype);
-        return SwordSkillDatabase.UnlockedFor(wtype, kills).ToList();
-    }
 
     // ── Labyrinth (dungeon) state ────────────────────────────────────
     private GameMap? _overworldMap;
@@ -308,13 +305,78 @@ public partial class TurnManager
         MapSwapped?.Invoke();
     }
 
+    // Talents offered but not yet taken, oldest first.
+    //
+    // The entry stores the PERK IDS THAT WERE OFFERED, not just a count. RollChoices is a fresh
+    // shuffle every call, so re-rolling on resume would turn dismissing the prompt into a free
+    // reroll — dismiss until the perk you want appears. Storing the offer makes "the same three
+    // come back" true by construction instead of by a reproducibility argument, and it needs no
+    // run seed. Keyed by the level it was earned at, which is unique per offer.
+    private readonly List<(int Id, int Level, string[] PerkIds)> _pendingTalents = new();
+
+    // Identity is a sequence number, NOT the level. Two offers can share a level — anything that
+    // grants a talent outside a level-up, or a level-up that fires twice — and keying by level
+    // would then resolve both entries as one and orphan the other.
+    private int _nextPendingTalentId = 1;
+
+    public int PendingTalentCount => _pendingTalents.Count;
+
     public void RequestTalentPick()
     {
         var choices = PassiveTalents.RollChoices();
-        TalentPickRequested?.Invoke(choices);
+        var entry = new PendingTalent(_nextPendingTalentId++, _player.Level, choices);
+        _pendingTalents.Add((entry.Id, entry.Level, choices.Select(c => c.Id).ToArray()));
+        TalentPickRequested?.Invoke(entry);
+    }
+
+    // Every talent still owed, with the exact three perks its offer originally rolled.
+    public List<PendingTalent> EnumeratePendingTalents()
+    {
+        var list = new List<PendingTalent>();
+        foreach (var (id, level, ids) in _pendingTalents)
+        {
+            var choices = ids.Select(PassiveTalents.ById)
+                             .Where(p => p is not null)
+                             .Select(p => p!)
+                             .ToArray();
+            if (choices.Length > 0) list.Add(new PendingTalent(id, level, choices));
+        }
+        return list;
+    }
+
+    // Takes one pending talent. No-op if it was already taken, so a stale dialog cannot grant
+    // the same perk twice.
+    public void ResolveTalentPick(int pendingId, PassiveTalents.Perk picked)
+    {
+        int i = _pendingTalents.FindIndex(e => e.Id == pendingId);
+        if (i < 0) return;
+        _pendingTalents.RemoveAt(i);
+        ApplyTalent(picked);
     }
 
     public void ApplyTalent(PassiveTalents.Perk perk) => perk.Apply(_player);
+
+    // ── Persistence ──
+    public List<PendingTalentSave> SnapshotPendingTalents() =>
+        _pendingTalents.Select(e => new PendingTalentSave
+        {
+            Id = e.Id,
+            Level = e.Level,
+            PerkIds = e.PerkIds.ToList(),
+        }).ToList();
+
+    public void RehydratePendingTalents(List<PendingTalentSave>? saved)
+    {
+        _pendingTalents.Clear();
+        _nextPendingTalentId = 1;
+        if (saved is null) return;
+        foreach (var e in saved)
+        {
+            _pendingTalents.Add((e.Id, e.Level, e.PerkIds.ToArray()));
+            // Keep issuing ids above anything restored, or a new offer would collide with one.
+            if (e.Id >= _nextPendingTalentId) _nextPendingTalentId = e.Id + 1;
+        }
+    }
 
     // Fires after a Divine enters inventory (boss drop or quest reward).
     // Every Divine pickup gets full ceremony — no per-run cap.
@@ -629,6 +691,7 @@ public partial class TurnManager
         foreach (var kvp in save.WeaponKills) tm._weaponKills[kvp.Key] = kvp.Value;
         // IF Proficiency forks — rehydrate per-weapon pick state.
         tm.RehydrateForkChoices(save.WeaponProficiencyForks);
+        tm.RehydratePendingTalents(save.PendingTalents);
         if (save.DiscoveredLore != null) foreach (var idx in save.DiscoveredLore) tm._discoveredLore.Add(idx);
         if (save.SeenTutorialTips != null) TutorialSystem.SeenTips = new HashSet<string>(save.SeenTutorialTips);
         if (save.ActiveQuests != null) QuestSystem.ActiveQuests = new List<Quest>(save.ActiveQuests);

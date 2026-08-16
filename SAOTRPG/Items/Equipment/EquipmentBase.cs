@@ -38,6 +38,18 @@ public abstract class EquipmentBase : BaseItem
     public IReadOnlyList<EquipmentSpecialEffect> ParsedEffects =>
         EquipmentSpecialEffectRegistry.GetParsed(this);
 
+    // First parsed effect of type T, or null. Indexed loop rather than
+    // ParsedEffects.OfType<T>().FirstOrDefault(): that pair allocates an OfType iterator plus a
+    // boxed list enumerator on every call, and the callers run per monster hit, per boss breath
+    // and per sword-skill use. ParsedEffects is an IReadOnlyList, so indexing is free.
+    public T? FirstEffect<T>() where T : EquipmentSpecialEffect
+    {
+        var effects = ParsedEffects;
+        for (int i = 0; i < effects.Count; i++)
+            if (effects[i] is T match) return match;
+        return null;
+    }
+
     // ── IF Refinement — 3 Ingot DefId slots; mutate ONLY via Refinement.Socket (direct writes skip stat-folding + prior-ingot destruction). Divine cannot refine.
     public const int RefinementSlotCount = 3;
     public string?[] RefinementSlots { get; set; } = new string?[RefinementSlotCount];

@@ -5,7 +5,7 @@ using SAOTRPG.UI.Helpers;
 namespace SAOTRPG.UI.Dialogs;
 
 // Modal cutscene — typewriter text + optional portrait. Space/Enter finishes current line, next Enter advances.
-// Choices appear after line completes. Esc skips unless Unskippable.
+// Choices appear after line completes. Esc skips.
 public static class CutsceneDialog
 {
     private const int DialogWidth  = 74;
@@ -53,9 +53,7 @@ public static class CutsceneDialog
         var hintLabel = new Label
         {
             X = 2, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1),
-            Text = script.Unskippable
-                ? "Enter: continue | Space: finish line"
-                : "Enter: continue | Space: finish | Esc: skip",
+            Text = "Enter: continue | Space: finish | Esc: skip",
             SchemeName = ColorSchemes.DimName,
         };
 
@@ -170,7 +168,7 @@ public static class CutsceneDialog
                 FinishCurrentLine();
                 e.Handled = true;
             }
-            else if (e.KeyCode == KeyCode.Esc && !script.Unskippable)
+            else if (e.KeyCode == KeyCode.Esc)
             {
                 typingGen++;
                 AppHost.App.RequestStop();
@@ -179,7 +177,7 @@ public static class CutsceneDialog
         };
 
         dialog.Add(portraitLabel, speakerLabel, textLabel, choiceArea, continueBtn, hintLabel);
-        if (!script.Unskippable) DialogHelper.CloseOnEscape(dialog);
+        DialogHelper.CloseOnEscape(dialog);
         ShowBeat(0);
         DialogHelper.RunModal(dialog);
         typingGen++;

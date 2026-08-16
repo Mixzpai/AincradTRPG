@@ -20,10 +20,17 @@ public static class PassiveTalents
         new("int2",      "Sharp Mind",      "+2 Intelligence",         p => p.Intelligence += 2),
     };
 
+    // Resolves a stored perk id. A pending talent persists the ids it offered, so this is how
+    // the original three come back rather than a fresh roll.
+    public static Perk? ById(string id) => Array.Find(AllPerks, p => p.Id == id);
+
     // Returns 3 random unique perks for the player to choose from.
     public static Perk[] RollChoices(int count = 3)
     {
-        var shuffled = AllPerks.OrderBy(_ => Random.Shared.Next()).Take(count).ToArray();
+        var shuffled = AllPerks.OrderBy(_ => RunRng.Next()).Take(count).ToArray();
         return shuffled;
     }
 }
+
+// One level-up talent still owed, and the exact three perks its offer rolled.
+public record PendingTalent(int Id, int Level, PassiveTalents.Perk[] Choices);

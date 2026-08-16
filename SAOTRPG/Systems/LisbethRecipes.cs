@@ -162,13 +162,6 @@ public static class LisbethRecipes
         }),
     };
 
-    public static Recipe? FindByWeaponDefId(string defId)
-    {
-        foreach (var r in All)
-            if (r.WeaponDefId == defId) return r;
-        return null;
-    }
-
     // Low-tier enhance recipe: iron_ingot ×3 + 200 Col enables a +1 enhancement
     // attempt on Common/Uncommon weapons up to +5 cap. Routes through the existing
     // CraftingDialog enhance flow (mat counter + ore picker) — does NOT directly

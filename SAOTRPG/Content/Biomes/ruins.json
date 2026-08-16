@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "dust_mote", "densityPermille": 5 },
   "pocketCandidates": ["Urban", "Forest"],
   "primaryPaletteId": "Dim",
-  "tintColor": "#806040A0",
+  "tintColor": "#8060401E",
   "floorEntryText": "Cracked flagstones underfoot. Someone lived here once. No one does now.",
   "treeGlyph": "♣",
   "oreVeinDensity": 0.5,

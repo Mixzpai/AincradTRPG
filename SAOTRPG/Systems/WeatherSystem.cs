@@ -44,7 +44,7 @@ public static class WeatherSystem
         int total = 0;
         foreach (var cfg in Configs.Values) total += cfg.Weight;
 
-        int roll = Random.Shared.Next(total);
+        int roll = RunRng.Next(total);
         int acc = 0;
         foreach (var (type, cfg) in Configs)
         {

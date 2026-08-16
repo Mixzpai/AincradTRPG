@@ -3,9 +3,11 @@ using SAOTRPG.Systems;
 
 namespace SAOTRPG.UI.Helpers;
 
-// 3-4 letter abbreviations for the 8 currently-modeled status effects.
-// Reserved-but-unused codes (BRN/FRZ/IAI/MSE/DVN/BAR) intentionally omitted —
-// they have no backing TurnManager state today.
+// 3-4 letter abbreviations for the 9 currently-modeled status effects.
+// Reserved-but-unused codes (BRN/FRZ/IAI/MSE/DVN) intentionally omitted — they have no backing
+// TurnManager state today. BAR was on that list and should not have been: _barrierRemaining is
+// refilled every floor from equipped Barrier+N effects and spent in ProcessMonsterTurn, and the
+// Player Guide tells the player to build around it — it simply had no accessor to read.
 public static class StatusIconMap
 {
     public readonly record struct StatusIcon(string Abbrev, Color Color, int Count);
@@ -35,6 +37,9 @@ public static class StatusIconMap
             icons.Add(new("REGN", Color.BrightGreen, tm.FoodRegenTurnsLeft));
         if (tm.IsInvisible)
             icons.Add(new("INV", Color.White, tm.InvisibilityTurnsLeft));
+        // Barrier is a damage POOL, not a duration — Count is absorb remaining, not turns.
+        if (tm.BarrierRemaining > 0)
+            icons.Add(new("BAR", Color.BrightCyan, tm.BarrierRemaining));
 
         return icons;
     }

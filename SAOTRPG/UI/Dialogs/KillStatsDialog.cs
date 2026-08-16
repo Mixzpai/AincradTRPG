@@ -30,7 +30,8 @@ public static class KillStatsDialog
         y++;
 
         // ── Run Summary ──
-        dialog.Add(ScreenHeader.Section("Run Summary", y++));
+        var runHdr = ScreenHeader.Section("Run Summary", 1, y++, DialogWidth - 4);
+        dialog.Add(runHdr.Caption, runHdr.Rule);
         dialog.Add(MakeStat("Floor", $"{turnManager.CurrentFloor}", y++));
         dialog.Add(MakeStat("Kills", $"{turnManager.KillCount}", y++));
         dialog.Add(MakeStat("Turns", $"{turnManager.TurnCount}", y++));
@@ -64,7 +65,8 @@ public static class KillStatsDialog
         y++;
 
         // ── Weapon Proficiency ──
-        dialog.Add(ScreenHeader.Section("Weapon Proficiency", y++));
+        var weaponHdr = ScreenHeader.Section("Weapon Proficiency", 1, y++, DialogWidth - 4);
+        dialog.Add(weaponHdr.Caption, weaponHdr.Rule);
         if (turnManager.WeaponKills.Count > 0)
         {
             // Count entries dropped to footer-clip so the player gets a "+N more" hint

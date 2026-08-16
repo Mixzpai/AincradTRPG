@@ -2,6 +2,8 @@ using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.UI.Helpers;
 
+using SAOTRPG.Systems.Input;
+
 namespace SAOTRPG.UI;
 
 // Ranged Fire with Reticle.
@@ -160,46 +162,48 @@ public partial class MapView
     private bool HandleRangedFireKey(Key keyEvent)
     {
         if (!_rangedFireActive) return false;
-        var bareKey = keyEvent.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
 
-        // Backslash (rune match — v2 KeyCode has no Backslash member) toggles back off.
-        if (keyEvent.AsRune.Value == '\\')
+        // The key that opened the reticle closes it again, as does Esc.
+        if (keyEvent.KeyCode == KeyCode.Esc || Keybinds.IsPressed(GameAction.RangedFire, keyEvent))
         {
             ExitRangedFireMode();
             keyEvent.Handled = true;
             return true;
         }
 
-        switch (bareKey)
+        GameAction action = Keybinds.Resolve(InputContext.RangedFire, keyEvent);
+
+        if (action == GameAction.FireConfirm)
         {
-            case KeyCode.Esc:
-                ExitRangedFireMode();
-                keyEvent.Handled = true;
-                return true;
-            case KeyCode.Enter:
-            case KeyCode.Space:
-                ConfirmRangedFire();
-                keyEvent.Handled = true;
-                return true;
-            case KeyCode.Tab:
-                CycleReticleToNextEnemy(keyEvent.IsShift ? -1 : 1);
-                keyEvent.Handled = true;
-                return true;
-            // Cardinal nudges. WASD doubles as arrows so muscle memory carries over.
-            case KeyCode.CursorUp:    case KeyCode.W: MoveReticle( 0, -1); keyEvent.Handled = true; return true;
-            case KeyCode.CursorDown:  case KeyCode.S: MoveReticle( 0,  1); keyEvent.Handled = true; return true;
-            case KeyCode.CursorLeft:  case KeyCode.A: MoveReticle(-1,  0); keyEvent.Handled = true; return true;
-            case KeyCode.CursorRight: case KeyCode.D: MoveReticle( 1,  0); keyEvent.Handled = true; return true;
-            // Diagonals — mirrors the QEZC main map binding so reticle aim feels native.
-            case KeyCode.Q: MoveReticle(-1, -1); keyEvent.Handled = true; return true;
-            case KeyCode.E: MoveReticle( 1, -1); keyEvent.Handled = true; return true;
-            case KeyCode.Z: MoveReticle(-1,  1); keyEvent.Handled = true; return true;
-            case KeyCode.C: MoveReticle( 1,  1); keyEvent.Handled = true; return true;
-            default:
-                // Unknown key: stay in mode (don't surprise-exit). Swallow so map keys don't fire.
-                keyEvent.Handled = true;
-                return true;
+            ConfirmRangedFire();
+            keyEvent.Handled = true;
+            return true;
         }
+
+        if (action == GameAction.FireNextTarget || keyEvent.KeyCode == KeyCode.Tab)
+        {
+            CycleReticleToNextEnemy(keyEvent.IsShift ? -1 : 1);
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        // Reticle nudges have their own bindings, defaulting to the same WASD/QEZC as walking so
+        // aiming feels native.
+        GameAction reticle = action != GameAction.None
+            ? action
+            : Keybinds.ResolveDirectionLoose(InputContext.RangedFire, keyEvent);
+        (int dx, int dy) = Keybinds.Delta(reticle);
+        if (dx != 0 || dy != 0)
+        {
+            MoveReticle(dx, dy);
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        // Unknown key: stay in mode rather than surprise-exiting, and swallow it so map keys
+        // do not fire underneath the reticle.
+        keyEvent.Handled = true;
+        return true;
     }
 
     private void RenderRangedFireMode(int vpWidth, int vpHeight)

@@ -148,31 +148,11 @@ public partial class MapView
         }
     }
 
-    // Biome tint wash: per-tile RGB alpha blend bg_new = bg_old*(1-a) + tint*a
-    // so the base palette reads through at the configured alpha strength.
-    private void RenderTintOverlay(int w, int h)
-    {
-        var cfg = Systems.BiomeSystem.CurrentGenConfig;
-        if (cfg == null) return;
-        var tint = cfg.GetTintColor(out byte alpha);
-        if (tint == null || alpha == 0) return;
-        float a = alpha / 255f;
-        float ia = 1f - a;
-        byte tr = tint.Value.R, tg = tint.Value.G, tb = tint.Value.B;
-        for (int vy = 0; vy < h; vy++)
-        for (int vx = 0; vx < w; vx++)
-        {
-            int mx = VxToMap(vx), my = VyToMap(vy);
-            if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
-            var tile = _map.GetTile(mx, my);
-            var (glyph, fg, bg) = _visualCache.Get(mx, my, tile.Type);
-            var blended = new Color(
-                (byte)(bg.R * ia + tr * a),
-                (byte)(bg.G * ia + tg * a),
-                (byte)(bg.B * ia + tb * a));
-            DrawGlyph_View(vx, vy, glyph, Gfx.Attr(fg, blended));
-        }
-    }
+    // The biome tint wash used to live here as an uncalled overlay pass. It is in
+    // MapView.Rendering's ApplyLighting now, which is the seam every visible cell already passes
+    // through and the only one the tile-layer cache can see — as an overlay it repainted the whole
+    // viewport every frame, and it blended against the tile's UNLIT background, discarding the
+    // lighting it was drawn on top of.
 
     private void RenderFootstepTrail(int w, int h)
     {

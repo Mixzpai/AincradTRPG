@@ -2,12 +2,11 @@ using Terminal.Gui;
 
 namespace SAOTRPG.Systems.Story;
 
-// A scripted cutscene: an ordered list of beats, optionally unskippable.
+// A scripted cutscene: an ordered list of beats.
 public record CutsceneScript(
     string EventId,
     string Title,
     CutsceneBeat[] Beats,
-    bool Unskippable = false,
     bool IsReplay = false
 );
 

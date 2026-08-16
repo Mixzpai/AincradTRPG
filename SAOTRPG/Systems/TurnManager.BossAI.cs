@@ -41,7 +41,7 @@ public partial class TurnManager
 
             // Random chance to use ability (higher in later phases).
             int useChance = 15 + boss.CurrentPhase * 10;
-            if (Random.Shared.Next(100) >= useChance) continue;
+            if (RunRng.Next(100) >= useChance) continue;
 
             ability.LastUsedTurn = TurnCount;
             ExecuteBossAbility(boss, ability);
@@ -148,7 +148,7 @@ public partial class TurnManager
                 if (!_map.InBounds(nx, ny)) continue;
                 var t = _map.GetTile(nx, ny);
                 if (t.BlocksMovement || t.Occupant != null) continue;
-                var mob = MobFactory.CreateFloorMob(CurrentFloor, _diffTier.MobStatPercent);
+                var mob = MobFactory.CreateFloorMob(CurrentFloor, _diffTier.MobStatPercent, RunRng.Stream);
                 _map.PlaceEntity(mob, nx, ny);
                 mob.SetLog(_log);
                 spawned++;
@@ -196,12 +196,12 @@ public partial class TurnManager
         int dist = Math.Max(Math.Abs(_player.X - boss.X), Math.Abs(_player.Y - boss.Y));
         if (dist > ability.AoERadius) return;
 
-        if (Random.Shared.NextDouble() < ability.StatusChance && ability.StatusEffect != null)
+        if (RunRng.NextDouble() < ability.StatusChance && ability.StatusEffect != null)
         {
             // Uninterruptible+N — chance to shrug off boss status breath.
             var breathWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-            int breathUninterrupt = breathWpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Uninterruptible>().FirstOrDefault()?.ChancePercent ?? 0;
-            if (breathUninterrupt > 0 && Random.Shared.Next(100) < breathUninterrupt)
+            int breathUninterrupt = breathWpn?.FirstEffect<EquipmentSpecialEffect.Uninterruptible>()?.ChancePercent ?? 0;
+            if (breathUninterrupt > 0 && RunRng.Next(100) < breathUninterrupt)
             {
                 _log.LogCombat($"  {breathWpn!.Name} shields you from {ability.Name}!");
                 return;

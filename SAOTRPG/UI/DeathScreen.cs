@@ -9,7 +9,9 @@ namespace SAOTRPG.UI;
 public static class DeathScreen
 {
     private const int BannerY = 2, FlavorY = 11, NameY = 13, SummaryY = 15;
-    private const int RecapBoxW = 49, RecapTrimW = 45, RecapCount = 5;
+    // RecapInner is the span between the two box edges; the body pads to RecapInner minus one
+    // space of gutter on each side.
+    private const int RecapInner = 45, RecapTrimW = RecapInner - 2, RecapCount = 5;
 
     private const string DeathArt = @"
     ╔══════════════════════════════════════╗
@@ -88,13 +90,15 @@ public static class DeathScreen
             var recentLines = logView.GetRecentEntries(RecapCount);
             if (recentLines.Count > 0)
             {
-                string border = new string('-', RecapBoxW - 4);
-                const int headerPrefixLen = 19;
-                string recap = $"  +[ Last Moments ]{border[headerPrefixLen..]}+\n";
+                // All three edges must span RecapInner columns. They used to be derived
+                // independently and came out at 46, 52 and 49 columns respectively.
+                const string RecapTitle = "[ Last Moments ]";
+                string border = new string('-', RecapInner);
+                string recap = $"  +{RecapTitle}{border[RecapTitle.Length..]}+\n";
                 foreach (var line in recentLines)
                 {
                     string trimmed = line.Length > RecapTrimW ? line[..RecapTrimW] : line;
-                    recap += $"  |  {trimmed,-RecapTrimW} |\n";
+                    recap += $"  | {trimmed,-RecapTrimW} |\n";
                 }
                 recap += $"  +{border}+";
 
@@ -120,7 +124,8 @@ public static class DeathScreen
         var returnBtn = new Button
         {
             Text = " Return to Title ", X = Pos.Center(), Y = buttonY,
-            IsDefault = true, SchemeName = ColorSchemes.ButtonName
+            IsDefault = true, SchemeName = ColorSchemes.ButtonName,
+            ShadowStyle = null
         };
         returnBtn.Accepting += (s, e) =>
         {
@@ -165,7 +170,7 @@ public static class DeathScreen
             int par = TurnManager.GetFloorPar(floor);
             int floorTurns = turnManager.FloorTurns;
             string parResult = floorTurns <= par ? "FAST" : "SLOW";
-            summary += $"  |  {"Floor Pace:",-17}{parResult,5} ({floorTurns,3}/{par,3})│\n";
+            summary += SummaryFormatter.StatRow("Floor Pace", $"{parResult} ({floorTurns}/{par})");
         }
 
         if (turnManager?.TopKill is var (topName, topCount))
@@ -183,7 +188,7 @@ public static class DeathScreen
                 summary += SummaryFormatter.StatRow("Top Weapon", $"{topWpn.Key} ({topWpn.Value} kills)");
         }
 
-        summary += "  |                                   |\n" + SummaryFormatter.StatRow("Rating", grade);
+        summary += SummaryFormatter.BlankRow() + SummaryFormatter.StatRow("Rating", grade);
 
         if (turnManager != null)
         {
@@ -196,7 +201,12 @@ public static class DeathScreen
 
         if (turnManager != null) summary += ProficiencyHelper.BuildBoxRows(turnManager);
 
-        summary += "  |                                   |\n" + "  +------------------------------------+";
+        // The seed the run was built from. Shown last because it is the one row a player copies
+        // rather than reads — entering it at character creation replays this exact world.
+        summary += SummaryFormatter.BlankRow()
+                 + SummaryFormatter.StatRow("Seed", RunRng.Seed.ToString());
+
+        summary += SummaryFormatter.BlankRow() + SummaryFormatter.Border().TrimEnd(SummaryFormatter.RowBreak);
         return summary;
     }
 

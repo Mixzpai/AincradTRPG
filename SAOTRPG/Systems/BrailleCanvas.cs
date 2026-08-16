@@ -20,7 +20,6 @@ public static class BrailleCanvas
     public const byte CornerSE    = 0x80; // dot 8
 
     // Drop alternate bits — preserves rough density at half. Fast popcount-aware reduction.
-    public static byte HalfDots(byte mask) => (byte)(mask & 0x55);
 
     // Pick `dotCount` dots deterministically by seed. Fisher-Yates over the 8 positions.
     public static byte SpreadDots(int seed, int dotCount)

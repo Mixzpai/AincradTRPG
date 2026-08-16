@@ -16,7 +16,8 @@ public sealed class WorldContext
     public List<Room> Rooms { get; } = new();
     public List<(int x, int y)> Clearings { get; } = new();
 
-    // Populated by SeedDerivationPass. Use this everywhere — not Random.Shared.
+    // Populated by SeedDerivationPass. Use this everywhere inside the pipeline — never the ambient
+    // run stream, because a pass must reproduce from the floor's derived seed alone.
     public Random Rng { get; set; } = null!;
 
     // Set by HeightmapPass. float[w,h] in [0..1]. Null until the pass runs.
@@ -29,9 +30,6 @@ public sealed class WorldContext
     // Set by FeatureScatterPass mid-run when the boss room is carved.
     public Room? BossRoom { get; set; }
 
-    // Set by LakePass before lake stamping. Consumed by ConnectivityAuditPass for
-    // Brogue's 85% post-lake-reachability rule. 0 until LakePass runs.
-    public int PreLakeWalkableCount { get; set; }
 
     // Set by PocketBiomePass on band-edge floors. Per-tile override biome;
     // null entries (and null map) fall back to ctx.Biome in BaseTerrainPass.

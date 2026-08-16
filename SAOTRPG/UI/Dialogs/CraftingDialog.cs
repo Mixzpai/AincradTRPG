@@ -226,13 +226,14 @@ public static class CraftingDialog
             player.Inventory.ConsumeByDefinitionId(chosenOreDefId, 1);
 
         // Roll for success
-        bool success = Random.Shared.Next(100) < successRate;
+        bool success = RunRng.Next(100) < successRate;
 
         if (success)
         {
             // Weapon path threads oreDefId so per-level bonus biases to ore's stat.
             ApplyEnhancementDelta(player, chosenItem, +1, chosenOreDefId);
             SAOTRPG.Systems.MilestoneSystem.OnRefinementApplied(player, chosenItem);
+            SAOTRPG.Systems.MilestoneSystem.OnWeaponUpgraded(player);
 
             string biasMsg = "";
             if (chosenOreDefId != null &&
@@ -248,7 +249,7 @@ public static class CraftingDialog
         else
         {
             // +7 and above: 30% risk of losing a level (SAO canon). Pops last ore for -1 inverse.
-            if (chosenItem.EnhancementLevel >= 7 && Random.Shared.Next(100) < 30)
+            if (chosenItem.EnhancementLevel >= 7 && RunRng.Next(100) < 30)
             {
                 ApplyEnhancementDelta(player, chosenItem, -1, null);
 
@@ -426,12 +427,45 @@ public static class CraftingDialog
         if (step.PeakExtraMatId != null && peakName != null)
             costLine += $"\n + 1x {peakName} ({havePeak} owned)";
 
+        // The Slicing Stone branch: one tier-matched stone instead of the canon catalyst pile,
+        // routing to a different weapon. Offered only when this weapon has an alt entry, so a
+        // chain without one keeps the original two-button prompt exactly.
+        var alt = WeaponEvolutionChains.GetAlt(weapon.DefinitionId);
+        string? altName = null, stoneName = null;
+        int haveStone = 0;
+        if (alt != null)
+        {
+            altName = ItemRegistry.Create(alt.AltNextDefId)?.Name ?? alt.AltNextDefId;
+            stoneName = MaterialDisplayName(alt.StoneDefId);
+            haveStone = CountMaterialByDefId(player, alt.StoneDefId);
+        }
+
         string promptBody =
             $"Evolve {weapon.EnhancedName} into {nextName}?\n\n" +
             $"Cost: {costLine}";
+        if (alt != null)
+            promptBody += $"\n\nOr take the Slicing Stone branch into {altName}:\n"
+                        + $"  1x {stoneName} ({haveStone} owned)";
 
-        int choice = DialogHelper.Query("Evolve Weapon", promptBody, "Confirm", "Cancel");
-        if (choice != 0) return;
+        int choice = alt == null
+            ? DialogHelper.Query("Evolve Weapon", promptBody, "Confirm", "Cancel")
+            : DialogHelper.Query("Evolve Weapon", promptBody, "Canon Evolve", "Slicing Stone", "Cancel");
+        if (choice != 0 && !(alt != null && choice == 1)) return;
+        bool useAlt = alt != null && choice == 1;
+
+        if (useAlt)
+        {
+            if (haveStone < 1)
+            {
+                resultLabel.Text = $"The alt branch needs 1x {stoneName}. You have {haveStone}.";
+                resultLabel.SchemeName = ColorSchemes.DangerName;
+                return;
+            }
+            CommitEvolution(player, weapon, alt!.AltNextDefId, resultLabel, header,
+                            () => ConsumeMaterialByDefId(player, alt!.StoneDefId, 1),
+                            $"1x {stoneName}");
+            return;
+        }
 
         // Validate materials after confirm so the player sees the full prompt first.
         if (haveMat < step.MaterialQty)
@@ -447,19 +481,34 @@ public static class CraftingDialog
             return;
         }
 
-        // Build the next-tier weapon, preserving enhancement level if supported.
-        var created = ItemRegistry.Create(step.NextDefId);
+        CommitEvolution(player, weapon, step.NextDefId, resultLabel, header,
+                        () =>
+                        {
+                            ConsumeMaterialByDefId(player, step.MaterialDefId, step.MaterialQty);
+                            if (step.PeakExtraMatId != null)
+                                ConsumeMaterialByDefId(player, step.PeakExtraMatId, 1);
+                        },
+                        $"{step.MaterialQty}x {matName}"
+                        + (step.PeakExtraMatId != null ? $" + 1x {peakName}" : ""));
+    }
+
+    // Build the target weapon, pay the cost, fold the old +N bonuses in and swap it on. Shared by
+    // the canon and Slicing Stone branches, which differ only in what they cost and what they
+    // produce — duplicating this was the alternative, and enhancement preservation is the part
+    // that must not drift between the two.
+    private static void CommitEvolution(Player player, Weapon weapon, string targetDefId,
+                                        Label resultLabel, Label header,
+                                        Action payCost, string costSummary)
+    {
+        var created = ItemRegistry.Create(targetDefId);
         if (created is not Weapon nextWeapon)
         {
-            resultLabel.Text = $"Internal error: next weapon '{step.NextDefId}' could not be created.";
+            resultLabel.Text = $"Internal error: next weapon '{targetDefId}' could not be created.";
             resultLabel.SchemeName = ColorSchemes.DangerName;
             return;
         }
 
-        // Consume materials.
-        ConsumeMaterialByDefId(player, step.MaterialDefId, step.MaterialQty);
-        if (step.PeakExtraMatId != null)
-            ConsumeMaterialByDefId(player, step.PeakExtraMatId, 1);
+        payCost();
 
         // Preserve enhancement: bake existing-level bonuses into the new weapon then swap.
         int oldEnhLevel = weapon.EnhancementLevel;
@@ -496,8 +545,7 @@ public static class CraftingDialog
         // ◈ prefix triggers LogColorRules BrightRed accent (Divine Object style).
         resultLabel.Text =
             $"◈ Your {oldName} evolves into {nextWeapon.EnhancedName}!\n" +
-            $"Consumed {step.MaterialQty}x {matName}" +
-            (step.PeakExtraMatId != null ? $" + 1x {peakName}." : ".");
+            $"Consumed {costSummary}.";
         resultLabel.SchemeName = ColorSchemes.GoldName;
 
         header.Text = $"Col: {player.ColOnHand}    Materials: {CountMaterials(player)}";

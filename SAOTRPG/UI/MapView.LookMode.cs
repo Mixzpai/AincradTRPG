@@ -3,6 +3,8 @@ using SAOTRPG.Entities;
 using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
+using SAOTRPG.Systems.Input;
+
 namespace SAOTRPG.UI;
 
 // Look mode (L): highlight visible monsters, Tab/arrows cycle, selected stat overlay. Right Target List sorts Dist/HP/Threat/Level/Index (T cycles, 1-9 jump).
@@ -136,49 +138,59 @@ public partial class MapView
     private bool HandleLookModeKey(Key keyEvent)
     {
         if (!_lookModeActive) return false;
-        var bareKey = keyEvent.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
 
-        switch (bareKey)
+        // Esc and Tab are reserved framework keys; everything else here is bound.
+        if (keyEvent.KeyCode == KeyCode.Esc || Keybinds.IsPressed(GameAction.Look, keyEvent))
         {
-            case KeyCode.Esc:
-            case KeyCode.L:
-                ExitLookMode();
-                keyEvent.Handled = true;
-                return true;
-            case KeyCode.Tab:
-            case KeyCode.D:
-            case KeyCode.CursorRight:
-            case KeyCode.S:
-            case KeyCode.CursorDown:
-                LookNext();
-                keyEvent.Handled = true;
-                return true;
-            case KeyCode.A:
-            case KeyCode.CursorLeft:
-            case KeyCode.W:
-            case KeyCode.CursorUp:
-                LookPrev();
-                keyEvent.Handled = true;
-                return true;
-            // T cycles sort (Dist→HP→Threat→Level→Index); shadows MapView.Input.cs EquipmentRequested while active.
-            case KeyCode.T:
-                CycleSort();
-                keyEvent.Handled = true;
-                return true;
-            // 1-9 jump; shadows QuickUseRequested hotbar. Out-of-range = silent no-op.
-            case KeyCode.D1: JumpToTarget(1); keyEvent.Handled = true; return true;
-            case KeyCode.D2: JumpToTarget(2); keyEvent.Handled = true; return true;
-            case KeyCode.D3: JumpToTarget(3); keyEvent.Handled = true; return true;
-            case KeyCode.D4: JumpToTarget(4); keyEvent.Handled = true; return true;
-            case KeyCode.D5: JumpToTarget(5); keyEvent.Handled = true; return true;
-            case KeyCode.D6: JumpToTarget(6); keyEvent.Handled = true; return true;
-            case KeyCode.D7: JumpToTarget(7); keyEvent.Handled = true; return true;
-            case KeyCode.D8: JumpToTarget(8); keyEvent.Handled = true; return true;
-            case KeyCode.D9: JumpToTarget(9); keyEvent.Handled = true; return true;
-            default:
-                ExitLookMode();
-                return false;
+            ExitLookMode();
+            keyEvent.Handled = true;
+            return true;
         }
+
+        GameAction action = Keybinds.Resolve(InputContext.LookMode, keyEvent);
+
+        // Target cycling also follows the movement keys, so whichever direction keys the player
+        // uses to walk are the ones that step through targets.
+        GameAction direction = Keybinds.ResolveDirectionLoose(InputContext.Map, keyEvent);
+
+        if (keyEvent.KeyCode == KeyCode.Tab
+            || action == GameAction.LookNextTarget
+            || direction == GameAction.MoveSouth)
+        {
+            LookNext();
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        if (action == GameAction.LookPrevTarget || direction == GameAction.MoveNorth)
+        {
+            LookPrev();
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        // Cycles sort (Dist->HP->Threat->Level->Index); shadows the equipment binding while active.
+        if (action == GameAction.LookInspect)
+        {
+            CycleSort();
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        // Quick-use bindings double as jump-to-target while look mode is up. Out of range is a
+        // silent no-op, matching the hotbar it shadows.
+        for (int slot = 1; slot <= 9; slot++)
+        {
+            if (!Keybinds.IsPressed(GameAction.QuickUse1 + (slot - 1), keyEvent)) continue;
+
+            JumpToTarget(slot);
+            keyEvent.Handled = true;
+            return true;
+        }
+
+        // Anything else leaves look mode and is handled as an ordinary map key.
+        ExitLookMode();
+        return false;
     }
 
     private void RenderLookMode(int vpWidth, int vpHeight)

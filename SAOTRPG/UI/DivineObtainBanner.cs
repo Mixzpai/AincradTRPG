@@ -57,7 +57,6 @@ public static class DivineObtainBanner
     }
 
     public static string WeaponName  => _weaponName;
-    public static string RarityLabel => _rarityLabel;
     // True when the active banner is an awakening fire (vs. obtain).
     public static bool IsAwakening => _isAwakening;
     public static int AwakeningLevel => _awakeningLevel;

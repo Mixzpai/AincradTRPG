@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "firefly", "densityPermille": 4 },
   "pocketCandidates": ["Grassland", "Swamp"],
   "primaryPaletteId": "Success",
-  "tintColor": "#2E5B2E90",
+  "tintColor": "#2E5B2E22",
   "floorEntryText": "Dense canopy swallows the light. Every rustle might be teeth.",
   "treeGlyph": "T",
   "oreVeinDensity": 0.6,

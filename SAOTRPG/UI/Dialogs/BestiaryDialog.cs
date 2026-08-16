@@ -4,6 +4,8 @@ using SAOTRPG.Entities;
 using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
+using SAOTRPG.Systems.Input;
+
 namespace SAOTRPG.UI.Dialogs;
 
 // Monster compendium (Y from map). Persists selection/tab/sort/filter across opens within a run.
@@ -72,6 +74,10 @@ public static class BestiaryDialog
             X = 1, Y = 4,
             Width = ListPaneWidth, Height = Dim.Fill(3),
             SchemeName = ColorSchemes.ListSelectionName,
+            // Type-ahead off — it swallows this list's letter hotkeys and its own search key.
+            // ListView.OnKeyDown eats a printable rune before KeyDown is raised, so one arrow
+            // key would kill every letter binding for the rest of the session.
+            KeystrokeNavigator = null,
         };
 
         // ── Detail pane ──
@@ -93,7 +99,14 @@ public static class BestiaryDialog
         // ── Footer hint ──
         var hint = new Label
         {
-            Text = "[Y/Esc] Close  [↑↓] Nav  [Tab] Tab  [S] Sort  [/] Search  [B] Boss  [U] Undisc  [C] Clear",
+            Text = $"[{Keybinds.Get(GameAction.OpenBestiary).Primary}/Esc] Close  "
+                 + "[↑↓] Nav  [Tab] Detail tab  "
+                 + $"[{Keybinds.Get(GameAction.BestiarySortPrefix).Primary}] Sort  "
+                 + $"[{Keybinds.Get(GameAction.BestiaryFloorBand).Primary}] Floor  "
+                 + $"[{Keybinds.Get(GameAction.BestiarySearch).Primary}] Search  "
+                 + $"[{Keybinds.Get(GameAction.BestiaryBossOnly).Primary}] Boss  "
+                 + $"[{Keybinds.Get(GameAction.BestiaryShowUndiscovered).Primary}] Undisc  "
+                 + $"[{Keybinds.Get(GameAction.BestiaryClearFilters).Primary}] Clear",
             X = 1, Y = Pos.AnchorEnd(1),
             Width = Dim.Fill(1), Height = 1,
             SchemeName = ColorSchemes.DimName,
@@ -129,15 +142,14 @@ public static class BestiaryDialog
                 filtered = filtered.Where(e => filter.ActiveTags.Contains(e.LootTag ?? ""));
             if (filter.BossOnly)
                 filtered = filtered.Where(e => e.IsBoss || e.IsFieldBoss);
+            if (filter.BandActive)
+                filtered = filtered.Where(e =>
+                    filter.BandIncludes(e.FirstFloorEncountered, e.LastFloorEncountered));
             if (!string.IsNullOrWhiteSpace(filter.Search))
             {
                 string q = filter.Search.ToLowerInvariant();
                 filtered = filtered.Where(e => e.Name.ToLowerInvariant().Contains(q));
             }
-            filtered = filtered.Where(e =>
-                e.FirstFloorEncountered <= filter.FloorMax &&
-                (e.LastFloorEncountered == 0 || e.LastFloorEncountered >= filter.FloorMin));
-
             filtered = sortKey switch
             {
                 "A" => filtered.OrderBy(e => e.Name),
@@ -177,7 +189,22 @@ public static class BestiaryDialog
             }
             string bossMark = filter.BossOnly ? "[x]" : "[ ]";
             string undiscMark = filter.ShowUndiscovered ? "[x]" : "[ ]";
-            indicatorLabel.Text = $"B:{bossMark}Boss  U:{undiscMark}Undisc  F{filter.FloorMin}-{filter.FloorMax}  Sort:{sortKey}";
+            // The chips above carry no digits of their own, so the row that reports filter state
+            // also names the keys that change it.
+            // The band is shown only while one is selected. A permanent range readout is what
+            // FB-655 removed: it advertised a filter with no control behind it.
+            string bandMark = filter.BandActive ? $"  {filter.BandLabel}" : "";
+            indicatorLabel.Text =
+                $"B:{bossMark}Boss  U:{undiscMark}Undisc{bandMark}  " +
+                $"Sort:{SortName(sortKey)}  Tags: 1-9 0 a w";
+            indicatorLabel.SchemeName = ColorSchemes.BodyName;
+        }
+
+        // S arms a suffix; without this the mode is invisible and the next keystroke vanishes.
+        void ShowSortPrompt()
+        {
+            indicatorLabel.Text = "Sort by:  a Name   l Level   k Kills   r Recent   f Floor";
+            indicatorLabel.SchemeName = ColorSchemes.GoldName;
         }
 
         void RefreshDetail()
@@ -222,6 +249,7 @@ public static class BestiaryDialog
             var sourceList = rows.Select(r => r.DisplayName).ToList();
             if (sourceList.Count == 0) sourceList.Add("  (no entries)");
             listView.SetSource(new ObservableCollection<string>(sourceList));
+            DialogHelper.SelectFirstRow(listView);
 
             // Restore last-selected row if it's still in the filtered view.
             if (!string.IsNullOrEmpty(Bestiary.SessionSelectedName))
@@ -259,6 +287,10 @@ public static class BestiaryDialog
             }
         };
 
+        // Two-key S-prefix sort state. Scoped to this dialog instance: as a static it survived
+        // the dialog closing, so an S left armed ate the first keystroke of the next open.
+        bool awaitingSortSuffix = false;
+
         // Primary keybind handler on listView. Letters go via
         // e.AsRune.Value (the typed character); control keys go via
         // e.KeyCode. Mixing the two matches how PlayerGuideDialog wires
@@ -267,12 +299,22 @@ public static class BestiaryDialog
         // letter binding has to use AsRune.
         listView.KeyDown += (s, e) =>
         {
+            if (Keybinds.IsPressed(GameAction.BestiarySearch, e))
+            {
+                searchLabel.Visible = true;
+                searchField.Visible = true;
+                searchField.Text = filter.Search ?? "";
+                searchField.SetFocus();
+                e.Handled = true;
+                return;
+            }
+
             char rune = char.ToLowerInvariant((char)e.AsRune.Value);
 
             // Sort prefix: awaiting sort-suffix input after 's'.
-            if (_awaitingSortSuffix)
+            if (awaitingSortSuffix)
             {
-                _awaitingSortSuffix = false;
+                awaitingSortSuffix = false;
                 sortKey = rune switch
                 {
                     'a' => "A",
@@ -305,41 +347,53 @@ public static class BestiaryDialog
                     return;
             }
 
-            // Letter keys — use rune. Case-insensitive via ToLowerInvariant.
-            switch (rune)
+            // Close on the same key that opened this. Read from OpenBestiary rather than
+            // hardcoded, so rebinding the opener moves both halves together.
+            if (Keybinds.IsPressed(GameAction.OpenBestiary, e))
             {
-                case 'y':
-                    Bestiary.SessionSort = sortKey;
-                    Bestiary.SessionActiveTab = activeTab;
-                    AppHost.App.RequestStop();
-                    e.Handled = true;
-                    return;
-                case 's':
-                    _awaitingSortSuffix = true;
-                    e.Handled = true;
-                    return;
-                case 'b':
-                    filter.BossOnly = !filter.BossOnly;
-                    Refresh();
-                    e.Handled = true;
-                    return;
-                case 'u':
-                    filter.ShowUndiscovered = !filter.ShowUndiscovered;
-                    Refresh();
-                    e.Handled = true;
-                    return;
-                case 'c':
-                    filter.Clear();
-                    Refresh();
-                    e.Handled = true;
-                    return;
-                case '/':
-                    searchLabel.Visible = true;
-                    searchField.Visible = true;
-                    searchField.Text = filter.Search ?? "";
-                    searchField.SetFocus();
-                    e.Handled = true;
-                    return;
+                Bestiary.SessionSort = sortKey;
+                Bestiary.SessionActiveTab = activeTab;
+                AppHost.App.RequestStop();
+                e.Handled = true;
+                return;
+            }
+            if (Keybinds.IsPressed(GameAction.BestiarySortPrefix, e))
+            {
+                awaitingSortSuffix = true;
+                ShowSortPrompt();
+                e.Handled = true;
+                return;
+            }
+            if (Keybinds.IsPressed(GameAction.BestiaryBossOnly, e))
+            {
+                filter.BossOnly = !filter.BossOnly;
+                Refresh();
+                e.Handled = true;
+                return;
+            }
+            if (Keybinds.IsPressed(GameAction.BestiaryShowUndiscovered, e))
+            {
+                filter.ShowUndiscovered = !filter.ShowUndiscovered;
+                Refresh();
+                e.Handled = true;
+                return;
+            }
+            if (Keybinds.IsPressed(GameAction.BestiaryClearFilters, e))
+            {
+                filter.Clear();
+                Refresh();
+                e.Handled = true;
+                return;
+            }
+
+            // Floor band. Routed through Keybinds while its neighbours are bare runes, so a
+            // rebind moves it and the legend follows.
+            if (Keybinds.IsPressed(GameAction.BestiaryFloorBand, e))
+            {
+                filter.CycleBand();
+                Refresh();
+                e.Handled = true;
+                return;
             }
 
             // Tag chips: 1-9, 0, 'a'/'w' map 12 tags. Raw rune (not lowercased) drives digits.
@@ -364,8 +418,11 @@ public static class BestiaryDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // Two-key S-prefix sort state; rolls to next KeyDown frame for the suffix.
-    private static bool _awaitingSortSuffix;
+    // Sort-key letter to the word the indicator row shows.
+    private static string SortName(string key) => key switch
+    {
+        "L" => "Level", "K" => "Kills", "R" => "Recent", "F" => "Floor", _ => "Name",
+    };
 
     // ── List row formatting ──
     // Template: "{prefix}{glyph} {name,-18} L{level,2} x{kills,2}"; prefix ! boss, * elite, · normal, ? undisc.

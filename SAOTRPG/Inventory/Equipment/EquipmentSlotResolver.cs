@@ -13,36 +13,47 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         RegisterDefaultMappings();
     }
 
+    // SPECIFIC BEFORE BROAD, and the order is the whole method.
+    //
+    // This used to try EquipmentType first and treat the sub-type properties as a fallback. Every
+    // Armor carries EquipmentType "Armor" and every Accessory carries "Accessory", and BOTH are
+    // registered as broad mappings ("armor" → Chest, "accessory" → Bracelet) — so the direct
+    // lookup never missed and the sub-type branches below were unreachable by construction.
+    //
+    // Measured on the shipped registry: all 395 equipment items landed in FOUR of the eleven
+    // declared slots (Weapon 364, Chest 22, Bracelet 6, Tool 3). Head, Legs, Feet, RightRing,
+    // LeftRing, Necklace and OffHand were unreachable, so a helmet and a chestplate fought for one
+    // slot, every ring and necklace fought for another — and every SHIELD resolved to Chest, which
+    // means the OffHand slot was always empty and TryShieldBlock could never fire.
     public EquipmentSlot? ResolveSlot(EquipmentBase equipment)
     {
-        if (string.IsNullOrWhiteSpace(equipment.EquipmentType))
-            return null;
+        // Sub-type first: "Helmet" → Head, "Shield" → OffHand, "Ring" → RightRing.
+        if (equipment is Armor armor && !string.IsNullOrWhiteSpace(armor.ArmorSlot)
+            && _slotMappings.TryGetValue(armor.ArmorSlot, out var armorSlot))
+            return armorSlot;
 
-        // Try direct mapping first (e.g. "broadsword" → Weapon)
-        if (_slotMappings.TryGetValue(equipment.EquipmentType, out var slot))
-            return slot;
+        if (equipment is Accessory accessory && !string.IsNullOrWhiteSpace(accessory.AccessorySlot)
+            && _slotMappings.TryGetValue(accessory.AccessorySlot, out var accSlot))
+            return accSlot;
 
-        // Fallback: check sub-type properties on concrete types
-        if (equipment is Weapon weapon && !string.IsNullOrWhiteSpace(weapon.WeaponType))
-        {
-            if (_slotMappings.TryGetValue(weapon.WeaponType, out slot))
-                return slot;
-        }
+        if (equipment is Weapon weapon && !string.IsNullOrWhiteSpace(weapon.WeaponType)
+            && _slotMappings.TryGetValue(weapon.WeaponType, out var weaponSlot))
+            return weaponSlot;
 
-        if (equipment is Armor armor && !string.IsNullOrWhiteSpace(armor.ArmorSlot))
-        {
-            if (_slotMappings.TryGetValue(armor.ArmorSlot, out slot))
-                return slot;
-        }
-
-        if (equipment is Accessory accessory && !string.IsNullOrWhiteSpace(accessory.AccessorySlot))
-        {
-            if (_slotMappings.TryGetValue(accessory.AccessorySlot, out slot))
-                return slot;
-        }
+        // Broad category last, and still load-bearing: a WeaponType the table does not name
+        // (Katana, Spear, Axe …) falls through to "weapon" → Weapon, which is correct.
+        if (!string.IsNullOrWhiteSpace(equipment.EquipmentType)
+            && _slotMappings.TryGetValue(equipment.EquipmentType, out var broadSlot))
+            return broadSlot;
 
         return null;
     }
+
+    // What slot a type NAME maps to, independent of any item. Exists so a checker can ask the
+    // resolver its own table rather than keeping a second copy that can drift from it.
+    public EquipmentSlot? ResolveSlotForType(string? equipmentType) =>
+        !string.IsNullOrWhiteSpace(equipmentType)
+        && _slotMappings.TryGetValue(equipmentType, out var slot) ? slot : null;
 
     public void RegisterMapping(string equipmentType, EquipmentSlot slot)
     {

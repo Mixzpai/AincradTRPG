@@ -14,23 +14,14 @@ public sealed class LakePass : IGenerationPass
         var rng = ctx.Rng;
         int width = ctx.Width, height = ctx.Height;
 
-        // Snapshot pre-lake walkable count so ConnectivityAuditPass can enforce
-        // Brogue's 85%-post-lake-walkable reachability guard.
-        int preLake = 0;
-        for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
-        {
-            var t = map.Tiles[x, y].Type;
-            if (t != TileType.Wall && t != TileType.Mountain) preLake++;
-        }
-        ctx.PreLakeWalkableCount = preLake;
+        var (seedPct, caPasses) = LakeShape(ctx);
 
         int lakeCount = FloorScale.LakeCount(ctx.FloorNumber, rng);
         for (int i = 0; i < lakeCount; i++)
         {
             if (!TryPickLakeCenter(ctx, width, height, out int cx, out int cy)) continue;
             int radius = rng.Next(4, 7);
-            MapGenerator.GenerateLake(map, cx, cy, radius, rng);
+            MapGenerator.GenerateLake(map, cx, cy, radius, rng, seedPct, caPasses);
         }
 
         // Lake stamping is naturally clipped — protected/Mountain tiles outside the disk
@@ -48,6 +39,30 @@ public sealed class LakePass : IGenerationPass
                     map.Tiles[x, y].Type = TileType.BogWater;
             }
         }
+    }
+
+    // The biome's lake-shape pair. This pass only runs when WaterLakesEnabled, so a seed density of
+    // 0 here means "lakes on, but every lake empty" — a contradictory config, clamped and logged
+    // rather than silently generating nothing. 0 smoothing passes is legal, if speckly: it is the
+    // raw noise field, which is a look a biome may legitimately want.
+    private static (int SeedPct, int CaPasses) LakeShape(WorldContext ctx)
+    {
+        int seedPct = ctx.Config.WaterSeedPct;
+        int caPasses = ctx.Config.WaterCAPasses;
+        if (seedPct < 1 || seedPct > 99)
+        {
+            int clamped = Math.Clamp(seedPct, 1, 99);
+            UI.DebugLogger.LogGame("LAKE",
+                $"biome={ctx.Biome} has waterLakesEnabled but waterSeedPct={seedPct} — clamped to {clamped}");
+            seedPct = clamped;
+        }
+        if (caPasses < 0)
+        {
+            UI.DebugLogger.LogGame("LAKE",
+                $"biome={ctx.Biome} waterCAPasses={caPasses} is negative — clamped to 0");
+            caPasses = 0;
+        }
+        return (seedPct, caPasses);
     }
 
     // Up to 8 retries for an in-disk center; lakes that fail all retries are skipped.

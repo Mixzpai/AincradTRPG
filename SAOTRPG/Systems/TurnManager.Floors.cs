@@ -91,7 +91,7 @@ public partial class TurnManager
         if (mobs > 0)
         {
             string mobMsg = string.Format(
-                FlavorText.FloorMobCountFlavors[Random.Shared.Next(FlavorText.FloorMobCountFlavors.Length)], mobs);
+                FlavorText.FloorMobCountFlavors[RunRng.Next(FlavorText.FloorMobCountFlavors.Length)], mobs);
             _log.LogCombat(mobMsg);
         }
 
@@ -149,15 +149,15 @@ public partial class TurnManager
         int squadSize = 2 + CurrentFloor / 20;
         for (int i = 0; i < squadSize; i++)
         {
-            var pker = MobFactory.CreateFloorMob(CurrentFloor, _diffTier.MobStatPercent);
+            var pker = MobFactory.CreateFloorMob(CurrentFloor, _diffTier.MobStatPercent, RunRng.Stream);
             pker.Name = $"Laughing Coffin PKer";
             pker.LootTag = "humanoid";
             pker.SetAppearance('P', Color.BrightRed);
             int tries = 0;
             while (tries < 40)
             {
-                int x = Random.Shared.Next(10, _map.Width - 10);
-                int y = Random.Shared.Next(10, _map.Height - 10);
+                int x = RunRng.Next(10, _map.Width - 10);
+                int y = RunRng.Next(10, _map.Height - 10);
                 if (_map.InBounds(x, y) && _map.GetTile(x, y).IsWalkable && _map.GetTile(x, y).Occupant == null)
                 {
                     _map.PlaceEntity(pker, x, y);

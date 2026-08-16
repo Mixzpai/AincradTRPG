@@ -26,7 +26,7 @@ public partial class TurnManager
             // NPCs wander slowly — 25% chance to take a random step each turn.
             if (entity is NPC npc && entity is not Ally)
             {
-                if (Random.Shared.Next(4) == 0) WanderNpc(npc);
+                if (RunRng.Next(4) == 0) WanderNpc(npc);
                 continue;
             }
 
@@ -69,7 +69,7 @@ public partial class TurnManager
         for (int i = 0; i < 8; i++) idx[i] = i;
         for (int i = 7; i > 0; i--)
         {
-            int j = Random.Shared.Next(i + 1);
+            int j = RunRng.Next(i + 1);
             (idx[i], idx[j]) = (idx[j], idx[i]);
         }
         foreach (int i in idx)
@@ -97,7 +97,7 @@ public partial class TurnManager
         for (int i = 0; i < 8; i++) idx[i] = i;
         for (int i = 7; i > 0; i--)
         {
-            int j = Random.Shared.Next(i + 1);
+            int j = RunRng.Next(i + 1);
             (idx[i], idx[j]) = (idx[j], idx[i]);
         }
         foreach (int i in idx)
@@ -158,7 +158,7 @@ public partial class TurnManager
         }
 
         // Special ability — 20% chance for mobs with a named ability
-        if (monster is Mob abilityMob && abilityMob.SpecialAbility != null && Random.Shared.Next(100) < 20)
+        if (monster is Mob abilityMob && abilityMob.SpecialAbility != null && RunRng.Next(100) < 20)
         {
             int dist = Math.Max(Math.Abs(_player.X - monster.X), Math.Abs(_player.Y - monster.Y));
 
@@ -180,7 +180,7 @@ public partial class TurnManager
                     if (_player.IsDefeated)
                     {
                         LastKillerName = monster.Name;
-                        _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+                        _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
                         RaisePlayerDied("monster");
                     }
                     return;
@@ -221,7 +221,7 @@ public partial class TurnManager
             if (_player.IsDefeated)
             {
                 LastKillerName = monster.Name;
-                _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+                _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
                 RaisePlayerDied("monster");
             }
             return;
@@ -231,7 +231,7 @@ public partial class TurnManager
         // Bosses: 25% chance, strong mobs (level >= player+2): 15% chance
         bool canTelegraph = monster is Boss || (monster.Level >= _player.Level + 2);
         int telegraphChance = monster is Boss ? 25 : 15;
-        if (canTelegraph && Random.Shared.Next(100) < telegraphChance)
+        if (canTelegraph && RunRng.Next(100) < telegraphChance)
         {
             int heavyDmg = (int)(CalcMonsterDamage(monster) * 1.8);
             _telegraphedAttacks[monster.Id] = heavyDmg;
@@ -247,13 +247,13 @@ public partial class TurnManager
         int reduced = Math.Max(0, rawDamage - (_player.Defense + _shrineBuff + SatietyDefBonus + FatigueDefPenalty) / 3);
         int finalDamage = Math.Max(1, reduced);
 
-        bool monsterCrit = Random.Shared.Next(100) < Math.Max(0, monster.CriticalRate + WeatherSystem.GetCritModifier());
+        bool monsterCrit = RunRng.Next(100) < Math.Max(0, monster.CriticalRate + WeatherSystem.GetCritModifier());
         // CritImmune+N — at ≥100 cancels the crit outright; lower values roll.
         // MH + OH shield contribute, picking the max (cap-like, non-stacking).
         var playerWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         int critImmune = MaxWeaponShield<EquipmentSpecialEffect.CritImmune>(c => c.ChancePercent);
         if (monsterCrit && critImmune > 0
-            && (critImmune >= 100 || Random.Shared.Next(100) < critImmune))
+            && (critImmune >= 100 || RunRng.Next(100) < critImmune))
         {
             monsterCrit = false;
             string aegisName = playerWpn?.Name ?? "your aegis";
@@ -317,9 +317,19 @@ public partial class TurnManager
         var mainWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         // BlockChance is additive across all equipped slots (armor pieces too).
         int blockFx = SumAllSlots<EquipmentSpecialEffect.BlockChanceBonus>(b => b.Percent);
-        int totalBlock = (shield?.BlockChance ?? 0) + blockFx;
+
+        // Holy Sword — Heathcliff's stance. The Guide states "a permanent block bonus, active only
+        // while you hold a one-handed sword and a real shield", and UniqueSkill declares
+        // "+15% block". Nothing implemented it: IsHolySwordActive was the ONLY one of the five
+        // Is*Active predicates with no caller, which is also why DamageBonusPercent's hasShield
+        // parameter had no consumer. `shield` is `OffHand as Armor`, so a second sword is already
+        // excluded — exactly the "real shield, not a second sword" the Guide describes.
+        int holySwordBlock = Skills.UniqueSkillSystem.IsHolySwordActive(
+            mainWpn?.WeaponType ?? "", shield != null) ? 15 : 0;
+
+        int totalBlock = (shield?.BlockChance ?? 0) + blockFx + holySwordBlock;
         if (totalBlock <= 0) return false;
-        if (Random.Shared.Next(100) >= totalBlock) return false;
+        if (RunRng.Next(100) >= totalBlock) return false;
 
         string blockSource = shield?.Name ?? mainWpn?.Name ?? "guard";
         _log.LogCombat($"Your {blockSource} blocks {monster.Name}'s attack!");
@@ -340,7 +350,7 @@ public partial class TurnManager
         // ParryChance additive across all slots; armor with parry-flavor stacks.
         int parryFx = SumAllSlots<EquipmentSpecialEffect.ParryChance>(p => p.Percent);
         int parryChance = Math.Min(15, _player.Dexterity) + GetActiveWeaponPerks().Parry + parryFx;
-        if (parryChance <= 0 || Random.Shared.Next(100) >= parryChance) return false;
+        if (parryChance <= 0 || RunRng.Next(100) >= parryChance) return false;
 
         int counterDmg = Math.Max(1, _player.Attack / 4);
         monster.CurrentHealth -= counterDmg;
@@ -361,13 +371,13 @@ public partial class TurnManager
         if (_slowTurnsLeft > 0) dodgeChance /= 2;
         // Naked Ingress — +25% evasion compensation for no armor.
         if (RunModifiers.IsActive(RunModifier.NakedIngress)) dodgeChance = dodgeChance * 125 / 100;
-        if (Random.Shared.Next(100) >= dodgeChance) return false;
+        if (RunRng.Next(100) >= dodgeChance) return false;
 
         _dodgeStreak++;
         TutorialSystem.ShowTip(_log, "first_dodge");
         CombatTextEvent?.Invoke(_player.X, _player.Y, "DODGE", Color.BrightCyan);
         string dodgeMsg = string.Format(
-            FlavorText.DodgeFlavors[Random.Shared.Next(FlavorText.DodgeFlavors.Length)], monster.Name);
+            FlavorText.DodgeFlavors[RunRng.Next(FlavorText.DodgeFlavors.Length)], monster.Name);
         _log.LogCombat(dodgeMsg);
 
         if (_dodgeStreak == 3) _log.LogCombat("*** Matrix mode! 3 dodges in a row! ***");
@@ -446,17 +456,17 @@ public partial class TurnManager
         }
 
         if (blocked > 0 && blocked >= rawDamage / 2)
-            _log.LogCombat(FlavorText.BlockFlavors[Random.Shared.Next(FlavorText.BlockFlavors.Length)]);
+            _log.LogCombat(FlavorText.BlockFlavors[RunRng.Next(FlavorText.BlockFlavors.Length)]);
 
         ApplyMobStatusEffects(monster);
 
-        if (!_player.IsDefeated && _player.CurrentHealth <= _player.MaxHealth / 4 && Random.Shared.Next(100) < 40)
-            _log.Log(FlavorText.LowHpEncouragements[Random.Shared.Next(FlavorText.LowHpEncouragements.Length)]);
+        if (!_player.IsDefeated && _player.CurrentHealth <= _player.MaxHealth / 4 && RunRng.Next(100) < 40)
+            _log.Log(FlavorText.LowHpEncouragements[RunRng.Next(FlavorText.LowHpEncouragements.Length)]);
 
         if (_player.IsDefeated)
         {
             LastKillerName = monster.Name;
-            _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+            _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
             RaisePlayerDied("monster");
         }
     }
@@ -466,30 +476,30 @@ public partial class TurnManager
         // Uninterruptible+N — weapon grants N% chance to shrug off any
         // incoming status application from the monster hit we just took.
         var uninterruptWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
-        int uninterruptChance = uninterruptWpn?.ParsedEffects.OfType<EquipmentSpecialEffect.Uninterruptible>().FirstOrDefault()?.ChancePercent ?? 0;
-        if (uninterruptChance > 0 && Random.Shared.Next(100) < uninterruptChance)
+        int uninterruptChance = uninterruptWpn?.FirstEffect<EquipmentSpecialEffect.Uninterruptible>()?.ChancePercent ?? 0;
+        if (uninterruptChance > 0 && RunRng.Next(100) < uninterruptChance)
         {
             _log.LogCombat($"  {uninterruptWpn!.Name}'s resolve shrugs off {monster.Name}'s effect.");
             return;
         }
-        if (monster is Mob { CanPoison: true } && _poisonTurnsLeft <= 0 && Random.Shared.Next(100) < 35)
+        if (monster is Mob { CanPoison: true } && _poisonTurnsLeft <= 0 && RunRng.Next(100) < 35)
         {
             _poisonTurnsLeft = 5;
             _poisonDamagePerTick = 1 + CurrentFloor;
             _log.LogCombat($"  {monster.Name}'s attack poisons you! ({_poisonDamagePerTick} dmg/turn for {_poisonTurnsLeft} turns)");
         }
-        if (monster is Mob { CanBleed: true } && _bleedTurnsLeft <= 0 && Random.Shared.Next(100) < 30)
+        if (monster is Mob { CanBleed: true } && _bleedTurnsLeft <= 0 && RunRng.Next(100) < 30)
         {
             _bleedTurnsLeft = 4;
             _bleedDamagePerTick = 1 + CurrentFloor;
             _log.LogCombat($"  {monster.Name}'s slash opens a wound! (Bleed: {_bleedDamagePerTick} dmg/turn for {_bleedTurnsLeft} turns)");
         }
-        if (monster is Mob { CanStun: true } && _stunTurnsLeft <= 0 && Random.Shared.Next(100) < 20)
+        if (monster is Mob { CanStun: true } && _stunTurnsLeft <= 0 && RunRng.Next(100) < 20)
         {
-            _stunTurnsLeft = 1 + Random.Shared.Next(0, 2);
+            _stunTurnsLeft = 1 + RunRng.Next(0, 2);
             _log.LogCombat($"  {monster.Name}'s heavy blow stuns you! ({_stunTurnsLeft} turns)");
         }
-        if (monster is Mob { CanSlow: true } && _slowTurnsLeft <= 0 && Random.Shared.Next(100) < 25)
+        if (monster is Mob { CanSlow: true } && _slowTurnsLeft <= 0 && RunRng.Next(100) < 25)
         {
             _slowTurnsLeft = 3;
             _log.LogCombat($"  {monster.Name}'s attack slows you! (Dodge halved for {_slowTurnsLeft} turns)");

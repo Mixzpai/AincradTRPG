@@ -218,7 +218,8 @@ public class Inventory
         return true;
     }
 
-    // Cached aggregate stat bonuses (by StatType). Invalidated on Equip/Unequip/ForceEquip/Destroy + external via InvalidateStatCache.
+    // Cached aggregate stat bonuses (by StatType). Invalidated on Equip, Unequip,
+    // ForceEquipForLoad and DestroyEquipped, plus externally via InvalidateStatCache.
     private int[]? _statBonusCache;
     private static readonly int StatTypeCount = Enum.GetValues<StatType>().Length;
 
@@ -231,14 +232,24 @@ public class Inventory
         if (cache == null)
         {
             cache = new int[StatTypeCount];
+            var live = new List<Items.Equipment.EquipmentBase>();
             foreach (var eq in _equippedItems.Values)
             {
-                if (eq?.Bonuses?.Effects == null || eq.ItemDurability <= 0) continue;
+                if (eq == null || eq.ItemDurability <= 0) continue;
+                live.Add(eq);
+                if (eq.Bonuses?.Effects == null) continue;
                 foreach (var effect in eq.Bonuses.Effects)
                 {
                     cache[(int)effect.Type] += effect.Potency;
                 }
             }
+            // Armour set bonuses fold in here rather than at a call site, so every consumer of
+            // GetTotalEquipmentBonus sees them and the existing invalidation (Equip / Unequip /
+            // ForceEquipForLoad / DestroyEquipped / InvalidateStatCache) covers them for free.
+            // `live` excludes broken pieces, so a set at zero durability stops counting — the same
+            // rule the per-item loop above already applies.
+            foreach (var b in Systems.EquipmentSets.ActiveBonuses(live))
+                cache[(int)b.Stat] += b.Value;
             _statBonusCache = cache;
         }
         return cache[(int)statType];

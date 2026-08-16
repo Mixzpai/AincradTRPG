@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "fog_mote", "densityPermille": 8 },
   "pocketCandidates": ["Forest", "Aquatic"],
   "primaryPaletteId": "Dim",
-  "tintColor": "#40385080",
+  "tintColor": "#40385026",
   "floorEntryText": "The bog exhales. Your boots find wet ground before you see it.",
   "treeGlyph": "Y",
   "oreVeinDensity": 0.4,

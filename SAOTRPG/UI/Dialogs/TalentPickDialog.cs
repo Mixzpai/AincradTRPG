@@ -43,7 +43,9 @@ public static class TalentPickDialog
 
         var hintLabel = new Label
         {
-            Text = "Enter: choose talent",
+            // Dismissing leaves the talent pending, re-offered from the character sheet with the
+            // same three perks — the same contract the proficiency fork has.
+            Text = "Enter: choose talent  |  Esc: decide later",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
         dlg.Add(hintLabel);

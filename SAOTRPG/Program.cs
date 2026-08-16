@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Terminal.Gui;
 using SAOTRPG.Systems;
 using SAOTRPG.UI;
@@ -6,47 +5,18 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG
 {
-    // Application entry point — initializes the terminal window, sets up
-    // Terminal.Gui, attaches crash logging, and launches the title screen.
+    // Application entry point — sets up Terminal.Gui, attaches crash logging,
+    // and launches the title screen.
+    //
+    // The game takes the terminal at whatever size it is already. It does not move or resize
+    // the host window.
     internal class Program
     {
-        // ── Win32 imports for window resize — targets the foreground terminal window ──
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll")]
-        private static extern bool MoveWindow(IntPtr hWnd, int x, int y, int width, int height, bool repaint);
-        [DllImport("user32.dll")]
-        private static extern int GetSystemMetrics(int nIndex);
-
-        // GetSystemMetrics index for primary screen width in pixels.
-        private const int SM_CXSCREEN = 0;
-        // GetSystemMetrics index for primary screen height in pixels.
-        private const int SM_CYSCREEN = 1;
-
-        // Target window width in pixels on launch.
-        private const int WindowWidth  = 1920;
-        // Target window height in pixels on launch.
-        private const int WindowHeight = 1080;
-
         static void Main(string[] args)
         {
-            // Resize terminal to 1920x1080, centered on screen
-            try
-            {
-                var hwnd = GetForegroundWindow();
-                if (hwnd != IntPtr.Zero)
-                {
-                    int screenW = GetSystemMetrics(SM_CXSCREEN);
-                    int screenH = GetSystemMetrics(SM_CYSCREEN);
-                    int x = Math.Max(0, (screenW - WindowWidth) / 2);
-                    int y = Math.Max(0, (screenH - WindowHeight) / 2);
-                    MoveWindow(hwnd, x, y, WindowWidth, WindowHeight, true);
-                }
-            }
-            catch { /* Not supported on all terminals — silently continue */ }
-
-            // Load user settings (persists across sessions)
+            // Load user settings and key bindings (both persist across sessions)
             UserSettings.Load();
+            SAOTRPG.Systems.Input.Keybinds.Load();
 
             // Initialize debug logger — writes keystrokes + game output to debug.log
             DebugLogger.Init();
@@ -64,6 +34,7 @@ namespace SAOTRPG
             if (args.Contains("--debug")) DebugMode.Enable();
             if (args.Contains("--freeze-anim")) DebugMode.EnableFreezeAnimations();
             if (args.Contains("--perf")) DebugMode.EnablePerfSampling();
+            if (args.Contains("--verify-tiles")) DebugMode.EnableVerifyTiles();
 
             // Create and initialize the Terminal.Gui application instance.
             // --driver <windows|ansi|dotnet> overrides the backend; the platform
@@ -74,20 +45,13 @@ namespace SAOTRPG
             var app = AppHost.Start(driverName);
 
             // Register the game's named palettes with SchemeManager so views can
-            // bind via SchemeName. Must run before any UI construction.
-            ColorSchemes.RegisterAll();
+            // bind via SchemeName, and replace Terminal.Gui's default marker glyphs.
+            // Both must run before any UI construction.
+            ColorSchemes.ApplyTheme(UserSettings.Current.ColorTheme);
+            ColorSchemes.ApplyGlyphs();
 
             // Attach keystroke logger to capture all input
             DebugLogger.AttachKeyLogger();
-
-            var blackScheme = new Scheme
-            {
-                Normal = Gfx.Attr(Color.DarkGray, Color.Black),
-                Focus = Gfx.Attr(Color.Gray, Color.Black),
-                HotNormal = Gfx.Attr(Color.Gray, Color.Black),
-                HotFocus = Gfx.Attr(Color.White, Color.Black),
-                Disabled = Gfx.Attr(Color.DarkGray, Color.Black)
-            };
 
             // Main window fills entire terminal — all screens render inside this
             var mainWindow = new GameWindow
@@ -95,7 +59,12 @@ namespace SAOTRPG
                 Title = "Aincrad TRPG",
                 X = 0, Y = 0,
                 Width = Dim.Fill(), Height = Dim.Fill(),
-            }.WithScheme(blackScheme);
+                SchemeName = ColorSchemes.WindowName,
+            };
+
+            // The border is LOAD-BEARING for render performance — see Gfx.FillDirtyRows. It puts a
+            // dirty cell at both ends of every row, so FillDirtyRows expands each row end to end and
+            // the driver never walks a clean cell. Removing it measured 5-19x SLOWER.
 
             TitleScreen.Show(mainWindow);
             app.Run(mainWindow);

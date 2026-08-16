@@ -717,6 +717,11 @@ public static class ItemRegistry
 
     private static void Register(string id, Func<BaseItem> factory) => _registry[id] = factory;
 
+    // Every registered DefinitionId. An id is an implementation detail that happens to be readable,
+    // so it leaks into prose written by someone reading the code; enumerating them is what lets a
+    // checker prove the Player Guide names items the way the player sees them.
+    public static IReadOnlyCollection<string> DefinitionIds => _registry.Keys;
+
     // Recreate an item from its DefinitionId. Returns null if the ID is unknown.
     public static BaseItem? Create(string definitionId) =>
         _registry.TryGetValue(definitionId, out var factory) ? factory() : null;

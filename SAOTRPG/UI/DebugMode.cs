@@ -33,4 +33,13 @@ public static class DebugMode
     public static bool PerfSampling { get; private set; }
 
     public static void EnablePerfSampling() => PerfSampling = true;
+
+    // Correctness harness for the damage-tracked tile layer. Every frame that paints tiles
+    // renders the layer incrementally, then recomputes it in full, compares the two cell by
+    // cell, logs any mismatch to debug.log, and keeps the full result so play stays correct
+    // while verifying. Deliberately slower than having no cache at all. Launch with
+    // --verify-tiles.
+    public static bool VerifyTiles { get; private set; }
+
+    public static void EnableVerifyTiles() => VerifyTiles = true;
 }

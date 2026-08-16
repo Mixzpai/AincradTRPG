@@ -47,7 +47,7 @@ public static class NpcDialogDialog
         };
 
         // ── Optional ASCII portrait (Klein/Asuna/Silica/Argo/etc.) ──
-        string? portraitKey = npc.PortraitKey ?? AsciiPortraits.KeyForName(npc.Name);
+        string? portraitKey = AsciiPortraits.KeyForName(npc.Name);
         string[] portrait = portraitKey != null ? AsciiPortraits.Get(portraitKey) : Array.Empty<string>();
         bool hasPortrait = portrait.Length > 0;
         var portraitLabel = new Label

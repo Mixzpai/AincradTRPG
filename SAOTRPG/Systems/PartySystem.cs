@@ -126,7 +126,7 @@ public static class PartySystem
     private static void AllyAttack(Ally ally, Monster target, GameMap map, IGameLog log)
     {
         int dmg = Math.Max(1, ally.AttackDamage - target.BaseDefense / 3);
-        bool crit = Random.Shared.Next(100) < 8 + ally.Dexterity / 3;
+        bool crit = RunRng.Next(100) < 8 + ally.Dexterity / 3;
         if (crit) dmg = (int)(dmg * 1.5);
 
         var reward = target.TakeDamage(dmg);

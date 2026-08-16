@@ -22,12 +22,20 @@ public static class DayNightCycle
         }
     }
 
+    // Sun level is snapped to this many steps before it becomes ambient light.
+    // The light grid is the map renderer's change-detection input: an unquantized ambient
+    // shifts every lit cell by a fraction of a colour channel on every single turn, which
+    // would mark the whole viewport changed and defeat incremental tile rendering. At 64
+    // steps the largest jump is ~1.3/255 per channel, well under the step-8 quantization
+    // the renderer already applies to lit colours.
+    private const int AmbientSteps = 64;
+
     // Ambient RGB — lerped midnight blue → warm daylight by SunLevel.
     public static (float R, float G, float B) Ambient
     {
         get
         {
-            float s = SunLevel;
+            float s = MathF.Round(SunLevel * AmbientSteps) / AmbientSteps;
             // Night: cool moonlit blue. Day: warm off-white.
             float r = Lerp(18f,  180f, s);
             float g = Lerp(22f,  175f, s);

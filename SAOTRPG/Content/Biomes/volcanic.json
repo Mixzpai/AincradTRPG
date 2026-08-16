@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "ember", "densityPermille": 8 },
   "pocketCandidates": ["Desert"],
   "primaryPaletteId": "Danger",
-  "tintColor": "#CC402090",
+  "tintColor": "#CC402026",
   "floorEntryText": "The ground trembles underfoot. Somewhere below, something old is awake.",
   "treeGlyph": "¥",
   "oreVeinDensity": 1.5,

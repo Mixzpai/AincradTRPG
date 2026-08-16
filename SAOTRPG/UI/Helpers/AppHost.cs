@@ -204,10 +204,19 @@ public static class AppHost
                 $" | draw avg {s_drawPhaseMs / d:F1}ms worst {s_drawMaxMs:F0}ms" +
                 $" | mapFrames {s_mapFrames}/{s_drawFrames}" +
                 $" | tileLoops {tiles.loops}/{tiles.paints}" +
+                // Cells the tile layer had to resolve against cells it scanned, per frame that
+                // painted tiles. This is the damage tracker's hit rate: during sustained
+                // movement it should sit far below 1.
+                $" | tileCells {tiles.resolved / Math.Max(1, tiles.paints)}" +
+                $"/{tiles.scanned / Math.Max(1, tiles.paints)}" +
                 $" | pre {s_preDrawMs / m:F1}ms map {SAOTRPG.UI.MapView.DrainDrawAvgMs():F1}ms post {s_postDrawMs / m:F1}ms" +
                 $" (of which flush {s_flushMs / d:F1}ms)" +
-                $" | cells w{cells.written / n} s{cells.skipped / n} sent {cells.sent / n} rows {cells.rows / n}" +
-                $" | escapes {cells.runs / n} (~{(cells.runs * 40 + cells.sent) / n / 1024.0:F0}KB/frame)" +
+                // Per DRAWN frame, matching flush. Dividing these by iterations instead made a
+                // frame that transmits the whole screen look like it transmitted a few hundred
+                // cells, and comparing that against a per-drawn-frame flush is what produced the
+                // false conclusion that flush does not respond to payload.
+                $" | cells w{cells.written / d} s{cells.skipped / d} sent {cells.sent / d} rows {cells.rows / d}" +
+                $" | escapes {cells.runs / d} (~{(cells.runs * 40 + cells.sent) / d / 1024.0:F0}KB/frame)" +
                 $" | clock {SAOTRPG.Systems.FrameClock.ElapsedMs}ms" +
                 $" | sizeQuery {sizeMs:F1}ms | cpu {cpuPct:F0}% of wall" +
                 $" | gc0 {gen0 - s_gen0At} gc2 {gen2 - s_gen2At}" +

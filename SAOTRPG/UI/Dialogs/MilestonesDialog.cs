@@ -5,6 +5,8 @@ using SAOTRPG.Items;
 using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
+using SAOTRPG.Systems.Input;
+
 namespace SAOTRPG.UI.Dialogs;
 
 // Standalone Milestones panel — opened with Shift+M from anywhere on the map.
@@ -55,6 +57,12 @@ internal static class MilestoneTabbedView
     private static readonly string[] BucketOrder =
         { "All", "LN", "AL", "IF", "HF", "LR", "MD", "FD", "Myth", "Non-Canon" };
 
+    // Expansions for the bucket codes. The row has to stay coded — ten buttons of full names do
+    // not fit the 96-column minimum — so the codes are decoded once, on the tally line, for the
+    // bucket actually being filtered. Without this "MD" / "FD" / "LR" are unguessable and the
+    // legend existed nowhere on the dialog.
+    // Kept short on purpose: the tally line's own worst case is measured against the minimum
+    // dialog width, and these are the only part of it this file controls.
     private static readonly Dictionary<string, string> BucketLabels = new()
     {
         ["All"] = "All buckets",
@@ -62,7 +70,7 @@ internal static class MilestoneTabbedView
         ["AL"] = "Alicization Lycoris",
         ["IF"] = "Integral Factor",
         ["HF"] = "Hollow Fragment",
-        ["LR"] = "Last Recollection / Lost Song",
+        ["LR"] = "Last Recollection",
         ["MD"] = "Memory Defrag",
         ["FD"] = "Fractured Daydream",
         ["Myth"] = "Mythological",
@@ -76,12 +84,20 @@ internal static class MilestoneTabbedView
     //   y=7      HF progress bar (Discovery only)
     //   y=8..-5  list view
     //   y=-5..-3 detail panel + equip hint
-    public static void Build(View parent, Player player, string? initialCategory)
+    //
+    // bottomReserve is how many rows the caller keeps below the list. Monument stacks its kill
+    // log into that region, so a fixed Fill(6) drew the list's last five rows underneath it.
+    public static void Build(View parent, Player player, string? initialCategory,
+                             int bottomReserve = 6, string? extraKeys = null)
     {
         var state = new TabState
         {
             Player = player,
             Current = ResolveInitialTab(initialCategory),
+            // Both callers pass their Dialog as `parent`, and both set a title before building.
+            // Captured rather than hardcoded so Monument keeps its own name.
+            TitleHost = parent,
+            BaseTitle = parent.Title?.ToString() ?? "",
         };
 
         // ── Tab strip (2 rows of 5) ───────────────────────────────────
@@ -182,9 +198,14 @@ internal static class MilestoneTabbedView
         // ── List view ─────────────────────────────────────────────────
         var listView = new ListView
         {
-            X = 1, Y = 8, Width = Dim.Fill(2), Height = Dim.Fill(6),
+            X = 1, Y = 8, Width = Dim.Fill(2), Height = Dim.Fill(bottomReserve),
             SchemeName = ColorSchemes.ListSelectionName,
             CanFocus = true,
+            // Type-ahead off — it outranks this list's rune hotkeys (E/U equip, 1-9/0 tab jump).
+            // ListView.OnKeyDown consumes a printable rune before KeyDown is raised and reports it
+            // handled even when the match is the current row, so one arrow key kills every letter
+            // and digit for the rest of the session.
+            KeystrokeNavigator = null,
         };
         // PATH-D-PORT: ListView uses ObservableCollection<string> source; replace each refresh.
         parent.Add(listView);
@@ -206,7 +227,16 @@ internal static class MilestoneTabbedView
             Text = "", X = 1, Y = Pos.AnchorEnd(3), Width = Dim.Fill(2),
             SchemeName = ColorSchemes.GoldName,
         };
-        parent.Add(detailLine, rewardLine, equipHint);
+        // Key legend on the left of the bottom row. AddCloseFooter's esc hint is anchored to the
+        // right of that same row, so Fill(20) keeps the two from meeting.
+        var keyLegend = new Label
+        {
+            Text = "", X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(20),
+            SchemeName = ColorSchemes.DimName,
+        };
+        parent.Add(detailLine, rewardLine, equipHint, keyLegend);
+        state.KeyLegend = keyLegend;
+        state.ExtraKeys = extraKeys;
         state.DetailLine = detailLine;
         state.RewardLine = rewardLine;
         state.EquipHint = equipHint;
@@ -218,25 +248,71 @@ internal static class MilestoneTabbedView
         // Tab/Shift+Tab cycles tabs; 1-9/0 jumps directly to a tab.
         listView.KeyDown += (s, e) =>
         {
-            if (e.KeyCode == KeyCode.E)
+            if (Keybinds.IsPressed(GameAction.MilestoneEquipTitle, e))
             {
                 TryEquipFocused(state);
                 e.Handled = true;
             }
-            else if (e.KeyCode == KeyCode.U)
+            else if (Keybinds.IsPressed(GameAction.MilestoneUnequipTitle, e))
             {
                 TryUnequipFocused(state);
                 e.Handled = true;
             }
         };
 
-        // Dialog-level key dispatch — Tab cycles tabs, digits jump.
-        parent.KeyDown += (s, e) => HandleHotKey(state, e);
+        // Dialog-level key dispatch — Tab cycles tabs, digits jump, and the bucket filter
+        // gets the key it never had. The bucket buttons are only reachable by Tab, which this
+        // dialog claims for itself, so without this the nine source filters had no route at all.
+        parent.KeyDown += (s, e) =>
+        {
+            if (Keybinds.IsPressed(GameAction.MilestoneCycleBucket, e))
+            {
+                if (state.Current != "Collectables") return;
+                int i = Array.IndexOf(BucketOrder, state.Bucket);
+                state.Bucket = BucketOrder[(i < 0 ? 0 : i + 1) % BucketOrder.Length];
+                RefreshBucketRow(state);
+                RefreshList(state);
+                e.Handled = true;
+                return;
+            }
+            HandleHotKey(state, e);
+        };
 
         // Initial render.
         RefreshBucketRow(state);
         UpdateTabButtons(state);
         RefreshList(state);
+
+        // Focus the list, not the tab strip. HandleHotKey claims Tab for category cycling, so
+        // Tab never advances focus here — measured, 0 of 30 presses reached a list — and the
+        // arrow keys only get there after walking all ten tab buttons. Landing on the list is
+        // what makes the equip keys and the digit jumps reachable at all.
+        //
+        // Deferred to first layout: the caller still has to add its close footer, and the
+        // framework assigns focus when the session starts, which overrides a SetFocus made here.
+        bool focused = false;
+        parent.SubViewsLaidOut += (s, e) =>
+        {
+            if (focused) return;
+            focused = true;
+            listView.SetFocus();
+        };
+    }
+
+    // The keys this dialog answers appear nowhere else on it — there is no hint footer, and
+    // Tab / the digits / the equip keys were all undocumented on screen.
+    // Compact so it still fits the 96-column minimum dialog. The bucket key is listed only on
+    // the tab where it does anything; advertising a dead key is the defect this arc keeps finding.
+    private static string KeyLegend(TabState state)
+    {
+        string equip = Keybinds.Get(GameAction.MilestoneEquipTitle).Primary.ToString();
+        string unequip = Keybinds.Get(GameAction.MilestoneUnequipTitle).Primary.ToString();
+        string cycle = Keybinds.Get(GameAction.MilestoneNextTab).Primary.ToString();
+        string s = $"{cycle}: category   1-0: jump   {equip}/{unequip}: title";
+        if (state.Current == "Collectables")
+            s += $"   {Keybinds.Get(GameAction.MilestoneCycleBucket).Primary}: bucket";
+        if (!string.IsNullOrEmpty(state.ExtraKeys)) s += "   " + state.ExtraKeys;
+        return s;
     }
 
     // ── State ──────────────────────────────────────────────────────────
@@ -255,8 +331,12 @@ internal static class MilestoneTabbedView
         public Label RewardLine = null!;
         public Label EquipHint = null!;
         public Label IfProgressBar = null!;
+        public Label KeyLegend = null!;
+        public string? ExtraKeys;
         public Label HfProgressBar = null!;
         public List<Milestone> CurrentRows = new();
+        public View TitleHost = null!;
+        public string BaseTitle = "";
     }
 
     private static string ResolveInitialTab(string? initialCategory)
@@ -306,7 +386,20 @@ internal static class MilestoneTabbedView
             }
         }
 
+        // The row has to stay coded to fit ten buttons, and "MD" / "FD" / "LR" are not guessable,
+        // so the active bucket is spelled out in the title — the one region on this dialog with
+        // room to spare and nothing to collide with. Cleared when the filter is off, so the title
+        // never claims a filter that is not applied.
+        if (state.TitleHost != null)
+        {
+            string suffix = show && state.Bucket != "All"
+                            && BucketLabels.TryGetValue(state.Bucket, out var bucketName)
+                ? $" — {bucketName}" : "";
+            state.TitleHost.Title = state.BaseTitle + suffix;
+        }
+
         RefreshDiscoveryProgress(state);
+        if (state.KeyLegend != null) state.KeyLegend.Text = KeyLegend(state);
     }
 
     // Update the IF/HF Discovery-tab progress bars. Visible only on Discovery.
@@ -377,6 +470,7 @@ internal static class MilestoneTabbedView
         }
 
         state.ListView.SetSource(new ObservableCollection<string>(lines));
+        DialogHelper.SelectFirstRow(state.ListView);
         UpdateTallyLabel(state, unlockedCount, rows.Count);
         RefreshDetail(state);
     }
@@ -397,8 +491,13 @@ internal static class MilestoneTabbedView
             activeTitle = act.Name;
         }
 
+        // MEASURED against the 96-column minimum dialog, where this label gets width - 3 = 91.
+        // With "Active title:" the longest real form was 92 — one column over, clipped, before
+        // anything was added to it (the registry's longest equippable title is "Last-Attack Beta
+        // Tester" at 23 chars). "Title:" brings the worst case to 85. It is also why the bucket
+        // name is NOT on this line: it goes in the dialog title, which has ~64 columns spare.
         state.TallyLabel.Text =
-            $"{state.Current}: {unlocked}/{total}   |   Total {globalUnlocked}/{globalTotal} ({pct}%)   |   Active title: {activeTitle}";
+            $"{state.Current}: {unlocked}/{total}   |   Total {globalUnlocked}/{globalTotal} ({pct}%)   |   Title: {activeTitle}";
     }
 
     // Single-line formatter for the list view. Marker glyph chosen by reward type.
@@ -449,9 +548,12 @@ internal static class MilestoneTabbedView
 
         if (m.Reward == RewardType.EquippableTitle && unlocked)
         {
+            string equip = Keybinds.Get(GameAction.MilestoneEquipTitle).Primary.ToString();
+            string unequip = Keybinds.Get(GameAction.MilestoneUnequipTitle).Primary.ToString();
             state.EquipHint.Text = active
-                ? "[U] Unequip this title"
-                : "[E] Equip this title";
+                ? $"[{unequip}] Unequip this title"
+                : $"[{equip}] Equip this title";
+            state.EquipHint.SchemeName = ColorSchemes.GoldName;
         }
         else
         {
@@ -521,15 +623,19 @@ internal static class MilestoneTabbedView
     {
         var bareKey = e.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
 
-        // Tab forward / Shift+Tab back across the 10 tabs.
-        if (bareKey == KeyCode.Tab)
+        // Category cycling. Bound rather than hardcoded so a player can hand Tab back to the
+        // framework's focus advance; unbinding both is safe because every category also has a
+        // digit, so nothing becomes unreachable.
+        bool next = Keybinds.IsPressed(GameAction.MilestoneNextTab, e);
+        bool prev = Keybinds.IsPressed(GameAction.MilestonePrevTab, e);
+        if (next || prev)
         {
             int curIdx = Array.IndexOf(TabOrder, state.Current);
             if (curIdx < 0) curIdx = 0;
-            int next = e.IsShift
+            int target = prev
                 ? (curIdx - 1 + TabOrder.Length) % TabOrder.Length
                 : (curIdx + 1) % TabOrder.Length;
-            SwitchTab(state, TabOrder[next]);
+            SwitchTab(state, TabOrder[target]);
             e.Handled = true;
             return;
         }

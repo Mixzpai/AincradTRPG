@@ -85,11 +85,15 @@ public static class CookingScreen
         }
 
         cookBtn.Accepting += (s, e) => { e.Handled = true; TryCook(); };
+        // Enter is Command.Accept and Activated answers Command.Activate (Space); an unclaimed
+        // Accept bubbles to a default button, and this dialog has two of them.
+        listView.Accepting += (s, e) => { e.Handled = true; TryCook(); };
         listView.Activated += (s, e) => TryCook();
 
         dialog.Add(header, listView, detailLabel, cookBtn, hint);
         DialogHelper.AddCloseFooter(dialog);
         listView.SetFocus();
+        DialogHelper.SelectFirstRow(listView);
         DialogHelper.RunModal(dialog);
     }
 

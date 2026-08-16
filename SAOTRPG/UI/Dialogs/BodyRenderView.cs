@@ -1,5 +1,6 @@
 using System.Text;
 using Terminal.Gui;
+using SAOTRPG.Systems.Input;
 using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
@@ -40,7 +41,6 @@ internal sealed class BodyRenderView : View
     private static readonly Color FgSection    = Color.BrightYellow;
     private static readonly Color FgLink       = Color.BrightCyan;
     private static readonly Color FgDisclosure = Color.BrightYellow;
-    private static readonly Color FgDim        = Color.Gray;
     // Whole-line foreground swap for the focused See-also bullet.
     private static readonly Color FgFocusLine  = Color.BrightYellow;
 
@@ -55,7 +55,6 @@ internal sealed class BodyRenderView : View
     }
 
     public bool HasSeeAlsoLinks => _seeAlsoIdxs.Count > 0;
-    public int FocusedSeeAlsoIndex => _focused;
 
     // Plain message (no tokenization). Used for category-header / spoiler placeholder text.
     public void SetMessage(string text)
@@ -270,6 +269,16 @@ internal sealed class BodyRenderView : View
     // ── Input ────────────────────────────────────────────────────────────
     protected override bool OnKeyDown(Key keyEvent)
     {
+        // Checked before the switch so it works wherever the highlight happens to be. Enter is
+        // claimed by a focused See-also link, and entering the body focuses one immediately, so a
+        // collapsed block needs a key of its own to be reachable at all.
+        if (Keybinds.IsPressed(GameAction.GuideExpand, keyEvent)
+            && OnEnterToggleDisclosure?.Invoke() == true)
+        {
+            keyEvent.Handled = true;
+            return true;
+        }
+
         switch (keyEvent.KeyCode)
         {
             case KeyCode.CursorUp:

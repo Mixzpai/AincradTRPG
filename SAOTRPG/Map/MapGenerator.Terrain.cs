@@ -24,16 +24,17 @@ public static partial class MapGenerator
         }
 
         int limit = horizontal ? w - 3 : h - 3;
+        int width = RiverWidth(ctx);
 
         while (pos < limit)
         {
-            // Stamp river tiles (1-2 wide depending on hash).
-            int rx = horizontal ? pos : cross;
-            int ry = horizontal ? cross : pos;
-            int rx2 = rx + (horizontal ? 0 : 1);
-            int ry2 = ry + (horizontal ? 1 : 0);
-            if (!ctx.IsInTownKeepOut(rx,  ry))  StampRiverTile(map, rx,  ry);
-            if (!ctx.IsInTownKeepOut(rx2, ry2)) StampRiverTile(map, rx2, ry2);
+            // Stamp `width` tiles across the cross axis; protected tiles survive the stamp.
+            for (int i = 0; i < width; i++)
+            {
+                int rx = horizontal ? pos : cross + i;
+                int ry = horizontal ? cross + i : pos;
+                if (!ctx.IsInTownKeepOut(rx, ry)) StampRiverTile(map, rx, ry);
+            }
 
             // Advance along the primary axis.
             pos++;
@@ -55,6 +56,21 @@ public static partial class MapGenerator
         or TileType.Path or TileType.Mountain or TileType.Journal
         or TileType.Lever or TileType.PressurePlate;
 
+    // Tiles a river is stamped across, widening on the cross axis. Both river algorithms were
+    // hardcoded to 2 while every biome JSON carried a riverMinWidth nothing read, so an Aquatic
+    // canal ran the same width as a Ruins trickle. Consumes no rng, so honouring the config moves
+    // water tiles without shifting the stream position for any later pass.
+    // A live river algorithm with a width below 1 is a contradictory config: clamped, and logged
+    // rather than silently generating nothing.
+    internal static int RiverWidth(Generation.WorldContext ctx)
+    {
+        int width = ctx.Config.RiverMinWidth;
+        if (width >= 1) return width;
+        UI.DebugLogger.LogGame("RIVER",
+            $"biome={ctx.Biome} algorithm={ctx.Config.RiverAlgorithm} but riverMinWidth={width} — clamped to 1");
+        return 1;
+    }
+
     internal static void StampRiverTile(GameMap map, int x, int y)
     {
         if (!map.InBounds(x, y)) return;
@@ -62,22 +78,32 @@ public static partial class MapGenerator
         map.Tiles[x, y].Type = TileType.Water;
     }
 
-    // ── Lake: CA noise → 4x 5-neighbor smoothing → organic contiguous shape. Interior tiles → WaterDeep.
-    internal static void GenerateLake(GameMap map, int cx, int cy, int radius, Random rng)
+    // ── Lake: CA noise → N× 5-neighbor smoothing → organic contiguous shape. Interior tiles → WaterDeep.
+    //
+    // `seedPct` and `caPasses` come from the biome (they were hardcoded 45 and 4 while every biome
+    // JSON declared its own pair and nothing read them). Both change the SHAPE of a lake and
+    // neither changes how much rng is drawn: the seed loop's `&&` short-circuits, so `rng.Next(100)`
+    // fires once per IN-CIRCLE cell whatever the density is, and the smoothing rule draws nothing
+    // at all. That is what lets this be honoured without shifting the stream for any later pass.
+    // More seed density and more passes both mean a larger, more solid lake — and a solid lake
+    // interior is WaterDeep, which blocks movement below Swimming L25, so this knob is a
+    // reachability input and not only a cosmetic one.
+    internal static void GenerateLake(GameMap map, int cx, int cy, int radius, Random rng,
+                                      int seedPct, int caPasses)
     {
         int d = radius * 2 + 1;
         bool[,] grid = new bool[d, d];
 
-        // Seed: random fill inside a circle at 45% density.
+        // Seed: random fill inside a circle at the biome's density.
         for (int dx = 0; dx < d; dx++)
         for (int dy = 0; dy < d; dy++)
         {
             int distSq = (dx - radius) * (dx - radius) + (dy - radius) * (dy - radius);
-            grid[dx, dy] = distSq <= radius * radius && rng.Next(100) < 45;
+            grid[dx, dy] = distSq <= radius * radius && rng.Next(100) < seedPct;
         }
 
-        // Smooth: 4 iterations of the 5-neighbor rule.
-        for (int iter = 0; iter < 4; iter++)
+        // Smooth: N iterations of the 5-neighbor rule.
+        for (int iter = 0; iter < caPasses; iter++)
         {
             var next = new bool[d, d];
             for (int dx = 1; dx < d - 1; dx++)

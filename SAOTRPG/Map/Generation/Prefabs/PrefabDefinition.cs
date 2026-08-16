@@ -95,7 +95,4 @@ public static class PrefabGlyphMapping
     public static bool IsReservedSlot(char c) =>
         (c >= '1' && c <= '7') || (c >= 'a' && c <= 'd');
 
-    // True if glyph is handled specially by placer (anchor/noop/reserved) — not via Default dict.
-    public static bool IsSpecial(char c) =>
-        c == AnchorGlyph || c == NoopGlyph || IsReservedSlot(c);
 }

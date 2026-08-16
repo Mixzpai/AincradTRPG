@@ -34,7 +34,12 @@ public static class ShopDialog
         }
         // Bargaining stacks multiplicatively on karma multiplier (L99 × Honorable = 0.90×0.85 = 0.765).
         float bargainMul = LifeSkillSystem.BargainingDiscount(player);
-        int BuyPrice(BaseItem it) => Math.Max(1, (int)Math.Round(it.Value * karmaMul * bargainMul));
+        // Beater's second half. The modifier applied its faction-rep hit at run start and logged
+        // "Shop prices hiked", but nothing here consulted it and rep does not feed pricing — so
+        // the +25% the selection screen advertises was never charged. Stacks like bargainMul.
+        float beaterMul = RunModifiers.IsActive(RunModifier.Beater) ? 1.25f : 1f;
+        int BuyPrice(BaseItem it) =>
+            Math.Max(1, (int)Math.Round(it.Value * karmaMul * bargainMul * beaterMul));
 
         // Dynamic tiering: fold newly-unlocked items (dedup by DefId). NEW-to-this-visit set
         // lets the render loop flag them; MarkSeen clears the flag next visit.
@@ -151,15 +156,15 @@ public static class ShopDialog
         var investBtn = DialogHelper.CreateButton("Invest");
         var closeBtn = DialogHelper.CreateButton("Leave", isDefault: true);
 
-        var buttonBar = new View { X = Pos.Center(), Y = Pos.AnchorEnd(3), Width = 62, Height = 1 };
-        buyBtn.X = 0;
-        sellBtn.X = Pos.Right(buyBtn) + 1;
-        junkBtn.X = Pos.Right(sellBtn) + 1;
-        repairBtn.X = Pos.Right(junkBtn) + 1;
-        investBtn.X = Pos.Right(repairBtn) + 1;
-        closeBtn.X = Pos.Right(investBtn) + 1;
-        buyBtn.Y = sellBtn.Y = junkBtn.Y = repairBtn.Y = investBtn.Y = closeBtn.Y = 0;
-        buttonBar.Add(buyBtn, sellBtn, junkBtn, repairBtn, investBtn, closeBtn);
+        // Flat, not nested. These six sat inside a CanFocus=false container, which Terminal.Gui
+        // refuses to traverse — twelve Tab presses never left the list, so every shop action was
+        // unreachable by keyboard. Pos.Align centres them as a group with no width to maintain.
+        foreach (var b in new[] { buyBtn, sellBtn, junkBtn, repairBtn, investBtn, closeBtn })
+        {
+            b.X = Pos.Align(Alignment.Center,
+                AlignmentModes.StartToEnd | AlignmentModes.AddSpaceBetweenItems);
+            b.Y = Pos.AnchorEnd(3);
+        }
 
         var sellHeader = new Label { Text = "", X = Pos.Center(), Y = Pos.AnchorEnd(2) };
         bool sellMode = false;
@@ -457,9 +462,20 @@ public static class ShopDialog
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
+        // Enter is Command.Accept. Unclaimed it bubbles to the dialog's default button — the
+        // "Leave" button — so the advertised "Enter: buy/sell" shut the shop instead. Routing it
+        // to whichever button owns the current mode keeps one copy of the buy/sell logic.
+        listView.Accepting += (s, e) =>
+        {
+            e.Handled = true;
+            (sellMode ? sellBtn : buyBtn).InvokeCommand(Command.Accept);
+        };
+
         dialog.Add(colLabel, modeHeader, listView, emptyLabel, detailLabel, compareLabel,
-                   buttonBar, sellHeader, hintLabel);
+                   buyBtn, sellBtn, junkBtn, repairBtn, investBtn, closeBtn,
+                   sellHeader, hintLabel);
         DialogHelper.CloseOnEscape(dialog);
+        DialogHelper.SelectFirstRow(listView);
         DialogHelper.RunModal(dialog);
     }
 

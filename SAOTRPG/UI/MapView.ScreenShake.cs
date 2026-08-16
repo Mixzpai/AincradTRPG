@@ -20,7 +20,7 @@ public partial class MapView
     // Ignored if a same-or-higher tier is already shaking (no stacking).
     public void RequestShake(int tier)
     {
-        if (!UserSettings.Current.ScreenShakeEnabled) return;
+        if (!UserSettings.Current.ScreenShakeEnabled || !Motion.Animate) return;
         if (_shakeMsLeft > 0 && tier <= _shakeTier) return;
 
         _shakeTier = tier;

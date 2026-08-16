@@ -64,9 +64,10 @@ public partial class MapView : View
 
     // ── Weapon swing arcs ────────────────────────────────────────────
     private readonly List<(int FromX, int FromY, int ToX, int ToY, Color Color, int RemainingMs)> _weaponSwings = new();
+    // Fallback for callers with no weapon in hand; the combat path passes a weight-scaled value.
     private const int WeaponSwingMs = 66;
-    public void AddWeaponSwing(int fx, int fy, int tx, int ty, Color color)
-    { _weaponSwings.Add((fx, fy, tx, ty, color, WeaponSwingMs)); DirtyFrame(); }
+    public void AddWeaponSwing(int fx, int fy, int tx, int ty, Color color, int durationMs = WeaponSwingMs)
+    { _weaponSwings.Add((fx, fy, tx, ty, color, Math.Max(1, durationMs))); DirtyFrame(); }
 
     private readonly List<(int X, int Y, int RemainingMs)> _corpseMarkers = new();
     private const int CorpseMarkerMs = 1320;
@@ -249,6 +250,8 @@ public partial class MapView : View
     {
         _openedDoors.Add((x, y));
         _doorFlashes.Add((x, y, DoorFlashMs));
+        // Only this cell's own resolve consults the door set, so one damage mark covers it.
+        DamageMapCell(x, y);
         DirtyFrame();
     }
 
@@ -359,6 +362,10 @@ public partial class MapView : View
     private bool _playerBarsInitialized;
     // Per-monster HP tween for boss bar + look-mode enemy display.
     private readonly Dictionary<int, IntTween> _monsterHpTween = new();
+    // Scratch list for iterating the tween keys while writing back into the dictionary. Reused
+    // rather than allocated per frame: the tick runs every frame for as long as any monster's bar
+    // is still moving, which is most of a fight.
+    private readonly List<int> _monsterTweenKeys = new();
 
     // Fires when any HP/XP/SAT tween advanced this frame so the HUD label
     // text picks up the new value without a turn-tick.
@@ -451,7 +458,9 @@ public partial class MapView : View
         ResetDotTracking();
         // Clear any in-flight Divine drop banner so it doesn't bleed into the next floor.
         DivineObtainBanner.Clear();
-        DirtyFrame();
+        // Nothing in the tile layer survives a map swap, and the door set it reads was just
+        // emptied — the incremental path has nothing to scroll from.
+        DirtyTilesFull();
     }
 
     public MapView(GameMap map, Camera camera, Player player)

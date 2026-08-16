@@ -25,7 +25,7 @@ namespace SAOTRPG.Entities
 
         public int CurrentExperience { get; set; }
         public int ExperienceRequired => (BaseExperienceRequired + (BaseExperienceRequired * Level));
-        public int BaseExperienceRequired { get; set; } = 100;
+        private const int BaseExperienceRequired = 100;
 
         // MaxHP = 100 + Vit*10 + Sleep life-skill milestone bonus (read-path wide, one source of truth).
         public new int MaxHealth => 100 + (Vitality * 10) + LifeSkills.SleepMaxHpBonus();
@@ -69,8 +69,6 @@ namespace SAOTRPG.Entities
 
         // Derived stat readers. Equipment Bonuses fold into Base* via ApplyStat;
         // GetTotalEquipmentBonus also tallies for display so stats stay live when gear durability hits 0.
-        public int EffectiveCritRate => BaseCriticalRate + (Dexterity / 2)
-            + Inventory.GetTotalEquipmentBonus(StatType.CritRate);
 
         // Fork passives + (eventually) weapon-mastery layers stack here.
         public int BaseAttackSpeedBonus { get; set; }
@@ -89,7 +87,7 @@ namespace SAOTRPG.Entities
             var player = new Player
             {
                 FirstName = firstName, LastName = lastName, Gender = gender,
-                Title = "Adventurer", Id = Random.Shared.Next(10000, 99999),
+                Title = "Adventurer", Id = RunRng.Next(10000, 99999),
                 Level = 1, CurrentExperience = 0, ColOnHand = 1000, SkillPoints = 10
             };
             player._log = log;
@@ -191,7 +189,6 @@ namespace SAOTRPG.Entities
         }
 
         public bool EquipItem(EquipmentBase equipment) => Inventory.Equip(equipment, this);
-        public bool UnequipItem(EquipmentSlot slot) => Inventory.Unequip(slot, this);
         public void UseItem(Consumable consumable) => Inventory.UseConsumable(consumable, this);
 
         // Active-title display name (fallback to Player.Title). Sidebar HUD formatted for 48-col panel.

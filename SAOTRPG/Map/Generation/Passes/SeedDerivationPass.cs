@@ -8,7 +8,9 @@ public sealed class SeedDerivationPass : IGenerationPass
     public bool ShouldRun(WorldContext ctx) => true;
     public void Execute(WorldContext ctx)
     {
-        int seed = HashCode.Combine(ctx.GlobalSeed, ctx.FloorNumber);
+        // StableHash, not HashCode.Combine: the latter randomises per process, so every pass's
+        // RNG — and therefore the whole floor — changed on each launch of the game.
+        int seed = Systems.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber);
         ctx.Rng = new Random(seed);
     }
 }

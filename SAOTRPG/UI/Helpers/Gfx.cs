@@ -14,9 +14,12 @@ namespace SAOTRPG.UI.Helpers;
 // Upgrade-isolation point — renderer/backend migrations only touch this file.
 public static class Gfx
 {
-    // Create a color attribute from foreground + background colors.
-    public static Attribute Attr(Color fg, Color bg)
-        => new Attribute(fg, bg);
+    // Create a color attribute from foreground + background colors, with an optional
+    // text style. Style carries hierarchy that is orthogonal to colour — Bold for
+    // emphasis — but terminal support varies (conhost renders neither Faint nor
+    // Italic), so style must reinforce a colour difference, never replace one.
+    public static Attribute Attr(Color fg, Color bg, TextStyle style = TextStyle.None)
+        => new Attribute(fg, bg) { Style = style };
 
     // Shorthand: fg on black background (most common case).
     public static Attribute Attr(Color fg)
@@ -64,14 +67,116 @@ public static class Gfx
         return cell;
     }
 
-    // Marks every cell of every dirty row across the whole buffer.
+    // Last glyph handed to MakeCell. Runs of one character are the norm across terrain,
+    // so this skips most of the dictionary lookups. UI-thread only, like s_cellByChar.
+    private static char s_lastMadeCh;
+    private static Cell s_lastMadeCell;
+    private static bool s_hasLastMade;
+
+    // A resolved cell, before it becomes a driver Cell.
     //
-    // The driver walks a dirty row cell by cell; each clean cell it steps over flushes
-    // the pending output and emits a cursor move, and every flush is its own encode plus
-    // console write. Scattered changes therefore produce thousands of tiny writes, which
-    // costs far more than one bulk write of the entire row — measured at seconds versus
-    // milliseconds. Filling each touched row end to end leaves the driver a single
-    // uninterrupted run per row. Clean rows are still skipped wholesale.
+    // Deliberately reference-free. Cell carries its grapheme as a string, so an array of Cells
+    // pays a GC write barrier on every element store and cannot be memmoved — and the map's
+    // tile layer is a viewport-sized array that is written and scrolled every frame. Holding
+    // (char, Attribute) instead makes both operations plain memory traffic; the grapheme is
+    // resolved once per cell that actually reaches the driver, in BlitGlyphs.
+    public struct Glyph
+    {
+        public char Ch;
+        public Attribute Attr;
+
+        public Glyph(char ch, Attribute attr) { Ch = ch; Attr = attr; }
+    }
+
+    // Replays a composed glyph layer into the driver buffer, skipping any cell the terminal
+    // already shows. Mirrors BlitRegion; the layer, not the driver's contents, is the source
+    // of truth. Returns false when the driver is unavailable.
+    public static bool BlitGlyphs(View view, Glyph[] src, int width, int height)
+    {
+        var buffer = AppHost.App.Driver?.GetOutputBuffer();
+        var contents = buffer?.Contents;
+        if (contents is null) return false;
+
+        int rows = contents.GetLength(0), cols = contents.GetLength(1);
+        var clip = ClipBounds(buffer, cols, rows);
+        var origin = view.ViewportToScreen(new System.Drawing.Point(0, 0));
+
+        for (int vy = 0; vy < height; vy++)
+        {
+            int sy = origin.Y + vy;
+            if (sy < 0 || sy >= rows || sy < clip.Y0 || sy >= clip.Y1) continue;
+
+            int rowBase = vy * width;
+            bool rowTouched = false;
+            for (int vx = 0; vx < width; vx++)
+            {
+                int sx = origin.X + vx;
+                if (sx < 0 || sx >= cols || sx < clip.X0 || sx >= clip.X1) continue;
+
+                Glyph g = src[rowBase + vx];
+                ref Cell existing = ref contents[sy, sx];
+                if (existing.Attribute == g.Attr
+                    && existing.Grapheme is { Length: 1 } s && s[0] == g.Ch)
+                {
+                    if (Counting) CellsSkipped++;
+                    continue;
+                }
+
+                Cell cell = MakeCell(g.Ch, g.Attr);
+                cell.IsDirty = true;
+                existing = cell;
+                rowTouched = true;
+                if (Counting) CellsWritten++;
+            }
+
+            if (rowTouched) buffer!.DirtyLines[sy] = true;
+        }
+
+        return true;
+    }
+
+    // Builds a driver Cell without touching the output buffer.
+    public static Cell MakeCell(char ch, Attribute attr)
+    {
+        Cell cell;
+        if (s_hasLastMade && ch == s_lastMadeCh)
+        {
+            cell = s_lastMadeCell;
+        }
+        else
+        {
+            cell = CellFor(ch);
+            s_lastMadeCh = ch; s_lastMadeCell = cell; s_hasLastMade = true;
+        }
+
+        cell.Attribute = attr;
+        return cell;
+    }
+
+    // Marks every cell of every dirty row across the whole buffer, from the row's leftmost dirty
+    // cell to its rightmost.
+    //
+    // ── DO NOT "OPTIMISE" THIS BY SENDING FEWER CELLS. Tried twice; 5x and 60x slower. ──
+    //
+    // A CLEAN CELL INSIDE A DIRTY ROW COSTS A SYSCALL. A DIRTY ONE IS ALMOST FREE.
+    //
+    // Terminal.Gui's OutputBase.Write(IOutputBuffer) walks every column of every dirty row, and
+    // its clean-cell branch calls SetCursorPositionImpl per clean cell — which in AnsiOutput emits
+    // a cursor escape through its own WriteFile on the console handle. Dirty cells, by contrast,
+    // accumulate into one buffer and leave in a single write. So the cheapest possible frame is one
+    // where every dirty row is 100% dirty, and cost scales with the clean cells you leave *inside*
+    // the span, not with the cells you send.
+    //
+    // Filling lo..hi is therefore optimal, not wasteful. Two measured attempts to send less:
+    //   - bridge only gaps <=12 cells: payload -97% (28,756 -> ~914 cells), flush 19ms -> ~1,100ms
+    //   - drop the window border:      rows 91 -> 1, flush 19ms -> ~105ms even at the title screen
+    // Both lost precisely because they left clean cells inside dirty rows.
+    //
+    // This is also why the host window's border is LOAD-BEARING: it dirties column 0 and column
+    // W-1 on every row, which pins lo/hi to the screen edges and guarantees zero clean-cell walks.
+    // Do not remove it for performance reasons.
+    //
+    // There is no further win here without replacing the driver's write loop.
     //
     // Must run after every view has painted but before the driver flushes.
     public static void FillDirtyRows()

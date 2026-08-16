@@ -35,7 +35,7 @@ public partial class TurnManager
     {
         if (!_player.IsDefeated) return;
         LastKillerName = killerName;
-        _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+        _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
         RaisePlayerDied(killerName);
     }
 
@@ -66,10 +66,6 @@ public partial class TurnManager
     public bool IsBleeding => _bleedTurnsLeft > 0;
     // Remaining turns of bleed damage.
     public int BleedTurnsLeft => _bleedTurnsLeft;
-    // True if the player is currently stunned.
-    public bool IsStunned => _stunTurnsLeft > 0;
-    // True if the player is currently slowed.
-    public bool IsSlowed => _slowTurnsLeft > 0;
 
     private void TickExhaustion()
     {
@@ -110,7 +106,7 @@ public partial class TurnManager
 
         if (TurnCount > 0 && TurnCount % FlavorText.MilestoneInterval == 0)
         {
-            string msg = FlavorText.MilestoneMessages[Random.Shared.Next(FlavorText.MilestoneMessages.Length)];
+            string msg = FlavorText.MilestoneMessages[RunRng.Next(FlavorText.MilestoneMessages.Length)];
             _log.LogSystem(string.Format(msg, TurnCount));
         }
 
@@ -142,7 +138,7 @@ public partial class TurnManager
             if (_player.IsDefeated)
             {
                 LastKillerName = "starvation";
-                _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+                _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
                 RaisePlayerDied("starvation");
             }
         }
@@ -195,8 +191,8 @@ public partial class TurnManager
             _player.CurrentHealth = Math.Min(_player.CurrentHealth + regenAmount, _player.MaxHealth);
             // Healing tick sparkle — subtle +/· pair at player tile.
             ParticleQueue.Emit(ParticleEvent.HealingTick, _player.X, _player.Y);
-            if (Random.Shared.Next(100) < 30)
-                _log.Log(FlavorText.RegenFlavors[Random.Shared.Next(FlavorText.RegenFlavors.Length)]);
+            if (RunRng.Next(100) < 30)
+                _log.Log(FlavorText.RegenFlavors[RunRng.Next(FlavorText.RegenFlavors.Length)]);
         }
 
         // SPRegen applies regardless of HP cap, on the same tick cadence.

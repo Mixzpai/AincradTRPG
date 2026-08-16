@@ -20,7 +20,7 @@
   "ambientOverlay": { "particleId": "lantern_glow", "densityPermille": 3 },
   "pocketCandidates": ["Ruins"],
   "primaryPaletteId": "Gold",
-  "tintColor": "#B0A8904A",
+  "tintColor": "#B0A8901A",
   "floorEntryText": "Lantern light spills from shuttered windows. The streets remember footsteps.",
   "treeGlyph": "♣",
   "oreVeinDensity": 0.5,

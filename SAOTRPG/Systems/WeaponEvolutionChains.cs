@@ -81,9 +81,6 @@ public static class WeaponEvolutionChains
     // Slicing Stone alt-path map.
     // STUB-DEFERRED: Slicing Stone alt-evolution UI feature deferred per DEFERRED.md.
     // Data table preserved for future revival. No active readers — query methods
-    // (IsChainWeapon / GetAlt / HasAltPath / AltStoneFor) were removed in the
-    // 2026-05-01 codebase audit cleanup. To revive: re-add query methods +
-    // surface the alt-evolve choice in CraftingDialog's evolve flow.
     //
     // Player presents Slicing Stone (tier-matched) instead of canon catalyst → routes to alt DefId.
     // Tier match: Lesser→T1weapon, Greater→T2weapon, Perfect→T3weapon. T4 apex has no alt branch.
@@ -143,6 +140,11 @@ public static class WeaponEvolutionChains
         ["anneal_blade"]              = new("queens_knightsword", "slicing_stone_greater"),
         ["tough_anneal_blade"]        = new("azure_sky_blade",    "slicing_stone_perfect"),
     };
+
+    // The alt branch a weapon can take instead of its canon evolution, or null when it has none.
+    // A weapon at T4 has no canon NextDefId and no alt entry either, so both paths end together.
+    public static AltStep? GetAlt(string? defId)
+        => defId != null && AltChains.TryGetValue(defId, out var alt) ? alt : null;
 
     // Maps floor → T1 chain weapon DefId awarded at that floor's Secret Shrine.
     // Used by MapGenerator.Population (shrine spawn) and TurnManager.Tiles (shrine interact).

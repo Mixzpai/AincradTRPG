@@ -122,7 +122,17 @@ public static class GuildRosterDialog
             AppHost.App.RequestStop();
         };
 
-        dialog.Add(header, listView, detail, reqLabel, foundBtn);
+        // This dialog advertised nothing at all — no hint row, and the buttons below are only
+        // reachable by Tab. Joining is deliberately absent: it happens at a recruiter NPC.
+        var hint = new Label
+        {
+            Text = "Up/Down: browse   Tab: reach the buttons   Esc: close"
+                 + "   (joining happens at a guild's recruiter NPC)",
+            X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(20),
+            SchemeName = ColorSchemes.DimName,
+        };
+
+        dialog.Add(header, listView, detail, reqLabel, foundBtn, hint);
 
         // Dissolve (shown only when player leads a founded guild): GuildSystem.Leave's PlayerGuild
         // branch drops perk + clears ActiveGuildId, no penalty. Also clears name for re-founding.
@@ -201,6 +211,7 @@ public static class GuildRosterDialog
             X = 1, Y = 2,
             Labels = presets.Select(p => $"{p.Name} — {p.Flavor}").ToArray(),
         };
+        SAOTRPG.UI.NavigationHelper.EnableSelectorArrowNav(rg);
         int result = -1;
         var okBtn = DialogHelper.CreateButton("Select", isDefault: true);
         okBtn.X = Pos.Center() - 8; okBtn.Y = Pos.AnchorEnd(2);

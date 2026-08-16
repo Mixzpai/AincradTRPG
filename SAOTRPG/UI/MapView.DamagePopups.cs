@@ -100,13 +100,6 @@ public partial class MapView
         DirtyFrame();
     }
 
-    // DoT tick filter — first tick per mob id passes, the rest suppress.
-    // Caller (TurnManager) passes a stable key like the mob Id.
-    public bool ShouldShowDotTick(int mobId)
-    {
-        if (_dotTickFirstSeen.Add(mobId)) return true;
-        return false;
-    }
 
     public void ResetDotTracking() => _dotTickFirstSeen.Clear();
 

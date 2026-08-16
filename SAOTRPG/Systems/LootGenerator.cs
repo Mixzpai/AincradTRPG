@@ -22,14 +22,14 @@ public static class LootGenerator
     public static readonly Dictionary<string, (string Name, int Value)[]> MobLootTable = new()
     {
         { "beast",     new[] { ("Raw Hide",        8), ("Beast Fang",     12), ("Sinew",         6) } },
-        { "kobold",    new[] { ("Kobold Ear",      5), ("Crude Dagger",   15), ("Tattered Cloth", 4) } },
+        { "kobold",    new[] { ("Kobold Ear",      5), ("Crude Dagger",   15), ("Tattered Cloth", 4), ("Lesser Slicing Stone", 3) } },
         { "insect",    new[] { ("Chitin Shard",   10), ("Wing Fragment",   8), ("Venom Sac",     14), ("Valkyrie Feather", 3) } },
         { "plant",     new[] { ("Herb Bundle",    12), ("Toxic Spore",    10), ("Root Fiber",     6) } },
         { "humanoid",  new[] { ("Coin Pouch",     20), ("Iron Ring",      15), ("Worn Map",      10), ("Demonic Sigil",    3), ("Oni Ash",          3) } },
         { "reptile",   new[] { ("Scale Plate",    12), ("Forked Tongue",   8), ("Reptile Eye",   14) } },
-        { "undead",    new[] { ("Bone Fragment",    6), ("Soul Dust",      18), ("Cursed Shard",  14), ("Lunar Core",       3) } },
+        { "undead",    new[] { ("Bone Fragment",    6), ("Soul Dust",      18), ("Cursed Shard",  14), ("Lunar Core",       3), ("Greater Slicing Stone", 3) } },
         { "construct", new[] { ("Gear Fragment",   10), ("Crystal Core",   20), ("Iron Bolt",      8), ("Geometric Shard",  3), ("Titan Fragment",   3) } },
-        { "dragon",    new[] { ("Dragon Scale",   30), ("Flame Essence",  25), ("Dragon Claw",   20), ("Infernal Gem",     3), ("Nidhogg Scale",    3) } },
+        { "dragon",    new[] { ("Dragon Scale",   30), ("Flame Essence",  25), ("Dragon Claw",   20), ("Infernal Gem",     3), ("Nidhogg Scale",    3), ("Perfect Slicing Stone", 3) } },
         { "elemental", new[] { ("Fire Crystal",   22), ("Essence Wisp",   18), ("Elemental Ash",  12), ("Trishula Tip",     3) } },
         { "aquatic",   new[] { ("Water Core",     15), ("Fish Scale",      8), ("Murky Pearl",   18) } },
         // Hollow/corrupted/celestial — F76+ endgame mobs. Ash White ore themed.
@@ -49,6 +49,12 @@ public static class LootGenerator
         ["Titan Fragment"]   = "titan_fragment",
         ["Nidhogg Scale"]    = "nidhogg_scale",
         ["Trishula Tip"]     = "trishula_tip",
+        // Alt-path catalysts. Routing through here is what gives the dropped stone its
+        // DefinitionId — CountMaterialByDefId keys on that, so a stone built without it
+        // would sit in the backpack and never be spendable.
+        ["Lesser Slicing Stone"]  = "slicing_stone_lesser",
+        ["Greater Slicing Stone"] = "slicing_stone_greater",
+        ["Perfect Slicing Stone"] = "slicing_stone_perfect",
     };
 
     // Floor-boss guaranteed drops — Divine Objects + Legendary rewards. Divine uses
@@ -142,12 +148,14 @@ public static class LootGenerator
     // Floor-banded registered loot pool. RollChestItem ~5% picks a DefId whose
     // (minFloor, maxFloor) band contains CurrentFloor.
     //
-    // Legendary chest pool. F1=2 hard (mate_chopper + lambent_light), F100=0, peak ≤23.
-    // 70 Legendary chest entries.
-    // Per-floor Legendary chest count (chest entries only; locks add on top from boss/NPC tables):
-    //   F1-5=2  F6-7=1  F8=1  F9-11=0  F12-17=1  F18-21=1-2  F22-29=2-3  F30-37=2-3
-    //   F38-42=1  F43-55=0  F56-57=1  F58-64=5-6  F65-72=6-13  F73-79=10-15  F80=15 (peak)
-    //   F81-90=10-13  F91-94=8-12  F95-99=4-9. Adding locks, peak total ~18 (F80) — well under 23.
+    // A floor's entries are its POOL BREADTH, not how much it drops: one chest roll picks one
+    // DefId from the whole in-band pool, so widening a band changes the variety a floor can show
+    // and not the amount of loot it gives. The hand-maintained per-floor table that used to sit
+    // here read as a drop count and had drifted on every figure it stated, so it is gone; the
+    // three claims that are actually design constraints are pinned by Tools/ContentProbe instead,
+    // where they cannot rot:
+    //   F1 carries exactly 2 (mate_chopper + lambent_light), F100 carries none, and no floor's
+    //   Legendary pool exceeds the 23 budget.
     public static readonly (int MinFloor, int MaxFloor, string DefId)[] FloorBandedRegisteredLoot =
     {
         // Anneal line — Sachi/Kirito-era starter OHS (IF canon, F1-10). Uncommon/Rare, not Legendary.
@@ -358,6 +366,18 @@ public static class LootGenerator
 
         // ── LN late-game additions ───────────────────────────────────────
         (88, 94, "radiant_light"),                   // LN postgame Asuna
+
+        // ── Celestial mid-tier chest half ────────────────────────────────
+        // The Celestial family is twelve weapons split by acquisition route: the six that
+        // CanonCitationData cites as "shop tier" are stocked in ShopTierSystem, and these six are
+        // cited as chest drops. Bands are the ones those citations declare. Appended rather than
+        // grouped by floor so every out-of-band floor keeps its existing pool exactly.
+        (62, 68, "celestial_mace"),
+        (65, 72, "celestial_axe"),
+        (65, 71, "celestial_scimitar"),
+        (66, 72, "celestial_claws"),
+        (70, 76, "celestial_dagger"),
+        (70, 76, "celestial_scythe"),
     };
 
     // IM Enhancement Ore themed drops: Mob LootTag → ore DefId at OreDropChancePercent.
@@ -387,7 +407,7 @@ public static class LootGenerator
     public static string PickRandomOreDefId()
     {
         var ids = EnhancementOreDefinitions.AllOreDefIds;
-        return ids[Random.Shared.Next(ids.Length)];
+        return ids[RunRng.Next(ids.Length)];
     }
 
     // Resolve floor-boss drop. The per-run Divine cap was removed; every guaranteed
@@ -406,7 +426,7 @@ public static class LootGenerator
         foreach (var (minF, maxF, defId) in FloorBandedRegisteredLoot)
             if (floor >= minF && floor <= maxF) pool.Add(defId);
         if (pool.Count == 0) return null;
-        return pool[Random.Shared.Next(pool.Count)];
+        return pool[RunRng.Next(pool.Count)];
     }
 
     // Canon-named mob → (DefId, dropChance 0-1) overrides. Rolled BEFORE generic
@@ -496,20 +516,20 @@ public static class LootGenerator
     };
 
     private static string PickName(string weaponType) =>
-        $"{MetalPrefixes[Random.Shared.Next(MetalPrefixes.Length)]} " +
+        $"{MetalPrefixes[RunRng.Next(MetalPrefixes.Length)]} " +
         (WeaponNouns.TryGetValue(weaponType, out var nouns)
-            ? nouns[Random.Shared.Next(nouns.Length)]
+            ? nouns[RunRng.Next(nouns.Length)]
             : "Weapon");
 
     private static string PickArmorName(string slot) =>
-        $"{ArmorPrefixes[Random.Shared.Next(ArmorPrefixes.Length)]} {slot}";
+        $"{ArmorPrefixes[RunRng.Next(ArmorPrefixes.Length)]} {slot}";
 
     private static string PickShieldName() =>
-        $"{ArmorPrefixes[Random.Shared.Next(ArmorPrefixes.Length)]} {ShieldNouns[Random.Shared.Next(ShieldNouns.Length)]}";
+        $"{ArmorPrefixes[RunRng.Next(ArmorPrefixes.Length)]} {ShieldNouns[RunRng.Next(ShieldNouns.Length)]}";
 
     public static string PickRarity()
     {
-        int r = Random.Shared.Next(100);
+        int r = RunRng.Next(100);
         return r < RarityCommonCeiling ? "Common"
              : r < RarityUncommonCeiling ? "Uncommon"
              : r < RarityRareCeiling ? "Rare"
@@ -523,7 +543,7 @@ public static class LootGenerator
         var scale = RarityScaling[RarityIndex(rarity)];
         int dur = 30 + currentFloor * 10 + scale.DurBonus;
         int lvl = Math.Max(1, currentFloor - 1);
-        int roll = Random.Shared.Next(EquipmentTypeCount);
+        int roll = RunRng.Next(EquipmentTypeCount);
 
         return roll switch
         {
@@ -548,7 +568,7 @@ public static class LootGenerator
                 Rarity = rarity, ItemDurability = dur,
                 RequiredLevel = lvl, EquipmentType = "Armor",
                 ArmorSlot = "Shield", BaseDefense = ScaleDef(currentFloor, scale, 0.8), Weight = 4,
-                BlockChance = 10 + currentFloor + Random.Shared.Next(0, 6),
+                BlockChance = 10 + currentFloor + RunRng.Next(0, 6),
                 Bonuses = new StatModifierCollection().Add(StatType.Defense, ScaleDef(currentFloor, scale, 0.8))
             },
             _ => CreateRandomAccessory(currentFloor, rarity, scale, scale.DurBonus),
@@ -560,8 +580,8 @@ public static class LootGenerator
         (int StatMul, int DurBonus, int ValMul) scale, double dmgFactor, int atkSpeed, int range,
         StatType secondaryStat)
     {
-        int baseDmg = (int)((3 + floor * 1.5 + Random.Shared.Next(0, Math.Max(1, floor / 3))) * dmgFactor) * scale.StatMul / 100;
-        int atkBonus = (int)((2 + floor * 1.2 + Random.Shared.Next(0, 3)) * dmgFactor) * scale.StatMul / 100;
+        int baseDmg = (int)((3 + floor * 1.5 + RunRng.Next(0, Math.Max(1, floor / 3))) * dmgFactor) * scale.StatMul / 100;
+        int atkBonus = (int)((2 + floor * 1.2 + RunRng.Next(0, 3)) * dmgFactor) * scale.StatMul / 100;
         int secBonus = Math.Max(1, (1 + floor / 4) * scale.StatMul / 100);
         return new Weapon
         {
@@ -599,12 +619,12 @@ public static class LootGenerator
     }
 
     private static int ScaleDef(int floor, (int StatMul, int DurBonus, int ValMul) scale, double factor) =>
-        Math.Max(1, (int)((2 + floor * 1.5 + Random.Shared.Next(0, 3)) * factor) * scale.StatMul / 100);
+        Math.Max(1, (int)((2 + floor * 1.5 + RunRng.Next(0, 3)) * factor) * scale.StatMul / 100);
 
     private static Accessory CreateRandomAccessory(int currentFloor, string rarity,
         (int StatMul, int DurBonus, int ValMul) scale, int durBonus)
     {
-        var acc = AccessoryPool[Random.Shared.Next(AccessoryPool.Length)]();
+        var acc = AccessoryPool[RunRng.Next(AccessoryPool.Length)]();
         acc.Rarity = rarity;
         acc.Value = acc.Value * scale.ValMul / 100;
         acc.ItemDurability = 50 + currentFloor * 8 + durBonus;

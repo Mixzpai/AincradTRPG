@@ -18,7 +18,75 @@ public partial class TurnManager
             case TileType.TrapTeleport: HandleTeleportTrap(tile, tx, ty); break;
             case TileType.TrapPoison:   HandlePoisonTrap(tile, tx, ty); break;
             case TileType.TrapAlarm:    HandleAlarmTrap(tile, tx, ty); break;
+            case TileType.TrapWeb:      HandleWebTrap(); break;
+            case TileType.TrapMagnet:   HandleMagnetTrap(tx, ty); break;
+            case TileType.TrapRune:     return HandleRuneTrap(tile, tx, ty);
             case TileType.GasVent:      HandleGasVent(tile); break;
+        }
+        return false;
+    }
+
+    // Web — pure movement denial, no damage. Slow already exists as a status with a tick and a
+    // tray icon (SLW), so this reuses it rather than adding a second immobilise concept.
+    private void HandleWebTrap()
+    {
+        int turns = 3 + CurrentFloor / 20;
+        _slowTurnsLeft = Math.Max(_slowTurnsLeft, turns);
+        _log.LogCombat("Thick web snares your legs!");
+        _log.LogCombat($"  You are slowed for {_slowTurnsLeft} turns.");
+    }
+
+    // Magnet — drags every nearby monster two steps toward the player. Costs no HP directly; the
+    // danger is what it collects. Uses the same passability rule mob movement uses, so it can
+    // never push a monster into a wall or onto another occupant.
+    private void HandleMagnetTrap(int tx, int ty)
+    {
+        _log.LogCombat("A pulse of force floods the chamber — something is pulling!");
+        int dragged = 0;
+        // ToList: MoveEntity mutates the map's monster bookkeeping while we walk it.
+        foreach (var m in _map.Monsters.ToList())
+        {
+            if (m.IsDefeated) continue;
+            int dx = tx - m.X, dy = ty - m.Y;
+            if (Math.Max(Math.Abs(dx), Math.Abs(dy)) is < 2 or > 6) continue;
+            bool moved = false;
+            for (int step = 0; step < 2; step++)
+            {
+                int sx = m.X + Math.Sign(tx - m.X), sy = m.Y + Math.Sign(ty - m.Y);
+                if (sx == tx && sy == ty) break;          // never stack onto the player
+                if (!_map.InBounds(sx, sy) || !IsMonsterWalkable(m, sx, sy)) break;
+                _map.MoveEntity(m, sx, sy);
+                moved = true;
+            }
+            if (moved) dragged++;
+        }
+        _log.LogCombat(dragged > 0
+            ? $"  {dragged} enemy(s) are dragged toward you!"
+            : "  Nothing is close enough to be pulled.");
+    }
+
+    // Rune — burst damage that ignores armour, plus a brief stun. The armour bypass is what makes
+    // it the late-floor hazard: it does not soften as gear improves.
+    private bool HandleRuneTrap(Tile tile, int tx, int ty)
+    {
+        int dmg = 6 + CurrentFloor * 2;
+        _log.LogCombat("A dormant rune flares white beneath your feet!");
+        _player.TakeDamage(dmg);
+        CombatTextEvent?.Invoke(tx, ty, $"RUNE -{dmg}", Color.BrightMagenta);
+        ParticleQueue.Emit(ParticleEvent.CritShatter, tx, ty);
+        _log.LogCombat($"  Raw force tears through your armour for {dmg} damage!");
+        if (_stunTurnsLeft <= 0)
+        {
+            _stunTurnsLeft = 1;
+            _log.LogCombat("  The blast leaves you reeling. (stunned 1 turn)");
+        }
+        _map.SetTileType(tx, ty, TileType.Floor);
+        if (_player.IsDefeated)
+        {
+            LastKillerName = "a warding rune";
+            _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
+            RaisePlayerDied("trap");
+            return true;
         }
         return false;
     }
@@ -42,12 +110,12 @@ public partial class TurnManager
         _player.TakeDamage(trapDmg);
         DamageDealt?.Invoke(tx, ty, trapDmg, true, false);
         _log.LogCombat(string.Format(
-            FlavorText.SpikeTrapFlavors[Random.Shared.Next(FlavorText.SpikeTrapFlavors.Length)], trapDmg));
+            FlavorText.SpikeTrapFlavors[RunRng.Next(FlavorText.SpikeTrapFlavors.Length)], trapDmg));
         _map.SetTileType(tx, ty, TileType.Floor);
         if (_player.IsDefeated)
         {
             LastKillerName = "a spike trap";
-            _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+            _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
             RaisePlayerDied("trap");
             return true;
         }
@@ -59,15 +127,16 @@ public partial class TurnManager
         _log.LogCombat("A teleport trap activates! You're warped to a random location!");
         for (int attempt = 0; attempt < 50; attempt++)
         {
-            int rx = Random.Shared.Next(5, _map.Width - 5);
-            int ry = Random.Shared.Next(5, _map.Height - 5);
+            int rx = RunRng.Next(5, _map.Width - 5);
+            int ry = RunRng.Next(5, _map.Height - 5);
             var rtile = _map.GetTile(rx, ry);
             if (!rtile.BlocksMovement && rtile.Occupant == null
                 && rtile.Type is not (TileType.TrapTeleport or TileType.TrapSpike
-                    or TileType.TrapPoison or TileType.TrapAlarm))
+                    or TileType.TrapPoison or TileType.TrapAlarm
+                    or TileType.TrapWeb or TileType.TrapMagnet or TileType.TrapRune))
             {
                 _map.MoveEntity(_player, rx, ry);
-                _log.LogCombat(FlavorText.TeleportLandingFlavors[Random.Shared.Next(FlavorText.TeleportLandingFlavors.Length)]);
+                _log.LogCombat(FlavorText.TeleportLandingFlavors[RunRng.Next(FlavorText.TeleportLandingFlavors.Length)]);
                 break;
             }
         }
@@ -115,9 +184,9 @@ public partial class TurnManager
             if (md <= 2 && md < bestDist) { ambusher = m; bestDist = md; }
         }
 
-        if (ambusher != null && Random.Shared.Next(100) < ambushChance)
+        if (ambusher != null && RunRng.Next(100) < ambushChance)
         {
-            _log.LogCombat(FlavorText.AmbushFlavors[Random.Shared.Next(FlavorText.AmbushFlavors.Length)]);
+            _log.LogCombat(FlavorText.AmbushFlavors[RunRng.Next(FlavorText.AmbushFlavors.Length)]);
             int ambushDmg = Math.Max(1, ambusher.BaseAttack - _player.Defense / 2);
             _player.TakeDamage(ambushDmg);
             DamageDealt?.Invoke(tx, ty, ambushDmg, true, false);
@@ -125,13 +194,13 @@ public partial class TurnManager
             if (_player.IsDefeated)
             {
                 LastKillerName = ambusher.Name;
-                _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+                _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
                 RaisePlayerDied("monster");
                 return true;
             }
         }
         else if (ambusher != null)
-            _log.Log(FlavorText.AmbushAvoidedFlavors[Random.Shared.Next(FlavorText.AmbushAvoidedFlavors.Length)]);
+            _log.Log(FlavorText.AmbushAvoidedFlavors[RunRng.Next(FlavorText.AmbushAvoidedFlavors.Length)]);
 
         return false;
     }
@@ -139,7 +208,7 @@ public partial class TurnManager
     private void HandleTrapDetection(int tx, int ty)
     {
         int baseChance = Math.Min(30, _player.Dexterity * 3) + WeatherSystem.GetTrapDetectionPenalty();
-        if (Random.Shared.Next(100) >= baseChance) return;
+        if (RunRng.Next(100) >= baseChance) return;
 
         for (int tdx = -1; tdx <= 1; tdx++)
         for (int tdy = -1; tdy <= 1; tdy++)
@@ -153,13 +222,13 @@ public partial class TurnManager
                 if (adjTile.TrapHidden)
                 {
                     int detectChance = Math.Min(95, 30 + _player.Dexterity * 3);
-                    if (Random.Shared.Next(100) < detectChance)
+                    if (RunRng.Next(100) < detectChance)
                     {
                         _map.SetTrapHidden(tx + tdx, ty + tdy, false);
                         _log.LogSystem("Your keen senses reveal a hidden trap nearby!");
                     }
                     else
-                        _log.LogCombat(FlavorText.TrapSenseFlavors[Random.Shared.Next(FlavorText.TrapSenseFlavors.Length)]);
+                        _log.LogCombat(FlavorText.TrapSenseFlavors[RunRng.Next(FlavorText.TrapSenseFlavors.Length)]);
                 }
                 return;
             }

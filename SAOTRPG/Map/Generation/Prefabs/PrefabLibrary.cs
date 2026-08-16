@@ -72,10 +72,6 @@ public sealed class PrefabLibrary
         }
     }
 
-    // Lookup by exact NAME. Null if not present.
-    public PrefabDefinition? GetByName(string name) =>
-        _byName.TryGetValue(name, out var def) ? def : null;
-
     // Pool of candidates matching biome + floor + optional tag filter.
     // "any"-biome prefabs always included. Empty Floors list = any floor.
     public IEnumerable<PrefabDefinition> CandidatesFor(string biome, int floor, IEnumerable<string>? tagsRequired = null)

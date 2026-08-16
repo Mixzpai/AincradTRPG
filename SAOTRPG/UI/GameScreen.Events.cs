@@ -28,7 +28,7 @@ public static partial class GameScreen
             Color tint = ResolveDamageTint(turnManager, turnManager.Player, isPlayer);
             mapView.EnqueueDamagePopup(x, y, dmg, isCrit, tint, maxHp);
         };
-        turnManager.WeaponSwing += (fx, fy, tx, ty, c) => mapView.AddWeaponSwing(fx, fy, tx, ty, c);
+        turnManager.WeaponSwing += (fx, fy, tx, ty, c, ms) => mapView.AddWeaponSwing(fx, fy, tx, ty, c, ms);
         turnManager.CombatTextEvent += (x, y, text, color) => mapView.AddTextFlash(x, y, text, color);
         turnManager.LeveledUp += () =>
         {
@@ -205,14 +205,18 @@ public static partial class GameScreen
         turnManager.MonumentInteraction += () =>
             InvokeDialog(() => { MonumentDialog.Show(player); refreshHud(); });
 
-        turnManager.TalentPickRequested += (perks) =>
+        turnManager.TalentPickRequested += (pending) =>
             InvokeDialog(() =>
             {
-                var picked = TalentPickDialog.Show(perks);
+                var picked = TalentPickDialog.Show(pending.Choices);
                 if (picked != null)
                 {
-                    turnManager.ApplyTalent(picked);
+                    turnManager.ResolveTalentPick(pending.Id, picked);
                     gameLog.Log($"  Talent acquired: {picked.Name} — {picked.Description}");
+                }
+                else
+                {
+                    gameLog.Log($"  (Talent for level {pending.Level} pending — resume from Stats.)");
                 }
             });
 

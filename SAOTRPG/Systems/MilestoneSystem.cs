@@ -62,6 +62,23 @@ public static class MilestoneSystem
         if (monster is Boss) TryUnlock("first_boss", player);
         if (tm.KillStreak >= 5) TryUnlock("perfect_streak_5", player);
 
+        // "Criminal". Its trigger is Conditional, which nothing evaluates, and no caller unlocked
+        // it by id — so the milestone was displayed and could never be earned. Town Guards are
+        // real: PopulateTownOfBeginnings posts a patrol once karma drops to -50 or below.
+        if (monster.Name == "Town Guard") TryUnlock("karma_town_guard_kill", player);
+
+        // "Last-Attack Beta Tester" — 25 floor bosses. It was typed KillCountByTag, which counts
+        // mob kills by LOOT TAG, against a key no mob carries, so it could never fire. FieldBoss
+        // is excluded for the same reason FloorBossAlive excludes it: wilderness elites are
+        // optional content. The player landed the killing blow by definition — this runs on kill.
+        if (monster is Boss and not FieldBoss)
+        {
+            var lt = LifetimeStats.Load();
+            lt.FloorBossLastHits++;
+            LifetimeStats.Save(lt);
+            if (lt.FloorBossLastHits >= 25) TryUnlock("if_last_attack_beta_tester", player);
+        }
+
         // Total-kill thresholds.
         EvaluateKillThresholds(tm.KillCount, player);
 
@@ -223,6 +240,17 @@ public static class MilestoneSystem
         if (oldTier == KarmaSystem.Tier.Outlaw && newTier != KarmaSystem.Tier.Outlaw
             && newKarma >= 0)
             TryUnlock("karma_atonement", player);
+    }
+
+    // "Lisbeth's Best Customer" — 200 successful weapon upgrades. Also typed KillCountByTag
+    // against a key no mob carries. Called from the enhancement success branch only: the
+    // milestone's own text says "Successfully upgrade", so a failed roll must not count.
+    public static void OnWeaponUpgraded(Player? player)
+    {
+        var lt = LifetimeStats.Load();
+        lt.WeaponUpgrades++;
+        LifetimeStats.Save(lt);
+        if (lt.WeaponUpgrades >= 200) TryUnlock("if_lisbeth_customer", player);
     }
 
     private static void OnGuildJoined(Faction faction)

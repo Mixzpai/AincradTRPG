@@ -77,6 +77,13 @@ public static class LifetimeStats
         // tagged turn-in if the current run exceeds the prior best.
         public int IfImplementHighWaterMark { get; set; }
         public int HfMissionHighWaterMark { get; set; }
+
+        // Lifetime counters behind two milestones that advertise an exact number.
+        // FieldBoss is excluded from the boss count, matching the distinction
+        // TurnManager.FloorBossAlive already draws: wilderness elites are optional
+        // content and must not count toward "floor bosses".
+        public int FloorBossLastHits { get; set; }
+        public int WeaponUpgrades { get; set; }
     }
 
     // Load stats from disk. Returns empty stats if file missing or corrupt.

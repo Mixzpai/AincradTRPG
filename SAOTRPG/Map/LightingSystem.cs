@@ -34,6 +34,11 @@ public sealed class LightingSystem
     // Row-major (y*Width + x). Was [x, y], which strided by Height in all three hot loops:
     // the ambient refill, AddSource's merge, and the map tile loop's per-cell read. Row-major
     // makes each of them a contiguous walk and lets the refill go through Span.Fill.
+    //
+    // PATH-D-PORT: an RGB light field at ONE VALUE PER LOGICAL TILE, multiplied onto cells in
+    // ApplyLighting. A pixel renderer would naturally interpolate between tile centres, which is a
+    // different look, not a free upgrade — the hard tile edges are what make light read as
+    // roguelike illumination. Keep the layout row-major to match every other per-cell grid.
     private readonly LightRgb[] _light;
 
     // Emissive coords owned by GameMap.EmissiveTiles; we only cache per-type (color, radius).

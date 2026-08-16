@@ -50,6 +50,10 @@ public static class TileDefinitions
     private static readonly Color ReedsYellowGrn = new(120, 140, 70);
 
     // Ore vein palette. Mineable variants use a slight pulse/contrast shade.
+    //
+    // Iron and Mithril were both '◊' and told apart by hue alone — the one place on the map where
+    // an information channel had no second cue. Mithril is '◆' (filled) now, so the valuable vein
+    // reads without colour. Divine keeps its own '◈'/'◊' pulse.
     private static readonly Color OreIronFg          = new(170, 170, 180);
     private static readonly Color OreIronDepletedFg  = new(110, 110, 115);
     private static readonly Color OreMithrilFg       = new(190, 210, 255);
@@ -70,6 +74,11 @@ public static class TileDefinitions
     public static bool IsAnimated(TileType type) =>
         type is TileType.Lava or TileType.Campfire or TileType.OreVeinDivine;
 
+    // PATH-D-PORT: the authored appearance of every tile, and the boundary between a LOGICAL tile
+    // and a terminal cell. Two inputs a port must preserve: the position hash, which is what makes
+    // a field of grass look varied without storing per-cell data, and the wall-clock reads inside
+    // LavaVisual/CampfireVisual/the divine ore, whose step constants are deliberately slow because
+    // every phase turnover costs a terminal flush — a renderer without that cost can raise them.
     public static (char Glyph, Color Foreground, Color Background) GetVisual(TileType type, int x = 0, int y = 0)
     {
         int hash = (x * 374761393 + y * 668265263) & 0x7FFFFFFF;
@@ -89,6 +98,9 @@ public static class TileDefinitions
             TileType.TrapTeleport => ('.', RockGray, Color.Black),
             TileType.TrapPoison   => ('.', GrassDim, Color.Black),
             TileType.TrapAlarm    => ('.', RockGray, Color.Black),
+            TileType.TrapWeb      => ('.', GrassDim, Color.Black),
+            TileType.TrapMagnet   => ('.', RockGray, Color.Black),
+            TileType.TrapRune     => ('.', RockGray, Color.Black),
             TileType.Lava         => LavaVisual(hash),
             TileType.Campfire     => CampfireVisual(hash),
             TileType.Chest        => ('◈', GoldBright, Color.Black),
@@ -129,7 +141,7 @@ public static class TileDefinitions
             // Ore veins. Divine pulses warm via animation phase; others static.
             TileType.OreVeinIron            => ('◊', OreIronFg,         Color.Black),
             TileType.OreVeinIronDepleted    => ('·', OreIronDepletedFg, Color.Black),
-            TileType.OreVeinMithril         => ('◊', OreMithrilFg,      Color.Black),
+            TileType.OreVeinMithril         => ('◆', OreMithrilFg,      Color.Black),
             TileType.OreVeinMithrilDepleted => ('·', OreMithrilDepFg,   Color.Black),
             TileType.OreVeinDivine          => DivineVeinVisual(hash),
             TileType.OreVeinDivineDepleted  => ('·', OreDivineDepFg,    Color.Black),
@@ -289,9 +301,12 @@ public static class TileDefinitions
     // Divine vein pulses between '◈' (cool) and '◊' (warm).
     private static (char, Color, Color) DivineVeinVisual(int hash)
     {
+        // Glyph held constant at '◈' and the pulse carried by colour alone: it used to alternate
+        // to '◊', which is Iron's, so for half of every cycle a divine vein and an iron vein were
+        // the same glyph in different hues — a colour-only distinction on the most valuable tile
+        // on the map.
         int phase = ((int)(AnimClockMs / DivineStepMs) + hash) % 4;
-        char glyph = phase < 2 ? '◈' : '◊';
         Color c = phase % 2 == 0 ? OreDivineFg : new Color(255, 230, 130);
-        return (glyph, c, Color.Black);
+        return ('◈', c, Color.Black);
     }
 }

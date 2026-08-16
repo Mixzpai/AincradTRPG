@@ -78,7 +78,8 @@ public static class VictoryScreen
             Text = " Return to Title ",
             X = Pos.Center(), Y = buttonY,
             IsDefault = true,
-            SchemeName = ColorSchemes.ButtonName
+            SchemeName = ColorSchemes.ButtonName,
+            ShadowStyle = null
         };
         returnBtn.Accepting += (s, e) =>
         {
@@ -138,20 +139,22 @@ public static class VictoryScreen
             int par = TurnManager.GetFloorPar(100);
             int floorTurns = turnManager.FloorTurns;
             string parResult = floorTurns <= par ? "FAST" : "SLOW";
-            summary += $"  |  {"Final Pace:",-17}{parResult,5} ({floorTurns,3}/{par,3})│\n";
+            summary += SummaryFormatter.StatRow("Final Pace", $"{parResult} ({floorTurns}/{par})");
         }
 
         summary +=
-            "  |                                   |\n" +
-            SummaryFormatter.StatRow("Rating", grade);
+            SummaryFormatter.BlankRow() + SummaryFormatter.StatRow("Rating", grade);
+
+        // Same as the death card: the seed is what makes a clear repeatable, or shareable.
+        summary += SummaryFormatter.BlankRow()
+                 + SummaryFormatter.StatRow("Seed", RunRng.Seed.ToString());
 
         // Weapon proficiency (parity with DeathScreen)
         if (turnManager != null)
             summary += ProficiencyHelper.BuildBoxRows(turnManager);
 
         summary +=
-            "  |                                   |\n" +
-            "  +------------------------------------+";
+            SummaryFormatter.BlankRow() + SummaryFormatter.Border().TrimEnd(SummaryFormatter.RowBreak);
         return summary;
     }
 

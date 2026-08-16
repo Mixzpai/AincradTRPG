@@ -47,57 +47,62 @@ public class StatusTrayWidget : View
 
     // Pulls from all 7 sources, deduped by letter (first-wins).
     // Order: Debuffs (severity) → Buffs (soonest-expiring) → Cooldowns last.
+    // The tray letter (B, S, P, L …) is what carries the meaning; colour reinforces it. Routed
+    // through the theme's semantic roles so a theme switch reaches the tray, and so the four
+    // hues separate by luminance under Colourblind Safe.
+    private static ColorTheme T => ColorSchemes.Theme;
+
     private List<TrayEntry> CollectEntries()
     {
         var entries = new List<TrayEntry>();
 
         // ── 1) Combat debuffs ────────────────────────────────────────
         if (_tm.IsBleeding)
-            entries.Add(new('B', Color.BrightRed, 1, _tm.BleedTurnsLeft,
+            entries.Add(new('B', T.Crit, 1, _tm.BleedTurnsLeft,
                 TrayClass.Debuff, 10, "Bleed"));
         if (_tm.StunTurnsLeft > 0)
-            entries.Add(new('S', Color.BrightYellow, 1, _tm.StunTurnsLeft,
+            entries.Add(new('S', T.Warn, 1, _tm.StunTurnsLeft,
                 TrayClass.Debuff, 20, "Stun"));
         if (_tm.IsPoisoned)
-            entries.Add(new('P', Color.BrightGreen, 1, _tm.PoisonTurnsLeft,
+            entries.Add(new('P', T.Ok, 1, _tm.PoisonTurnsLeft,
                 TrayClass.Debuff, 40, "Poison"));
         if (_tm.SlowTurnsLeft > 0)
-            entries.Add(new('L', Color.Cyan, 1, _tm.SlowTurnsLeft,
+            entries.Add(new('L', T.Info, 1, _tm.SlowTurnsLeft,
                 TrayClass.Debuff, 50, "Slow"));
 
         // ── 2) Satiety tier (hunger side) ────────────────────────────
         if (_tm.Satiety <= 15)
-            entries.Add(new('H', Color.BrightRed, 1, 0,
+            entries.Add(new('H', T.Crit, 1, 0,
                 TrayClass.Debuff, 70, "Starving"));
         else if (_tm.Satiety < 30)
-            entries.Add(new('H', Color.Yellow, 1, 0,
+            entries.Add(new('H', T.Warn, 1, 0,
                 TrayClass.Debuff, 70, "Hungry"));
 
         // Fatigue / exhaustion — wait-to-rest debuffs read like slow-ticking hunger.
         if (_tm.RestCounter >= 250)
-            entries.Add(new('X', Color.BrightRed, 1, 0,
+            entries.Add(new('X', T.Crit, 1, 0,
                 TrayClass.Debuff, 75, "Exhausted"));
         else if (_tm.RestCounter >= 150)
-            entries.Add(new('X', Color.Yellow, 1, 0,
+            entries.Add(new('X', T.Warn, 1, 0,
                 TrayClass.Debuff, 76, "Fatigued"));
 
         // ── 3) Biome / weather debuffs ───────────────────────────────
         if (BiomeSystem.Current == BiomeType.Ice)
-            entries.Add(new('W', Color.BrightCyan, 1, 0,
+            entries.Add(new('W', T.Info, 1, 0,
                 TrayClass.Debuff, 80, "Cold"));
         else if (BiomeSystem.Current == BiomeType.Volcanic)
-            entries.Add(new('V', Color.BrightRed, 1, 0,
+            entries.Add(new('V', T.Crit, 1, 0,
                 TrayClass.Debuff, 81, "Heat"));
         else if (BiomeSystem.Current == BiomeType.Swamp)
-            entries.Add(new('G', Color.Green, 1, 0,
+            entries.Add(new('G', T.Ok, 1, 0,
                 TrayClass.Debuff, 82, "Toxic Fog"));
 
         // ── 4) Combat buffs ──────────────────────────────────────────
         if (_tm.ShrineBuffTurns > 0)
-            entries.Add(new('C', Color.BrightYellow, 1, _tm.ShrineBuffTurns,
+            entries.Add(new('C', T.Warn, 1, _tm.ShrineBuffTurns,
                 TrayClass.Buff, 100, "Shrine Blessing"));
         if (_tm.LevelUpBuffTurns > 0)
-            entries.Add(new('D', Color.BrightMagenta, 1, _tm.LevelUpBuffTurns,
+            entries.Add(new('D', T.Accent, 1, _tm.LevelUpBuffTurns,
                 TrayClass.Buff, 101, "Level Surge"));
         if (_tm.Satiety >= 80)
             entries.Add(new('F', new Color(255, 200, 60), 1, 0,
@@ -106,7 +111,7 @@ public class StatusTrayWidget : View
         // Passive regen tick buff (only when non-bleeding/poisoned).
         if (_tm.Satiety >= 30 && !_tm.IsPoisoned && !_tm.IsBleeding
             && _player.CurrentHealth < _player.MaxHealth)
-            entries.Add(new('R', Color.BrightGreen, 1, 0,
+            entries.Add(new('R', T.Ok, 1, 0,
                 TrayClass.Buff, 103, "Regen"));
 
         // ── 5) Permanent / gear buffs ────────────────────────────────
@@ -116,12 +121,12 @@ public class StatusTrayWidget : View
             as Items.Equipment.Weapon;
         if (mainWpn != null && offWpn != null
             && DualWieldPairs.IsCanonicalPair(mainWpn.DefinitionId, offWpn.DefinitionId))
-            entries.Add(new('E', Color.BrightMagenta, 1, 0,
+            entries.Add(new('E', T.Accent, 1, 0,
                 TrayClass.Buff, 104, "Pair Resonance"));
 
         // ── 6) Active sword-skill buff ───────────────────────────────
         if (_tm.IsCounterStance)
-            entries.Add(new('K', Color.BrightCyan, 1, 0,
+            entries.Add(new('K', T.Info, 1, 0,
                 TrayClass.Buff, 105, "Counter Stance"));
 
         // ── 7) Quickbar cooldown placeholder (infrastructure, dormant) ──

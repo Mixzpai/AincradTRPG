@@ -71,18 +71,18 @@ namespace SAOTRPG.Entities
                     AccessoryDefinitions.CreateScholarsPendant,
                     AccessoryDefinitions.CreateVitalityCharm,
                 };
-                ShopStock.Add(accPool[Random.Shared.Next(accPool.Length)]());
+                ShopStock.Add(accPool[RunRng.Next(accPool.Length)]());
             }
 
             // Floor-scaled equipment — 3-4 random weapons + 1-2 armor.
-            int weaponsAdded = 0, weaponTarget = 3 + Random.Shared.Next(0, 2);
+            int weaponsAdded = 0, weaponTarget = 3 + RunRng.Next(0, 2);
             for (int tries = 0; tries < 30 && weaponsAdded < weaponTarget; tries++)
             {
                 var item = LootGenerator.CreateRandomEquipment(floor);
                 if (item is Weapon w) { ShopStock.Add(w); weaponsAdded++; }
             }
 
-            int armorAdded = 0, armorTarget = 1 + Random.Shared.Next(0, 2);
+            int armorAdded = 0, armorTarget = 1 + RunRng.Next(0, 2);
             for (int tries = 0; tries < 30 && armorAdded < armorTarget; tries++)
             {
                 var item = LootGenerator.CreateRandomEquipment(floor);

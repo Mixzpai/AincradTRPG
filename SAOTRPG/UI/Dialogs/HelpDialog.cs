@@ -1,4 +1,5 @@
 using Terminal.Gui;
+using SAOTRPG.Systems.Input;
 using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
@@ -121,6 +122,102 @@ public static class HelpDialog
         ("named",     Color.BrightRed,    44, 24),
     };
 
+
+    // Which action each reference row describes. The row's DESCRIPTION is the key here, because
+    // that is the part of the line that does not change when a binding does.
+    private static readonly Dictionary<string, GameAction> RowActions = new()
+    {
+        ["Wait"]              = GameAction.Wait,
+        ["Sword Skill menu"]  = GameAction.OpenSwordSkills,
+        ["Counter stance"]    = GameAction.Counter,
+        ["Ranged fire (Bow)"] = GameAction.RangedFire,
+        ["Rest (3 turns)"]    = GameAction.Rest,
+        ["Auto-explore"]      = GameAction.AutoExplore,
+        ["Look mode"]         = GameAction.Look,
+        ["Pickup"]            = GameAction.Pickup,
+        ["Inventory"]         = GameAction.OpenInventory,
+        ["Equipment"]         = GameAction.OpenEquipment,
+        ["Stats / Levels"]    = GameAction.OpenStats,
+        ["Quest Log"]         = GameAction.OpenQuestLog,
+        ["Kill Stats"]        = GameAction.OpenKillStats,
+        ["Bestiary"]          = GameAction.OpenBestiary,
+        ["Help (this)"]       = GameAction.OpenHelp,
+        ["Player Guide"]      = GameAction.OpenPlayerGuide,
+        ["Legendary panel"]   = GameAction.OpenCollectables,
+        ["Save game"]         = GameAction.QuickSave,
+    };
+
+    // Rows whose key cell covers a RANGE of bindings rather than one.
+    private static readonly Dictionary<string, Func<string>> RowRanges = new()
+    {
+        ["Move"]                = () => Span(GameAction.MoveNorth) + " / " + Alt(GameAction.MoveNorth),
+        ["Diagonals"]           = () => Join(GameAction.MoveNorthWest, GameAction.MoveNorthEast,
+                                             GameAction.MoveSouthWest, GameAction.MoveSouthEast),
+        ["Skill slots 1-4"]     = () => Span(GameAction.SwordSkill1) + "-" + Span(GameAction.SwordSkill4),
+        ["Use quickbar slot"]   = () => Span(GameAction.QuickUse1) + "-" + Span(GameAction.QuickUse10),
+        ["Status tray verbose"] = () => Span(GameAction.ToggleStatusTray),
+        ["Log scroll"]          = () => Span(GameAction.LogScrollUp) + "/" + Span(GameAction.LogScrollDown),
+    };
+
+    private static string Span(GameAction a) => Keybinds.Get(a).Primary.ToString();
+
+    // The reference's key cells are narrow, so the long key names are abbreviated the way this
+    // table already wrote them by hand.
+    private static string Compact(string key) =>
+        key.Replace("PageUp", "PgUp").Replace("PageDown", "PgDn");
+
+    private static string Alt(GameAction a) => Keybinds.Get(a).Alternate.ToString();
+
+    private static string Join(params GameAction[] actions) =>
+        string.Concat(actions.Select(a => Keybinds.Get(a).Primary.ToString()));
+
+    // Rewrites each reference row's key cell with what is actually bound.
+    //
+    // Substituted IN PLACE, preserving every column: the glyph and status overlays below are
+    // positioned by hardcoded (column, row) coordinates against this text, so a row that changed
+    // length would silently drag them out of alignment. An over-long binding is clipped rather
+    // than allowed to push the layout.
+    private static string[] LiveKeys(string[] lines)
+    {
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string line = lines[i];
+
+            int firstChar = 0;
+            while (firstChar < line.Length && char.IsWhiteSpace(line[firstChar])) firstChar++;
+            if (firstChar >= line.Length || line[firstChar] == '[') continue;
+
+            int dotStart = line.IndexOf(" .", firstChar);
+            if (dotStart < 0) continue;
+
+            int afterDots = dotStart + 1;
+            while (afterDots < line.Length && line[afterDots] == '.') afterDots++;
+            if (afterDots >= line.Length || line[afterDots] != ' ') continue;
+
+            int descStart = afterDots + 1;
+            string description = line[descStart..].TrimEnd();
+            if (description.Length == 0) continue;
+
+            string? replacement =
+                RowRanges.TryGetValue(description, out Func<string>? range) ? range()
+                : RowActions.TryGetValue(description, out GameAction action) ? Span(action)
+                : null;
+            if (replacement is null) continue;
+
+            // The key cell runs from firstChar to descStart, dot leader included. The rebuilt cell
+            // has to be EXACTLY that wide: key + space + dots + space. Clipping to cell-3 leaves
+            // room for at least one dot, which is what the narrowest rows here already use.
+            int cell = descStart - firstChar;
+            replacement = Compact(replacement);
+            if (replacement.Length > cell - 3) replacement = replacement[..Math.Max(1, cell - 3)];
+            string leader = new('.', Math.Max(1, cell - replacement.Length - 2));
+
+            lines[i] = line[..firstChar] + replacement + " " + leader + " " + line[descStart..];
+        }
+
+        return lines;
+    }
+
     public static void Show()
     {
         var dialog = DialogHelper.Create("", DialogWidth, DialogHeight);
@@ -132,7 +229,7 @@ public static class HelpDialog
         // Render the Content as a stack of per-line Labels. Static read-only
         // reference — Labels give per-token color (TG v2 TextView shares one
         // Scheme across all its content, which is the wrong primitive here).
-        var lines = Content.Replace("\r\n", "\n").Split('\n');
+        var lines = LiveKeys(Content.Replace("\r\n", "\n").Split('\n'));
         for (int row = 0; row < lines.Length; row++)
         {
             string line = lines[row];
@@ -205,6 +302,8 @@ public static class HelpDialog
         }
 
         DialogHelper.AddCloseFooter(dialog);
+        DialogHelper.EnableKeyScroll(dialog);
+        DialogHelper.DiscloseClippedContent(dialog);
         DialogHelper.RunModal(dialog);
     }
 

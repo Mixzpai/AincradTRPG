@@ -56,7 +56,7 @@ public static class SimpleAI
             return MoveToward(monster, player, map);
 
         // Out of range — wander randomly (50% chance to idle)
-        if (Random.Shared.Next(2) == 0)
+        if (RunRng.Next(2) == 0)
             return (0, 0); // idle
 
         return Wander(monster, map);
@@ -162,7 +162,7 @@ public static class SimpleAI
     {
         for (int i = array.Length - 1; i > 0; i--)
         {
-            int j = Random.Shared.Next(i + 1);
+            int j = RunRng.Next(i + 1);
             (array[i], array[j]) = (array[j], array[i]);
         }
     }

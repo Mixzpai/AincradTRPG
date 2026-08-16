@@ -34,7 +34,7 @@ public static class StoryEvents
         events.Add(E10_RubyPalace());
     }
 
-    // F1 prologue: Kayaba's announcement (unskippable).
+    // F1 prologue: Kayaba's announcement.
     private static NarrativeEvent E01_KayabaReveal() => new(
         Id: "e01_kayaba_reveal",
         Trigger: StoryTrigger.GameStart,
@@ -42,7 +42,6 @@ public static class StoryEvents
         Build: _ => new CutsceneScript(
             EventId: "e01_kayaba_reveal",
             Title: "November 6, 2022",
-            Unskippable: true,
             Beats: new[]
             {
                 new CutsceneBeat(null, null, WorldEvent, Letterbox: true,
@@ -340,8 +339,7 @@ public static class StoryEvents
             return new CutsceneScript(
                 EventId: "e10_ruby_palace",
                 Title: "The Ruby Palace",
-                Unskippable: true,
-                Beats: beats.ToArray()
+                    Beats: beats.ToArray()
             );
         }
     );

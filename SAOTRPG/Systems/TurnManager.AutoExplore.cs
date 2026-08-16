@@ -36,14 +36,14 @@ public partial class TurnManager
             int d = Math.Max(Math.Abs(entity.X - _player.X), Math.Abs(entity.Y - _player.Y));
             if (d <= 6 && _map.IsVisible(entity.X, entity.Y))
             {
-                _log.Log(FlavorText.AutoExploreEnemyFlavors[Random.Shared.Next(FlavorText.AutoExploreEnemyFlavors.Length)]);
+                _log.Log(FlavorText.AutoExploreEnemyFlavors[RunRng.Next(FlavorText.AutoExploreEnemyFlavors.Length)]);
                 ClearExplorePath(); return false;
             }
         }
 
         if (_map.HasItemsAt(_player.X, _player.Y))
         {
-            _log.Log(FlavorText.AutoExploreItemFlavors[Random.Shared.Next(FlavorText.AutoExploreItemFlavors.Length)]);
+            _log.Log(FlavorText.AutoExploreItemFlavors[RunRng.Next(FlavorText.AutoExploreItemFlavors.Length)]);
             ClearExplorePath(); return false;
         }
 
@@ -57,13 +57,13 @@ public partial class TurnManager
             var target = FindBestExploreTarget();
             if (target.x == -1)
             {
-                _log.Log(FlavorText.AutoExploreDoneFlavors[Random.Shared.Next(FlavorText.AutoExploreDoneFlavors.Length)]);
+                _log.Log(FlavorText.AutoExploreDoneFlavors[RunRng.Next(FlavorText.AutoExploreDoneFlavors.Length)]);
                 ClearExplorePath(); return false;
             }
             var path = AStarPath(_player.X, _player.Y, target.x, target.y);
             if (path == null || path.Count == 0)
             {
-                _log.Log(FlavorText.AutoExploreDoneFlavors[Random.Shared.Next(FlavorText.AutoExploreDoneFlavors.Length)]);
+                _log.Log(FlavorText.AutoExploreDoneFlavors[RunRng.Next(FlavorText.AutoExploreDoneFlavors.Length)]);
                 ClearExplorePath(); return false;
             }
             _explorePath = path; _explorePathIndex = 0;
@@ -243,7 +243,7 @@ public partial class TurnManager
         if (_map.GetExplorationPercent() >= 100)
         {
             _floorFullyExplored = true;
-            _log.LogSystem(FlavorText.FloorCompleteMessages[Random.Shared.Next(FlavorText.FloorCompleteMessages.Length)]);
+            _log.LogSystem(FlavorText.FloorCompleteMessages[RunRng.Next(FlavorText.FloorCompleteMessages.Length)]);
         }
     }
 }

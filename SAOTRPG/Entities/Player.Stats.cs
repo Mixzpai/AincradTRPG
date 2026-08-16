@@ -62,18 +62,18 @@ namespace SAOTRPG.Entities
         public (int Damage, bool IsCrit) AttackMonster(Monster monster)
         {
             int damage = Attack;
-            bool isCrit = Random.Shared.Next(0, 100) < Math.Max(0, CriticalRate + WeatherSystem.GetCritModifier());
+            bool isCrit = RunRng.Next(0, 100) < Math.Max(0, CriticalRate + WeatherSystem.GetCritModifier());
             if (isCrit)
             {
                 damage += (int)CriticalHitDamage;
                 _log?.LogCombat(string.Format(
-                    CritFlavors[Random.Shared.Next(CritFlavors.Length)],
+                    CritFlavors[RunRng.Next(CritFlavors.Length)],
                     FirstName, monster.Name, damage));
             }
             else
             {
                 _log?.LogCombat(string.Format(
-                    AttackFlavors[Random.Shared.Next(AttackFlavors.Length)],
+                    AttackFlavors[RunRng.Next(AttackFlavors.Length)],
                     FirstName, monster.Name, damage));
             }
             return (damage, isCrit);
@@ -89,7 +89,7 @@ namespace SAOTRPG.Entities
             _log?.LogSystem("====================================");
             _log?.LogSystem($"  ** LEVEL UP! **  {FirstName} is now Level {Level}!");
             _log?.LogSystem($"  +5 Skill Points | HP fully restored");
-            _log?.LogSystem(LevelUpFlavors[Random.Shared.Next(LevelUpFlavors.Length)]);
+            _log?.LogSystem(LevelUpFlavors[RunRng.Next(LevelUpFlavors.Length)]);
             _log?.LogSystem("====================================");
             DebugLogger.LogState($"Player \"{FirstName}\" leveled up", $"LVL:{Level} HP:{CurrentHealth}/{MaxHealth} ATK:{Attack} DEF:{Defense} SP:{SkillPoints}");
         }

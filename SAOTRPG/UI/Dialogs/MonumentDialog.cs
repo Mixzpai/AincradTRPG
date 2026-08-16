@@ -3,6 +3,7 @@ using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Input;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -30,20 +31,46 @@ public static class MonumentDialog
         dialog.Add(flavorLabel);
 
         // ── Shared milestone tab view ────────────────────────────────
-        MilestoneTabbedView.Build(dialog, player, initialCategory: null);
+        // 11 rows reserved below: the kill-log header, its 6-row strip, and the shared
+        // detail/close block. The default 6 drew the list's last five rows under the strip.
+        MilestoneTabbedView.Build(dialog, player, initialCategory: null, bottomReserve: 11,
+            extraKeys: $"{Keybinds.Get(GameAction.MilestoneFocusKillLog).Primary}: kill log");
 
         // ── Kill log preview at the bottom (unique to Monument) ──────
         // The legacy Monument's species kill log lives here as a compact 6-row
         // strip beneath the milestone area. Full per-species detail still lives
         // on the Bestiary screen.
-        AddKillLogStrip(dialog);
+        ListView killList = AddKillLogStrip(dialog);
+
+        // The kill log is the second focusable list on a dialog that claims Tab for category
+        // cycling, so nothing moved focus onto it. Toggles between the two lists.
+        dialog.KeyDown += (s, e) =>
+        {
+            if (!Keybinds.IsPressed(GameAction.MilestoneFocusKillLog, e)) return;
+            var lists = new List<ListView>();
+            CollectLists(dialog, lists);
+            ListView? milestones = lists.Count > 0 ? lists[0] : null;
+            if (killList.HasFocus) milestones?.SetFocus();
+            else killList.SetFocus();
+            e.Handled = true;
+        };
 
         DialogHelper.AddCloseFooter(dialog);
         DialogHelper.RunModal(dialog);
     }
 
+    // Depth-first list of the dialog's ListViews, in add order: [0] milestones, [1] kill log.
+    private static void CollectLists(View v, List<ListView> into)
+    {
+        foreach (View c in v.SubViews)
+        {
+            if (c is ListView lv) into.Add(lv);
+            CollectLists(c, into);
+        }
+    }
+
     // 6-row scrolling strip showing top-killed species + 10/100/1000 checkmarks.
-    private static void AddKillLogStrip(Dialog dialog)
+    private static ListView AddKillLogStrip(Dialog dialog)
     {
         var header = new Label
         {
@@ -77,8 +104,16 @@ public static class MonumentDialog
             X = 1, Y = Pos.AnchorEnd(10), Width = Dim.Fill(2), Height = 6,
             SchemeName = ColorSchemes.ListSelectionName,
             CanFocus = true,
+            // Type-ahead off — it consumes a printable rune before KeyDown is raised, which ate
+            // the dialog-level 1-9/0 tab jumps whenever focus sat on this list.
+            KeystrokeNavigator = null,
         };
         killList.SetSource(new ObservableCollection<string>(lines));
+        // A read-only strip, but it is still a focus stop, so Enter reaches it — and an
+        // unclaimed Command.Accept bubbles to the dialog's default button, which is Close.
+        killList.Accepting += (s, e) => e.Handled = true;
         dialog.Add(killList);
+        DialogHelper.SelectFirstRow(killList);
+        return killList;
     }
 }

@@ -63,6 +63,13 @@ public partial class MapView
     // Two-phase canon-aligned monster death burst:
     //   Phase 1 (0..flashMs)   — fracture flash: blue-white core + dense braille around silhouette
     //   Phase 2 (flashMs..end) — spread/fade: shards burst outward, density falls with radius
+    //
+    // PATH-D-PORT: the signature kill effect, and the one place sub-cell resolution is used —
+    // braille dot masks paint 2x4 subpixels inside one terminal cell, so a renderer with real
+    // pixels should draw the shatter directly rather than porting the dot encoding. Two contracts
+    // must survive whatever replaces it: SAO shatters into LIGHT, never blood (the palette is
+    // blue-white -> cyan -> dark grey), and shard positions are POLAR, derived from
+    // elapsed-since-flash x speed, so the burst reads as an outward spray rather than a fade.
     private void RenderMonsterDeathBursts(int w, int h, int dtMs)
     {
         if (_deathBursts.Count == 0) return;

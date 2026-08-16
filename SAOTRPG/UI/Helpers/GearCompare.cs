@@ -9,11 +9,6 @@ namespace SAOTRPG.UI.Helpers;
 // changed row; zero-deltas omitted; type-mismatch → banner only. Inline color markers.
 public static class GearCompare
 {
-    // Inline markers for future richer renderers; current callers use plain text.
-    // Kept ASCII-simple so log lines stay readable.
-    private const string GainTag = "";
-    private const string LossTag = "";
-
     // Builds a multi-line diff block suitable for a detail panel.
     // `equipped` may be null → all new stats show as gains.
     public static string BuildDiff(BaseItem? selected, BaseItem? equipped)

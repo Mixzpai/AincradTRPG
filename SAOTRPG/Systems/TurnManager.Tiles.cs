@@ -50,10 +50,10 @@ public partial class TurnManager
         {
             _player.CurrentHealth += heal;
             _log.Log($"The campfire's warmth restores {heal} HP.");
-            _log.Log(FlavorText.CampfireQuotes[Random.Shared.Next(FlavorText.CampfireQuotes.Length)]);
+            _log.Log(FlavorText.CampfireQuotes[RunRng.Next(FlavorText.CampfireQuotes.Length)]);
         }
         else if (!hadStatus)
-            _log.Log(FlavorText.CampfireFullHpFlavors[Random.Shared.Next(FlavorText.CampfireFullHpFlavors.Length)]);
+            _log.Log(FlavorText.CampfireFullHpFlavors[RunRng.Next(FlavorText.CampfireFullHpFlavors.Length)]);
         _restCounter = 0;
         _fatiguedWarned = false;
         _exhaustedWarned = false;
@@ -119,12 +119,12 @@ public partial class TurnManager
         {
             int tier = Math.Clamp(CurrentFloor - 1, 0, 4);
             var mobNames = MobFactory.GetFloorMobNames(tier);
-            _bountyTarget = mobNames[Random.Shared.Next(mobNames.Length)];
+            _bountyTarget = mobNames[RunRng.Next(mobNames.Length)];
             _bountyKillsNeeded = Math.Min(5, 2 + CurrentFloor / 3);
             _bountyKillsCurrent = 0;
             _bountyRewardCol = 100 + CurrentFloor * 50;
             _bountyRewardXp = 50 + CurrentFloor * 25;
-            _log.LogSystem(FlavorText.BountyAcceptFlavors[Random.Shared.Next(FlavorText.BountyAcceptFlavors.Length)]);
+            _log.LogSystem(FlavorText.BountyAcceptFlavors[RunRng.Next(FlavorText.BountyAcceptFlavors.Length)]);
             _log.LogSystem($"  BOUNTY: Slay {_bountyKillsNeeded} {_bountyTarget}!");
             _log.LogSystem($"  Reward: {_bountyRewardCol} Col + {_bountyRewardXp} XP");
         }
@@ -138,7 +138,7 @@ public partial class TurnManager
         if (_player.IsDefeated)
         {
             LastKillerName = "lava";
-            _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+            _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
             RaisePlayerDied("lava");
             return true;
         }
@@ -147,7 +147,7 @@ public partial class TurnManager
 
     private void HandleLoreStone(Tile tile, int tx, int ty)
     {
-        int loreIdx = Random.Shared.Next(FlavorText.LoreStoneEntries.Length);
+        int loreIdx = RunRng.Next(FlavorText.LoreStoneEntries.Length);
         string lore = FlavorText.LoreStoneEntries[loreIdx];
         _discoveredLore.Add(loreIdx);
         int loreXp = 5 * CurrentFloor;
@@ -168,7 +168,7 @@ public partial class TurnManager
         if (_player.IsDefeated)
         {
             LastKillerName = "corrupted ground";
-            _log.LogSystem(FlavorText.DeathFlavors[Random.Shared.Next(FlavorText.DeathFlavors.Length)]);
+            _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
             RaisePlayerDied("corrupted_ground");
             return true;
         }
@@ -193,7 +193,7 @@ public partial class TurnManager
 
     private void HandleJournal(Tile tile, int tx, int ty)
     {
-        string entry = JournalEntries[Random.Shared.Next(JournalEntries.Length)];
+        string entry = JournalEntries[RunRng.Next(JournalEntries.Length)];
         _log.Log("You find a weathered journal on the ground...");
         _log.Log($"  \"{entry}\"");
         int xpReward = 3 * CurrentFloor;
@@ -220,7 +220,7 @@ public partial class TurnManager
             return;
         }
 
-        var (pickedSlot, pickedItem) = equipped[Random.Shared.Next(equipped.Count)];
+        var (pickedSlot, pickedItem) = equipped[RunRng.Next(equipped.Count)];
         // Add +2 to a random core stat
         (string label, StatType statType)[] stats =
         {
@@ -228,7 +228,7 @@ public partial class TurnManager
             ("DEF", StatType.Defense),
             ("SPD", StatType.Speed),
         };
-        var (statLabel, chosen) = stats[Random.Shared.Next(stats.Length)];
+        var (statLabel, chosen) = stats[RunRng.Next(stats.Length)];
         // Add to the item's bonuses so unequip/re-equip keeps the enchant
         pickedItem.Bonuses.Add(chosen, 2);
         // Also apply immediately since the item is already equipped
@@ -316,7 +316,7 @@ public partial class TurnManager
     private void HandleMud(Tile tile)
     {
         if (_slowTurnsLeft >= 2) return;
-        _slowTurnsLeft = Math.Max(_slowTurnsLeft, 1 + Random.Shared.Next(2));
+        _slowTurnsLeft = Math.Max(_slowTurnsLeft, 1 + RunRng.Next(2));
         _log.LogCombat("The mud sucks at your boots — you slow down.");
     }
 
@@ -325,7 +325,7 @@ public partial class TurnManager
     private void HandleBogWater(Tile tile)
     {
         if (_poisonTurnsLeft > 0) return;
-        _poisonTurnsLeft = 2 + Random.Shared.Next(2);
+        _poisonTurnsLeft = 2 + RunRng.Next(2);
         _poisonDamagePerTick = 1 + CurrentFloor / 2;
         _log.LogCombat($"The fetid bogwater seeps into your cuts. ({_poisonDamagePerTick} dmg/turn for {_poisonTurnsLeft} turns)");
     }
@@ -335,12 +335,12 @@ public partial class TurnManager
     private void HandleCrackedIce(Tile tile)
     {
         if (_stunTurnsLeft > 0) return;
-        if (Random.Shared.Next(100) < 25)
+        if (RunRng.Next(100) < 25)
         {
             _stunTurnsLeft = 1;
             _log.LogCombat("The cracked ice gives way — you slip and lose your footing!");
         }
-        else if (Random.Shared.Next(4) == 0)
+        else if (RunRng.Next(4) == 0)
             _log.Log("The ice groans underfoot.");
     }
 }

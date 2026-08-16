@@ -4,6 +4,12 @@ namespace SAOTRPG.Systems;
 // Non-canon → GenerateGenericBlurb (LootTag + floor band).
 public static class BestiaryFlavor
 {
+    // ByMobName is keyed by the name an entity actually spawns under, and a key that matches
+    // nothing is authored text the player never sees. Eleven late-floor blurbs were keyed to
+    // Hollow Fragment's boss names while BossFactory.BossRoster uses this game's own; ten were
+    // re-keyed off the floor each blurb states about itself, and the remainder are listed in
+    // Tools/ContentProbe with the reason each cannot be mapped. Lookup only strips prefixes,
+    // so a key that is not a real spawn name is unreachable — there is no fuzzy fallback.
     // Strip Elite/Champion/affix prefixes to hit canonical key; matches MobFactory naming.
     public static string Lookup(string name, string? lootTag = null,
         int minFloor = 1, int maxFloor = 100)
@@ -338,51 +344,61 @@ public static class BestiaryFlavor
             "Every mob on the floor gains Bleed-inflicting attacks while this " +
             "boss lives; clear order matters more than damage output.",
 
-        ["The Ruler of Blade"] =
-            "The Floor 90 boss. An armored swordmaster; every weapon skill it " +
+        ["Colossus of Aincrad"] =
+            "The Floor 90 boss. (HF canon: \"The Ruler of Blade\".) An armored swordmaster; every " +
+            "weapon skill it " +
             "uses corresponds to a known player-class unlock. Blade-mirror " +
             "mechanics: it learns the player's sword skills over the course " +
             "of the fight.",
 
-        ["The Absolute Gazer"] =
-            "The Floor 91 boss. A massive eye-and-tendril aberration that " +
+        ["Seraphiel the Fallen"] =
+            "The Floor 91 boss. (HF canon: \"The Absolute Gazer\".) A massive eye-and-tendril " +
+            "aberration that " +
             "pierces through terrain. There is no 'line of sight' cover on " +
             "this floor — only distance.",
 
-        ["The Chaos Dragon"] =
-            "The Floor 92 boss. A multi-headed dragon whose elemental damage " +
+        ["Apollyon the World-Ender"] =
+            "The Floor 92 boss. (HF canon: \"The Chaos Dragon\".) A multi-headed dragon whose " +
+            "elemental damage " +
             "type rotates every phase. Dragon-slayer consumables are canonically " +
             "stocked for this fight.",
 
-        ["The Lava Creeper"] =
-            "The Floor 93 boss. A magma-serpent that tunnels beneath the arena, " +
+        ["Ragnarok the Final Beast"] =
+            "The Floor 93 boss. (HF canon: \"The Lava Creeper\".) A magma-serpent that tunnels " +
+            "beneath the arena, " +
             "surfacing as molten columns that become permanent hazards.",
 
-        ["The Knight of Blazing"] =
-            "The Floor 94 boss. A fire-clad paladin wielding a flamberge. " +
+        ["Immortal Phoenix"] =
+            "The Floor 94 boss. (HF canon: \"The Knight of Blazing\".) A fire-clad paladin " +
+            "wielding a flamberge. " +
             "Immolation aura deals tick damage to anyone within 2 tiles; " +
             "reach weapons dominate.",
 
-        ["The Genocide Eyes"] =
-            "The Floor 95 boss. Rumored to have killed every raid group that " +
+        ["Abyss Walker"] =
+            "The Floor 95 boss. (HF canon: \"The Genocide Eyes\".) Rumored to have killed every " +
+            "raid group that " +
             "attempted it in the first HF clear week. Death-gaze range increases " +
             "each phase.",
 
-        ["The Slaughter Fang"] =
-            "The Floor 96 boss. Alpha of the bleeding pack, upgraded from F89. " +
+        ["Herald of the Ruby Palace"] =
+            "The Floor 96 boss. (HF canon: \"The Slaughter Fang\".) Alpha of the bleeding pack, " +
+            "upgraded from F89. " +
             "Same aura; this version stacks bleeds rather than refreshing them.",
 
-        ["The Emperor of Death"] =
-            "The Floor 97 boss. A reaper-emperor whose scythe-reach matches the " +
+        ["Cardinal the System Error"] =
+            "The Floor 97 boss. (HF canon: \"The Emperor of Death\".) A reaper-emperor whose " +
+            "scythe-reach matches the " +
             "entire raid floor diagonal. Positioning is the whole fight.",
 
-        ["The Kaiser Dragon"] =
-            "The Floor 98 boss. The culmination of HF's dragon line. Canon kill " +
+        ["Incarnation of the Radius"] =
+            "The Floor 98 boss. (HF canon: \"The Kaiser Dragon\".) The culmination of HF's dragon " +
+            "line. Canon kill " +
             "required the full clearing group of the HF endgame, plus every " +
             "dragon-slayer consumable the merchant tree can cook.",
 
-        ["The Ruler of Deities"] =
-            "The Floor 99 boss. Flanked by four sub-bosses that must be cleared " +
+        ["Heathcliff's Shadow"] =
+            "The Floor 99 boss. (HF canon: \"The Ruler of Deities\".) Flanked by four sub-bosses " +
+            "that must be cleared " +
             "in a specific order or the Ruler's phase-shift triggers an arena-" +
             "wide wipe.",
 

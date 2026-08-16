@@ -202,7 +202,7 @@ public static class MilestoneRegistry
         new("life_running_50", "Running — Expert", "+10 Speed",
             "Life Skills", null, TriggerType.LifeSkillLevel, "Running", 50,
             RewardType.AutoPassive, 0, null, 0, null, false),
-        new("life_running_99", "Running — Master", "+20 Speed, -30% sprint cost",
+        new("life_running_99", "Running — Master", "+20 Speed",
             "Life Skills", null, TriggerType.LifeSkillLevel, "Running", 99,
             RewardType.AutoPassive, 0, null, 0, null, false),
 
@@ -340,7 +340,7 @@ public static class MilestoneRegistry
             RewardType.Col, 4000, null, 0, null, true),
         new("if_last_attack_beta_tester", "Last-Attack Beta Tester",
             "Land the killing blow on 25 floor bosses.",
-            "Combat", null, TriggerType.KillCountByTag, "last_attack_boss", 25,
+            "Combat", null, TriggerType.Conditional, "floor_boss_last_hits", 25,
             RewardType.EquippableTitle, 0, StatType.Attack, 5, "boss", true),
         new("if_no_ally_death", "The Shepherd",
             "Reached F100 without any party member falling.",
@@ -351,7 +351,7 @@ public static class MilestoneRegistry
             RewardType.Col, 5000, null, 0, null, false),
         new("if_lisbeth_customer", "Lisbeth's Best Customer",
             "Successfully upgrade weapons 200 times.",
-            "Equipment", null, TriggerType.KillCountByTag, "weapon_upgrades", 200,
+            "Equipment", null, TriggerType.Conditional, "weapon_upgrades", 200,
             RewardType.Col, 2500, null, 0, null, false),
 
         // ────────────────────────────────────────────────────────────────
@@ -505,11 +505,11 @@ public static class MilestoneRegistry
 
         // Karma threshold milestones.
         new("karma_saint", "Saint",
-            "Reached Honorable karma (+50). +5% prices in friendly towns.",
+            "Reached Honorable karma (+50). Shops charge 10% less. +3 Vitality.",
             "Karma", null, TriggerType.KarmaThreshold, "ge", 50,
             RewardType.EquippableTitle, 0, StatType.Vitality, 3, null, false),
         new("karma_outlaw", "Outlaw",
-            "Fell to Outlaw karma (-50). +10% drop chance from all kills.",
+            "Fell to Outlaw karma (-50). Shops refuse service. +4 Attack.",
             "Karma", null, TriggerType.KarmaThreshold, "le", -50,
             RewardType.EquippableTitle, 0, StatType.Attack, 4, null, false),
         new("karma_atonement", "Atonement",
@@ -519,7 +519,7 @@ public static class MilestoneRegistry
         new("karma_town_guard_kill", "Criminal",
             "Killed a Town of Beginnings Guard.",
             "Karma", null, TriggerType.Conditional, "town_guard_killed", 1,
-            RewardType.Col, 0, null, 0, null, false),
+            RewardType.DisplayOnly, 0, null, 0, null, false),
 
         // Quest completions — major canon storylines.
         new("quest_mothers_rosario", "Mother's Rosario",

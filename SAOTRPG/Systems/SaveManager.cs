@@ -18,13 +18,30 @@ public static class SaveManager
     private static readonly string SaveDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AincradTRPG");
 
+    // The save file stays indented on purpose: it is read by hand when diagnosing a run, and
+    // measured against the largest real player-data file compacting buys only ~28% (14 KB -> 10 KB),
+    // which does not pay for losing that.
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    // A procedural item's blob is embedded in the save AS AN ESCAPED STRING, so its indentation
+    // lands as literal \n and \" clutter on one line — it costs ~29% per item and makes the
+    // surrounding file harder to read, not easier. Whitespace-only, so older saves still parse.
+    private static readonly JsonSerializerOptions NestedJsonOpts = new()
+    {
+        WriteIndented = false,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     private static string SlotPath(int slot) => Path.Combine(SaveDir, $"save_{slot}.json");
+
+    // Read-only seam for Tools/ProgressProbe, which verifies that every SaveData property
+    // survives the real JSON layer. It has to read the file the game actually wrote, and
+    // duplicating the path expression in the probe would let the two drift apart.
+    public static string SaveSlotPath(int slot) => SlotPath(slot);
 
     public static bool SaveExists(int slot) => File.Exists(SlotPath(slot));
 
@@ -143,6 +160,7 @@ public static class SaveManager
         Satiety = tm.Satiety, KillStreak = tm.KillStreak,
         WeaponKills = new Dictionary<string, int>(tm.WeaponKills),
         WeaponProficiencyForks = tm.SnapshotForkChoices(),
+        PendingTalents = tm.SnapshotPendingTalents(),
         RestCounter = tm.RestCounter,
         BountyTarget = tm.BountyTarget, BountyKillsNeeded = tm.BountyKillsNeeded,
         BountyKillsCurrent = tm.BountyKillsCurrent, BountyRewardCol = tm.BountyRewardCol,
@@ -313,7 +331,7 @@ public static class SaveManager
                 break;
         }
 
-        return JsonSerializer.Serialize(dict, JsonOpts);
+        return JsonSerializer.Serialize(dict, NestedJsonOpts);
     }
 
     private static List<Dictionary<string, object>> SerializeBonuses(StatModifierCollection bonuses)

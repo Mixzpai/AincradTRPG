@@ -189,7 +189,38 @@ public static class EquipmentDialog
             int val = inv.GetTotalEquipmentBonus(type);
             if (val != 0) parts.Add($"{label} +{val}");
         }
-        return parts.Count > 0 ? $"Gear: {string.Join("  ", parts)}" : "Gear: (none)";
+        string line = parts.Count > 0 ? $"Gear: {string.Join("  ", parts)}" : "Gear: (none)";
+
+        // The set bonus is already inside those totals — it folds into GetTotalEquipmentBonus —
+        // so without this line the player would see the number move and never learn why. Naming
+        // the set and the piece count is also what makes chasing the third piece legible.
+        string sets = BuildSetSummary(player);
+        return sets.Length == 0 ? line : line + "\n" + sets;
+    }
+
+    // Active armour sets, with the near-misses called out so a two-of-three reads as progress
+    // rather than as nothing. Returns "" when no set has two pieces worn.
+    internal static string BuildSetSummary(Player player)
+    {
+        var live = new List<SAOTRPG.Items.Equipment.EquipmentBase>();
+        foreach (EquipmentSlot slot in Enum.GetValues<EquipmentSlot>())
+        {
+            var eq = player.Inventory.GetEquipped(slot);
+            if (eq != null && eq.ItemDurability > 0) live.Add(eq);
+        }
+
+        var active = Systems.EquipmentSets.ActiveSets(live);
+        if (active.Count == 0) return "";
+
+        var parts = new List<string>();
+        foreach (var (set, worn) in active)
+        {
+            int total = set.MemberDefIds.Length;
+            parts.Add(worn >= total
+                ? $"{set.Name} ({worn}/{total}) FULL"
+                : $"{set.Name} ({worn}/{total})");
+        }
+        return "Set: " + string.Join("  ", parts);
     }
 
     // Finds the lowest-durability equipped item and formats a warning.

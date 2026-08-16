@@ -1,5 +1,6 @@
 using Terminal.Gui;
 using SAOTRPG.Entities;
+using SAOTRPG.Systems;
 
 namespace SAOTRPG.Map;
 
@@ -7,7 +8,8 @@ namespace SAOTRPG.Map;
 // Variants: 10% Elite (1.5x stats), 3% Champion (2x stats).
 public static class MobFactory
 {
-    // LootTag → themed drops in TurnManager.GetMobLoot(). Poison/Bleed etc. for status-inflicters.
+    // LootTag → themed drops via LootGenerator.MobLootTable, consumed in TurnManager.Loot.
+    // Poison/Bleed etc. for status-inflicters.
     private record MobTemplate(string Name, char Symbol, Color Color, int Aggro,
         bool Poison = false, bool Bleed = false, bool Stun = false, bool Slow = false,
         string LootTag = "generic", int Range = 1, string? Ability = null,
@@ -174,11 +176,6 @@ public static class MobFactory
         return null;
     }
 
-    // Legacy 3-arg overload — delegates to RNG-threaded version using Random.Shared
-    // so external callers (bounty system etc.) without ctx.Rng still work.
-    public static Mob? CreateByKey(string key, int floor, int statScale = 100)
-        => CreateByKey(key, floor, statScale, Random.Shared);
-
     // "Frenzy Boar" → "frenzy_boar". Lowercase + non-alphanumeric collapsed to '_'.
     private static string SlugifyName(string name)
     {
@@ -225,12 +222,15 @@ public static class MobFactory
     }
 
     // Picks a random tier template, applies stat scaling, rolls Elite/Champion variant.
-    public static Mob CreateFloorMob(int floor, int statScale = 100)
+    // The stream is explicit because the caller decides it: worldgen passes the derived per-floor
+    // stream so a floor's roster is a pure function of (seed, floor), while a mid-run spawn passes
+    // RunRng.Stream because it happens at a point the player's own choices determined.
+    public static Mob CreateFloorMob(int floor, int statScale, Random rng)
     {
         int tier = FloorToTier(Math.Max(1, floor));
         var templates = FloorMobs[tier];
-        var template = templates[Random.Shared.Next(templates.Length)];
-        int level = Math.Max(1, floor + Random.Shared.Next(-1, 3));
+        var template = templates[rng.Next(templates.Length)];
+        int level = Math.Max(1, floor + rng.Next(-1, 3));
 
         int Scale(int val) => Math.Max(1, val * statScale / 100);
 
@@ -249,7 +249,7 @@ public static class MobFactory
             Dexterity = 1,
             Agility = 1 + floor,
             Intelligence = 1,
-            MaxHealth = Scale(15 + (floor * 10) + Random.Shared.Next(0, 10)),
+            MaxHealth = Scale(15 + (floor * 10) + rng.Next(0, 10)),
             ExperienceYield = 20 + (floor * 15),
             ColYield = 5 + (floor * 10)
         };
@@ -264,7 +264,7 @@ public static class MobFactory
         mob.CanSwim = template.Swim;
 
         // Variant: 10% Elite (1.5x stats/2x reward), 3% Champion (2x stats/3x reward).
-        int variantRoll = Random.Shared.Next(100);
+        int variantRoll = rng.Next(100);
         if (variantRoll < 3)
         {
             mob.Variant = "Champion";
@@ -292,15 +292,15 @@ public static class MobFactory
 
         // Affix roll for elite/champion mobs — random combat modifiers
         if (mob.Variant is "Elite" or "Champion")
-            ApplyAffix(mob, mob.Variant == "Champion" ? 2 : 1);
+            ApplyAffix(mob, mob.Variant == "Champion" ? 2 : 1, rng);
 
         mob.CurrentHealth = mob.MaxHealth;
-        mob.Id = Random.Shared.Next(20000, 99999);
+        mob.Id = rng.Next(20000, 99999);
         return mob;
     }
 
     // Town Guard — F1 TOB plaza patrol at karma <= -50. Direct-placed by PopulateTownOfBeginnings; mid-tier Lv20.
-    public static Mob CreateTownGuard()
+    public static Mob CreateTownGuard(Random rng)
     {
         var guard = new Mob
         {
@@ -322,7 +322,7 @@ public static class MobFactory
         };
         guard.SetAppearance('G', Color.BrightBlue);
         guard.CurrentHealth = guard.MaxHealth;
-        guard.Id = Random.Shared.Next(20000, 99999);
+        guard.Id = rng.Next(20000, 99999);
         return guard;
     }
 
@@ -334,14 +334,14 @@ public static class MobFactory
         "Cardinal-Marked", "Immortal-Marked",
     };
 
-    private static void ApplyAffix(Mob mob, int count)
+    private static void ApplyAffix(Mob mob, int count, Random rng)
     {
         var available = new List<string>(AffixPool);
         var applied = new List<string>();
 
         for (int i = 0; i < count && available.Count > 0; i++)
         {
-            int idx = Random.Shared.Next(available.Count);
+            int idx = rng.Next(available.Count);
             string affix = available[idx];
             available.RemoveAt(idx);
             applied.Add(affix);

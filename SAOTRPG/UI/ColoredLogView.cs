@@ -35,14 +35,17 @@ public class ColoredLogView : View
     private int _wrappedCacheWidth;
 
     // ── Category → fallback color (keyword rules in LogColorRules.cs) ──
-    private static readonly Dictionary<LogCategory, Color> CategoryColors = new()
+    // A method, not a cached dictionary: a static readonly map captures whatever theme was
+    // active at type-init and would then never follow a switch.
+    private static Color CategoryColor(LogCategory category) => category switch
     {
-        { LogCategory.Combat,  Color.BrightRed },
-        { LogCategory.System,  Color.BrightCyan },
-        { LogCategory.Item,    Color.BrightYellow },
-        { LogCategory.Dialog,  Color.White },
-        { LogCategory.General, Color.Gray },
+        LogCategory.Combat => ColorSchemes.Theme.Crit,
+        LogCategory.System => ColorSchemes.Theme.Info,
+        LogCategory.Item   => ColorSchemes.Theme.Warn,
+        LogCategory.Dialog => ColorSchemes.Theme.Emph,
+        _                  => ColorSchemes.Theme.Body,
     };
+
 
     // Tab-cycle order: null (All) → Combat → System → Item → Dialog → back to null.
     private static readonly LogCategory?[] TabCycle =
@@ -316,7 +319,7 @@ public class ColoredLogView : View
     }
 
     // ── Color resolution ── LogColorRules keyword (first match, case-insensitive),
-    // then reward pattern ("+X EXP"/"+X Col" → BrightYellow), then CategoryColors fallback.
+    // then reward pattern ("+X EXP"/"+X Col" → BrightYellow), then CategoryColor fallback.
     private static Color ResolveColor(string text, LogCategory category)
     {
         foreach (var (keyword, color) in LogColorRules.Rules)
@@ -326,7 +329,7 @@ public class ColoredLogView : View
         }
         if (text.Contains('+') && (text.Contains("EXP") || text.Contains("Col")))
             return Color.BrightYellow;
-        return CategoryColors.GetValueOrDefault(category, Color.White);
+        return CategoryColor(category);
     }
 
     // ── Scroll input ── Tab cycles filter; Up/Down/PgUp/PgDn scroll.

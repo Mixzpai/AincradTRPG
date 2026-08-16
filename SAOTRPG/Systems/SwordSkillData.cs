@@ -410,6 +410,132 @@ public static class SwordSkillDatabase
             1, 6.0, 10, 2, 500, SkillType.Power,
             "Channel all strength into a single devastating straight punch."),
 
+        // SCIMITAR — curved slashes, bleed affinity (invented; no canon curved-blade OSS names).
+        // Sits between Dagger and One-Handed Sword: quicker than OHS, less raw power than Axe,
+        // and the only line where bleed is the through-thread rather than an occasional proc.
+        new("sci_crescent", "Crescent", "Scimitar",
+            1, 1.25, 0, 0, 0, SkillType.Power,
+            "A shallow curved draw-cut that opens the guard."),
+
+        new("sci_reaving_arc", "Reaving Arc", "Scimitar",
+            1, 1.35, 0, 0, 0, SkillType.Power,
+            "A wide sweeping arc that follows the blade's natural curve."),
+
+        new("sci_bleeding_edge", "Bleeding Edge", "Scimitar",
+            1, 1.5, 2, 0, 10, SkillType.Power,
+            "A drawing slash angled to open a wound rather than close it.",
+            1, 0.35, "Bleed"),
+
+        new("sci_sand_dancer", "Sand Dancer", "Scimitar",
+            2, 1.7, 2, 0, 25, SkillType.Rush,
+            "Close the gap on light feet and cut twice on the turn.", 2),
+
+        new("sci_carmine_spiral", "Carmine Spiral", "Scimitar",
+            3, 2.1, 3, 1, 50, SkillType.Combo,
+            "Three rising curved cuts that corkscrew around the target.",
+            1, 0.30, "Bleed"),
+
+        new("sci_moonlit_reave", "Moonlit Reave", "Scimitar",
+            1, 2.2, 4, 1, 75, SkillType.Counter,
+            "Give ground, then answer with a single crescent counter-cut."),
+
+        new("sci_scarlet_gale", "Scarlet Gale", "Scimitar",
+            4, 2.6, 4, 1, 100, SkillType.AoE,
+            "A spinning four-quarter sweep that catches everything adjacent.",
+            1, 0.25, "Bleed"),
+
+        new("sci_serpents_waltz", "Serpent's Waltz", "Scimitar",
+            5, 3.2, 6, 2, 200, SkillType.Combo,
+            "Five flowing cuts, each opening the line for the next.",
+            1, 0.40, "Bleed"),
+
+        new("sci_crimson_eclipse", "Crimson Eclipse", "Scimitar",
+            7, 4.2, 8, 2, 500, SkillType.Combo,
+            "Seven curved slashes drawn so fast the arcs hang in the air.",
+            1, 0.50, "Bleed"),
+
+        // CLAWS — dual-fist flurry, the fastest ordinary weapon (invented; no canon claw OSS).
+        // Highest hit counts outside the Dual Blades unique skill, lowest per-hit multipliers,
+        // and the shortest cooldowns in the game.
+        new("clw_rending_swipe", "Rending Swipe", "Claws",
+            1, 1.2, 0, 0, 0, SkillType.Power,
+            "A single raking swipe across the target's guard."),
+
+        new("clw_twin_jab", "Twin Jab", "Claws",
+            2, 1.3, 0, 0, 0, SkillType.Combo,
+            "Left, then right — two short punches inside the enemy's reach."),
+
+        new("clw_flurry", "Flurry", "Claws",
+            3, 1.6, 1, 0, 10, SkillType.Combo,
+            "Three rapid alternating strikes with almost no recovery."),
+
+        new("clw_pouncing_fang", "Pouncing Fang", "Claws",
+            1, 1.5, 2, 0, 25, SkillType.Rush,
+            "Spring forward and bury both claws on landing.", 2),
+
+        new("clw_tiger_rush", "Tiger Rush", "Claws",
+            4, 2.0, 2, 0, 50, SkillType.Combo,
+            "Four driving strikes that walk the target backwards."),
+
+        new("clw_gale_talon", "Gale Talon", "Claws",
+            5, 2.4, 3, 1, 75, SkillType.Combo,
+            "Five slashing arcs delivered faster than the eye follows.",
+            1, 0.25, "Bleed"),
+
+        new("clw_savage_crescendo", "Savage Crescendo", "Claws",
+            6, 2.8, 4, 1, 100, SkillType.AoE,
+            "A whirling six-strike spin that batters everything in reach.",
+            1, 0.20, "Stun"),
+
+        new("clw_hundred_fangs", "Hundred Fangs", "Claws",
+            9, 3.6, 5, 1, 200, SkillType.Combo,
+            "Nine strikes so quick they land as one continuous tearing sound.",
+            1, 0.30, "Bleed"),
+
+        new("clw_ravening_storm", "Ravening Storm", "Claws",
+            12, 4.6, 7, 2, 500, SkillType.Combo,
+            "Twelve hits in a single breath — the fastest combo any weapon can throw."),
+
+        // SCYTHE — long-reach reaper, slow and heavy (invented; no canon scythe OSS names).
+        // Every skill is Range 2 to match the weapon's reach, with Axe-class multipliers and the
+        // longest cooldowns of any ordinary weapon.
+        new("scy_reap", "Reap", "Scythe",
+            1, 1.4, 0, 0, 0, SkillType.Power,
+            "A level sweep at the end of the haft, taken from well outside sword range.", 2),
+
+        new("scy_wide_harvest", "Wide Harvest", "Scythe",
+            1, 1.7, 2, 0, 10, SkillType.AoE,
+            "A broad half-circle cut that reaches every enemy in the arc.", 2),
+
+        new("scy_hooking_pull", "Hooking Pull", "Scythe",
+            1, 1.8, 2, 0, 25, SkillType.Power,
+            "Hook the blade behind the target and drag it off balance.", 2),
+
+        new("scy_crescent_sweep", "Crescent Sweep", "Scythe",
+            2, 2.2, 3, 1, 50, SkillType.AoE,
+            "Two opposing sweeps that cross at the far edge of reach.", 2),
+
+        new("scy_deaths_pendulum", "Death's Pendulum", "Scythe",
+            2, 2.5, 4, 1, 75, SkillType.Combo,
+            "The scythe swings out and back, striking on both passes.", 2),
+
+        new("scy_grave_toll", "Grave Toll", "Scythe",
+            1, 2.8, 4, 1, 100, SkillType.Counter,
+            "Plant the haft and answer a charge with the blade's full weight.", 2),
+
+        new("scy_soul_harvest", "Soul Harvest", "Scythe",
+            3, 3.4, 5, 2, 150, SkillType.AoE,
+            "Three widening circles that scythe through everything within reach.",
+            2, 0.30, "Bleed"),
+
+        new("scy_last_rites", "Last Rites", "Scythe",
+            3, 4.2, 7, 2, 300, SkillType.Combo,
+            "A rising cut, a falling cut, and a level stroke to finish.", 2),
+
+        new("scy_final_recollection", "Final Recollection", "Scythe",
+            1, 7.0, 10, 2, 500, SkillType.AoE,
+            "One enormous overhead reap that lands like a closing door.", 2),
+
         // DUAL BLADES — unique skill, hidden unlock, extreme hit counts and cooldowns.
         new("dbl_double_circular", "Double Circular", "Dual Blades",
             1, 2.0, 2, 0, 0, SkillType.Power,

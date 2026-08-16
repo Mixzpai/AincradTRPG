@@ -39,11 +39,14 @@ public sealed class RiverPass : IGenerationPass
         var (sx, sy) = PickSeedPeak(heights, w, h, ctx.Rng, ctx);
 
         int cx = sx, cy = sy;
+        int width = MapGenerator.RiverWidth(ctx);
         for (int step = 0; step < w + h; step++)
         {
             // Skip stamping inside town keep-out so rivers don't clip through gates/buildings.
-            if (!ctx.IsInTownKeepOut(cx, cy))     MapGenerator.StampRiverTile(map, cx, cy);
-            if (!ctx.IsInTownKeepOut(cx + 1, cy)) MapGenerator.StampRiverTile(map, cx + 1, cy);
+            // Widening is on x only, as it always has been: the trace turns every step, so there is
+            // no stable cross axis to widen against without reshaping the course.
+            for (int i = 0; i < width; i++)
+                if (!ctx.IsInTownKeepOut(cx + i, cy)) MapGenerator.StampRiverTile(map, cx + i, cy);
 
             // Stop on disk exit (protected Mountain ring) or near map bbox edge.
             if (!ctx.IsInsideCircle(cx, cy)) break;

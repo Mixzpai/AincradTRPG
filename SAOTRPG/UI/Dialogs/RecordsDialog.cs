@@ -14,6 +14,15 @@ public static class RecordsDialog
     private enum ViewMode { Recent, Leaderboard }
     private enum SortKey { Col, Turns, Level, Kills, PlayTime, Date, Grade }
 
+    // Columns between the two │ edges of the Summary / Career Stats panels. Every row has to
+    // agree on this or the box renders ragged, which it did: the borders came out 37 columns
+    // wide against body rows of 36, so the right edge of all twelve data rows sat one column
+    // inside the corners. Rows are built by the three helpers below rather than hand-spaced.
+    private const int BoxInner = 35;
+
+    // Columns the label plus its dot leader occupy inside a row.
+    private const int LeaderWidth = 18;
+
     public static void Show()
     {
         var data = LifetimeStats.Load();
@@ -44,26 +53,26 @@ public static class RecordsDialog
             return;
         }
 
-        // ── Summary panel (left column, ~36 wide) ──────────────────────
-        int colW = 36;
+        // ── Summary panel (left column) ────────────────────────────────
+        // Box outer width is BoxInner + the two │ edges; the right column clears it by one.
         int leftColX = 2;
-        int rightColX = leftColX + colW + 2;
+        int rightColX = leftColX + BoxInner + 2 + 1;
 
         var summaryHdr = new Label
         {
-            Text = "┌─ Summary ─────────────────────────┐",
+            Text = BoxTop("Summary"),
             X = leftColX, Y = 2, Width = Dim.Auto(), SchemeName = ColorSchemes.GoldName,
         };
         string totalTime = FormatTime(data.TotalPlayTimeSeconds);
         var summaryBody = new Label
         {
-            Text =
-                $"│ Runs ............ {data.TotalRuns,-14} │\n" +
-                $"│ Victories ....... {data.TotalVictories,-14} │\n" +
-                $"│ Deaths .......... {data.TotalDeaths,-14} │\n" +
-                $"│ Total Kills ..... {data.TotalKills,-14:N0} │\n" +
-                $"│ Play Time ....... {totalTime,-14} │\n" +
-                "└───────────────────────────────────┘",
+            Text = string.Join("\n",
+                BoxRow("Runs",        $"{data.TotalRuns}"),
+                BoxRow("Victories",   $"{data.TotalVictories}"),
+                BoxRow("Deaths",      $"{data.TotalDeaths}"),
+                BoxRow("Total Kills", $"{data.TotalKills:N0}"),
+                BoxRow("Play Time",   totalTime),
+                BoxBottom()),
             X = leftColX, Y = 3, Width = Dim.Auto(), Height = 6,
             SchemeName = ColorSchemes.BodyName,
         };
@@ -71,21 +80,21 @@ public static class RecordsDialog
         // ── Career-stats panel (right column) ───────────────────────────
         var achHdr = new Label
         {
-            Text = "┌─ Career Stats ────────────────────┐",
+            Text = BoxTop("Career Stats"),
             X = rightColX, Y = 2, Width = Dim.Auto(), SchemeName = ColorSchemes.GoldName,
         };
         int winRate = data.TotalRuns > 0 ? (data.TotalVictories * 100 / data.TotalRuns) : 0;
         var achBody = new Label
         {
-            Text =
-                $"│ Best Grade ...... {data.BestGrade,-14} │\n" +
-                $"│ Highest Floor ... F{data.HighestFloor,-13} │\n" +
-                $"│ Highest Level ... Lv {data.HighestLevel,-11} │\n" +
-                $"│ Col Earned ...... {data.TotalColEarned,-14:N0} │\n" +
-                $"│ Win Rate ........ {winRate,-13}% │\n" +
-                $"│ IF Implements ... {data.IfImplementHighWaterMark,-14} │\n" +
-                $"│ HF Missions ..... {data.HfMissionHighWaterMark,-14} │\n" +
-                "└───────────────────────────────────┘",
+            Text = string.Join("\n",
+                BoxRow("Best Grade",    data.BestGrade),
+                BoxRow("Highest Floor", $"F{data.HighestFloor}"),
+                BoxRow("Highest Level", $"Lv {data.HighestLevel}"),
+                BoxRow("Col Earned",    $"{data.TotalColEarned:N0}"),
+                BoxRow("Win Rate",      $"{winRate}%"),
+                BoxRow("IF Implements", $"{data.IfImplementHighWaterMark}"),
+                BoxRow("HF Missions",   $"{data.HfMissionHighWaterMark}"),
+                BoxBottom()),
             X = rightColX, Y = 3, Width = Dim.Auto(), Height = 8,
             SchemeName = ColorSchemes.BodyName,
         };
@@ -189,6 +198,22 @@ public static class RecordsDialog
             closeBtn);
         DialogHelper.CloseOnEscape(dialog);
         DialogHelper.RunModal(dialog);
+    }
+
+    // "┌─ Summary ─────────────────────────┐"
+    private static string BoxTop(string title) =>
+        $"┌─ {title} ".PadRight(BoxInner + 1, '─') + "┐";
+
+    // "└───────────────────────────────────┘"
+    private static string BoxBottom() => "└" + new string('─', BoxInner) + "┘";
+
+    // "│ Runs ............. 42             │" — value clipped rather than allowed to
+    // push the right edge out, which is how the death/victory card used to burst its box.
+    private static string BoxRow(string label, string value)
+    {
+        string cell = " " + (label + " ").PadRight(LeaderWidth, '.') + " " + value;
+        if (cell.Length > BoxInner) cell = cell[..BoxInner];
+        return "│" + cell.PadRight(BoxInner) + "│";
     }
 
     // Horizontal block bar: filled = ⌊value·width/max⌋ cells of █, rest ░.

@@ -27,10 +27,10 @@ public class GameWindow : Window
     {
         DrawComplete += (_, _) =>
         {
-            // Every view has painted; the driver flush follows. Close the gaps in
-            // touched rows first so it writes one run per row instead of thousands
-            // of fragments. This is the render fix — it runs unconditionally, and only
-            // the timestamp below is instrumentation.
+            // Every view has painted; the driver flush follows. Close the gaps in touched
+            // rows first so it writes one run per row instead of thousands of fragments.
+            // This is the render fix — it runs unconditionally, and only the timestamp
+            // below is instrumentation.
             Gfx.FillDirtyRows();
             if (s_sampling) ViewDrawCompleteTicks = System.Diagnostics.Stopwatch.GetTimestamp();
         };

@@ -46,8 +46,6 @@ public class Quest
     // (fixture handlers, procgen predicates) to feed run-counter increments on turn-in.
     public QuestSubCategory SubCategory { get; set; } = QuestSubCategory.None;
 
-    public bool IsComplete => Status == QuestStatus.Complete || Status == QuestStatus.TurnedIn;
-
     public string ProgressText => Type switch
     {
         QuestType.Kill => $"Slay {TargetMob}: {CurrentCount}/{TargetCount}",
@@ -94,7 +92,7 @@ public static class QuestSystem
     // Generate floor-appropriate quests. Called when entering a new floor
     // or talking to quest-giving NPCs.
     public static Quest GenerateQuest(int floor, string giverName)
-        => Generate((QuestType)Random.Shared.Next(4), floor, giverName);
+        => Generate((QuestType)RunRng.Next(4), floor, giverName);
 
     private static readonly string[] KillTargets =
     {
@@ -149,23 +147,23 @@ public static class QuestSystem
         switch (type)
         {
             case QuestType.Kill:
-                target = KillTargets[Random.Shared.Next(KillTargets.Length)];
-                count = 3 + Random.Shared.Next(0, 3) + floor / 5;
+                target = KillTargets[RunRng.Next(KillTargets.Length)];
+                count = 3 + RunRng.Next(0, 3) + floor / 5;
                 idTag = $"kill_{floor}_{target}";
                 templates = KillQuestTemplates;
                 rewardCol = 100 + floor * 50 + count * 20;
                 rewardXp = 50 + floor * 30 + count * 10;
                 break;
             case QuestType.Collect:
-                target = CollectItems[Random.Shared.Next(CollectItems.Length)];
-                count = 2 + Random.Shared.Next(0, 3);
+                target = CollectItems[RunRng.Next(CollectItems.Length)];
+                count = 2 + RunRng.Next(0, 3);
                 idTag = $"collect_{floor}_{target}";
                 templates = CollectQuestTemplates;
                 rewardCol = 80 + floor * 40 + count * 30;
                 rewardXp = 40 + floor * 25 + count * 15;
                 break;
             case QuestType.Explore:
-                count = 40 + Random.Shared.Next(0, 20); // percent
+                count = 40 + RunRng.Next(0, 20); // percent
                 target = count.ToString();
                 idTag = $"explore_{floor}_{count}";
                 templates = ExploreQuestTemplates;
@@ -182,7 +180,7 @@ public static class QuestSystem
                 break;
         }
 
-        var template = templates[Random.Shared.Next(templates.Length)];
+        var template = templates[RunRng.Next(templates.Length)];
         // Explore's description takes a single {0} = percent; Deliver has no format args;
         // Kill/Collect take {0} = target, {1} = count.
         string description = type switch
@@ -194,7 +192,7 @@ public static class QuestSystem
 
         return new Quest
         {
-            Id = $"{idTag}_{Random.Shared.Next(1000)}",
+            Id = $"{idTag}_{RunRng.Next(1000)}",
             Title = template[0],
             Description = description,
             GiverName = giver, Floor = floor, Type = type,

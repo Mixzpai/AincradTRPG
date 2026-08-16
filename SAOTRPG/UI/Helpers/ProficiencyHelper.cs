@@ -3,22 +3,28 @@ using SAOTRPG.Systems;
 namespace SAOTRPG.UI.Helpers;
 
 // Weapon proficiency formatting — DeathScreen/VictoryScreen/KillStatsDialog/StatsDialog.
-// Formats: BoxRow (summary card), DetailLine ("Sword Adept +4 dmg [12/20]"), DetailExpanded (+next-rank preview).
+// Formats: BuildBoxRows (summary card), BuildDetailLine ("Sword Adept +4 dmg [12/20]"),
+// BuildDetailLineExpanded (+next-rank preview).
 public static class ProficiencyHelper
 {
     // Returns box-formatted proficiency lines for summary cards.
     // Each line: "  │  Sword            Adept      +4  │"
-    public static string BuildBoxRows(TurnManager tm, int colWidth = 37)
+    // Appended into the death/victory summary card, so every row must be exactly
+    // SummaryFormatter.BoxInner columns between the edges. This block used to render one column
+    // wide on its blank and heading rows and one column narrow on its data rows, which bowed the
+    // card's right edge in and out across the proficiency section.
+    public static string BuildBoxRows(TurnManager tm)
     {
         if (tm.WeaponKills.Count == 0) return "";
 
-        string rows = "  |" + "".PadRight(colWidth) + "|\n" +
-                       "  |     [ Weapon Proficiency ]" + "".PadRight(colWidth - 27) + "|\n";
+        const string Heading = "     [ Weapon Proficiency ]";
+        string rows = SummaryFormatter.BlankRow()
+                      + "  |" + Heading.PadRight(SummaryFormatter.BoxInner) + "|\n";
         foreach (var (wpnType, _) in tm.WeaponKills)
         {
             var info = tm.GetProficiencyInfo(wpnType);
             int bonus = tm.GetProficiencyBonus(wpnType);
-            rows += $"  |  {wpnType,-16} {info.Rank,-10} +{bonus,2}  |\n";
+            rows += $"  |  {wpnType,-16} {info.Rank,-10} +{bonus,2}   |\n";
         }
         return rows;
     }

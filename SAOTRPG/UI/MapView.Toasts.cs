@@ -30,7 +30,7 @@ public partial class MapView
             if (lines[i].Length > longestLen) longestLen = lines[i].Length;
         int boxWidth = Math.Min(maxBoxWidth, Math.Max(MinBoxWidth, longestLen + 4));
 
-        // Per-line ellipsis when forced to truncate at MaxBoxWidth (word-cut tolerated).
+        // Per-line ellipsis when forced to truncate at boxWidth (word-cut tolerated).
         int innerWidth = boxWidth - 4;
         for (int i = 0; i < lines.Length; i++)
         {

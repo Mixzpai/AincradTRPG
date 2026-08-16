@@ -67,10 +67,13 @@ public static class StatBarHelper
     // Returns BrightGreen even at 100% (the full-tier safe band).
     public static Color ZoneColor(int current, int max)
     {
-        if (max <= 0) return Color.DarkGray;
+        // Reinforcement, not the only channel — the bar's fill level already carries the number.
+        // Themed so a zone reads the same way as every other Ok/Warn/Crit in the game.
+        if (max <= 0) return ColorSchemes.Theme.Muted;
         double pct = Math.Clamp((double)current / max, 0.0, 1.0);
-        if (pct >= 0.5) return Color.BrightGreen;
-        if (pct >= 0.25) return Color.BrightYellow;
-        return Color.BrightRed;
+        if (pct >= 0.5) return ColorSchemes.Theme.Ok;
+        if (pct >= 0.25) return ColorSchemes.Theme.Warn;
+
+        return ColorSchemes.Theme.Crit;
     }
 }

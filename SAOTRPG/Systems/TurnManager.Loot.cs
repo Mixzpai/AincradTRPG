@@ -21,16 +21,16 @@ public partial class TurnManager
         {
             foreach (var (defId, chance) in namedDrops)
             {
-                if (Random.Shared.NextDouble() >= chance) continue;
+                if (RunRng.NextDouble() >= chance) continue;
                 var namedItem = ItemRegistry.Create(defId);
                 if (namedItem != null) DropItem(mx, my, namedItem, monster.Name);
             }
         }
 
         if (monster is Mob mob && LootGenerator.MobLootTable.TryGetValue(mob.LootTag, out var lootTable)
-            && Random.Shared.Next(100) < 40)
+            && RunRng.Next(100) < 40)
         {
-            var entry = lootTable[Random.Shared.Next(lootTable.Length)];
+            var entry = lootTable[RunRng.Next(lootTable.Length)];
 
             // Chain catalysts need DefinitionId set (for Anvil Evolve) — route
             // via ItemRegistry when the drop name matches.
@@ -52,25 +52,25 @@ public partial class TurnManager
             if (lootItem != null) DropItem(mx, my, lootItem, monster.Name);
         }
 
-        int roll = Random.Shared.Next(100);
+        int roll = RunRng.Next(100);
         if (roll < 30)
         {
-            var potion = CurrentFloor >= 3 && Random.Shared.Next(3) == 0
-                ? (Random.Shared.Next(2) == 0 ? PotionDefinitions.CreateSpeedPotion() : PotionDefinitions.CreateIronSkinPotion())
+            var potion = CurrentFloor >= 3 && RunRng.Next(3) == 0
+                ? (RunRng.Next(2) == 0 ? PotionDefinitions.CreateSpeedPotion() : PotionDefinitions.CreateIronSkinPotion())
                 : PotionDefinitions.CreateHealthPotion();
             DropItem(mx, my, potion, monster.Name);
         }
         else if (roll < 45)
         {
-            var food = CurrentFloor >= 2 && Random.Shared.Next(3) == 0
+            var food = CurrentFloor >= 2 && RunRng.Next(3) == 0
                 ? FoodDefinitions.CreateSpicedJerky() : FoodDefinitions.CreateBread();
             DropItem(mx, my, food, monster.Name);
         }
 
-        if (monster is Mob { CanPoison: true } && Random.Shared.Next(100) < 40)
+        if (monster is Mob { CanPoison: true } && RunRng.Next(100) < 40)
             DropItem(mx, my, PotionDefinitions.CreateAntidote(), monster.Name);
 
-        if (Random.Shared.Next(100) < 10)
+        if (RunRng.Next(100) < 10)
         {
             var gear = LootGenerator.CreateRandomEquipment(CurrentFloor);
             if (gear != null) DropItem(mx, my, gear, monster.Name);
@@ -80,7 +80,7 @@ public partial class TurnManager
         // drops use RollBossOreDrops in TurnManager.Combat.
         if (monster is Mob mob2
             && LootGenerator.OreByLootTag.TryGetValue(mob2.LootTag, out var oreDefId)
-            && Random.Shared.Next(100) < LootGenerator.OreDropChancePercent)
+            && RunRng.Next(100) < LootGenerator.OreDropChancePercent)
         {
             var ore = ItemRegistry.Create(oreDefId);
             if (ore != null) DropItem(mx, my, ore, monster.Name);
@@ -91,8 +91,8 @@ public partial class TurnManager
     // independently so a boss can yield mixed types.
     private void RollBossOreDrops(int bx, int by, string sourceName)
     {
-        if (Random.Shared.Next(100) >= LootGenerator.BossOreDropChancePercent) return;
-        int count = 1 + Random.Shared.Next(2); // 1 or 2 ores
+        if (RunRng.Next(100) >= LootGenerator.BossOreDropChancePercent) return;
+        int count = 1 + RunRng.Next(2); // 1 or 2 ores
         for (int i = 0; i < count; i++)
         {
             var defId = LootGenerator.PickRandomOreDefId();
@@ -115,7 +115,7 @@ public partial class TurnManager
         if (item.Rarity is "Rare" or "Epic" or "Legendary")
         {
             string msg = string.Format(
-                FlavorText.RareLootFlavors[Random.Shared.Next(FlavorText.RareLootFlavors.Length)],
+                FlavorText.RareLootFlavors[RunRng.Next(FlavorText.RareLootFlavors.Length)],
                 item.Rarity, item.Name);
             _log.LogLoot(msg);
         }
@@ -130,13 +130,13 @@ public partial class TurnManager
         else if (tier == "mid") _log.LogLoot("You open a treasure chest — a faint silver shimmer catches your eye.");
         else _log.LogLoot("You open a treasure chest!");
 
-        int col = 20 + CurrentFloor * 15 + Random.Shared.Next(0, 20);
+        int col = 20 + CurrentFloor * 15 + RunRng.Next(0, 20);
         if (tier == "far") col = col * 3 / 2;
         _player.ColOnHand += col;
         TotalColEarned += col;
         _log.LogLoot($"  Found {col} Col!");
 
-        int rolls = tier == "far" ? 2 : 1 + Random.Shared.Next(0, 2);
+        int rolls = tier == "far" ? 2 : 1 + RunRng.Next(0, 2);
         for (int r = 0; r < rolls; r++)
         {
             BaseItem item = RollChestItem(tier);
@@ -159,7 +159,7 @@ public partial class TurnManager
 
     private BaseItem RollChestItem(string tier)
     {
-        int loot = Random.Shared.Next(100);
+        int loot = RunRng.Next(100);
 
         if (tier == "far" && loot < 40)
             return RollEquipmentWithRegisteredPool()
@@ -185,7 +185,7 @@ public partial class TurnManager
     // 15% chance to pull from floor-banded registered pool; else procedural.
     private BaseItem? RollEquipmentWithRegisteredPool()
     {
-        if (Random.Shared.Next(100) < 15)
+        if (RunRng.Next(100) < 15)
         {
             var defId = LootGenerator.PickFloorBandedRegisteredDefId(CurrentFloor);
             if (defId != null)
@@ -199,7 +199,7 @@ public partial class TurnManager
 
     private BaseItem RollChestConsumable()
     {
-        int sub = Random.Shared.Next(5);
+        int sub = RunRng.Next(5);
         return sub switch
         {
             0 => CurrentFloor >= 3 ? FoodDefinitions.CreateFishStew() : FoodDefinitions.CreateGrilledMeat(),
@@ -244,7 +244,7 @@ public partial class TurnManager
         int px = _player.X, py = _player.Y;
         if (!_map.HasItemsAt(px, py))
         {
-            _log.Log(FlavorText.EmptyGroundFlavors[Random.Shared.Next(FlavorText.EmptyGroundFlavors.Length)]);
+            _log.Log(FlavorText.EmptyGroundFlavors[RunRng.Next(FlavorText.EmptyGroundFlavors.Length)]);
             return;
         }
 
@@ -272,13 +272,13 @@ public partial class TurnManager
                 {
                     string rarityTag = RarityHelper.LogTag(item.Rarity);
                     string pickMsg = string.Format(
-                        FlavorText.PickupFlavors[Random.Shared.Next(FlavorText.PickupFlavors.Length)], item.Name);
+                        FlavorText.PickupFlavors[RunRng.Next(FlavorText.PickupFlavors.Length)], item.Name);
                     _log.LogLoot($"{rarityTag}{pickMsg}");
                 }
             }
             else
             {
-                _log.Log(FlavorText.InventoryFullFlavors[Random.Shared.Next(FlavorText.InventoryFullFlavors.Length)]);
+                _log.Log(FlavorText.InventoryFullFlavors[RunRng.Next(FlavorText.InventoryFullFlavors.Length)]);
                 break;
             }
         }

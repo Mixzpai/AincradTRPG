@@ -12,9 +12,11 @@ public static partial class MapGenerator
         int floor, int statScale = 100, HashSet<string>? defeatedFieldBosses = null,
         bool skipFieldBosses = false, Random? rng = null)
     {
-        // Derive a deterministic per-floor Random from the persisted master seed
-        // when callers don't supply one. Keeps F9 hot-reload reproducible.
-        rng ??= new Random(CurrentGlobalSeed ^ floor);
+        // Derive a deterministic per-floor stream when callers don't supply one, so a floor's
+        // roster is a pure function of (seed, floor) and does not shift with how much of the run
+        // preceded it. Derived through StreamFor rather than seed^floor: XOR collides, giving
+        // seed S floor F the same stream as seed S^k floor F^k.
+        rng ??= RunRng.StreamFor("populate", floor);
         UI.DebugLogger.LogGame("POPULATE", $"PopulateFloor({floor}) — {rooms.Count} rooms, map {map.Width}x{map.Height}");
         if (rooms.Count == 0) return;
 
@@ -37,29 +39,38 @@ public static partial class MapGenerator
             {
                 var (mx, my) = FindOpenSpot(map, rooms[i], rng);
                 if (mx < 0 || IsInSafeZone(map, mx, my)) continue;
-                var mob = MobFactory.CreateFloorMob(floor, statScale);
+                var mob = MobFactory.CreateFloorMob(floor, statScale, rng);
                 map.PlaceEntity(mob, mx, my);
             }
         }
 
         // Wandering mobs between rooms — more on larger floors
-        int wanderers = FloorScale.WanderingMobs(floor);
+        int wanderers = FloorScale.WanderingMobs(floor, rng);
         for (int i = 0; i < wanderers; i++)
         {
             var (wx, wy) = FindOpenSpotOutsideSafeZone(map, rng);
             if (wx < 0) continue;
-            var mob = MobFactory.CreateFloorMob(floor, statScale);
+            var mob = MobFactory.CreateFloorMob(floor, statScale, rng);
             map.PlaceEntity(mob, wx, wy);
         }
 
-        // Every floor has a unique boss (lives in the labyrinth boss room).
-        if (rooms.Count > 1)
+        // ONE floor boss per floor, and it STANDS ON THE STAIRS UP — so a map with no StairsUp gets
+        // no floor boss. That single rule covers all three cases without anything having to know
+        // which map it is on: a normal overworld carries only an archway and therefore no boss (its
+        // archway is ungated, exactly as floor 1 already was), a labyrinth carries StairsUp and the
+        // boss stands on it, and F100's throne room carries StairsUp for the player-clone.
+        //
+        // Both maps used to get one, because EnterLabyrinth calls PopulateFloor again — measured,
+        // the same canonical boss twice per floor with identical stats. FLOOR_CANON describes "a
+        // northern labyrinth tower leading to THE floor boss", singular.
+        var wayUp = FarthestReachable(map, FloodFrom(map, rooms[0].CenterX, rooms[0].CenterY),
+            rooms[0].CenterX, rooms[0].CenterY, TileType.StairsUp);
+        if (wayUp.x >= 0)
         {
-            var bossRoom = rooms[^1];
             var boss = floor >= 100
                 ? BossFactory.CreatePlayerClone(player)
                 : BossFactory.CreateFloorBoss(floor);
-            map.PlaceEntity(boss, bossRoom.CenterX, bossRoom.CenterY);
+            map.PlaceEntity(boss, wayUp.x, wayUp.y);
         }
 
         // Field bosses — wilderness named elites. Skipped when defeated this run, seasonal inactive, or skipFieldBosses=true.
@@ -100,7 +111,7 @@ public static partial class MapGenerator
                 if (IsWalkableType(map.Tiles[x, y].Type) && map.Tiles[x, y].Occupant == null
                     && Math.Abs(x - rooms[0].CenterX) > 8 && Math.Abs(y - rooms[0].CenterY) > 8)
                 {
-                    var npc = WandererFactory.CreateWanderer(floor);
+                    var npc = WandererFactory.CreateWanderer(floor, rng);
                     map.PlaceEntity(npc, x, y);
                     break;
                 }
@@ -133,13 +144,13 @@ public static partial class MapGenerator
                     if (map.InBounds(doorX + ddx, doorY + 1))
                         map.Tiles[doorX + ddx, doorY + 1].Type = TileType.DangerZone;
                 int denMobCount = 3 + rng.Next(0, 2);
-                var firstMob = MobFactory.CreateFloorMob(floor, statScale);
+                var firstMob = MobFactory.CreateFloorMob(floor, statScale, rng);
                 map.PlaceEntity(firstMob, dx + 1, dy + 1);
                 for (int m = 1; m < denMobCount; m++)
                 {
                     var (mx, my) = FindOpenSpot(map, denRoom, rng);
                     if (mx < 0) continue;
-                    var mob = MobFactory.CreateFloorMob(floor, statScale);
+                    var mob = MobFactory.CreateFloorMob(floor, statScale, rng);
                     map.PlaceEntity(mob, mx, my);
                 }
                 break;
@@ -147,7 +158,7 @@ public static partial class MapGenerator
         }
 
         // Treasure chests — scaled to floor area
-        int chestCount = FloorScale.ChestCount(floor);
+        int chestCount = FloorScale.ChestCount(floor, rng);
         for (int i = 0; i < chestCount; i++)
         {
             var (cx, cy) = FindOpenSpotOutsideSafeZone(map, rng);
@@ -281,12 +292,12 @@ public static partial class MapGenerator
             map.Tiles[sx, sy - TownHalfH - 4].Type = TileType.Campfire;
 
         // Wilderness mobs outside the town walls — scaled to map size.
-        int wanderers = FloorScale.WildernessMobsFloor1(floor);
+        int wanderers = FloorScale.WildernessMobsFloor1(floor, rng);
         for (int i = 0; i < wanderers; i++)
         {
             var (wx, wy) = FindOpenSpotOutsideSafeZone(map, rng);
             if (wx < 0) continue;
-            var mob = MobFactory.CreateFloorMob(floor, statScale);
+            var mob = MobFactory.CreateFloorMob(floor, statScale, rng);
             map.PlaceEntity(mob, wx, wy);
         }
 
@@ -296,7 +307,7 @@ public static partial class MapGenerator
             int guardCount = 3 + rng.Next(0, 3);
             for (int i = 0; i < guardCount; i++)
             {
-                var guard = MobFactory.CreateTownGuard();
+                var guard = MobFactory.CreateTownGuard(rng);
                 int ox = rng.Next(-8, 9);
                 int oy = rng.Next(-8, 9);
                 TryPlaceEntityNear(map, guard, sx + ox, sy + oy);
@@ -749,6 +760,53 @@ public static partial class MapGenerator
     private static bool IsRoomInSafeZone(GameMap map, Room room) =>
         map.SafeZone?.Contains(room.CenterX, room.CenterY) == true;
 
+    private static (int x, int y) FarthestReachable(GameMap map, bool[] reachable,
+        int spawnX, int spawnY, TileType type)
+    {
+        int bestX = -1, bestY = -1;
+        long bestD = -1;
+        for (int y = 0; y < map.Height; y++)
+            for (int x = 0; x < map.Width; x++)
+            {
+                if (map.Tiles[x, y].Type != type) continue;
+                if (!reachable[y * map.Width + x]) continue;
+                long dx = x - spawnX, dy = y - spawnY;
+                long d = dx * dx + dy * dy;
+                if (d > bestD) { bestD = d; bestX = x; bestY = y; }
+            }
+        return (bestX, bestY);
+    }
+
+    // Walkable-region flood from spawn, using the SAME blocking predicate the connectivity audit
+    // uses so placement and auditing cannot disagree about what "reachable" means.
+    private static bool[] FloodFrom(GameMap map, int sx, int sy)
+    {
+        int w = map.Width, h = map.Height;
+        var seen = new bool[w * h];
+        if (sx < 0 || sy < 0 || sx >= w || sy >= h) return seen;
+        var queue = new int[w * h];
+        int head = 0, tail = 0;
+        queue[tail++] = sy * w + sx;
+        seen[sy * w + sx] = true;
+        int[] dxs = { -1, 1, 0, 0 }, dys = { 0, 0, -1, 1 };
+        while (head < tail)
+        {
+            int cur = queue[head++];
+            int cx = cur % w, cy = cur / w;
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = cx + dxs[d], ny = cy + dys[d];
+                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                int ni = ny * w + nx;
+                if (seen[ni]) continue;
+                if (Generation.Passes.ConnectivityAuditPass.IsAuditBlocking(map.Tiles[nx, ny].Type)) continue;
+                seen[ni] = true;
+                queue[tail++] = ni;
+            }
+        }
+        return seen;
+    }
+
     private static (int x, int y) FindOpenSpotOutsideSafeZone(GameMap map, Random rng)
     {
         for (int attempt = 0; attempt < 80; attempt++)
@@ -815,7 +873,11 @@ public static partial class MapGenerator
     }
 
     // Bresenham line carve (no jitter) for main roads; clears trees/bushes in the way.
-    internal static void CarveStraightPath(GameMap map, int x1, int y1, int x2, int y2)
+    // breachWalls lets a carve cut a doorway through a built wall. Off for ordinary roads, which
+    // must not punch holes in rooms; on for the connectivity audit, whose whole job is to guarantee
+    // a region is reachable and which could not do it while walls stopped the carve dead.
+    internal static void CarveStraightPath(GameMap map, int x1, int y1, int x2, int y2,
+        bool breachWalls = false)
     {
         int dx = Math.Abs(x2 - x1), sx = x1 < x2 ? 1 : -1;
         int dy = -Math.Abs(y2 - y1), sy = y1 < y2 ? 1 : -1;
@@ -823,7 +885,7 @@ public static partial class MapGenerator
         int x = x1, y = y1;
         while (true)
         {
-            SetRoadTile(map, x, y);
+            SetRoadTile(map, x, y, breachWalls);
             if (x == x2 && y == y2) break;
             int e2 = 2 * err;
             if (e2 >= dy) { err += dy; x += sx; }
@@ -840,12 +902,24 @@ public static partial class MapGenerator
     }
 
     // Road-tile setter; clears trees/rocks but never carves through Mountain (disk wall).
-    private static void SetRoadTile(GameMap map, int x, int y)
+    private static void SetRoadTile(GameMap map, int x, int y, bool breachWalls = false)
     {
         if (!map.InBounds(x, y)) return;
         var t = map.Tiles[x, y].Type;
+        // A breach turns a built wall into a doorway. Mountain is never breached: it is the disk
+        // boundary, and cutting it would open the floor onto the void outside the world.
+        if (breachWalls && (t == TileType.Wall || t == TileType.CrackedWall))
+        {
+            map.Tiles[x, y].Type = TileType.Door;
+            return;
+        }
+        // LabyrinthEntrance is guarded for the same reason as the stairs: it is an exit, and a road
+        // carved to it ends ON it. FeatureScatterPass writes the entrance and then carves spawn ->
+        // entrance, so without this the tile was overwritten with Path one line after creation and
+        // the floor had no way up at all.
         if (t == TileType.Wall || t == TileType.Floor || t == TileType.Door
             || t == TileType.StairsUp || t == TileType.StairsDown
+            || t == TileType.LabyrinthEntrance
             || t == TileType.Mountain) return;
         map.Tiles[x, y].Type = TileType.Path;
     }

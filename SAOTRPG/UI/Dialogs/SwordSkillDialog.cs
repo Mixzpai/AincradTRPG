@@ -68,6 +68,10 @@ public static class SwordSkillDialog
             X = 1, Y = 2, Width = Dim.Fill(1), Height = Dim.Fill(7),
             Source = new ListWrapper<string>(names),
             CanFocus = true,
+            // Type-ahead off — it swallows the 1-4 slot-assign digits. ListView.OnKeyDown eats a
+            // printable rune before KeyDown is raised, so one arrow key would kill them for the
+            // rest of the session — and arrowing to a skill is how you pick one to assign.
+            KeystrokeNavigator = null,
         };
 
         var detailLabel = new Label
@@ -84,7 +88,7 @@ public static class SwordSkillDialog
 
         var hint = new Label
         {
-            Text = "Enter: assign to slot  |  1-4: assign to specific slot  |  Esc: close",
+            Text = "Enter: assign to next free slot  |  1-4: assign to that slot  |  Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
@@ -100,12 +104,16 @@ public static class SwordSkillDialog
             detailLabel.SchemeName = unlocked ? ColorSchemes.BodyName : ColorSchemes.DimName;
         };
 
-        // Assign to next available slot on Enter
-        listView.Activated += (s, e) =>
-        {
-            AppHost.App.Invoke(() => TryAssignSkill(tm, allSkills, listView.SelectedItem ?? 0, kills, -1,
+        // Assign to next available slot on Enter.
+        // Enter is Command.Accept; Activated answers Command.Activate (Space). An unhandled
+        // Accept bubbles to the dialog's default button — Close — so the advertised
+        // "Enter: assign to slot" used to shut the dialog instead. Claiming it stops the bubble.
+        void AssignSelected() => AppHost.App.Invoke(() =>
+            TryAssignSkill(tm, allSkills, listView.SelectedItem ?? 0, kills, -1,
                 names, slotLabel, detailLabel, wtype));
-        };
+
+        listView.Accepting += (s, e) => { e.Handled = true; AssignSelected(); };
+        listView.Activated += (s, e) => AssignSelected();
 
         // Direct slot assignment with 1-4 keys
         listView.KeyDown += (s, e) =>
@@ -126,6 +134,7 @@ public static class SwordSkillDialog
         dialog.Add(header, listView, detailLabel, slotLabel, hint);
         DialogHelper.AddCloseFooter(dialog);
         listView.SetFocus();
+        DialogHelper.SelectFirstRow(listView);
         DialogHelper.RunModal(dialog);
     }
 

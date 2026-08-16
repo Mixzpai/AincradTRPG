@@ -118,7 +118,7 @@ public partial class TurnManager
         {
             _idleTurns++;
             if (_idleTurns >= FlavorText.IdleThreshold && _idleTurns % FlavorText.IdleRepeatInterval == 0)
-                _log.Log(FlavorText.IdleFlavors[Random.Shared.Next(FlavorText.IdleFlavors.Length)]);
+                _log.Log(FlavorText.IdleFlavors[RunRng.Next(FlavorText.IdleFlavors.Length)]);
         }
         else _idleTurns = 0;
 
@@ -164,8 +164,8 @@ public partial class TurnManager
                 _log.Log($"The {kind} is too much for your swimming skill (need L{tile.RequiresSwimmingLevel}).");
                 return;
             }
-            if (Random.Shared.Next(100) < 3)
-                _log.Log(FlavorText.WallBumpFlavors[Random.Shared.Next(FlavorText.WallBumpFlavors.Length)]);
+            if (RunRng.Next(100) < 3)
+                _log.Log(FlavorText.WallBumpFlavors[RunRng.Next(FlavorText.WallBumpFlavors.Length)]);
             return;
         }
 
@@ -195,7 +195,7 @@ public partial class TurnManager
             TutorialSystem.ShowTip(_log, "floor1_exit_town");
 
         // Biome movement effects: ice slip, swamp poison.
-        if (BiomeSystem.SlipChance > 0 && Random.Shared.Next(100) < BiomeSystem.SlipChance)
+        if (BiomeSystem.SlipChance > 0 && RunRng.Next(100) < BiomeSystem.SlipChance)
         {
             _log.Log("You slip on the icy surface!");
             // Slip = lose the rest of this turn (no further processing).
@@ -205,7 +205,7 @@ public partial class TurnManager
             TurnCompleted?.Invoke();
             return;
         }
-        if (BiomeSystem.StepPoisonChance > 0 && Random.Shared.Next(100) < BiomeSystem.StepPoisonChance
+        if (BiomeSystem.StepPoisonChance > 0 && RunRng.Next(100) < BiomeSystem.StepPoisonChance
             && _poisonTurnsLeft <= 0)
         {
             _poisonTurnsLeft = 3;
@@ -218,28 +218,40 @@ public partial class TurnManager
         if (HandleTileInteraction(tile, tx, ty)) return;
 
         if (FlavorText.TerrainFlavors.TryGetValue(tile.Type, out var flavors)
-            && Random.Shared.Next(100) < FlavorText.FootstepChance)
-            _log.Log(flavors[Random.Shared.Next(flavors.Length)]);
+            && RunRng.Next(100) < FlavorText.FootstepChance)
+            _log.Log(flavors[RunRng.Next(flavors.Length)]);
 
         HandleTrapDetection(tx, ty);
 
-        if (Random.Shared.Next(100) < FlavorText.AmbientChance)
-            _log.Log(FlavorText.AmbientMessages[Random.Shared.Next(FlavorText.AmbientMessages.Length)]);
+        if (RunRng.Next(100) < FlavorText.AmbientChance)
+            _log.Log(FlavorText.AmbientMessages[RunRng.Next(FlavorText.AmbientMessages.Length)]);
 
         CheckStairsDiscovery(tx, ty);
 
         if (tile.Type == TileType.LabyrinthEntrance)
         {
-            if (!_inLabyrinth) TutorialSystem.ShowTip(_log, "first_labyrinth");
-            if (_inLabyrinth) ExitLabyrinth();
-            else EnterLabyrinth();
+            // Leaving is never gated; entering is. The overworld floor boss sits away from the
+            // archway, and a boss-arena prefab can stamp an entrance anywhere — including onto the
+            // spawn tile — so without this a floor could be entered from the square the player
+            // arrives on, skipping it entirely. Floor 1 places no overworld floor boss, so the gate
+            // is deliberately inert there and the tutorial floor stays open.
+            // SAFETY: this makes the boss's reachability load-bearing. Tools/SeedProbe asserts it.
+            if (_inLabyrinth) { ExitLabyrinth(); return; }
+            TutorialSystem.ShowTip(_log, "first_labyrinth");
+            if (FloorBossAlive())
+            {
+                _log.LogCombat("  The way up is sealed. Defeat the Floor Boss first!");
+                TurnCompleted?.Invoke();
+                return;
+            }
+            EnterLabyrinth();
             return;
         }
 
         if (tile.Type == TileType.StairsUp)
         {
             TutorialSystem.ShowTip(_log, "first_stairs");
-            bool bossAlive = _map.Bosses.Any(b => !b.IsDefeated);
+            bool bossAlive = FloorBossAlive();
             if (bossAlive)
             {
                 _log.LogCombat("The stairs are sealed by a powerful force. Defeat the Floor Boss first!");
@@ -260,7 +272,7 @@ public partial class TurnManager
         _restCounter++;
         TickExhaustion();
         if (PlayerLowHp && TurnCount % 5 == 0)
-            _log.LogCombat(FlavorText.LowHpEncouragements[Random.Shared.Next(FlavorText.LowHpEncouragements.Length)]);
+            _log.LogCombat(FlavorText.LowHpEncouragements[RunRng.Next(FlavorText.LowHpEncouragements.Length)]);
         TickPoison(); TickBleed(); TickSlow();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
@@ -297,7 +309,8 @@ public partial class TurnManager
             var tile = _map.GetTile(tx, ty);
             if (!tile.TrapHidden) continue;
             if (tile.Type is not (TileType.TrapSpike or TileType.TrapTeleport
-                or TileType.TrapPoison or TileType.TrapAlarm)) continue;
+                or TileType.TrapPoison or TileType.TrapAlarm
+                or TileType.TrapWeb or TileType.TrapMagnet or TileType.TrapRune)) continue;
             _map.SetTrapHidden(tx, ty, false);
             revealedAny = true;
         }
@@ -1380,7 +1393,7 @@ public partial class TurnManager
         {
             TutorialSystem.ShowTip(_log, "first_vendor");
             string greeting = string.Format(
-                FlavorText.VendorGreetings[Random.Shared.Next(FlavorText.VendorGreetings.Length)],
+                FlavorText.VendorGreetings[RunRng.Next(FlavorText.VendorGreetings.Length)],
                 vendor.ShopName ?? "my shop");
             _log.Log($"{vendor.Name}: \"{greeting}\"");
             if (vendor.ShopStock.Count > 0)
@@ -1429,7 +1442,7 @@ public partial class TurnManager
             // Offer random quest if room — Divine-quest NPCs skip (no layering).
             if (!handledByDivineNpc
                 && QuestSystem.ActiveQuests.Count < QuestSystem.MaxActiveQuests
-                && npc.CanInteract && Random.Shared.Next(3) == 0)
+                && RunRng.Next(3) == 0)
             {
                 var quest = QuestSystem.GenerateQuest(CurrentFloor, npc.Name);
 
@@ -1463,7 +1476,7 @@ public partial class TurnManager
                 else
                 {
                     string dialogue = npc.Dialogue
-                        ?? FlavorText.NpcFallbackDialogue[Random.Shared.Next(FlavorText.NpcFallbackDialogue.Length)];
+                        ?? FlavorText.NpcFallbackDialogue[RunRng.Next(FlavorText.NpcFallbackDialogue.Length)];
                     _log.Log($"{npc.Name}: \"{dialogue}\"");
                 }
 
@@ -1486,7 +1499,7 @@ public partial class TurnManager
                 && _map.GetTile(tx + sdx, ty + sdy).Type == TileType.StairsUp)
             {
                 _stairsDiscovered = true;
-                _log.LogSystem(FlavorText.StairsDiscoveryMessages[Random.Shared.Next(FlavorText.StairsDiscoveryMessages.Length)]);
+                _log.LogSystem(FlavorText.StairsDiscoveryMessages[RunRng.Next(FlavorText.StairsDiscoveryMessages.Length)]);
                 return;
             }
         }
@@ -1510,9 +1523,8 @@ public partial class TurnManager
     // then invokes Respond before returning.
     public event Action<RecruitDialogContext>? RecruitDialogRequested;
 
-    // TODO: subscribe in UI layer (see PATH-D-PORT marker). Until wired the
-    // recruit prompt is silently skipped — flag rather than fall back, per
-    // fail-loud rule.
+    // No subscriber means no prompt, so the absence is logged as an error rather than letting
+    // the recruit offer vanish silently.
     private void TryRecruitNpc(NPC npc)
     {
         if (!RecruitableNpcs.TryGetValue(npc.Name, out var info)) return;
@@ -1607,9 +1619,15 @@ public partial class TurnManager
 
         string tag = closest is Mob m2 ? m2.LootTag : "generic";
         string[] cues = FlavorText.SoundCues.GetValueOrDefault(tag, FlavorText.GenericSoundCues)!;
-        _log.Log(cues[Random.Shared.Next(cues.Length)]);
+        _log.Log(cues[RunRng.Next(cues.Length)]);
         _lastSoundCueTurn = TurnCount;
     }
+
+    // The floor boss only. FieldBoss derives from Boss and lands in GameMap.Bosses too, but
+    // wilderness named elites are OPTIONAL content -- gating the way up on them would demand
+    // clearing every one before a floor could be left.
+    private bool FloorBossAlive() =>
+        _map.Bosses.Any(b => b is not FieldBoss && !b.IsDefeated);
 }
 
 // PATH-D-PORT: payload for RecruitDialogRequested. UI subscriber synthesizes a

@@ -8,6 +8,8 @@ using SAOTRPG.Items.Materials;
 using SAOTRPG.Inventory.Core;
 using SAOTRPG.UI.Helpers;
 
+using SAOTRPG.Systems.Input;
+
 namespace SAOTRPG.UI.Dialogs;
 
 // Split-pane inventory: equipment slots left, scrollable item list right.
@@ -20,9 +22,28 @@ public static class InventoryDialog
     private enum SortMode { Default, ByType, ByRarity, ByName, ByValue }
     private static readonly string[] SortLabels = { "Default", "Type", "Rarity", "Name", "Value" };
 
-    // Category filter tabs. 1-5 cycles selection; All = default.
+    // Category filter tabs. All = default.
     private enum FilterMode { All, Weapons, Armor, Materials, Consumables }
     private static readonly string[] FilterLabels = { "All", "Weapons", "Armor", "Materials", "Consumables" };
+
+    // Strip order, and the action each tab answers to. The strip used to number its tabs by
+    // position, which disagreed with the bindings by one — the tab drawn "2 Weapons" was
+    // selected by pressing 1 — so both the order and the digits now come from the binding table
+    // and follow a rebind.
+    private static readonly FilterMode[] TabOrder =
+    {
+        FilterMode.Weapons, FilterMode.Armor, FilterMode.Materials,
+        FilterMode.Consumables, FilterMode.All,
+    };
+
+    private static GameAction ActionFor(FilterMode mode) => mode switch
+    {
+        FilterMode.Weapons     => GameAction.InvFilterWeapons,
+        FilterMode.Armor       => GameAction.InvFilterArmor,
+        FilterMode.Materials   => GameAction.InvFilterMaterials,
+        FilterMode.Consumables => GameAction.InvFilterConsumables,
+        _                      => GameAction.InvFilterAll,
+    };
 
     // Predicate per filter — keeps the type tests in one place so the tab
     // header text and the actual filter stay in sync.
@@ -124,6 +145,10 @@ public static class InventoryDialog
             X = rightX, Y = 2, Width = Dim.Fill(1), Height = Dim.Fill(9),
             Source = new ListWrapper<string>(itemNames),
             CanFocus = true,
+            // Type-ahead off — it swallows the 1-0 quick-slot digits and the compare hotkey.
+            // ListView.OnKeyDown eats a printable rune before KeyDown is raised, so one arrow
+            // key would kill every digit and letter binding for the rest of the session.
+            KeystrokeNavigator = null,
         };
 
         // ── Detail + compare panel ──
@@ -144,9 +169,12 @@ public static class InventoryDialog
         var sortBtn = DialogHelper.CreateButton("Sort");
         sortBtn.X = 1; sortBtn.Y = Pos.AnchorEnd(2);
 
+        // Keys the player can rebind are read from the table, not written out. "1-5: filter"
+        // was a straight transcription and it disagreed with the bindings.
         var hintLabel = new Label
         {
-            Text = "Enter: act | L: lore | 1-5: filter | Shift+N: bind slot | Esc: close",
+            Text = $"Enter: act | {Keybinds.Get(GameAction.InvCompare).Primary}: lore | "
+                 + "digits above: filter | Shift+digit: bind quickbar | Esc: close",
             X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), SchemeName = ColorSchemes.DimName,
         };
 
@@ -194,6 +222,7 @@ public static class InventoryDialog
                 int newIdx = itemRefs.IndexOf(preserved);
                 if (newIdx >= 0) listView.SelectedItem = newIdx;
             }
+            DialogHelper.SelectFirstRow(listView);
             listView.SetNeedsDraw();
             slotView.SetNeedsDraw();
         }
@@ -230,13 +259,18 @@ public static class InventoryDialog
         }
 
         // ── Event wiring ── Enter → context popup.
-        // OpenSelectedItem is the Terminal.Gui 2.0.0 hook; migrate to Accepting past v2.2.
-        listView.Activated += (s, e) =>
+        // Enter is Command.Accept on a ListView, and Activated answers Command.Activate (Space).
+        // An unhandled Accept bubbles to the dialog's default button — Close — so before this
+        // handler existed the advertised "Enter: act" simply shut the inventory. Claiming it
+        // here stops the bubble. Space keeps working through Activated.
+        listView.Accepting += (s, e) =>
         {
-            // Defer so the Enter keypress that triggered OpenSelectedItem
-            // doesn't propagate into the MessageBox and auto-select.
+            e.Handled = true;
+            // Defer so the keypress that opened the popup doesn't propagate into the
+            // MessageBox and auto-select its first button.
             AppHost.App.Invoke(() => ActOnSelectedItem());
         };
+        listView.Activated += (s, e) => AppHost.App.Invoke(() => ActOnSelectedItem());
 
         // Detail label updates as the user browses.
         listView.ValueChanged += (s, e) =>
@@ -306,13 +340,13 @@ public static class InventoryDialog
         {
             if (e.IsShift || (e.KeyCode & KeyCode.CtrlMask) != 0
                 || (e.KeyCode & KeyCode.AltMask) != 0) return;
-            FilterMode? newFilter = e.KeyCode switch
+            FilterMode? newFilter = Keybinds.Resolve(InputContext.Inventory, e) switch
             {
-                KeyCode.D1 => FilterMode.Weapons,
-                KeyCode.D2 => FilterMode.Armor,
-                KeyCode.D3 => FilterMode.Materials,
-                KeyCode.D4 => FilterMode.Consumables,
-                KeyCode.D5 => FilterMode.All,
+                GameAction.InvFilterWeapons     => FilterMode.Weapons,
+                GameAction.InvFilterArmor       => FilterMode.Armor,
+                GameAction.InvFilterMaterials   => FilterMode.Materials,
+                GameAction.InvFilterConsumables => FilterMode.Consumables,
+                GameAction.InvFilterAll         => FilterMode.All,
                 _ => null,
             };
             if (newFilter == null) return;
@@ -325,8 +359,7 @@ public static class InventoryDialog
         // Listed before the Shift+N handler so unmodified L is captured first.
         listView.KeyDown += (s, e) =>
         {
-            var bare = e.KeyCode & ~KeyCode.ShiftMask & ~KeyCode.CtrlMask & ~KeyCode.AltMask;
-            if (bare != KeyCode.L || e.IsShift || (e.KeyCode & KeyCode.CtrlMask) != 0) return;
+            if (!Keybinds.IsPressed(GameAction.InvCompare, e)) return;
             var sel = GetSelectedItem();
             if (sel == null) return;
             CanonInspectPopup.Show(sel);
@@ -338,14 +371,7 @@ public static class InventoryDialog
         listView.KeyDown += (s, e) =>
         {
             if (!e.IsShift) return;
-            int slot = e.KeyCode switch
-            {
-                KeyCode.D1 => 1, KeyCode.D2 => 2, KeyCode.D3 => 3,
-                KeyCode.D4 => 4, KeyCode.D5 => 5, KeyCode.D6 => 6,
-                KeyCode.D7 => 7, KeyCode.D8 => 8, KeyCode.D9 => 9,
-                KeyCode.D0 => 10,
-                _ => 0,
-            };
+            int slot = QuickbarSlotFor(e);
             if (slot == 0) return;
             var selected = GetSelectedItem();
             if (selected is not Consumable cons || string.IsNullOrEmpty(cons.DefinitionId))
@@ -372,21 +398,48 @@ public static class InventoryDialog
 
         // Focus the item list on open so arrow keys work immediately.
         listView.SetFocus();
+        DialogHelper.SelectFirstRow(listView);
 
         DialogHelper.RunModal(dialog);
     }
 
-    // Render the 5-tab filter strip. Active tab uppercase + bracketed, others
-    // dimmed by surrounding spaces. Single Label so we don't fight focus.
+    // Quickbar slot 1-10 for a Shift+digit keystroke, or 0 for anything else.
+    //
+    // The rune first: Shift sets KeyCode.ShiftMask, so comparing the whole KeyCode against a
+    // bare KeyCode.D1 never matched and this binding was dead. A driver may report either the
+    // digit or the symbol Shift produces over it on a US layout, so both readings are accepted;
+    // the masked KeyCode covers a layout whose symbols differ.
+    private static int QuickbarSlotFor(Key e)
+    {
+        int slot = (char)e.AsRune.Value switch
+        {
+            '1' or '!' => 1, '2' or '@' => 2, '3' or '#' => 3, '4' or '$' => 4, '5' or '%' => 5,
+            '6' or '^' => 6, '7' or '&' => 7, '8' or '*' => 8, '9' or '(' => 9, '0' or ')' => 10,
+            _ => 0,
+        };
+        if (slot != 0) return slot;
+
+        return (e.KeyCode & ~KeyCode.ShiftMask) switch
+        {
+            KeyCode.D1 => 1, KeyCode.D2 => 2, KeyCode.D3 => 3, KeyCode.D4 => 4, KeyCode.D5 => 5,
+            KeyCode.D6 => 6, KeyCode.D7 => 7, KeyCode.D8 => 8, KeyCode.D9 => 9, KeyCode.D0 => 10,
+            _ => 0,
+        };
+    }
+
+    // Render the 5-tab filter strip. Active tab bracketed, others dimmed by surrounding
+    // spaces. Single Label so we don't fight focus. Each tab prints the key actually bound to
+    // it, so the strip cannot drift from the bindings and a rebind moves the digit.
     private static string BuildTabStrip(FilterMode active)
     {
         var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < FilterLabels.Length; i++)
+        for (int i = 0; i < TabOrder.Length; i++)
         {
-            bool isActive = i == (int)active;
-            string label = FilterLabels[i];
-            sb.Append(isActive ? $"[{i + 1} {label}]" : $" {i + 1} {label} ");
-            if (i < FilterLabels.Length - 1) sb.Append(' ');
+            FilterMode mode = TabOrder[i];
+            string key = Keybinds.Get(ActionFor(mode)).Primary.ToString();
+            string label = $"{key} {FilterLabels[(int)mode]}";
+            sb.Append(mode == active ? $"[{label}]" : $" {label} ");
+            if (i < TabOrder.Length - 1) sb.Append(' ');
         }
         return sb.ToString();
     }

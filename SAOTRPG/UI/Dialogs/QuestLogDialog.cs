@@ -19,8 +19,8 @@ public static class QuestLogDialog
         bool showCompleted = false;
 
         // ── Tab buttons ──────────────────────────────────────────────
-        var activeTab = new Button { Text = " Active ", X = 2, Y = 0, NoPadding = true, SchemeName = ColorSchemes.GoldName };
-        var completedTab = new Button { Text = " Completed ", X = 14, Y = 0, NoPadding = true, SchemeName = ColorSchemes.DimName };
+        var activeTab = new Button { Text = " Active ", X = 2, Y = 0, NoPadding = true, SchemeName = ColorSchemes.GoldName, ShadowStyle = null };
+        var completedTab = new Button { Text = " Completed ", X = 14, Y = 0, NoPadding = true, SchemeName = ColorSchemes.DimName, ShadowStyle = null };
         var countLabel = new Label
         {
             Text = $"{QuestSystem.ActiveQuests.Count}/{QuestSystem.MaxActiveQuests} active",
@@ -35,6 +35,10 @@ public static class QuestLogDialog
             X = 1, Y = 2, Width = 38, Height = Dim.Fill(4),
             Source = new ListWrapper<string>(names),
             CanFocus = true,
+            // Type-ahead off — it swallows the P hotkey that toggles completed quests.
+            // ListView.OnKeyDown eats a printable rune before KeyDown is raised, so one arrow
+            // key would kill it for the rest of the session.
+            KeystrokeNavigator = null,
         };
 
         // ── Detail panel (right side) ────────────────────────────────
@@ -126,6 +130,7 @@ public static class QuestLogDialog
                 names.Add($"{pinTag}{status} {typeTag} {TextHelpers.Truncate(q.Title, 20)}");
             }
             listView.Source = new ListWrapper<string>(names);
+            DialogHelper.SelectFirstRow(listView);
             countLabel.Text = showCompleted
                 ? $"{QuestSystem.CompletedQuests.Count} done"
                 : $"{QuestSystem.ActiveQuests.Count}/{QuestSystem.MaxActiveQuests} active";
@@ -218,6 +223,9 @@ public static class QuestLogDialog
             hint);
         DialogHelper.AddCloseFooter(dialog);
         listView.SetFocus();
+        // RefreshList ran before ValueChanged was wired, so paint the first row's detail by hand.
+        DialogHelper.SelectFirstRow(listView);
+        ShowDetail(listView.SelectedItem ?? -1);
         DialogHelper.RunModal(dialog);
     }
 }
