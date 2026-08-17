@@ -1,63 +1,112 @@
-# AincradTRPG ASCII VERSION
+# AincradTRPG
 
-A Sword Art Online–themed ASCII roguelike built in C# / .NET 8 with [Terminal.Gui](https://github.com/gui-cs/Terminal.Gui).
+A *Sword Art Online*–themed ASCII roguelike for the terminal, built in C# on
+[Terminal.Gui](https://github.com/gui-cs/Terminal.Gui).
 
-Climb all 100 floors of Aincrad. Die, and it's game over — no second try. Beat the death game.
+Climb all 100 floors of Aincrad. Death deletes the save — there is no second try.
 
-## Features
+```
+################################
+#..........♣....................#
+#....@.....♣......k.............#
+#..........♣..........Π.........#
+#...◇......................◈....#
+################################
+```
 
-- **100 floors** of procedurally generated dungeons, towns, and labyrinths
-- **RGB-lit ASCII** rendering with a shadowcaster FOV and dynamic lighting
-- **Named canon weapons and bosses** pulled from the Aincrad arc, Progressive novels, and SAO games
-- **Sword Skills system** with weapon proficiency, Outside System Skills, and Unique Skills
-- **Biomes, weather, and day/night cycle** that change how the floor plays
-- **Crafting, cooking, field bosses, bounties**, faction reputation, and seasonal events
-- **Run Modifiers** — stack challenge modifiers for a score multiplier (Naked Ingress, Laughing Coffin, Heathcliff's Gauntlet, and more)
+## What it is
 
-## Run it
+A turn-based roguelike where the whole world is a fixed character grid. Every floor is generated
+from a seed, so the same seed always produces the same world — and the run ends for good when you
+die. The presentation leans on 24-bit colour, a shadowcasting field of view and per-tile lighting
+rather than on sprites; the player is `@`, as tradition requires.
 
-Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download).
+The SAO setting is played straight: canonical floor bosses, named weapons, the sword-skill system,
+and the towns you would expect where you would expect them. There is no blood — combat resolves in
+light and polygon shatter, the way the source material does.
+
+## Running it
+
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
 cd SAOTRPG
 dotnet run
 ```
 
-That's it. The game launches in your terminal.
+The game launches in your terminal. A **120×30** terminal is the supported minimum; it is happier
+with more. Keyboard only — there are no mouse bindings anywhere.
 
-## Controls
+Useful flags:
 
-- Arrow keys / WASD — move
-- Space — wait / attack adjacent
-- `i` — inventory
-- `p` — character sheet
-- `m` — minimap
-- `?` — full keybind list in-game
-
-A full keyboard-only game. No mouse required.
-
-## Requirements
-
-- .NET 8 SDK
-- A terminal with 24-bit color and Unicode support (Windows Terminal, iTerm2, Alacritty, WezTerm, kitty, etc.)
-- ~60 MB of RAM
-- Recommended terminal size: 120×40 or larger
-
-Windows, Linux, and macOS all supported.
-
-## Project layout
-
-```
-SAOTRPG/
-├── Program.cs              — entry point
-├── Entities/               — player, monsters, NPCs, allies
-├── Inventory/              — inventory + equipment + stats
-├── Items/                  — weapons, armor, food, potions, crystals (data-driven)
-├── Map/                    — map generation, biomes, weather, lighting
-├── Systems/                — turn manager, combat, AI, quests, skills, save/load
-└── UI/                     — screens, dialogs, minimap, overlays
+```bash
+dotnet run -- --perf          # frame/loop timing to debug.log
+dotnet run -- --freeze-anim   # pin all wall-clock animation
+dotnet run -- --verify-tiles  # diff the incremental map layer against a full recompute
 ```
 
-## License
+## What's in it
 
-See `LICENSE` — MIT.
+| | |
+|---|---|
+| Floors | 100, each generated from the run seed |
+| Biomes | 11, JSON-tunable and hot-reloadable at runtime |
+| Room prefabs | 102 hand-authored ASCII grids |
+| Monsters | 66 species, 100 floor bosses, 34 field bosses |
+| Items | 549 registered definitions |
+| Sword skills | 123 across 17 weapon types, plus Unique Skills |
+| Milestones | 337 — achievements, titles, life-skill ranks, a collection log |
+| In-game guide | 251 topics, searchable, unlocked as you climb |
+
+Beyond the climb: crafting and weapon evolution, enhancement and refinement, cooking, mining and
+other life skills, guilds and faction reputation, karma, quests, party members, field bosses,
+weather and a day/night cycle, and stackable run modifiers that raise both the difficulty and the
+score multiplier.
+
+## Layout
+
+```
+SAOTRPG/          the game
+  Entities/       player, monsters, NPCs
+  Items/          registry and item definitions
+  Inventory/      equipment slots and stat aggregation
+  Map/            generation pipeline, tiles, FOV, biomes
+  Systems/        turn manager, combat, skills, progression
+  UI/             Terminal.Gui screens, dialogs and the map renderer
+  Content/        biome JSON and room prefabs
+Tools/            offline verification harnesses (see below)
+```
+
+`TurnManager`, `MapView` and `MapGenerator` are partial classes split across many files, one
+concern per file.
+
+## Verification
+
+The game is checked by a suite of offline probes rather than a unit-test project. They drive the
+real systems — a real `TurnManager`, a real `MapView`, real dialogs — and each exists because of a
+specific class of failure that is silent at runtime: content that parses but is never consumed,
+a milestone that can never be earned, an item that can never be obtained, a map layer that goes
+stale, a key path that renders but cannot be reached.
+
+```bash
+cd Tools/ContentProbe   && dotnet run   # content integrity
+cd Tools/SeedProbe      && dotnet run   # run reproducibility
+cd Tools/ProgressProbe  && dotnet run   # run progression and permadeath
+cd Tools/TileVerifyProbe && dotnet run  # map render correctness
+cd Tools/DialogKeyProbe && dotnet run   # dialog key paths
+cd Tools/GuideAudit     && dotnet run   # in-game guide invariants
+cd Tools/CodeAudit      && python invariants.py
+```
+
+All of them exit non-zero on failure.
+
+## Status
+
+Playable end to end and under active development. Saves are not migrated between versions — a
+change to generation or to save structure means starting a fresh run, which is by design rather
+than an oversight.
+
+## Credits
+
+Sword Art Online is the work of Reki Kawahara. This is a non-commercial fan project and is not
+affiliated with or endorsed by the rights holders.
