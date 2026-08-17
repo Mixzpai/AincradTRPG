@@ -86,6 +86,17 @@ public class SaveData
     public int SlowTurnsLeft { get; set; }
     public int ShrineBuffTurns { get; set; }
     public int LevelUpBuffTurns { get; set; }
+    // The MAGNITUDE half of each timed effect above. Saving only the duration left a loaded run
+    // counting down a blessing worth nothing and a poison dealing nothing, while the status tray
+    // advertised both — TakeDamage(0) every tick, and a HEMORRHAGE burst of (0+0)*2.
+    public int ShrineBuffAmount { get; set; }
+    public int LevelUpBuffAmount { get; set; }
+    public int PoisonDamagePerTick { get; set; }
+    public int BleedDamagePerTick { get; set; }
+    public int InvisibilityTurnsLeft { get; set; }
+    // Active timed potion buffs. Persisted so a save/load cannot launder a buff into a permanent
+    // stat, which is exactly what the pre-FB-730 behaviour did on every use.
+    public List<TimedBuffSave> TimedBuffs { get; set; } = new();
     // Active food regen buff. 0 = inactive (legacy default safe).
     public int FoodRegenRate { get; set; }
     public int FoodRegenTurnsLeft { get; set; }
@@ -253,4 +264,13 @@ public class PendingTalentSave
     public int Level { get; set; }
     public List<string> PerkIds { get; set; } = [];
 }
+
+// One active timed buff, flattened for the save file.
+public class TimedBuffSave
+{
+    public string Stat { get; set; } = "";
+    public int Potency { get; set; }
+    public int TurnsLeft { get; set; }
+}
+
 

@@ -25,9 +25,22 @@ public sealed class OreVeinPlacementPass : IGenerationPass
         int veinCount = (int)Math.Round(baseCount * biomeDensity);
         if (veinCount <= 0) return;
 
-        for (int i = 0; i < veinCount; i++)
+        var candidates = CollectSeedCandidates(ctx);
+        if (candidates.Count == 0)
         {
-            if (!TryPickSeed(ctx, out int cx, out int cy)) continue;
+            UI.DebugLogger.LogGame("MAPGEN",
+                $"OreVein: floor {floor} has no viable host tile — no veins placed");
+            return;
+        }
+
+        // Seeds are drawn without replacement so two veins cannot start on the same tile and
+        // silently collapse into one.
+        for (int i = 0; i < veinCount && candidates.Count > 0; i++)
+        {
+            int pick = rng.Next(candidates.Count);
+            var (cx, cy) = candidates[pick];
+            candidates.RemoveAt(pick);
+
             VeinTier tier = PickTierForFloor(floor, rng);
             int radius = 2 + rng.Next(2);                  // 2-3
             int targetCount = 3 + rng.Next(4);             // 3-6
@@ -81,24 +94,47 @@ public sealed class OreVeinPlacementPass : IGenerationPass
     };
 
     // Seed must be a Wall in interior, outside SafeZone, inside disk, and >=4 tiles from any room.
-    private static bool TryPickSeed(WorldContext ctx, out int cx, out int cy)
+    // WHAT ROCK AN ORE VEIN MAY REPLACE.
+    //
+    // Both the seed picker and the grower used to require TileType.Wall, and the heightmap
+    // overworld barely produces Wall: measured on floor 2, 377 Wall tiles against 216,827
+    // Mountain — and the few Wall tiles that exist are prefab interiors, which IsTooCloseToRoom
+    // then rejects. So all 40 seed attempts failed on every floor and NOT ONE ORE VEIN EVER
+    // SPAWNED: 0 of 21 floors across 3 seeds. The whole Mining life skill — three pickaxe tiers,
+    // MiningOreTables, the biome Enhancement Ore that OreTableId selects, the mining perks and
+    // milestones — sat downstream of a pass that could never place anything.
+    //
+    // Wall stays in the set because labyrinth floors are built from it; Mountain and Rock are the
+    // overworld's stone and are what the pass's own comment ("terrain rocks already exist") always
+    // meant.
+    private static bool IsVeinHost(TileType t) =>
+        t is TileType.Wall or TileType.Mountain or TileType.Rock;
+
+    // EVERY TILE A VEIN COULD SEED ON, collected in one scan.
+    //
+    // This used to throw 40 random darts at the whole map and keep the first that landed on a
+    // valid host. Measured, the viable pool is 7,770 tiles of ~1,000,000 on floor 2 — 0.8% — so
+    // the darts almost never landed and no floor got any ore at all. Widening the host test alone
+    // moved it from 0 of 21 floors to 2 of 21: the sampling, not the predicate, was the wall.
+    //
+    // One scan of a 1000x1000 floor is cheap beside the passes that already walk every cell, and
+    // it makes placement DETERMINISTIC in the useful sense: if hosts exist, veins are placed.
+    private static List<(int X, int Y)> CollectSeedCandidates(WorldContext ctx)
     {
         var map = ctx.Map;
-        var rng = ctx.Rng;
-        const int Attempts = 40;
-        for (int i = 0; i < Attempts; i++)
+        var candidates = new List<(int X, int Y)>();
+        for (int y = 4; y < ctx.Height - 4; y++)
         {
-            int x = rng.Next(4, Math.Max(5, ctx.Width - 4));
-            int y = rng.Next(4, Math.Max(5, ctx.Height - 4));
-            if (!ctx.IsInsideCircle(x, y)) continue;
-            if (!map.InInterior(x, y)) continue;
-            if (map.Tiles[x, y].Type != TileType.Wall) continue;
-            if (IsTooCloseToRoom(ctx.Rooms, x, y, 4)) continue;
-            cx = x; cy = y;
-            return true;
+            for (int x = 4; x < ctx.Width - 4; x++)
+            {
+                if (!IsVeinHost(map.Tiles[x, y].Type)) continue;
+                if (!ctx.IsInsideCircle(x, y)) continue;
+                if (!map.InInterior(x, y)) continue;
+                if (IsTooCloseToRoom(ctx.Rooms, x, y, 4)) continue;
+                candidates.Add((x, y));
+            }
         }
-        cx = cy = 0;
-        return false;
+        return candidates;
     }
 
     private static bool IsTooCloseToRoom(IReadOnlyList<Room> rooms, int x, int y, int margin)
@@ -130,7 +166,7 @@ public sealed class OreVeinPlacementPass : IGenerationPass
             frontier.RemoveAt(idx);
 
             if (!map.InInterior(x, y)) continue;
-            if (map.Tiles[x, y].Type != TileType.Wall) continue;
+            if (!IsVeinHost(map.Tiles[x, y].Type)) continue;
             int dist = Math.Abs(x - cx) + Math.Abs(y - cy);
             if (dist > radius) continue;
 

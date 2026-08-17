@@ -13,7 +13,7 @@ namespace SAOTRPG.UI.Helpers;
 // Labels whose text changes, and without the clear a shorter string leaves the tail of the previous
 // one behind. Letting the framework clear costs nothing on screens that repaint only on a keypress.
 //
-// The trade-off has one edge: the paired invariant in CLAUDE.md says a container between a
+// The trade-off has one edge: the paired render invariant says a container between a
 // guard-carrying view and GameWindow must cancel its clear. No pre-map view carries that guard, so
 // it does not apply — but a Card placed on GameScreen would have to become a PanelView, and its
 // content labels would then need fixed widths to stay residue-free.

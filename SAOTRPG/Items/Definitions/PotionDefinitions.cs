@@ -29,7 +29,7 @@ public static class PotionDefinitions
         "Antidote", 0, "Cures poison and bleed.");
 
     public static Potion CreateBattleElixir() => Make("battle_elixir", "Battle Elixir", 150, "Rare",
-        "Buff", 60, "Increases Attack and Speed for 60 seconds.", maxStacks: 20,
+        "Buff", 60, "Increases Attack by 15 and Speed by 10 for 60 turns.", maxStacks: 20,
         effects: new StatModifierCollection()
             .Add(StatType.Attack, 15, duration: 60)
             .Add(StatType.Speed, 10, duration: 60));

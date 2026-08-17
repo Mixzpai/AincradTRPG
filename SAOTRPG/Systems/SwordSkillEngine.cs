@@ -207,7 +207,7 @@ public partial class TurnManager
 
         // ── Advance turn ─────────────────────────────────────────────
         AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow();
+        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
         PassiveRegen();
@@ -225,7 +225,7 @@ public partial class TurnManager
             _skillCooldowns[skill.Id] = skill.CooldownTurns;
 
         AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow();
+        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
 

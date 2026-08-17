@@ -54,7 +54,7 @@ public partial class MapView
                 byte b = (byte)(p.Color.B + (p.FadeTo.B - p.Color.B) * t);
                 c = new Color(r, g, b);
             }
-            DrawGlyph(mx, my, p.Glyph, Gfx.Attr(c, Color.Black), w, h);
+            DrawGlyph(mx, my, p.Glyph, Gfx.Attr(OverlayColor(c), Color.Black), w, h);
         }
 
         RenderMonsterDeathBursts(w, h, dtMs);
@@ -97,7 +97,7 @@ public partial class MapView
             {
                 // Bright core — blue-white braille FullCell at kill point, with corona of dense braille.
                 DrawGlyph(burst.X, burst.Y, BrailleCanvas.Braille(BrailleCanvas.FullCell),
-                    Gfx.Attr(coreColor, black), w, h);
+                    Gfx.Attr(OverlayColor(coreColor), black), w, h);
                 // Silhouette corona: scales with tier radius.
                 int silR = burst.Tier switch
                 {
@@ -120,7 +120,7 @@ public partial class MapView
                     // Color crossfades core → brightCyan over the flash window.
                     float ft = t / Math.Max(1f, burst.FlashMs);
                     Color cc = LerpColor(coreColor, brightCyan, ft);
-                    DrawGlyph(px, py, BrailleCanvas.Braille(mask), Gfx.Attr(cc, black), w, h);
+                    DrawGlyph(px, py, BrailleCanvas.Braille(mask), Gfx.Attr(OverlayColor(cc), black), w, h);
                 }
             }
             else
@@ -160,7 +160,7 @@ public partial class MapView
                         if (mask == 0) continue;
                         glyph = BrailleCanvas.Braille(mask);
                     }
-                    DrawGlyph(px, py, glyph, Gfx.Attr(color, black), w, h);
+                    DrawGlyph(px, py, glyph, Gfx.Attr(OverlayColor(color), black), w, h);
                 }
             }
 

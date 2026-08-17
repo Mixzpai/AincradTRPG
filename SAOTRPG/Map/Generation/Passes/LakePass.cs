@@ -20,7 +20,15 @@ public sealed class LakePass : IGenerationPass
         for (int i = 0; i < lakeCount; i++)
         {
             if (!TryPickLakeCenter(ctx, width, height, out int cx, out int cy)) continue;
-            int radius = rng.Next(4, 7);
+            // Radius scales with the floor's disk, the same correction PocketBiomePass needed.
+            // A flat 4-6 was sized for the old small floors: on a 1000x1000 map six puddles of
+            // radius 5 cover about 0.03% of the ground, which is what a Forest floor measured
+            // when no river rolled — an amount of water no player would ever notice. A twelfth of
+            // the disk radius keeps a lake readable at both ends of the climb. Still exactly ONE
+            // draw, so the stream position for every later pass is unchanged.
+            int diskRadius = Math.Min(width, height) / 2;
+            int baseR = Math.Clamp(diskRadius / 20, 4, 40);
+            int radius = baseR + rng.Next(baseR / 3 + 1);
             MapGenerator.GenerateLake(map, cx, cy, radius, rng, seedPct, caPasses);
         }
 

@@ -68,8 +68,8 @@ public partial class MapView
             ? ('╔', '╗', '╚', '╝', '═', '║')
             : ('┌', '┐', '└', '┘', '─', '│');
 
-        var borderAttr = Gfx.Attr(accent, Color.Black);
-        var textAttr = Gfx.Attr(textCol, Color.Black);
+        var borderAttr = Gfx.Attr(OverlayColor(accent), Color.Black);
+        var textAttr = Gfx.Attr(OverlayColor(textCol), Color.Black);
 
         // Top border
         SetAttribute(borderAttr);

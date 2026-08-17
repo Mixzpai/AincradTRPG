@@ -206,6 +206,19 @@ public static class OptionsScreen
         };
         y += 2;
 
+        // Status tray labels. Shift+S flips this in play; here it is set before a run starts.
+        var trayVerboseLabel = FormLabel("Status Tray Labels", y);
+        var trayVerboseCheck = Toggle("Status Tray Labels", y, settings.StatusTrayVerbose,
+            v => settings.StatusTrayVerbose = v);
+        y += 1;
+        var trayVerboseDesc = new Label
+        {
+            Text = "Spell status effects out (POISON·3) instead of letters (P×3).",
+            X = ControlX, Y = y,
+            Width = 62, Height = 1, SchemeName = ColorSchemes.DimName,
+        };
+        y += 2;
+
         // Same family as the bars above: a glyph fallback for a font that lacks the code point.
         var asciiGlyphsLabel = FormLabel("ASCII Guide Arrows", y);
         var asciiGlyphsCheck = Toggle("ASCII Guide Arrows", y, settings.UseAsciiDisclosureGlyphs,
@@ -512,7 +525,7 @@ public static class OptionsScreen
             footstepLengthLabel, footstepLengthRadio,
             footstepOpacityLabel, footstepOpacityRadio,
             flashLabel, flashCheck,
-            asciiBarsLabel, asciiBarsCheck, asciiBarsDesc,
+            asciiBarsLabel, asciiBarsCheck, asciiBarsDesc, trayVerboseLabel, trayVerboseCheck, trayVerboseDesc,
             asciiGlyphsLabel, asciiGlyphsCheck, asciiGlyphsDesc);
         accessPage.Add(
             motionLabel, motionCheck, motionDesc,

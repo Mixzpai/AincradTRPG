@@ -97,39 +97,67 @@ public partial class TurnManager
         if (_slowTurnsLeft <= 0) _log.LogCombat("You are no longer slowed.");
     }
 
-    private void AdvanceTurn()
+    // EVERY TIMED DURATION IN THE GAME, ticked once per turn.
+    //
+    // These used to live in AdvanceTurn — and the ordinary successful move does TurnCount++
+    // directly and never calls it, so on a populated floor only the turns that happened to be
+    // attacks ticked anything. Measured: 13 of 46 turns, i.e. a declared 20-turn skill cooldown
+    // really lasted about 70, invisibility outlasted its own duration roughly threefold, and a
+    // confused mob stayed confused for as long as the player kept walking.
+    //
+    // Called beside TickPoison/TickBleed/TickSlow, which is the one hook every turn-consuming
+    // path already reaches. AdvanceTurn's callers reach it too, so nothing double-ticks.
+    //
+    // DELIBERATELY NOT MOVED, and the distinction is durations versus attrition: hunger drain,
+    // biome damage, starvation and TickExhaustion stay where they are. Each of those is a RATE
+    // rather than a declared duration, so rehoming them would change how demanding the game is
+    // rather than make a stated number true. (TickExhaustion is the mirror case — its single call
+    // site is the walking path, so fatigue currently builds only while walking.) That is a balance
+    // decision for the dev.
+    // THE WORLD CLOCK: hunger, biome damage and starvation.
+    //
+    // These lived in AdvanceTurn, which the ordinary move never calls — so the modulo test was
+    // only SAMPLED on the ~28% of turns that were attacks, mining or stuns. That did not merely
+    // slow attrition down, it made it ERRATIC: whether a hunger tick landed depended on an attack
+    // turn happening to coincide with a multiple of the interval. Two players walking the same
+    // floor could starve at very different rates for reasons neither could see.
+    //
+    // Every interval is scaled by AttritionTurnScale so the AVERAGE rate is preserved. The
+    // sampling fraction was measured at 13 AdvanceTurns per 46 turns (ProgressProbe s14), i.e.
+    // one attrition evaluation per ~3.5 turns; 4 is that rounded to a whole multiplier, which
+    // leaves the game about 13% gentler on average than the old behaviour and, more importantly,
+    // identical for every playstyle.
+    //
+    // TickExhaustion is deliberately NOT here. Fatigue is an EXERTION clock, and "walking tires
+    // you, standing still does not" is at least arguable as a design; a hunger clock that runs
+    // faster because you chose to fight is not. Moving it stays the dev's call.
+    private const int AttritionTurnScale = 4;
+
+    private void TickAttrition()
     {
-        TurnCount++;
-        TickSkillCooldowns();
-        TickInvisibility();
-        TickConfusedMobs();
-
-        if (TurnCount > 0 && TurnCount % FlavorText.MilestoneInterval == 0)
-        {
-            string msg = FlavorText.MilestoneMessages[RunRng.Next(FlavorText.MilestoneMessages.Length)];
-            _log.LogSystem(string.Format(msg, TurnCount));
-        }
-
         // Normal hunger + biome-specific extra drain (desert/volcanic/void).
         // Iron Rank modifier doubles hunger drain.
         int drainAmount = 1 + BiomeSystem.SatietyDrainBonus;
         if (RunModifiers.IsActive(RunModifier.IronRank)) drainAmount *= 2;
-        if (TurnCount % HungerDrainInterval == 0 && Satiety > 0)
+        if (TurnCount % (HungerDrainInterval * AttritionTurnScale) == 0 && Satiety > 0)
             Satiety = Math.Max(0, Satiety - drainAmount);
 
         // Biome passive damage (volcanic heat, void corruption).
         var (biomeDmg, bioInterval) = BiomeSystem.EnvironmentDamage;
-        if (biomeDmg > 0 && bioInterval > 0 && TurnCount % bioInterval == 0 && !_player.IsDefeated)
+        int bioScaled = bioInterval * AttritionTurnScale;
+        if (biomeDmg > 0 && bioInterval > 0 && TurnCount % bioScaled == 0 && !_player.IsDefeated)
         {
             _player.TakeDamage(biomeDmg);
-            if (TurnCount % (bioInterval * 3) == 0) // log every 3rd tick to reduce spam
+            if (TurnCount % (bioScaled * 3) == 0) // log every 3rd tick to reduce spam
                 _log.Log($"The {BiomeSystem.DisplayName} environment wears on you. (-{biomeDmg} HP)");
             if (_player.IsDefeated) { LastKillerName = $"the {BiomeSystem.DisplayName}"; RaisePlayerDied("biome"); }
         }
 
+        // Starvation carried no interval of its own — it was one HP per AdvanceTurn, which the
+        // sampling made roughly one per 3.5 turns. Keyed to the same scale so it stays there.
         if (Satiety <= 0 && !_player.IsDefeated)
         {
-            _player.TakeDamage(1);
+            if (TurnCount % AttritionTurnScale == 0) _player.TakeDamage(1);
             if (!_starvingWarned)
             {
                 _log.LogCombat("You're starving! Eat something before it's too late!");
@@ -146,6 +174,13 @@ public partial class TurnManager
         {
             _log.Log("Your stomach growls... you're getting hungry.");
         }
+    }
+
+    private void TickPerTurnTimers()
+    {
+        TickSkillCooldowns();
+        TickInvisibility();
+        TickConfusedMobs();
 
         if (_shrineBuffTurns > 0)
         {
@@ -158,6 +193,28 @@ public partial class TurnManager
             _levelUpBuffTurns--;
             if (_levelUpBuffTurns == 0) { _levelUpBuff = 0; _log.Log("The level-up surge fades."); }
         }
+
+        if (_foodRegenTurnsLeft > 0)
+        {
+            _foodRegenTurnsLeft--;
+            if (_foodRegenTurnsLeft == 0)
+            { _foodRegenRate = 0; _log.Log("The meal's restorative warmth fades."); }
+        }
+
+        ExpireTimedBuffs();
+        TickAttrition();
+    }
+
+    private void AdvanceTurn()
+    {
+        TurnCount++;
+
+        if (TurnCount > 0 && TurnCount % FlavorText.MilestoneInterval == 0)
+        {
+            string msg = FlavorText.MilestoneMessages[RunRng.Next(FlavorText.MilestoneMessages.Length)];
+            _log.LogSystem(string.Format(msg, TurnCount));
+        }
+
     }
 
     private void PassiveRegen()
@@ -175,15 +232,11 @@ public partial class TurnManager
         int hpBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.HPRegen>(h => h.Amount);
         int spBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.SPRegen>(s => s.Amount);
 
-        // Active food regen buff folds into the same tick.
-        // Consumed once per regen interval; expires when turns reach 0.
-        int foodBonus = 0;
-        if (_foodRegenTurnsLeft > 0)
-        {
-            foodBonus = _foodRegenRate;
-            _foodRegenTurnsLeft--;
-            if (_foodRegenTurnsLeft == 0) { _foodRegenRate = 0; _log.Log("The meal's restorative warmth fades."); }
-        }
+        // Active food regen buff folds into the same tick. The countdown itself lives in
+        // TickPerTurnTimers — this only READS the rate. It used to decrement here, once per regen
+        // INTERVAL rather than once per turn, so a buff whose parameter, field and tray row all
+        // say "turns" actually lasted RegenInterval times longer than its own number.
+        int foodBonus = _foodRegenTurnsLeft > 0 ? _foodRegenRate : 0;
 
         if (_player.CurrentHealth < _player.MaxHealth)
         {

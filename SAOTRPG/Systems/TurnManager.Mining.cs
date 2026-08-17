@@ -81,7 +81,7 @@ public partial class TurnManager
 
         // Standard turn-consume tail (mirrors swing/move).
         AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow();
+        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
         if (_player.IsDefeated) { TurnCompleted?.Invoke(); return true; }
         ProcessEntityTurns();
         PassiveRegen();

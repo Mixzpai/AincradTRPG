@@ -539,6 +539,10 @@ public static class ItemRegistry
         Register("celestial_chestplate",   () => ArmorDefinitions.CreateCelestialChest());
         Register("celestial_helmet",       () => ArmorDefinitions.CreateCelestialHelmet());
         Register("celestial_boots",        () => ArmorDefinitions.CreateCelestialBoots());
+        Register("steel_legs",          () => ArmorDefinitions.CreateSteelLegs());
+        Register("mythril_legs",        () => ArmorDefinitions.CreateMythrilLegs());
+        Register("adamantite_legs",     () => ArmorDefinitions.CreateAdamantiteLegs());
+        Register("celestial_legs",      () => ArmorDefinitions.CreateCelestialLegs());
 
         // ── Pickaxes (Tool slot — mining) ────────────────────────────
         Register("wooden_pickaxe",   () => PickaxeDefinitions.CreateWoodenPickaxe());
@@ -552,6 +556,9 @@ public static class ItemRegistry
         Register("scholars_pendant", () => AccessoryDefinitions.CreateScholarsPendant());
         Register("swift_band", () => AccessoryDefinitions.CreateSwiftBand());
         Register("vitality_charm", () => AccessoryDefinitions.CreateVitalityCharm());
+        Register("leather_bracer",  () => AccessoryDefinitions.CreateLeatherBracer());
+        Register("duelists_bangle", () => AccessoryDefinitions.CreateDuelistsBangle());
+        Register("wardens_armlet",  () => AccessoryDefinitions.CreateWardensArmlet());
 
         // Potions
         Register("health_potion", () => PotionDefinitions.CreateHealthPotion());

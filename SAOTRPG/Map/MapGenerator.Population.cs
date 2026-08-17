@@ -219,6 +219,16 @@ public static partial class MapGenerator
                             "Always carry Health Potions — press 1 to use one fast. " +
                             "Rest with R when out of combat to heal. Watch your hunger bar. " +
                             "And if you see a glowing enemy? That's an Elite. Be careful."),
+                        new("You've heard about me, haven't you.",
+                            "Word travels. Orange cursor, guards watching the gate... " +
+                            "I'm not going to lecture you. But shops won't serve you up here, " +
+                            "and I can't be seen clearing with you. Sort it out.",
+                            new DialogueCondition(KarmaAtMost: -50)),
+                        new("I've been climbing. Anything else?",
+                            "Past the low floors? Then here's the real one: the Labyrinth changes " +
+                            "when you leave it. Stairs stay sealed while the floor boss lives, so " +
+                            "clear it in one go — don't step out to restock halfway up.",
+                            new DialogueCondition(MinFloorReached: 10)),
                     }),
                 new("One more thing — the Labyrinth is where the floor boss waits. " +
                     "You HAVE to beat it to reach Floor 2. Good luck out there!"),
@@ -241,6 +251,11 @@ public static partial class MapGenerator
                             "Fight with the same weapon type to build proficiency. " +
                             "Higher proficiency = more damage + new Sword Skills. " +
                             "Also check shops for better gear as you climb floors."),
+                        new("Anything the other players don't know?",
+                            "Since you've been up there — matched armour is worth more than the " +
+                            "sum of it. Same material head to boots and the set carries you. " +
+                            "That one usually costs Col.",
+                            new DialogueCondition(MinFloorReached: 25)),
                         new("What's the catch?",
                             "Die here and you lose everything — save gets wiped clean. " +
                             "Aincrad doesn't hand out second chances, yeah? So don't die."),

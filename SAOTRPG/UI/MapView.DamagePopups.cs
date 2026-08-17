@@ -163,7 +163,7 @@ public partial class MapView
                 draw = Dim(p.Color, t);
             }
 
-            DrawTextAtView(vx, vy, p.Text, Gfx.Attr(draw, Color.Black), w, h);
+            DrawTextAtView(vx, vy, p.Text, Gfx.Attr(OverlayColor(draw), Color.Black), w, h);
         }
     }
 

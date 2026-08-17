@@ -39,6 +39,10 @@ public static class ArmorDefinitions
         220, "Uncommon", 60, 10, "Boots", 10, 4,
         new StatModifierCollection().Add(StatType.Defense, 10).Add(StatType.Agility, 3));
 
+    public static Armor CreateSteelLegs() => Make("steel_legs", "Steel Chausses",
+        260, "Uncommon", 75, 10, "Legs", 11, 5,
+        new StatModifierCollection().Add(StatType.Defense, 11).Add(StatType.Endurance, 4));
+
     // ── Tier 3: Mythril (Floors 25-50) ───────────────────────────────
 
     public static Armor CreateMythrilChest() => Make("mythril_chestplate", "Mythril Chestplate",
@@ -52,6 +56,10 @@ public static class ArmorDefinitions
     public static Armor CreateMythrilBoots() => Make("mythril_boots", "Mythril Sabatons",
         650, "Rare", 90, 25, "Boots", 20, 3,
         new StatModifierCollection().Add(StatType.Defense, 20).Add(StatType.Agility, 8).Add(StatType.Speed, 5));
+
+    public static Armor CreateMythrilLegs() => Make("mythril_legs", "Mythril Chausses",
+        700, "Rare", 95, 25, "Legs", 22, 4,
+        new StatModifierCollection().Add(StatType.Defense, 22).Add(StatType.Endurance, 7).Add(StatType.Agility, 4));
 
     // ── Tier 4: Adamantite (Floors 50-75) ────────────────────────────
 
@@ -67,6 +75,10 @@ public static class ArmorDefinitions
         1900, "Epic", 130, 50, "Boots", 35, 4,
         new StatModifierCollection().Add(StatType.Defense, 35).Add(StatType.Agility, 14).Add(StatType.Speed, 8));
 
+    public static Armor CreateAdamantiteLegs() => Make("adamantite_legs", "Adamantite Greaves",
+        2000, "Epic", 140, 50, "Legs", 38, 5,
+        new StatModifierCollection().Add(StatType.Defense, 38).Add(StatType.Vitality, 9).Add(StatType.Endurance, 9));
+
     // ── Tier 5: Celestial (Floors 75-100) ────────────────────────────
 
     public static Armor CreateCelestialChest() => Make("celestial_chestplate", "Celestial Cuirass",
@@ -80,4 +92,8 @@ public static class ArmorDefinitions
     public static Armor CreateCelestialBoots() => Make("celestial_boots", "Celestial Greaves",
         4800, "Epic", 180, 75, "Boots", 58, 3,
         new StatModifierCollection().Add(StatType.Defense, 58).Add(StatType.Agility, 20).Add(StatType.Speed, 12));
+
+    public static Armor CreateCelestialLegs() => Make("celestial_legs", "Celestial Chausses",
+        5000, "Epic", 190, 75, "Legs", 64, 4,
+        new StatModifierCollection().Add(StatType.Defense, 64).Add(StatType.Vitality, 14).Add(StatType.Endurance, 12));
 }

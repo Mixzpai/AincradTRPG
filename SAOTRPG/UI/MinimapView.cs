@@ -14,6 +14,8 @@ public class MinimapView : View
 
     private const char PlayerMarker = '@', EntityMarker = '*', ItemMarker = '!';
     private const char DoorMarker = '+', StairsMarker = '>', ShrineMarker = '*', CampfireMarker = '*';
+    // Depleted veins deliberately get no marker — a spent vein is not a destination.
+    private const char OreMarker = '◊';
     private const int RevealFlashDuration = 6;
 
     private readonly HashSet<(int X, int Y)> _revealedCells = new();
@@ -101,7 +103,9 @@ public class MinimapView : View
                 if (ch != ' ' && _revealedCells.Contains((vx, vy)))
                     fg = Color.BrightCyan;
             }
-            batch.Put(vx, vy, ch, Gfx.Attr(fg, Color.Black));
+            // The minimap samples world terrain, so it takes the same world transform the map
+            // does — otherwise a themed map sat beside a full-colour minimap of itself.
+            batch.Put(vx, vy, ch, Gfx.Attr(MapView.OverlayColor(fg), Color.Black));
         }
 
         if (_revealFlashCounter > 0)
@@ -186,6 +190,13 @@ public class MinimapView : View
                     case TileType.Fountain:          landmarkCh = ShrineMarker;   landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
                     case TileType.SecretShrine:      landmarkCh = '!';            landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
                     case TileType.Campfire:          landmarkCh = CampfireMarker; landmarkFg = Color.Yellow;        haveLandmark = true; break;
+                    // Ore veins are worth crossing a floor for and could not be spotted at a
+                    // glance. Listed last so a shrine or door sharing the sampled block still wins
+                    // the cell — those are navigation, an ore vein is a detour. Depleted veins get
+                    // no marker: a spent vein is not a destination.
+                    case TileType.OreVeinIron:       landmarkCh = OreMarker;      landmarkFg = Color.Gray;          haveLandmark = true; break;
+                    case TileType.OreVeinMithril:    landmarkCh = OreMarker;      landmarkFg = Color.BrightCyan;    haveLandmark = true; break;
+                    case TileType.OreVeinDivine:     landmarkCh = OreMarker;      landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
                 }
             }
         }
@@ -202,15 +213,45 @@ public class MinimapView : View
         return (glyph, color);
     }
 
+    // THE MINIMAP'S OWN LEGEND, declared once so the Player Guide can render it rather than
+    // transcribe it. Every previous hand-written glyph list in this codebase had drifted by the
+    // time anyone checked — the status tray's key was wrong on three letters — so this one is
+    // generated from the start.
+    //
+    // Only the glyphs a player needs to READ a route are listed: the terrain that stops or slows
+    // them, and the landmarks worth walking to.
+    public static readonly (char Glyph, string Meaning)[] Legend =
+    {
+        ('@', "You"),
+        ('*', "A monster or a dropped item"),
+        ('>', "Stairs up — the way off this floor"),
+        ('\u03a0', "The labyrinth archway"),
+        ('+', "A door"),
+        ('S', "A shrine or fountain"),
+        ('!', "A secret shrine"),
+        ('&', "A campfire — rest and cook here"),
+        ('\u25ca', "An ore vein; brighter means a better tier"),
+        ('\u2248', "Shallow water — crossable from Swimming L1"),
+        ('\u2261', "Deep water — needs Swimming L25"),
+        ('\u00a7', "Lava — it will hurt"),
+        ('^', "Mountain"),
+        ('T', "Trees"),
+        ('\u25aa', "Wall"),
+    };
+
     private static char GetTerrainGlyph(TileType type) => type switch
     {
         TileType.Wall => '▪', TileType.Mountain => '^',
-        TileType.Water or TileType.WaterDeep => '≈',
+        // Shallow and deep must differ: WaterDeep is a Swimming L25 wall, and a player reading
+        // the minimap to plan a route needs to know which water they can actually cross. They
+        // shared one glyph and leaned on colour — which Amber Mono collapses to luma.
+        TileType.Water => '≈',
+        TileType.WaterDeep => '≡',
         TileType.Tree or TileType.TreePine => 'T', TileType.Bush => '*',
         TileType.StairsUp => '◊', TileType.Door => '+',
         TileType.Path or TileType.Floor => '.', TileType.Rock => 'o',
         TileType.Campfire => '&', TileType.Fountain => 'F',
-        TileType.Shrine => 'S', TileType.Pillar => 'P', TileType.Lava => '≈',
+        TileType.Shrine => 'S', TileType.Pillar => 'P', TileType.Lava => '§',
         TileType.TrapSpike or TileType.TrapTeleport => '.',
         TileType.Grass or TileType.GrassTall or TileType.GrassSparse or TileType.Flowers => ' ',
         _ => ' ',

@@ -62,15 +62,29 @@ public sealed class AquaticDepthPostPass : IGenerationPass
             }
         }
 
+        // BANDS SCALE WITH THE FLOOR, like the lake radius that feeds them. A fixed 2 / 5 was
+        // sized for the old radius-4-6 puddles, where almost nothing reached distance 6 and a
+        // floor ended up with essentially no deep water. Once lakes scale, every tile past 5 from
+        // shore becomes WaterDeep — which is a Swimming L25 gate, so an early Aquatic floor would
+        // wall off most of its own water from the player who is standing on it. Proportional
+        // bands keep the beach-shallow-deep gradient intact at any floor size, and keep the deep
+        // core a minority of each lake rather than the whole of it.
+        //
+        // Same reasoning the river stamper already follows: rivers place only shallow water,
+        // because life skills start at L1 and WaterDeep is the audit-blocking one.
+        int lakeUnit = Math.Max(6, Math.Min(w, h) / 40);
+        int beachBand = Math.Max(2, lakeUnit / 3);
+        int shallowBand = beachBand + Math.Max(3, lakeUnit);
+
         for (int x = 0; x < w; x++)
         for (int y = 0; y < h; y++)
         {
             var t = map.Tiles[x, y].Type;
             if (t != TileType.Water && t != TileType.WaterDeep) continue;
             int d = dist[x, y];
-            if (d <= 2)      map.Tiles[x, y].Type = TileType.Sand;
-            else if (d <= 5) map.Tiles[x, y].Type = TileType.Water;
-            else             map.Tiles[x, y].Type = TileType.WaterDeep;
+            if (d <= beachBand)        map.Tiles[x, y].Type = TileType.Sand;
+            else if (d <= shallowBand) map.Tiles[x, y].Type = TileType.Water;
+            else                       map.Tiles[x, y].Type = TileType.WaterDeep;
         }
     }
 

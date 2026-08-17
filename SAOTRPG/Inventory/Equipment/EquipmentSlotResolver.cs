@@ -83,7 +83,7 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
 
         // Legs
         RegisterMany(EquipmentSlot.Legs,
-            "pants", "leggings", "trousers", "greaves", "chausses");
+            "legs", "pants", "leggings", "trousers", "greaves", "chausses");
 
         // Feet
         RegisterMany(EquipmentSlot.Feet,

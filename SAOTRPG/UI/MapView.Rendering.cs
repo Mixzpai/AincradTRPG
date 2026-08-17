@@ -665,7 +665,14 @@ public partial class MapView
             float scale = MemoryFadeScale(fadeStep);
             fg = new Color((byte)(fg.R * scale), (byte)(fg.G * scale), (byte)(fg.B * scale));
         }
-        return (ch, fg, Color.Black);
+
+        // Memory tiles bypass ApplyLighting — they have their own palette and no light — so the
+        // theme's world transform has to be applied here or it never reaches them. That mattered:
+        // explored-but-unseen ground is most of a mapped floor, so under Amber Mono the majority
+        // of the screen kept its original hues while the lit region was remapped.
+        // Applied AFTER the fade so the two compose the same way lighting and theme do on a
+        // visible tile: the transform acts on the colour actually being drawn.
+        return (ch, OverlayColor(fg), Color.Black);
     }
 
     private (char ch, Color fg, Color bg) ResolveVisibleTile(Map.GameMap map, Map.Tile tile, int mx, int my)
@@ -943,6 +950,22 @@ public partial class MapView
     // flash, the crit flash and the status tint. The 8-step colour quantization is not cosmetic —
     // it is what keeps the damage-tracked tile layer's change detection tractable, so a port that
     // drops it makes every lit cell change every turn.
+    // Overlay colours go through the SAME world transform the tiles do.
+    //
+    // Particles, toasts and damage popups paint outside ApplyLighting, so they kept full colour
+    // while the world around them was remapped — an amber map with rainbow numbers over it. These
+    // are authored colours (a toast accent, a popup's red or green), not role-palette values, so
+    // transforming them is exactly what the map's own ~80 authored colours get.
+    //
+    // Under Amber Mono the hue distinction between damage and heal is lost, as it is for every
+    // tile; relative brightness survives, and the popup text itself still carries the sign. The
+    // HUD's four semantic roles live in the role palette and are untouched by this.
+    internal static Color OverlayColor(Color c)
+    {
+        var theme = ColorSchemes.Theme;
+        return theme.TintsWorld ? theme.World(c) : c;
+    }
+
     private void ApplyLighting(int mx, int my, ref Color fg, ref Color bg)
     {
         var light = _map.Lighting.GetLightUnchecked(mx, my);

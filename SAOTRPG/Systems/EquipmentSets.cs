@@ -8,7 +8,7 @@ namespace SAOTRPG.Systems;
 // Membership is read off the pieces that exist rather than invented: no new items are added here.
 //
 // The bonus is deliberately a REASON TO MATCH rather than a reason to ignore better gear. Each
-// tier's 2-piece is worth roughly a fifth of one piece's Defense and the 3-piece roughly a half,
+// tier's 2-piece is worth roughly a fifth of one piece's Defense and the full set roughly a half,
 // so mixing a higher-tier chest into a lower-tier set stays the right call whenever the raw stat
 // gap is wide — the set is a tiebreak, not a trap.
 public static class EquipmentSets
@@ -26,27 +26,27 @@ public static class EquipmentSets
     {
         // Steel: per-piece Defense runs 15/12/10, so 3 + 8 is ~20% / ~55% of a single piece.
         new("Steel Panoply", "Plain, matched, and heavier than it looks.",
-            new[] { "steel_chestplate", "steel_helmet", "steel_boots" },
+            new[] { "steel_chestplate", "steel_helmet", "steel_legs", "steel_boots" },
             new[] { new SetBonus(StatType.Defense, 3) },
             new[] { new SetBonus(StatType.Defense, 8), new SetBonus(StatType.Endurance, 3) }),
 
         // Mythril: 30/24/20 Defense per piece.
         new("Mythril Weave", "Light enough to run in, cold to the touch.",
-            new[] { "mythril_chestplate", "mythril_helmet", "mythril_boots" },
+            new[] { "mythril_chestplate", "mythril_helmet", "mythril_legs", "mythril_boots" },
             new[] { new SetBonus(StatType.Defense, 6) },
             new[] { new SetBonus(StatType.Defense, 15), new SetBonus(StatType.Agility, 6),
                     new SetBonus(StatType.Speed, 4) }),
 
         // Adamantite: 55/42/35 Defense per piece.
         new("Adamantite Bulwark", "A wall that happens to be shaped like a person.",
-            new[] { "adamantite_chestplate", "adamantite_helmet", "adamantite_boots" },
+            new[] { "adamantite_chestplate", "adamantite_helmet", "adamantite_legs", "adamantite_boots" },
             new[] { new SetBonus(StatType.Defense, 11) },
             new[] { new SetBonus(StatType.Defense, 28), new SetBonus(StatType.Vitality, 10),
                     new SetBonus(StatType.Endurance, 8) }),
 
         // Celestial: 90/70/58 Defense per piece — the endgame trio.
         new("Celestial Regalia", "Worn by nobody the records name.",
-            new[] { "celestial_chestplate", "celestial_helmet", "celestial_boots" },
+            new[] { "celestial_chestplate", "celestial_helmet", "celestial_legs", "celestial_boots" },
             new[] { new SetBonus(StatType.Defense, 18) },
             new[] { new SetBonus(StatType.Defense, 45), new SetBonus(StatType.Vitality, 15),
                     new SetBonus(StatType.Intelligence, 10), new SetBonus(StatType.Speed, 8) }),

@@ -183,7 +183,7 @@ public static partial class GameScreen
         };
 
         turnManager.NpcDialogRequested += (npc) =>
-            InvokeDialog(() => NpcDialogDialog.Show(npc), false);
+            InvokeDialog(() => NpcDialogDialog.Show(npc, turnManager.Player), false);
 
         // Recruit prompt — UI subscriber for TurnManager.RecruitDialogRequested.
         // Respond(true) accepts the recruit; Respond(false) declines.

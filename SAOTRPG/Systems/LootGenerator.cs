@@ -16,19 +16,21 @@ public static class LootGenerator
     private const int RarityRareCeiling = 96;
 
     // 0-11 = weapon types, 12-15 = armor/shield, 16 = accessory fallback.
-    private const int EquipmentTypeCount = 17;
+    // Rolls 0-16 are the explicit cases in CreateRandomEquipment and the last falls to the
+    // accessory branch. Adding a case means bumping this, or the new case is dead.
+    private const int EquipmentTypeCount = 18;
 
     // Mob loot tables by LootTag → (name, Col). ChainMaterialByName routes through ItemRegistry.Create for Anvil Evolve.
     public static readonly Dictionary<string, (string Name, int Value)[]> MobLootTable = new()
     {
-        { "beast",     new[] { ("Raw Hide",        8), ("Beast Fang",     12), ("Sinew",         6) } },
-        { "kobold",    new[] { ("Kobold Ear",      5), ("Crude Dagger",   15), ("Tattered Cloth", 4), ("Lesser Slicing Stone", 3) } },
+        { "beast",     new[] { ("Raw Hide",        8), ("Beast Fang",     12), ("Sinew",         6), ("Wolf Pelt",       10), ("Rabbit Meat",      7), ("Hunter Ingot",   80) } },
+        { "kobold",    new[] { ("Kobold Ear",      5), ("Crude Dagger",   15), ("Tattered Cloth", 4), ("Lesser Slicing Stone", 3), ("Sharpening Ingot", 80) } },
         { "insect",    new[] { ("Chitin Shard",   10), ("Wing Fragment",   8), ("Venom Sac",     14), ("Valkyrie Feather", 3) } },
-        { "plant",     new[] { ("Herb Bundle",    12), ("Toxic Spore",    10), ("Root Fiber",     6) } },
+        { "plant",     new[] { ("Herb Bundle",    12), ("Toxic Spore",    10), ("Root Fiber",     6), ("Slime Gel",        8) } },
         { "humanoid",  new[] { ("Coin Pouch",     20), ("Iron Ring",      15), ("Worn Map",      10), ("Demonic Sigil",    3), ("Oni Ash",          3) } },
         { "reptile",   new[] { ("Scale Plate",    12), ("Forked Tongue",   8), ("Reptile Eye",   14) } },
-        { "undead",    new[] { ("Bone Fragment",    6), ("Soul Dust",      18), ("Cursed Shard",  14), ("Lunar Core",       3), ("Greater Slicing Stone", 3) } },
-        { "construct", new[] { ("Gear Fragment",   10), ("Crystal Core",   20), ("Iron Bolt",      8), ("Geometric Shard",  3), ("Titan Fragment",   3) } },
+        { "undead",    new[] { ("Bone Fragment",    6), ("Soul Dust",      18), ("Cursed Shard",  14), ("Lunar Core",       3), ("Greater Slicing Stone", 3), ("Lunar Ingot",     80) } },
+        { "construct", new[] { ("Gear Fragment",   10), ("Crystal Core",   20), ("Iron Bolt",      8), ("Geometric Shard",  3), ("Titan Fragment",   3), ("Warden Ingot",    80) } },
         { "dragon",    new[] { ("Dragon Scale",   30), ("Flame Essence",  25), ("Dragon Claw",   20), ("Infernal Gem",     3), ("Nidhogg Scale",    3), ("Perfect Slicing Stone", 3) } },
         { "elemental", new[] { ("Fire Crystal",   22), ("Essence Wisp",   18), ("Elemental Ash",  12), ("Trishula Tip",     3) } },
         { "aquatic",   new[] { ("Water Core",     15), ("Fish Scale",      8), ("Murky Pearl",   18) } },
@@ -40,6 +42,17 @@ public static class LootGenerator
     // ItemRegistry.Create so Anvil Evolve flow can find/consume them.
     public static readonly Dictionary<string, string> ChainMaterialByName = new()
     {
+        // Refinement ingots and the three orphan mob drops. MobLootTable is keyed by DISPLAY
+        // NAME and TurnManager.Loot builds a bare MobDrop unless the name maps through here —
+        // and Refinement.Socket / CountMaterialByDefId both key on DefinitionId, so an ingot
+        // dropped without one lands in the backpack and can never be socketed.
+        ["Sharpening Ingot"]    = "sharpening_ingot",
+        ["Warden Ingot"]        = "warden_ingot",
+        ["Hunter Ingot"]        = "hunter_ingot",
+        ["Lunar Ingot"]         = "lunar_ingot",
+        ["Slime Gel"]           = "slime_gel",
+        ["Wolf Pelt"]           = "wolf_pelt",
+        ["Rabbit Meat"]         = "rabbit_meat",
         ["Demonic Sigil"]    = "demonic_sigil",
         ["Geometric Shard"]  = "geometric_shard",
         ["Infernal Gem"]     = "infernal_gem",
@@ -378,6 +391,70 @@ public static class LootGenerator
         (66, 72, "celestial_claws"),
         (70, 76, "celestial_dagger"),
         (70, 76, "celestial_scythe"),
+
+        // ── Armour sets ──────────────────────────────────────────────────
+        // EquipmentSets keys membership on DefinitionId, and procedural armour carries none, so a
+        // set can only ever be assembled from these registered pieces. Before this they were in no
+        // acquisition path at all and every set was unearnable while EquipmentDialog advertised
+        // its progress. Bands follow each tier's RequiredLevel (10 / 25 / 50 / 75), wide enough
+        // that four pieces are collectable inside one tier's stretch of floors. Celestial stops at
+        // F99 because F100 must carry an empty pool.
+        (10, 28, "steel_chestplate"),
+        (10, 28, "steel_helmet"),
+        (10, 28, "steel_legs"),
+        (10, 28, "steel_boots"),
+
+        (26, 52, "mythril_chestplate"),
+        (26, 52, "mythril_helmet"),
+        (26, 52, "mythril_legs"),
+        (26, 52, "mythril_boots"),
+
+        (50, 78, "adamantite_chestplate"),
+        (50, 78, "adamantite_helmet"),
+        (50, 78, "adamantite_legs"),
+        (50, 78, "adamantite_boots"),
+
+        (76, 99, "celestial_chestplate"),
+        (76, 99, "celestial_helmet"),
+        (76, 99, "celestial_legs"),
+        (76, 99, "celestial_boots"),
+
+        // ── Named baseline-tier weapons ──────────────────────────────────
+        // Hand-authored one-offs that sat above the shop ladder and below the canon
+        // Legendaries, and that no table produced. Bands follow each one's RequiredLevel.
+        (3,  12, "stout_brave"),
+        (5,  15, "sword_of_eventide"),
+        (8,  18, "blue_boar"),
+        (10, 22, "argos_claws"),
+        (12, 24, "tias_longbow"),
+        (14, 26, "agate_rapier"),
+        (16, 30, "soul_eater"),
+        (18, 32, "verdant_lord"),
+        (24, 40, "minotaur_warhammer"),
+
+        // Mithril Pickaxe is deliberately find-only — the shop ladder stops at Iron.
+        (30, 60, "mithril_pickaxe"),
+
+        // ── Utility crystals above shop tier ─────────────────────────────
+        // Every one has a live effect in TurnManager.HandleCrystal, and none could be got.
+        // Anti-Crystal and Mirage Sphere are deliberately absent: HandleCrystal prints a
+        // sentence for each and sets no state, so selling them would ship a promise. Recorded
+        // in ContentProbe knownSourceless with the teleport crystals.
+        (14, 40, "corridor_crystal"),
+        (60, 95, "pneuma_flower"),
+
+        // ── Refinement ingots, Rare and up ───────────────────────────────
+        // The Common four drop from mobs (MobLootTable below); these are the chest half.
+        // Refinement.Socket takes a def id, so an ingot that arrives without one cannot be
+        // spent — everything here resolves through ItemRegistry and carries its DefinitionId.
+        (20, 45, "keen_ingot"),
+        (20, 45, "guardian_ingot"),
+        (22, 48, "swiftstrike_ingot"),
+        (22, 48, "spellbind_ingot"),
+        (45, 75, "chimeric_ingot"),
+        (48, 78, "sovereign_ingot"),
+        (50, 80, "vanguard_ingot"),
+        (78, 99, "astral_ingot"),
     };
 
     // IM Enhancement Ore themed drops: Mob LootTag → ore DefId at OreDropChancePercent.
@@ -484,7 +561,10 @@ public static class LootGenerator
     };
 
     // ── Accessory pool for random drops ────────────────────────────────
-    private static readonly Func<Accessory>[] AccessoryPool =
+    // The one accessory pool. Vendor kept a hand-copied duplicate of this list, so an accessory
+    // added here reached chests and never reached a shop — the two drifted the moment three
+    // bracelets were added. Public so there is one list to add to.
+    public static readonly Func<Accessory>[] AccessoryPool =
     {
         AccessoryDefinitions.CreateRingOfStrength,
         AccessoryDefinitions.CreateAgilityNecklace,
@@ -492,11 +572,18 @@ public static class LootGenerator
         AccessoryDefinitions.CreateScholarsPendant,
         AccessoryDefinitions.CreateSwiftBand,
         AccessoryDefinitions.CreateVitalityCharm,
+        AccessoryDefinitions.CreateLeatherBracer,
+        AccessoryDefinitions.CreateDuelistsBangle,
+        AccessoryDefinitions.CreateWardensArmlet,
     };
 
     // ── Equipment name tables ─────────────────────────────────────────
     private static readonly string[] MetalPrefixes = { "Rusty", "Iron", "Steel", "Sharp", "Gleaming", "Worn", "Fine", "Tempered", "Darksteel", "Mythril" };
-    private static readonly string[] ArmorPrefixes = { "Leather", "Iron", "Studded", "Chainmail", "Plated", "Worn", "Mythril", "Hardened" };
+    // No prefix here may name an armour-set material. Set membership is by DefinitionId and
+    // procedural armour has none, so a drop reading "Mythril Chestplate" would be a different item
+    // from the set piece of that exact name — indistinguishable to the player, and it would not
+    // count. "Banded" replaces Mythril for that reason; ContentProbe pins the whole cross-product.
+    private static readonly string[] ArmorPrefixes = { "Leather", "Iron", "Studded", "Chainmail", "Plated", "Worn", "Banded", "Hardened" };
     private static readonly string[] ShieldNouns = { "Shield", "Buckler", "Kite Shield", "Tower Shield" };
 
     private static readonly Dictionary<string, string[]> WeaponNouns = new()
@@ -562,7 +649,11 @@ public static class LootGenerator
             12 => MakeArmor("Chest", "Chestplate", currentFloor, rarity, scale, 1.0, 6),
             13 => MakeArmor("Helmet", "Helmet",    currentFloor, rarity, scale, 0.8, 3),
             14 => MakeArmor("Boots", "Boots",      currentFloor, rarity, scale, 0.7, 2),
-            15 => new Armor
+            // Legs sit between chest and helmet on both coverage and weight. Without this case the
+            // slot could only ever be filled by the four registered leg pieces, so a player who
+            // found none wore nothing there for a whole run.
+            15 => MakeArmor("Legs", "Greaves",     currentFloor, rarity, scale, 0.9, 4),
+            16 => new Armor
             {
                 Name = PickShieldName(), Value = (40 + currentFloor * 22) * scale.ValMul / 100,
                 Rarity = rarity, ItemDurability = dur,

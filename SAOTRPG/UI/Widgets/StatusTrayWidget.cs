@@ -39,11 +39,48 @@ public class StatusTrayWidget : View
     {
         _tm = tm;
         _player = player;
+        VerboseMode = Systems.UserSettings.Current.StatusTrayVerbose;
         CanFocus = false;
         SchemeName = ColorSchemes.BodyName;
     }
 
-    public void ToggleVerbose() { VerboseMode = !VerboseMode; SetNeedsDraw(); }
+    // EVERY LETTER THIS TRAY CAN SHOW, and the one place they are declared.
+    //
+    // The Player Guide's "Status Icon Tray" topic carried a hand-written key that had drifted
+    // badly: it described X as Blind (the code shows Exhausted), C as Crit-Up (Shrine Blessing),
+    // D as Dodge-Up (Level Surge), and listed a Z for Freeze that this tray has never emitted.
+    // Three letters told the player the wrong thing. The Guide generates its key from here now.
+    //
+    // H and X each cover two severities (Hungry/Starving, Fatigued/Exhausted) and are listed once
+    // with both named, because the letter is what the player has to look up.
+    public static readonly (char Letter, string Meaning)[] AllLetters =
+    {
+        ('P', "Poison — damage each turn"),
+        ('B', "Bleed — damage each turn"),
+        ('S', "Stun — you lose your turn"),
+        ('L', "Slow — halved dodge chance"),
+        ('H', "Hungry, or Starving when satiety hits zero"),
+        ('X', "Fatigued, or Exhausted past the second threshold"),
+        ('W', "Cold — Ice biome"),
+        ('V', "Heat — Volcanic biome"),
+        ('G', "Toxic fog — Swamp biome"),
+        ('F', "Well-Fed — bonus regen and stats"),
+        ('R', "Regen — healing each tick from food"),
+        ('C', "Shrine blessing — bonus ATK and DEF"),
+        ('D', "Level-up surge — bonus ATK"),
+        ('E', "Pair resonance — matched dual-wield weapons"),
+        ('K', "Counter stance — the next incoming attack is parried"),
+    };
+
+    // Shift+S in play. Written through to UserSettings so the preference survives the session —
+    // the tray used to reset to compact on every launch however often it was toggled.
+    public void ToggleVerbose()
+    {
+        VerboseMode = !VerboseMode;
+        Systems.UserSettings.Current.StatusTrayVerbose = VerboseMode;
+        Systems.UserSettings.Save();
+        SetNeedsDraw();
+    }
 
     // Pulls from all 7 sources, deduped by letter (first-wins).
     // Order: Debuffs (severity) → Buffs (soonest-expiring) → Cooldowns last.

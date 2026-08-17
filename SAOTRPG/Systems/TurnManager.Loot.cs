@@ -126,6 +126,16 @@ public partial class TurnManager
         int dist = Math.Max(Math.Abs(chestX - _map.Width / 2), Math.Abs(chestY - _map.Height / 2));
         string tier = dist > 40 ? "far" : dist >= 20 ? "mid" : "near";
 
+        // Extra Skill: Search — a chest the player examined opens one tier better, which reuses
+        // the existing near/mid/far ladder rather than inventing a second quality axis. "far" is
+        // already the top rung, so scouting one is a no-op by design.
+        bool scouted = _scoutedChests.Remove((chestX, chestY));
+        if (scouted && tier != "far")
+        {
+            tier = tier == "near" ? "mid" : "far";
+            _log.LogLoot("  Your earlier survey pays off — you go straight for the good compartment.");
+        }
+
         if (tier == "far") _log.LogLoot("You open a treasure chest — it gleams with a golden light!");
         else if (tier == "mid") _log.LogLoot("You open a treasure chest — a faint silver shimmer catches your eye.");
         else _log.LogLoot("You open a treasure chest!");

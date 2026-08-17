@@ -956,7 +956,7 @@ public partial class TurnManager
         int hpBefore = _player.CurrentHealth;
         HandleCombat(monster, hpBefore);
         AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow();
+        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
         PassiveRegen();

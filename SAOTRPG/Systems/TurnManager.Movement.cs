@@ -12,8 +12,14 @@ public partial class TurnManager
     public void ProcessRest()
     {
         if (_player.IsDefeated) return;
-        if (_player.CurrentHealth >= _player.MaxHealth)
-        { _log.Log("Already at full health. Press Space to wait a turn instead."); return; }
+
+        // Resting is the ONLY way to clear fatigue (_restCounter is zeroed below), so refusing it
+        // at full health left an exhausted player stuck with -4 ATK and -1 DEF and no way out
+        // short of taking a hit first. Full health only blocks a rest that would do nothing at all.
+        bool healingNeeded = _player.CurrentHealth < _player.MaxHealth;
+        bool fatigueToClear = _restCounter >= FatigueThreshold;
+        if (!healingNeeded && !fatigueToClear)
+        { _log.Log("Already at full health and well rested. Press Space to wait a turn instead."); return; }
 
         int nearbyCount = _map.Monsters.Count(m => !m.IsDefeated
             && Math.Abs(m.X - _player.X) <= 1 && Math.Abs(m.Y - _player.Y) <= 1);
@@ -32,7 +38,7 @@ public partial class TurnManager
             int heal = Math.Min(3, _player.MaxHealth - _player.CurrentHealth);
             if (heal > 0) { _player.CurrentHealth += heal; totalHealed += heal; }
             TurnCount++;
-            TickPoison(); TickBleed(); TickSlow();
+            TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
             if (_player.IsDefeated) return;
             ProcessEntityTurns();
             if (_player.IsDefeated) return;
@@ -64,10 +70,13 @@ public partial class TurnManager
         // Running skill XP per sprint action (covers 2 tiles).
         GrantSprintRunningXp();
         TurnCount++;
-        TickPoison(); TickBleed(); TickSlow();
+        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
         if (_player.IsDefeated) return;
+        // Sprinting is two tiles of movement and used to skip passive regen entirely, so a player
+        // who sprinted everywhere healed less than one who walked the same ground.
+        PassiveRegen();
         UpdateVisibility();
         TurnCompleted?.Invoke();
     }
@@ -78,7 +87,7 @@ public partial class TurnManager
         _counterStance = true;
         _log.LogCombat("You raise your guard — ready to counter the next attack!");
         AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow();
+        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
         _counterStance = false; // expires after one round
@@ -104,7 +113,7 @@ public partial class TurnManager
         {
             _log.LogCombat("You are stunned and cannot act!");
             AdvanceTurn();
-            TickStun(); TickPoison(); TickBleed(); TickSlow();
+            TickStun(); TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
             if (_player.IsDefeated) return;
             ProcessEntityTurns();
             PassiveRegen();
@@ -199,7 +208,7 @@ public partial class TurnManager
         {
             _log.Log("You slip on the icy surface!");
             // Slip = lose the rest of this turn (no further processing).
-            TurnCount++; TickPoison(); TickBleed(); TickSlow();
+            TurnCount++; TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
             if (_player.IsDefeated) return;
             ProcessEntityTurns(); PassiveRegen(); UpdateVisibility();
             TurnCompleted?.Invoke();
@@ -273,14 +282,14 @@ public partial class TurnManager
         TickExhaustion();
         if (PlayerLowHp && TurnCount % 5 == 0)
             _log.LogCombat(FlavorText.LowHpEncouragements[RunRng.Next(FlavorText.LowHpEncouragements.Length)]);
-        TickPoison(); TickBleed(); TickSlow();
+        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
         if (_player.IsDefeated) return;
         ProcessEntityTurns();
         // Swim slow penalty: extra tick + entity round (mobs get free turn).
         if (swimSlowPenalty && !_player.IsDefeated)
         {
             TurnCount++;
-            TickPoison(); TickBleed(); TickSlow();
+            TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
             if (!_player.IsDefeated) ProcessEntityTurns();
         }
         PassiveRegen();
@@ -299,7 +308,7 @@ public partial class TurnManager
         if (!Skills.UniqueSkillSystem.Has(Skills.UniqueSkill.ExtraSearch)) return;
         int r = Skills.UniqueSkillSystem.SearchRadius();
         int px = _player.X, py = _player.Y;
-        bool revealedAny = false;
+        bool revealedAny = false, scoutedAny = false;
         for (int dx = -r; dx <= r; dx++)
         for (int dy = -r; dy <= r; dy++)
         {
@@ -307,6 +316,14 @@ public partial class TurnManager
             int tx = px + dx, ty = py + dy;
             if (!_map.InBounds(tx, ty)) continue;
             var tile = _map.GetTile(tx, ty);
+            // Chests are not hidden, so scouting one is not a reveal — it is a closer look
+            // that pays off when the chest is opened. Marked here so the skill does something
+            // visible on floors that happen to carry no traps at all.
+            if (tile.Type == TileType.Chest && _scoutedChests.Add((tx, ty)))
+            {
+                scoutedAny = true;
+                continue;
+            }
             if (!tile.TrapHidden) continue;
             if (tile.Type is not (TileType.TrapSpike or TileType.TrapTeleport
                 or TileType.TrapPoison or TileType.TrapAlarm
@@ -318,6 +335,11 @@ public partial class TurnManager
         {
             _extraSearchRevealedThisFloor = true;
             _log.LogSystem("Your trained eye spots a hidden trap nearby!");
+        }
+        if (scoutedAny && !_extraSearchScoutedThisFloor)
+        {
+            _extraSearchScoutedThisFloor = true;
+            _log.LogSystem("You size up a nearby chest — you know where the good compartments are.");
         }
     }
 
@@ -1381,7 +1403,7 @@ public partial class TurnManager
             int hpBefore = _player.CurrentHealth;
             HandleCombat(monster, hpBefore);
             AdvanceTurn();
-            TickPoison(); TickBleed(); TickSlow();
+            TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
             if (_player.IsDefeated) return;
             ProcessEntityTurns();
             PassiveRegen();

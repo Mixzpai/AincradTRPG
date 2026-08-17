@@ -175,6 +175,8 @@ public partial class TurnManager
         _floorFullyExplored = false;
         _stairsDiscovered = false;
         _extraSearchRevealedThisFloor = false;
+        _scoutedChests.Clear();
+        _extraSearchScoutedThisFloor = false;
         _aggroAlerted.Clear();
         _dangerWarned.Clear();
         _iaijutsuStruck.Clear();

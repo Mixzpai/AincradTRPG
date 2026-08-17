@@ -86,6 +86,11 @@ public class UserSettings
 
     public bool UseAsciiStatBars { get; set; } = false;
 
+    // Status tray verbose labels (POISON·3 4t instead of P×3:4). Shift+S toggles it in play; this
+    // is what makes the choice survive the session, so a player who prefers labels is not
+    // re-pressing it every run. The in-play toggle writes through to here.
+    public bool StatusTrayVerbose { get; set; } = false;
+
     // Player Guide — fall back to ASCII disclosure glyphs ('>' / 'v') instead
     // of '▸' / '▾' when the terminal font lacks the geometric arrow code points.
     // Default false → unicode.

@@ -899,6 +899,9 @@ public static partial class PlayerGuideDialog
         // next time the page is opened. Key tokens resolve before the stat block and the body
         // normaliser run, so both see real keys.
         srcBody = PlayerGuideContent.BuildControlsBody(srcBody);
+        srcBody = PlayerGuideContent.ResolveStatusCodes(srcBody);
+        srcBody = PlayerGuideContent.ResolveStatusLetters(srcBody);
+        srcBody = PlayerGuideContent.ResolveMinimapLegend(srcBody);
         srcBody = PlayerGuideContent.ResolveKeyTokens(srcBody);
         srcBody = ResolveCategoryTokens(srcBody);
 

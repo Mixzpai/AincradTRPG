@@ -14,10 +14,17 @@ public static class NpcDialogDialog
 
     // Show a modal conversation dialog with the given NPC.
     // Advances through dialogue lines sequentially; supports player choice branches.
-    public static void Show(NPC npc)
+    public static void Show(NPC npc) => Show(npc, null);
+
+    // `player` is optional so an unconditioned conversation still works without one; when it is
+    // absent every gated line and choice is simply shown, which is the safe direction — a missing
+    // player must never silently hide content.
+    public static void Show(NPC npc, Player? player)
     {
         // ── Early exit — no dialogue configured ───────────────────────
         var lines = npc.DialogueLines;
+        if (player != null && lines != null)
+            lines = lines.Where(l => l.Condition?.IsMet(player) ?? true).ToArray();
         if (lines == null || lines.Length == 0)
         {
             DialogHelper.Query(npc.Name, "The NPC has nothing to say.", "OK");
@@ -95,12 +102,16 @@ public static class NpcDialogDialog
             npcText.Text = $"\"{line.Text}\"";
             choiceArea.RemoveAll();
 
-            if (line.Choices != null && line.Choices.Length > 0)
+            var choices = line.Choices;
+            if (player != null && choices != null)
+                choices = choices.Where(c => c.Condition?.IsMet(player) ?? true).ToArray();
+
+            if (choices != null && choices.Length > 0)
             {
                 // Show player choices as buttons
                 continueBtn.Visible = false;
                 int btnY = 0;
-                foreach (var choice in line.Choices)
+                foreach (var choice in choices)
                 {
                     var btn = DialogHelper.CreateButton(choice.Label);
                     btn.X = Pos.Center();

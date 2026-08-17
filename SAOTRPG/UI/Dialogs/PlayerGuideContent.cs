@@ -14,6 +14,61 @@ public static class PlayerGuideContent
     private static readonly System.Text.RegularExpressions.Regex KeyTokenRx =
         new(@"\{\{KEY:([A-Za-z0-9]+)\}\}");
 
+    // The status tray's own code list, rendered at read time. This table was hand-written and
+    // had drifted twice — BAR shipped without it and the timed-buff rows never reached it — so it
+    // is generated from StatusIconMap.AllCodes, the one place the codes are declared.
+    public const string StatusCodesToken = "{{STATUS_CODES}}";
+
+    // The letter tray's own key, rendered at read time. The hand-written version described three
+    // letters as meaning something they do not (X, C, D) and invented a fourth (Z).
+    // The minimap's glyph legend, rendered from MinimapView.Legend at read time.
+    public const string MinimapLegendToken = "{{MINIMAP_LEGEND}}";
+
+    internal static string BuildMinimapLegendBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (glyph, meaning) in MinimapView.Legend)
+            sb.Append("  ").Append(glyph).Append("   ").Append(meaning).Append('\n');
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    public static string ResolveMinimapLegend(string src) =>
+        !src.Contains(MinimapLegendToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(MinimapLegendToken, BuildMinimapLegendBlock());
+
+    public const string StatusLettersToken = "{{STATUS_LETTERS}}";
+
+    internal static string BuildStatusLettersBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (letter, meaning) in Widgets.StatusTrayWidget.AllLetters)
+        {
+            sb.Append("  ").Append(letter).Append("   ").Append(meaning).Append('\n');
+        }
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    public static string ResolveStatusLetters(string src) =>
+        !src.Contains(StatusLettersToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(StatusLettersToken, BuildStatusLettersBlock());
+
+    public static string ResolveStatusCodes(string src) =>
+        !src.Contains(StatusCodesToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(StatusCodesToken, BuildStatusCodesBlock());
+
+    internal static string BuildStatusCodesBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (code, meaning) in Helpers.StatusIconMap.AllCodes)
+        {
+            sb.Append("  ").Append(code.PadRight(6)).Append(meaning).Append('\n');
+        }
+        return sb.ToString().TrimEnd('\n');
+    }
+
     public static string ResolveKeyTokens(string body)
     {
         if (!body.Contains("{{KEY:", System.StringComparison.Ordinal)) return body;
@@ -129,9 +184,9 @@ public static class PlayerGuideContent
         ("tutorial",      new[] { "Start Here" }),
         ("colorblind",    new[] { "Colour Themes" }),
         ("accessibility", new[] { "Footstep Trail Settings" }),
-        // Damage Mitigation dropped from this alias: its own summary now uses the word, so the
-        // plain substring search finds it and the alias would be dead weight.
-        ("armour",        new[] { "Equipment Slots & Dual Wield" }),
+        // The "armour" alias is gone entirely: it bridged the British spelling to American-spelled
+        // topics, and the Armour Sets topic now carries the word in its own title and in the
+        // slots topic's See-also, so a plain substring search reaches both.
         ("quit",          new[] { "Save System" }),
     };
 
@@ -781,10 +836,13 @@ public static class PlayerGuideContent
             "Satiety is your food clock; fatigue is your exhaustion clock. Both\n" +
             "swing combat stats and need regular maintenance at food and campfires.\n" +
             "Eat food, rest at campfires (+20 satiety), and sleep to clear fatigue.\n" +
+            "Resting works at full health when you are fatigued — it is the only way\n" +
+            "to clear the penalty, so you are never stuck carrying it.\n" +
             "Sprint cycles and heavy combat tick fatigue up. Well Fed (>=80): +1\n" +
             "HP regen, +3 ATK/DEF. Hungry (<20): -2 ATK. Starving (0): -5 HP/turn\n" +
             "plus STARVING status. Mild Fatigue: -1 SPD, -2 ATK. Heavy Fatigue:\n" +
-            "-2 SPD, -4 ATK, -1 DEF. Food restores satiety and HP over turns; the Eating life\n" +
+            "-2 SPD, -4 ATK, -1 DEF. Rest clears fatigue outright, and rest is allowed\n" +
+            "even at full HP for exactly that reason. Food restores satiety and HP over turns; the Eating life\n" +
             "skill scales food potency by +10% / +25% / +50% / +100% at L10 / L25\n" +
             "/ L50 / L99. At L99 Eating also scales food's HP REGEN RATE — the\n" +
             "per-turn heal ticks higher in addition to the Satiety duration boost,\n" +
@@ -1062,7 +1120,7 @@ public static class PlayerGuideContent
             "changing how the world looks, Colourblind Safe leaves terrain\n" +
             "untouched and only moves the status hues.\n\n" +
             "SEE ALSO\n" +
-            "[Reduce Motion] · [Rarity Colors & Glyphs] · [Status Icon Tray] · [Combat Visual Feedback] · [Rebinding Keys] · [Footstep Trail Settings]")
+            "[Minimap] · [Reduce Motion] · [Rarity Colors & Glyphs] · [Status Icon Tray] · [Combat Visual Feedback] · [Rebinding Keys] · [Footstep Trail Settings]")
         {
             Tags = new[] { "ui", "accessibility", "colour" }
         },
@@ -1191,6 +1249,32 @@ public static class PlayerGuideContent
             Tags = new[] { "combat", "ui", "log", "accessibility" }
         },
 
+        new("World", "Minimap",
+            "\u250c\u2500 World\n" +
+            "\u2502 Topic: Minimap\n" +
+            "\u2502 Location: Top-right panel\n" +
+            "\u2502 Shows: Explored ground, scaled to fit\n" +
+            "\u2514\u2500\n\n" +
+            "SUMMARY\n" +
+            "A scaled view of everything you have explored on this floor. Each cell\n" +
+            "stands for a block of the real map, so a single mark can be several\n" +
+            "tiles; what it shows is the most important thing in that block.\n\n" +
+            "Priority runs entities and items first, then landmarks, then terrain —\n" +
+            "so a monster never hides behind the ground it is standing on, and a\n" +
+            "shrine never hides behind a tree.\n\n" +
+            "LEGEND\n" +
+            MinimapLegendToken + "\n\n" +
+            "TIPS\n" +
+            "The two water marks are worth learning apart: shallow water costs you\n" +
+            "nothing at Swimming L1, while deep water needs L25 and will simply\n" +
+            "refuse you until then. Planning a route around the wrong one wastes a\n" +
+            "long walk.\n\n" +
+            "SEE ALSO\n" +
+            "[Swimming (Life Skill)] \u00b7 [Mining \u2014 Tool Slot & Ore Veins] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
+        {
+            Tags = new[] { "minimap", "navigation", "ui" }
+        },
+
         new("Combat & Rarity", "Status Icon Tray",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Status Icon Tray\n" +
@@ -1209,23 +1293,8 @@ public static class PlayerGuideContent
             "letters for short labels (`POISON·3 4t`) until reload. Ordering is\n" +
             "debuff-first severity, so the scariest effect sits leftmost and can't\n" +
             "hide behind a cosmetic buff.\n\n" +
-            "ICON KEY (letter · color · source):\n" +
-            "  P  Green      Poison DoT\n" +
-            "  B  Red        Bleed DoT\n" +
-            "  S  Yellow     Stun (skip turn)\n" +
-            "  L  Cyan       Slow (halves dodge)\n" +
-            "  Z  LightBlue  Freeze (immobilize)\n" +
-            "  X  Magenta    Blind (miss chance)\n" +
-            "  F  Gold       Well Fed\n" +
-            "  H  Gray       Hunger\n" +
-            "  E  Cyan       Pair Resonance (dual-wield)\n" +
-            "  K  Bronze     Counter Stance (queued parry)\n" +
-            "  W  LightBlue  Winter weather affinity\n" +
-            "  V  Red        Volcano biome affinity\n" +
-            "  G  Green      Toxic biome affinity\n" +
-            "  R  Green      Regen tick buff\n" +
-            "  C  Yellow     Crit-Up buff\n" +
-            "  D  Cyan       Dodge-Up buff\n\n" +
+            "ICON KEY\n" +
+            StatusLettersToken + "\n\n" +
             "TIPS\n" +
             "Run verbose for the first few runs to learn the key, then flip back\n" +
             "to compact once the shapes read at a glance. If the tray fills, the\n" +
@@ -1827,7 +1896,7 @@ public static class PlayerGuideContent
         new("Progression", "Unique Skill: Extra Skill — Search",
             "┌─ Progression\n" +
             "│ Topic: Unique Skill: Extra Skill — Search\n" +
-            "│ Stat: Trap reveal in 3-tile radius\n" +
+            "│ Stat: Trap reveal + chest scouting, 3-tile radius\n" +
             "│ Requires: Normal step move\n" +
             "│ Unlock: Disarm 10 traps total\n" +
             "└─\n\n" +
@@ -1839,9 +1908,14 @@ public static class PlayerGuideContent
             "nothing to spend. Every turn you take, hidden traps inside a 3-tile\n" +
             "circle around you are revealed, and they stay revealed.\n\n" +
             "WHAT IT FINDS\n" +
-            "Only the four seeded trap types: Spike, Poison, Teleport and Alarm.\n" +
-            "Terrain that hurts you but was never hidden — lava, bog water, cracked\n" +
-            "ice — is not a trap, and you can already see all of it.\n\n" +
+            "All seven seeded trap types: Spike, Poison, Teleport, Alarm, Web,\n" +
+            "Magnet and Rune. Terrain that hurts you but was never hidden — lava,\n" +
+            "bog water, cracked ice — is not a trap, and you can already see it.\n\n" +
+            "It also SCOUTS CHESTS. A chest that passes through the aura is sized\n" +
+            "up, and opening a scouted chest rolls one tier better — a near chest\n" +
+            "pays like a mid, a mid like a far. Far chests are already the top\n" +
+            "rung, so scouting one changes nothing. The mark is spent when the\n" +
+            "chest is opened, so a single survey does not pay twice.\n\n" +
             "WHEN IT DOES NOT FIRE\n" +
             "Sprinting is the gap. A sprint covers two tiles in a turn of its own\n" +
             "and skips the reveal entirely, so the moment you are crossing ground\n" +
@@ -1851,7 +1925,8 @@ public static class PlayerGuideContent
             "so sweeping a corridor does not bury the log.\n\n" +
             "TIPS\n" +
             "Grind the 10-trap counter early on a Trap-heavy floor; the\n" +
-            "total persists across floors, so progress never resets.\n\n" +
+            "total persists across floors, so progress never resets. Once you\n" +
+            "have it, walking a lap past a chest before opening it is free value.\n\n" +
             "SEE ALSO\n" +
             "[Traps & Hazards] · [Sprint & Stealth Move] · [Vision & FOV]")
         {
@@ -2459,15 +2534,15 @@ public static class PlayerGuideContent
             "on use; Anvil and Bounty Board re-open freely. Walk onto the tile to\n" +
             "trigger — campfires offer a cooking menu; Anvils open the smithing/\n" +
             "repair/evolve screen. Anvil Repair/Enhance/Evolve burn Col + mats.\n\n" +
-            "CAMPFIRE (&/*, orange)    Purge Poison/Bleed/Slow, heal\n" +
-            "                           15+5*floor HP, reset rest + fatigue,\n" +
-            "                           cooking interaction\n" +
-            "FOUNTAIN (O, cyan)         Heal 30+10*floor HP, +20 Satiety,\n" +
-            "                           clear fatigue (tile consumes)\n" +
-            "SHRINE (cross, violet)     +3+floor ATK & DEF for 30 turns\n" +
-            "PILLAR (|)                 Reveals 15-tile map radius\n" +
-            "ANVIL (+, gold)            Opens smithing/repair/evolve UI\n" +
-            "BOUNTY BOARD (diamond)     100+50*floor Col contracts\n\n" +
+            "  CAMPFIRE (&/*, orange)    Purge Poison/Bleed/Slow, heal\n" +
+            "                             15+5*floor HP, reset rest + fatigue,\n" +
+            "                             cooking interaction\n" +
+            "  FOUNTAIN (O, cyan)         Heal 30+10*floor HP, +20 Satiety,\n" +
+            "                             clear fatigue (tile consumes)\n" +
+            "  SHRINE (cross, violet)     +3+floor ATK & DEF for 30 turns\n" +
+            "  PILLAR (|)                 Reveals 15-tile map radius\n" +
+            "  ANVIL (+, gold)            Opens smithing/repair/evolve UI\n" +
+            "  BOUNTY BOARD (diamond)     100+50*floor Col contracts\n\n" +
             "TIPS\n" +
             "Save Shrines until right before the labyrinth run — 30 turns\n" +
             "of +ATK/+DEF goes a long way in a boss fight. Never ascend a\n" +
@@ -3557,17 +3632,16 @@ public static class PlayerGuideContent
             "Full name table for every chain weapon, T1 through T4. Each class\n" +
             "has a unique four-name progression ending in a Divine capstone. Use\n" +
             "this as a reference sheet when planning catalyst spend.\n\n" +
-            "Weapon    T1               T2               T3               T4 (Divine)\n" +
-            "-----------------------------------------------------------------------\n" +
-            "1H Sword  Final Espada     Asmodeus         Final Avalanche  Tyrfing\n" +
-            "Rapier    Prima Sabre      Pentagramme      Charadrios       Hexagramme\n" +
-            "Scimitar  Moonstruck Saber Diablo Esperanza Iblis            Satanachia\n" +
-            "Dagger    Heated Razor     Valkyrie         Misericorde      Iron Maiden\n" +
-            "Mace      Lunatic Press    Nemesis          Yggdrasil        Mjolnir\n" +
-            "Katana    Matamon          Shishi-Otoshi    Shichishito      Masamune\n" +
-            "2H Sword  Matter Dissolver Titan's Blade    Ifrit            Ascalon\n" +
-            "Axe       Bardiche         Archaic Murder   Nidhogg's Fang   Ouroboros\n" +
-            "Spear     Heart Piercer    Trishula         Vijaya           Caladbolg\n\n" +
+            "  Weapon    T1               T2               T3               T4 (Divine)\n" +
+            "  1H Sword  Final Espada     Asmodeus         Final Avalanche  Tyrfing\n" +
+            "  Rapier    Prima Sabre      Pentagramme      Charadrios       Hexagramme\n" +
+            "  Scimitar  Moonstruck Saber Diablo Esperanza Iblis            Satanachia\n" +
+            "  Dagger    Heated Razor     Valkyrie         Misericorde      Iron Maiden\n" +
+            "  Mace      Lunatic Press    Nemesis          Yggdrasil        Mjolnir\n" +
+            "  Katana    Matamon          Shishi-Otoshi    Shichishito      Masamune\n" +
+            "  2H Sword  Matter Dissolver Titan's Blade    Ifrit            Ascalon\n" +
+            "  Axe       Bardiche         Archaic Murder   Nidhogg's Fang   Ouroboros\n" +
+            "  Spear     Heart Piercer    Trishula         Vijaya           Caladbolg\n\n" +
             "TIPS\n" +
             "Names repeat from the Named Legendary list where a class\n" +
             "converges (Mjolnir, Masamune). Either source grants the same\n" +
@@ -3776,6 +3850,12 @@ public static class PlayerGuideContent
             "  Vanguard     ATK +12, VIT+4        / DEX -2\n" +
             "LEGENDARY (multi-stat, minimal downside)\n" +
             "  Astral       ATK +15, DEX+10 / DEF -2\n\n" +
+            "WHERE  The four Common ingots drop from mobs — Sharpening\n" +
+            "       from kobolds, Warden from constructs, Hunter from\n" +
+            "       beasts, Lunar from the undead. Rare, Epic and the\n" +
+            "       Legendary Astral Ingot are chest finds, banded by\n" +
+            "       floor: Rare from F20, Epic from F45, Astral F78+.\n" +
+            "\n" +
             "TIPS\n" +
             "Three Guardian Ingots in a shield give +45 DEF — roughly a\n" +
             "full Celestial armor tier of extra defense on top of the\n" +
@@ -4123,7 +4203,7 @@ public static class PlayerGuideContent
             "canon weapon early, you can start dual-wielding before the\n" +
             "Dual Blades grind completes.\n\n" +
             "SEE ALSO\n" +
-            "[Gear Compare] · [Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System] · [Accessories] · [Mining — Tool Slot & Ore Veins] · [Equipment Compare Panel] · [Inventory Screen]")
+            "[Gear Compare] · [Armour Sets] · [Unique Skill: Dual Blades] · [Paired Dual-Wield Weapons] · [Weapon Refinement System] · [Accessories] · [Mining — Tool Slot & Ore Veins] · [Equipment Compare Panel] · [Inventory Screen]")
         {
             Tags = new[] { "equipment", "weapons", "refinement" }
         },
@@ -4414,24 +4494,84 @@ public static class PlayerGuideContent
             "         poison/bleed), Battle Elixir (+15 ATK/+10 SPD 60t),\n" +
             "         Speed Potion (+10 SPD 30t), Iron Skin Potion (+10\n" +
             "         DEF 30t), Escape Rope, Revive Crystal (auto).\n" +
-            "CRYSTALS Teleport Crystal (warp to named city), Corridor\n" +
-            "         Crystal (60s portal), Anti-Crystal (suppresses\n" +
+            "CRYSTALS Corridor Crystal (escape to the heart of the\n" +
+            "         floor), Anti-Crystal (suppresses\n" +
             "         teleports — Laughing Coffin tool), Healing (+100),\n" +
             "         High Healing (+300), Antidote Crystal, Paralysis\n" +
             "         Cure, Mirage Sphere (records combat), Pneuma Flower\n" +
             "         (revives ally within 10 turns, Legendary), Divine\n" +
             "         Stone of Returning Soul (revives within 10s —\n" +
             "         Nicholas F49 drop).\n" +
+            "WHERE  Potions, throwables, the healing / antidote /\n" +
+            "       paralysis-cure crystals and tavern fare are vendor\n" +
+            "       stock, unlocking as you cross floors. Corridor,\n" +
+            "       and the Pneuma Flower are\n" +
+            "       chest finds. The Divine Stone drops from Nicholas\n" +
+            "       the Renegade on F49.\n" +
             "THROWABLES  Fire Bomb (30 fire, 3-rad), Poison Vial (10+\n" +
             "            poison), Smoke Bomb (blinds), Flash Bomb (5+stun).\n\n" +
             "TIPS\n" +
-            "Keep a Teleport Crystal + Escape Rope stacked for panic\n" +
+            "Keep a Corridor Crystal + Escape Rope stacked for panic\n" +
             "exits. The Divine Stone of Returning Soul is a one-shot\n" +
             "revival — don't stash it, deploy it when it matters.\n\n" +
             "SEE ALSO\n" +
             "[Quick-Use Slots] · [Status: Bleed & Poison] · [Run Modifiers (12 Optional Challenges)]")
         {
             Tags = new[] { "potions", "throwables", "equipment" }
+        },
+
+        new("Items", "Armour Sets",
+            "┌─ Items\n" +
+            "│ Topic: Armour Sets\n" +
+            "│ Tier: Four sets, four pieces each\n" +
+            "│ Slots: Chest + Head + Legs + Feet\n" +
+            "│ Source: Chest drops on the set's floor band\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Wearing matched armour pays a bonus. Two pieces grant a small one;\n" +
+            "all four replace it with a much larger one. The four pieces sit in\n" +
+            "four different slots, so a full set never fights itself for space.\n" +
+            "\n" +
+            "The sets track the material tiers, and each drops from chests across\n" +
+            "the band of floors where its pieces are worth wearing.\n" +
+            "\n" +
+            "  Set                 Floors   Two pieces  All four\n" +
+            "  Steel Panoply       F10-28   +3 DEF  +8 DEF, +3 END\n" +
+            "  Mythril Weave       F26-52   +6 DEF  +15 DEF, +6 AGI, +4 SPD\n" +
+            "  Adamantite Bulwark  F50-78   +11 DEF  +28 DEF, +10 VIT, +8 END\n" +
+            "  Celestial Regalia   F76-99   +18 DEF  +45 DEF, +15 VIT, +10 INT, +8 SPD\n" +
+            "\n" +
+            "THE FULL SET REPLACES THE TWO-PIECE, it does not stack on top of it.\n" +
+            "Completing a set is always the larger reward, so there is never a\n" +
+            "reason to stop at three pieces.\n" +
+            "\n" +
+            "BROKEN GEAR COUNTS FOR NOTHING. A piece at zero durability grants\n" +
+            "neither its own stats nor its place in the set, so a set bonus can\n" +
+            "vanish mid-fight without anything being unequipped. Repair before a\n" +
+            "boss.\n" +
+            "\n" +
+            "A SET PIECE IS A SPECIFIC ITEM, not a name. Only the four named pieces\n" +
+            "of a set count toward it; ordinary armour found in the world is made\n" +
+            "fresh each time and belongs to no set, however similar it looks. No\n" +
+            "wandering drop shares a name with a set piece, so a name you recognise\n" +
+            "is always the real thing.\n" +
+            "\n" +
+            "THE BONUS IS A TIEBREAK, NOT A TRAP. Each full set is worth roughly\n" +
+            "half of one piece's own Defense, so a much stronger chestplate from\n" +
+            "the next tier still beats holding a set together. Match when the raw\n" +
+            "stats are close; take the upgrade when they are not.\n" +
+            "\n" +
+            "TIPS\n" +
+            "The equipment screen shows set progress as you go, so two matching\n" +
+            "pieces read as progress rather than as nothing. The bands overlap at\n" +
+            "the tier seams -- around F26-28, F50-52 and F76-78 both sets drop,\n" +
+            "which is the window to start the next one before the last is outgrown.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Equipment Slots & Dual Wield] · [Anvil — Repair, Enhance, Evolve, Refine] · [Rarity Tiers & Drop Rates] · [Gear Compare] · [Accessories] · [Equipment Compare Panel]")
+        {
+            Tags = new[] { "equipment", "armour", "set-bonus", "defense" }
         },
 
         new("Items", "Accessories",
@@ -6450,17 +6590,12 @@ public static class PlayerGuideContent
             "one glance gives you both what is on you and how long you have to\n" +
             "live with it.\n\n" +
             "ABBREVIATIONS\n" +
-            "  BLD   Bleed             (BrightRed)\n" +
-            "  PSN   Poison            (BrightGreen)\n" +
-            "  STN   Stun              (BrightYellow)\n" +
-            "  SLW   Slow              (BrightCyan)\n" +
-            "  SHRN  Shrine Buff       (BrightYellow)\n" +
-            "  SRG   Level-Up Surge    (BrightGreen)\n" +
-            "  REGN  Food Regen        (BrightGreen)\n" +
-            "  INV   Invisibility      (White)\n\n" +
+            StatusCodesToken + "\n" +
             "TIPS\n" +
             "On narrow sidebars (under 24 cells), the row falls back to\n" +
-            "single-letter form (B/P/S/etc.) — same color, less width. The\n" +
+            "single-letter form (B/P/S/etc.) — same color, less width. If even\n" +
+            "that will not fit, a trailing +N counts what is hidden, so the row\n" +
+            "never quietly stops at whatever happened to be first. The\n" +
             "log tag style remains [BLD]/[PSN]/etc. for consistency with\n" +
             "the sidebar.\n\n" +
             "SEE ALSO\n" +

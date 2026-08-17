@@ -137,6 +137,20 @@ public class Inventory
                 slot = EquipmentSlot.OffHand;
         }
 
+        // Ring overflow, the same shape as the dual-wield route above. Every ring resolves to
+        // RightRing, so a second one used to evict the first — and `Accessory.MaxEquipped`, which
+        // rings set to 2, was declared, serialized and consulted by NOTHING. Honouring it here is
+        // what makes the LeftRing slot reachable at all: before this it was unreachable by
+        // construction, exactly like the six slots FB-724 unlocked.
+        if (slot == EquipmentSlot.RightRing
+            && _equippedItems[EquipmentSlot.RightRing] != null
+            && _equippedItems[EquipmentSlot.LeftRing] == null
+            && equipment is Items.Equipment.Accessory ring
+            && ring.MaxEquipped >= 2)
+        {
+            slot = EquipmentSlot.LeftRing;
+        }
+
         if (_equippedItems[slot.Value] != null)
         {
             Unequip(slot.Value, target);

@@ -38,6 +38,81 @@ public partial class TurnManager
     private int _shrineBuff, _shrineBuffTurns;
     public int ShrineBuffTurns => _shrineBuffTurns;
 
+    // The magnitude halves, exposed for the save. A timed effect that persists its duration and
+    // not its strength resumes as a countdown over nothing.
+    public int ShrineBuffAmount => _shrineBuff;
+    public int LevelUpBuffAmount => _levelUpBuff;
+    public int PoisonDamagePerTick => _poisonDamagePerTick;
+    public int BleedDamagePerTick => _bleedDamagePerTick;
+
+    // Timed potion buffs. One entry per stat: a second dose REFRESHES rather than stacking, which
+    // is what "Increases Defense by 10 for 30 turns" says and is what stops twenty potions from
+    // one inventory slot granting +200. Applied straight to the player's base stat and taken back
+    // on expiry, so every consumer sees them without a second code path.
+    private readonly List<TimedBuff> _timedBuffs = new();
+    public IReadOnlyList<TimedBuff> ActiveBuffs => _timedBuffs;
+
+    public sealed class TimedBuff
+    {
+        public Items.StatType Stat { get; set; }
+        public int Potency { get; set; }
+        public int TurnsLeft { get; set; }
+    }
+
+    // Grant or refresh a timed buff. Potency takes the stronger of the two so a weaker potion
+    // cannot cut an active stronger one short, and the duration is refreshed either way.
+    public void ApplyTimedBuff(Items.StatType stat, int potency, int turns)
+    {
+        if (potency == 0 || turns <= 0) return;
+
+        var existing = _timedBuffs.FirstOrDefault(b => b.Stat == stat);
+        if (existing == null)
+        {
+            Items.StatModifierCollection.ApplySingle(_player, stat, potency, add: true);
+            _timedBuffs.Add(new TimedBuff { Stat = stat, Potency = potency, TurnsLeft = turns });
+            _log.Log($"{stat} +{potency} for {turns} turns.");
+            return;
+        }
+
+        if (potency > existing.Potency)
+        {
+            Items.StatModifierCollection.ApplySingle(
+                _player, stat, potency - existing.Potency, add: true);
+            existing.Potency = potency;
+        }
+        existing.TurnsLeft = Math.Max(existing.TurnsLeft, turns);
+        _log.Log($"{stat} +{existing.Potency} refreshed to {existing.TurnsLeft} turns.");
+    }
+
+    // Rebuild the buff list from a save. The stat deltas are NOT re-applied: the player's
+    // BaseAttack and friends were serialized WITH the buff already folded in, so applying again
+    // would double it every load — the same laundering this whole feature exists to stop.
+    private void RestoreTimedBuffs(List<TimedBuffSave>? saved)
+    {
+        _timedBuffs.Clear();
+        if (saved == null) return;
+        foreach (var b in saved)
+        {
+            if (b.TurnsLeft <= 0) continue;
+            if (!Enum.TryParse<Items.StatType>(b.Stat, out var stat)) continue;
+            _timedBuffs.Add(new TimedBuff { Stat = stat, Potency = b.Potency, TurnsLeft = b.TurnsLeft });
+        }
+    }
+
+    // Take a buff back when it runs out. Kept separate from the tick so the load path can rebuild
+    // the list without double-applying.
+    private void ExpireTimedBuffs()
+    {
+        for (int i = _timedBuffs.Count - 1; i >= 0; i--)
+        {
+            var b = _timedBuffs[i];
+            if (--b.TurnsLeft > 0) continue;
+            Items.StatModifierCollection.ApplySingle(_player, b.Stat, b.Potency, add: false);
+            _timedBuffs.RemoveAt(i);
+            _log.Log($"The {b.Stat} elixir wears off.");
+        }
+    }
+
     // Remaining Barrier+N absorb for this floor. Exposed so the status tray can show it: the
     // pool is live (refilled per floor from equipped Barrier effects, spent in ProcessMonsterTurn)
     // and the Player Guide tells the player to build around it, but nothing displayed it.
@@ -86,6 +161,10 @@ public partial class TurnManager
     // ExtraSearch passive: true after the first trap reveal this floor so we
     // only log the flavor line once per floor (subsequent reveals are silent).
     private bool _extraSearchRevealedThisFloor;
+    // Chests Extra Skill: Search has examined on this floor. Opening one of these rolls a
+    // tier better. Positions rather than a Tile flag — see the note in RevealNearbyTraps.
+    private readonly HashSet<(int X, int Y)> _scoutedChests = new();
+    private bool _extraSearchScoutedThisFloor;
     private static readonly int[] FloorParTurns = { 200, 220, 250, 280, 320, 360, 400, 450, 500, 550 };
     private int _floorStartTurn;
 
@@ -448,6 +527,11 @@ public partial class TurnManager
                     _log.LogSystem("You use the Escape Rope and warp back to the entrance!");
                 }
             }
+            // Timed effects are the buff system's business — Consumable.Use deliberately applies
+            // only the instant ones, so nothing here double-applies.
+            foreach (var timed in e.Consumable.Effects.TimedEffects)
+                ApplyTimedBuff(timed.Type, timed.Potency, timed.Duration);
+
             if (e.Consumable is SAOTRPG.Items.Consumables.Crystal crystal)
                 HandleCrystal(crystal);
             if (e.Consumable is SAOTRPG.Items.Consumables.CorruptionStone stone)
@@ -530,6 +614,12 @@ public partial class TurnManager
                 _map.MoveEntity(_player, _map.Width / 2, _map.Height / 2);
                 _log.LogSystem("A corridor portal opens beneath you. You step through to the entrance.");
                 break;
+            // Anti-Crystal and Mirage Sphere set NO state and nothing reads them: they print a
+            // sentence and end. Both are held unobtainable in ContentProbe's knownSourceless for
+            // that reason rather than being given an invented mechanic — the Anti-Crystal is a
+            // Laughing Coffin tool used ON a victim, so "suppresses your escape" would make a
+            // 2,000 Col purchase self-harm, and the Mirage Sphere's evidence-recording has no
+            // system behind it. Giving either a real effect is a design decision.
             case "AntiCrystal":
                 _log.LogSystem("The Anti-Crystal hums. Teleport effects are suppressed in this area.");
                 break;
@@ -681,6 +771,11 @@ public partial class TurnManager
         tm._poisonTurnsLeft = save.PoisonTurnsLeft; tm._bleedTurnsLeft = save.BleedTurnsLeft;
         tm._stunTurnsLeft = save.StunTurnsLeft; tm._slowTurnsLeft = save.SlowTurnsLeft;
         tm._shrineBuffTurns = save.ShrineBuffTurns; tm._levelUpBuffTurns = save.LevelUpBuffTurns;
+        tm._shrineBuff = save.ShrineBuffAmount; tm._levelUpBuff = save.LevelUpBuffAmount;
+        tm._poisonDamagePerTick = save.PoisonDamagePerTick;
+        tm._bleedDamagePerTick = save.BleedDamagePerTick;
+        tm._invisibilityTurnsLeft = save.InvisibilityTurnsLeft;
+        tm.RestoreTimedBuffs(save.TimedBuffs);
         // Restore food regen buff. 0 = inactive on legacy saves.
         tm._foodRegenRate = save.FoodRegenRate; tm._foodRegenTurnsLeft = save.FoodRegenTurnsLeft;
         tm._floorStartTurn = save.TurnCount; tm._floorStartRealTime = DateTime.Now;

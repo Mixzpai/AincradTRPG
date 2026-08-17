@@ -14,23 +14,38 @@ public class StatModifierCollection
         return this;
     }
 
-    // Apply all effects to the player.
+    // Effects that last a fixed number of turns rather than applying once. Equipment bonuses all
+    // declare duration 0 and are unaffected; only the buff potions use this.
+    public IEnumerable<StatEffect> TimedEffects => Effects.Where(e => e.Duration > 0);
+
+    // Apply the INSTANT effects to the player — a duration is not this type's business.
+    //
+    // This used to apply everything, duration and all, and nothing ever took a timed effect back:
+    // an Iron Skin Potion reading "Increases Defense by 10 for 30 turns" added 10 Defense
+    // PERMANENTLY, and it stacks to 20 in a single inventory slot. TurnManager owns timed buffs
+    // now and applies them itself; leaving them here would double-apply and never expire.
     public void ApplyTo(IStatModifiable target)
     {
         foreach (var effect in Effects)
         {
+            if (effect.Duration > 0) continue;
             ApplyStat(target, effect, add: true);
         }
     }
 
-    // Remove all effects from the target.
+    // Remove the instant effects, mirroring ApplyTo so Equip/Unequip stay symmetric.
     public void RemoveFrom(IStatModifiable target)
     {
         foreach (var effect in Effects)
         {
+            if (effect.Duration > 0) continue;
             ApplyStat(target, effect, add: false);
         }
     }
+
+    // Apply or take back one effect, for a caller that owns the timing.
+    public static void ApplySingle(IStatModifiable target, StatType type, int potency, bool add)
+        => ApplyStat(target, new StatEffect(type, potency, 0, false), add);
 
     private static void ApplyStat(IStatModifiable target, StatEffect effect, bool add)
     {

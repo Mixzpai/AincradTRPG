@@ -168,6 +168,12 @@ public static class SaveManager
         PoisonTurnsLeft = tm.PoisonTurnsLeft, BleedTurnsLeft = tm.BleedTurnsLeft,
         StunTurnsLeft = tm.StunTurnsLeft, SlowTurnsLeft = tm.SlowTurnsLeft,
         ShrineBuffTurns = tm.ShrineBuffTurns, LevelUpBuffTurns = tm.LevelUpBuffTurns,
+        ShrineBuffAmount = tm.ShrineBuffAmount, LevelUpBuffAmount = tm.LevelUpBuffAmount,
+        PoisonDamagePerTick = tm.PoisonDamagePerTick,
+        BleedDamagePerTick = tm.BleedDamagePerTick,
+        InvisibilityTurnsLeft = tm.InvisibilityTurnsLeft,
+        TimedBuffs = tm.ActiveBuffs.Select(b => new TimedBuffSave
+        { Stat = b.Stat.ToString(), Potency = b.Potency, TurnsLeft = b.TurnsLeft }).ToList(),
         // Active food regen buff round-trip.
         FoodRegenRate = tm.FoodRegenRate, FoodRegenTurnsLeft = tm.FoodRegenTurnsLeft,
         DiscoveredLore = tm.DiscoveredLore.ToList(),
