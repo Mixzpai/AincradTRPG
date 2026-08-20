@@ -125,9 +125,20 @@ public static partial class MapGenerator
     }
 
     // Corridor decoration: sconces and cracked floors.
-    internal static void DecorateCorridors(GameMap map, int spawnX, int spawnY, Random rng)
+    // `campfireBudget` caps the wall-sconce campfires. This used to be an uncapped 8%-per-Wall
+    // roll, which ignored the biome config's own MinCampfires/MaxCampfires entirely: grassland
+    // declares a maximum of 2 and floor 1 carried 54. Worse, the density RAN THE WRONG WAY with
+    // depth — a campfire every ~320 walkable tiles on floor 99 against one per ~14,000 on floor 1
+    // — because the roll scales with Wall count while the map shrinks. A campfire is a rest,
+    // cook and sleep-XP point, so that is a difficulty curve running backwards.
+    //
+    // The budget suppresses the WRITE only. Every rng draw still happens in the same order, so no
+    // other feature on the floor moves.
+    internal static void DecorateCorridors(GameMap map, int spawnX, int spawnY, Random rng,
+        int campfireBudget = int.MaxValue)
     {
         int w = map.Width, h = map.Height;
+        int firesPlaced = 0;
         // Sconces near walls adjacent to paths/floors
         for (int x = 1; x < w - 1; x++)
         for (int y = 1; y < h - 1; y++)
@@ -144,7 +155,11 @@ public static partial class MapGenerator
                 var t = map.Tiles[nx, ny].Type;
                 if ((t == TileType.Path || t == TileType.Floor) && rng.Next(2) == 0)
                 {
-                    map.Tiles[nx, ny].Type = TileType.Campfire;
+                    if (firesPlaced < campfireBudget)
+                    {
+                        map.Tiles[nx, ny].Type = TileType.Campfire;
+                        firesPlaced++;
+                    }
                     break;
                 }
             }

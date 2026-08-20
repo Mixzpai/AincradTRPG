@@ -37,6 +37,7 @@ public static class PrefabParser
         var orient = PrefabOrient.Float;
         var requires = new List<string>();
         var mons  = new Dictionary<char, string>();
+        var npcs  = new Dictionary<char, string>();
         var items = new Dictionary<char, string>();
         var kfeat = new Dictionary<char, TileType>();
         var subst  = new List<SubstRule>();
@@ -112,6 +113,7 @@ public static class PrefabParser
                     break;
                 case "REQUIRES": requires.AddRange(SplitWs(value)); break;
                 case "MONS":  ParseGlyphStringPairs(value, mons); break;
+                case "NPCS":  ParseGlyphStringPairs(value, npcs); break;
                 case "ITEM":
                 case "ITEMS": ParseGlyphStringPairs(value, items); break;
                 case "KFEAT": ParseKFeat(value, kfeat, sourcePath, li + 1); break;
@@ -184,6 +186,7 @@ public static class PrefabParser
             Orient = orient,
             Requires = requires,
             Mons  = mons,
+            Npcs  = npcs,
             Items = items,
             KFeat = kfeat,
             Subst  = subst,

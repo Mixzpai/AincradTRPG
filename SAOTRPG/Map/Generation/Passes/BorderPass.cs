@@ -25,8 +25,11 @@ public sealed class BorderPass : IGenerationPass
         for (int y = 0; y < h; y++)
         {
             if (mask[x, y]) continue;
-            bool nearEdge = NeighborInside(mask, x, y, 1) || NeighborInside(mask, x, y, 2);
-            if (nearEdge) map.Tiles[x, y].Type = TileType.Mountain;
+            // RANGE 1 IS CONTAINED IN RANGE 2 — the old `NeighborInside(1) || NeighborInside(2)`
+            // re-probed the same nine cells inside the twenty-five, on every out-of-disk cell of
+            // the map (~215,000 on a 1000x1000 floor). Strictly redundant, so the result is
+            // identical.
+            if (NeighborInside(mask, x, y, 2)) map.Tiles[x, y].Type = TileType.Mountain;
         }
     }
 

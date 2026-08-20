@@ -8,6 +8,9 @@ MAX_PER_FLOOR: 1
 ROTATE:        true
 MIRROR:        true
 
+NPCS: 1 = trader
+NPCS: 2 = trader
+
 MAP
 ###########
 #.........#

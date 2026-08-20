@@ -74,8 +74,6 @@ public class UserSettings
     // damage tag bracket style — default [BRACKETS] for visual anchor.
     public DamageTagStyle DamageTagStyle { get; set; } = DamageTagStyle.Brackets;
 
-    // Fall back to ASCII stat bars if the terminal font renders
-    // eighth-block unicode (█▉▊▋▌▍▎▏) incorrectly. Default false → unicode.
     // Stops everything that moves on its own: looping tile and weather visuals, screen shake,
     // particles, dialog fades and the HUD bar tweens. Event lifetimes are untouched — a toast
     // still appears and still expires, it just does not fade.
@@ -84,7 +82,15 @@ public class UserSettings
     // Interface colour theme. UI layer only — the map keeps its own palette.
     public UI.Helpers.ThemeId ColorTheme { get; set; } = UI.Helpers.ThemeId.Default;
 
+    // Fall back to ASCII stat bars if the terminal font renders
+    // eighth-block unicode (█▉▊▋▌▍▎▏) incorrectly. Default false → unicode.
     public bool UseAsciiStatBars { get; set; } = false;
+
+    // Directional sun shadows and ambient occlusion across the map. Off leaves the flat ambient
+    // fill the game had before: every tile under the open sky lit identically, whatever stands
+    // over it. On costs a little contrast — a glyph in deep shadow is dimmer — so it is a real
+    // legibility choice and not only a taste one, which is why it has a control at all.
+    public bool TerrainShading { get; set; } = true;
 
     // Status tray verbose labels (POISON·3 4t instead of P×3:4). Shift+S toggles it in play; this
     // is what makes the choice survive the session, so a player who prefers labels is not

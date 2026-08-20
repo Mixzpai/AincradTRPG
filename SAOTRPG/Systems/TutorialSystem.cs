@@ -117,7 +117,7 @@ public static class TutorialSystem
             "Night is falling — your vision range shrinks dramatically. Your torch provides a warm bubble of light around you.",
 
         "first_weather_change" =>
-            "The weather has changed! Weather affects combat: Rain reduces crit, Fog reduces vision, Wind boosts throwables.",
+            "The weather has changed! Rain reduces crit, Fog hides traps, Wind boosts throwables. Rain and fog also flatten the sun, so shadows fade.",
 
         // ── Progression ──────────────────────────────────────────────
         "first_level_up" =>

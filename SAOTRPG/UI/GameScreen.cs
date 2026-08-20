@@ -360,7 +360,9 @@ public static partial class GameScreen
             int explPct = turnManager.Map.GetExplorationPercent();
             int par = TurnManager.GetFloorPar(turnManager.CurrentFloor);
             sidebar.Append("\n\n[ Floor ]");
-            sidebar.Append($"\n  F{turnManager.CurrentFloor}  {BiomeSystem.DisplayName}");
+            string biomeEffect = BiomeSystem.EffectSummary;
+            sidebar.Append($"\n  F{turnManager.CurrentFloor}  {BiomeSystem.DisplayName}"
+                + (biomeEffect.Length > 0 ? $"  ({biomeEffect})" : ""));
             sidebar.Append($"\n  Kills:{floorKills}  Expl:{explPct}%  {SAOTRPG.Map.DayNightCycle.PhaseName}");
             sidebar.Append($"\n  T{turnManager.FloorTurns}/{par}  {turnManager.GetFloorDangerLabel()}");
 
@@ -548,7 +550,9 @@ public static partial class GameScreen
         // automatically if the event is already in FiredEventIds (save-loaded run).
         if (saveData == null)
         {
-            AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(250), () =>
+            // Fired once per fresh run at screen show, never from a key handler, so it cannot
+            // stack; StorySystem's own fired-events set is the real idempotence.
+            AppHost.AddOneShotTimeout(TimeSpan.FromMilliseconds(250), () =>
             {
                 Story.StorySystem.TryFire(Story.StoryTrigger.GameStart,
                     new Story.StoryContext(startFloor, 0, player));

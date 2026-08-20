@@ -10,6 +10,7 @@ ROTATE:        true
 MIRROR:        true
 
 KFEAT: P = Pillar
+MONS: 1 = fallen_paladin
 
 MAP
 ###########

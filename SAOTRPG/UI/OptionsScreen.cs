@@ -193,6 +193,21 @@ public static class OptionsScreen
         var flashCheck = Toggle("Damage Flash", y, settings.ShowDamageFlash, v => settings.ShowDamageFlash = v);
         y += 2;
 
+        // Sun shadows and contact shading across the map. It has a control because it trades
+        // contrast for depth: a glyph in deep shadow is dimmer than one in the open, which is
+        // the whole point of it and also a reason someone might want it off.
+        var shadingLabel = FormLabel("Terrain Shading", y);
+        var shadingCheck = Toggle("Terrain Shading", y, settings.TerrainShading,
+            v => settings.TerrainShading = v);
+        y += 1;
+        var shadingDesc = new Label
+        {
+            Text = "Trees and walls cast graded shadows that swing with the sun.",
+            X = ControlX, Y = y,
+            Width = 62, Height = 1, SchemeName = ColorSchemes.DimName,
+        };
+        y += 2;
+
         // Eighth-block bars vs. ASCII fallback for HP/XP/SAT.
         var asciiBarsLabel = FormLabel("ASCII Stat Bars", y);
         var asciiBarsCheck = Toggle("ASCII Stat Bars", y, settings.UseAsciiStatBars,
@@ -525,6 +540,7 @@ public static class OptionsScreen
             footstepLengthLabel, footstepLengthRadio,
             footstepOpacityLabel, footstepOpacityRadio,
             flashLabel, flashCheck,
+            shadingLabel, shadingCheck, shadingDesc,
             asciiBarsLabel, asciiBarsCheck, asciiBarsDesc, trayVerboseLabel, trayVerboseCheck, trayVerboseDesc,
             asciiGlyphsLabel, asciiGlyphsCheck, asciiGlyphsDesc);
         accessPage.Add(

@@ -22,6 +22,200 @@ public static class PlayerGuideContent
     // The letter tray's own key, rendered at read time. The hand-written version described three
     // letters as meaning something they do not (X, C, D) and invented a fourth (Z).
     // The minimap's glyph legend, rendered from MinimapView.Legend at read time.
+    // Per-biome ore density, read from the biome JSONs at render.
+    //
+    // The hand-written version listed a "Cave" biome the game does not have, and omitted Ice,
+    // Desert and Dark — three of the four richest. Fifth generator here to replace a
+    // transcription that had already rotted.
+    public const string OreDensityToken = "{{ORE_DENSITY}}";
+
+    internal static string BuildOreDensityBlock()
+    {
+        var rows = new List<(string Name, float Density)>();
+        foreach (Systems.BiomeType b in System.Enum.GetValues<Systems.BiomeType>())
+        {
+            var cfg = Map.Generation.BiomeGenConfigLoader.Get(b);
+            if (cfg != null) rows.Add((b.ToString(), cfg.OreVeinDensity));
+        }
+
+        var sb = new System.Text.StringBuilder();
+        foreach (var (name, d) in rows.OrderByDescending(r => r.Density).ThenBy(r => r.Name))
+        {
+            string band = d >= 1.3f ? "richest" : d >= 0.9f ? "rich"
+                        : d >= 0.6f ? "moderate" : "barren";
+            sb.Append("  ").Append(name.PadRight(11)).Append(d.ToString("0.0"))
+              .Append("   ").Append(band).Append('\n');
+        }
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    public static string ResolveOreDensity(string src) =>
+        !src.Contains(OreDensityToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(OreDensityToken, BuildOreDensityBlock());
+
+    public const string LandmarkKindsToken = "{{LANDMARK_KINDS}}";
+
+    // Counted off the prefab library itself, so a new hand-authored landmark reaches this page
+    // without anyone editing it — and the page can never claim a kind that no longer ships.
+    // Categories only: a prefab's NAME is an internal id and must not appear in player text.
+    internal static string BuildLandmarkKindsBlock()
+    {
+        var lib = Map.Generation.Prefabs.PrefabLibrary.Shared;
+        lib.LoadAll();
+
+        var seen = new System.Collections.Generic.Dictionary<string, int>();
+        var names = new System.Collections.Generic.HashSet<string>();
+        foreach (var biome in new[] { "grassland", "forest", "swamp", "desert", "ice", "volcanic",
+                                      "aquatic", "ruins", "dark", "urban", "void" })
+        foreach (int floor in System.Linq.Enumerable.Range(1, 100))
+        foreach (var def in lib.CandidatesFor(biome, floor))
+        {
+            if (def.Tags.Contains("boss")) continue;
+            if (!names.Add(def.Name)) continue;
+            string kind = Kind(def.Tags);
+            seen[kind] = seen.GetValueOrDefault(kind) + 1;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        foreach (var row in System.Linq.Enumerable.OrderByDescending(seen, r => r.Value))
+            sb.Append("  ").Append(row.Key.PadRight(22)).Append(row.Value).Append('\n');
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    // The prefab's leading tag decides its kind; the fallback keeps an unlabelled one visible
+    // rather than dropping it silently.
+    private static string Kind(System.Collections.Generic.IReadOnlyCollection<string> tags)
+    {
+        if (tags.Contains("shrine")) return "Shrines and altars";
+        if (tags.Contains("vault") || tags.Contains("treasure")) return "Vaults and hoards";
+        if (tags.Contains("merchant")) return "Camps and traders";
+        if (tags.Contains("trap") || tags.Contains("puzzle")) return "Traps and puzzles";
+        if (tags.Contains("signature")) return "Biome landmarks";
+        if (tags.Contains("vignette") || tags.Contains("narrative")) return "Scenes and remains";
+        if (tags.Contains("altar") || tags.Contains("monument")) return "Monuments";
+        return "Other structures";
+    }
+
+    public static string ResolveLandmarkKinds(string src) =>
+        !src.Contains(LandmarkKindsToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(LandmarkKindsToken, BuildLandmarkKindsBlock());
+
+    // {{GLYPH:Campfire}} renders the mark that tile actually draws, inline in prose. Every
+    // written-out glyph in this corpus has eventually gone stale — the chest was a "gold diamond"
+    // for a shipment after it stopped being one — so naming a glyph in words is not allowed to
+    // survive anywhere a token can stand instead.
+    internal static string ResolveGlyphTokens(string src)
+    {
+        if (!src.Contains("{{GLYPH:", System.StringComparison.Ordinal)) return src;
+        return System.Text.RegularExpressions.Regex.Replace(src, @"\{\{GLYPH:(\w+)\}\}", m =>
+        {
+            if (!System.Enum.TryParse<Map.TileType>(m.Groups[1].Value, out var type))
+                return m.Value;   // an authoring mistake should look like one
+            var glyphs = new System.Collections.Generic.List<char>();
+            for (int i = 0; i < 60; i++)
+            {
+                char g = Map.TileDefinitions.GetVisual(type, i % 8, i / 8).Glyph;
+                if (g != ' ' && !glyphs.Contains(g)) glyphs.Add(g);
+            }
+            return glyphs.Count == 0 ? m.Value
+                 : string.Join(" or ", glyphs.ConvertAll(g => "'" + g + "'"));
+        });
+    }
+
+    public const string CampfireQuotaToken = "{{CAMPFIRE_QUOTA}}";
+
+    // Read off the biome configs, because "how many fires a floor holds" is a tuning value and a
+    // typed number would be wrong the next time anyone edits a JSON. Reports the range across
+    // biomes rather than one figure — the answer genuinely differs by where you are.
+    internal static string BuildCampfireQuotaBlock()
+    {
+        int lo = int.MaxValue, hi = 0;
+        foreach (Systems.BiomeType b in System.Enum.GetValues<Systems.BiomeType>())
+        {
+            var q = Map.Generation.BiomeGenConfigLoader.Get(b)?.FeatureQuotas;
+            if (q == null) continue;
+            lo = System.Math.Min(lo, q.MinCampfires);
+            hi = System.Math.Max(hi, q.MaxCampfires);
+        }
+        return lo > hi ? "a handful" : lo == hi ? $"{lo}" : $"{lo} to {hi}";
+    }
+
+    public static string ResolveCampfireQuota(string src) =>
+        !src.Contains(CampfireQuotaToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(CampfireQuotaToken, BuildCampfireQuotaBlock());
+
+    public const string BiomeEffectsToken = "{{BIOME_EFFECTS}}";
+
+    // TENTH generator. The hand-written table it replaces was mostly right, and the two things
+    // it got wrong are the kind only a generator catches: it omitted The Void's +1 hunger/turn
+    // entirely, and it called the Desert and Volcanic satiety drain "thirst" when the stat is
+    // satiety, which the game elsewhere calls hunger. Built from BiomeSystem's own config table,
+    // so a tuning change reaches the page.
+    //
+    // Only PASSIVE per-turn effects belong here — Ruins' trap density and Settlement's vendors
+    // are real but are not config fields, so they stay in prose beneath the table rather than
+    // being invented as rows.
+    internal static string BuildBiomeEffectsBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (Systems.BiomeType b in System.Enum.GetValues<Systems.BiomeType>())
+        {
+            var c = Systems.BiomeSystem.ConfigFor(b);
+            var parts = new System.Collections.Generic.List<string>();
+            if (c.VisionModifier != 0) parts.Add($"{c.VisionModifier} vision");
+            if (c.AttackModifier != 0) parts.Add($"{c.AttackModifier} ATK");
+            if (c.SlipChance > 0) parts.Add($"{c.SlipChance}% slip");
+            if (c.StepPoisonChance > 0) parts.Add($"{c.StepPoisonChance}% step poison");
+            if (c.EnvironmentDamage.Interval > 0)
+                parts.Add($"{c.EnvironmentDamage.Damage} dmg every {c.EnvironmentDamage.Interval} turns");
+            if (c.SatietyDrainBonus > 0) parts.Add($"+{c.SatietyDrainBonus} hunger/turn");
+            sb.Append("  ").Append(c.DisplayName.PadRight(15))
+              .Append(parts.Count == 0 ? "no passive effect" : string.Join(", ", parts))
+              .Append('\n');
+        }
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    public static string ResolveBiomeEffects(string src) =>
+        !src.Contains(BiomeEffectsToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(BiomeEffectsToken, BuildBiomeEffectsBlock());
+
+    public const string MapLegendToken = "{{MAP_LEGEND}}";
+
+    // Renders the glyph the renderer ACTUALLY draws, by asking it. Several tiles vary their glyph
+    // with a position hash or an animation phase, so a fixed sample point would be one arbitrary
+    // frame — take the distinct set and show them together.
+    internal static string BuildMapLegendBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (type, meaning) in Map.TileDefinitions.MapLegend)
+        {
+            var glyphs = new System.Collections.Generic.List<char>();
+            for (int i = 0; i < 60; i++)
+            {
+                char g = Map.TileDefinitions.GetVisual(type, i % 8, i / 8).Glyph;
+                if (g != ' ' && !glyphs.Contains(g)) glyphs.Add(g);
+            }
+            if (glyphs.Count == 0) continue;
+            // QUOTED, because the body renderer normalises a leading "- " into a bullet: lava
+            // draws '-' and the legend rendered it as '*', so the generated block lied about the
+            // very glyph it exists to show. A quote can never begin a bullet.
+            var cell = string.Join(" ", glyphs.ConvertAll(g => "'" + g + "'"));
+            sb.Append("  ").Append(cell.PadRight(9))
+              .Append("  ").Append(meaning).Append('\n');
+        }
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    public static string ResolveMapLegend(string src) =>
+        !src.Contains(MapLegendToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(MapLegendToken, BuildMapLegendBlock());
+
     public const string MinimapLegendToken = "{{MINIMAP_LEGEND}}";
 
     internal static string BuildMinimapLegendBlock()
@@ -36,6 +230,17 @@ public static class PlayerGuideContent
         !src.Contains(MinimapLegendToken, System.StringComparison.Ordinal)
             ? src
             : src.Replace(MinimapLegendToken, BuildMinimapLegendBlock());
+
+    // The day clock's length, read from the constant that runs it. This page said
+    // "400-turn clock" in three places against a cycle of 4,000 — the transcription was a factor
+    // of ten out, and the tip built on it was timed against a day that does not exist. Eighth
+    // generator here, eighth rotted transcription it replaced.
+    public const string DayClockToken = "{{DAY_CLOCK}}";
+
+    public static string ResolveDayClock(string src) =>
+        !src.Contains(DayClockToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(DayClockToken, Map.DayNightCycle.CycleLength.ToString("N0"));
 
     public const string StatusLettersToken = "{{STATUS_LETTERS}}";
 
@@ -1249,6 +1454,32 @@ public static class PlayerGuideContent
             Tags = new[] { "combat", "ui", "log", "accessibility" }
         },
 
+        new("World", "Map Legend",
+            "\u250c\u2500 World\n" +
+            "\u2502 Topic: Map Legend\n" +
+            "\u2502 Covers: Landmarks, hazards and the water gates\n" +
+            "\u2502 Source: Generated from the renderer\n" +
+            "\u2514\u2500\n\n" +
+            "SUMMARY\n" +
+            "What every mark on the main map means. This list is built from the\n" +
+            "renderer itself, so a glyph shown here is the glyph you will see.\n\n" +
+            "Terrain you simply walk over is left out — the ground does not need\n" +
+            "a key. What follows is what you stop for, and what stops you.\n\n" +
+            "LEGEND\n" +
+            MapLegendToken + "\n\n" +
+            "TIPS\n" +
+            "Two pairs are worth learning apart before you need them. Shallow\n" +
+            "water is free from Swimming L1 and deep water refuses you until\n" +
+            "L25, so they carry different marks rather than different shades.\n" +
+            "Lava does the same: it will not be mistaken for water you can\n" +
+            "wade. Some tiles show more than one mark because they animate or\n" +
+            "vary by position; every mark listed against them is one they use.\n\n" +
+            "SEE ALSO\n" +
+            "[Minimap] · [Mechanical Tiles] · [Terrain Hazards] · [Biomes] · [River Crossing & Aquatic Mobs]")
+        {
+            Tags = new[] { "map", "legend", "glyphs", "ui", "accessibility", "navigation" }
+        },
+
         new("World", "Minimap",
             "\u250c\u2500 World\n" +
             "\u2502 Topic: Minimap\n" +
@@ -2341,29 +2572,114 @@ public static class PlayerGuideContent
             "┌─ World\n" +
             "│ Topic: Day/Night Cycle\n" +
             "│ Floors: All\n" +
-            "│ Landmark: Global 400-turn clock\n" +
+            "│ Landmark: Global {{DAY_CLOCK}}-turn clock\n" +
             "│ Unlock: Always on\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "A 400-turn clock runs whether or not you act, and how far you can see\n" +
-            "moves with it. Deep night cuts your vision to a torch bubble — that is\n" +
-            "the whole mechanic, and it is enough to change how you travel.\n\n" +
-            "A global clock ticks every turn and cycles through Dawn, Day, Dusk,\n" +
-            "and Night on a 400-turn loop. Sun elevation follows a cosine curve —\n" +
-            "SunLevel=1.0 at noon, 0.0 at midnight. Check the HUD or use Look Mode\n" +
-            "to see current phase. Vision radius scales with sun level: bright\n" +
-            "day gives the full viewport, deep night shrinks FOV to an 18-tile\n" +
-            "torch bubble. Ambient tint shifts cool moonlit blue at night, warm\n" +
-            "off-white by day. Darkness Blade unique skill only activates at\n" +
-            "Night; the Starless Night run modifier pins the cycle at 0 permanently.\n" +
+            "A {{DAY_CLOCK}}-turn clock runs whether or not you act. How far you can\n" +
+            "see moves with it, and so does the direction every shadow on the floor\n" +
+            "is pointing. Deep night cuts your vision to a torch bubble.\n\n" +
+            "The clock ticks every turn and cycles through Dawn, Day, Dusk and\n" +
+            "Night. Sun elevation follows a cosine curve, highest at noon and zero\n" +
+            "at midnight; the HUD and Look Mode both name the current phase.\n\n" +
+            "Two things move with it. Vision radius scales with sun level — bright\n" +
+            "day gives the full viewport, deep night shrinks it to an 18-tile torch\n" +
+            "bubble — and the sun’s BEARING swings a half-circle from east at dawn\n" +
+            "through south at noon to west at dusk, dragging every shadow round\n" +
+            "with it. Ambient tint shifts cool moonlit blue at night, warm\n" +
+            "off-white by day. Darkness Blade only activates at Night; the\n" +
+            "Starless Night run modifier pins the cycle at 0 permanently.\n" +
             "Time advances whether you act or idle.\n\n" +
             "TIPS\n" +
-            "Save Darkness Blade combat windows for Night; rest at campfires\n" +
-            "during dawn to enter Day with a fresh vision radius.\n\n" +
+            "Save Darkness Blade combat windows for Night. Shadows are longest\n" +
+            "early and late and shortest at noon, so a shape you cannot place at\n" +
+            "dusk may simply be a tree lying across the ground.\n\n" +
             "SEE ALSO\n" +
-            "[Vision & FOV] · [Unique Skill: Darkness Blade] · [Run Modifiers (12 Optional Challenges)] · [Weather]")
+            "[Vision & FOV] · [Light & Shadow] · [Unique Skill: Darkness Blade] · [Run Modifiers (12 Optional Challenges)] · [Weather]")
         {
             Tags = new[] { "world", "weather", "floors" }
+        },
+
+        new("World", "Light & Shadow",
+            "┌─ World\n" +
+            "│ Topic: Light & Shadow\n" +
+            "│ Floors: All\n" +
+            "│ Sources: Sky, sun, your torch, glowing tiles\n" +
+            "│ Setting: Terrain Shading (Options - Display)\n" +
+            "└─\n" +
+            "\n" +
+            "SUMMARY\n" +
+            "Four things light the floor: the sky, the sun, the torch you carry,\n" +
+            "and anything that glows. Only the sun casts shadows, and it moves.\n" +
+            "\n" +
+            "THE SKY is a flat wash over everything outdoors, cool blue at night\n" +
+            "and warm off-white by day. It is what you see by wherever nothing\n" +
+            "else reaches.\n" +
+            "\n" +
+            "THE SUN sits on a bearing that swings east to west across the day,\n" +
+            "and anything blocking sight lays a shadow away from it — trees, rock,\n" +
+            "walls, closed doors. Those shadows are graded rather than flat:\n" +
+            "darkest at the foot of whatever cast them, fading along their length,\n" +
+            "with an edge that softens the further it travels. A shadow is longest\n" +
+            "when the sun is low and shortest at noon, and because the bearing is\n" +
+            "rarely square to the grid, most of the day it falls diagonally.\n" +
+            "\n" +
+            "Losing the sun is not the same as losing all light. A shadowed tile\n" +
+            "still has the sky on it, so it goes COOLER as well as darker — that\n" +
+            "blue cast is how you tell shade from nightfall.\n" +
+            "\n" +
+            "WEATHER decides how much direct sun there is to block. Cloud and fog\n" +
+            "scatter it, and scattered light casts no shadow, so a rainy floor\n" +
+            "keeps its brightness and loses most of its relief while a foggy one\n" +
+            "is flat almost everywhere. Wind clears the sky instead of clouding\n" +
+            "it, and changes nothing.\n" +
+            "\n" +
+            "CONTACT SHADING darkens a tile for each neighbour that blocks sight,\n" +
+            "so the inside corner of a room reads deeper than its middle. It has\n" +
+            "nothing to do with the sun and works underground and at night.\n" +
+            "\n" +
+            "YOUR TORCH is a warm pool that follows you and flickers, and it FADES\n" +
+            "as the sun climbs: at night it is nearly everything you have, and at\n" +
+            "noon it is a faint warmth underfoot rather than a lantern. It is\n" +
+            "shadowcast in its own right, so it will not reach through a wall — but\n" +
+            "it does spill round a corner, softening as it goes rather than stopping\n" +
+            "at a line. It also fills sun shadows back in, so standing in shade\n" +
+            "costs you nothing you could otherwise see.\n" +
+            "\n" +
+            "GLOWING TILES each carry a colour and a reach:\n" +
+            "\n" +
+            "  Campfire         warm orange, the widest of them\n" +
+            "  Anvil            forge orange\n" +
+            "  Lava             hot red, and it will hurt you\n" +
+            "  Shrine           violet, breathing slowly in and out\n" +
+            "  Enchant Shrine   golden\n" +
+            "  Fountain         cool cyan\n" +
+            "  Gas Vent         sickly green\n" +
+            "  Lore Stone       purple\n" +
+            "  Stairs Up        pale blue\n" +
+            "  Archway          pale blue\n" +
+            "\n" +
+            "Where several lie close together — a spatter of lava, most often —\n" +
+            "they light as one WIDER fire rather than stacking into a glare, so a\n" +
+            "big flow still falls off toward its edge instead of washing out. Two\n" +
+            "lights overlapping never quite reach full brightness, however many\n" +
+            "there are, which is what keeps that falloff readable.\n" +
+            "\n" +
+            "WHERE IT DOES NOT APPLY. There is no sun inside a labyrinth or in the\n" +
+            "throne room on Floor 100, so those are lit by torch, glow and contact\n" +
+            "shading alone. Ground you have explored but cannot currently see is\n" +
+            "drawn from memory and carries no lighting at all.\n" +
+            "\n" +
+            "TIPS\n" +
+            "Shadows point away from the sun, so at a glance they tell you which\n" +
+            "way is east or west without opening anything. If the shading makes\n" +
+            "glyphs harder to read on your terminal, Terrain Shading under\n" +
+            "Options - Display drops the sun and contact terms and leaves the sky.\n" +
+            "\n" +
+            "SEE ALSO\n" +
+            "[Day/Night Cycle] · [Vision & FOV] · [Biomes] · [Weather] · [Traps & Hazards]")
+        {
+            Tags = new[] { "world", "vision", "shadows", "sun", "accessibility", "rendering" }
         },
 
         new("World", "Biomes",
@@ -2383,17 +2699,10 @@ public static class PlayerGuideContent
             "ascend. Biome effects apply passively; scout the tile legend to spot\n" +
             "the hazards. Biome passives can cost HP (Volcanic/Void), satiety\n" +
             "(Desert), or stats (Ice/Aquatic) — plan rest stops accordingly.\n\n" +
-            "  Grassland     safe\n" +
-            "  Forest        -8 vision, ambush in tall grass\n" +
-            "  Toxic Swamp   -5 vision, 8% step poison\n" +
-            "  Desert        -5 vision, +1 thirst/turn\n" +
-            "  Volcanic      2 dmg every 8 turns, +1 thirst\n" +
-            "  Frozen (Ice)  12% slip, -2 ATK\n" +
-            "  Aquatic       5% slip, -3 ATK\n" +
-            "  Darkness      -20 vision (severe)\n" +
-            "  Ancient Ruins  trap/chest density bumped\n" +
-            "  Settlement    vendors/NPCs common\n" +
-            "  The Void      1 dmg every 10 turns, reality-warp flavor\n\n" +
+            BiomeEffectsToken + "\n\n" +
+            "Ruins bump trap and chest density, and Settlements are where\n" +
+            "vendors and NPCs cluster — neither shows as a passive above\n" +
+            "because neither costs you anything per turn.\n\n" +
             "TIPS\n" +
             "Carry Antidotes into Swamps, fire resist gear into Volcanic, and\n" +
             "a torch or Extra Skill Search into Darkness floors. Settlement\n" +
@@ -2476,12 +2785,17 @@ public static class PlayerGuideContent
             "  Rainy  (25%) -3 crit for all, trap detect -10, +1 poison dur.\n" +
             "  Foggy  (15%) trap detection -20 (traps almost invisible)\n" +
             "  Windy  (20%) +5 damage on thrown items\n\n" +
+            "Cloud and fog also scatter the sunlight, and scattered light casts\n" +
+            "no shadow. A rainy floor keeps most of its brightness and loses most\n" +
+            "of its relief; a foggy one is flat almost everywhere. Wind clears the\n" +
+            "sky rather than clouding it, so it leaves shadows alone.\n\n" +
             "TIPS\n" +
             "Save Fire Bombs and Flash Bombs for Windy floors (+5 each). If\n" +
             "you roll Foggy on a trap-heavy biome, consider skipping side\n" +
-            "rooms and going straight to the Labyrinth.\n\n" +
+            "rooms and going straight to the Labyrinth. Fog does NOT shorten your\n" +
+            "sight; it hides what is underfoot, not what is ahead.\n\n" +
             "SEE ALSO\n" +
-            "[Biomes] · [Traps & Hazards] · [Critical Hits] · [Day/Night Cycle]")
+            "[Biomes] · [Traps & Hazards] · [Critical Hits] · [Day/Night Cycle] · [Light & Shadow]")
         {
             Tags = new[] { "world", "weather", "floors" }
         },
@@ -2556,7 +2870,8 @@ public static class PlayerGuideContent
         new("World", "Campfires — Rest & Sleep XP",
             "┌─ World\n" +
             "│ Topic: Campfires — Rest & Sleep XP\n" +
-            "│ Glyph: Orange &/*\n" +
+            "│ Glyph: {{GLYPH:Campfire}}, orange\n" +
+            "│ Once used: {{GLYPH:Ash}} ash\n" +
             "│ Floors: All (scattered overworld)\n" +
             "│ Unlock: Walk-on, cooking interaction\n" +
             "└─\n\n" +
@@ -2565,12 +2880,18 @@ public static class PlayerGuideContent
             "survival clocks and banks Sleep-skill XP. Each tile works exactly\n" +
             "once, so they are a limited resource on the floor rather than a\n" +
             "place to idle.\n\n" +
-            "The standard Safe Room campfire doubles as a Sleep-skill farm. Each\n" +
-            "step onto a campfire tile banks +10 Sleep XP; the ProcessRest action\n" +
-            "(cook/sleep from the menu) banks another +20. Walk onto an orange &\n" +
-            "or * tile — the status purge and heal fire as with any campfire; the\n" +
-            "cooking menu opens on bump. Campfire tiles are one-shot per tile\n" +
-            "(consume on use), but Sleep XP banks before the tile is spent.\n\n" +
+            "Step onto one and everything happens at once: the heal, the status\n" +
+            "purge, both survival clocks reset, +10 Sleep XP banked, and the\n" +
+            "cooking menu opens. Then the fire is spent — the tile turns to ash\n" +
+            "and gives nothing on a second visit. The ProcessRest action\n" +
+            "(cook/sleep from the menu) banks another +20 Sleep XP and is not\n" +
+            "tied to a tile.\n\n" +
+            "The wilderness scatter allows " + CampfireQuotaToken + " per floor depending on\n" +
+            "the biome, and clearings and prefab structures add a few more — so a\n" +
+            "floor holds a countable number, and where you spend them is the\n" +
+            "decision. Walking a long way back to one you have already used is\n" +
+            "wasted turns; passing one at full health to keep it for the walk\n" +
+            "out is often right. A spent fire leaves ash you can walk over.\n\n" +
             "Stacked with the Safe Rooms effect package:\n" +
             "  +10 Sleep XP          on step (campfire tile)\n" +
             "  +20 Sleep XP          on ProcessRest action\n" +
@@ -2578,10 +2899,12 @@ public static class PlayerGuideContent
             "  Heal   15 + 5*floor HP\n" +
             "  Reset  rest + fatigue timers\n\n" +
             "TIPS\n" +
-            "Route through every campfire you pass even when not injured —\n" +
-            "the Sleep XP compounds toward L10/25/50/99 MaxHP milestones. The\n" +
-            "Eating skill levels from the cook menu, so campfires pull double\n" +
-            "duty if you roast food between fights.\n\n" +
+            "The Sleep XP compounds toward the L10/25/50/99 MaxHP milestones, so\n" +
+            "a fire is worth stepping on even at full health — but it is worth\n" +
+            "MORE saved for a moment you are hurt, poisoned and far from the\n" +
+            "stairs, because one step buys all three. The Eating skill levels\n" +
+            "from the cook menu, so roast something while you are there: the\n" +
+            "tile is about to be gone either way.\n\n" +
             "SEE ALSO\n" +
             "[Safe Rooms & Mechanics] · [Life Skills] · [Food & Cooking] · [Hunger, Satiety & Fatigue]")
         {
@@ -2723,10 +3046,10 @@ public static class PlayerGuideContent
             "                          toggles the linked wall into a door\n" +
             "                          (or vice versa). Used for dead-end\n" +
             "                          puzzle loops.\n" +
-            "CRACKED WALL (shaded)    Hidden passage - break to reveal a\n" +
+            "CRACKED WALL             Hidden passage - break to reveal a\n" +
             "                          safe room with a chest.\n" +
-            "CHEST (gold diamond)     Loot container; tier scales with floor.\n" +
-            "MONUMENT (M, yellow)     F1 Town of Beginnings only. Opens kill\n" +
+            "CHEST                    Loot container; tier scales with floor.\n" +
+            "MONUMENT                 F1 Town of Beginnings only. Opens kill\n" +
             "                          log + Active Title picker; never\n" +
             "                          consumes.\n" +
             "WATER (shallow, blue ~)  Swim gate L1+. Below L10, step costs\n" +
@@ -2996,30 +3319,34 @@ public static class PlayerGuideContent
             "│ Topic: Prefab Rooms — What They Are\n" +
             "│ Categories: Shrines · Vaults · Trap Corridors\n" +
             "│             Merchant Stalls · Boss Arenas · Vignettes\n" +
-            "│ Placement: Dropped into procedural floors\n" +
+            "│ Placement: Boss arenas, inside rooms, and on open ground\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Not every room is generated. Shrines, vaults, trap corridors, merchant\n" +
             "stalls and every boss arena are hand-authored templates dropped into\n" +
             "the map, which is why they read as deliberate when you walk into one.\n\n" +
-            "Some rooms on a floor aren't generated tile-by-tile — they're hand-\n" +
-            "authored templates dropped into the map. Shrines, vaults, trap\n" +
-            "corridors, merchant stalls, and every boss arena are prefab rooms.\n" +
-            "You'll recognize them by their deliberate layout and signature\n" +
-            "decoration. Prefab rooms intermix with procedural ones; a prefab\n" +
-            "shrine on a Forest floor will look the same as that prefab shrine\n" +
-            "on any other Forest floor (modulo rotation and mirroring). Each\n" +
-            "prefab carries a biome tag and a role tag (shrine, vault, trap,\n" +
-            "merchant, boss, vignette); the generator picks prefabs whose biome\n" +
-            "matches the current floor, rotates them to fit an open room, and\n" +
-            "stamps them. Some prefabs flag MAX_PER_GAME=1 so you will see them\n" +
-            "only once across a whole campaign. Template-specified mobs and items\n" +
-            "spawn at placement: MONS slot glyphs (1-7) fill with floor-\n" +
-            "appropriate monsters and ITEM slots (a-d) drop ground items when the\n" +
-            "prefab lands.\n\n" +
+            "Some places on a floor aren't generated tile-by-tile — they're hand-\n" +
+            "authored templates stamped into the map. You'll recognize them by\n" +
+            "their deliberate layout and signature decoration, and a given\n" +
+            "template looks the same wherever it lands, allowing for rotation\n" +
+            "and mirroring.\n\n" +
+            "They arrive three ways. Every boss arena is one, wrapped around the\n" +
+            "fight. Small ones are embedded inside existing rooms. And the large\n" +
+            "ones — shrines, vaults, hoards, trader camps and each biome's own\n" +
+            "signature ruin — are set down on open ground out in the wilderness,\n" +
+            "which is where most of what follows is waiting:\n\n" +
+            LandmarkKindsToken + "\n\n" +
+            "Each template carries a biome tag, so what you meet suits the floor\n" +
+            "you are on, and some are flagged once-per-campaign — see one of\n" +
+            "those and you will not see it again this run. Many are guarded:\n" +
+            "a hoard with nothing standing over it is the exception, not the\n" +
+            "rule, and the guard is scaled to the floor rather than to the\n" +
+            "template.\n\n" +
             "TIPS\n" +
-            "Scan every floor for the signature silhouettes: a clean\n" +
-            "rectangle of decoration flags a prefab. Search Mode clears\n" +
+            "The minimap marks the ones worth the detour — a chest, an anvil,\n" +
+            "an enchanting shrine, a lore stone — so sweep it before you commit\n" +
+            "to a direction. Otherwise scan for the signature silhouettes: a\n" +
+            "clean rectangle of decoration flags a prefab. Search Mode clears\n" +
             "hidden traps in trap-corridor prefabs. Once-per-game prefabs\n" +
             "(secret shrines, deep vaults) are worth the detour.\n\n" +
             "SEE ALSO\n" +
@@ -3234,7 +3561,7 @@ public static class PlayerGuideContent
             "lore guarantee is easy to miss: a single Journal behind a\n" +
             "trapped corridor counts.\n\n" +
             "SEE ALSO\n" +
-            "[Biomes] · [Lore, Journals & Enchant Shrines] · [Traps & Hazards] · [Prefab Rooms — What They Are] · [Ascending a Floor]")
+            "[Biomes] · [Lore, Journals & Enchant Shrines] · [Traps & Hazards] · [Prefab Rooms — What They Are] · [Ascending a Floor] · [Map Legend]")
         {
             Tags = new[] { "world", "terrain", "meta" }
         },
@@ -4260,12 +4587,9 @@ public static class PlayerGuideContent
             "carry on the ingot itself. Mining is a slower route to these ores\n" +
             "than hunting the mobs that drop them, but it is one you control: the\n" +
             "floor you stand on decides which ore you get.\n\n" +
-            "BIOME DENSITY (relative — generation pass weights veins by\n" +
-            "biome richness):\n" +
-            "  Volcanic + Void              richest tiles\n" +
-            "  Plains / Forest / Cave       moderate\n" +
-            "  Aquatic + Swamp              barren — rivers and bogs hide\n" +
-            "                               little ore\n" +
+            "ORE DENSITY BY BIOME (the generation pass weights veins by this\n" +
+            "multiplier; the floor you stand on decides how much rock carries ore):\n" +
+            OreDensityToken + "\n\n" +
             "FLOOR EXCLUSIONS:\n" +
             "  F1 (Town of Beginnings)      no veins — civic floor\n" +
             "  F100 (Ruby Palace)           no veins — final boss arena\n" +

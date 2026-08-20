@@ -29,9 +29,22 @@ public partial class MapView
     // layered cache is actually skipping the loop. Cells resolved against cells scanned is
     // the same readout one level down, for the incremental path.
     private static int s_tileLoops, s_tilePaints;
+    private static int s_framesDrawn;
+
+    // Painted frames since the last read. Public so a probe outside this assembly can divide by
+    // it; reading resets, so two measurements cannot overlap by accident.
+    public static int DrainFramesDrawn()
+    {
+        int n = s_framesDrawn;
+        s_framesDrawn = 0;
+        return n;
+    }
     private static long s_cellsResolved, s_cellsScanned;
 
-    internal static (int loops, int paints, long resolved, long scanned) DrainTileLayerCounts()
+    // Public because it is a MEASUREMENT SEAM, like DrainFramesDrawn above. Bytes per PAINTED
+    // FRAME cannot see a per-cell allocation — the frame cache means the tile loop runs on only a
+    // few frames — so an allocation guard needs the resolved-cell count as its denominator.
+    public static (int loops, int paints, long resolved, long scanned) DrainTileLayerCounts()
     {
         var result = (s_tileLoops, s_tilePaints, s_cellsResolved, s_cellsScanned);
         s_tileLoops = 0; s_tilePaints = 0; s_cellsResolved = 0; s_cellsScanned = 0;
@@ -54,6 +67,12 @@ public partial class MapView
     {
         // A modal above us has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
+
+        // A frame counter that exists OUTSIDE --verify-tiles. VerifyFramesChecked only counts in
+        // verify mode, and DrainTileLayerCounts is internal, so an offline harness had no honest
+        // denominator for a per-frame measurement — which is why the first attempt at a per-frame
+        // allocation bound measured the verifier instead of the renderer.
+        s_framesDrawn++;
 
         if (!s_sampling) return DrawContent(context);
 
@@ -96,6 +115,15 @@ public partial class MapView
         _camera.CenterOn(_player.X, _player.Y);
 
         // FOV radius from smaller viewport dim — terminal chars ~2:1 aspect → height limits.
+        //
+        // DELIBERATELY ~2x THE FARTHEST ON-SCREEN CELL, and it must stay that way. Deriving it
+        // from the viewport instead is a large, correct-looking win and was measured and
+        // REVERTED: 188 -> ~102 at 316x91 took a player turn from 3.84 ms to 1.45 ms (Debug,
+        // standing in the open; FOV.Compute is 70% of a turn). But this radius also drives what
+        // is marked EXPLORED, and auto-exploring a floor to exhaustion reached 86% at 188 and
+        // only 46% at 102 — while QuestSystem generates Explore quests targeting 40-59%. Roughly
+        // two thirds of them would have become impossible. Tightening this needs the exploration
+        // model dealt with first; it is not a free optimisation.
         int halfH = vp.Height / 2 + 2;
         Map.DayNightCycle.FovRadius = halfH * Map.DayNightCycle.FovMultiplier;
 
@@ -734,7 +762,7 @@ public partial class MapView
         {
             var lilyPad = (tile.Type == TileType.Water) ? MapEffects.GetWaterLilyPad(mx, my) : null;
             if (lilyPad != null) { ch = lilyPad.Value.Glyph; fg = lilyPad.Value.Color; }
-            else ch = MapEffects.GetWaterFlowGlyph(mx, my);
+            else ch = MapEffects.GetWaterFlowGlyph(mx, my, tile.Type == TileType.WaterDeep);
         }
         var shore = MapEffects.GetShorelineVisual(_map, mx, my, tile.Type);
         if (shore != null) { ch = shore.Value.Glyph; fg = shore.Value.Fg; }

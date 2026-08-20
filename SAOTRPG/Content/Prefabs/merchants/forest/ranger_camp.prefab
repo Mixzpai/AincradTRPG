@@ -9,6 +9,7 @@ ROTATE:        true
 MIRROR:        true
 
 KFEAT: T = Tree
+NPCS: 1 = guide
 
 MAP
 ,T,T,T,T,

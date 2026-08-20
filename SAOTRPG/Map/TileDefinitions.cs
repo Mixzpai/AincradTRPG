@@ -79,6 +79,55 @@ public static class TileDefinitions
     // a field of grass look varied without storing per-cell data, and the wall-clock reads inside
     // LavaVisual/CampfireVisual/the divine ore, whose step constants are deliberately slow because
     // every phase turnover costs a terminal flush — a renderer without that cost can raise them.
+    // ONE GLYPH PER MEANING, because colour is the only other channel and an accessibility theme
+    // may collapse it (Amber Mono maps the world to luma). Two merges here are deliberate and
+    // must stay: every trap draws as open ground ON PURPOSE, and the '.'/',' ground family is one
+    // meaning — walkable open terrain — in several terrain flavours separated by hue alone, which
+    // is decoration rather than information. '~' is likewise one meaning: shallow walkable water
+    // and loose dry ground are all crossable at no cost. What may never merge is a pair that
+    // differs in whether the player can walk it.
+    // THE MAP'S OWN LEGEND, declared once so the Player Guide renders it rather than describing
+    // it in prose. The Guide called the chest a "gold diamond" and it had stopped being one — a
+    // written-out glyph is a claim that survives only until somebody edits the table above.
+    // Landmarks and hazards only: the terrain a player walks over needs no key.
+    public static readonly (TileType Type, string Meaning)[] MapLegend =
+    {
+        (TileType.Chest,                "An unopened chest"),
+        (TileType.ChestOpened,          "A chest you have already emptied"),
+        (TileType.StairsUp,             "Stairs up — the way off this floor"),
+        (TileType.LabyrinthEntrance,    "The labyrinth archway"),
+        (TileType.Door,                 "A door"),
+        (TileType.CrackedWall,          "A cracked wall — break it for a hidden room"),
+        (TileType.Lever,                "A lever, linked to a wall or door"),
+        (TileType.PressurePlate,        "A pressure plate"),
+        (TileType.Shrine,               "A shrine"),
+        (TileType.SecretShrine,         "A secret shrine"),
+        (TileType.EnchantShrine,        "An enchanting shrine"),
+        (TileType.Fountain,             "A fountain"),
+        (TileType.Anvil,                "An anvil — repair, enhance, evolve"),
+        (TileType.BountyBoard,          "A bounty board"),
+        (TileType.MonumentOfSwordsmen,  "The Monument of Swordsmen"),
+        (TileType.LoreStone,            "A lore stone"),
+        (TileType.Journal,              "A journal page"),
+        (TileType.Campfire,             "A campfire — rest and cook here, once"),
+        (TileType.Ash,                  "Ash — burnt ground, and what a spent campfire leaves"),
+        (TileType.GasVent,              "A gas vent"),
+        (TileType.OreVeinIron,          "An iron ore vein"),
+        (TileType.OreVeinMithril,       "A mithril ore vein"),
+        (TileType.OreVeinDivine,        "A divine ore vein, the richest tier"),
+        (TileType.Water,                "Shallow water — crossable from Swimming L1"),
+        (TileType.WaterDeep,            "Deep water — needs Swimming L25"),
+        (TileType.Lava,                 "Lava — it will hurt"),
+        (TileType.DangerZone,           "Corrupted ground — it burns you every step"),
+        (TileType.BogWater,             "Bogwater — wading it poisons you"),
+        (TileType.Mud,                  "Mud — it slows you for a turn or two"),
+        (TileType.Ice,                  "Ice"),
+        (TileType.CrackedIce,           "Cracked ice"),
+        (TileType.Mountain,             "Mountain — impassable"),
+        (TileType.Rock,                 "A boulder"),
+        (TileType.Pillar,               "A pillar"),
+    };
+
     public static (char Glyph, Color Foreground, Color Background) GetVisual(TileType type, int x = 0, int y = 0)
     {
         int hash = (x * 374761393 + y * 668265263) & 0x7FFFFFFF;
@@ -103,17 +152,21 @@ public static class TileDefinitions
             TileType.TrapRune     => ('.', RockGray, Color.Black),
             TileType.Lava         => LavaVisual(hash),
             TileType.Campfire     => CampfireVisual(hash),
-            TileType.Chest        => ('◈', GoldBright, Color.Black),
+            TileType.Chest        => ('▤', GoldBright, Color.Black),
             TileType.ChestOpened  => ('◇', RockGray, Color.Black),
             TileType.Fountain     => ('⊙', FountainCyan, Color.Black),
             TileType.Shrine       => ('☥', ShrineViolet, Color.Black),
             TileType.Pillar       => ('║', WallGray, Color.Black),
-            TileType.LoreStone    => ('◆', ShrineViolet, Color.Black),
+            TileType.LoreStone    => ('‡', ShrineViolet, Color.Black),
             TileType.MonumentOfSwordsmen => ('M', GoldBright, Color.Black),
-            TileType.DangerZone   => ('.', LavaOrange, Color.Black),
+            // CORRUPTED GROUND DAMAGES YOU AND CAN KILL — "corrupted ground" is a recorded
+            // killer name — and it drew an orange '.', which is the open-ground glyph. Under a
+            // theme that collapses colour it was ordinary floor. Traps disguise themselves on
+            // purpose; this is not a trap, it is terrain that hurts, and it should read as such.
+            TileType.DangerZone   => ('%', LavaOrange, Color.Black),
             TileType.Anvil        => ('╬', GoldBright, Color.Black),
             TileType.BountyBoard  => ('▣', FountainCyan, Color.Black),
-            TileType.EnchantShrine => ('☥', GoldBright, Color.Black),
+            TileType.EnchantShrine => ('✦', GoldBright, Color.Black),
             TileType.SecretShrine => ('!', new Color(255, 100, 255), Color.Black),
             TileType.Journal      => ('≡', GoldBright, Color.Black),
             TileType.GasVent      => ('¤', new Color(120, 255, 120), Color.Black),
@@ -131,12 +184,15 @@ public static class TileDefinitions
             TileType.Sand       => ('.',  SandTan,        Color.Black),
             TileType.DuneSand   => ('~',  DuneSandBright, Color.Black),
             TileType.Snow       => ((hash % 3) == 0 ? ',' : '.', SnowPale, Color.Black),
-            TileType.Ice        => ('≈',  IcePaleBlue,    Color.Black),
-            TileType.CrackedIce => ('~',  CrackedIceDim,  Color.Black),
+            TileType.Ice        => ('░',  IcePaleBlue,    Color.Black),
+            TileType.CrackedIce => ('▚',  CrackedIceDim,  Color.Black),
             TileType.Basalt     => ('.',  BasaltDark,     Color.Black),
             TileType.Ash        => (':',  AshWarmGray,    Color.Black),
             TileType.Mud        => ('~',  MudBrown,       Color.Black),
-            TileType.BogWater   => ('≈',  BogWaterGreen,  Color.Black),
+            // POISONS ON ENTRY. FB-742 moved this onto '~' reasoning that bog water is shallow walkable
+    // water — right about walkability, wrong about harm. Same tilde family, because it IS water,
+    // but its own mark: wading it costs you 1 + floor/2 damage a turn.
+    TileType.BogWater   => ('\u223d',  BogWaterGreen,  Color.Black),
             TileType.Reeds      => ('|',  ReedsYellowGrn, Color.Black),
             // Ore veins. Divine pulses warm via animation phase; others static.
             TileType.OreVeinIron            => ('◊', OreIronFg,         Color.Black),
@@ -179,8 +235,10 @@ public static class TileDefinitions
     private static (char, Color, Color) TallGrassVisual(int hash)
         => ('"', TallGrassColors[Era][hash % TallGrassColors[Era].Length], Color.Black);
 
+    // A third of shallow-water cells used to draw the DEEP-water glyph, which is a Swimming L25
+    // gate — a route-planning lie on the tile a player is deciding whether to cross.
     private static (char, Color, Color) WaterVisual(int hash)
-        => ((hash % 3) == 0 ? '≈' : '~', WaterBlue, Color.Black);
+        => ((hash % 3) == 0 ? '∼' : '~', WaterBlue, Color.Black);
 
     private static (char, Color, Color) WaterDeepVisual(int hash)
         => ('≈', WaterDeepBlue, Color.Black);
@@ -282,8 +340,10 @@ public static class TileDefinitions
     // Lava pulses between orange and yellow.
     private static (char, Color, Color) LavaVisual(int hash)
     {
+        // Dashes, not tildes: lava drew the shallow-water glyph for half its phases, so a lethal
+        // blocking tile read as water a player could wade across.
         int phase = ((int)(AnimClockMs / LavaStepMs) + hash) % 4;
-        char glyph = phase < 2 ? '~' : '-';
+        char glyph = phase < 2 ? '-' : '=';
         // Pulse color between orange and bright yellow
         Color c = phase % 2 == 0 ? LavaOrange : new Color(255, 160, 40);
         return (glyph, c, Color.Black);

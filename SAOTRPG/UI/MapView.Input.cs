@@ -129,6 +129,13 @@ public partial class MapView
 
         switch (bare)
         {
+            case KeyCode.F8:
+                LightDebugMode lm = CycleLightDebug();
+                SetNeedsDraw();
+                Log?.LogSystem($"[LIGHT] Lighting debug overlay: {lm}.");
+                keyEvent.Handled = true;
+                return true;
+
             case KeyCode.F10:
                 Profiler.Enabled = !Profiler.Enabled;
                 Log?.LogSystem(Profiler.Enabled ? "[PROF] Profiler enabled." : "[PROF] Profiler disabled.");

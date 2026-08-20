@@ -61,6 +61,7 @@ public static class HelpDialog
 
                                           [ Debug ]
 
+                                              Shift+F8 .. Lighting field
                                               Shift+F10 . Profiler toggle
                                               Shift+F11 . Profiler reset
                                               Shift+F12 . Profiler dump

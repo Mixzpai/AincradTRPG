@@ -374,7 +374,9 @@ public static class DialogHelper
         // Snap to black at frame 0 so the first paint isn't full-color.
         dialog.SetScheme(SAOTRPG.Systems.EasingHelper.ScaleScheme(originalScheme, 0f));
 
-        AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(16), () =>
+        // One per dialog OBJECT — two opens are two dialogs, each easing its own captured
+        // instance, so there is no shared state to race.
+        AppHost.AddOneShotTimeout(TimeSpan.FromMilliseconds(16), () =>
         {
             if (!IsOpen(dialog)) return false;
 

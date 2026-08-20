@@ -131,7 +131,12 @@ public static class SimpleAI
     // Pick a random walkable direction from the 8 cardinal/diagonal options.
     private static (int dx, int dy) Wander(Monster monster, GameMap map)
     {
-        int[] indices = { 0, 1, 2, 3, 4, 5, 6, 7 };
+        // STACK, NOT HEAP. This ran once per monster per turn for every mob out of aggro range,
+        // and a `new int[8]` is ~56 bytes each time: measured 64 B per DecideAction call, which
+        // was 17.5 KB of the 17.9 KB a moving turn allocated on a 267-monster floor. The two
+        // sibling shufflers in TurnManager.AI already do it this way.
+        Span<int> indices = stackalloc int[8];
+        for (int i = 0; i < 8; i++) indices[i] = i;
         Shuffle(indices);
 
         foreach (int i in indices)
@@ -158,7 +163,9 @@ public static class SimpleAI
     }
 
     // Fisher-Yates in-place shuffle for direction randomization.
-    private static void Shuffle(int[] array)
+    // Span so the caller can shuffle a stack buffer. Same Fisher-Yates, same draw order, so the
+    // rng stream is untouched — a mob picks exactly the direction it picked before.
+    private static void Shuffle(Span<int> array)
     {
         for (int i = array.Length - 1; i > 0; i--)
         {

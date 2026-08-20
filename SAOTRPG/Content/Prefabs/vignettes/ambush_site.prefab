@@ -9,6 +9,7 @@ ROTATE:        true
 MIRROR:        true
 
 KFEAT: b = Bush
+MONS: 1 = shadow_stalker
 
 MAP
 .....

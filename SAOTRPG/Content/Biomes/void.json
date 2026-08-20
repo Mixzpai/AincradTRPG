@@ -23,7 +23,7 @@
   "primaryPaletteId": "TierRadio",
   "tintColor": "#5020A026",
   "floorEntryText": "Reality hiccups. For one breath, the walls aren't where they were.",
-  "treeGlyph": "*",
+  "treeGlyph": "Ψ",
   "oreVeinDensity": 1.4,
   "oreTableId": "void",
   "featureQuotas": {

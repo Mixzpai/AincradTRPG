@@ -102,7 +102,8 @@ public sealed class FeatureScatterPass : IGenerationPass
 
         // Quota-driven Poisson scatter (anvils/shrines/chests/traps/vents/lore/journals/campfires/pillars).
         // Guarantees per-biome minimums first, then fills toward maxima until the point pool runs out.
-        ScatterQuotaFeatures(ctx, map, spawnX, spawnY, width, height, rng);
+        using (Systems.Profiler.Begin("Scatter.QuotaFeatures"))
+            ScatterQuotaFeatures(ctx, map, spawnX, spawnY, width, height, rng);
 
         int dangerClusters = FloorScale.DangerClusters(ctx.FloorNumber, rng);
         for (int i = 0; i < dangerClusters; i++)
@@ -178,14 +179,25 @@ public sealed class FeatureScatterPass : IGenerationPass
             }
         }
 
-        MapGenerator.DecorateCorridors(map, spawnX, spawnY, rng);
-        MapGenerator.PlaceWaterFeatures(map, spawnX, spawnY, rng);
-        MapGenerator.DecorateStairRooms(map, spawnX, spawnY, bossX, bossY, bossW, bossH);
+        // The biome's own campfire quota governs the wall sconces too. Without this the
+        // decorator ignored it and out-produced every other campfire source combined.
+        int fireBudget = ctx.Config.FeatureQuotas?.MaxCampfires ?? 3;
+        using (Systems.Profiler.Begin("Scatter.DecorateCorridors"))
+            MapGenerator.DecorateCorridors(map, spawnX, spawnY, rng, fireBudget);
+        using (Systems.Profiler.Begin("Scatter.PlaceWaterFeatures"))
+            MapGenerator.PlaceWaterFeatures(map, spawnX, spawnY, rng);
+        using (Systems.Profiler.Begin("Scatter.DecorateStairRooms"))
+            MapGenerator.DecorateStairRooms(map, spawnX, spawnY, bossX, bossY, bossW, bossH);
 
-        MapGenerator.EnsureConnectivity(map, rooms, clearings);
+        using (Systems.Profiler.Begin("Scatter.EnsureConnectivity"))
+            MapGenerator.EnsureConnectivity(map, rooms, clearings);
 
         UI.DebugLogger.LogGame("MAPGEN", $"  {rooms.Count} rooms, {clearings.Count} clearings");
-        map.RecountWalkableTiles();
+        // ConnectivityAuditPass runs immediately after this one and recounts, so a full sweep
+        // here is thrown away — measured 14.6 ms per floor for nothing. What this pass genuinely
+        // owes the map is the opacity invalidation, because it wrote tile types through the
+        // indexer. Nothing reads the walkable count between the two passes.
+        map.InvalidateOpacity();
     }
 
     // Quota-driven Poisson scatter: shared point pool per floor, popped per feature category.

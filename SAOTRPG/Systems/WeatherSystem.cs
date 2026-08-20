@@ -1,13 +1,17 @@
 namespace SAOTRPG.Systems;
 
-// Per-floor weather. Effects: Clear=+1 regen, Rain=-3 crit, Fog=-vision, Wind=+5 throwable.
+// Per-floor weather. Effects: Clear=+1 regen, Rain=-3 crit, Fog=-20 trap detection, Wind=+5
+// throwable. Rain and Fog also flatten the sun's shadows, which is a render effect and changes
+// no roll.
 public enum WeatherType
 {
     // Pleasant conditions — +1 passive HP regen bonus.
     Clear,
-    // Wet conditions — −3 crit rate for all combatants.
+    // Wet conditions — −3 crit rate for all combatants, −10 trap detection.
     Rain,
-    // Reduces visibility radius.
+    // Thick air — −20 trap detection. It does NOT reduce the visibility radius: that was claimed
+    // here and in the tutorial for a long time with nothing reading it for vision, while the
+    // Player Guide correctly said "trap detection, not FOV". The comment was the wrong half.
     Fog,
     // Tailwind — +5 damage on throwable items.
     Wind
@@ -28,15 +32,23 @@ public static class WeatherSystem
         int RegenBonus,
         int TrapDetectionPenalty,
         int PoisonDurationBonus,
+        // Share of the sun's direct light that still reaches the ground. Cloud and fog scatter
+        // it, and scattered light casts no shadow — so this scales shadow depth and nothing
+        // else. Render-only: it changes no roll and cannot alter a seeded run.
+        float SunlightScale,
         string FlavorDescription);
 
     private static readonly Dictionary<WeatherType, WeatherConfig> Configs = new()
     {
-        [WeatherType.Clear] = new("Clear", 40,  0, 1,   0, 0, ""),
-        [WeatherType.Rain]  = new("Rainy", 25, -3, 0, -10, 1, "Rain patters against the stone walls of the labyrinth."),
-        [WeatherType.Fog]   = new("Foggy", 15,  0, 0, -20, 0, "A thick fog rolls in, reducing visibility."),
-        [WeatherType.Wind]  = new("Windy", 20,  0, 0,   0, 0, "A strong wind sweeps through the corridors."),
+        [WeatherType.Clear] = new("Clear", 40,  0, 1,   0, 0, 1.00f, ""),
+        [WeatherType.Rain]  = new("Rainy", 25, -3, 0, -10, 1, 0.40f, "Rain patters against the stone walls of the labyrinth."),
+        [WeatherType.Fog]   = new("Foggy", 15,  0, 0, -20, 0, 0.15f, "A thick fog swallows the light, and every edge with it."),
+        // Wind clears the sky rather than clouding it, so the sun is untouched.
+        [WeatherType.Wind]  = new("Windy", 20,  0, 0,   0, 0, 1.00f, "A strong wind sweeps through the corridors."),
     };
+
+    // How much of the sun's shadow-casting light survives the current weather.
+    public static float SunlightScale => Configs[Current].SunlightScale;
 
     // Roll weather for floor. Floor param reserved for biome-specific tables.
     public static void RollWeather(int floor)

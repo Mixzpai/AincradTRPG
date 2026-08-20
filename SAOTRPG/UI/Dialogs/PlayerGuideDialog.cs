@@ -902,6 +902,13 @@ public static partial class PlayerGuideDialog
         srcBody = PlayerGuideContent.ResolveStatusCodes(srcBody);
         srcBody = PlayerGuideContent.ResolveStatusLetters(srcBody);
         srcBody = PlayerGuideContent.ResolveMinimapLegend(srcBody);
+        srcBody = PlayerGuideContent.ResolveOreDensity(srcBody);
+        srcBody = PlayerGuideContent.ResolveLandmarkKinds(srcBody);
+        srcBody = PlayerGuideContent.ResolveMapLegend(srcBody);
+        srcBody = PlayerGuideContent.ResolveGlyphTokens(srcBody);
+        srcBody = PlayerGuideContent.ResolveCampfireQuota(srcBody);
+        srcBody = PlayerGuideContent.ResolveBiomeEffects(srcBody);
+        srcBody = PlayerGuideContent.ResolveDayClock(srcBody);
         srcBody = PlayerGuideContent.ResolveKeyTokens(srcBody);
         srcBody = ResolveCategoryTokens(srcBody);
 

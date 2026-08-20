@@ -124,6 +124,32 @@ public static class BiomeSystem
     }
 
     // Display name for the biome.
+    // Read-only access to any biome's config, not just the current floor's. The Player Guide's
+    // biome table was transcribed from this dictionary by hand and had drifted — it credited
+    // Desert with -5 vision when its VisionModifier is 0 — so the table is generated now.
+    // The current biome's passive effect in one short phrase, for the sidebar. The biome NAME was
+    // shown and the effect was not, so a player on a Darkness floor saw their sight collapse with
+    // nothing on screen connecting the two — the number lived only in the Player Guide. Built
+    // from the same config the Guide's table is generated from, so the two cannot disagree.
+    public static string EffectSummary
+    {
+        get
+        {
+            var c = Config;
+            if (c.VisionModifier != 0) return $"{c.VisionModifier} vis";
+            if (c.EnvironmentDamage.Interval > 0)
+                return $"{c.EnvironmentDamage.Damage}dmg/{c.EnvironmentDamage.Interval}t";
+            if (c.AttackModifier != 0) return $"{c.AttackModifier} ATK";
+            if (c.StepPoisonChance > 0) return $"{c.StepPoisonChance}% psn";
+            if (c.SlipChance > 0) return $"{c.SlipChance}% slip";
+            if (c.SatietyDrainBonus > 0) return $"+{c.SatietyDrainBonus} hunger";
+            return string.Empty;
+        }
+    }
+
+    public static BiomeConfig ConfigFor(BiomeType biome) =>
+        _configs.TryGetValue(biome, out var c) ? c : _fallback;
+
     public static string DisplayName => Config.DisplayName;
 
     // -- Per-turn passive effects --

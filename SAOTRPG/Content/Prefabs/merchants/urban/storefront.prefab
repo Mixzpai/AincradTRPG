@@ -9,6 +9,7 @@ ROTATE:        true
 MIRROR:        true
 
 KFEAT: P = Pillar
+NPCS: 1 = shopkeeper
 
 MAP
 #########

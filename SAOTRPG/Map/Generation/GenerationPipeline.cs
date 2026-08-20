@@ -12,6 +12,10 @@ public static class GenerationPipeline
         var outerSw = DebugLogger.StartTimer($"GenerateFloor({ctx.FloorNumber})");
         using (Profiler.Begin("MapGen.Total"))
         {
+            // Every pipeline floor is an open-air disk and takes sun shadows. F100 is the Ruby
+            // Palace throne room, which is interior — as is the labyrinth, which never reaches
+            // this method at all and so keeps GameMap's conservative default.
+            ctx.Map.HasSky = ctx.FloorNumber != 100;
             BuildCircleMask(ctx);
             ComputeTownKeepOut(ctx);
             foreach (var pass in passes)

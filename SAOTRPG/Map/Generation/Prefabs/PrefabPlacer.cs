@@ -58,6 +58,89 @@ public static class PrefabPlacer
         return false;
     }
 
+    // Open-ground placement — the third route, and the only one most of the library can use.
+    //
+    // TryPlaceInRoom requires a prefab to fit room.W-2 x room.H-2, and the largest room interior a
+    // floor produces is 23x6 (rooms are wide and shallow). TryPlaceEncompass only ever sees
+    // boss-tagged prefabs. So anything taller than 6 that is not a boss arena had NO ROUTE AT ALL:
+    // every shrine, every vault, every treasure room, every merchant camp and all eleven biome
+    // signature pieces were authored, parsed, validated and never once stamped.
+    //
+    // `anchors` is pre-scanned by the caller and consumed destructively, so the map is walked once
+    // per floor rather than once per prefab — same shape as the ore-vein seeding fix, where random
+    // darts at a sparse target were the real wall.
+    public static bool TryPlaceFloating(
+        GameMap map,
+        PrefabDefinition def,
+        Random rng,
+        List<(int X, int Y)> anchors,
+        IReadOnlyList<Room> rooms,
+        WorldContext? ctx = null,
+        List<PrefabSpawnRequest>? spawnQueue = null,
+        int attempts = 48)
+    {
+        if (anchors.Count == 0) return false;
+        if (ctx != null && !EvaluateRequires(def, ctx, null)) return false;
+
+        var variants = EnumerateOrientations(def, rng).ToList();
+
+        for (int a = 0; a < attempts && anchors.Count > 0; a++)
+        {
+            // Draw without replacement: a site that failed for this prefab is no better for the
+            // next one, and re-testing it is how a sparse search turns into a silent no-op.
+            int idx = rng.Next(anchors.Count);
+            var (ax, ay) = anchors[idx];
+            anchors[idx] = anchors[^1];
+            anchors.RemoveAt(anchors.Count - 1);
+
+            foreach (var variant in variants)
+            {
+                int ox = ax - variant.Width / 2, oy = ay - variant.Height / 2;
+                if (!VariantFitsInDisk(variant, ox, oy, ctx?.CircleMask)) continue;
+                if (!AreaIsClearGround(map, ox, oy, variant.Width, variant.Height)) continue;
+                if (OverlapsAnyRoom(rooms, ox, oy, variant.Width, variant.Height)) continue;
+
+                var resolved = variant.Resolved(rng);
+                Stamp(map, resolved, ox, oy, def.KFeat, spawnQueue, ctx);
+                DebugLogger.LogGame("PREFAB",
+                    $"floating-placed '{def.Name}' at ({ox},{oy}) {resolved.Width}x{resolved.Height}");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Base terrain only, plus a one-tile skirt so a stamp never butts straight onto a wall or a
+    // lake edge. An ALLOWLIST on purpose: an unknown tile is simply never built on, where a
+    // denylist would quietly stamp over the next feature anybody adds.
+    public static bool IsClearGround(TileType t) =>
+        t is TileType.Grass or TileType.GrassTall or TileType.GrassSparse or TileType.Flowers
+          or TileType.Floor or TileType.Path
+          or TileType.Sand or TileType.DuneSand
+          or TileType.Snow or TileType.Ice
+          or TileType.Basalt or TileType.Ash
+          or TileType.Mud or TileType.Reeds;
+
+    private static bool AreaIsClearGround(GameMap map, int ox, int oy, int w, int h)
+    {
+        for (int x = ox - 1; x < ox + w + 1; x++)
+        for (int y = oy - 1; y < oy + h + 1; y++)
+        {
+            if (!map.InBounds(x, y)) return false;
+            if (!IsClearGround(map.Tiles[x, y].Type)) return false;
+        }
+        return true;
+    }
+
+    private static bool OverlapsAnyRoom(IReadOnlyList<Room> rooms, int ox, int oy, int w, int h)
+    {
+        foreach (var r in rooms)
+            if (ox < r.X + r.Width + 2 && ox + w + 2 > r.X
+             && oy < r.Y + r.Height + 2 && oy + h + 2 > r.Y)
+                return true;
+        return false;
+    }
+
     // ORIENT=encompass — stamps at map center (unrotated variant first). Used for boss arenas.
     public static bool TryPlaceEncompass(GameMap map, PrefabDefinition def, Random rng,
         WorldContext? ctx = null, List<PrefabSpawnRequest>? spawnQueue = null)

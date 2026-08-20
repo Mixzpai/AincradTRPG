@@ -8,6 +8,8 @@ MAX_PER_FLOOR: 2
 ROTATE:        true
 MIRROR:        true
 
+MONS: 1 = iron_warden
+
 MAP
 #######
 #.....#

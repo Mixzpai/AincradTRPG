@@ -13,7 +13,7 @@ public partial class TurnManager
     {
         switch (tile.Type)
         {
-            case TileType.Campfire:      HandleCampfire(tile); break;
+            case TileType.Campfire:      HandleCampfire(tile, tx, ty); break;
             case TileType.Fountain:      HandleFountain(tile, tx, ty); break;
             case TileType.Shrine:        HandleShrine(tile, tx, ty); break;
             case TileType.Pillar:        HandlePillar(tile, tx, ty); break;
@@ -36,7 +36,7 @@ public partial class TurnManager
         return false;
     }
 
-    private void HandleCampfire(Tile tile)
+    private void HandleCampfire(Tile tile, int tx, int ty)
     {
         bool hadStatus = _poisonTurnsLeft > 0 || _bleedTurnsLeft > 0 || _slowTurnsLeft > 0;
         if (hadStatus)
@@ -61,6 +61,14 @@ public partial class TurnManager
         // a full rest (10 vs 20) since the player doesn't spend turns.
         GrantCampfireSleepXp();
         CookingInteraction?.Invoke();
+
+        // SPEND THE TILE. It never was spent — the fire healed, purged every status and banked
+        // Sleep XP again on every single step, so each of a floor's campfires was an unlimited
+        // heal and an unlimited XP farm. HandleFountain, directly below, has always consumed its
+        // tile; this one was the only restorative that did not, and the Player Guide states the
+        // opposite twice ("each tile works exactly once", "one-shot per tile (consume on use)").
+        // Ash rather than Floor: a burnt-out fire leaves something, and it reads as spent.
+        _map.SetTileType(tx, ty, TileType.Ash);
     }
 
     private void HandleFountain(Tile tile, int tx, int ty)

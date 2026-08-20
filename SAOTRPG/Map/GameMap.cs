@@ -45,6 +45,11 @@ public class GameMap
     // passes run. Null on F1/F48 hand-built towns and F100 Ruby Palace.
     public bool[,]? CircleMask { get; set; }
 
+    // True when this floor has open sky above it, which is what lets the sun cast shadows across
+    // it. Defaults to FALSE and is set by the generation pipeline, so a map built by any other
+    // route — the labyrinth, the Ruby Palace — gets no sunlight without having to know the rule.
+    public bool HasSky { get; set; }
+
     public bool IsInsideCircle(int x, int y) =>
         CircleMask is null
         || ((uint)x < (uint)CircleMask.GetLength(0)
@@ -70,6 +75,21 @@ public class GameMap
     private readonly bool[] _opaque;
     private bool _opaqueStale = true;
 
+    // Bumped whenever sight-blocking could have changed. The visible set is a pure function of
+    // (player position, radius, opacity), so an unchanged stamp means an unchanged answer.
+    private int _sightVersion;
+
+    // Last inputs the visible set was computed from. FOV is ~70% of a player turn, and a turn
+    // that does not MOVE the player — an attack, a rest, a mining strike, a wait — recomputed the
+    // identical answer every time.
+    private int _fovX = int.MinValue, _fovY = int.MinValue, _fovRadius = -1, _fovVersion = -1;
+
+    // The cells the last full shadowcast marked visible. Needed because MarkVisible also stamps
+    // _lastSeenTurn, which drives the memory fade — skipping the recompute without refreshing it
+    // would make tiles the player is LOOKING AT fade as though last seen many turns ago, the
+    // moment they walk away. Refreshing this list is O(visible) instead of O(disk).
+    private readonly List<int> _visibleCells = new();
+
     // Row-major (y*Width + x), matching _tiles and _opaque. These were [x, y], which strides
     // by Height between adjacent columns — and every hot consumer walks x fastest: the
     // shadowcaster's north/south scans, and the map tile loop. On a 1000x1000 floor
@@ -94,6 +114,24 @@ public class GameMap
     // Bucket grid (64-cell tiles) for spatial culling around the player.
     private List<(int X, int Y, TileType Type)>? _emissiveTiles;
     private HashSet<(int X, int Y)>? _emissivePositions;
+
+    // LAVA IS NOT A LAMP, IT IS A FIELD, and lighting it per tile blew the map out. Measured on
+    // a Volcanic floor: 220 lava tiles, the largest CONNECTED run only 9 and just one tile fully
+    // enclosed — so merging by connectivity would have removed a single source. They are
+    // scattered but locally dense, and every one was its own radius-5 lamp at full brightness, so
+    // their contributions summed and clamped: around the densest cluster, FIFTY-ODD CELLS SAT AT
+    // EXACTLY 255 with no falloff and no detail, and the lava read as a white hole in the floor.
+    //
+    // Grouped by PROXIMITY instead — one lamp per occupied cell of a coarse grid, sitting on the
+    // member tile nearest the group's centre so the light never starts inside a wall, and grown
+    // slightly by how many tiles it stands for. A wider fire, not a brighter one.
+    //
+    // Only lava clusters. A campfire or a shrine is a discrete landmark the player navigates by,
+    // and sliding two of them together would move the light off both.
+    public const int LavaClusterCell = 5;
+
+    private List<(int X, int Y, TileType Type, int Count)>? _emissiveSources;
+    private Dictionary<(int Bx, int By), List<(int X, int Y, TileType Type, int Count)>>? _sourceBuckets;
     private Dictionary<(int Bx, int By), List<(int X, int Y, TileType Type)>>? _emissiveBuckets;
     public const int EmissiveBucketShift = 6; // 64-cell buckets
 
@@ -204,6 +242,12 @@ public class GameMap
         }
     }
 
+    // Throws the opacity table away WITHOUT the full walkable/explored sweep. Mapgen passes write
+    // tile types through the Tiles indexer, bypassing OnTileTypeChanged, so a pass that changes
+    // terrain must invalidate — but only the LAST pass needs the counts, and they were being
+    // recomputed twice per floor over a million cells.
+    public void InvalidateOpacity() { _opaqueStale = true; _sightVersion++; }
+
     // Called by MapGenerator after terrain placement; refreshed on runtime walkability changes (e.g. CrackedWall destroy).
     public void RecountWalkableTiles()
     {
@@ -241,6 +285,26 @@ public class GameMap
     {
         using var _ = Profiler.Begin("Visibility.Update");
         if (_opaqueStale) RebuildOpacity();
+
+        // THE VISIBLE SET IS A PURE FUNCTION OF (position, radius, opacity). A turn that does not
+        // move the player — an attack, a rest, a mining strike, a wait — used to recompute the
+        // identical answer, and the shadowcast is ~70% of a turn. Lighting still runs below,
+        // because ambient light tracks the day/night clock and does change on a still turn.
+        //
+        // NewlyRevealed is cleared either way: nothing was revealed, and the minimap reads its
+        // count to fire the reveal flash.
+        if (playerX == _fovX && playerY == _fovY && radius == _fovRadius
+            && _sightVersion == _fovVersion)
+        {
+            NewlyRevealed.Clear();
+            int seenNow = DayNightCycle.CurrentTurn;
+            var cells = _visibleCells;
+            for (int i = 0; i < cells.Count; i++) _lastSeenTurn[cells[i]] = seenNow;
+            Lighting.Update(this, playerX, playerY);
+            return;
+        }
+        _fovX = playerX; _fovY = playerY; _fovRadius = radius; _fovVersion = _sightVersion;
+
         // Clear visibility only in the player's visible region (avoids 125K bool clear on 500x250 map).
         int clearR = radius + 2;
         int x0 = Math.Max(0, playerX - clearR), x1 = Math.Min(Width, playerX + clearR + 1);
@@ -250,6 +314,7 @@ public class GameMap
             Array.Clear(_visible, y * Width + x0, x1 - x0);
 
         NewlyRevealed.Clear();
+        _visibleCells.Clear();
         using (Profiler.Begin("FOV.Compute"))
             Shadowcaster.Compute(playerX, playerY, radius, BlocksSight, MarkVisible);
         Lighting.Update(this, playerX, playerY);
@@ -263,10 +328,24 @@ public class GameMap
         return BlocksSight(x, y);
     }
 
+    // The sight-blocking table itself, for a caller that sweeps a whole region in storage order
+    // rather than probing scattered cells — the sun-shadow sweep reads one cell per output cell
+    // and cannot afford a call plus a staleness test for each. Row-major (y*Width + x), the same
+    // layout as every other per-cell grid here.
+    public ReadOnlySpan<bool> OpacityTable
+    {
+        get
+        {
+            if (_opaqueStale) RebuildOpacity();
+            return _opaque;
+        }
+    }
+
     // Marks a door open. Sight through it is table-backed, so the set and the table move together.
     public void OpenDoor(int x, int y)
     {
         if (!InBounds(x, y) || !_openedDoors.Add((x, y))) return;
+        _sightVersion++;
         _opaque[Idx(x, y)] = ComputeOpaque(x, y);
     }
 
@@ -277,6 +356,7 @@ public class GameMap
         for (int x = 0; x < Width; x++)
             _opaque[y * Width + x] = ComputeOpaque(x, y);
         _opaqueStale = false;
+        _sightVersion++;
     }
 
     private bool ComputeOpaque(int x, int y)
@@ -294,6 +374,7 @@ public class GameMap
         int i = Idx(x, y);
         _visible[i] = true;
         _lastSeenTurn[i] = DayNightCycle.CurrentTurn;
+        _visibleCells.Add(i);
         if (!_explored[i])
         {
             _explored[i] = true;
@@ -417,6 +498,7 @@ public class GameMap
         var oldType = tile.Type;
         if (oldType == newType) return;
         tile.Type = newType;
+        _sightVersion++;
         OnTileTypeChanged(x, y, oldType, newType);
     }
 
@@ -621,6 +703,9 @@ public class GameMap
     private void AddEmissiveAt(int x, int y, TileType t)
     {
         if (_emissiveTiles == null) return;
+        // The clustered view is derived from this list, so any change to it drops the derivation.
+        _emissiveSources = null;
+        _sourceBuckets = null;
         if (!_emissivePositions!.Add((x, y))) return;
         var entry = (x, y, t);
         _emissiveTiles.Add(entry);
@@ -636,6 +721,9 @@ public class GameMap
     private void RemoveEmissiveAt(int x, int y, TileType t)
     {
         if (_emissiveTiles == null) return;
+        // The clustered view is derived from this list, so any change to it drops the derivation.
+        _emissiveSources = null;
+        _sourceBuckets = null;
         if (!_emissivePositions!.Remove((x, y))) return;
         for (int i = _emissiveTiles.Count - 1; i >= 0; i--)
         {
@@ -655,13 +743,83 @@ public class GameMap
     }
 
     // Iterate emissives whose bucket intersects the player ROI; bucketRadius is in 64-cell buckets.
-    public IEnumerable<(int X, int Y, TileType Type)> EmissiveTilesNear(int playerX, int playerY, int bucketRadius)
+    private void EnsureSourcesBuilt()
+    {
+        if (_emissiveSources != null) return;
+        EnsureEmissiveBuilt();
+
+        // Sum each lava group's coordinates so the representative can be picked by distance to
+        // the group's own centre rather than by whichever tile happened to be enumerated first.
+        var groups = new Dictionary<(int, int), (long Sx, long Sy, int N)>();
+        foreach (var (x, y, type) in _emissiveTiles!)
+        {
+            if (type != TileType.Lava) continue;
+            var key = (x / LavaClusterCell, y / LavaClusterCell);
+            groups.TryGetValue(key, out var g);
+            groups[key] = (g.Sx + x, g.Sy + y, g.N + 1);
+        }
+
+        var best = new Dictionary<(int, int), (int X, int Y, int D2, int N)>();
+        foreach (var (x, y, type) in _emissiveTiles!)
+        {
+            if (type != TileType.Lava) continue;
+            var key = (x / LavaClusterCell, y / LavaClusterCell);
+            var g = groups[key];
+            int cx = (int)(g.Sx / g.N), cy = (int)(g.Sy / g.N);
+            int d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+            if (!best.TryGetValue(key, out var cur) || d2 < cur.D2)
+                best[key] = (x, y, d2, g.N);
+        }
+
+        _emissiveSources = new List<(int, int, TileType, int)>();
+        foreach (var (x, y, type) in _emissiveTiles!)
+            if (type != TileType.Lava)
+                _emissiveSources.Add((x, y, type, 1));
+        foreach (var c in best.Values)
+            _emissiveSources.Add((c.X, c.Y, TileType.Lava, c.N));
+
+        _sourceBuckets = new Dictionary<(int, int), List<(int, int, TileType, int)>>();
+        foreach (var s in _emissiveSources)
+        {
+            var key = (s.X >> EmissiveBucketShift, s.Y >> EmissiveBucketShift);
+            if (!_sourceBuckets.TryGetValue(key, out var bucket))
+            {
+                bucket = new List<(int, int, TileType, int)>();
+                _sourceBuckets[key] = bucket;
+            }
+            bucket.Add(s);
+        }
+    }
+
+    // The light sources near the player, with lava already grouped. Count is how many tiles a
+    // source stands for — one for everything that is not lava.
+    public IEnumerable<(int X, int Y, TileType Type, int Count)> EmissiveSourcesNear(
+        int playerX, int playerY, int bucketRadiusX, int bucketRadiusY)
+    {
+        EnsureSourcesBuilt();
+        int bx = playerX >> EmissiveBucketShift;
+        int by = playerY >> EmissiveBucketShift;
+        for (int dby = -bucketRadiusY; dby <= bucketRadiusY; dby++)
+        for (int dbx = -bucketRadiusX; dbx <= bucketRadiusX; dbx++)
+        {
+            if (_sourceBuckets!.TryGetValue((bx + dbx, by + dby), out var bucket))
+            {
+                for (int i = 0; i < bucket.Count; i++) yield return bucket[i];
+            }
+        }
+    }
+
+    // Separate reaches per axis, because the region a light can MATTER in is not square: the
+    // renderer draws a wide, short viewport, so a source far above or below the player cannot
+    // touch a drawn cell however close it is horizontally.
+    public IEnumerable<(int X, int Y, TileType Type)> EmissiveTilesNear(
+        int playerX, int playerY, int bucketRadiusX, int bucketRadiusY)
     {
         EnsureEmissiveBuilt();
         int bx = playerX >> EmissiveBucketShift;
         int by = playerY >> EmissiveBucketShift;
-        for (int dby = -bucketRadius; dby <= bucketRadius; dby++)
-        for (int dbx = -bucketRadius; dbx <= bucketRadius; dbx++)
+        for (int dby = -bucketRadiusY; dby <= bucketRadiusY; dby++)
+        for (int dbx = -bucketRadiusX; dbx <= bucketRadiusX; dbx++)
         {
             if (_emissiveBuckets!.TryGetValue((bx + dbx, by + dby), out var bucket))
             {

@@ -28,6 +28,77 @@ public sealed class PrefabPlacementPass : IGenerationPass
 
         // 2) Room-embedding — skip first (spawn) and last (boss) rooms.
         TryEmbedRoomPrefabs(ctx, biome);
+
+        // 3) Open-ground landmarks. Appended last so every draw above keeps its position in the
+        //    stream; inserting a step would renumber every later pass.
+        TryPlaceOpenGroundPrefabs(ctx, biome);
+    }
+
+    // Rooms are wide and shallow — the largest interior any floor produces is 23x6 — so a prefab
+    // taller than that has no room to embed in, and only boss-tagged prefabs reach the encompass
+    // route. That left 44 of 82 non-boss prefabs with NO PLACEMENT ROUTE: every shrine, every
+    // vault, every treasure room, every merchant camp, all eleven biome signature pieces. They
+    // stamp onto open wilderness ground now, which is also where a player would expect to stumble
+    // on one.
+    private static void TryPlaceOpenGroundPrefabs(WorldContext ctx, string biome)
+    {
+        var pool = PrefabLibrary.Shared.CandidatesFor(biome, ctx.FloorNumber)
+            .Where(p => !p.Tags.Contains("boss"))
+            .Where(p => p.Orient != PrefabOrient.Encompass)
+            .ToList();
+        if (pool.Count == 0) return;
+
+        // Scale with the disk, not with an absolute count — floors run 1000x1000 down to 100x100.
+        int diskRadius = Math.Min(ctx.Width, ctx.Height) / 2;
+        int budget = Math.Clamp(diskRadius / 70, 2, 8);
+
+        var anchors = CollectOpenGroundAnchors(ctx);
+        if (anchors.Count == 0)
+        {
+            DebugLogger.LogGame("PREFAB",
+                $"floor={ctx.FloorNumber} no open-ground anchors — skipped landmark placement");
+            return;
+        }
+
+        int placed = 0;
+        for (int i = 0; i < budget; i++)
+        {
+            var pick = WeightedPick(pool, ctx.Rng);
+            if (pick == null) break;
+            if (ctx.Rng.NextDouble() > pick.Chance) continue;
+            if (!MapGenerator.TryIncrementPrefabUse(pick.Name, pick.MaxPerGame)) continue;
+
+            var spawnQueue = new List<PrefabSpawnRequest>();
+            if (PrefabPlacer.TryPlaceFloating(ctx.Map, pick, ctx.Rng, anchors, ctx.Rooms, ctx, spawnQueue))
+            {
+                DrainSpawnQueue(ctx, pick, spawnQueue);
+                placed++;
+            }
+            else RollbackPrefabUse(pick.Name);
+        }
+
+        if (placed > 0)
+            DebugLogger.LogGame("PREFAB",
+                $"floor={ctx.FloorNumber} placed {placed} open-ground landmarks "
+                + $"(budget {budget}, {anchors.Count} anchors left)");
+    }
+
+    // One scan per floor, sampled on a stride: a landmark is a large footprint, so anchors a few
+    // tiles apart are redundant and a full-resolution list is megabytes for nothing. Measuring the
+    // size of the target BEFORE tuning the search is the ore-vein lesson.
+    private static List<(int X, int Y)> CollectOpenGroundAnchors(WorldContext ctx)
+    {
+        const int Stride = 6;
+        var map = ctx.Map;
+        var anchors = new List<(int X, int Y)>();
+        for (int y = 8; y < ctx.Height - 8; y += Stride)
+        for (int x = 8; x < ctx.Width - 8; x += Stride)
+        {
+            if (!ctx.IsInsideCircle(x, y)) continue;
+            if (!PrefabPlacer.IsClearGround(map.Tiles[x, y].Type)) continue;
+            anchors.Add((x, y));
+        }
+        return anchors;
     }
 
     private static void TryPlaceBossArena(WorldContext ctx, string biome)
@@ -46,9 +117,15 @@ public sealed class PrefabPlacementPass : IGenerationPass
         var genericEncompass = bossPool
             .Where(p => p.Tags.Contains("generic") && p.Orient == PrefabOrient.Encompass)
             .ToList();
-        foreach (var slug in new[] { "arena_large", "arena_medium", "arena_small" })
+        // These are TAGS, not prefab names. They used to read "arena_large"/"arena_medium"/
+        // "arena_small" — the files' NAME field — while arena_large.prefab actually carries
+        // "TAGS: boss generic large any". So the fallback matched nothing and had NEVER once
+        // fired: measured, 60 of 75 sampled floors reached the give-up log, and every one of
+        // them has 3-5 encompass arenas available whose largest is 25x19, which fits any floor's
+        // disk with room to spare.
+        foreach (var sizeTag in new[] { "large", "medium", "small" })
         {
-            var def = genericEncompass.FirstOrDefault(p => p.Tags.Contains(slug));
+            var def = genericEncompass.FirstOrDefault(p => p.Tags.Contains(sizeTag));
             if (TryPlaceCandidate(ctx, def)) return;
         }
 
@@ -56,8 +133,11 @@ public sealed class PrefabPlacementPass : IGenerationPass
         var fallback = WeightedPick(bossPool.Where(p => p.Orient != PrefabOrient.Encompass).ToList(), ctx.Rng);
         if (TryPlaceCandidate(ctx, fallback)) return;
 
+        // Says what actually happened rather than guessing at a cause. The old wording blamed
+        // the disk, which was never the reason and sent one investigation down the wrong path.
         DebugLogger.LogGame("PREFAB",
-            $"floor={ctx.FloorNumber} all encompass arenas exceed disk; boss spawning into procedural boss room only");
+            $"floor={ctx.FloorNumber} no boss arena placed (canon, generic and room-anchored all "
+            + "declined); boss spawning into the procedural boss room only");
     }
 
     // Increment-then-place; rolls back the use counter on placement failure.
@@ -133,12 +213,41 @@ public sealed class PrefabPlacementPass : IGenerationPass
     }
 
     // MONS/ITEM directives fire here — consume queued slot positions into live mobs + ground items.
+    // The friendly occupants a prefab may declare. Kept small and explicit — an unknown key
+    // logs and leaves the tile bare rather than guessing at something hostile.
+    private static NPC? BuildPrefabNpc(string key, int floor) => key.Trim().ToLowerInvariant() switch
+    {
+        "vendor" or "merchant" or "shopkeeper" => NewVendor(floor, "Travelling Merchant", "Wayside Stock"),
+        "trader" => NewVendor(floor, "Caravan Trader", "Caravan Goods"),
+        "guide" => NewVendor(floor, "Ranger Guide", "Ranger's Supplies"),
+        _ => null,
+    };
+
+    private static Vendor NewVendor(int floor, string name, string shop)
+    {
+        var v = new Vendor { Name = name, ShopName = shop };
+        v.GenerateStock(floor);
+        return v;
+    }
+
     private static void DrainSpawnQueue(WorldContext ctx, PrefabDefinition def, List<PrefabSpawnRequest> queue)
     {
         if (queue.Count == 0) return;
         foreach (var req in queue)
         {
-            if (req.Kind == "mons")
+            // A slot the prefab declares as an NPC takes precedence: the glyph classes overlap
+            // (both use 1-7), and a stall's keeper must not come out as a bandit.
+            if (req.Kind == "mons" && def.Npcs.TryGetValue(req.Glyph, out var npcKey))
+            {
+                var npc = BuildPrefabNpc(npcKey, ctx.FloorNumber);
+                if (npc == null)
+                {
+                    DebugLogger.LogGame("PREFAB", $"'{def.Name}' unknown NPCS key '{npcKey}' — floor left bare");
+                    continue;
+                }
+                ctx.Map.PlaceEntity(npc, req.X, req.Y);
+            }
+            else if (req.Kind == "mons")
             {
                 if (!def.Mons.TryGetValue(req.Glyph, out var key))
                 {

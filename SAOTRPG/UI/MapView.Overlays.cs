@@ -49,6 +49,9 @@ public partial class MapView
         RenderParticles(w, h, dtMs);
         RenderProjectiles(w, h, dtMs);
         RenderDamagePopups(w, h, dtMs);
+        // Late, so the field is clean: every map overlay above has already painted and the
+        // debug modes replace all of it. Toasts and the divine banner still land on top.
+        RenderLightDebugOverlay(w, h);
         RenderToasts(w, h);
         // Divine obtain banner draws LAST — above every other overlay so the
         // 3s celebration is unmissable; auto-dismisses via DivineObtainBanner.Tick.

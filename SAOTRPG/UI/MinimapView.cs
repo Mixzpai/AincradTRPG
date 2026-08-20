@@ -13,9 +13,28 @@ public class MinimapView : View
     private readonly Player _player;
 
     private const char PlayerMarker = '@', EntityMarker = '*', ItemMarker = '!';
-    private const char DoorMarker = '+', StairsMarker = '>', ShrineMarker = '*', CampfireMarker = '*';
+    private const char DoorMarker = '+', StairsMarker = '>', ShrineMarker = 'S', CampfireMarker = '&';
+    // A boss is the one occupant worth re-routing around, so it does not share the monster
+    // marker. It must not share the mithril vein's glyph either: colour is the only thing
+    // separating them and Amber Mono collapses colour.
+    private const char BossMarker = 'Ω';
+    // A secret shrine used to share the dropped-item marker.
+    private const char SecretMarker = '?';
+    // An ally, a townsperson and a monster all painted the monster marker, told
+    // apart by colour — which is exactly what a theme may collapse. Friend and foe
+    // is the one distinction on this widget worth a glyph of its own.
+    private const char FriendMarker = 'n';
+    // Open-ground landmarks. Prefabs used to reach only town rooms and the boss arena, so a chest
+    // or an anvil out in the wilderness did not exist to mark; they do now, and they are exactly
+    // what a player crosses a floor for.
+    private const char ChestMarker = '$';
+    private const char AnvilMarker = 'A';
+    private const char EnchantMarker = 'E';
+    private const char LoreMarker = 'L';
     // Depleted veins deliberately get no marker — a spent vein is not a destination.
-    private const char OreMarker = '◊';
+    private const char OreMarker = '◊';        // Iron, matching the main map
+    private const char OreMithrilMark = '◆';   // Mithril
+    private const char OreDivineMark = '◈';    // Divine
     private const int RevealFlashDuration = 6;
 
     private readonly HashSet<(int X, int Y)> _revealedCells = new();
@@ -160,8 +179,8 @@ public class MinimapView : View
                 var occ = tile.Occupant;
                 if (occ != null && !occ.IsDefeated)
                 {
-                    if (occ is Ally) { entityCh = EntityMarker; entityFg = Color.BrightGreen; haveEntity = true; }
-                    else if (occ is Boss) { entityCh = '◆'; entityFg = Color.BrightRed; haveEntity = true; }
+                    if (occ is Ally) { entityCh = FriendMarker; entityFg = Color.BrightGreen; haveEntity = true; }
+                    else if (occ is Boss) { entityCh = BossMarker; entityFg = Color.BrightRed; haveEntity = true; }
                     else if (occ is Monster m)
                     {
                         Color threatColor = (m.Level - _player.Level) switch
@@ -172,7 +191,7 @@ public class MinimapView : View
                         };
                         entityCh = EntityMarker; entityFg = threatColor; haveEntity = true;
                     }
-                    else if (occ is NPC) { entityCh = EntityMarker; entityFg = Color.BrightCyan; haveEntity = true; }
+                    else if (occ is NPC) { entityCh = FriendMarker; entityFg = Color.BrightCyan; haveEntity = true; }
                 }
                 if (!haveEntity && _map.HasItemsAt(x, y))
                 { entityCh = ItemMarker; entityFg = Color.BrightYellow; haveEntity = true; }
@@ -188,15 +207,24 @@ public class MinimapView : View
                     case TileType.Door:              landmarkCh = DoorMarker;     landmarkFg = Color.BrightYellow;  haveLandmark = true; break;
                     case TileType.Shrine:
                     case TileType.Fountain:          landmarkCh = ShrineMarker;   landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
-                    case TileType.SecretShrine:      landmarkCh = '!';            landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
+                    case TileType.SecretShrine:      landmarkCh = SecretMarker;            landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
                     case TileType.Campfire:          landmarkCh = CampfireMarker; landmarkFg = Color.Yellow;        haveLandmark = true; break;
                     // Ore veins are worth crossing a floor for and could not be spotted at a
                     // glance. Listed last so a shrine or door sharing the sampled block still wins
                     // the cell — those are navigation, an ore vein is a detour. Depleted veins get
                     // no marker: a spent vein is not a destination.
+                    // Per-tier glyphs, mirroring the main map. FB-736 gave all three ONE marker
+                    // separated only by colour — the same mistake FB-738 fixed for water, and
+                    // Amber Mono collapses exactly that colour. A player deciding whether a vein
+                    // is worth crossing a floor for has to be able to read the tier.
                     case TileType.OreVeinIron:       landmarkCh = OreMarker;      landmarkFg = Color.Gray;          haveLandmark = true; break;
-                    case TileType.OreVeinMithril:    landmarkCh = OreMarker;      landmarkFg = Color.BrightCyan;    haveLandmark = true; break;
-                    case TileType.OreVeinDivine:     landmarkCh = OreMarker;      landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
+                    case TileType.OreVeinMithril:    landmarkCh = OreMithrilMark; landmarkFg = Color.BrightCyan;    haveLandmark = true; break;
+                    case TileType.OreVeinDivine:     landmarkCh = OreDivineMark;  landmarkFg = Color.BrightMagenta; haveLandmark = true; break;
+                    case TileType.Chest:             landmarkCh = ChestMarker;    landmarkFg = Color.BrightYellow;  haveLandmark = true; break;
+                    case TileType.Anvil:             landmarkCh = AnvilMarker;    landmarkFg = Color.BrightYellow;  haveLandmark = true; break;
+                    case TileType.EnchantShrine:     landmarkCh = EnchantMarker;  landmarkFg = Color.BrightYellow;  haveLandmark = true; break;
+                    case TileType.LoreStone:
+                    case TileType.Journal:           landmarkCh = LoreMarker;     landmarkFg = Color.BrightCyan;    haveLandmark = true; break;
                 }
             }
         }
@@ -213,6 +241,12 @@ public class MinimapView : View
         return (glyph, color);
     }
 
+    // PATH-D-PORT: this widget's visual contract is ONE GLYPH PER MEANING, and nothing here may
+    // rely on colour to separate two things — an accessibility theme is allowed to collapse hue
+    // (Amber Mono maps the world to luma). A renderer swap must keep every mark distinguishable
+    // in monochrome. `Legend` below is the canonical list, checked in BOTH directions by
+    // ContentProbe: every legend glyph reaches a paint site, every painted glyph is explained,
+    // and no glyph carries two meanings.
     // THE MINIMAP'S OWN LEGEND, declared once so the Player Guide can render it rather than
     // transcribe it. Every previous hand-written glyph list in this codebase had drifted by the
     // time anyone checked — the status tray's key was wrong on three letters — so this one is
@@ -223,19 +257,35 @@ public class MinimapView : View
     public static readonly (char Glyph, string Meaning)[] Legend =
     {
         ('@', "You"),
-        ('*', "A monster or a dropped item"),
+        ('*', "A monster"),
+        ('n', "An ally or NPC"),
+        ('!', "A dropped item"),
+        ('Ω', "A boss — the floor boss, or a field elite"),
         ('>', "Stairs up — the way off this floor"),
         ('\u03a0', "The labyrinth archway"),
         ('+', "A door"),
         ('S', "A shrine or fountain"),
-        ('!', "A secret shrine"),
+        ('?', "A secret shrine"),
         ('&', "A campfire — rest and cook here"),
-        ('\u25ca', "An ore vein; brighter means a better tier"),
+        ('$', "An unopened chest"),
+        ('A', "An anvil — repair and smith here"),
+        ('E', "An enchanting shrine"),
+        ('L', "A lore stone or journal"),
+        ('\u25ca', "An iron ore vein"),
+        ('\u25c6', "A mithril ore vein"),
+        ('\u25c8', "A divine ore vein, the richest tier"),
         ('\u2248', "Shallow water — crossable from Swimming L1"),
         ('\u2261', "Deep water — needs Swimming L25"),
         ('\u00a7', "Lava — it will hurt"),
+        ('%', "Corrupted ground — it burns you every step"),
+        ('\u223d', "Bogwater — wading it poisons you"),
+        ('~', "Mud — it slows you"),
         ('^', "Mountain"),
         ('T', "Trees"),
+        ('"', "Bushes"),
+        ('o', "Loose rock"),
+        ('P', "A pillar"),
+        ('.', "Open ground"),
         ('\u25aa', "Wall"),
     };
 
@@ -247,11 +297,16 @@ public class MinimapView : View
         // shared one glyph and leaned on colour — which Amber Mono collapses to luma.
         TileType.Water => '≈',
         TileType.WaterDeep => '≡',
-        TileType.Tree or TileType.TreePine => 'T', TileType.Bush => '*',
-        TileType.StairsUp => '◊', TileType.Door => '+',
+        TileType.Tree or TileType.TreePine => 'T', TileType.Bush => '"',
+        TileType.StairsUp => StairsMarker, TileType.Door => DoorMarker,
         TileType.Path or TileType.Floor => '.', TileType.Rock => 'o',
-        TileType.Campfire => '&', TileType.Fountain => 'F',
-        TileType.Shrine => 'S', TileType.Pillar => 'P', TileType.Lava => '§',
+        TileType.Campfire => CampfireMarker, TileType.Fountain => ShrineMarker,
+        TileType.Shrine => ShrineMarker, TileType.Pillar => 'P', TileType.Lava => '§',
+        // HAZARDS THE ROUTE-PLANNING SURFACE USED TO LEAVE BLANK. Lava was marked and these three
+        // were not, so a player plotting a path across the minimap saw clear ground where
+        // corrupted ground would burn them every step and bogwater would poison them. Same marks
+        // as the main map, so the two surfaces read alike.
+        TileType.DangerZone => '%', TileType.BogWater => '∽', TileType.Mud => '~',
         TileType.TrapSpike or TileType.TrapTeleport => '.',
         TileType.Grass or TileType.GrassTall or TileType.GrassSparse or TileType.Flowers => ' ',
         _ => ' ',

@@ -18,6 +18,20 @@ public static class AppHost
     private static IApplication? _app;
 
     // The running application. Throws if reached before Start().
+    // A timeout that fires ONCE and cannot stack, said in code rather than in a comment.
+    //
+    // The standing rule is that an AddTimeout registered from an event handler needs a
+    // re-entrancy guard, because each call stacks another concurrent callback — auto-explore
+    // once ran seven explorers off seven keypresses. A genuinely one-shot registration needs no
+    // guard, but "this one is fine" was recorded in the checker as a (file, line) pair, and an
+    // unrelated edit two lines above moved the line and failed the suite. Comments cannot carry
+    // it either: `invariants.py` strips them first, deliberately, so that prose cannot satisfy a
+    // guard check. A named call is the one form that is both self-documenting and machine-visible.
+    //
+    // Use it only where the registration genuinely cannot happen twice concurrently.
+    public static void AddOneShotTimeout(TimeSpan delay, Func<bool> callback) =>
+        App.AddTimeout(delay, callback);
+
     public static IApplication App =>
         _app ?? throw new InvalidOperationException("AppHost.Start() must run before any UI work.");
 

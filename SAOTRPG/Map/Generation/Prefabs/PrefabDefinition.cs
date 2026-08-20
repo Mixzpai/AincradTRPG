@@ -18,6 +18,11 @@ public sealed record PrefabDefinition
     public PrefabOrient Orient { get; init; } = PrefabOrient.Float;
     public IReadOnlyList<string> Requires { get; init; } = Array.Empty<string>();
     public IReadOnlyDictionary<char, string> Mons { get; init; } = new Dictionary<char, string>();
+    // A MONS slot builds a HOSTILE mob. A merchant stall's shopkeeper is not one — mapping a
+    // trader to a mob turns every stall into an ambush and contradicts both the prefab's own
+    // description and the Guide, which says these house a vendor. NPCS maps a slot to a friendly
+    // occupant instead.
+    public IReadOnlyDictionary<char, string> Npcs { get; init; } = new Dictionary<char, string>();
     public IReadOnlyDictionary<char, string> Items { get; init; } = new Dictionary<char, string>();
     public IReadOnlyDictionary<char, TileType> KFeat { get; init; } = new Dictionary<char, TileType>();
     public IReadOnlyList<SubstRule> Subst { get; init; } = Array.Empty<SubstRule>();

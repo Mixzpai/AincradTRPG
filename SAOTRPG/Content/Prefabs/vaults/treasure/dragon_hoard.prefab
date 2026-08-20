@@ -9,6 +9,8 @@ MAX_PER_GAME:  2
 ROTATE:        true
 MIRROR:        true
 
+MONS: 2 = gemini_dragon_hatchling
+
 MAP
 ###########
 #.........#
