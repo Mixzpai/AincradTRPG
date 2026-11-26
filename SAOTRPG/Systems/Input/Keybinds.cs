@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Terminal.Gui;
 
 namespace SAOTRPG.Systems.Input;
 
@@ -119,13 +118,18 @@ public static class Keybinds
 
     public static void ResetToDefaults()
     {
+        RestoreDefaults();
+        Save();
+    }
+
+    private static void RestoreDefaults()
+    {
         foreach (ActionBinding b in All)
         {
             b.Primary = b.DefaultPrimary;
             b.Alternate = b.DefaultAlternate;
         }
         _byContext = Index();
-        Save();
     }
 
     public static bool IsDefault(ActionBinding b) =>
@@ -133,12 +137,13 @@ public static class Keybinds
 
     // Contexts in the order a player meets them, with their captions. Shared so the rebind screen
     // and the Player Guide's controls page cannot disagree about what a group is called.
-    // Log is absent because nothing binds to it — log scrolling lives in the Map context.
     public static readonly (InputContext Context, string Caption)[] Groups =
     {
         (InputContext.Map,         "On the map"),
         (InputContext.LookMode,    "Look mode"),
         (InputContext.RangedFire,  "Ranged fire"),
+        (InputContext.WorldMap,    "Full map"),
+        (InputContext.Log,         "Message log"),
         (InputContext.Inventory,   "Inventory"),
         (InputContext.PlayerGuide, "Player guide"),
         (InputContext.Milestones,  "Milestones"),
@@ -233,10 +238,9 @@ public static class Keybinds
         }
         catch (Exception ex)
         {
-            // Disclosed fallback: the defaults are already in place, but say so rather than
-            // letting a player wonder why their bindings reverted.
-            UI.DebugLogger.LogError("Keybinds.Load", ex);
-            ResetToDefaults();
+            // Disclosed fallback: defaults in memory only, so the unreadable file survives to be fixed.
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogError("Keybinds.Load", ex);
+            RestoreDefaults();
         }
     }
 
@@ -254,7 +258,7 @@ public static class Keybinds
         }
         catch (Exception ex)
         {
-            UI.DebugLogger.LogError("Keybinds.Save", ex);
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogError("Keybinds.Save", ex);
         }
     }
 
@@ -310,6 +314,7 @@ public static class Keybinds
             B(GameAction.OpenCollectables, InputContext.Map, "Collectables",      S('l')),
             B(GameAction.ToggleStatusTray, InputContext.Map, "Verbose status",    S('s')),
             B(GameAction.ToggleHeightmap,  InputContext.Map, "Heightmap overlay", S('g')),
+            B(GameAction.OpenWorldMap,     InputContext.Map, "Full map",          C('m')),
 
             B(GameAction.SwordSkill1, InputContext.Map, "Sword skill slot 1", K(KeyCode.F1)),
             B(GameAction.SwordSkill2, InputContext.Map, "Sword skill slot 2", K(KeyCode.F2)),
@@ -327,8 +332,7 @@ public static class Keybinds
             B(GameAction.QuickUse9,  InputContext.Map, "Quick-use slot 9",  C('9')),
             B(GameAction.QuickUse10, InputContext.Map, "Quick-use slot 10", C('0')),
 
-            B(GameAction.LogScrollUp,   InputContext.Map, "Scroll log up",   K(KeyCode.PageUp)),
-            B(GameAction.LogScrollDown, InputContext.Map, "Scroll log down", K(KeyCode.PageDown)),
+            B(GameAction.OpenMessageLog, InputContext.Map, "Message log",   S('p')),
 
             // ── Look mode ────────────────────────────────────────────
             B(GameAction.LookNextTarget, InputContext.LookMode, "Next target",     C('d'), K(KeyCode.CursorRight)),
@@ -380,6 +384,25 @@ public static class Keybinds
             // keep both directions independently visible to Conflicts.
             B(GameAction.MilestoneNextTab, InputContext.Milestones, "Next category",     K(KeyCode.Tab)),
             B(GameAction.MilestonePrevTab, InputContext.Milestones, "Previous category", S2(KeyCode.Tab)),
+
+            // ── Full map ─────────────────────────────────────────────
+            // '+' is Shift+'=' on most layouts and KeyChord matches Shift exactly, so zoom-in
+            // takes the unshifted key with the shifted one as its alternate.
+            B(GameAction.WorldMapZoomIn,    InputContext.WorldMap, "Zoom in",                    C('='), S('+')),
+            B(GameAction.WorldMapZoomOut,   InputContext.WorldMap, "Zoom out",                   C('-')),
+            B(GameAction.WorldMapCenter,    InputContext.WorldMap, "Back to you",                K(KeyCode.Space)),
+            B(GameAction.WorldMapNextPoint, InputContext.WorldMap, "Next point of interest",     K(KeyCode.Tab)),
+            B(GameAction.WorldMapPrevPoint, InputContext.WorldMap, "Previous point of interest", S2(KeyCode.Tab)),
+
+            // ── Message log ──────────────────────────────────────────
+            // CDDA's MESSAGE_LOG keys, two per action; Esc closes it as it closes every dialog.
+            B(GameAction.MessageLogUp,          InputContext.Log, "Scroll up",    K(KeyCode.CursorUp), C('k')),
+            B(GameAction.MessageLogDown,        InputContext.Log, "Scroll down",  K(KeyCode.CursorDown), C('j')),
+            B(GameAction.MessageLogPageUp,      InputContext.Log, "Page up",      K(KeyCode.PageUp)),
+            B(GameAction.MessageLogPageDown,    InputContext.Log, "Page down",    K(KeyCode.PageDown)),
+            B(GameAction.MessageLogFilter,      InputContext.Log, "Filter",       C('f'), C('/')),
+            B(GameAction.MessageLogResetFilter, InputContext.Log, "Reset filter", C('r')),
+            B(GameAction.MessageLogClose,       InputContext.Log, "Close",        C('q'), K(KeyCode.Space)),
 
             // ── Bestiary ─────────────────────────────────────────────
             B(GameAction.BestiarySearch,    InputContext.Bestiary, "Search",             C('/')),

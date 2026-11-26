@@ -1,0 +1,24 @@
+NAME:          forest_hollow_stump
+DESC:          A stump wide enough to live in, hollowed and roofed over, with a banked hearth and a reading-stone where somebody wintered.
+TAGS:          signature forest stump hollow
+FLOORS:        *
+BIOME:         forest
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: T = Tree
+KFEAT: * = LoreStone
+
+MAP
+,,,TTT,,,
+,,T...T,,
+,T.....T,
+T...F...T
+T.......,
+T...*...T
+,T.....T,
+,,T...T,,
+,,,TTT,,,
+ENDMAP

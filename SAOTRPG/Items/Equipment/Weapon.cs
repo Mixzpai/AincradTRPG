@@ -27,5 +27,5 @@ public class Weapon : EquipmentBase
     public int AwakeningLevel { get; set; } = 0;
 
     // True when weapon is Divine-rarity and below the awakening cap.
-    public bool CanAwaken => Rarity == "Divine" && AwakeningLevel < SAOTRPG.Systems.DivineAwakening.MaxLevel;
+    public bool CanAwaken => Rarity == "Divine" && AwakeningLevel < SAOTRPG.Systems.Crafting.DivineAwakening.MaxLevel;
 }

@@ -19,8 +19,9 @@ public enum StatType
     Intelligence,
 
     // Append-only; int order matters for Inventory._statBonusCache.
-    // CritRate=% crit chance, AttackSpeed=weapon swing cadence, BlockChance=shield %,
-    // HPRegen=HP per tick, SkillCooldown=turns reduction on sword skills.
+    // CritRate is live. The other four are declared and plumbed but READ BY NOTHING — granting one
+    // from an item or a perk does nothing at all, silently. See StatModifierCollection.ApplyStat
+    // for which working mechanism each is mistaken for.
     CritRate,
     AttackSpeed,
     BlockChance,

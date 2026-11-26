@@ -1,6 +1,4 @@
-using Terminal.Gui;
 using SAOTRPG.Items;
-using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.UI.Helpers;
 

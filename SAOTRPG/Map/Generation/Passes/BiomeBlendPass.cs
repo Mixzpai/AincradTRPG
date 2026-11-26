@@ -17,40 +17,69 @@ public sealed class BiomeBlendPass : IGenerationPass
             forestFringeChance, rockFringeChance, shoreFringeChance);
     }
 
+    // Each neighbour contributes to at most one of the three tallies, and eight neighbours cannot
+    // overflow a byte field — so the three counts ride in one int and the 3x3 scan becomes eight
+    // adds with no branches. The table is indexed by tile type, which is what turns three
+    // `is A or B or C` pattern tests per neighbour into one load.
+    private const int Tree  = 0x000001;
+    private const int Rock  = 0x000100;
+    private const int Water = 0x010000;
+
+    private static readonly int[] NeighborClass = BuildNeighborClass();
+
+    private static int[] BuildNeighborClass()
+    {
+        int max = 0;
+        foreach (TileType t in Enum.GetValues<TileType>()) if ((int)t > max) max = (int)t;
+        var cls = new int[max + 1];
+        foreach (TileType t in Enum.GetValues<TileType>())
+        {
+            int v = 0;
+            if (t is TileType.Tree or TileType.TreePine or TileType.Bush) v += Tree;
+            if (t is TileType.Rock or TileType.Mountain) v += Rock;
+            if (t is TileType.Water or TileType.WaterDeep) v += Water;
+            cls[(int)t] = v;
+        }
+        return cls;
+    }
+
     // Byte-snapshot variant. Drops 4MB→1MB at 1000x1000; CircleMask gate skips off-disk tiles.
+    //
+    // The snapshot is FLAT and column-major (x*h + y), which is the layout the 3x3 scan below wants
+    // — the inner loop walks y, so each of the three sampled columns is a contiguous run. It is
+    // FILLED row-major, because that is the order GameMap stores tiles in and streaming the 16 MB
+    // tile grid matters more than the strided writes into a 1 MB table.
     private static void BlendBiomes(GameMap map, Random rng, bool[,]? circleMask,
         float forestFringeChance, float rockFringeChance, float shoreFringeChance)
     {
         int w = map.Width, h = map.Height;
-        var snapshot = new byte[w, h];
-        for (int x = 0; x < w; x++)
+        var snapshot = new byte[w * h];
+        var tiles = map.Tiles;
         for (int y = 0; y < h; y++)
-            snapshot[x, y] = (byte)map.Tiles[x, y].Type;
+        for (int x = 0; x < w; x++)
+            snapshot[x * h + y] = (byte)tiles[x, y].Type;
 
+        var cls = NeighborClass;
         for (int x = 1; x < w - 1; x++)
-        for (int y = 1; y < h - 1; y++)
         {
-            if (circleMask != null && !circleMask[x, y]) continue;
-            var t = (TileType)snapshot[x, y];
-            if (t != TileType.Grass) continue;
-
-            int trees = 0, rocks = 0, water = 0;
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
+            int b0 = (x - 1) * h, b1 = x * h, b2 = (x + 1) * h;
+            for (int y = 1; y < h - 1; y++)
             {
-                if (dx == 0 && dy == 0) continue;
-                var n = (TileType)snapshot[x + dx, y + dy];
-                if (n is TileType.Tree or TileType.TreePine or TileType.Bush) trees++;
-                if (n is TileType.Rock or TileType.Mountain) rocks++;
-                if (n is TileType.Water or TileType.WaterDeep) water++;
-            }
+                if (circleMask != null && !circleMask[x, y]) continue;
+                if (snapshot[b1 + y] != (byte)TileType.Grass) continue;
 
-            if (trees >= 3 && rng.NextDouble() < forestFringeChance)
-                map.Tiles[x, y].Type = TileType.GrassTall;
-            else if (rocks >= 2 && rng.NextDouble() < rockFringeChance)
-                map.Tiles[x, y].Type = TileType.GrassSparse;
-            else if (water >= 2 && rng.NextDouble() < shoreFringeChance)
-                map.Tiles[x, y].Type = TileType.GrassSparse;
+                int acc = cls[snapshot[b0 + y - 1]] + cls[snapshot[b0 + y]] + cls[snapshot[b0 + y + 1]]
+                        + cls[snapshot[b1 + y - 1]]                        + cls[snapshot[b1 + y + 1]]
+                        + cls[snapshot[b2 + y - 1]] + cls[snapshot[b2 + y]] + cls[snapshot[b2 + y + 1]];
+                int trees = acc & 0xFF, rocks = (acc >> 8) & 0xFF, water = (acc >> 16) & 0xFF;
+
+                if (trees >= 3 && rng.NextDouble() < forestFringeChance)
+                    tiles[x, y].Type = TileType.GrassTall;
+                else if (rocks >= 2 && rng.NextDouble() < rockFringeChance)
+                    tiles[x, y].Type = TileType.GrassSparse;
+                else if (water >= 2 && rng.NextDouble() < shoreFringeChance)
+                    tiles[x, y].Type = TileType.GrassSparse;
+            }
         }
     }
 }

@@ -1,22 +1,20 @@
-using System.Runtime.CompilerServices;
-using SAOTRPG.UI;
+
+using SAOTRPG.Systems.Diagnostics;
 
 namespace SAOTRPG.Items.Equipment;
 
-// Typed-effect parse cache. Walks EquipmentBase.SpecialEffect once per equipment
-// instance, builds the typed record list, caches via ConditionalWeakTable.
-// String field on EquipmentBase remains save-format authority; parser is lazy + idempotent.
+// Typed-effect parser. Walks EquipmentBase.SpecialEffect once and builds the typed record list.
+// The string field on EquipmentBase remains save-format authority; the parse is lazy and its
+// result is held by the item itself (EquipmentBase._parsedEffects), so this type is stateless
+// apart from the warn-once set.
 public static class EquipmentSpecialEffectRegistry
 {
-    private static readonly ConditionalWeakTable<EquipmentBase, IReadOnlyList<EquipmentSpecialEffect>> _cache = new();
     // Tracks unknown keys per session so warnings don't spam every parse.
     private static readonly HashSet<string> _warnedKeys = new();
 
     // Parsed view of an equipment's SpecialEffect string. Empty list when null/unset.
-    public static IReadOnlyList<EquipmentSpecialEffect> GetParsed(EquipmentBase eq)
-        => _cache.GetValue(eq, BuildParsed);
-
-    private static IReadOnlyList<EquipmentSpecialEffect> BuildParsed(EquipmentBase eq)
+    // Callers should read EquipmentBase.ParsedEffects, which caches; this always re-parses.
+    public static List<EquipmentSpecialEffect> Parse(EquipmentBase eq)
     {
         var list = new List<EquipmentSpecialEffect>();
         var fx = eq.SpecialEffect;
@@ -48,4 +46,7 @@ public static class EquipmentSpecialEffectRegistry
         }
         return list;
     }
+
+    // Cached parsed view. Kept so a caller holding only the registry can still ask.
+    public static IReadOnlyList<EquipmentSpecialEffect> GetParsed(EquipmentBase eq) => eq.ParsedEffects;
 }

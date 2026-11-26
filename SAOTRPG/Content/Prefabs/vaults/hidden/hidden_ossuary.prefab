@@ -1,0 +1,20 @@
+NAME:          hidden_ossuary
+DESC:          Four niches cut into the corners of a burial cell, a grave-register on the plinth and one strongbox nobody came back for.
+TAGS:          vault hidden chamber ossuary late
+FLOORS:        70-99
+BIOME:         any
+WEIGHT:        60
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#=...=#
+#.....#
+#..J..#
+#.....#
+#=.$.=#
+###+###
+ENDMAP

@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.UI.Helpers;
 
 // Shared pre-game/dialog construction helpers — title+rule, "── Section ──" labels, right-aligned form labels.

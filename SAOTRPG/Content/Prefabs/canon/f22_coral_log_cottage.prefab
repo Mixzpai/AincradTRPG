@@ -1,0 +1,27 @@
+NAME:          f22_coral_log_cottage
+DESC:          The log cottage above Coral Village where two front-liners kept a home and found a child in the Forest of Wandering; hearth banked, a journal open on the table.
+TAGS:          canon-overlay canon coral cottage forest f22
+FLOORS:        22
+BIOME:         forest
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: F = Campfire
+KFEAT: J = Journal
+
+MAP
+T,,,,,,,,,,,T
+,,,,,,,,,,,,,
+,,#########,,
+,,#.......#,,
+T,#.F...J.#,,
+,,#.......#,,
+,,####+####,,
+,,,,,,,,,,,,,
+,,♣,,,,,,,♣,,
+,,,,,,,,,,,,,
+T,,,,,,,,,,,T
+ENDMAP

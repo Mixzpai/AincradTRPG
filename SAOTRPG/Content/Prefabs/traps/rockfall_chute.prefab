@@ -12,11 +12,11 @@ ORIENT:        float
 KFEAT: = = CrackedWall
 
 MAP
-###
 #.#
-#O#
 #.#
-#O#
+#=#
+#.#
+#=#
 #.#
 #=#
 ENDMAP

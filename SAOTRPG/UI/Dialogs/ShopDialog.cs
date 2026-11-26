@@ -1,12 +1,14 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Inventory.Core;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.RunState;
+using SAOTRPG.Systems.Skills;
+using SAOTRPG.Systems.Social;
+using SAOTRPG.UI.GameLog;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -14,11 +16,11 @@ namespace SAOTRPG.UI.Dialogs;
 public static class ShopDialog
 {
     private const int DialogWidth = 64, DialogHeight = 22;
-    private const int CostPerDurability = 2, BaseDurability = 50, DurabilityPerLevel = 10;
+    private const int CostPerDurability = 2;
 
     // Opens the shop dialog — buy, sell, and repair items from a vendor.
     public static void Show(Player player, Vendor vendor, int currentFloor = 1,
-        SAOTRPG.UI.IGameLog? log = null)
+        IGameLog? log = null)
     {
         // Karma: Outlaw-tier players are refused service outright.
         // Honorable / Shady tiers apply a ±10% markup via BuyPrice() below.
@@ -32,14 +34,10 @@ public static class ShopDialog
                 "Leave");
             return;
         }
-        // Bargaining stacks multiplicatively on karma multiplier (L99 × Honorable = 0.90×0.85 = 0.765).
-        float bargainMul = LifeSkillSystem.BargainingDiscount(player);
-        // Beater's second half. The modifier applied its faction-rep hit at run start and logged
-        // "Shop prices hiked", but nothing here consulted it and rep does not feed pricing — so
-        // the +25% the selection screen advertises was never charged. Stacks like bargainMul.
-        float beaterMul = RunModifiers.IsActive(RunModifier.Beater) ? 1.25f : 1f;
-        int BuyPrice(BaseItem it) =>
-            Math.Max(1, (int)Math.Round(it.Value * karmaMul * bargainMul * beaterMul));
+        int BuyPrice(BaseItem it) => CalcBuyPrice(it, player);
+        // CalcSellPrice is per unit, and selling removes the whole stack.
+        int SellPrice(BaseItem it) => CalcSellPrice(it, currentFloor, player)
+            * (it is StackableItem stack ? Math.Max(1, stack.Quantity) : 1);
 
         // Dynamic tiering: fold newly-unlocked items (dedup by DefId). NEW-to-this-visit set
         // lets the render loop flag them; MarkSeen clears the flag next visit.
@@ -178,7 +176,7 @@ public static class ShopDialog
             sellRefs.Clear();
             foreach (var item in player.Inventory.Items)
             {
-                int sellPrice = CalcSellPrice(item, currentFloor, player);
+                int sellPrice = SellPrice(item);
                 string tag = RarityHelper.FormatTag(item.Rarity);
                 string qty = item is StackableItem s ? $" x{s.Quantity}" : "";
                 sellNames.Add($"  {tag}{item.Name}{qty} — sells for {sellPrice} Col");
@@ -229,18 +227,18 @@ public static class ShopDialog
                 compareLabel.Text = BuildComparison(item, player);
                 if (item is EquipmentBase eqItem)
                 {
-                    var verdict = EquipmentComparer.GetVerdict(player, eqItem);
+                    var verdict = GearCompare.GetVerdict(player, eqItem);
                     compareLabel.SchemeName = verdict switch
                     {
-                        EquipmentComparer.CompareResult.Upgrade => ColorSchemes.GoldName,
-                        EquipmentComparer.CompareResult.Downgrade => ColorSchemes.DangerName,
+                        GearCompare.CompareResult.Upgrade => ColorSchemes.GoldName,
+                        GearCompare.CompareResult.Downgrade => ColorSchemes.DangerName,
                         _ => ColorSchemes.DimName
                     };
                 }
             }
             else if (sellMode && idx >= 0 && idx < sellRefs.Count)
             {
-                detailLabel.Text = $"Press Sell to sell for {CalcSellPrice(sellRefs[idx], currentFloor, player)} Col.";
+                detailLabel.Text = $"Press Sell to sell for {SellPrice(sellRefs[idx])} Col.";
                 compareLabel.Text = "";
                 compareLabel.SchemeName = ColorSchemes.DimName;
             }
@@ -292,7 +290,7 @@ public static class ShopDialog
             if (idx < 0 || idx >= sellRefs.Count) return;
 
             var item = sellRefs[idx];
-            int sellPrice = CalcSellPrice(item, currentFloor, player);
+            int sellPrice = SellPrice(item);
 
             string qtyTag = item is StackableItem st ? $" x{st.Quantity}" : "";
             bool isRarePlus = item.Rarity != null && item.Rarity != "Common";
@@ -330,7 +328,7 @@ public static class ShopDialog
             {
                 var eq = player.Inventory.GetEquipped(slot);
                 if (eq == null) continue;
-                int maxDur = BaseDurability + eq.RequiredLevel * DurabilityPerLevel;
+                int maxDur = DurabilityHelper.RepairCeiling(eq, currentFloor);
                 if (eq.ItemDurability >= maxDur) continue;
                 totalCost += (maxDur - eq.ItemDurability) * CostPerDurability;
                 itemsToRepair++;
@@ -343,7 +341,7 @@ public static class ShopDialog
             {
                 var eq = player.Inventory.GetEquipped(slot);
                 if (eq == null) continue;
-                int maxDur = BaseDurability + eq.RequiredLevel * DurabilityPerLevel;
+                int maxDur = DurabilityHelper.RepairCeiling(eq, currentFloor);
                 if (eq.ItemDurability >= maxDur) continue;
                 breakdown.AppendLine($"  {eq.Name}: {eq.ItemDurability}/{maxDur} (+{maxDur - eq.ItemDurability})");
             }
@@ -353,24 +351,25 @@ public static class ShopDialog
                 "Repair", "Cancel");
             if (confirm != 0) return;
 
-            bool repaired = false;
+            int spent = 0;
             foreach (var slot in repairSlots)
             {
                 var eq = player.Inventory.GetEquipped(slot);
                 if (eq == null) continue;
-                int maxDur = BaseDurability + eq.RequiredLevel * DurabilityPerLevel;
+                int maxDur = DurabilityHelper.RepairCeiling(eq, currentFloor);
                 if (eq.ItemDurability >= maxDur) continue;
                 int cost = (maxDur - eq.ItemDurability) * CostPerDurability;
-                if (player.ColOnHand < cost)
-                {
-                    detailLabel.Text = $"Not enough Col to repair {eq.Name}! ({cost} Col needed)";
-                    continue;
-                }
+                if (player.ColOnHand < cost) continue;
                 player.ColOnHand -= cost;
                 eq.ItemDurability = maxDur;
-                repaired = true;
+                spent += cost;
             }
-            detailLabel.Text = repaired ? $"Repaired all gear for {totalCost} Col!" : "Not enough Col to repair anything!";
+            bool repaired = spent > 0;
+            // A broken piece gives no bonus until repaired, so the cached gear totals must rebuild.
+            if (repaired) player.Inventory.InvalidateStatCache();
+            detailLabel.Text = !repaired ? "Not enough Col to repair anything!"
+                : spent < totalCost ? $"Repaired what you could afford for {spent} Col."
+                : $"Repaired all gear for {spent} Col!";
             detailLabel.SchemeName = repaired ? ColorSchemes.SuccessName : ColorSchemes.DangerName;
             colLabel.Text = $"Your Col: {player.ColOnHand}";
         };
@@ -386,7 +385,7 @@ public static class ShopDialog
                 return;
             }
 
-            int totalCol = junkItems.Sum(i => CalcSellPrice(i, currentFloor, player));
+            int totalCol = junkItems.Sum(i => SellPrice(i));
             int confirm = DialogHelper.Query("Sell Junk",
                 $"Sell {junkItems.Count} Common item(s) for {totalCol} Col?", "Sell All", "Cancel");
             if (confirm != 0) return;
@@ -484,19 +483,43 @@ public static class ShopDialog
 
     // Sell price w/ floor bonus. With `player`: symmetric karma mult (Honorable +10%, Shady -10%).
     // Outlaw (karma ≤ -50) already blocked at entry.
+    // What the vendor charges. Karma tier, Bargaining and Beater all stack multiplicatively
+    // (L99 Bargaining × Honorable = 0.85 × 0.90 = 0.765). Public and static so the sell side can
+    // be checked against it — while this was a local function inside Show(), nothing could compare
+    // the two, and the sell price silently overtook it partway up the tower.
+    public static int CalcBuyPrice(BaseItem item, Player? player = null)
+    {
+        float karmaMul = player == null ? 1f : KarmaSystem.ShopPriceMultiplier(player.Karma);
+        if (karmaMul < 0) karmaMul = 1f;                 // Outlaw — Show() already refused entry
+        float bargainMul = LifeSkillSystem.BargainingDiscount(player);
+        float beaterMul = RunModifiers.IsActive(RunModifier.Beater) ? 1.25f : 1f;
+        return Math.Max(1, (int)Math.Round(item.Value * karmaMul * bargainMul * beaterMul));
+    }
+
+    // The vendor's spread: it will never pay more than this share of its own asking price for the
+    // same item. Without a ceiling the floor bonus below makes the sell price overtake the buy
+    // price partway up the tower — buy, sell straight back, repeat, for unbounded Col.
+    private const float VendorSpread = 0.9f;
+
     public static int CalcSellPrice(BaseItem item, int floor = 1, Player? player = null)
     {
         int basePrice = Math.Max(1, item.Value / 2);
         int floorBonus = basePrice * Math.Max(0, floor - 1) * 5 / 100;
         int raw = basePrice + floorBonus;
-        if (player == null) return raw;
-        float buyMul = KarmaSystem.ShopPriceMultiplier(player.Karma);
-        if (buyMul < 0) return raw;  // Outlaw — caller already blocked entry
-        float sellMul = 2f - buyMul;
-        // Bargaining sell = 2 − buyMul (e.g. 0.85 → 1.15, +15% at L99 cap); stacks × karma sell mult.
-        float bargainBuy = LifeSkillSystem.BargainingDiscount(player);
-        float sellBargain = 2f - bargainBuy;
-        return Math.Max(1, (int)Math.Round(raw * sellMul * sellBargain));
+        float buyMul = player == null ? 1f : KarmaSystem.ShopPriceMultiplier(player.Karma);
+        if (player != null && buyMul >= 0)   // Outlaw (< 0) — caller already blocked entry
+        {
+            // Sell multiplier mirrors the buy multiplier about 1.0: Honorable buys at 0.9 and
+            // sells at 1.1. Bargaining does the same (L99 cap 0.85 -> 1.15) and stacks.
+            float sellMul = 2f - buyMul;
+            float sellBargain = 2f - LifeSkillSystem.BargainingDiscount(player);
+            raw = Math.Max(1, (int)Math.Round(raw * sellMul * sellBargain));
+        }
+        // Tied to THIS player's buy price, not a neutral one: whatever discounts they can buy at,
+        // the vendor must not then buy back above. A consequence worth knowing — deep enough that
+        // the ceiling binds, a heavy discount lowers the sell price too, because it lowered what
+        // the same item costs to acquire.
+        return Math.Min(raw, Math.Max(1, (int)(CalcBuyPrice(item, player) * VendorSpread)));
     }
 
     private static string FormatItemInfo(BaseItem item) => item switch
@@ -507,7 +530,9 @@ public static class ShopDialog
         _ => ""
     };
 
-    // Shallow clone via MemberwiseClone reflection; Bonuses/Effects stay aliased to template.
+    // Shallow clone via MemberwiseClone reflection. Equipment's mutable lists (Bonuses, sockets,
+    // ore history) are copied so enhancing one bought copy cannot change the stock or another
+    // copy; StatEffect objects are never edited in place, so the entries themselves are shared.
     // Quantity resets to 1 for stackable consumables so the buyer gets a single unit.
     private static readonly System.Reflection.MethodInfo _memberwiseClone =
         typeof(object).GetMethod("MemberwiseClone",
@@ -517,6 +542,12 @@ public static class ShopDialog
     {
         var clone = (BaseItem)_memberwiseClone.Invoke(item, null)!;
         if (clone is StackableItem s) s.Quantity = 1;
+        if (clone is EquipmentBase eq)
+        {
+            eq.Bonuses = new StatModifierCollection { Effects = new(eq.Bonuses.Effects) };
+            eq.RefinementSlots = (string?[])eq.RefinementSlots.Clone();
+            if (eq is Weapon w) w.EnhancementOreHistory = new(w.EnhancementOreHistory);
+        }
         return clone;
     }
 }

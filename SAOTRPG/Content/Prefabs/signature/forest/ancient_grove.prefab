@@ -1,8 +1,8 @@
 NAME:          forest_ancient_grove
-DESC:          Ring of massive trees around a moss-covered altar in the deep forest.
+DESC:          Ring of massive trees around a moss-covered altar, the floor between them thick with undergrowth.
 TAGS:          signature forest grove altar
-FLOORS:        3-40
-BIOME:         forest any
+FLOORS:        *
+BIOME:         forest
 WEIGHT:        25
 MAX_PER_FLOOR: 1
 ROTATE:        true
@@ -10,7 +10,7 @@ MIRROR:        true
 
 KFEAT: T = Tree
 KFEAT: A = Shrine
-KFEAT: f = Flowers
+KFEAT: f = Bush
 
 MAP
 ,,,T,T,T,T,,

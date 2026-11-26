@@ -1,4 +1,7 @@
-using SAOTRPG.Systems.Input;
+﻿using SAOTRPG.Systems.Input;
+using SAOTRPG.UI.Rendering;
+using SAOTRPG.Systems.Turns;
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -32,7 +35,7 @@ public static class PlayerGuideContent
     internal static string BuildOreDensityBlock()
     {
         var rows = new List<(string Name, float Density)>();
-        foreach (Systems.BiomeType b in System.Enum.GetValues<Systems.BiomeType>())
+        foreach (BiomeType b in System.Enum.GetValues<BiomeType>())
         {
             var cfg = Map.Generation.BiomeGenConfigLoader.Get(b);
             if (cfg != null) rows.Add((b.ToString(), cfg.OreVeinDensity));
@@ -132,7 +135,7 @@ public static class PlayerGuideContent
     internal static string BuildCampfireQuotaBlock()
     {
         int lo = int.MaxValue, hi = 0;
-        foreach (Systems.BiomeType b in System.Enum.GetValues<Systems.BiomeType>())
+        foreach (BiomeType b in System.Enum.GetValues<BiomeType>())
         {
             var q = Map.Generation.BiomeGenConfigLoader.Get(b)?.FeatureQuotas;
             if (q == null) continue;
@@ -161,9 +164,9 @@ public static class PlayerGuideContent
     internal static string BuildBiomeEffectsBlock()
     {
         var sb = new System.Text.StringBuilder();
-        foreach (Systems.BiomeType b in System.Enum.GetValues<Systems.BiomeType>())
+        foreach (BiomeType b in System.Enum.GetValues<BiomeType>())
         {
-            var c = Systems.BiomeSystem.ConfigFor(b);
+            var c = SAOTRPG.Systems.World.BiomeSystem.ConfigFor(b);
             var parts = new System.Collections.Generic.List<string>();
             if (c.VisionModifier != 0) parts.Add($"{c.VisionModifier} vision");
             if (c.AttackModifier != 0) parts.Add($"{c.AttackModifier} ATK");
@@ -216,6 +219,97 @@ public static class PlayerGuideContent
             ? src
             : src.Replace(MapLegendToken, BuildMapLegendBlock());
 
+    public const string AnimatedTilesToken = "{{ANIMATED_TILES}}";
+
+    // What actually animates, read from the two registries that decide it. The hand-written
+    // catalogue named three tiles by their INTERNAL stand-in — a bounty board was documented as a
+    // "Terminal", a lever as a "Fan", an enchant shrine as a "Torch" — so a player looking for a
+    // fan would never find one. Names come from MapLegend, which is the player-facing wording, so
+    // an internal name cannot leak back in.
+    internal static string BuildAnimatedTilesBlock()
+    {
+        var names = new System.Collections.Generic.Dictionary<Map.TileType, string>();
+        foreach (var (type, meaning) in Map.TileDefinitions.MapLegend)
+            names[type] = ShortTileName(meaning);
+
+        var rows = new System.Collections.Generic.List<(string Name, string Look, string When)>();
+        foreach (var kv in Map.TileAnimator.Registry)
+        {
+            string name = names.TryGetValue(kv.Key, out var n) ? n : kv.Key.ToString();
+            // The overlay keeps the tile's own glyph and only pulses its brightness, so the frame
+            // glyphs are not what the player sees.
+            bool sparkle = Map.TileAnimator.IsSparkleOverlay(kv.Key);
+            string look = sparkle ? "glints in place" : "pulses in place";
+            string when = (sparkle
+                    ? "every " + Map.TileAnimator.SparkleCycleMs + "ms"
+                    : kv.Value.Frames.Length + " x " + kv.Value.IntervalMs + "ms")
+                + (Map.TileAnimator.IsCombatSuppressed(kv.Key) ? ", stops in combat" : "");
+            rows.Add((name, look, when));
+        }
+
+        // The terrain clock is a second, independent path — these tiles animate from
+        // TileDefinitions rather than the registry above, and the catalogue used to omit lava
+        // entirely while listing three animations that do not exist.
+        foreach (Map.TileType t in System.Enum.GetValues<Map.TileType>())
+        {
+            if (!Map.TileDefinitions.IsAnimated(t)) continue;
+            if (Map.TileAnimator.Registry.ContainsKey(t)) continue;
+            rows.Add((names.TryGetValue(t, out var n2) ? n2 : t.ToString(),
+                      "shifts in place", "terrain clock"));
+        }
+
+        rows.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
+        // Column widths come from the data. A fixed pad puts every column after an over-long cell
+        // out of line, which is the table defect this Guide has hit before; the renderer itself
+        // only ever pads the first column, so the rest are ours to align.
+        int wName = 0, wLook = 0;
+        foreach (var (name, look, _) in rows)
+        {
+            if (name.Length > wName) wName = name.Length;
+            if (look.Length > wLook) wLook = look.Length;
+        }
+        var sb = new System.Text.StringBuilder();
+        foreach (var (name, look, when) in rows)
+            sb.Append("  ").Append(name.PadRight(wName))
+              .Append("  ").Append(look.PadRight(wLook))
+              .Append("  ").Append(when).Append('\n');
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    // MapLegend meanings are sentences ("A campfire — rest and cook here, once"); a table cell
+    // needs the noun. Deterministic: drop the article, cut at the first dash or comma.
+    private static string ShortTileName(string meaning)
+    {
+        string s = meaning;
+        int cut = s.IndexOfAny(new[] { '—', ',' });
+        if (cut > 0) s = s[..cut];
+        s = s.Trim();
+        if (s.StartsWith("An ", System.StringComparison.Ordinal)) s = s[3..];
+        else if (s.StartsWith("A ", System.StringComparison.Ordinal)) s = s[2..];
+        return s.Length == 0 ? meaning : char.ToUpperInvariant(s[0]) + s[1..];
+    }
+
+    public static string ResolveAnimatedTiles(string src) =>
+        !src.Contains(AnimatedTilesToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(AnimatedTilesToken, BuildAnimatedTilesBlock());
+
+    // The message log's colour key, rendered from LogTones.Key at read time.
+    public const string LogTonesToken = "{{LOG_TONES}}";
+
+    internal static string BuildLogTonesBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (_, name, meaning) in SAOTRPG.UI.GameLog.LogTones.Key)
+            sb.Append("  ").Append(name.PadRight(9)).Append(meaning).Append('\n');
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    public static string ResolveLogTones(string src) =>
+        !src.Contains(LogTonesToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(LogTonesToken, BuildLogTonesBlock());
+
     public const string MinimapLegendToken = "{{MINIMAP_LEGEND}}";
 
     internal static string BuildMinimapLegendBlock()
@@ -240,7 +334,62 @@ public static class PlayerGuideContent
     public static string ResolveDayClock(string src) =>
         !src.Contains(DayClockToken, System.StringComparison.Ordinal)
             ? src
-            : src.Replace(DayClockToken, Map.DayNightCycle.CycleLength.ToString("N0"));
+            : src.Replace(DayClockToken, SAOTRPG.Map.Lighting.DayNightCycle.CycleLength.ToString("N0"));
+
+    // HOW LONG THE NIGHT IS — the mechanical night, not the dark half of the clock. The two are
+    // not the same length and the difference is nearly a factor of two: half the cycle is 2,000
+    // turns, while Night is the bucket the game charges hunger and aggro for, and it is under a
+    // third of it. A hand-written "a night is 2000 turns" was sitting in the light topic, sizing
+    // a torch against a night that does not exist.
+    //
+    // Closed form from the two constants that decide it, NOT a sweep: sweeping means writing to
+    // DayNightCycle.CurrentTurn, which is the live clock the renderer reads, and SunLevel is
+    // pinned to zero under the Starless Night modifier — so a swept figure would report a whole
+    // cycle of night on that run. Rounded to ten turns because the shipped level is quantized and
+    // this form is not, which is worth about fifteen turns. GuideAudit sweeps the real clock and
+    // asserts this agrees with it to within one quantization step.
+    public const string NightShareToken = "{{NIGHT_SHARE}}";
+
+    public static int NightTurnsPerCycle()
+    {
+        // SunLevel = 0.5 + 0.5*cos(2*pi*p), so it sits at or below the threshold between the two
+        // solutions of cos(theta) = 2T - 1.
+        double edge = System.Math.Acos(2.0 * SAOTRPG.Map.Lighting.DayNightCycle.NightThreshold - 1.0) / (2.0 * System.Math.PI);
+        double turns = SAOTRPG.Map.Lighting.DayNightCycle.CycleLength * (1.0 - 2.0 * edge);
+        return (int)System.Math.Round(turns / 10.0) * 10;
+    }
+
+    // PUBLIC so the corpus checker can assert this exact string reaches the page. Removing the
+    // resolve call deletes the sentence rather than leaving a token behind, so a token-shaped
+    // check cannot see it go.
+    public static string BuildNightShareBlock()
+    {
+        int turns = NightTurnsPerCycle();
+        int pct = (int)System.Math.Round(100.0 * turns / SAOTRPG.Map.Lighting.DayNightCycle.CycleLength);
+        return $"{turns:N0} of every {SAOTRPG.Map.Lighting.DayNightCycle.CycleLength:N0} turns ({pct}%)";
+    }
+
+    public static string ResolveNightShare(string src) =>
+        !src.Contains(NightShareToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(NightShareToken, BuildNightShareBlock());
+
+    // WHAT SPEED BUYS, read off SpeedContest rather than transcribed. Every number in this
+    // sentence is a constant the combat roll uses, and the last topic here that transcribed a
+    // formula instead of generating it was out by a factor of ten.
+    public const string SpeedRuleToken = "{{SPEED_RULE}}";
+
+    public static string BuildSpeedRuleBlock() =>
+        "outpace it and each exchange carries a chance of one extra strike worth "
+        + $"{SAOTRPG.Systems.Turns.SpeedContest.FollowUpDamagePercent}% of the blow that earned it. The chance "
+        + "climbs with the gap and flattens as it grows: half of it is spent by the time you are "
+        + $"{SAOTRPG.Systems.Turns.SpeedContest.HalfAdvantage} SPD ahead, and it approaches "
+        + $"{SAOTRPG.Systems.Turns.SpeedContest.FollowUpCeilingPercent}% without ever reaching it";
+
+    public static string ResolveSpeedRule(string src) =>
+        !src.Contains(SpeedRuleToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(SpeedRuleToken, BuildSpeedRuleBlock());
 
     public const string StatusLettersToken = "{{STATUS_LETTERS}}";
 
@@ -270,6 +419,59 @@ public static class PlayerGuideContent
         foreach (var (code, meaning) in Helpers.StatusIconMap.AllCodes)
         {
             sb.Append("  ").Append(code.PadRight(6)).Append(meaning).Append('\n');
+        }
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    // THE PROFICIENCY FORK TABLES ARE GENERATED FROM TurnManager.GetForkOptions, not transcribed.
+    // The transcription had drifted three ways at once: two topics named passives no fork offers,
+    // the Katana and Bow pairs were filed under L25 when they are picked at L50, and the damage
+    // cap was written as +120 against a real +55. Spliced into the body at class init rather than
+    // through a render token, so the corpus a checker reads is the generated text.
+    private static string ForkTable(IEnumerable<(string Name, string What)> rows)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (name, what) in rows)
+            sb.Append("  ").Append(name.PadRight(29)).Append(what).Append('\n');
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    // "" is not a weapon type, so GetForkOptions takes its generic branch — which is what every
+    // type that does not declare its own L50 fork is offered.
+    internal static string BuildGenericForkBlock() => ForkTable(
+        SAOTRPG.Systems.Turns.TurnManager.ForkLevelList.SelectMany(lvl =>
+        {
+            var (a, b) = SAOTRPG.Systems.Turns.TurnManager.GetForkOptions(lvl, "");
+            return new[] { ($"L{lvl} {a.Name}", a.Description), ($"L{lvl} {b.Name}", b.Description) };
+        }));
+
+    internal static string BuildWeaponForkBlock() => ForkTable(
+        SAOTRPG.Systems.Turns.TurnManager.WeaponSpecificL50Types.SelectMany(w =>
+        {
+            string tag = w == "One-Handed Sword" ? "1H Sword" : w;
+            int lvl = SAOTRPG.Systems.Turns.TurnManager.WeaponSpecificForkLevel;
+            var (a, b) = SAOTRPG.Systems.Turns.TurnManager.GetForkOptions(lvl, w);
+            return new[]
+            {
+                ($"L{lvl} {a.Name} ({tag})", a.Description),
+                ($"L{lvl} {b.Name} ({tag})", b.Description),
+            };
+        }));
+
+    // The kill/level/damage ladder, off the same curve ComputeLevel walks.
+    internal static string BuildProficiencyLadderBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (level, kills) in SAOTRPG.Systems.Turns.TurnManager.LevelAnchors)
+        {
+            if (level == 1) continue;   // the origin of the curve, not a milestone
+            string note = SAOTRPG.Systems.Turns.TurnManager.ForkLevelList.Contains(level) ? "fork"
+                        : level == SAOTRPG.Systems.Turns.TurnManager.MaxProfLevel ? "cap" : "";
+            sb.Append("  ").Append($"Level {level}".PadRight(12))
+              .Append($"{kills:N0} kills".PadRight(15))
+              .Append($"+{SAOTRPG.Systems.Turns.TurnManager.DamageAtLevel(level)} ATK");
+            if (note.Length > 0) sb.Append(", ").Append(note);
+            sb.Append('\n');
         }
         return sb.ToString().TrimEnd('\n');
     }
@@ -973,21 +1175,17 @@ public static class PlayerGuideContent
             "Your damage bonus is half your proficiency level, so it climbs\n" +
             "steadily rather than in jumps. The four forks are the only\n" +
             "thresholds you have to plan around:\n" +
-            "  Level 25     at      25 kills   +12 ATK, fork: crit / parry\n" +
-            "  Level 50     at     100 kills   +25 ATK, fork: dodge / skill\n" +
-            "  Level 75     at     500 kills   +37 ATK, fork: combo / stun\n" +
-            "  Level 100    at   2,000 kills   +50 ATK, capstone fork\n" +
-            "  Level 110    at  10,000 kills   +55 ATK, cap\n" +
+            BuildProficiencyLadderBlock() + "\n\n" +
             "The fifteen rank names run on their own kill ladder alongside this,\n" +
             "from Novice at 10 kills to The Black Swordsman at 9,999. They are\n" +
             "cosmetic — the damage comes from the level, not the name.\n" +
-            "Each of the four forks offers a 1-of-2 passive pick — see the\n" +
-            "Proficiency Forks topic for the branch list.\n\n" +
+            "Each of the four forks offers a 1-of-2 passive pick — the branch\n" +
+            "list is on [Weapon Proficiency Tree].\n\n" +
             "TIPS\n" +
             "The forks cluster at L25/50/75/100 — plan grind milestones\n" +
             "around those thresholds, not the raw damage numbers. Pick\n" +
-            "forks that match your build: crit/dodge for Dex, combo/parry\n" +
-            "for tanks.\n\n" +
+            "forks that match your build: Keen Edge at L50 for a crit\n" +
+            "build, Bulwark and Guarded Stance for a tank.\n\n" +
             "SEE ALSO\n" +
             "[Weapon Proficiency Tree] · [Damage Formula] · [Sword Skills — Unlock & Use]")
         {
@@ -1029,75 +1227,117 @@ public static class PlayerGuideContent
         new("Combat & Rarity", "Hunger, Satiety & Fatigue",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Hunger, Satiety & Fatigue\n" +
-            "│ Satiety: Drains per turn\n" +
-            "│ Fatigue: Ticks from exertion\n" +
-            "│ Trigger: Time, sprint, combat\n" +
+            "│ Satiety: 100 bar, one point per 12 turns\n" +
+            "│ Restores: Food, fountains\n" +
+            "│ Fatigue: Builds on walked steps only\n" +
+            "│ Fatigue clears: Rest, campfire, fountain, a new floor\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Two clocks run whether or not you are watching them. Satiety swings\n" +
-            "attack and defence and eventually kills you outright; fatigue\n" +
-            "quietly drains speed and crit. Both are cheap to maintain and\n" +
-            "expensive to forget.\n\n" +
-            "Satiety is your food clock; fatigue is your exhaustion clock. Both\n" +
-            "swing combat stats and need regular maintenance at food and campfires.\n" +
-            "Eat food, rest at campfires (+20 satiety), and sleep to clear fatigue.\n" +
-            "Resting works at full health when you are fatigued — it is the only way\n" +
-            "to clear the penalty, so you are never stuck carrying it.\n" +
-            "Sprint cycles and heavy combat tick fatigue up. Well Fed (>=80): +1\n" +
-            "HP regen, +3 ATK/DEF. Hungry (<20): -2 ATK. Starving (0): -5 HP/turn\n" +
-            "plus STARVING status. Mild Fatigue: -1 SPD, -2 ATK. Heavy Fatigue:\n" +
-            "-2 SPD, -4 ATK, -1 DEF. Rest clears fatigue outright, and rest is allowed\n" +
-            "even at full HP for exactly that reason. Food restores satiety and HP over turns; the Eating life\n" +
-            "skill scales food potency by +10% / +25% / +50% / +100% at L10 / L25\n" +
-            "/ L50 / L99. At L99 Eating also scales food's HP REGEN RATE — the\n" +
-            "per-turn heal ticks higher in addition to the Satiety duration boost,\n" +
-            "so Roast Boar with high Eating turns into a passive heal stream during\n" +
-            "exploration rather than a one-shot top-up. Satiety drains 1 point per\n" +
-            "N turns (biome- and modifier-dependent); Iron Rank run modifier\n" +
-            "doubles drain rate.\n\n" +
+            "attack and defence, gates passive healing and eventually kills you\n" +
+            "outright; fatigue builds as you walk and costs attack. Both are\n" +
+            "cheap to maintain and expensive to forget.\n\n" +
+            "THE SATIETY LADDER\n" +
+            "The bar holds 100, and every effect on it is a step rather than a\n" +
+            "slope. The middle column is the name the status tray gives it:\n\n" +
+            "  80 or more   Well-Fed   +2 ATK and +1 DEF\n" +
+            "  30 to 79     (none)     no modifier; passive healing ticks\n" +
+            "  16 to 29     Hungry     no modifier; passive healing stops\n" +
+            "  15 or less   Starving   -2 ATK and -1 DEF\n" +
+            "  0            Starving   the above, plus 1 HP every 4 turns\n\n" +
+            "Passive healing between fights stops once satiety falls below 30,\n" +
+            "and that is the one most players notice first and blame on\n" +
+            "something else. It is not a penalty on the sheet — the heal simply\n" +
+            "stops ticking, and the tray's Regen mark goes out with it.\n\n" +
+            "HOW FAST IT DRAINS\n" +
+            "One point every 12 turns, and three things change that:\n\n" +
+            "  Biome       Desert, Volcanic and the Void each add a point per drain\n" +
+            "  Night       an extra point every 48 turns — 25% while the sun is down\n" +
+            "  Iron Rank   doubles the whole bill, night and biome included\n\n" +
+            "The biome column is per-floor and [[Biomes]] carries the whole table.\n" +
+            "A full bar is about 1,200 turns of walking against a day that runs\n" +
+            "{{DAY_CLOCK}} turns, so you will empty it two or three times between one\n" +
+            "noon and the next. Food is routine maintenance, not an emergency\n" +
+            "measure, and the night surcharge costs roughly one ration a night\n" +
+            "rather than anything you have to plan around.\n\n" +
+            "FATIGUE\n" +
+            "Fatigue counts WALKED STEPS and nothing else. Fighting, sprinting,\n" +
+            "sneaking, mining and waiting all leave it alone; only ordinary\n" +
+            "movement builds it.\n\n" +
+            "  Fatigued    150 steps   -2 ATK\n" +
+            "  Exhausted   250 steps   -4 ATK and -1 DEF\n\n" +
+            "Attack and defence are the whole of it — fatigue does not touch\n" +
+            "Speed, and the combat log names exactly the two it charges.\n" +
+            "Resting clears the counter outright, and rest is allowed at full\n" +
+            "health when you are carrying fatigue for exactly that reason — otherwise\n" +
+            "the only way out would be to go and get hit. A campfire, a\n" +
+            "fountain and climbing to a new floor all clear it too.\n\n" +
+            "WHAT RESTORES SATIETY\n" +
+            "Food, and fountains. A fountain is worth +20 satiety on top of its\n" +
+            "heal, and it burns the tile — see [[Safe Rooms & Mechanics]]. A campfire\n" +
+            "does NOT feed you: it heals, purges Poison, Bleed and Slow and\n" +
+            "clears fatigue, and your satiety is exactly where it was when you\n" +
+            "stepped on.\n\n" +
+            "Food restores satiety and heals over several turns. The Eating\n" +
+            "life skill scales food potency by +10% / +25% / +50% / +100% at\n" +
+            "L10 / L25 / L50 / L99. At L99 Eating also raises food's per-turn\n" +
+            "heal rate on top of the satiety gain, so a Roast Boar becomes a\n" +
+            "heal stream you walk with rather than a one-shot top-up.\n\n" +
             "TIPS\n" +
-            "Hover at Well Fed before any boss — the +3 ATK/DEF feeds right\n" +
-            "into Damage Mitigation. Carry at least one stack of cheap bread\n" +
-            "for emergency top-ups; each bread also banks Eating XP toward\n" +
-            "the food-potency milestones. Once Eating hits L99, swap your\n" +
-            "between-fight grazing food from cheap bread up to Roast Boar or\n" +
-            "stew for the duration-PLUS-regen-rate stack.\n\n" +
+            "Hover at Well-Fed before any boss — the +2 ATK and +1 DEF feed\n" +
+            "straight into [[Damage Mitigation]]. Carry a stack of cheap bread for\n" +
+            "emergency top-ups; each one also banks Eating XP toward the\n" +
+            "food-potency milestones. Eat before nightfall rather than after:\n" +
+            "the night charges a quarter more and cuts how far you can see to\n" +
+            "look for more. Once Eating hits L99, move your between-fight\n" +
+            "grazing food up from bread to Roast Boar or stew for the\n" +
+            "duration-and-regen stack.\n\n" +
             "SEE ALSO\n" +
-            "[Food & Cooking] · [Damage Mitigation] · [Run Modifiers (12 Optional Challenges)] · [Life Skills] · [Campfires — Rest & Sleep XP]")
+            "[Food & Cooking] · [Damage Mitigation] · [Day/Night Cycle] · [Run Modifiers (12 Optional Challenges)] · [Life Skills] · [Campfires — Rest & Sleep XP]")
         {
-            Tags = new[] { "combat", "stats" }
+            Tags = new[] { "combat", "stats", "survival", "night" }
         },
 
         new("Combat & Rarity", "Sprint & Stealth Move",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Sprint & Stealth Move\n" +
             "│ Sprint: Shift + dir, 2 tiles\n" +
-            "│ Stealth: Ctrl + dir, 1 tile\n" +
+            "│ Stealth: Ctrl + dir, 1 tile, halves detection\n" +
             "│ Trigger: Modifier key on move\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Two ways to move that are not a plain step: sprint covers two tiles for\n" +
-            "extra satiety drain, stealth moves you quietly. Sprint refuses to cross\n" +
-            "hazard tiles, which makes it safe to hold down.\n\n" +
+            "Two ways to move that are not a plain step. Sprint covers two tiles\n" +
+            "in one turn; stealth halves the range at which anything notices you\n" +
+            "until you attack. Neither banks Walking XP and neither builds\n" +
+            "fatigue.\n\n" +
             "Two movement modifiers beyond the normal step. Hold Shift with a\n" +
             "direction to sprint 2 tiles; hold Ctrl with a direction to take one\n" +
-            "quiet step. Sprint cannot cross Lava, Trap, or DangerZone tiles —\n" +
-            "you'll stop short — and adds +50% satiety drain for the turn. Stealth\n" +
-            "Move halves aggro range that turn and hides you from mobs farther\n" +
-            "than 5 tiles; it breaks on attack. Neither triggers Extra Search's\n" +
-            "passive trap-reveal — only normal step moves do. Each sprint step\n" +
-            "banks +2 Running XP; each normal step banks +1 Walking XP (sprint\n" +
-            "and stealth skip the Walking track).\n\n" +
+            "quiet step. A sprint refuses a path with anything solid or anyone\n" +
+            "standing in it and you stop where you are. Neither triggers Extra\n" +
+            "Search's passive trap-reveal — only normal step moves do. Each\n" +
+            "sprint banks +2 Running XP; each normal step banks +1 Walking XP,\n" +
+            "and sprint and stealth both skip the Walking track. Only ordinary\n" +
+            "walked steps build fatigue.\n\n" +
+            "WHAT A QUIET STEP BUYS\n" +
+            "Stealth HALVES the range at which a monster notices you, for that\n" +
+            "turn, and it breaks the moment you attack. It halves whatever the\n" +
+            "monster's range currently is — which means the night widens the\n" +
+            "range first and stealth halves the wider number, so a quiet step\n" +
+            "after dark leaves you closer to being seen than the same step at\n" +
+            "noon. Detection ranges run from about 2 tiles to 12 depending on\n" +
+            "the monster, so halving is worth a great deal against a watchful\n" +
+            "thing and almost nothing against a short-sighted one.\n\n" +
             "TIPS\n" +
             "Use Sprint to escape post-motion recovery before the follow-up\n" +
             "hit lands. Use Stealth Move when scouting unfamiliar rooms so\n" +
-            "you don't pull the whole pack at once. Alternate sprint and\n" +
-            "normal steps on long treks — both life skills bank XP on the\n" +
-            "same trip.\n\n" +
+            "you don't pull the whole pack at once, and give yourself more\n" +
+            "margin at night than the same room needed by day. Alternate\n" +
+            "sprint and normal steps on long treks — both life skills bank XP\n" +
+            "on the same trip.\n\n" +
             "SEE ALSO\n" +
-            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Unique Skill: Extra Skill — Search] · [Traps & Hazards] · [Life Skills]")
+            "[Controls & Keybindings] · [Heavy Attacks (Winding Up)] · [Day/Night Cycle] · [Unique Skill: Extra Skill — Search] · [Traps & Hazards] · [Life Skills]")
         {
-            Tags = new[] { "combat", "movement", "controls" }
+            Tags = new[] { "combat", "movement", "controls", "stealth" }
         },
 
         new("Combat & Rarity", "Quick-Use Slots",
@@ -1242,7 +1482,7 @@ public static class PlayerGuideContent
         new("Combat & Rarity", "Combat Visual Feedback",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Combat Visual Feedback\n" +
-            "│ Shake: 100ms / 3 frames on high-impact hits\n" +
+            "│ Shake: Tier 1 100ms / ±1 cell · Tier 2 120ms / ±2 cells\n" +
             "│ Projectiles: Arrows · skill arcs · status trails\n" +
             "│ Multi-hit: Per-hit popups + aggregate summary\n" +
             "└─\n\n" +
@@ -1255,13 +1495,18 @@ public static class PlayerGuideContent
             "explosions, and floor-quakes. Animated projectiles trace arrows,\n" +
             "multi-hit sword-skill arcs, and status trails. Multi-hit cascades\n" +
             "(e.g. Starburst Stream's 16 hits) fire a fast per-popup stream plus\n" +
-            "a single aggregate damage summary at the end. All three layers are\n" +
-            "automatic; each can be toggled independently in Options > Accessibility.\n\n" +
-            "SCREEN SHAKE (trigger list):\n" +
-            "  - Critical hits (yours or theirs)\n" +
-            "  - Boss heavy attacks (winding-up release)\n" +
-            "  - Explosion tiles and fire-bomb detonations\n" +
-            "  - Floor-wide quake events (labyrinth collapse, boss phase)\n" +
+            "a single aggregate damage summary at the end. All three are automatic.\n" +
+            "Screen shake is the one with a switch — Options > Accessibility — and\n" +
+            "it also stops on its own if you have asked for reduced motion.\n\n" +
+            "SCREEN SHAKE comes in two strengths, and which one you feel tells\n" +
+            "you something. A shake never stacks: while one is running, a request\n" +
+            "of the same or a lower tier is ignored.\n" +
+            "\n" +
+            "  Tier 1   ±1 cell   100ms   your crits, or a hit taking a fifth of your health\n" +
+            "  Tier 2   ±2 cells  120ms   a floor boss using a named ability\n" +
+            "\n" +
+            "So a shake you did not cause is a damage warning rather than a flourish:\n" +
+            "it means that blow took 20% of your health, whether or not it critted.\n" +
             "PROJECTILE ANIMATIONS:\n" +
             "  - Arrows trace a single-frame glyph tile-to-tile\n" +
             "  - Sword-skill arcs sweep along the hit path\n" +
@@ -1311,7 +1556,7 @@ public static class PlayerGuideContent
             "                    entire world to amber while keeping relative\n" +
             "                    brightness, so lava still outshines deep\n" +
             "                    water and a campfire still outshines a tree.\n\n" +
-            "NOTHING IMPORTANT IS CARRIED BY COLOUR ALONE\n" +
+            "COLOUR IS NEVER THE ONLY CUE\n" +
             "This is what makes a single-hue or colourblind palette safe to\n" +
             "play on. Item rarity carries a bracketed tag and a per-tier glyph\n" +
             "on the ground; monster tier is spelled by the casing of its\n" +
@@ -1493,6 +1738,8 @@ public static class PlayerGuideContent
             "Priority runs entities and items first, then landmarks, then terrain —\n" +
             "so a monster never hides behind the ground it is standing on, and a\n" +
             "shrine never hides behind a tree.\n\n" +
+            "Press {{KEY:OpenWorldMap}} on the map for the same view at the size of the\n" +
+            "screen, with a cursor and a list of everything found: see [Full Map].\n\n" +
             "LEGEND\n" +
             MinimapLegendToken + "\n\n" +
             "TIPS\n" +
@@ -1501,9 +1748,46 @@ public static class PlayerGuideContent
             "refuse you until then. Planning a route around the wrong one wastes a\n" +
             "long walk.\n\n" +
             "SEE ALSO\n" +
-            "[Swimming (Life Skill)] \u00b7 [Mining \u2014 Tool Slot & Ore Veins] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
+            "[Full Map] \u00b7 [Swimming (Life Skill)] \u00b7 [Mining \u2014 Tool Slot & Ore Veins] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
         {
             Tags = new[] { "minimap", "navigation", "ui" }
+        },
+
+        new("World", "Full Map",
+            "\u250c\u2500 World\n" +
+            "\u2502 Topic: Full Map\n" +
+            "\u2502 Open: {{KEY:OpenWorldMap}} on the map, and again to close\n" +
+            "\u2502 Shows: Every explored tile, at a zoom you choose\n" +
+            "\u2514\u2500\n\n" +
+            "SUMMARY\n" +
+            "The minimap at the size of the screen. It opens on you, zoomed to\n" +
+            "fit the ground you have explored, and draws every tile with the\n" +
+            "minimap's own marks, so the two always agree and share one legend.\n" +
+            "Explored ground with nothing on it shows as a dot, so the edge of\n" +
+            "what you know reads at every zoom. No turns pass while it is open.\n\n" +
+            "THE PANEL\n" +
+            "The right-hand panel lists every point of interest found so far,\n" +
+            "one row per kind: the ways off the floor first, then who is about,\n" +
+            "then the places to use. A row gives the count and the nearest\n" +
+            "one's compass bearing and distance in moves. Monsters count only\n" +
+            "while in sight, as on the minimap. The bottom line names what is\n" +
+            "under the cursor and how far it lies from you.\n\n" +
+            "KEYS\n" +
+            "  {{KEY:MoveNorth}} {{KEY:MoveWest}} {{KEY:MoveSouth}} {{KEY:MoveEast}}   Move the cursor one cell; hold Shift for eight\n" +
+            "  {{KEY:WorldMapZoomIn}} / {{KEY:WorldMapZoomOut}}   Zoom in and out\n" +
+            "  {{KEY:WorldMapNextPoint}}   Jump to the next point of interest, nearest first\n" +
+            "  {{KEY:WorldMapPrevPoint}}   Jump back one\n" +
+            "  {{KEY:WorldMapCenter}}   Bring the cursor back to you\n" +
+            "  {{KEY:OpenWorldMap}} / Esc   Close\n\n" +
+            "TIPS\n" +
+            "Every zoom step after the first covers twice as many rows as columns\n" +
+            "in each cell, because a terminal cell is twice as tall as it is wide:\n" +
+            "the floor keeps its true shape. The closest step is the main map's\n" +
+            "own one tile per cell.\n\n" +
+            "SEE ALSO\n" +
+            "[Minimap] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
+        {
+            Tags = new[] { "map", "full-map", "world-map", "navigation", "poi", "ui" }
         },
 
         new("Combat & Rarity", "Status Icon Tray",
@@ -1581,40 +1865,59 @@ public static class PlayerGuideContent
         new("Combat & Rarity", "Vision & FOV",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Vision & FOV\n" +
-            "│ Base radius: 20 tiles (bright day)\n" +
-            "│ Night floor: 8 tiles\n" +
-            "│ Modifiers: Biome, time, lights\n" +
+            "│ Bright day: Past the edge of the panel\n" +
+            "│ Deep night: 18 tiles, and 8 in the worst biome\n" +
+            "│ Modifiers: Time of day, biome, carried light\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "You see a cone shaped by light, time of day and biome — never the\n" +
-            "whole floor. Tiles you have already seen stay drawn but stop\n" +
+            "You see a shadowcast field shaped by the hour and the biome — never\n" +
+            "the whole floor. Tiles you have already seen stay drawn but stop\n" +
             "updating, so a remembered corridor can hold things that were not\n" +
             "there when you looked at it.\n\n" +
-            "Your visible area is a shadowcast FOV that shrinks with time of day\n" +
-            "and biome penalties and expands around light sources (campfires,\n" +
-            "shrines, vents emit warm bubbles for extended sight). Fog-of-war\n" +
-            "persists — previously seen tiles stay dim but don't update mob\n" +
-            "movement until re-seen.\n\n" +
-            "  - Base radius:       20 tiles on bright day\n" +
-            "  - Time of day:       shrinks to 8 tiles at deep night\n" +
-            "  - Biome:              Darkness -20, Forest -8, Swamp -5, Desert -5\n" +
-            "  - Weather:           Fog reduces trap detection, not FOV\n" +
-            "  - Starless Night:    run modifier locks vision at -20\n\n" +
+            "HOW FAR YOU SEE\n" +
+            "The radius slides between two ends rather than sitting at a fixed\n" +
+            "number, and the bright end is derived from your terminal:\n\n" +
+            "  Bright day   as far as the map panel reaches, and past it\n" +
+            "  Deep night   18 tiles, a bubble around you\n" +
+            "  Hard floor   8 tiles, whatever else is subtracted\n\n" +
+            "Because the day end tracks the panel, a taller terminal genuinely\n" +
+            "sees further; the night end does not move, so night is far more\n" +
+            "levelling than the numbers suggest. A biome penalty comes off on\n" +
+            "top, and each point of it is worth FOUR tiles of radius — the\n" +
+            "Darkness biome's -20 is eighty tiles gone, which is why a dark\n" +
+            "floor plays like permanent night at any hour. [[Biomes]] carries\n" +
+            "the per-biome table. Nothing subtracts past the hard floor of 8.\n\n" +
+            "Weather does not touch the radius. Fog reduces trap detection\n" +
+            "instead. The Starless Night run modifier pins the sun at zero, so\n" +
+            "a run under it is at the night floor for its whole length.\n\n" +
+            "HEARING WHAT YOU CANNOT SEE\n" +
+            "When a monster is close but outside your visible field, the log\n" +
+            "prints a sound cue for it — a scrape, a rattle, breathing. The\n" +
+            "range it fires at is the range that monster is actually hunting on,\n" +
+            "so it GROWS at night alongside the aggro range and shrinks again at\n" +
+            "dawn. One cue at a time, and not every turn. Treat it as a bearing\n" +
+            "rather than a position: it tells you something is near and unseen,\n" +
+            "which at night is most of what there is to know.\n\n" +
+            "Light is carried, not innate — a torch or lantern in the Tool slot\n" +
+            "lights a pool around you, and glowing tiles light their own. That\n" +
+            "is a separate system from this one and [[Light & Shadow]] covers it.\n\n" +
             "TIPS\n" +
-            "Hug shrine and campfire bubbles when exploring Darkness or\n" +
-            "Forest biomes; the extra radius can reveal traps before you\n" +
-            "step on them.\n\n" +
+            "Hug shrine and campfire glow when exploring Darkness or Forest\n" +
+            "floors; the extra light can reveal traps before you step on them.\n" +
+            "If the log starts naming sounds you cannot place, you are at the\n" +
+            "night floor and something is inside its own reach of you — back to\n" +
+            "a corridor mouth rather than pushing on across open ground.\n\n" +
             "SEE ALSO\n" +
-            "[Look Mode & Counter Stance] · [Traps & Hazards] · [Biomes] · [Ambient World Animation]")
+            "[Look Mode & Counter Stance] · [Light & Shadow] · [Day/Night Cycle] · [Traps & Hazards] · [Biomes] · [Ambient World Animation]")
         {
-            Tags = new[] { "combat", "vision" }
+            Tags = new[] { "combat", "vision", "night" }
         },
 
         new("Combat & Rarity", "Look Mode & Counter Stance",
             "┌─ Combat & Rarity\n" +
             "│ Topic: Look Mode & Counter Stance\n" +
-            "│ Look: L key, cursor inspect + target list panel\n" +
-            "│ Stance: V key, forces Parry\n" +
+            "│ Look: {{KEY:Look}}, cursor inspect + target list panel\n" +
+            "│ Stance: {{KEY:Counter}}, forces Parry\n" +
             "│ Trigger: Manual hotkey\n" +
             "└─\n\n" +
             "SUMMARY\n" +
@@ -1703,7 +2006,7 @@ public static class PlayerGuideContent
             "/ elite flags stamp on FIRST DAMAGE rather than first aggro, so\n" +
             "insta-kill openers (Holy Sword burst, Iaijutsu first-strike, alpha\n" +
             "on a surprised target) don't leak past the compendium.\n\n" +
-            "SORTING BY FLOOR AND FILTERING BY FLOOR SHARE A LETTER\n" +
+            "FLOOR SORT AND FLOOR FILTER\n" +
             "{{KEY:BestiaryFloorBand}} on its own narrows the list to a quarter of the castle.\n" +
             "S then f leaves every entry listed and orders them by the floor\n" +
             "each was first met on. The letter is the same on purpose: one\n" +
@@ -1795,10 +2098,10 @@ public static class PlayerGuideContent
             "│ Unlock: New character\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Every character begins identically: Level 1, an Iron Sword, one\n" +
-            "Health Potion, 1000 Col and ten unspent Skill Points. The only\n" +
-            "decision on the way out of the Town of Beginnings is where those ten\n" +
-            "points go.\n\n" +
+            "Every character begins identically: Level 1, a Wooden Torch\n" +
+            "already lit, an Iron Sword and a Health Potion in the pack, 1000\n" +
+            "Col and ten unspent Skill Points. The only decision on the way out\n" +
+            "of the Town of Beginnings is where those ten points go.\n\n" +
             "Everyone starts identically, so the only thing that separates two\n" +
             "characters on Floor 1 is where the ten Skill Points went.\n\n" +
             "WHAT YOU CARRY\n" +
@@ -1806,8 +2109,17 @@ public static class PlayerGuideContent
             "  Title        Adventurer\n" +
             "  Purse        1000 Col\n" +
             "  Skill Pts    10, unspent\n" +
-            "  Weapon       Iron Sword, equipped\n" +
-            "  Inventory    1 Health Potion\n\n" +
+            "  Tool slot    Wooden Torch, equipped and burning\n" +
+            "  Backpack     Iron Sword, 1 Health Potion\n\n" +
+            "THE SWORD IS IN THE PACK\n" +
+            "Nothing is equipped for you except the torch. Open the inventory\n" +
+            "and equip the Iron Sword before you leave town — an unarmed\n" +
+            "Floor 1 is survivable and an unarmed Floor 2 is not, and the\n" +
+            "difference does not announce itself.\n\n" +
+            "The torch matters more than it looks. You cast no light of your\n" +
+            "own, so the Tool slot is the difference between a playable night\n" +
+            "and a black screen, and the starter torch burns down — see\n" +
+            "[[Light & Shadow]].\n\n" +
             "Every one of the six attributes starts at zero, and so do Attack,\n" +
             "Defense, Speed and Skill Damage. Only crit is non-zero out of the\n" +
             "gate: 5% rate and 10 bonus damage.\n\n" +
@@ -1858,7 +2170,7 @@ public static class PlayerGuideContent
             "  STRENGTH     +2 ATK per point\n" +
             "  ENDURANCE    +2 DEF per point\n" +
             "  DEXTERITY    +0.5% CritRate + 1 CritDamage; improves accuracy\n" +
-            "  AGILITY      +2 SPD (a displayed stat) + dodge, +2% to a 20% cap\n" +
+            "  AGILITY      +2 SPD (follow-up strikes) + dodge, +2% to a 20% cap\n" +
             "  INTELLIGENCE  +2 SkillDamage (boosts Sword Skill multipliers)\n\n" +
             "TIPS\n" +
             "Dex double-dips on crit rate and crit damage, so it scales\n" +
@@ -1892,24 +2204,45 @@ public static class PlayerGuideContent
             "  SD = BaseSkillDamage + (INT x 2) + gear bonuses\n" +
             "  CRT = BaseCriticalRate + DEX/2 (percent)\n" +
             "  CD = BaseCriticalHitDamage + DEX\n\n" +
+            "The sheet's CRT is the base rate. What actually gets rolled adds\n" +
+            "two things the sheet cannot see, because both depend on the weapon\n" +
+            "in your hand:\n" +
+            "  CRT rolled = CRT + weapon CritRate tag + proficiency crit perk\n" +
+            "               + weather\n" +
+            "Swap weapons and the rolled figure moves even though the sheet\n" +
+            "does not. Every crit in the game — basic swing, off-hand swing and\n" +
+            "each hit of a multi-hit Sword Skill — uses that one number.\n\n" +
+            "WHAT SPD BUYS\n" +
+            "SPD is a contest, not a flat bonus: it is measured against the SPEED\n" +
+            "of whatever you are hitting — {{SPEED_RULE}}. A mob carrying the Swift\n" +
+            "or Ethereal affix is faster than its neighbours and so is harder to\n" +
+            "press, and Floor 100's clone is built with your own SPD, so it cannot\n" +
+            "be outpaced at all.\n\n" +
+            "The follow-up is announced in the combat log every time it lands. It\n" +
+            "carries no crit roll of its own and cannot chain into a second.\n\n" +
+            "A weapon's own Swing number on the equipment panel is NOT this stat: it is\n" +
+            "a 0-3 weight that decides how long the swing arc is drawn for, nothing\n" +
+            "more.\n\n" +
             "DIRECT STAT GRANTS\n" +
-            "Five stats can be granted outright by a piece of equipment,\n" +
-            "rather than through an effect tag:\n" +
-            "  CritRate         +N% to CRT — stacks with Dex contribution\n" +
-            "  AttackSpeed      +N to weapon swing cadence (faster turns)\n" +
-            "  BlockChance      +N% to shield block roll\n" +
-            "  HPRegen          +N HP per passive-regen pulse\n" +
-            "  SkillCooldown    -N turns on Sword Skill cooldowns\n" +
-            "Any equipment piece — armor, ring, bracelet, necklace — can roll\n" +
-            "them, and the values stack additively with the equivalent effect\n" +
-            "tags on other slots. Broken gear (0 durability) contributes\n" +
-            "nothing until repaired.\n\n" +
+            "One stat is granted outright rather than through an effect tag:\n" +
+            "  CritRate         +N% to CRT — stacks with the Dex contribution\n" +
+            "Reforging a Bow, Dagger or Rapier can roll it. The other combat\n" +
+            "riders are carried by effect TAGS on the item, and the tag is the\n" +
+            "thing that works:\n" +
+            "  CritRate+N       adds to the crit roll (weapon or shield)\n" +
+            "  BlockChance+N    adds to the shield block roll, summed across\n" +
+            "                   every equipped slot\n" +
+            "  HPRegen+N        adds to each passive-regen pulse, summed the\n" +
+            "                   same way\n" +
+            "  SkillCooldown-N  shortens Sword Skill cooldowns (weapon only)\n" +
+            "  PostMotion-N     shortens the post-skill vulnerability window\n" +
+            "  ExtraAutoAttack+N  adds N% flat to the SPD follow-up roll\n" +
+            "Broken gear (0 durability) contributes nothing until repaired.\n\n" +
             "TIPS\n" +
             "Audit the sheet after repair runs — a dead weapon or armor\n" +
-            "slot silently halves your output until you notice. Direct\n" +
-            "grants for CritRate/AttackSpeed/HPRegen are visible\n" +
-            "on the sheet's diff line; effect tags show in the tooltip \n" +
-            "— both sources sum.\n\n" +
+            "slot silently halves your output until you notice. A CritRate\n" +
+            "grant shows on the sheet's diff line; effect tags show in the\n" +
+            "tooltip, and the crit ones sum into the same roll.\n\n" +
             "SEE ALSO\n" +
             "[The Six Attributes] · [Damage Formula] · [Anvil — Repair, Enhance, Evolve, Refine] · [Advanced Weapon Effects]")
         {
@@ -2248,7 +2581,7 @@ public static class PlayerGuideContent
             "│ Topic: Life Skills\n" +
             "│ Skills: Sleep · Walking · Running · Eating · Bargaining · Swimming · Mining\n" +
             "│ Cap: Level 99 per skill\n" +
-            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "│ Save: Per-player, with the run\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Seven non-combat tracks that level from ordinary play — sleeping,\n" +
@@ -2264,16 +2597,16 @@ public static class PlayerGuideContent
             "XP curve (piecewise geometric): L5=10, L10=100, L25=1000, L50=5000,\n" +
             "L99=50000.\n\n" +
             "  SKILL       XP SOURCE                       L10/25/50/99\n" +
-            "  SLEEP       +20 ProcessRest / +10 campfire  MaxHP +5/+15/+35/+80 +regen\n" +
+            "  SLEEP       +20 per rest / +10 campfire     MaxHP +5/+15/+35/+80 +regen\n" +
             "  WALKING     +1 per normal step              END  +2/+5/+10/+20\n" +
             "              (suppressed on Water tiles — Swim takes over)\n" +
             "  RUNNING     +2 per sprint step              SPD  +2/+5/+10/+20 +cost\n" +
             "  EATING      +10 per food consumed           Potency +10/25/50/100%\n" +
             "  BARGAINING  +1 per shop transaction         Buy x0.97/0.94/0.90/0.85\n" +
             "              (Sell Junk = 1 XP total)        Sell x1.03/1.06/1.10/1.15\n" +
-            "  SWIMMING    +2 Water step / +3 WaterDeep    L10 Water full-speed\n" +
-            "                                              L25 WaterDeep passable\n" +
-            "                                              L50 WaterDeep full-speed\n" +
+            "  SWIMMING    +2 shallow / +3 deep water      L10 shallow full-speed\n" +
+            "              (Walking XP suppressed)         L25 deep water passable\n" +
+            "              (per water step)                L50 deep water full-speed\n" +
             "  MINING      +4 Iron / +9 Mith / +18 Div     L10 +5% drops + free dur every other strike\n" +
             "              (per vein strike)               L25 +10% drops + 20% bonus ore roll\n" +
             "                                              L50 +15% drops + Mith trace +1\n" +
@@ -2304,7 +2637,7 @@ public static class PlayerGuideContent
             "│ Topic: Bargaining (Life Skill)\n" +
             "│ XP: +1 per shop transaction (buy or sell)\n" +
             "│ Cap: Level 99 (-15% buy / +15% sell)\n" +
-            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "│ Save: Per-player, with the run\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "The Life Skill that moves shop prices in your favour, levelled by every\n" +
@@ -2342,9 +2675,9 @@ public static class PlayerGuideContent
         new("Progression", "Swimming (Life Skill)",
             "┌─ Progression\n" +
             "│ Topic: Swimming (Life Skill)\n" +
-            "│ XP: +2 per Water step / +3 per WaterDeep step\n" +
-            "│ Gates: L1 Water / L25 WaterDeep\n" +
-            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "│ XP: +2 per shallow step / +3 per deep-water step\n" +
+            "│ Gates: L1 shallow water / L25 deep water\n" +
+            "│ Save: Per-player, with the run\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "The Life Skill that turns water from a wall into terrain. Level decides\n" +
@@ -2353,18 +2686,18 @@ public static class PlayerGuideContent
             "Swimming is a Life Skill that turns water tiles from impassable walls\n" +
             "into traversable terrain. Level gates control WHICH water you can\n" +
             "enter; milestone thresholds drop the slow penalty that otherwise gives\n" +
-            "aquatic mobs a free turn on every step. Step onto a Water or WaterDeep\n" +
+            "aquatic mobs a free turn on every step. Step onto a shallow or deep water\n" +
             "tile to bank XP. Walking XP is SUPPRESSED on water steps — no double-\n" +
             "dip with the Walking skill. Below the speed threshold for a water\n" +
             "type, each step costs 2 turn ticks instead of 1 (the mob acts between\n" +
             "your frames).\n\n" +
-            "  LEVEL   WATER (shallow)       WATERDEEP            XP/STEP\n" +
+            "  LEVEL   WATER (shallow)       DEEP WATER           XP/STEP\n" +
             "  L1-9    Passable, slow (2t)   Blocked              +2 / n/a\n" +
             "  L10-24  Full speed            Blocked              +2 / n/a\n" +
             "  L25-49  Full speed            Passable, slow (2t)  +2 / +3\n" +
             "  L50-98  Full speed            Full speed           +2 / +3\n" +
             "  L99     Master swimmer (flavor-only capstone)      +2 / +3\n" +
-            "RequiresSwimmingLevel on Tile: Water = 1, WaterDeep = 25. Below-\n" +
+            "Shallow water needs Swimming L1 and deep water needs L25. Below-\n" +
             "threshold water steps burn 2 turn ticks — a slow tax that lets aquatic\n" +
             "mobs reposition or attack between your frames. Monster\n" +
             "pathing is unchanged, so dryland mobs still treat water as a\n" +
@@ -2388,7 +2721,7 @@ public static class PlayerGuideContent
             "│ Topic: Mining (Life Skill)\n" +
             "│ XP: +4 Iron / +9 Mithril / +18 Divine per strike\n" +
             "│ Cap: Level 99 (+25% drops, dur damage halved)\n" +
-            "│ Save: Per-player, in SaveData.LifeSkills\n" +
+            "│ Save: Per-player, with the run\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "The Life Skill behind the ore loop, levelled every time you swing a\n" +
@@ -2514,31 +2847,23 @@ public static class PlayerGuideContent
             "where you pick one of two passive branches. Picks are permanent per\n" +
             "save (no respec without a New Game). The 15 classic rank titles\n" +
             "(Novice through The Black Swordsman) are retained as cosmetic bands\n" +
-            "draped over the numeric levels:\n" +
-            "  L1-9    Novice / Apprentice\n" +
-            "  L10-24  Journeyman grind\n" +
-            "  L25     FORK 1 (crit vs parry focus)\n" +
-            "  L50     FORK 2 (dodge vs skill-damage focus,\n" +
-            "          weapon-specific for select types — see below)\n" +
-            "  L75     FORK 3 (combo vs stun focus)\n" +
-            "  L100    FORK 4 (capstone — per-weapon unique)\n" +
-            "  L110    The Black Swordsman (cap, +120 ATK)\n\n" +
+            "draped over the numeric levels. The cap is worth the flat ATK the\n" +
+            "[Weapon Proficiency Ranks] page lists, not a bonus of its own.\n\n" +
+            "THE GENERIC FORK BRANCHES\n" +
+            "Offered by every weapon type that does not declare its own L50\n" +
+            "pair. One of each pair, permanently:\n\n" +
+            BuildGenericForkBlock() + "\n\n" +
             "WEAPON-SPECIFIC L50 FORKS\n" +
-            "Three weapon types offer their own fork at the L50 mark\n" +
-            "instead of the generic dodge / skill-damage pick:\n" +
-            "  ONE-HANDED SWORD  Vorpal Edge (+3 CritRate)\n" +
-            "                    OR Saber Step (+1 AttackSpeed)\n" +
-            "  KATANA            Iaijutsu (see wiring below)\n" +
-            "                    OR Drawing Stance (+2 CritRate)\n" +
-            "  BOW               Marksman Eye (see wiring below)\n" +
-            "                    OR Quickdraw (+1 AttackSpeed)\n" +
-            "The other 9 weapon types use the unchanged generic L50 fork.\n" +
-            "Both are direct stat grants (CritRate, AttackSpeed), so they\n" +
-            "show up on the character sheet rather than as flavour riders.\n\n" +
+            "Three weapon types replace the generic L50 pair with their own:\n\n" +
+            BuildWeaponForkBlock() + "\n\n" +
+            "Vorpal Edge and Drawing Stance raise the crit rate on the\n" +
+            "character sheet. Saber Step and Quickdraw are scoped to the\n" +
+            "weapon that earned them — they apply while that weapon type is\n" +
+            "equipped and are not on the sheet.\n\n" +
             "<details:Iaijutsu and Marksman Eye in detail>\n" +
             "IAIJUTSU & MARKSMAN EYE\n" +
-            "What the two signature L25 forks do once you have them:\n" +
-            "  KATANA L25 IAIJUTSU\n" +
+            "What the two signature L50 forks do once you have them:\n" +
+            "  KATANA L50 IAIJUTSU\n" +
             "    +25% damage on the FIRST strike against each enemy per\n" +
             "    floor. Tracked per-enemy, not per-encounter — once you\n" +
             "    hit a mob once on a floor, subsequent hits on that mob\n" +
@@ -2547,12 +2872,12 @@ public static class PlayerGuideContent
             "    x2-x3 damage; Iaijutsu does NOT layer on top of a\n" +
             "    backstab to prevent compounding). Combat log shows:\n" +
             "    \"Iaijutsu strike! +25% damage on first contact.\"\n" +
-            "  BOW L25 MARKSMAN EYE\n" +
-            "    +5 tile range on Bow sword-skills (in addition to the\n" +
-            "    existing +2 CritRate). Affects skills only — basic-attack\n" +
-            "    ranged-fire is a separate system. The range overflow\n" +
-            "    stacks with weapon-line skill range; e.g. a 6-tile skill\n" +
-            "    becomes 11 tiles with Marksman Eye selected.\n" +
+            "  BOW L50 MARKSMAN EYE\n" +
+            "    +5 tiles of range (in addition to the +2 CritRate), on\n" +
+            "    Bow sword-skills AND on basic ranged fire — both read the\n" +
+            "    same overflow. The range stacks with the weapon-line\n" +
+            "    figure; a 6-tile skill becomes 11 tiles, and the reticle\n" +
+            "    opens to the longer reach as well.\n" +
             "</details>\n\n" +
             "TIPS\n" +
             "Don't split early kills across 3 weapons. A single primary\n" +
@@ -2573,48 +2898,82 @@ public static class PlayerGuideContent
             "│ Topic: Day/Night Cycle\n" +
             "│ Floors: All\n" +
             "│ Landmark: Global {{DAY_CLOCK}}-turn clock\n" +
+            "│ Night: {{NIGHT_SHARE}}\n" +
+            "│ Night costs: Sight, +15% aggro, +25% hunger\n" +
             "│ Unlock: Always on\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "A {{DAY_CLOCK}}-turn clock runs whether or not you act. How far you can\n" +
             "see moves with it, and so does the direction every shadow on the floor\n" +
-            "is pointing. Deep night cuts your vision to a torch bubble.\n\n" +
+            "is pointing. Night is not only darker — it is the hardest stretch of\n" +
+            "the cycle, and it lasts {{NIGHT_SHARE}}.\n\n" +
             "The clock ticks every turn and cycles through Dawn, Day, Dusk and\n" +
             "Night. Sun elevation follows a cosine curve, highest at noon and zero\n" +
-            "at midnight; the HUD and Look Mode both name the current phase.\n\n" +
-            "Two things move with it. Vision radius scales with sun level — bright\n" +
-            "day gives the full viewport, deep night shrinks it to an 18-tile torch\n" +
-            "bubble — and the sun’s BEARING swings a half-circle from east at dawn\n" +
-            "through south at noon to west at dusk, dragging every shadow round\n" +
-            "with it. Ambient tint shifts cool moonlit blue at night, warm\n" +
-            "off-white by day. Darkness Blade only activates at Night; the\n" +
-            "Starless Night run modifier pins the cycle at 0 permanently.\n" +
-            "Time advances whether you act or idle.\n\n" +
+            "at midnight; the HUD and Look Mode both name the current phase, and\n" +
+            "the phase they print is the same one the rules below consult.\n\n" +
+            "WHAT MOVES WITH THE SUN\n" +
+            "Vision radius scales with sun level — bright day reaches past the\n" +
+            "edge of the viewport, deep night shrinks it to a torch bubble — and\n" +
+            "the sun's BEARING swings a half-circle from east at dawn through\n" +
+            "south at noon to west at dusk, dragging every shadow round with it.\n" +
+            "The sky runs cool moonlit blue at night, deep amber while the sun is\n" +
+            "near the horizon and neutral off-white at noon — the warmest hour is\n" +
+            "not the brightest one.\n\n" +
+            "WHAT THE NIGHT COSTS\n" +
+            "Four things change the moment the phase turns, and they are one\n" +
+            "switch rather than four sliding curves:\n\n" +
+            "  Sight     collapses to the torch bubble — see [[Vision & FOV]]\n" +
+            "  Aggro     every monster notices you about 15% further off\n" +
+            "  Warnings  the range you hear something you cannot see grows with it\n" +
+            "  Hunger    an extra satiety point every 48 turns, 25% more than by day\n\n" +
+            "The aggro figure is rounded, not truncated, so on most of the\n" +
+            "bestiary it is a real extra tile rather than a fraction of one. Set\n" +
+            "against the sight you lose at the same moment, the practical effect\n" +
+            "is that things reach you before you see them.\n\n" +
+            "WAITING FOR DAWN\n" +
+            "The {{KEY:Wait}} key passes a turn without moving, and a passed turn is\n" +
+            "a real turn: monsters act, timers tick and the sun climbs. Waiting out the\n" +
+            "worst of a night is a legitimate move when you are low, out of\n" +
+            "light or cornered somewhere defensible. It is not free — satiety\n" +
+            "drains on the night's faster clock while you stand there, and\n" +
+            "anything already hunting you keeps coming.\n\n" +
+            "Darkness Blade only activates at Night; the Starless Night run\n" +
+            "modifier pins the cycle at 0, so a run under it pays every cost\n" +
+            "above for its whole length.\n\n" +
             "TIPS\n" +
-            "Save Darkness Blade combat windows for Night. Shadows are longest\n" +
-            "early and late and shortest at noon, so a shape you cannot place at\n" +
-            "dusk may simply be a tree lying across the ground.\n\n" +
+            "Save Darkness Blade combat windows for Night — it is the one thing\n" +
+            "that gets better after dark. Eat before dusk rather than after.\n" +
+            "Shadows are longest early and late and shortest at noon, so a shape\n" +
+            "you cannot place at dusk may simply be a tree lying across the\n" +
+            "ground. If a night catches you without a light, waiting it out beside\n" +
+            "a campfire with {{KEY:Wait}} costs less than walking blind.\n\n" +
             "SEE ALSO\n" +
-            "[Vision & FOV] · [Light & Shadow] · [Unique Skill: Darkness Blade] · [Run Modifiers (12 Optional Challenges)] · [Weather]")
+            "[Vision & FOV] · [Light & Shadow] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move] · [Unique Skill: Darkness Blade] · [Run Modifiers (12 Optional Challenges)] · [Weather]")
         {
-            Tags = new[] { "world", "weather", "floors" }
+            Tags = new[] { "world", "weather", "floors", "night", "difficulty" }
         },
 
         new("World", "Light & Shadow",
             "┌─ World\n" +
             "│ Topic: Light & Shadow\n" +
             "│ Floors: All\n" +
-            "│ Sources: Sky, sun, your torch, glowing tiles\n" +
+            "│ Sources: Sky, sun, a carried torch or lantern, glowing tiles\n" +
+            "│ Slot: Tool (shared with the pickaxe)\n" +
             "│ Setting: Terrain Shading (Options - Display)\n" +
             "└─\n" +
             "\n" +
             "SUMMARY\n" +
-            "Four things light the floor: the sky, the sun, the torch you carry,\n" +
-            "and anything that glows. Only the sun casts shadows, and it moves.\n" +
+            "Four things light the floor: the sky, the sun, a light you carry,\n" +
+            "and anything that glows. You cast none of your own — an empty Tool\n" +
+            "slot means an empty night.\n" +
             "\n" +
-            "THE SKY is a flat wash over everything outdoors, cool blue at night\n" +
-            "and warm off-white by day. It is what you see by wherever nothing\n" +
-            "else reaches.\n" +
+            "THE SKY is a flat wash over everything outdoors and it changes colour\n" +
+            "through the day, not just brightness: cool blue at night, deep amber\n" +
+            "as the sun sits on the horizon, and a neutral off-white at noon. The\n" +
+            "warmest light is NOT the brightest — golden hour comes well before\n" +
+            "full sun, which is also when shadows are longest, so warm ground and\n" +
+            "cool blue shade appear together. It is what you see by wherever\n" +
+            "nothing else reaches.\n" +
             "\n" +
             "THE SUN sits on a bearing that swings east to west across the day,\n" +
             "and anything blocking sight lays a shadow away from it — trees, rock,\n" +
@@ -2638,13 +2997,61 @@ public static class PlayerGuideContent
             "so the inside corner of a room reads deeper than its middle. It has\n" +
             "nothing to do with the sun and works underground and at night.\n" +
             "\n" +
-            "YOUR TORCH is a warm pool that follows you and flickers, and it FADES\n" +
-            "as the sun climbs: at night it is nearly everything you have, and at\n" +
-            "noon it is a faint warmth underfoot rather than a lantern. It is\n" +
-            "shadowcast in its own right, so it will not reach through a wall — but\n" +
-            "it does spill round a corner, softening as it goes rather than stopping\n" +
-            "at a line. It also fills sun shadows back in, so standing in shade\n" +
-            "costs you nothing you could otherwise see.\n" +
+            "SHADE IS SHALLOWER IN THE OPEN. A shadow cast across bright ground\n" +
+            "is lifted a little by the light around it, so the same tree throws a\n" +
+            "paler shadow in a field than it does in a thicket. Deep inside a mass\n" +
+            "of rock or trunks there is nothing nearby to lift it and the shade\n" +
+            "keeps its full depth — which is why a wood reads darker than the sum\n" +
+            "of its trees.\n" +
+            "\n" +
+            "THE MAP ADAPTS TO THE DARK. As the sky falls the renderer opens up,\n" +
+            "so a midnight floor reads at about a quarter of noon's brightness\n" +
+            "rather than a tenth. It is not a setting and there is nothing to\n" +
+            "turn on. A light still looks like a light: anything already brighter\n" +
+            "than the sky is left at its own strength rather than lifted with\n" +
+            "everything else, so a campfire at midnight stands out more, not less.\n" +
+            "\n" +
+            "A CARRIED LIGHT is a warm pool that follows you — and you only have\n" +
+            "one if you are carrying one. You cast no light of your own. A torch\n" +
+            "or a lantern goes in the TOOL slot, which is the same slot a pickaxe\n" +
+            "uses, so underground you are choosing between digging and seeing.\n" +
+            "A new run starts with a Wooden Torch already equipped.\n" +
+            "\n" +
+            "  Wooden Torch      7 tiles    60 fuel    1980 turns   L1\n" +
+            "  Iron Lantern      11 tiles   140 fuel   4620 turns   L5\n" +
+            "  Crystal Lantern   15 tiles   300 fuel   9900 turns   L25\n" +
+            "\n" +
+            "THE LEVEL COLUMN IS A GATE\n" +
+            "Buying a lantern under its level leaves you carrying something that\n" +
+            "will not light: the equip is refused with a line in the log, which\n" +
+            "is easy to miss and reads like a broken item. The automatic swap\n" +
+            "when a light burns out skips a gated spare too, and names the level\n" +
+            "it needed rather than going dark without saying why. Vendors stock\n" +
+            "the Wooden Torch on every floor, the Iron Lantern from Floor 10 and\n" +
+            "the Crystal Lantern from Floor 40, so the shelf usually runs ahead\n" +
+            "of the level requirement rather than behind it.\n" +
+            "\n" +
+            "A lit torch spends one fuel every 33 turns, and only while it is\n" +
+            "equipped — shelving it stops the burn. Night lasts {{NIGHT_SHARE}}, so the\n" +
+            "starter torch covers a whole one with something in hand for the\n" +
+            "dusk either side; unequipping at dawn to swing a pickaxe is what\n" +
+            "stretches it further.\n" +
+            "\n" +
+            "You are warned twice, at a quarter of the fuel and again at a tenth.\n" +
+            "When it finally gutters out, the torch is destroyed and the best\n" +
+            "light left in your pack is lit automatically — so buy spares and the\n" +
+            "swap happens without you opening a menu in the dark. If nothing in\n" +
+            "the pack can be lit, you are told that too, rather than simply going\n" +
+            "blind.\n" +
+            "\n" +
+            "A light at zero fuel has gone out — it stops lighting anything. The\n" +
+            "flame also FADES as the sun climbs: at night it is nearly everything\n" +
+            "you have, and at noon it is a faint warmth underfoot rather than a\n" +
+            "lantern, though a bigger light stays bigger at both ends of that. It\n" +
+            "is shadowcast in its own right, so it will not reach through a wall —\n" +
+            "but it does spill round a corner, softening as it goes rather than\n" +
+            "stopping at a line. It also fills sun shadows back in, so standing in\n" +
+            "shade costs you nothing you could otherwise see.\n" +
             "\n" +
             "GLOWING TILES each carry a colour and a reach:\n" +
             "\n" +
@@ -2658,17 +3065,36 @@ public static class PlayerGuideContent
             "  Lore Stone       purple\n" +
             "  Stairs Up        pale blue\n" +
             "  Archway          pale blue\n" +
+            "  Door             faint warm light, the shortest reach\n" +
             "\n" +
-            "Where several lie close together — a spatter of lava, most often —\n" +
-            "they light as one WIDER fire rather than stacking into a glare, so a\n" +
-            "big flow still falls off toward its edge instead of washing out. Two\n" +
-            "lights overlapping never quite reach full brightness, however many\n" +
-            "there are, which is what keeps that falloff readable.\n" +
+            "Where several lie close together they light as one WIDER fire rather\n" +
+            "than stacking into a glare, so a big flow still falls off toward its\n" +
+            "edge instead of washing out. Only lava does this — a campfire or a\n" +
+            "shrine is a landmark you steer by, and merging two would move the\n" +
+            "light off both. Two lights overlapping never quite reach full\n" +
+            "brightness, however many there are, which is what keeps that falloff\n" +
+            "readable.\n" +
+            "\n" +
+            "THE EDGE OF SIGHT FALLS OFF rather than stopping. Ground you can see\n" +
+            "but that lies far from you is drawn dimmer the further out it sits,\n" +
+            "so the lit region reads as a sphere around you rather than a flat\n" +
+            "field cut off at the edge of the panel. It is a drawing cue and\n" +
+            "nothing more — a distant tile is no harder to reach or to hit for\n" +
+            "being drawn dim, and anything on it is rendered exactly as usual.\n" +
             "\n" +
             "WHERE IT DOES NOT APPLY. There is no sun inside a labyrinth or in the\n" +
             "throne room on Floor 100, so those are lit by torch, glow and contact\n" +
             "shading alone. Ground you have explored but cannot currently see is\n" +
             "drawn from memory and carries no lighting at all.\n" +
+            "\n" +
+            "MEMORY ALSO DIMS WITH AGE. Remembered ground holds full strength for\n" +
+            "a while after you look away and then fades toward a dim floor, so an\n" +
+            "area you cleared long ago sits darker than one you have just left.\n" +
+            "Structure holds more of its brightness than open ground does, which\n" +
+            "is what keeps walls, doors and landmarks legible on a floor you have\n" +
+            "not walked for some time. Nothing about it is a warning — a faded\n" +
+            "corridor is simply one you have not looked at recently, and what is\n" +
+            "standing in it now is anyone's guess either way.\n" +
             "\n" +
             "TIPS\n" +
             "Shadows point away from the sun, so at a glance they tell you which\n" +
@@ -2719,30 +3145,24 @@ public static class PlayerGuideContent
         new("World", "Ambient World Animation",
             "┌─ World\n" +
             "│ Topic: Ambient World Animation\n" +
-            "│ Tiles: Vents · terminals · fans · hearths · torches\n" +
-            "│        · water ripples · door creaks · chest sparkles\n" +
+            "│ Tiles: Gas vents · levers · bounty boards · campfires\n" +
+            "│        · enchanting shrines · fountains · chests · lava\n" +
+            "│        · divine ore veins\n" +
             "│ Density cap: Max 3 concurrent ambient tiles\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "A handful of tiles move on their own, and every one is a signal rather\n" +
-            "than decoration — a sparkle is an unlooted chest, a plume is a vent.\n" +
+            "than decoration — a sparkle is an unlooted chest, a pulse is a vent.\n" +
             "None of it touches monster AI, your vision, or trap rolls.\n\n" +
             "Select world tiles animate subtly to give the map a heartbeat. Each\n" +
             "animation is an environmental cue — vents mean airflow, sparkling\n" +
-            "chests mean unlooted treasure, and torches gutter when the floor has\n" +
-            "an active draft or quake event. Ambient animation runs automatically\n" +
+            "chests mean unlooted treasure, a steady pulse is a campfire you can\n" +
+            "rest at. Ambient animation runs automatically\n" +
             "when tiles enter your FOV; tiles outside the field of view never\n" +
             "animate. Presentation only — never changes mob AI, FOV radius, or\n" +
             "trap-detection rolls.\n\n" +
             "ANIMATED TILE CATALOGUE:\n" +
-            "  Vents          steam plume every few frames\n" +
-            "  Terminals      cursor blink / glyph cycle\n" +
-            "  Fans           rotating blade glyph\n" +
-            "  Hearths        flame flicker (pulses brighter in wind)\n" +
-            "  Torches        flame flicker (same palette as hearths)\n" +
-            "  Water ripples  surface tiles cycle a ~ glyph\n" +
-            "  Door creaks    one-shot when you pass adjacent\n" +
-            "  Chest sparkles  unlooted chests shimmer gold\n" +
+            AnimatedTilesToken + "\n" +
             "FOV GATING:\n" +
             "  Nothing animates outside your vision cone — ambient never\n" +
             "  reveals mob position or hidden tiles.\n" +
@@ -2750,13 +3170,12 @@ public static class PlayerGuideContent
             "  Engine hard-caps the map at 3 concurrent ambient tiles so\n" +
             "  busy floors never flood the eye with motion.\n" +
             "COMBAT SUPPRESSION:\n" +
-            "  Hearth and torch flames auto-disable while combat is active\n" +
-            "  so the flicker does not compete with damage popups.\n\n" +
+            "  Campfire and enchanting-shrine pulses stop while combat is active,\n" +
+            "  so the motion does not compete with damage popups.\n\n" +
             "TIPS\n" +
             "Read ambient motion as a scouting layer: a sparkling chest means\n" +
-            "unlooted, a fluttering torch means the floor has active weather\n" +
-            "or a nearby vent draft, and a steam plume pinpoints the vent\n" +
-            "tile itself in a Darkness biome when the base glyph is hard to\n" +
+            "unlooted, and a pulsing vent pinpoints the vent tile itself in a\n" +
+            "Darkness biome when the base glyph is hard to\n" +
             "read. Disable in Options if animation distracts you.\n\n" +
             "SEE ALSO\n" +
             "[Biomes] · [Vision & FOV] · [Mechanical Tiles] · [Labyrinth System] · [Weather] · [Campfires — Rest & Sleep XP] · [Combat Visual Feedback]")
@@ -2805,12 +3224,14 @@ public static class PlayerGuideContent
             "│ Topic: Labyrinth Dungeons\n" +
             "│ Floors: 1-99 (every climbed floor)\n" +
             "│ Entry: Labyrinth Entrance tile (cyan Pi)\n" +
+            "│ Layouts: Halls, Fissure, Grove, Cavern, Warren\n" +
             "│ Unlock: Walk in freely — the boss is inside, on the stairs\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Every floor is two maps. The open overworld holds the field bosses and\n" +
             "the loot; a separate labyrinth holds the way up and the floor boss that\n" +
-            "guards it. There is exactly one floor boss, and it is in there.\n\n" +
+            "guards it. There is exactly one floor boss, and it is in there. What\n" +
+            "shape the labyrinth takes depends on the era you are climbing through.\n\n" +
             "The two maps are linked by a Labyrinth Entrance archway (cyan Pi glyph),\n" +
             "usually revealed on the minimap after exploration. Nothing blocks the\n" +
             "archway — step onto it and you are inside; overworld state freezes while\n" +
@@ -2819,17 +3240,39 @@ public static class PlayerGuideContent
             "The fight is at the top. Deep in the labyrinth the Stairs Up sit in the\n" +
             "boss chamber with the floor boss standing on them, so the only way up is\n" +
             "through it. Field bosses NEVER spawn inside labyrinths — overworld only,\n" +
-            "and they are optional: they seal nothing. Labyrinth layouts lean\n" +
-            "corridor-and-room; overworld is open.\n\n" +
+            "and they are optional: they seal nothing.\n\n" +
+            "EVERY ERA DIGS DIFFERENTLY\n" +
+            "The floor's era decides the SHAPE the labyrinth is carved in, and\n" +
+            "there are five of them. They are not cosmetic — they change where\n" +
+            "you can be cornered and how much backtracking a wrong turn costs:\n\n" +
+            "  Halls     wide chambers joined by right-angled corridors\n" +
+            "  Fissure   a finer partition, thin rooms, pools of the era's hazard\n" +
+            "  Grove     chambers broken up from the inside by scattered blockers\n" +
+            "  Cavern    irregular caves tunnelled together, no straight lines\n" +
+            "  Warren    a true maze, braided open to a degree the era chooses\n\n" +
+            "Halls and Cavern hold the fewest dead ends; a Warren holds the\n" +
+            "most, and the tighter its braid the more of them are real. Grove\n" +
+            "and Fissure look open and are not — the blockers and pools inside a\n" +
+            "chamber break it into pockets you cannot cut across.\n\n" +
+            "The era also decides what the place is MADE of. A hazard is\n" +
+            "scattered through it and a walkable accent is worn along the walls,\n" +
+            "both drawn from the floor's own biome, so a volcanic labyrinth is\n" +
+            "lit by lava you have to walk around while an icy one is the same\n" +
+            "walk with a slip risk on it. There is no sky underground either\n" +
+            "way: everything you see in there is torch, glow or contact\n" +
+            "shading, so go in with a light — see [[Light & Shadow]].\n\n" +
             "TIPS\n" +
             "Clear the overworld first — field-boss drops (and Secret Shrines)\n" +
             "only exist outside, and once the boss falls there is little reason to\n" +
             "come back. Go in fully rested, at 100% durability, with escape\n" +
-            "consumables in quick slots — the boss is waiting at the stairs.\n\n" +
+            "consumables in quick slots — the boss is waiting at the stairs.\n" +
+            "Read the shape on the way in: a Warren rewards keeping one hand on\n" +
+            "a wall, a Cavern rewards heading for the widest opening, and a\n" +
+            "Grove punishes assuming a chamber is a shortcut.\n\n" +
             "SEE ALSO\n" +
-            "[Floor Scaling Formulas] · [Ascending a Floor] · [Mechanical Tiles] · [Ambient World Animation]")
+            "[Floor Scaling Formulas] · [Ascending a Floor] · [Biomes] · [Mechanical Tiles] · [Ambient World Animation]")
         {
-            Tags = new[] { "world", "floors", "bosses" }
+            Tags = new[] { "world", "floors", "bosses", "labyrinth" }
         },
 
         new("World", "Safe Rooms & Mechanics",
@@ -2849,8 +3292,9 @@ public static class PlayerGuideContent
             "trigger — campfires offer a cooking menu; Anvils open the smithing/\n" +
             "repair/evolve screen. Anvil Repair/Enhance/Evolve burn Col + mats.\n\n" +
             "  CAMPFIRE (&/*, orange)    Purge Poison/Bleed/Slow, heal\n" +
-            "                             15+5*floor HP, reset rest + fatigue,\n" +
-            "                             cooking interaction\n" +
+            "                             15+5*floor HP, clear fatigue, open\n" +
+            "                             the cook menu — no satiety, and the\n" +
+            "                             tile burns to ash\n" +
             "  FOUNTAIN (O, cyan)         Heal 30+10*floor HP, +20 Satiety,\n" +
             "                             clear fatigue (tile consumes)\n" +
             "  SHRINE (cross, violet)     +3+floor ATK & DEF for 30 turns\n" +
@@ -2873,42 +3317,57 @@ public static class PlayerGuideContent
             "│ Glyph: {{GLYPH:Campfire}}, orange\n" +
             "│ Once used: {{GLYPH:Ash}} ash\n" +
             "│ Floors: All (scattered overworld)\n" +
-            "│ Unlock: Walk-on, cooking interaction\n" +
+            "│ Step on it: One-shot; the tile burns out\n" +
+            "│ Camp beside it: Repeatable; the fire survives\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "A campfire heals you, strips Poison, Bleed and Slow, resets both\n" +
-            "survival clocks and banks Sleep-skill XP. Each tile works exactly\n" +
-            "once, so they are a limited resource on the floor rather than a\n" +
-            "place to idle.\n\n" +
-            "Step onto one and everything happens at once: the heal, the status\n" +
-            "purge, both survival clocks reset, +10 Sleep XP banked, and the\n" +
-            "cooking menu opens. Then the fire is spent — the tile turns to ash\n" +
-            "and gives nothing on a second visit. The ProcessRest action\n" +
-            "(cook/sleep from the menu) banks another +20 Sleep XP and is not\n" +
-            "tied to a tile.\n\n" +
+            "A campfire is two things, and they are mutually exclusive. Step ON\n" +
+            "it for a large one-shot heal, a status purge and the cooking menu,\n" +
+            "and the tile burns out behind you. Stand NEXT to it and rest, and\n" +
+            "the fire doubles your recovery rate for as long as it lasts.\n\n" +
+            "STEPPING ON IT SPENDS IT\n" +
+            "Everything happens at once: 15 HP plus 5 per floor, Poison, Bleed\n" +
+            "and Slow all stripped, the fatigue counter zeroed, +10 Sleep XP\n" +
+            "banked and the cooking menu opened. Then the fire is gone — the\n" +
+            "tile turns to ash and gives nothing on a second visit. It does not\n" +
+            "feed you; satiety is untouched by a campfire, and the +20 belongs\n" +
+            "to fountains.\n\n" +
+            "CAMPING BESIDE IT DOES NOT\n" +
+            "Rest on any tile adjacent to a lit fire and it heals 6 HP a turn\n" +
+            "instead of the usual 3 HP a turn. A rest is 3 turns either way, so\n" +
+            "that is 18 HP beside a fire against 9 HP anywhere else, and the\n" +
+            "fire is still burning when you stand up. Nothing limits how often\n" +
+            "you do it. Diagonals count; the fire has to be lit, so ash warms\n" +
+            "nothing.\n\n" +
+            "That is the whole decision the tile poses: spend it now for a heal\n" +
+            "you cannot repeat, or keep it and camp beside it as often as you\n" +
+            "like. Camping wins on total healing over a floor; stepping on wins\n" +
+            "when the heal has to land this turn, or when you are carrying a\n" +
+            "status you need gone.\n\n" +
+            "  Step on it      15 + 5 per floor   once, then ash\n" +
+            "  Camp beside     6 HP a turn        every rest, and the fire lives\n" +
+            "  Rest anywhere   3 HP a turn        every rest, no fire needed\n\n" +
+            "WHAT A FIRE BANKS\n" +
+            "Stepping on one banks +10 Sleep XP. A rest banks +20, and the same\n" +
+            "+20 whether or not there is a fire beside you — camping heals\n" +
+            "faster, it does not level Sleep faster. Sleep compounds toward the\n" +
+            "L10/25/50/99 max-HP milestones, so both are worth having.\n\n" +
             "The wilderness scatter allows " + CampfireQuotaToken + " per floor depending on\n" +
             "the biome, and clearings and prefab structures add a few more — so a\n" +
             "floor holds a countable number, and where you spend them is the\n" +
-            "decision. Walking a long way back to one you have already used is\n" +
-            "wasted turns; passing one at full health to keep it for the walk\n" +
-            "out is often right. A spent fire leaves ash you can walk over.\n\n" +
-            "Stacked with the Safe Rooms effect package:\n" +
-            "  +10 Sleep XP          on step (campfire tile)\n" +
-            "  +20 Sleep XP          on ProcessRest action\n" +
-            "  Purge  Poison / Bleed / Slow\n" +
-            "  Heal   15 + 5*floor HP\n" +
-            "  Reset  rest + fatigue timers\n\n" +
+            "decision. A spent fire leaves ash you can walk over.\n\n" +
             "TIPS\n" +
-            "The Sleep XP compounds toward the L10/25/50/99 MaxHP milestones, so\n" +
-            "a fire is worth stepping on even at full health — but it is worth\n" +
-            "MORE saved for a moment you are hurt, poisoned and far from the\n" +
-            "stairs, because one step buys all three. The Eating skill levels\n" +
-            "from the cook menu, so roast something while you are there: the\n" +
-            "tile is about to be gone either way.\n\n" +
+            "Fight NEXT to a fire rather than on it. Every rest between pulls\n" +
+            "runs at double rate and the fire is still there for the walk out,\n" +
+            "which is worth more over a floor than the single big heal. Save\n" +
+            "the step-on for the moment you are hurt, poisoned AND far from the\n" +
+            "stairs, because one step buys all three at once. The Eating skill\n" +
+            "levels from the cook menu, so roast something while you are there —\n" +
+            "the tile is about to be gone either way.\n\n" +
             "SEE ALSO\n" +
             "[Safe Rooms & Mechanics] · [Life Skills] · [Food & Cooking] · [Hunger, Satiety & Fatigue]")
         {
-            Tags = new[] { "sleep", "world", "life-skills" }
+            Tags = new[] { "sleep", "world", "life-skills", "healing" }
         },
 
         new("World", "Lore, Journals & Enchant Shrines",
@@ -2923,20 +3382,20 @@ public static class PlayerGuideContent
             "flavour; the third stamps a permanent +2 onto a piece of gear you are\n" +
             "already wearing.\n\n" +
             "A trio of one-shot tiles that reward exploration. Lore Stones and\n" +
-            "Journals grant XP + canon flavor; Enchant Shrines stamp permanent\n" +
-            "+2 bonuses onto equipped gear. Step on the glyph to consume it. Lore\n" +
+            "Journals grant XP + canon flavor; Enchant Shrines grant a permanent\n" +
+            "+2 to ATK, DEF or SPD. Step on the glyph to consume it. Lore\n" +
             "text shows in a triple-dot reveal; the entry is logged to your Lore\n" +
             "set for achievement use.\n\n" +
             "LORE STONE (diamond)       5x floor XP + Lore set entry,\n" +
             "                            one-shot, triple-dot reveal message\n" +
             "JOURNAL (=)                Weathered diary page (in-world tip),\n" +
             "                            3x floor XP, one-shot\n" +
-            "ENCHANT SHRINE (gold cross) Rolls one equipped piece, stamps +2\n" +
-            "                            to random stat (ATK/DEF/SPD);\n" +
-            "                            bonus persists through unequip\n\n" +
+            "ENCHANT SHRINE (gold cross) +2 to a random stat (ATK/DEF/SPD),\n" +
+            "                            kept for the rest of the run;\n" +
+            "                            needs one piece of gear worn\n\n" +
             "TIPS\n" +
-            "Equip your best piece before stepping on an Enchant Shrine — the\n" +
-            "+2 lives on the item and carries between runs. Hunt every Lore\n" +
+            "Take every Enchant Shrine you find — the +2 goes to you, not the\n" +
+            "item, so upgrading your gear never loses it. Hunt every Lore\n" +
             "Stone if you want the Loremaster achievement.\n\n" +
             "SEE ALSO\n" +
             "[Safe Rooms & Mechanics] · [Achievements] · [Secret Shrines (T1 Chain Weapons)] · [Experience & Leveling] · [Prefab Rooms — Shrine Vaults] · [Narrative Vignettes]")
@@ -3085,7 +3544,7 @@ public static class PlayerGuideContent
             "Water tiles are passable terrain gated by the Swimming Life Skill —\n" +
             "a strategic choke point for most mobs, but an open highway for the\n" +
             "five aquatic mobs that can swim. F4 Rovia is where\n" +
-            "the design shows up most clearly. Walk onto a Water or WaterDeep\n" +
+            "the design shows up most clearly. Walk onto a shallow or deep water\n" +
             "tile to cross. Your Swimming level sets BOTH the pass gate (L1\n" +
             "shallow, L25 deep) and the speed gate (L10 shallow full-speed, L50\n" +
             "deep full-speed). Monster pathing checks whether each mob swims against the\n" +
@@ -3096,7 +3555,7 @@ public static class PlayerGuideContent
             "  Giant Clam         Sessile ambusher\n" +
             "  Water Wight        Undead drifter\n" +
             "  Scavenger Toad     Amphibian brawler\n\n" +
-            "These mobs traverse BOTH Water and WaterDeep — they'll pursue\n" +
+            "These mobs traverse BOTH shallow and deep water — they'll pursue\n" +
             "you into a river and close the gap you thought was a moat.\n" +
             "Every monster respects it, whichever routine is driving it.\n\n" +
             "MOBS THAT DO NOT (everything else, including F2 Plumed Mist Lizard\n" +
@@ -3238,7 +3697,7 @@ public static class PlayerGuideContent
         new("World", "Ascending a Floor",
             "┌─ World\n" +
             "│ Topic: Ascending a Floor\n" +
-            "│ Floors: All, on StairsUp step\n" +
+            "│ Floors: All, on the stairs up\n" +
             "│ Landmark: Stairs Up, inside the labyrinth\n" +
             "│ Unlock: Kill the floor boss first\n" +
             "└─\n\n" +
@@ -3367,22 +3826,22 @@ public static class PlayerGuideContent
             "you which kind it is before you reach it. Some buff you for free, some\n" +
             "spend a gear enhancement, and some hand over a chain weapon and vanish.\n\n" +
             "Shrine vault prefabs center on an altar tile — often Shrine (temporary\n" +
-            "buff), EnchantShrine (one-shot enhance), or the floor-specific\n" +
-            "SecretShrine (chain weapon). Biome-themed decoration signals what\n" +
+            "buff), an enchanting shrine (one-shot enhance), or the floor-specific\n" +
+            "secret shrine (chain weapon). Biome-themed decoration signals what\n" +
             "kind: frost spikes in Ice, lava-forge anvils in Volcanic, bone rings\n" +
             "in the Void. Walk onto the altar — buff shrines trigger instantly;\n" +
-            "enchant shrines prompt before consuming a gear slot; secret shrines\n" +
-            "grant the chain weapon and vanish. EnchantShrines burn one\n" +
-            "enhancement on one gear piece. Altar sacrifices consume an inventory\n" +
+            "enchant shrines grant +2 ATK, DEF or SPD; secret shrines\n" +
+            "grant the chain weapon and vanish. An enchant shrine needs one\n" +
+            "piece of gear worn. Altar sacrifices consume an inventory\n" +
             "slot permanently. Buff shrines are free.\n\n" +
             "  Shrine          Temporary biome-themed buff, ~50 turns\n" +
-            "  EnchantShrine   One-shot +1 enhance on chosen gear\n" +
-            "  SecretShrine    Tier-1 chain weapon (floor-locked list)\n" +
+            "  Enchanting shrine   One-shot +2 ATK, DEF or SPD\n" +
+            "  Secret shrine       Tier-1 chain weapon (floor-locked list)\n" +
             "  Altar (ritual)  Rare sacrifice variant — consumes an\n" +
             "                  item, grants a stat-line bonus\n\n" +
             "TIPS\n" +
-            "Save enchant shrines for a mid-tier piece you'll keep for 10+\n" +
-            "floors — the +1 doesn't refund when you upgrade. Secret\n" +
+            "Take enchant shrines whenever you find them: the +2 goes to you,\n" +
+            "not the item, so upgrading gear never loses it. Secret\n" +
             "shrines are MAX_PER_GAME; don't skip one because you're in a\n" +
             "hurry. Altar sacrifices favor low-rarity items — don't feed a\n" +
             "Legendary.\n\n" +
@@ -3431,7 +3890,7 @@ public static class PlayerGuideContent
             "┌─ World\n" +
             "│ Topic: Prefab Rooms — Merchant Stalls\n" +
             "│ Occupant: Vendor NPC + generated stock\n" +
-            "│ Signals: Counter layout, BountyBoard, campfire\n" +
+            "│ Signals: Counter layout, bounty board, campfire\n" +
             "│ Stock: Scales with floor; layout scales with biome\n" +
             "└─\n\n" +
             "SUMMARY\n" +
@@ -3439,12 +3898,12 @@ public static class PlayerGuideContent
             "with a bounty board and a campfire alongside. Investment carries\n" +
             "across visits even though the stall itself is a one-off.\n\n" +
             "Wilderness merchant prefabs house a Vendor NPC with generated stock.\n" +
-            "Look for counter-layouts, BountyBoards, and campfires — visual cues\n" +
+            "Look for counter-layouts, bounty boards, and campfires — visual cues\n" +
             "that a merchant is near. Stock depth follows floor; stall layout\n" +
             "follows biome. Prices match standard shop rules; investing stacks\n" +
             "across visits, even if the stall is a one-off wilderness prefab.\n" +
             "Vendor stock rolls from the floor-tier table (a F20 stall shows F20-\n" +
-            "tier goods); a BountyBoard inside the stall grants the same quest\n" +
+            "tier goods); a bounty board inside the stall grants the same quest\n" +
             "options as a town board; campfires inside the stall are rest-legal.\n" +
             "Investing locks Col for a stock boost at the NEXT visit — not this\n" +
             "one.\n\n" +
@@ -3544,14 +4003,14 @@ public static class PlayerGuideContent
             "guarantees at least a shrine, a chest and a piece of lore, with more\n" +
             "guaranteed on top depending on the biome.\n\n" +
             "Every floor guarantees at least one shrine, one chest, and one piece\n" +
-            "of lore (LoreStone or Journal). Biome-specific quotas may also\n" +
+            "of lore (a lore stone or a journal page). Biome-specific quotas may also\n" +
             "guarantee anvils (Urban), gas vents (Volcanic/Swamp), or pillars\n" +
             "(Ruins). Maximums cap noise-y scatter. Walk the floor; you'll meet\n" +
             "quotas without trying. Missing a guarantee after exploration >= 80%\n" +
             "is a bug — report it.\n\n" +
             "  Shrine          min 1 per floor, max 3\n" +
             "  Chest           min 1 per floor, max 6 (scales w/ floor)\n" +
-            "  LoreStone       min 1 of {LoreStone, Journal} per floor\n" +
+            "  Lore            min 1 lore stone or journal page per floor\n" +
             "  Anvil           guaranteed on Urban / Ruins floors\n" +
             "  Vent            guaranteed on Volcanic / Swamp floors\n" +
             "  Trap cluster    quota scales with floor tier\n\n" +
@@ -3607,7 +4066,7 @@ public static class PlayerGuideContent
             "│ Topic: Narrative Vignettes\n" +
             "│ Size: 3×3 to 5×5 prefab clusters\n" +
             "│ Placement: Wilderness, off main paths\n" +
-            "│ Reward: LoreStone or Journal (no combat)\n" +
+            "│ Reward: Lore stone or journal page (no combat)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Tiny hand-built scenes off the main paths — a toppled cart, a cold\n" +
@@ -3617,14 +4076,14 @@ public static class PlayerGuideContent
             "stories: a toppled cart with a spilled journal, a hermit's shack\n" +
             "with a cold campfire, a grave circle ringed by pillars. Ambient\n" +
             "worldbuilding — no mandatory interaction. Vignettes appear as\n" +
-            "unusual clusters off main paths; loot is usually a LoreStone or\n" +
+            "unusual clusters off main paths; loot is usually a lore stone or\n" +
             "Journal, not combat rewards. No traps, no aggro, no turn penalties\n" +
             "beyond the walk.\n\n" +
             "  Toppled cart      Spilled Journal + 1-2 low-tier items\n" +
             "  Hermit's shack    Cold campfire (re-lightable), 1 Journal\n" +
-            "  Grave circle      Ring of Pillars, 1 LoreStone center\n" +
+            "  Grave circle      Ring of pillars, 1 lore stone at the centre\n" +
             "  Traveler rest     Bedroll + ash pile + 1 note\n" +
-            "  Wreckage          Broken gear + 1 LoreStone\n" +
+            "  Wreckage          Broken gear + 1 lore stone\n" +
             "Vignettes do NOT count toward Feature Quotas — they're a bonus layer\n" +
             "on top of the guaranteed lore count.\n\n" +
             "TIPS\n" +
@@ -3959,16 +4418,16 @@ public static class PlayerGuideContent
             "Full name table for every chain weapon, T1 through T4. Each class\n" +
             "has a unique four-name progression ending in a Divine capstone. Use\n" +
             "this as a reference sheet when planning catalyst spend.\n\n" +
-            "  Weapon    T1               T2               T3               T4 (Divine)\n" +
-            "  1H Sword  Final Espada     Asmodeus         Final Avalanche  Tyrfing\n" +
-            "  Rapier    Prima Sabre      Pentagramme      Charadrios       Hexagramme\n" +
-            "  Scimitar  Moonstruck Saber Diablo Esperanza Iblis            Satanachia\n" +
-            "  Dagger    Heated Razor     Valkyrie         Misericorde      Iron Maiden\n" +
-            "  Mace      Lunatic Press    Nemesis          Yggdrasil        Mjolnir\n" +
-            "  Katana    Matamon          Shishi-Otoshi    Shichishito      Masamune\n" +
-            "  2H Sword  Matter Dissolver Titan's Blade    Ifrit            Ascalon\n" +
-            "  Axe       Bardiche         Archaic Murder   Nidhogg's Fang   Ouroboros\n" +
-            "  Spear     Heart Piercer    Trishula         Vijaya           Caladbolg\n\n" +
+            "  Weapon    T1                T2                T3               T4 (Divine)\n" +
+            "  1H Sword  Final Espada      Asmodeus          Final Avalanche  Tyrfing\n" +
+            "  Rapier    Prima Sabre       Pentagramme       Charadrios       Hexagramme\n" +
+            "  Scimitar  Moonstruck Saber  Diablo Esperanza  Iblis            Satanachia\n" +
+            "  Dagger    Heated Razor      Valkyrie          Misericorde      Iron Maiden\n" +
+            "  Mace      Lunatic Press     Nemesis           Yggdrasil        Mjolnir\n" +
+            "  Katana    Matamon           Shishi-Otoshi     Shichishito      Masamune\n" +
+            "  2H Sword  Matter Dissolver  Titan's Blade     Ifrit            Ascalon\n" +
+            "  Axe       Bardiche          Archaic Murder    Nidhogg's Fang   Ouroboros\n" +
+            "  Spear     Heart Piercer     Trishula          Vijaya           Caladbolg\n\n" +
             "TIPS\n" +
             "Names repeat from the Named Legendary list where a class\n" +
             "converges (Mjolnir, Masamune). Either source grants the same\n" +
@@ -4033,7 +4492,31 @@ public static class PlayerGuideContent
             "Refinement Ingots into weapons and shields. Interact with an Anvil\n" +
             "to open the four services; Enhance, Evolve, and Refine all confirm\n" +
             "via preview before committing.\n\n" +
-            "REPAIR ALL — Restores all equipped gear to cap:\n" +
+            "WHAT ACTUALLY WEARS OUT. Only four slots ever lose durability, and\n" +
+            "each loses it for its own reason — the rest of your kit never\n" +
+            "degrades at all, however long you wear it.\n" +
+            "\n" +
+            "  Weapon    every attack, and every sword skill\n" +
+            "  Off-hand  every shield block\n" +
+            "  Chest     every hit that lands on you\n" +
+            "  Tool      every mining strike, and a lit torch as it burns\n" +
+            "\n" +
+            "Divine gear is the exception: it never wears, ever.\n" +
+            "\n" +
+            "You get three warnings, and the first one is easy to miss. Below 10\n" +
+            "durability a tag appears on the HUD's top row naming the slot and\n" +
+            "what is left — [!WPN:7] is a weapon with seven swings of life in it.\n" +
+            "At exactly 5 the combat log says so in words. At 0 the item BREAKS:\n" +
+            "it stays equipped and stops contributing anything, so a broken\n" +
+            "weapon gives none of its attack, a broken chestpiece none of its\n" +
+            "defence, and a broken torch no light. Nothing is destroyed — repair\n" +
+            "restores it — but you will be fighting with the bare version of\n" +
+            "yourself until you do.\n" +
+            "\n" +
+            "REPAIR ALL — Restores every equipped piece to its cap. An item that\n" +
+            "has a capacity of its own is restored to exactly that, so a Wooden\n" +
+            "Torch comes back with its 60 fuel and no more however deep you are.\n" +
+            "Everything else uses a floor-scaled cap:\n" +
             "  50 + 10*floor + 5*enhancementLevel durability.\n" +
             "ENHANCE (+0 to +10) — Each level consumes 1 Enhancement\n" +
             "Ore (7 types) plus the Col cost, and the ore picked biases\n" +
@@ -4047,7 +4530,8 @@ public static class PlayerGuideContent
             "to DOWNGRADE by 1 (SAO canon). IM LAB weapons cannot be\n" +
             "enhanced — the menu shows [SEALED].\n" +
             "EVOLVE — Swaps the equipped chain weapon, keeps the old in\n" +
-            "backpack, and preserves enhancement level AND ore history.\n" +
+            "backpack (it needs a free slot), and preserves enhancement level\n" +
+            "AND ore history.\n" +
             "REFINE — Socket an Ingot into one of 3 slots on a weapon or shield.\n" +
             "Override-only: socketing into an occupied slot destroys the previous\n" +
             "ingot. Divines cannot be refined.\n" +
@@ -4324,7 +4808,7 @@ public static class PlayerGuideContent
             "as ELEVATED-chance rare drops via the floor-banded registered-loot\n" +
             "pool — not guaranteed, but the pool weighting favors them on the\n" +
             "listed floor bands. Farm mobs within the band; drops echo through\n" +
-            "the standard LootGenerator.FloorBandedRegisteredLoot system, so you\n" +
+            "the standard floor-banded loot pool, so you\n" +
             "may see them from chests, kills, or boss loot rolls. Expect multiple\n" +
             "farm runs per piece.\n\n" +
             "  F30-40 band  Traitorblade: Argute Brand (1H Sword)  @ F35\n" +
@@ -4539,7 +5023,7 @@ public static class PlayerGuideContent
             "┌─ Items\n" +
             "│ Topic: Mining — Tool Slot & Ore Veins\n" +
             "│ Slot: Tool (new — equip a Pickaxe)\n" +
-            "│ Tiles: OreVeinIron · OreVeinMithril · OreVeinDivine\n" +
+            "│ Tiles: Iron · mithril · divine ore veins\n" +
             "│ Action: Bump a vein with a Pickaxe equipped\n" +
             "└─\n\n" +
             "SUMMARY\n" +
@@ -4556,9 +5040,9 @@ public static class PlayerGuideContent
             "   tiers gate by floor).\n" +
             "2. Equip via Inventory → Tool slot.\n" +
             "3. Explore until you spot an ore glyph on the map:\n" +
-            "      ◊  OreVeinIron      gray (RGB ~170,170,180)\n" +
-            "      ◊  OreVeinMithril   pale blue (RGB ~190,210,255)\n" +
-            "      ◈  OreVeinDivine    pulsing gold (RGB ~255,200,80)\n" +
+            "      ◊  Iron vein        gray (RGB ~170,170,180)\n" +
+            "      ◊  Mithril vein     pale blue (RGB ~190,210,255)\n" +
+            "      ◈  Divine vein      pulsing gold (RGB ~255,200,80)\n" +
             "4. Move into the vein tile. Each bump = 1 strike, 1 turn, 1\n" +
             "   durability tick on the pickaxe.\n" +
             "5. Keep striking until the vein depletes — it switches to a '·'\n" +
@@ -5000,7 +5484,7 @@ public static class PlayerGuideContent
             "  Schwarzs Blitz    2H Axe, Stun\n" +
             "  Muramasa          Katana, Bleed\n" +
             "  Wave Schneider    Spear, FrostDamage\n" +
-            "  Silver Wing       Scimitar, AttackSpeed\n" +
+            "  Silver Wing       Scimitar, PostMotion\n" +
             "  Rue Feuille       Dagger, CritRate\n\n" +
             "TIPS\n" +
             "Muramasa (Katana, Bleed) stacks cleanly with Katana Mastery's\n" +
@@ -5102,7 +5586,8 @@ public static class PlayerGuideContent
             "Ascend past F50, then clear each subsequent floor boss. The\n" +
             "shop header shows \"Tier N/50 unlocked\" and the first-visit\n" +
             "items carry a [NEW] badge until inspected.\n\n" +
-            "Tier count persists via SaveData.HighestFloorBossCleared. The\n" +
+            "The tier count is stored with the run, keyed to the highest\n" +
+            "floor boss you have cleared. The\n" +
             "12 Infinity Moment shop weapons slot into canon F76-F96 tier\n" +
             "bands (Epic at F76-85, Legendary at F86-99). Higher tiers also\n" +
             "inject future expansion content into the same pipeline. Vendor\n" +
@@ -5135,7 +5620,7 @@ public static class PlayerGuideContent
             "they roll here through the floor-banded loot pool at canon-\n" +
             "appropriate bands.\n\n" +
             "Farm mobs and chests within each weapon's listed floor band. Drops\n" +
-            "echo through LootGenerator.FloorBandedRegisteredLoot — you may see\n" +
+            "echo through the floor-banded loot pool — you may see\n" +
             "them from any kill, chest, or pool roll on the band, where they\n" +
             "compete for pool slots with IF/HF/IM/FD entries.\n\n" +
             "LEGENDARY (5): Sword of Diva (1H), Espada of Sword Dance\n" +
@@ -5561,7 +6046,7 @@ public static class PlayerGuideContent
             "  KILL     Defeat N mobs (optionally gated on weapon type)\n" +
             "  COLLECT  Gather N named items from mobs\n" +
             "  EXPLORE  Discover 40-60% of the floor\n" +
-            "  DELIVER  Bring a package to any NPC\n\n" +
+            "  DELIVER  Bring a package to another NPC\n\n" +
             "Reward formulas (F = floor, N = count):\n" +
             "  Kill:    100 + F*50 + N*20 Col / 50 + F*30 + N*10 XP\n" +
             "  Collect:  80 + F*40 + N*30 Col / 40 + F*25 + N*15 XP\n" +
@@ -5595,8 +6080,8 @@ public static class PlayerGuideContent
             "2. Play; Kill/Collect/Explore auto-track.\n" +
             "3. When [QUEST] complete! fires, bump ANY NPC to resolve. All\n" +
             "   completed quests pay out in a single pop.\n\n" +
-            "Deliver quests resolve the instant you talk to any NPC after\n" +
-            "picking up the package. Weapon-gated kill quests only count\n" +
+            "Deliver quests resolve the instant you talk to an NPC other than\n" +
+            "the one who gave them. Weapon-gated kill quests only count\n" +
             "while the required weapon type is equipped. Canonical Divine-\n" +
             "quest givers never layer random quests on top of their own.\n" +
             "Aborting just lets the quest expire on floor change — no penalty.\n\n" +
@@ -5620,23 +6105,19 @@ public static class PlayerGuideContent
             "A small widget under the minimap showing one pinned quest and its live\n" +
             "progress, so checking on it costs no keystrokes. Your first quest pins\n" +
             "itself; after that you choose which one sits there.\n\n" +
-            "A small HUD widget parked top-right (directly below the minimap)\n" +
-            "that shows your currently pinned quest: title, short objective,\n" +
-            "and live progress counter. On completion it flips to a green\n" +
-            "accent and prints \"COMPLETE → return to NPC\".\n\n" +
+            "It sits in the MAP card under the minimap's legend and shows your\n" +
+            "pinned quest in two lines: the title, then its live progress. On\n" +
+            "completion both turn green and the second line reads \"COMPLETE —\n" +
+            "return to\" the quest giver.\n\n" +
             "The first quest you accept is auto-pinned. Open the Quest Log\n" +
             "({{KEY:OpenQuestLog}}) and press P on any other quest to pin or unpin\n" +
             "it manually —\n" +
             "only one quest is pinned at a time, so pinning a new one\n" +
-            "replaces the previous. The widget reserves ~4 rows of the right\n" +
-            "margin and hides itself when no quest is pinned. P only binds\n" +
-            "inside the Quest Log dialog, so the widget never steals input.\n\n" +
-            "Widget layout (top-right, below minimap):\n" +
-            "  line 1 — quest title (truncated to fit)\n" +
-            "  line 2 — objective text\n" +
-            "  line 3 — progress counter or COMPLETE banner\n" +
-            "On completion the entire frame takes a green accent so peripheral\n" +
-            "vision catches the state change without having to read the text.\n\n" +
+            "replaces the previous. The widget takes its two rows only while a\n" +
+            "quest is pinned; with none, the minimap grows into them. P only\n" +
+            "binds inside the Quest Log dialog, so the widget never steals input.\n\n" +
+            "  line 1   quest title, truncated to fit\n" +
+            "  line 2   progress (3/5 Kobolds · F2) or the COMPLETE line\n\n" +
             "TIPS\n" +
             "Pin the quest whose progress you actually want to track at a\n" +
             "glance — usually a Kill or Collect quest on the current floor.\n" +
@@ -5820,6 +6301,13 @@ public static class PlayerGuideContent
             "buttons under the list: Buy, Sell, Sell Junk, Repair, Invest and\n" +
             "Leave. The panel under the list shows the price and, for gear, how it\n" +
             "compares with what you have equipped.\n\n" +
+            "Selling starts at half an item's value and rises 5% per floor, so\n" +
+            "the same loot is worth more the deeper you sell it. A vendor always\n" +
+            "keeps a margin, though: it will not pay above 90% of what it would\n" +
+            "charge you for the same item, so the floor bonus stops mattering\n" +
+            "once you reach that ceiling. Karma and Bargaining move both sides\n" +
+            "together — a discount on what you buy is also a discount on what\n" +
+            "anyone will pay you. Selling a stack pays for every unit in it.\n\n" +
             "Bump the green 'V'. Shop name scales:\n" +
             "  F<=5   \"General Store\"\n" +
             "  F<=10  \"Adventurer's Supply\"\n" +
@@ -5887,7 +6375,7 @@ public static class PlayerGuideContent
             "1,000 / 5,000 / 20,000 / Cancel. The deposit is clamped to\n" +
             "your Col on hand and to the 20,000-per-vendor cap. Header\n" +
             "badge \"Invested +N\" appears once the vendor has earned any\n" +
-            "bonus tiers. Persists in SaveData.VendorInvestments.\n\n" +
+            "bonus tiers. Investments are stored with the run.\n\n" +
             "  CUMULATIVE COL   BONUS TIERS   RESULT\n" +
             "      1,000 Col    +1 tier       Next unlocked tier added\n" +
             "      5,000 Col    +2 tiers      Two tiers added\n" +
@@ -6108,47 +6596,45 @@ public static class PlayerGuideContent
         new("Getting Started", "Categorized Combat Log",
             "┌─ Getting Started\n" +
             "│ Topic: Categorized Combat Log\n" +
-            "│ Tabs: All · Combat · System · Item · Dialog\n" +
-            "│ Cycle: Tab key (when log focused)\n" +
-            "│ History: 500-entry ring buffer (preserved across turns)\n" +
+            "│ Sidebar: the LOG card, newest line on the bottom row\n" +
+            "│ Message log: {{KEY:OpenMessageLog}} on the map, the last 256 messages\n" +
+            "│ Filter: {{KEY:MessageLogFilter}} · Reset: {{KEY:MessageLogResetFilter}} · Close: {{KEY:MessageLogClose}}\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "The log splits into five filtered tabs so you can read one slice of\n" +
-            "what just happened instead of all of it. Filtering is presentation\n" +
-            "only — nothing is discarded, and a 500-entry history survives floor\n" +
-            "changes.\n\n" +
-            "The combat log splits its feed into five filtered tabs so you\n" +
-            "can read just the slice you care about. Color per category keeps\n" +
-            "the All view scannable, and a 500-entry ring buffer preserves\n" +
-            "recent history across turns, floor changes, and dialog opens.\n" +
-            "The log never swallows turns and category filtering is pure\n" +
-            "presentation; dialogs still pause the game as normal.\n\n" +
-            "Focus the log pane, then press Tab to cycle forward through the\n" +
-            "tabs. Focus returns to the map with Tab or Esc. PageUp/PageDown\n" +
-            "scroll history within the active tab.\n\n" +
-            "TAB CONTENTS:\n" +
-            "  All      Every message, uncategorized, original colors\n" +
-            "  Combat   Hits, crits, dodges, parries, status applications\n" +
-            "  System   Saves, level-ups, floor changes, game state events\n" +
-            "  Item     Pickups, drops, vendor trades, crafting, equipment\n" +
-            "  Dialog   NPC barks, boss lines, quest text, scripted scenes\n" +
-            "COLOR KEY (same hue in All as in its home tab):\n" +
-            "  Combat   red/yellow damage tones\n" +
-            "  System   muted gray/gold for meta events\n" +
-            "  Item     cyan/green loot tones\n" +
-            "  Dialog   magenta for character voice\n" +
-            "HISTORY BUFFER:\n" +
-            "  Ring-buffer of the most recent 500 entries; older entries drop\n" +
-            "  off silently so the scroll stays responsive even on long runs.\n\n" +
+            "The message log fills the LOG card at the bottom of the sidebar,\n" +
+            "the newest line on the bottom row. It works like the log in\n" +
+            "Cataclysm: Dark Days Ahead: every line is coloured by its type,\n" +
+            "what it means to you, and fades as it ages. The last 256 messages\n" +
+            "survive floor changes and dialogs, and {{KEY:OpenMessageLog}} opens them all.\n\n" +
+            "MESSAGE TYPES\n" +
+            "Your hits and kills are good, a hit you take is bad, a miss, a\n" +
+            "dodge or a pickup is neutral, and what an NPC says is info.\n" +
+            LogTonesToken + "\n\n" +
+            "AGEING\n" +
+            "A line stays bright until you act again, then takes its type's\n" +
+            "darker colour for five turns, then turns grey. Opening the\n" +
+            "message log counts as reading all of it. A message repeated\n" +
+            "within three turns stacks onto the last line as a count, x 3.\n\n" +
+            "THE MESSAGE LOG\n" +
+            "{{KEY:OpenMessageLog}} opens the whole history beside the sidebar, newest line\n" +
+            "at the bottom, every line in its bright colour. The left column\n" +
+            "says how many turns ago each message came, and a bracket joins\n" +
+            "the lines that share a time. {{KEY:MessageLogUp}} and {{KEY:MessageLogDown}} scroll a\n" +
+            "line, {{KEY:MessageLogPageUp}} and {{KEY:MessageLogPageDown}} a page, and the scrollbar on\n" +
+            "the left edge shows where you are. {{KEY:MessageLogClose}} or Esc closes it.\n\n" +
+            "FILTERING\n" +
+            "{{KEY:MessageLogFilter}} opens the filter, and the log narrows as you type.\n" +
+            "Enter keeps the filter and Esc puts the old one back. The text\n" +
+            "matches anywhere in a line, in any case. Start with a type and\n" +
+            "a colon, as in bad: or good:Kobold, to search one type only.\n" +
+            "{{KEY:MessageLogResetFilter}} clears the filter.\n\n" +
             "TIPS\n" +
-            "Flip to Combat when auditing a boss fight and to Item after\n" +
-            "clearing a vault — the noise-to-signal ratio is dramatically\n" +
-            "better than the All view. Dialog tab doubles as a quick recap\n" +
-            "of the last NPC you talked to if you missed a quest hook.\n\n" +
+            "After a hard fight, open the message log and filter to bad:\n" +
+            "to see every hit you took and how many turns ago it landed.\n\n" +
             "SEE ALSO\n" +
             "[Damage & Toast Feedback] · [Damage Breakdown Format] · [Controls & Keybindings] · [Quick-Use Slots] · [Achievements]")
         {
-            Tags = new[] { "ui", "log", "controls" }
+            Tags = new[] { "ui", "log", "controls", "message-log", "history" }
         },
 
         new("Getting Started", "Save System",
@@ -6284,7 +6770,7 @@ public static class PlayerGuideContent
             "<details:Every key, grouped by where it applies>\n" +
             BindingsToken + "\n" +
             "</details>\n\n" +
-            "FIXED, AND DELIBERATELY NOT REBINDABLE\n" +
+            "KEYS THAT CANNOT BE REBOUND\n" +
             "  Esc               Close a dialog — or open the Pause Menu from\n" +
             "                    the map. Terminal.Gui owns Esc at the\n" +
             "                    application level, so rebinding it could\n" +
@@ -6323,7 +6809,7 @@ public static class PlayerGuideContent
             "│ NPC: N/A (system)\n" +
             "│ Floor: All\n" +
             "│ Quest: Options > About > Key Bindings\n" +
-            "│ Reward: 79 actions, two chords each\n" +
+            "│ Reward: 91 actions, two chords each\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Every gameplay key can be changed, and bindings are grouped by where\n" +
@@ -6349,13 +6835,13 @@ public static class PlayerGuideContent
             "the game has always taken both the letter keys and the cursor keys\n" +
             "for movement. Either slot may be cleared; an action with neither\n" +
             "is simply unbound and stops responding.\n\n" +
-            "CONFLICTS ARE SHOWN, NOT BLOCKED\n" +
+            "CONFLICTS ARE SHOWN\n" +
             "If the key you press already runs something else in the same\n" +
             "place, the screen says so and names what it clashes with rather\n" +
             "than refusing the change — moving a binding means displacing one,\n" +
-            "and you need to see what you displaced. The action listed first\n" +
-            "wins when the key is pressed, so clear the loser if you meant to\n" +
-            "replace it outright.\n\n" +
+            "and you need to see what you displaced. Only one of the two will\n" +
+            "work when the key is pressed, so clear the other binding if you\n" +
+            "meant to replace it outright.\n\n" +
             "WHAT YOU CANNOT REBIND\n" +
             "Esc, Tab and Enter in their menu-navigation role, the arrow keys\n" +
             "inside lists, and the developer keys. Esc especially: it is owned\n" +
@@ -6408,7 +6894,7 @@ public static class PlayerGuideContent
             "  F93  Ascalon                Ragnarok the Final Beast\n" +
             "  F97  Time Piercing Sword    Cardinal the System Error\n" +
             "  F98  Black Lily Sword       Incarnation of the Radius\n" +
-            "PRE-EXISTING FLOOR-BOSS DROPS (2):\n" +
+            "FLOOR-BOSS DROPS (2):\n" +
             "  F20  Blue Rose Sword        Absolut the Winter Monarch\n" +
             "  F99  Night Sky Sword        Heathcliff's Shadow\n" +
             "QUEST REWARDS (4):\n" +
@@ -6479,7 +6965,7 @@ public static class PlayerGuideContent
             "TIPS\n" +
             "Lv3 is a post-F100 state by design — the Primordial Shard only\n" +
             "drops from the throne clear, so the third awakening is a\n" +
-            "victory-lap upgrade unless you reload from a pre-clear save.\n" +
+            "victory-lap upgrade: winning ends the run and deletes its save.\n" +
             "Plan Lv2 mid-run: if a Divine enters inventory at F75, you have\n" +
             "the entire F75-F99 climb to farm a Divine Fragment (~0.8 expected\n" +
             "drops across 16 canon bosses at 5%).\n" +
@@ -7004,7 +7490,7 @@ public static class PlayerGuideContent
             "  /             Open the search bar and start typing\n" +
             "  Enter         Keep the results and return to the topic list\n" +
             "  Esc           Clear the query, then close the guide\n" +
-            "  Backspace     Step back to the previous topic you were reading\n\n" +
+            "  {{KEY:GuideBack}}     Step back to the previous topic you were reading\n\n" +
             "Search matches any run of letters inside a topic's title or its text,\n" +
             "so \"refor\" finds Reforge without typing the whole word. It is not a\n" +
             "fuzzy match — the letters have to appear together, in order — so reach\n" +
@@ -7498,14 +7984,16 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 11\n" +
             "│ Tier: 1 (newbie)\n" +
-            "│ Biome: Desert\n" +
+            "│ Biome: Ice (Taft, alpine)\n" +
             "│ Boss: Felos the Ember Drake (Wings of Living Flame)\n" +
             "└─\n" +
             "\n" +
             "SUMMARY\n" +
-            "First desert in the climb. Heat and grit raise your satiety\n" +
-            "drain by 1 per turn — pack water. The first floor that\n" +
-            "guarantees a Divine Beast drop on the labyrinth boss.\n" +
+            "Taft — mountain trails above the snow line, and the first\n" +
+            "properly cold floor of the climb. The cold takes 2 off your\n" +
+            "attack for as long as you are on it, and roughly one step in\n" +
+            "eight on ice slips. The first floor that guarantees a Divine\n" +
+            "Beast drop on the labyrinth boss.\n" +
             "\n" +
             "BOSS\n" +
             "Felos the Ember Drake (Lv32, ~540 HP). Flying fire-breath\n" +
@@ -7520,10 +8008,11 @@ public static class PlayerGuideContent
             "- Tier-2 chest pool.\n" +
             "\n" +
             "TIPS\n" +
-            "Bring water flasks; the satiety drain stacks with hot-tile\n" +
-            "ticks if any walls of the labyrinth carry residual fire from\n" +
-            "Felos's breath. Starfall pairs well with a melee carry —\n" +
-            "consider a two-character party.\n" +
+            "The -2 ATK is on you the whole floor, so bring a margin into\n" +
+            "the boss room rather than trusting your usual numbers. Watch\n" +
+            "the ice: a slip costs the turn, and losing one to Felos's\n" +
+            "breath is how this floor kills people. Starfall pairs well\n" +
+            "with a melee carry — consider a two-character party.\n" +
             "\n" +
             "SEE ALSO\n" +
             "[Floor 10] · [Floor 12] · [Divine Weapons — Roster & Acquisition] · [Floor Scaling Formulas]")
@@ -7907,15 +8396,16 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 24\n" +
             "│ Tier: 1 (newbie)\n" +
-            "│ Biome: Dark (lake resort)\n" +
+            "│ Biome: Aquatic (lake resort)\n" +
             "│ Boss: Grimhollow the Phantom (The Shape That Haunts)\n" +
             "└─\n" +
             "\n" +
             "SUMMARY\n" +
             "Panareze — the lake resort. Wooden bridges between sun-drenched\n" +
-            "islands in Integral Factor canon; in this build the dark biome\n" +
-            "wash dims it to dusk. Vacation-town flavor surfaces in\n" +
-            "Hollow Realization summer-beach event reskins.\n" +
+            "islands in Integral Factor canon, and open water in this build:\n" +
+            "expect to swim or walk the long way round, and expect the mobs\n" +
+            "in the water to have the advantage there. Vacation-town flavor\n" +
+            "surfaces in Hollow Realization summer-beach event reskins.\n" +
             "\n" +
             "BOSS\n" +
             "Grimhollow the Phantom (Lv58, ~1158 HP). Phase-shifter — turns\n" +
@@ -8242,13 +8732,14 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 35\n" +
             "│ Tier: 2 (mid-game)\n" +
-            "│ Biome: Ruins\n" +
+            "│ Biome: Grassland\n" +
             "│ Boss: Nicholas The Renegade (The Fallen Christmas Knight)\n" +
             "└─\n" +
             "\n" +
             "SUMMARY\n" +
             "The Christmas floor. Canon name Mishe — gentle hill-and-\n" +
-            "village setting in the lore, fortress-ruins biome in code.\n" +
+            "village country, open pastoral ground with the Hill of\n" +
+            "Memories on it, and no passive hazard of its own.\n" +
             "F35 wires Nicholas as the labyrinth boss directly,\n" +
             "anchoring the canonical Christmas-event association at the\n" +
             "floor it belongs to.\n\n" +
@@ -8687,15 +9178,15 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 49\n" +
             "│ Tier: 2 (mid-game)\n" +
-            "│ Biome: Dark\n" +
+            "│ Biome: Urban\n" +
             "│ Boss: Shadowstep Assassin (The Boss You Never See Coming)\n" +
             "└─\n" +
             "\n" +
             "SUMMARY\n" +
-            "Canon name Myujen — a white-stone city in the Aincrad\n" +
-            "lore, dark-dungeon flavor in code. The seasonal Nicholas\n" +
-            "the Renegade event drops here as the field-boss layer in\n" +
-            "the Forest of Wandering during a Dec 20-26 window.\n\n" +
+            "Canon name Myujen — a white-stone city, and a settled floor\n" +
+            "in this build: streets, traders and NPCs rather than open\n" +
+            "wilderness. The seasonal Nicholas the Renegade event drops\n" +
+            "here as the field-boss layer during a Dec 20-26 window.\n\n" +
             "BOSS\n" +
             "Shadowstep Assassin (The Boss You Never See Coming).\n" +
             "Tier-2 scaling-curve labyrinth boss with stealth-opener\n" +
@@ -8726,7 +9217,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 50\n" +
             "│ Tier: 2 (mid-game)\n" +
-            "│ Biome: Dark\n" +
+            "│ Biome: Urban\n" +
             "│ Boss: The Six-Armed Buddha (Tier of Sin)\n" +
             "└─\n" +
             "\n" +
@@ -8885,7 +9376,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 55\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Forest (Granzam fortress city)\n" +
+            "│ Biome: Urban (Granzam fortress city)\n" +
             "│ Boss: X'rphan the White Wyrm (The Pale Dragon of Floor 55)\n" +
             "└─\n" +
             "\n" +
@@ -8947,7 +9438,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 56\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Ruins (Pani forest outpost)\n" +
+            "│ Biome: Forest (Pani forest outpost)\n" +
             "│ Boss: Geocrawler (The Burrowing Menace)\n" +
             "└─\n" +
             "\n" +
@@ -9019,7 +9510,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 58\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Ruins\n" +
+            "│ Biome: Desert\n" +
             "│ Boss: Gravelthorn the Earth Elemental (Heart of the Mountain)\n" +
             "└─\n" +
             "\n" +
@@ -9044,7 +9535,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 59\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Ruins (Danac, sandstorm)\n" +
+            "│ Biome: Desert (Danac, sandstorm)\n" +
             "│ Boss: Stonewyrm Basileus (Petrified Dragon King)\n" +
             "└─\n" +
             "\n" +
@@ -9071,7 +9562,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 60\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Ruins (mountain frontier)\n" +
+            "│ Biome: Desert (mountain frontier)\n" +
             "│ Boss: The Armoured Stone Warrior (Golem of the Granite Throne)\n" +
             "└─\n" +
             "\n" +
@@ -9120,13 +9611,15 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 61\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Volcanic (Selmburg fog lake)\n" +
+            "│ Biome: Aquatic (Selmburg fog lake)\n" +
             "│ Boss: Belzeroth the Pit Fiend (Duke of the Infernal Court)\n" +
             "└─\n" +
             "\n" +
             "SUMMARY\n" +
-            "Selmburg — canon perpetual-fog lake town. Volcanic biome\n" +
-            "opens at the F61-F65 band. Anchors the Integral Factor Rosso\n" +
+            "Selmburg — canon perpetual-fog lake town, and water rather\n" +
+            "than fire despite sitting at the head of the infernal band:\n" +
+            "F62 onward is where the volcanic era really opens. Anchors\n" +
+            "the Integral Factor Rosso\n" +
             "Series field-boss ladder; the Crimson Forneus encounter on\n" +
             "this floor seeds the F58-F64 banded Rosso chest pool.\n\n" +
             "BOSS\n" +
@@ -9501,7 +9994,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 74\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Ice (Collinia plains, overcast)\n" +
+            "│ Biome: Grassland (Collinia plains, overcast)\n" +
             "│ Boss: The Gleam Eyes (The Blue Demon of Floor 74)\n" +
             "└─\n" +
             "\n" +
@@ -9544,7 +10037,7 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 75\n" +
             "│ Tier: 3 (expert)\n" +
-            "│ Biome: Ice (Collinia Labyrinth, bone arena)\n" +
+            "│ Biome: Dark (Collinia Labyrinth, bone arena)\n" +
             "│ Boss: The Skull Reaper (Death's Scythe)\n" +
             "└─\n" +
             "\n" +
@@ -9609,14 +10102,15 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 76\n" +
             "│ Tier: 4 (endgame)\n" +
-            "│ Biome: Dark\n" +
+            "│ Biome: Urban\n" +
             "│ Boss: The Ghastlygaze (The All-Seeing Abomination)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "First floor past the canon endpoint — the climb survivors who\n" +
             "kept going after Heathcliff. Algade revisited as the Hollow-\n" +
-            "Fragment casino district, all neon and dark glass over a Dark-\n" +
-            "biome demigod-tier scaling band. Lv 162, 5316 HP boss, 215 ATK.\n\n" +
+            "Fragment casino district: a settled floor of streets, arcades\n" +
+            "and traders carrying a demigod-tier scaling band. Lv 162,\n" +
+            "5316 HP boss, 215 ATK.\n\n" +
             "BOSS\n" +
             "The Ghastlygaze (HF canon). Eye-studded horror. By F76 the\n" +
             "boss kit is fully loaded: Devastating Charge opener, Ground\n" +
@@ -9683,13 +10177,14 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 78\n" +
             "│ Tier: 4 (endgame)\n" +
-            "│ Biome: Dark\n" +
+            "│ Biome: Forest\n" +
             "│ Boss: The Horn of Madness (Berserker of the Endless Maze)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Dark-biome maze floor. Lv 166, 5532 HP boss, 222 ATK. Anchor\n" +
-            "for Dorothy's Last-Recollection canon line — the only Divine\n" +
-            "Scythe in the game lives here.\n\n" +
+            "Deep forest at the top of the demigod era, and the canopy takes\n" +
+            "a real bite out of how far you can see. Lv 166, 5532 HP boss,\n" +
+            "222 ATK. Anchor for Dorothy's Last-Recollection canon line —\n" +
+            "the only Divine Scythe in the game lives here.\n\n" +
             "BOSS\n" +
             "The Horn of Madness (HF canon). Berserker of the Endless Maze\n" +
             "— minotaur-frame berserker, charge attacks chain in tight\n" +
@@ -9724,13 +10219,14 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 79\n" +
             "│ Tier: 4 (endgame)\n" +
-            "│ Biome: Dark\n" +
+            "│ Biome: Ice\n" +
             "│ Boss: The Tempest of Trihead (Three-Headed Storm Hydra)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Dark-biome ice-plain frontier per HF canon. Lv 168, 5640 HP\n" +
-            "boss, 226 ATK. First formal Hollow-Fragment Implement-System\n" +
-            "questgiver floor.\n\n" +
+            "Ice plains, per Hollow Fragment canon — the cold costs you 2\n" +
+            "attack for the whole floor and the surface slips. Lv 168,\n" +
+            "5640 HP boss, 226 ATK. First formal Hollow-Fragment\n" +
+            "Implement-System questgiver floor.\n\n" +
             "BOSS\n" +
             "The Tempest of Trihead (HF canon). Three-headed storm hydra —\n" +
             "lightning attacks alongside the F75+ kit. Spread melee,\n" +
@@ -9753,11 +10249,13 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 80\n" +
             "│ Tier: 4 (endgame)\n" +
-            "│ Biome: Dark\n" +
+            "│ Biome: Void\n" +
             "│ Boss: The Guilty Scythe (Reaper of the Eightieth Floor)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Sky-sanctum floor in HF canon — Dark biome, demigod scaling.\n" +
+            "Sky-sanctum floor in HF canon — above the cloud line, and the\n" +
+            "ground under it does not obey much. Reality warps here: the\n" +
+            "floor wears on you a point at a time and hunger runs faster.\n" +
             "Lv 170, 5750 HP boss, 229 ATK. Multiples-of-10 spike floor.\n" +
             "Heavy field-boss roster: two Legendaries plus an HF questgiver.\n\n" +
             "BOSS\n" +
@@ -9923,11 +10421,12 @@ public static class PlayerGuideContent
             "┌─ Floors\n" +
             "│ Topic: Floor 85\n" +
             "│ Tier: 4 (endgame)\n" +
-            "│ Biome: Swamp\n" +
+            "│ Biome: Volcanic\n" +
             "│ Boss: The Maelstrom of Trihead (Upgraded Storm Hydra)\n" +
             "└─\n\n" +
             "SUMMARY\n" +
-            "Volcanic-ruin swamp, Hollow-Fragment nightmare band. Lv 180,\n" +
+            "Volcanic ruin, Hollow-Fragment nightmare band. The heat costs\n" +
+            "you satiety and the ground itself damages you on a timer. Lv 180,\n" +
             "6318 HP boss, 247 ATK. Triple-loot floor — Black Lily Sword\n" +
             "(Divine), Macafitel (FD Yuuki rapier), Godblade Dragonslayer,\n" +
             "Bow Zephyros LAB. Heaviest haul before F95.\n\n" +
@@ -10515,7 +11014,7 @@ public static class PlayerGuideContent
     // Floor bosses: per-floor HashSet (Q16). Field bosses: best-effort gating by floor reach
     // (floor <= turnManager.CurrentFloor) — exact field-boss-name → FieldBossId map TBD.
     // LAB section gates same as floor bosses — clearing the floor reveals the LAB drop too.
-    public static string GateBossDropReferenceBody(string body, SAOTRPG.Systems.TurnManager? tm)
+    public static string GateBossDropReferenceBody(string body, TurnManager? tm)
     {
         if (tm == null || string.IsNullOrEmpty(body)) return body;
         const string GATED = "???";

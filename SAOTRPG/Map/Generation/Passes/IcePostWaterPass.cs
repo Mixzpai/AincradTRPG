@@ -1,4 +1,5 @@
-using SAOTRPG.Systems;
+
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Generation.Passes;
 
@@ -12,37 +13,60 @@ public sealed class IcePostWaterPass : IGenerationPass
     public void Execute(WorldContext ctx)
     {
         var map = ctx.Map;
+        var tiles = map.Tiles;
         int w = ctx.Width, h = ctx.Height;
 
-        // First pass: record which water tiles border land so the edge becomes CrackedIce.
-        bool[,] isEdge = new bool[w, h];
-        for (int x = 0; x < w; x++)
+        // This pass draws no rng, so the visit order is free — everything below runs row-major,
+        // which is the order GameMap stores tiles in. The water test is read once into a flat
+        // table because the edge scan asks it nine times per water tile, and a probe through the
+        // tile grid is a 16-byte struct behind a 2D indexer.
+        var water = new bool[w * h];
         for (int y = 0; y < h; y++)
         {
-            var t = map.Tiles[x, y].Type;
-            if (t != TileType.Water && t != TileType.WaterDeep) continue;
-            for (int dy = -1; dy <= 1 && !isEdge[x, y]; dy++)
-            for (int dx = -1; dx <= 1; dx++)
+            int rowBase = y * w;
+            for (int x = 0; x < w; x++)
             {
-                if (dx == 0 && dy == 0) continue;
-                int nx = x + dx, ny = y + dy;
-                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-                var nt = map.Tiles[nx, ny].Type;
-                if (nt != TileType.Water && nt != TileType.WaterDeep)
+                var t = tiles[x, y].Type;
+                water[rowBase + x] = t == TileType.Water || t == TileType.WaterDeep;
+            }
+        }
+
+        // First pass: record which water tiles border land so the edge becomes CrackedIce.
+        // Out-of-bounds neighbours do not count as land, exactly as the bounds `continue` did.
+        var isEdge = new bool[w * h];
+        for (int y = 0; y < h; y++)
+        {
+            int rowBase = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                if (!water[rowBase + x]) continue;
+                bool edge = false;
+                for (int dy = -1; dy <= 1 && !edge; dy++)
                 {
-                    isEdge[x, y] = true;
-                    break;
+                    int ny = y + dy;
+                    if (ny < 0 || ny >= h) continue;
+                    int nb = ny * w;
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        if (dx == 0 && dy == 0) continue;
+                        int nx = x + dx;
+                        if (nx < 0 || nx >= w) continue;
+                        if (!water[nb + nx]) { edge = true; break; }
+                    }
                 }
+                isEdge[rowBase + x] = edge;
             }
         }
 
         // Second pass: stamp Ice/CrackedIce.
-        for (int x = 0; x < w; x++)
         for (int y = 0; y < h; y++)
         {
-            var t = map.Tiles[x, y].Type;
-            if (t != TileType.Water && t != TileType.WaterDeep) continue;
-            map.Tiles[x, y].Type = isEdge[x, y] ? TileType.CrackedIce : TileType.Ice;
+            int rowBase = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                if (!water[rowBase + x]) continue;
+                tiles[x, y].Type = isEdge[rowBase + x] ? TileType.CrackedIce : TileType.Ice;
+            }
         }
     }
 }

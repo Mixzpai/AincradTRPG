@@ -1,0 +1,29 @@
+NAME:          f4_rovia_canal_quarter
+DESC:          A quarter of Rovia: four shuttered canal houses facing a crossed waterway, plank bridges over the channel, a dam plaque on the quay.
+TAGS:          canon-overlay canon rovia canal aquatic f4
+FLOORS:        4
+BIOME:         aquatic
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: _ = Path
+KFEAT: * = LoreStone
+
+MAP
+_______________
+_#####___#####_
+_#...#___#...#_
+_#..*#___#...#_
+_##+##___##+##_
+_______________
+~~~_~~~~~~~_~~~
+~~~_~~~~~~~_~~~
+_______________
+_##+##___##+##_
+_#...#___#...#_
+_#####___#####_
+_______________
+ENDMAP

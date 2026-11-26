@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.UI.Helpers;
 
 // Centralized color scheme definitions used across all UI screens.

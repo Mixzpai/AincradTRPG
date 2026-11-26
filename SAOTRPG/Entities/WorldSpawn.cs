@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Entities
 {
     public class WorldSpawn : NPC

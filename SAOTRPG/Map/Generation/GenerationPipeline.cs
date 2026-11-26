@@ -1,5 +1,6 @@
-using SAOTRPG.Systems;
-using SAOTRPG.UI;
+
+using SAOTRPG.Systems.Diagnostics;
+using SAOTRPG.Systems.RunState;
 
 namespace SAOTRPG.Map.Generation;
 

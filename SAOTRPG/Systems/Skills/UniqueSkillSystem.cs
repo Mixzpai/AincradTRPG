@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Systems.Skills;
 
 // Unique Skills state + dispatcher. All skills stack; passives apply in combat.
@@ -101,7 +99,7 @@ public static class UniqueSkillSystem
         => Has(UniqueSkill.KatanaMastery) && wpnType == "Katana";
 
     public static bool IsDarknessBladeActive()
-        => Has(UniqueSkill.DarknessBlade) && Map.DayNightCycle.PhaseName == "Night";
+        => Has(UniqueSkill.DarknessBlade) && SAOTRPG.Map.Lighting.DayNightCycle.PhaseName == "Night";
 
     // ── Damage / stat modifiers ───────────────────────────────────────
     public static int DamageBonusPercent(string wpnType, bool hasShield)
@@ -146,7 +144,7 @@ public static class UniqueSkillSystem
     // Boss-kill-based unlocks: Darkness (Night), Blazing (Volcanic), Frozen (Ice).
     public static UniqueSkill? CheckBossKillUnlock(string biomeName)
     {
-        if (Map.DayNightCycle.PhaseName == "Night" && TryUnlock(UniqueSkill.DarknessBlade))
+        if (SAOTRPG.Map.Lighting.DayNightCycle.PhaseName == "Night" && TryUnlock(UniqueSkill.DarknessBlade))
             return UniqueSkill.DarknessBlade;
         string b = biomeName.ToLowerInvariant();
         if ((b.Contains("volcan") || b.Contains("lava") || b.Contains("fire")) && TryUnlock(UniqueSkill.BlazingEdge))

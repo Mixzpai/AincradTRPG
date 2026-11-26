@@ -33,16 +33,6 @@ public class StatModifierCollection
         }
     }
 
-    // Remove the instant effects, mirroring ApplyTo so Equip/Unequip stay symmetric.
-    public void RemoveFrom(IStatModifiable target)
-    {
-        foreach (var effect in Effects)
-        {
-            if (effect.Duration > 0) continue;
-            ApplyStat(target, effect, add: false);
-        }
-    }
-
     // Apply or take back one effect, for a caller that owns the timing.
     public static void ApplySingle(IStatModifiable target, StatType type, int potency, bool add)
         => ApplyStat(target, new StatEffect(type, potency, 0, false), add);
@@ -63,8 +53,17 @@ public class StatModifierCollection
             case StatType.Dexterity: target.Dexterity += value; break;
             case StatType.Agility: target.Agility += value; break;
             case StatType.Intelligence: target.Intelligence += value; break;
-            // AttackSpeed/BlockChance resolve at weapon/shield sites in TurnManager
-            // (no-op here so collection still tallies into _statBonusCache).
+            // The last four channels have plumbing and NO consumer. Nothing grants them today, so
+            // nothing is broken — but each one silently does nothing if content starts to, and for
+            // three of them a same-named WORKING mechanism exists elsewhere, which is the trap:
+            //   AttackSpeed   tallies only; combat reads Weapon.AttackSpeed.
+            //   BlockChance   tallies only; TryShieldBlock reads Armor.BlockChance and the
+            //                 BlockChanceBonus special effect.
+            //   SkillCooldown writes a field nothing reads; SwordSkillEngine reads the equipment
+            //                 SPECIAL EFFECT of the same name.
+            //   HPRegen       writes a field nothing reads; regen derives from Vitality.
+            // invariants.py stats/every-granted-stat-reaches-a-mechanic fails if content grants one,
+            // and fails again if one is ever wired up and left in that record.
             case StatType.CritRate:       target.BaseCriticalRate += value; break;
             case StatType.AttackSpeed:    break;
             case StatType.BlockChance:    break;

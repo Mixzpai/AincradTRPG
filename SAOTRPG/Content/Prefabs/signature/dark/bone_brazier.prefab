@@ -1,0 +1,22 @@
+NAME:          dark_bone_brazier
+DESC:          Eight leaning pillars around a brazier that has been kept alight by nobody at all.
+TAGS:          signature dark brazier circle
+FLOORS:        *
+BIOME:         dark
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+KFEAT: F = Campfire
+
+MAP
+..P.P..
+.......
+P.....P
+...F...
+P.....P
+.......
+..P.P..
+ENDMAP

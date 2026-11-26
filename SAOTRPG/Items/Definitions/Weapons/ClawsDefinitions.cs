@@ -1,4 +1,4 @@
-using SAOTRPG.Items.Equipment;
+﻿using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
@@ -36,7 +36,7 @@ public static class ClawsDefinitions
     // ── SAO Lost Song Top-Tier (Claws) — Legendary F80-95 ────────────
     // Iron Fist Oguma — apex LS martial-claws, attack-speed biased.
     public static Weapon CreateIronFistOguma() => Make("clw_iron_fist_oguma", "Iron Fist Oguma", 18800, "Legendary", 205, 82, 148,
-        B().Add(StatType.Attack, 72).Add(StatType.Agility, 32).Add(StatType.Dexterity, 16), "AttackSpeed+3");
+        B().Add(StatType.Attack, 72).Add(StatType.Agility, 32).Add(StatType.Dexterity, 16), "PostMotion-1");
 
     // ── SAO Lost Song Mythological (Claws) — Legendary F75-99 ──────
     // Paopei — daoist martial-artifact claws, crit affinity.

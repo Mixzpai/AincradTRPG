@@ -1,4 +1,5 @@
-using SAOTRPG.Systems;
+
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Generation.Passes;
 
@@ -29,7 +30,7 @@ public sealed class LakePass : IGenerationPass
             int diskRadius = Math.Min(width, height) / 2;
             int baseR = Math.Clamp(diskRadius / 20, 4, 40);
             int radius = baseR + rng.Next(baseR / 3 + 1);
-            MapGenerator.GenerateLake(map, cx, cy, radius, rng, seedPct, caPasses);
+            MapGenerator.GenerateLake(map, cx, cy, radius, rng, seedPct, caPasses, ctx.Heights);
         }
 
         // Lake stamping is naturally clipped — protected/Mountain tiles outside the disk
@@ -60,31 +61,38 @@ public sealed class LakePass : IGenerationPass
         if (seedPct < 1 || seedPct > 99)
         {
             int clamped = Math.Clamp(seedPct, 1, 99);
-            UI.DebugLogger.LogGame("LAKE",
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("LAKE",
                 $"biome={ctx.Biome} has waterLakesEnabled but waterSeedPct={seedPct} — clamped to {clamped}");
             seedPct = clamped;
         }
         if (caPasses < 0)
         {
-            UI.DebugLogger.LogGame("LAKE",
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("LAKE",
                 $"biome={ctx.Biome} waterCAPasses={caPasses} is negative — clamped to 0");
             caPasses = 0;
         }
         return (seedPct, caPasses);
     }
 
-    // Up to 8 retries for an in-disk center; lakes that fail all retries are skipped.
+    // The LOWEST of eight in-disk candidates, not the first: water collects in low ground, and
+    // GenerateLake then fills only cells under a rise above this point, so the shore follows the
+    // contours. Every candidate costs its two draws whether chosen or not, as ClusterPass's do.
     private static bool TryPickLakeCenter(WorldContext ctx, int width, int height,
         out int cx, out int cy)
     {
         var rng = ctx.Rng;
+        var heights = ctx.Heights;
+        bool found = false;
+        float lowest = float.MaxValue;
+        cx = cy = 0;
         for (int attempt = 0; attempt < 8; attempt++)
         {
             int x = rng.Next(20, Math.Max(21, width - 20));
             int y = rng.Next(15, Math.Max(16, height - 15));
-            if (ctx.IsInsideCircle(x, y) && !ctx.IsInTownKeepOut(x, y)) { cx = x; cy = y; return true; }
+            if (!ctx.IsInsideCircle(x, y) || ctx.IsInTownKeepOut(x, y)) continue;
+            if (heights == null) { cx = x; cy = y; return true; }
+            if (heights[x, y] < lowest) { lowest = heights[x, y]; cx = x; cy = y; found = true; }
         }
-        cx = cy = 0;
-        return false;
+        return found;
     }
 }

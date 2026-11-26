@@ -1,11 +1,12 @@
 using System.Text.RegularExpressions;
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.Systems.Story;
 using SAOTRPG.UI.Helpers;
 
 using SAOTRPG.Systems.Input;
+using SAOTRPG.Systems.Persistence;
+using SAOTRPG.Systems.RunState;
+using SAOTRPG.Systems.Turns;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -42,6 +43,8 @@ public static partial class PlayerGuideDialog
     private static readonly HashSet<(string topic, string block)> _expanded = new();
 
     // Captured by Show() for stat-dump; null when opened outside an active run.
+    // Null outside a Show(), so the audit seam and any other caller still read live state.
+    private static int? _maxFloorSnapshot;
     private static TurnManager? _activeTm;
     private static Player? _activePlayer;
 
@@ -86,12 +89,35 @@ public static partial class PlayerGuideDialog
     {
         if (string.IsNullOrEmpty(query)) return true;
         string q = query.ToLowerInvariant();
-        if (e.Title.ToLowerInvariant().Contains(q)) return true;
-        if (e.Body.ToLowerInvariant().Contains(q)) return true;
+        if (LowerTitle(e).Contains(q)) return true;
+        if (LowerBody(e).Contains(q)) return true;
         if (e.Tags is not null)
             foreach (string t in e.Tags)
                 if (t.Contains(q, StringComparison.OrdinalIgnoreCase)) return true;
         return PlayerGuideContent.AliasMatches(e.Title, q);
+    }
+
+    // The corpus body is ~400,000 chars. Lowering it inside the predicate meant one full copy of
+    // every topic per keystroke — 777 KB of garbage and ~4 ms a character while the player types.
+    // Cached rather than switched to OrdinalIgnoreCase so the comparison stays byte-for-byte the
+    // one the search examples in the Guide's own prose were written against.
+    private static readonly Dictionary<PlayerGuideContent.GuideEntry, string> LowerBodyCache = new();
+    private static readonly Dictionary<PlayerGuideContent.GuideEntry, string> LowerTitleCache = new();
+
+    private static string LowerBody(PlayerGuideContent.GuideEntry e)
+    {
+        if (LowerBodyCache.TryGetValue(e, out string? v)) return v;
+        v = (e.Body ?? "").ToLowerInvariant();
+        LowerBodyCache[e] = v;
+        return v;
+    }
+
+    private static string LowerTitle(PlayerGuideContent.GuideEntry e)
+    {
+        if (LowerTitleCache.TryGetValue(e, out string? v)) return v;
+        v = (e.Title ?? "").ToLowerInvariant();
+        LowerTitleCache[e] = v;
+        return v;
     }
 
     // Atomic [[Topic]] token regex. Double-bracket; non-greedy; titles lack ']'.
@@ -118,6 +144,10 @@ public static partial class PlayerGuideDialog
         _expanded.Clear();
         _activeTm = turnManager;
         _activePlayer = player;
+        // A modal cannot be open while the player climbs, so the floor gate reads one value for
+        // the whole session. Without this every Floors topic re-read and re-deserialized
+        // lifetime_stats.json on the keystroke that opened it.
+        _maxFloorSnapshot = SAOTRPG.Systems.Persistence.LifetimeStats.Load().MaxFloorReached;
 
         int screenW = AppHost.App.Screen.Width;
         int screenH = AppHost.App.Screen.Height;
@@ -151,7 +181,7 @@ public static partial class PlayerGuideDialog
         foreach (var e in entries) entriesByTitle.TryAdd(e.Title, e);
 
         // Reverse map: title → list of titles whose body references it via [[bracket]].
-        var referencedBy = BuildReferencedByMap(entries);
+        var referencedBy = SharedReferencedByMap(entries);
 
         // Sidebar expand-state — restore from profile.
         var expanded = new HashSet<string>(ProfileData.GuideExpandedCategories, StringComparer.OrdinalIgnoreCase);
@@ -640,6 +670,12 @@ public static partial class PlayerGuideDialog
                 return;
             }
 
+            if (Keybinds.IsPressed(GameAction.GuideBack, e) && PopNavStack())
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (HandleGlobalGuideKey(e.KeyCode, e.AsRune,
                 StartSearch, JumpToCategory, () => ShowKeybindOverlay(),
                 () => ShowStatDump(Flash)))
@@ -718,9 +754,6 @@ public static partial class PlayerGuideDialog
                         }
                     }
                     break;
-                case KeyCode.Backspace when Keybinds.IsPressed(GameAction.GuideBack, e):
-                    if (PopNavStack()) { e.Handled = true; return; }
-                    break;
                 case KeyCode.O | KeyCode.CtrlMask:
                     if (PopNavStack()) { e.Handled = true; return; }
                     break;
@@ -797,7 +830,8 @@ public static partial class PlayerGuideDialog
         }
 
         sidebar.SetFocus();
-        DialogHelper.RunModal(dialog);
+        try { DialogHelper.RunModal(dialog); }
+        finally { _maxFloorSnapshot = null; }
     }
 
     // ── Global key dispatch ──
@@ -840,7 +874,8 @@ public static partial class PlayerGuideDialog
         if (spaceIdx < 0) return body;
         if (!int.TryParse(e.Title.AsSpan(spaceIdx + 1), out int n)) return body;
 
-        bool reached = SAOTRPG.Systems.LifetimeStats.Load().MaxFloorReached >= n;
+        int maxFloor = _maxFloorSnapshot ?? SAOTRPG.Systems.Persistence.LifetimeStats.Load().MaxFloorReached;
+        bool reached = maxFloor >= n;
         bool isStub = body.Contains("___UNREACHED___", StringComparison.Ordinal);
         if (reached && !isStub) return body;
 
@@ -902,13 +937,17 @@ public static partial class PlayerGuideDialog
         srcBody = PlayerGuideContent.ResolveStatusCodes(srcBody);
         srcBody = PlayerGuideContent.ResolveStatusLetters(srcBody);
         srcBody = PlayerGuideContent.ResolveMinimapLegend(srcBody);
+        srcBody = PlayerGuideContent.ResolveLogTones(srcBody);
+        srcBody = PlayerGuideContent.ResolveAnimatedTiles(srcBody);
         srcBody = PlayerGuideContent.ResolveOreDensity(srcBody);
-        srcBody = PlayerGuideContent.ResolveLandmarkKinds(srcBody);
+        srcBody = ResolveLandmarkKindsCached(srcBody);
         srcBody = PlayerGuideContent.ResolveMapLegend(srcBody);
         srcBody = PlayerGuideContent.ResolveGlyphTokens(srcBody);
         srcBody = PlayerGuideContent.ResolveCampfireQuota(srcBody);
         srcBody = PlayerGuideContent.ResolveBiomeEffects(srcBody);
+        srcBody = PlayerGuideContent.ResolveSpeedRule(srcBody);
         srcBody = PlayerGuideContent.ResolveDayClock(srcBody);
+        srcBody = PlayerGuideContent.ResolveNightShare(srcBody);
         srcBody = PlayerGuideContent.ResolveKeyTokens(srcBody);
         srcBody = ResolveCategoryTokens(srcBody);
 
@@ -966,6 +1005,26 @@ public static partial class PlayerGuideDialog
         }
 
         return WrapTo(sb.ToString(), wrapCols);
+    }
+
+    // Same substitution PlayerGuideContent.ResolveLandmarkKinds performs, with the block held.
+    // Building it walks 11 biomes x 100 floors of prefab candidates — 18.6 ms, measured, on the one
+    // topic that carries the token — and the prefab library has no hot-reload path, so the answer
+    // cannot change within a process.
+    private static string? _landmarkKindsBlock;
+
+    private static string ResolveLandmarkKindsCached(string src)
+    {
+        if (!src.Contains(PlayerGuideContent.LandmarkKindsToken, StringComparison.Ordinal)) return src;
+        if (string.IsNullOrEmpty(_landmarkKindsBlock))
+        {
+            // Only a non-empty answer is kept. The generator loads the prefab library on demand,
+            // so a one-off load failure would otherwise be frozen in for the rest of the process.
+            string block = PlayerGuideContent.BuildLandmarkKindsBlock();
+            if (string.IsNullOrEmpty(block)) return src.Replace(PlayerGuideContent.LandmarkKindsToken, block);
+            _landmarkKindsBlock = block;
+        }
+        return src.Replace(PlayerGuideContent.LandmarkKindsToken, _landmarkKindsBlock);
     }
 
     // The navigation topic describes the sidebar, so it must read the sidebar rather than a
@@ -1552,6 +1611,18 @@ public static partial class PlayerGuideDialog
         return ordered;
     }
 
+    // The map is a pure function of the static corpus — MigrateBracketsToDouble reads only
+    // LinkTargets, which is itself derived from Entries — so it is built once rather than on every
+    // open (5.3 ms, measured). Only the shared array is cached; the audit seam hands in its own.
+    private static Dictionary<string, List<string>>? _sharedReferencedBy;
+
+    private static Dictionary<string, List<string>> SharedReferencedByMap(
+        PlayerGuideContent.GuideEntry[] entries)
+    {
+        if (!ReferenceEquals(entries, PlayerGuideContent.Entries)) return BuildReferencedByMap(entries);
+        return _sharedReferencedBy ??= BuildReferencedByMap(entries);
+    }
+
     // Build reverse map: title → list of titles whose body references it via [[bracket]].
     private static Dictionary<string, List<string>> BuildReferencedByMap(PlayerGuideContent.GuideEntry[] entries)
     {
@@ -1823,9 +1894,9 @@ public static partial class PlayerGuideDialog
         };
 
         // Nested run loop — excluded from profiler scopes for the same reason RunModal is.
-        SAOTRPG.Systems.Profiler.BeginExclusion();
+        SAOTRPG.Systems.Diagnostics.Profiler.BeginExclusion();
         try { AppHost.App.Run(overlay); }
-        finally { SAOTRPG.Systems.Profiler.EndExclusion(); }
+        finally { SAOTRPG.Systems.Diagnostics.Profiler.EndExclusion(); }
         overlay.Dispose();
     }
 

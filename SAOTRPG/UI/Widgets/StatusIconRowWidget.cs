@@ -1,6 +1,5 @@
-using Terminal.Gui;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Turns;
 
 namespace SAOTRPG.UI.Widgets;
 
@@ -65,6 +64,7 @@ public class StatusIconRowWidget : View
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
+        using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Draw.StatusIcons");
         // A modal above us has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
 

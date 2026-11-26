@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Systems.Story;
 
 // A scripted cutscene: an ordered list of beats.

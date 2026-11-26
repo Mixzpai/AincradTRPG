@@ -1,4 +1,4 @@
-using SAOTRPG.Items.Equipment;
+﻿using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
@@ -84,7 +84,7 @@ public static class ScimitarDefinitions
 
     // IM Legendary-band shop weapon. Swan-feather light curve, weightless swing.
     public static Weapon CreateSilverWing() => Make("sci_silver_wing", "Silver Wing", 20000, "Legendary", 225, 78, 162,
-        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 24).Add(StatType.Agility, 20), "AttackSpeed+3");
+        B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 24).Add(StatType.Agility, 20), "PostMotion-1");
 
     // ── Infinity Moment LAB scimitar (non-enhanceable) ──────────────
 

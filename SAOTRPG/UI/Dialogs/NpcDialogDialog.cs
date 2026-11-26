@@ -1,6 +1,4 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
@@ -99,7 +97,7 @@ public static class NpcDialogDialog
             }
 
             var line = lines[idx];
-            npcText.Text = $"\"{line.Text}\"";
+            npcText.Text = $"\"{Systems.Input.KeyHints.Resolve(line.Text)}\"";
             choiceArea.RemoveAll();
 
             var choices = line.Choices;
@@ -121,7 +119,7 @@ public static class NpcDialogDialog
                     {
                         e.Handled = true;
                         // Show NPC response, then advance
-                        npcText.Text = $"\"{capturedChoice.Response}\"";
+                        npcText.Text = $"\"{Systems.Input.KeyHints.Resolve(capturedChoice.Response)}\"";
                         choiceArea.RemoveAll();
                         continueBtn.Visible = true;
                         continueBtn.Text = lineIndex < lines.Length - 1 ? " Continue " : " Goodbye  ";

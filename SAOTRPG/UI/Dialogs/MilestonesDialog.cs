@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
 using SAOTRPG.Systems.Input;
+using SAOTRPG.Systems.Persistence;
+using SAOTRPG.Systems.Progression;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -335,6 +335,11 @@ internal static class MilestoneTabbedView
         public string? ExtraKeys;
         public Label HfProgressBar = null!;
         public List<Milestone> CurrentRows = new();
+        // LifetimeStats.IsMilestoneUnlocked re-reads and re-deserializes lifetime_stats.json on
+        // every call, and a refresh asks it once per row plus once per registry entry for the
+        // tally — 337 file reads per tab switch, measured at 68-92 ms. Snapshotted per refresh;
+        // nothing can unlock a milestone while this modal owns the loop.
+        public HashSet<string> Unlocked = new(StringComparer.Ordinal);
         public View TitleHost = null!;
         public string BaseTitle = "";
     }
@@ -436,6 +441,8 @@ internal static class MilestoneTabbedView
     // locked dimmed below. SpoilerHidden + locked → "???" rows.
     private static void RefreshList(TabState state)
     {
+        state.Unlocked = new HashSet<string>(LifetimeStats.Load().UnlockedMilestones,
+                                             StringComparer.Ordinal);
         var registry = MilestoneRegistry.All;
         var rows = new List<Milestone>();
         foreach (var m in registry)
@@ -452,8 +459,8 @@ internal static class MilestoneTabbedView
         // Sort: unlocked first; within each group preserve registry order.
         rows.Sort((a, b) =>
         {
-            bool ua = LifetimeStats.IsMilestoneUnlocked(a.Id);
-            bool ub = LifetimeStats.IsMilestoneUnlocked(b.Id);
+            bool ua = state.Unlocked.Contains(a.Id);
+            bool ub = state.Unlocked.Contains(b.Id);
             if (ua != ub) return ua ? -1 : 1;
             return 0;
         });
@@ -464,7 +471,7 @@ internal static class MilestoneTabbedView
         int unlockedCount = 0;
         foreach (var m in rows)
         {
-            bool unlocked = LifetimeStats.IsMilestoneUnlocked(m.Id);
+            bool unlocked = state.Unlocked.Contains(m.Id);
             if (unlocked) unlockedCount++;
             lines.Add(FormatRow(m, unlocked, state.Player));
         }
@@ -481,7 +488,7 @@ internal static class MilestoneTabbedView
         int globalUnlocked = 0;
         int globalTotal = MilestoneRegistry.All.Count;
         foreach (var m in MilestoneRegistry.All)
-            if (LifetimeStats.IsMilestoneUnlocked(m.Id)) globalUnlocked++;
+            if (state.Unlocked.Contains(m.Id)) globalUnlocked++;
 
         int pct = globalTotal == 0 ? 0 : (int)(100.0 * globalUnlocked / globalTotal);
         string activeTitle = "(none equipped)";
@@ -535,7 +542,7 @@ internal static class MilestoneTabbedView
             return;
         }
         var m = state.CurrentRows[idx];
-        bool unlocked = LifetimeStats.IsMilestoneUnlocked(m.Id);
+        bool unlocked = state.Unlocked.Contains(m.Id);
         bool maskName = !unlocked && m.SpoilerHidden;
         bool active = unlocked && state.Player.ActiveTitleId == m.Id;
 

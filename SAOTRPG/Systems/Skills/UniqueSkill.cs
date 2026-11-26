@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Systems.Skills;
 
 // Canon Cardinal-assigned rare skills. In canon one per player; here every

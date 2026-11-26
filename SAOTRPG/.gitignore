@@ -1,8 +1,69 @@
+# ── Build output ─────────────────────────────────────────────────────────────
 bin/
 obj/
+*.pdb
+
+# ── IDE / editor ─────────────────────────────────────────────────────────────
 .vs/
-debug.log
-debug_*.log
-stderr.txt
+.vscode/
+.idea/
 *.user
 *.suo
+*.userprefs
+*.swp
+*~
+
+# ── Vendored third-party source ──────────────────────────────────────────────
+# The game builds against a locally packed, patched Terminal.Gui 2.4.5.1. The package,
+# patch and build script are committed (vendor/README.md); the upstream source tree is
+# someone else's code and is rebuilt from the v2.4.5 tag plus the patch.
+vendor/Terminal.Gui-2.4.5/
+
+# ── Local archives ───────────────────────────────────────────────────────────
+backups/
+*.7z
+*.zip
+*.rar
+*.bak
+
+# ── Runtime + player data ────────────────────────────────────────────────────
+# The game writes to %LocalAppData%\AincradTRPG, but the debug log lands next to
+# the binary when run from source.
+*.log
+stderr.txt
+__pycache__/
+save.json
+lifetime_stats.json
+profile.json
+keybinds.json
+deaths/
+
+# ── Assistant tooling and internal working notes ─────────────────────────────
+# The project is developed with an AI coding assistant. These files carry local
+# machine paths, session state and per-shipment working prose — useful to keep on
+# disk, not something to publish. The game code itself is deliberately free of
+# them: no assistant references, no personal identifiers, no decision-log noise
+# in comments.
+# Published: README.md, docs/ARCHITECTURE_NOTES.md, docs/FLOOR_CANON.md, docs/WEAPON_RESEARCH.md,
+# docs/README.md, docs/reference/.
+.claude/
+/CLAUDE.md
+/SESSION_STATE.md
+docs/HANDOFF.md
+docs/PERF.md
+docs/UI.md
+docs/PLAYER_GUIDE.md
+docs/FEATURE_BACKLOG.md
+docs/SHIPMENT_LOG.md
+docs/DEFERRED.md
+docs/archive/
+
+# The personal-identifier list the hygiene check greps for. Kept out of the repository for the
+# obvious reason: committing it would publish exactly the strings the check exists to exclude.
+Tools/CodeAudit/identifiers.local
+
+# ── OS noise ─────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

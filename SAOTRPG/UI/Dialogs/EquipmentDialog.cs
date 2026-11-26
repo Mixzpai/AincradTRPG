@@ -1,9 +1,9 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Inventory.Core;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -137,7 +137,12 @@ public static class EquipmentDialog
         {
             parts.Add($"DMG: {w.BaseDamage}");
             if (!string.IsNullOrEmpty(w.WeaponType)) parts.Add($"Type: {w.WeaponType}");
-            if (w.AttackSpeed > 0) parts.Add($"SPD: {w.AttackSpeed}");
+            // NOT "SPD". Weapon.AttackSpeed is a 0-3 weight class whose only consumer is
+            // GetSwingDurationMs -- how long the swing ARC is drawn for -- while SPD on the
+            // character sheet is Player.Speed, which buys follow-up strikes. Printing both under
+            // the same three letters read as one stat, and a player comparing a rapier's SPD 0
+            // against their own SPD 180 was comparing an animation length with a combat number.
+            if (w.AttackSpeed > 0) parts.Add($"Swing: {w.AttackSpeed}");
         }
         else if (eq is Armor a)
         {
@@ -158,11 +163,13 @@ public static class EquipmentDialog
             bonuses.Add($"{ShortStatName(effect.Type)} {sign}{effect.Potency}");
         }
         if (bonuses.Count > 0) parts.Add(string.Join(", ", bonuses));
-        // Pickaxe shows N/M with critical/low tag; other gear keeps the legacy single-number DUR.
-        if (eq is Pickaxe pickDur)
+        // Anything declaring its own ceiling shows N/M with a critical/low tag; other gear keeps
+        // the legacy single-number DUR. Gated on the CEILING rather than on `is Pickaxe`, or a
+        // torch — which declares one too — reads out with no denominator.
+        if (eq.MaxDurability > 0)
         {
-            int max = pickDur.MaxDurability > 0 ? pickDur.MaxDurability : Math.Max(1, pickDur.ItemDurability);
-            int cur = Math.Clamp(pickDur.ItemDurability, 0, max);
+            int max = eq.MaxDurability;
+            int cur = Math.Clamp(eq.ItemDurability, 0, max);
             double pct = (double)cur / max;
             string tag = cur <= 0 ? "BROKEN" : pct < 0.25 ? "CRITICAL" : pct < 0.50 ? "Low" : "Good";
             parts.Add(cur <= 0 ? "DUR: BROKEN" : $"DUR: {cur}/{max} ({tag})");
@@ -202,14 +209,14 @@ public static class EquipmentDialog
     // rather than as nothing. Returns "" when no set has two pieces worn.
     internal static string BuildSetSummary(Player player)
     {
-        var live = new List<SAOTRPG.Items.Equipment.EquipmentBase>();
+        var live = new List<EquipmentBase>();
         foreach (EquipmentSlot slot in Enum.GetValues<EquipmentSlot>())
         {
             var eq = player.Inventory.GetEquipped(slot);
             if (eq != null && eq.ItemDurability > 0) live.Add(eq);
         }
 
-        var active = Systems.EquipmentSets.ActiveSets(live);
+        var active = SAOTRPG.Systems.Combat.EquipmentSets.ActiveSets(live);
         if (active.Count == 0) return "";
 
         var parts = new List<string>();

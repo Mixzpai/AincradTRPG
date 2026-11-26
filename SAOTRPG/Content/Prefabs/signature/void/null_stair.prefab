@@ -1,0 +1,22 @@
+NAME:          void_null_stair
+DESC:          A flight of slabs climbing out of nothing and stopping in it, with a reading-stone set at the last step.
+TAGS:          signature void stair impossible
+FLOORS:        *
+BIOME:         void
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+KFEAT: * = LoreStone
+
+MAP
+.......
+.#.....
+.##....
+.###...
+..##.P.
+...#.*.
+.....P.
+ENDMAP

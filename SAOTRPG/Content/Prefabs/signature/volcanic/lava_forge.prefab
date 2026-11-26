@@ -1,8 +1,8 @@
 NAME:          volcanic_lava_forge
 DESC:          An obsidian anvil balanced over a lava pit, ringed by ember-hot stones.
 TAGS:          signature volcanic forge anvil
-FLOORS:        13-95
-BIOME:         volcanic any
+FLOORS:        *
+BIOME:         volcanic
 WEIGHT:        25
 MAX_PER_FLOOR: 1
 ROTATE:        true

@@ -1,4 +1,3 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
@@ -6,8 +5,9 @@ using SAOTRPG.Items.Definitions;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Items.Materials;
 using SAOTRPG.Inventory.Core;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Crafting;
+using SAOTRPG.Systems.RunState;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -94,7 +94,7 @@ public static class CraftingDialog
             {
                 var eq = player.Inventory.GetEquipped(slot);
                 if (eq == null) continue;
-                int maxDur = 50 + floor * 10 + eq.EnhancementLevel * 5;
+                int maxDur = DurabilityHelper.RepairCeiling(eq, floor);
                 if (eq.ItemDurability < maxDur) { eq.ItemDurability = maxDur; repaired++; }
             }
             // Broken gear gives 0 bonuses; repair restores → cached aggregate must rebuild.
@@ -232,8 +232,8 @@ public static class CraftingDialog
         {
             // Weapon path threads oreDefId so per-level bonus biases to ore's stat.
             ApplyEnhancementDelta(player, chosenItem, +1, chosenOreDefId);
-            SAOTRPG.Systems.MilestoneSystem.OnRefinementApplied(player, chosenItem);
-            SAOTRPG.Systems.MilestoneSystem.OnWeaponUpgraded(player);
+            SAOTRPG.Systems.Progression.MilestoneSystem.OnRefinementApplied(player, chosenItem);
+            SAOTRPG.Systems.Progression.MilestoneSystem.OnWeaponUpgraded(player);
 
             string biasMsg = "";
             if (chosenOreDefId != null &&
@@ -302,11 +302,10 @@ public static class CraftingDialog
         return oreStacks[which].DefId;
     }
 
-    // Shared enhance/de-enhance: unequip, adjust level by ±1, re-equip.
+    // Shared enhance/de-enhance: adjust level by ±1, then rebuild the cached gear totals.
     // Weapons route through ore-biased stat; armor/accessories keep flat DEF/ATK.
     private static void ApplyEnhancementDelta(Player player, EquipmentBase item, int delta, string? oreDefId)
     {
-        item.Unequip(player);
         int bonus = BonusPerLevel(item);
 
         if (item is Weapon weapon)
@@ -350,7 +349,6 @@ public static class CraftingDialog
         }
 
         item.EnhancementLevel += delta;
-        item.Equip(player);
         player.Inventory.InvalidateStatCache();  // Bonuses mutated on equipped item
     }
 
@@ -358,10 +356,6 @@ public static class CraftingDialog
     // any weapon (equipped or backpack), no ore picker; flat Crimson-Flame Attack bias.
     internal static void ApplyLisbethIronIngotEnhance(Player player, Weapon weapon)
     {
-        bool wasEquipped = ReferenceEquals(player.Inventory.GetEquipped(EquipmentSlot.Weapon), weapon)
-                           || ReferenceEquals(player.Inventory.GetEquipped(EquipmentSlot.OffHand), weapon);
-        if (wasEquipped) weapon.Unequip(player);
-
         int bonus = BonusPerLevel(weapon);
         // Crimson Flame fallback keeps EnhancementOreHistory consistent with Anvil saves.
         const string ore = "ore_crimson_flame";
@@ -371,9 +365,8 @@ public static class CraftingDialog
         weapon.Bonuses.Add(stat, bonus);
         weapon.EnhancementLevel += 1;
 
-        if (wasEquipped) weapon.Equip(player);
         player.Inventory.InvalidateStatCache();
-        SAOTRPG.Systems.MilestoneSystem.OnRefinementApplied(player, weapon);
+        SAOTRPG.Systems.Progression.MilestoneSystem.OnRefinementApplied(player, weapon);
     }
 
     // Ore DurabilityBonus via prototype. Only Adamant Ore is non-zero today (+10/level).
@@ -413,10 +406,10 @@ public static class CraftingDialog
 
         // Compose costs + resolve display names up front for the prompt.
         string matName = MaterialDisplayName(step.MaterialDefId);
-        int haveMat = CountMaterialByDefId(player, step.MaterialDefId);
+        int haveMat = player.Inventory.CountByDefinitionId(step.MaterialDefId);
 
         string? peakName = step.PeakExtraMatId != null ? MaterialDisplayName(step.PeakExtraMatId) : null;
-        int havePeak = step.PeakExtraMatId != null ? CountMaterialByDefId(player, step.PeakExtraMatId) : 0;
+        int havePeak = step.PeakExtraMatId != null ? player.Inventory.CountByDefinitionId(step.PeakExtraMatId) : 0;
 
         // Preview the resulting weapon (without committing it) so we can show its name.
         var previewNext = ItemRegistry.Create(step.NextDefId);
@@ -437,7 +430,7 @@ public static class CraftingDialog
         {
             altName = ItemRegistry.Create(alt.AltNextDefId)?.Name ?? alt.AltNextDefId;
             stoneName = MaterialDisplayName(alt.StoneDefId);
-            haveStone = CountMaterialByDefId(player, alt.StoneDefId);
+            haveStone = player.Inventory.CountByDefinitionId(alt.StoneDefId);
         }
 
         string promptBody =
@@ -462,7 +455,7 @@ public static class CraftingDialog
                 return;
             }
             CommitEvolution(player, weapon, alt!.AltNextDefId, resultLabel, header,
-                            () => ConsumeMaterialByDefId(player, alt!.StoneDefId, 1),
+                            () => player.Inventory.ConsumeByDefinitionId(alt!.StoneDefId, 1),
                             $"1x {stoneName}");
             return;
         }
@@ -484,9 +477,9 @@ public static class CraftingDialog
         CommitEvolution(player, weapon, step.NextDefId, resultLabel, header,
                         () =>
                         {
-                            ConsumeMaterialByDefId(player, step.MaterialDefId, step.MaterialQty);
+                            player.Inventory.ConsumeByDefinitionId(step.MaterialDefId, step.MaterialQty);
                             if (step.PeakExtraMatId != null)
-                                ConsumeMaterialByDefId(player, step.PeakExtraMatId, 1);
+                                player.Inventory.ConsumeByDefinitionId(step.PeakExtraMatId, 1);
                         },
                         $"{step.MaterialQty}x {matName}"
                         + (step.PeakExtraMatId != null ? $" + 1x {peakName}" : ""));
@@ -508,13 +501,23 @@ public static class CraftingDialog
             return;
         }
 
+        // The old weapon returns to the bag before anything is paid, and an empty Weapon slot
+        // keeps the dual-wield route from sending the new one to the OffHand. A result too
+        // high-level to wield goes to the bag too, so it needs a second free slot.
+        int freeNeeded = player.Level < nextWeapon.RequiredLevel ? 2 : 1;
+        if (player.Inventory.ItemCount + freeNeeded > player.Inventory.MaxSlots
+            || !player.Inventory.Unequip(EquipmentSlot.Weapon, player))
+        {
+            resultLabel.Text = $"Your bag is full — free {freeNeeded} slot(s) first.";
+            resultLabel.SchemeName = ColorSchemes.DangerName;
+            return;
+        }
+
         payCost();
 
         // Preserve enhancement: bake existing-level bonuses into the new weapon then swap.
         int oldEnhLevel = weapon.EnhancementLevel;
         string oldName = weapon.EnhancedName;
-
-        weapon.Unequip(player);  // removes old stat bonuses from player
 
         // Fold old +N bonuses into new weapon, preserving per-level ore biases (not flat rebake).
         if (oldEnhLevel > 0)
@@ -534,15 +537,10 @@ public static class CraftingDialog
             }
         }
 
-        // Return old weapon to backpack so player can verify/sell.
-        player.Inventory.AddItem(weapon);
+        // Straight into the empty slot; the bag only if Equip refuses it (level gate).
+        if (!player.Inventory.Equip(nextWeapon, player)) player.Inventory.AddItem(nextWeapon);
 
-        // Add-then-Equip routes through normal flow; Equip pulls off backpack list.
-        player.Inventory.AddItem(nextWeapon);
-        player.Inventory.Equip(nextWeapon, player);
-        player.Inventory.InvalidateStatCache();
-
-        // ◈ prefix triggers LogColorRules BrightRed accent (Divine Object style).
+        // ◈ prefix marks a Divine Object, the mark the log's lines carry for one.
         resultLabel.Text =
             $"◈ Your {oldName} evolves into {nextWeapon.EnhancedName}!\n" +
             $"Consumed {costSummary}.";
@@ -556,37 +554,6 @@ public static class CraftingDialog
     {
         var item = ItemRegistry.Create(defId);
         return item?.Name ?? defId;
-    }
-
-    // Count of a specific chain material in the player's backpack, keyed by DefId.
-    private static int CountMaterialByDefId(Player player, string defId) =>
-        player.Inventory.Items
-            .OfType<Material>()
-            .Where(m => m.DefinitionId == defId)
-            .Sum(m => m.Quantity);
-
-    // Decrement `count` units matching `defId` across stacks; removes empties. No-op if insufficient.
-    private static void ConsumeMaterialByDefId(Player player, string defId, int count)
-    {
-        int remaining = count;
-        var toRemove = new List<BaseItem>();
-        foreach (var mat in player.Inventory.Items.OfType<Material>().ToList())
-        {
-            if (remaining <= 0) break;
-            if (mat.DefinitionId != defId) continue;
-            if (mat.Quantity <= remaining)
-            {
-                remaining -= mat.Quantity;
-                toRemove.Add(mat);
-            }
-            else
-            {
-                mat.Quantity -= remaining;
-                remaining = 0;
-            }
-        }
-        foreach (var item in toRemove)
-            player.Inventory.RemoveItem(item);
     }
 
     // ── Refine ── Socket an Ingot into one of 3 slots on equipped weapon/shield.
@@ -753,14 +720,16 @@ public static class CraftingDialog
         _           => 9,
     };
 
+    // Generic enhance materials are mob drops only: ingots and ores are spent by their own paths.
     private static int CountMaterials(Player player) =>
-        player.Inventory.Items.OfType<Material>().Sum(m => m.Quantity);
+        player.Inventory.Items.OfType<MobDrop>().Sum(m => m.Quantity);
 
+    // Cheapest drops go first, so a rare catalyst is the last thing eaten.
     private static void ConsumeMaterials(Player player, int count)
     {
         int remaining = count;
         var toRemove = new List<BaseItem>();
-        foreach (var mat in player.Inventory.Items.OfType<Material>().ToList())
+        foreach (var mat in player.Inventory.Items.OfType<MobDrop>().OrderBy(m => m.Value).ToList())
         {
             if (remaining <= 0) break;
             if (mat.Quantity <= remaining)

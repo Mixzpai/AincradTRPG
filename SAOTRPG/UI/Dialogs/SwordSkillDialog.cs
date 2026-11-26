@@ -1,7 +1,8 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
-using SAOTRPG.Systems;
+using SAOTRPG.Systems.Input;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Skills;
+using SAOTRPG.Systems.Turns;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -196,18 +197,38 @@ public static class SwordSkillDialog
         }
     }
 
+    private static readonly GameAction[] SlotActions =
+    {
+        GameAction.SwordSkill1, GameAction.SwordSkill2,
+        GameAction.SwordSkill3, GameAction.SwordSkill4,
+    };
+
+    // Slot tags sit in a fixed column ahead of the skill name, so the tag and the blank that
+    // stands in for "not equipped" are both padded to the widest BOUND key. F1 is two characters
+    // and a rebind to Shift+M is seven; a tag that grew would shift every name in the list.
+    private static int SlotTagWidth() =>
+        SlotActions.Max(a => KeyHints.Key(a).Length) + 3;
+
     private static string GetSlotLabel(TurnManager tm, SwordSkill skill)
     {
-        for (int i = 0; i < tm.EquippedSkills.Length; i++)
-            if (tm.EquippedSkills[i]?.Id == skill.Id) return $"[F{i + 1}] ";
-        return "     ";
+        int width = SlotTagWidth();
+        int slots = Math.Min(tm.EquippedSkills.Length, SlotActions.Length);
+        for (int i = 0; i < slots; i++)
+            if (tm.EquippedSkills[i]?.Id == skill.Id)
+                return $"[{KeyHints.Key(SlotActions[i])}] ".PadRight(width);
+        return new string(' ', width);
     }
 
     private static string BuildSlotSummary(TurnManager tm)
     {
-        var parts = new string[4];
-        for (int i = 0; i < 4; i++)
-            parts[i] = tm.EquippedSkills[i]?.Name ?? "---";
-        return $"[F1] {parts[0],-16} [F2] {parts[1],-16} [F3] {parts[2],-16} [F4] {parts[3]}";
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < SlotActions.Length; i++)
+        {
+            if (i > 0) sb.Append(' ');
+            string name = tm.EquippedSkills[i]?.Name ?? "---";
+            sb.Append('[').Append(KeyHints.Key(SlotActions[i])).Append("] ")
+              .Append(i == SlotActions.Length - 1 ? name : name.PadRight(16));
+        }
+        return sb.ToString();
     }
 }

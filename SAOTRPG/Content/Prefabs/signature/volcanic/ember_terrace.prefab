@@ -1,0 +1,25 @@
+NAME:          volcanic_ember_terrace
+DESC:          A basalt terrace split by two lava runnels, with a scholar's stone stranded on the shelf between them.
+TAGS:          signature volcanic terrace lava
+FLOORS:        *
+BIOME:         volcanic
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: n = Ash
+KFEAT: k = Basalt
+KFEAT: * = LoreStone
+
+MAP
+nnnnnnnnn
+nkkkkkkkn
+nk.G.G.kn
+nkLLLLLkn
+nk..*..kn
+nkLLLLLkn
+nk.G.G.kn
+nkkkkkkkn
+nnnnnnnnn
+ENDMAP

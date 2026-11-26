@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.UI.Helpers;
 
 // Shared dialog utilities: factory, separators, buttons, confirm, Esc-close, close footer.
@@ -330,31 +328,31 @@ public static class DialogHelper
     // full repaint so dialog cells don't linger as stale frame-cache content.
     public static void RunModal(Dialog dialog)
     {
-        SAOTRPG.Systems.FrameClock.Pause();
+        SAOTRPG.UI.Effects.FrameClock.Pause();
         // The nested run loop below keeps the outer main loop iterating normally, so a caller
         // that opened this dialog mid-turn would otherwise bill the player's reading time to
         // whatever profiler scope it is standing in — with nothing in the loop sampler to
         // contradict it.
-        SAOTRPG.Systems.Profiler.BeginExclusion();
+        SAOTRPG.Systems.Diagnostics.Profiler.BeginExclusion();
         s_openModals.Add(dialog);
         try
         {
             // Under reduce-motion the dialog simply appears. The fade is the transition, not the
             // dialog — skipping it changes nothing about what is on screen a moment later.
-            if (SAOTRPG.Systems.Motion.Animate)
+            if (SAOTRPG.UI.Effects.Motion.Animate)
                 FadeInDialog(dialog, durationMs: 200,
-                    SAOTRPG.Systems.EasingHelper.EasingType.EaseOut);
+                    SAOTRPG.UI.Effects.EasingHelper.EasingType.EaseOut);
             AppHost.App.Run(dialog);
         }
         finally
         {
             // Before Dispose, so any pending timeout sees the dialog as closed.
             s_openModals.Remove(dialog);
-            SAOTRPG.Systems.Profiler.EndExclusion();
-            SAOTRPG.Systems.FrameClock.Resume();
+            SAOTRPG.Systems.Diagnostics.Profiler.EndExclusion();
+            SAOTRPG.UI.Effects.FrameClock.Resume();
             dialog.Dispose();
             // Force underlying view redraw so dialog cells aren't served stale by the frame cache.
-            SAOTRPG.UI.MapView.MarkFrameDirty();
+            SAOTRPG.UI.Rendering.MapView.MarkFrameDirty();
             (AppHost.App.TopRunnable as View)?.SetNeedsDraw();
         }
     }
@@ -362,7 +360,7 @@ public static class DialogHelper
     // Schedules a per-frame Scheme ramp from black→baseline.
     // Stopwatch-driven so it runs independently of the paused FrameClock.
     private static void FadeInDialog(Dialog dialog, int durationMs,
-        SAOTRPG.Systems.EasingHelper.EasingType easing)
+        SAOTRPG.UI.Effects.EasingHelper.EasingType easing)
     {
         var originalScheme = dialog.GetScheme();
         if (originalScheme == null) return; // belt-and-suspenders for safety
@@ -372,7 +370,7 @@ public static class DialogHelper
         if (target <= 0) return; // degenerate guard
 
         // Snap to black at frame 0 so the first paint isn't full-color.
-        dialog.SetScheme(SAOTRPG.Systems.EasingHelper.ScaleScheme(originalScheme, 0f));
+        dialog.SetScheme(SAOTRPG.UI.Effects.EasingHelper.ScaleScheme(originalScheme, 0f));
 
         // One per dialog OBJECT — two opens are two dialogs, each easing its own captured
         // instance, so there is no shared state to race.
@@ -382,8 +380,8 @@ public static class DialogHelper
 
             long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - startTicks;
             float t = Math.Clamp((float)elapsed / target, 0f, 1f);
-            float alpha = SAOTRPG.Systems.EasingHelper.Ease(t, easing);
-            dialog.SetScheme(SAOTRPG.Systems.EasingHelper.ScaleScheme(originalScheme, alpha));
+            float alpha = SAOTRPG.UI.Effects.EasingHelper.Ease(t, easing);
+            dialog.SetScheme(SAOTRPG.UI.Effects.EasingHelper.ScaleScheme(originalScheme, alpha));
             dialog.SetNeedsDraw();
             if (t >= 1f)
             {

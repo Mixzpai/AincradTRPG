@@ -1,4 +1,5 @@
-using SAOTRPG.Systems;
+
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Generation;
 
@@ -19,6 +20,36 @@ public sealed class WorldContext
     // Populated by SeedDerivationPass. Use this everywhere inside the pipeline — never the ambient
     // run stream, because a pass must reproduce from the floor's derived seed alone.
     public Random Rng { get; set; } = null!;
+
+    // Per-game prefab MAX_PER_GAME ledger, SCOPED TO THIS GENERATION. It starts as a copy of the
+    // game's ledger and is committed back only when the finished floor is actually adopted, so a
+    // floor built ahead of time and then discarded cannot leave the caps advanced.
+    //
+    // It also has to be per-context rather than static because generation may run off the UI
+    // thread. Measured on the static Dictionary it replaced: eight threads incrementing it lose
+    // ~10% of their increments outright and intermittently throw InvalidOperationException with
+    // the collection corrupted — i.e. a MAX_PER_GAME:1 landmark could place twice and a floor
+    // could stop reproducing, both in silence.
+    public Dictionary<string, int> PrefabUseCounts { get; set; } = new();
+
+    // Returns true if placement is allowed, and charges the cap. maxPerGame <= 0 = unlimited.
+    public bool TryUsePrefab(string name, int maxPerGame)
+    {
+        if (maxPerGame <= 0) return true;
+        int cur = PrefabUseCounts.TryGetValue(name, out int v) ? v : 0;
+        if (cur >= maxPerGame) return false;
+        PrefabUseCounts[name] = cur + 1;
+        return true;
+    }
+
+    // Mirror of TryUsePrefab: the charge above is optimistic, so a placement that ultimately
+    // fails gives it back rather than burning a cap on a prefab that never appeared.
+    public void RefundPrefab(string name)
+    {
+        if (!PrefabUseCounts.TryGetValue(name, out int v) || v <= 0) return;
+        if (v == 1) PrefabUseCounts.Remove(name);
+        else PrefabUseCounts[name] = v - 1;
+    }
 
     // Set by HeightmapPass. float[w,h] in [0..1]. Null until the pass runs.
     public float[,]? Heights { get; set; }
@@ -67,7 +98,11 @@ public sealed class WorldContext
         Width = width;
         Height = height;
         Biome = biome;
-        Config = config;
+        // A floor may declare a sub-variant of its biome, and the variant file REPLACES the base
+        // config for that floor. The caller supplies the biome's own config, which is still what
+        // every floor without a declared variant generates from — and what a declared variant
+        // falls back to, loudly, when its file cannot be read.
+        Config = BiomeGenConfigLoader.VariantFor(biome, floorNumber) ?? config;
         Map = map;
     }
 }

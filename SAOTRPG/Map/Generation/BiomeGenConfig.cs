@@ -1,4 +1,5 @@
-using SAOTRPG.Systems;
+
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Generation;
 
@@ -10,8 +11,18 @@ public enum RiverAlgorithm { None, DrunkardWalk, DownslopeTrace }
 // on screen, relative to the densest biome.
 public sealed record AmbientOverlayStub(string? ParticleId, int DensityPermille);
 
-// Per-biome min/max counts for Poisson-scattered features. Consumed by
-// FeatureScatterPass. All bounds inclusive; Poisson spacing is PoissonRadius tiles.
+// Per-biome min/max counts for scattered features. All bounds inclusive; Poisson spacing is
+// PoissonRadius tiles.
+//
+// FOR THE SIX RECONCILED CATEGORIES THESE ARE FLOOR-WIDE TOTALS, NOT A SCATTER ALLOWANCE.
+// Anvil / Campfire / EnchantShrine / LoreStone / Journal / Pillar are counted across the whole
+// finished floor and trimmed back to the maximum by FeatureScatterPass, which runs after the two
+// prefab passes and after every town, corridor and stair-room decorator. Before that they were a
+// budget for one placement route out of six, so the declared numbers described a fraction of what
+// the floor actually carried — grassland asked for at most 2 campfires and grew 18.
+//
+// Chests, traps and gas vents are NOT reconciled: they are loot and difficulty rather than
+// clutter, and their bounds still govern the Poisson scatter alone.
 public sealed record FeatureQuotas(
     int MinAnvils = 0,     int MaxAnvils = 1,
     int MinShrines = 1,    int MaxShrines = 2,
@@ -19,9 +30,13 @@ public sealed record FeatureQuotas(
     int MinTraps = 2,      int MaxTraps = 8,
     int MinGasVents = 0,   int MaxGasVents = 3,
     int MinLoreStones = 1, int MaxLoreStones = 2,
-    int MinJournals = 1,   int MaxJournals = 3,
-    int MinCampfires = 1,  int MaxCampfires = 3,
-    int MinPillars = 0,    int MaxPillars = 2,
+    int MinJournals = 1,   int MaxJournals = 2,
+    // Every floor must carry somewhere to recover, so the minimum is a hard 3 rather than a
+    // preference; the maximum is what keeps a 100x100 floor from reading as a campsite.
+    int MinCampfires = 3,  int MaxCampfires = 6,
+    // The boss arena and the spawn chamber each frame themselves with four corner pillars,
+    // unconditionally, on every floor — so a maximum below 8 is a declaration no floor can meet.
+    int MinPillars = 0,    int MaxPillars = 8,
     float PoissonRadius = 6.0f);
 
 // Per-biome generation knobs. Loaded from Content/Biomes/*.json; `CreateDefault`
@@ -40,7 +55,6 @@ public sealed record BiomeGenConfig(
     float RiverSpawnChance,
     int GrassTallWeight,
     int SparseWeight,
-    int FlowersWeight,
     int BaseGrassWeight,
     float[] HeightmapThresholds,
     bool RidgeNoiseEnabled,
@@ -61,8 +75,28 @@ public sealed record BiomeGenConfig(
     // coastlines wander rather than follow the noise lattice. Both default to the values every
     // biome used when they were hardcoded, so an unset biome is bit-identical.
     int HeightmapOctaves = 4,
-    float HeightmapWarpAmp = 30f)
+    float HeightmapWarpAmp = 30f,
+    // Cellular-automata cave carving, applied by BaseTerrainPass AFTER the biome's own terrain is
+    // stamped: the open cells keep the biome's palette and everything else is buried under Wall.
+    // Off by default, so a biome that says nothing about it generates bit-identically to before.
+    bool CaveMode = false,
+    // Share of in-disk cells seeded as rock before smoothing, in percent. This is the knob that
+    // decides how much floor survives, and its response is FLAT below ~47 and steep above: 38 and
+    // 45 differ by under a point of wall, while 50 and 52 differ by twenty. Ignored unless
+    // CaveMode; clamped to MinCaveFillPct..MaxCaveFillPct.
+    int CaveFillPct = 45,
+    // Smoothing iterations. Each one removes finer detail; below 3 the walls still read as noise
+    // rather than as rock. Ignored unless CaveMode.
+    int CaveSmoothPasses = 4)
 {
+    // The band BaseTerrainPass will honour, and both ends are measured rather than chosen. Below
+    // 35 the smoothing hands back an open field with rock islands in it; above 52 the open phase
+    // stops spanning the disk and the floor comes back sparse — 22% open at 52 and 7% at 55, on a
+    // 274x274 disk. A value outside is clamped AND logged rather than quietly obeyed.
+    public const int MinCaveFillPct = 35;
+    public const int MaxCaveFillPct = 52;
+    public const int MaxCaveSmoothPasses = 8;
+
     // Parse TintColor ("#RRGGBB" or "#RRGGBBAA") into Color + alpha byte; returns null
     // when unset/malformed. Alpha defaults to 160 (~63%) when only 6 hex digits given.
     //
@@ -89,85 +123,87 @@ public sealed record BiomeGenConfig(
     public static BiomeGenConfig CreateDefault(BiomeType biome) => biome switch
     {
         BiomeType.Grassland => Build(biome, 1.0f, 0.8f, 1.0f, 45, 4, true, RiverAlgorithm.DrunkardWalk,
-            2, 0.6f, 20, 10, 5, 65, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
+            2, 0.6f, 20, 10, 65, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
             "wind_motes", 3, new[] { "Forest", "Desert" }, "Body",
             "#8CC8501A", "A breeze stirs the tall grass. The sky is wide and unhurried.", '♣',
-            new FeatureQuotas(0, 1, 1, 2, 3, 5, 2, 4, 0, 1, 1, 2, 1, 2, 1, 2, 0, 1, 6.0f),
+            new FeatureQuotas(0, 1, 1, 2, 3, 5, 2, 4, 0, 1, 1, 2, 1, 2, 3, 6, 0, 8, 6.0f),
             0.8f, "default"),
         BiomeType.Forest => Build(biome, 2.2f, 0.6f, 1.6f, 45, 4, true, RiverAlgorithm.DrunkardWalk,
-            2, 0.55f, 40, 5, 3, 52, new[] { 0.10f, 0.30f, 0.70f, 0.92f }, false, 0f,
+            2, 0.55f, 40, 5, 52, new[] { 0.10f, 0.30f, 0.70f, 0.92f }, false, 0f,
             "firefly", 4, new[] { "Grassland", "Swamp" }, "Success",
             "#2E5B2E22", "Dense canopy swallows the light. Every rustle might be teeth.", 'T',
-            new FeatureQuotas(0, 1, 1, 2, 3, 6, 3, 6, 0, 2, 1, 3, 1, 3, 1, 3, 0, 1, 6.0f),
+            new FeatureQuotas(0, 1, 1, 2, 3, 6, 3, 6, 0, 2, 1, 3, 1, 2, 3, 6, 0, 8, 6.0f),
             0.6f, "default"),
         BiomeType.Swamp => Build(biome, 1.6f, 0.4f, 1.3f, 55, 3, true, RiverAlgorithm.DrunkardWalk,
-            1, 0.4f, 30, 25, 2, 43, new[] { 0.05f, 0.20f, 0.60f, 0.85f }, false, 0f,
+            1, 0.4f, 30, 25, 43, new[] { 0.05f, 0.20f, 0.60f, 0.85f }, false, 0f,
             "fog_mote", 8, new[] { "Forest", "Aquatic" }, "Dim",
             "#40385026", "The bog exhales. Your boots find wet ground before you see it.", 'Y',
-            new FeatureQuotas(0, 0, 0, 2, 2, 5, 4, 8, 2, 5, 1, 2, 1, 2, 0, 2, 0, 1, 7.0f),
+            new FeatureQuotas(0, 0, 0, 2, 2, 5, 4, 8, 2, 5, 1, 2, 1, 2, 3, 5, 0, 8, 7.0f),
             0.4f, "swamp"),
         BiomeType.Desert => Build(biome, 0.15f, 1.8f, 0.2f, 0, 0, false, RiverAlgorithm.None,
-            0, 0f, 2, 80, 1, 17, new[] { 0.30f, 0.50f, 0.75f, 0.88f }, true, 0.65f,
+            0, 0f, 2, 80, 17, new[] { 0.30f, 0.50f, 0.75f, 0.88f }, true, 0.65f,
             "sand_drift", 7, new[] { "Grassland", "Volcanic" }, "Gold",
             "#C8A05022", "Heat ripples distort the horizon. Your canteen feels too light.", '♠',
-            new FeatureQuotas(0, 1, 0, 1, 2, 4, 2, 6, 0, 2, 1, 2, 0, 2, 0, 1, 0, 2, 8.0f),
+            new FeatureQuotas(0, 1, 0, 1, 2, 4, 2, 6, 0, 2, 1, 2, 0, 2, 3, 5, 0, 8, 8.0f),
             1.2f, "desert"),
         BiomeType.Ice => Build(biome, 0.9f, 1.4f, 0.3f, 50, 4, true, RiverAlgorithm.DrunkardWalk,
-            2, 0.5f, 5, 55, 1, 39, new[] { 0.15f, 0.35f, 0.70f, 0.88f }, true, 0.35f,
+            2, 0.5f, 5, 55, 39, new[] { 0.15f, 0.35f, 0.70f, 0.88f }, true, 0.35f,
             "snowflake", 6, new[] { "Aquatic" }, "Title",
             "#88B0D822", "The air bites. Every breath glitters for a heartbeat then vanishes.", '▲',
-            new FeatureQuotas(0, 1, 1, 2, 3, 5, 2, 5, 0, 1, 1, 2, 1, 2, 1, 2, 0, 1, 6.0f),
+            new FeatureQuotas(0, 1, 1, 2, 3, 5, 2, 5, 0, 1, 1, 2, 1, 2, 3, 6, 0, 8, 6.0f),
             1.3f, "ice"),
         BiomeType.Volcanic => Build(biome, 0.2f, 2.2f, 0.2f, 0, 0, false, RiverAlgorithm.DownslopeTrace,
-            2, 0.7f, 2, 70, 0, 28, new[] { 0.20f, 0.40f, 0.65f, 0.82f }, true, 0.80f,
+            2, 0.7f, 2, 70, 28, new[] { 0.20f, 0.40f, 0.65f, 0.82f }, true, 0.80f,
             "ember", 8, new[] { "Desert" }, "Danger",
             "#CC402026", "The ground trembles underfoot. Somewhere below, something old is awake.", '¥',
-            new FeatureQuotas(0, 1, 0, 1, 2, 4, 4, 8, 3, 6, 1, 2, 0, 2, 0, 1, 0, 2, 7.0f),
+            new FeatureQuotas(0, 1, 0, 1, 2, 4, 4, 8, 3, 6, 1, 2, 0, 2, 3, 4, 0, 8, 7.0f),
             1.5f, "volcanic"),
         BiomeType.Aquatic => Build(biome, 0.5f, 0.6f, 0.8f, 70, 6, true, RiverAlgorithm.DrunkardWalk,
-            3, 0.85f, 15, 30, 2, 53, new[] { 0.40f, 0.55f, 0.75f, 0.92f }, false, 0f,
+            3, 0.85f, 15, 30, 53, new[] { 0.40f, 0.55f, 0.75f, 0.92f }, false, 0f,
             "rain_mote", 5, new[] { "Ice", "Swamp" }, "Dialog",
             "#4080C024", "Sea-spray dusts the stones. The horizon is water all the way to the wall.", '♣',
-            new FeatureQuotas(0, 1, 0, 1, 2, 4, 0, 2, 0, 1, 1, 2, 1, 2, 0, 2, 0, 1, 8.0f),
+            new FeatureQuotas(0, 1, 0, 1, 2, 4, 0, 2, 0, 1, 1, 2, 1, 2, 3, 5, 0, 8, 8.0f),
             0.2f, "aquatic"),
-        BiomeType.Ruins => Build(biome, 0.8f, 1.6f, 1.1f, 30, 3, true, RiverAlgorithm.DrunkardWalk,
-            1, 0.25f, 18, 40, 2, 40, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
+        BiomeType.Ruins => Build(biome, 0.15f, 0.35f, 0.4f, 30, 3, true, RiverAlgorithm.DrunkardWalk,
+            1, 0.25f, 18, 40, 40, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
             "dust_mote", 5, new[] { "Urban", "Forest" }, "Dim",
             "#8060401E", "Cracked flagstones underfoot. Someone lived here once. No one does now.", '♣',
-            new FeatureQuotas(0, 1, 1, 2, 3, 6, 3, 7, 0, 3, 2, 4, 2, 4, 0, 2, 1, 3, 6.0f),
-            0.5f, "default"),
-        BiomeType.Dark => Build(biome, 0.3f, 1.4f, 0.4f, 20, 3, true, RiverAlgorithm.None,
-            0, 0f, 3, 60, 0, 37, new[] { 0.10f, 0.30f, 0.65f, 0.88f }, false, 0f,
-            "shadow_wisp", 2, new[] { "Void" }, "Dim",
+            new FeatureQuotas(0, 1, 1, 2, 3, 6, 3, 7, 0, 3, 1, 3, 1, 2, 3, 5, 0, 10, 6.0f),
+            0.5f, "default", caveMode: true, caveFillPct: 49, caveSmoothPasses: 4),
+        BiomeType.Dark => Build(biome, 0.05f, 0.25f, 0.15f, 20, 3, true, RiverAlgorithm.None,
+            0, 0f, 3, 60, 37, new[] { 0.10f, 0.30f, 0.65f, 0.88f }, false, 0f,
+            "shadow_wisp", 2, new[] { "Volcanic" }, "Dim",
             "#20103022", "The torch sputters. Shadows fold in on themselves at the edge of sight.", '♣',
-            new FeatureQuotas(0, 0, 0, 1, 2, 4, 3, 7, 1, 3, 1, 2, 1, 2, 0, 1, 0, 2, 7.0f),
-            1.0f, "dark"),
+            new FeatureQuotas(0, 0, 0, 1, 2, 4, 3, 7, 1, 3, 1, 2, 1, 2, 3, 4, 0, 8, 7.0f),
+            1.0f, "dark", caveMode: true, caveFillPct: 50, caveSmoothPasses: 4),
         BiomeType.Urban => Build(biome, 0.3f, 0.4f, 0.5f, 25, 3, false, RiverAlgorithm.DrunkardWalk,
-            1, 0.3f, 5, 20, 5, 70, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
+            1, 0.3f, 5, 20, 70, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
             "lantern_glow", 3, new[] { "Ruins" }, "Gold",
             "#B0A8901A", "Lantern light spills from shuttered windows. The streets remember footsteps.", '♣',
-            new FeatureQuotas(1, 2, 1, 2, 2, 4, 1, 3, 0, 1, 1, 2, 2, 3, 1, 2, 1, 3, 5.0f),
+            new FeatureQuotas(1, 2, 1, 2, 2, 4, 1, 3, 0, 1, 1, 2, 1, 3, 3, 6, 0, 10, 5.0f),
             0.5f, "default"),
         BiomeType.Void => Build(biome, 0.1f, 0.6f, 0.2f, 10, 2, false, RiverAlgorithm.None,
-            0, 0f, 2, 75, 1, 22, new[] { 0.05f, 0.25f, 0.60f, 0.85f }, true, 0.45f,
+            0, 0f, 2, 75, 22, new[] { 0.05f, 0.25f, 0.60f, 0.85f }, true, 0.45f,
             "void_spark", 4, new[] { "Dark" }, "TierRadio",
             "#5020A026", "Reality hiccups. For one breath, the walls aren't where they were.", '*',
-            new FeatureQuotas(0, 0, 0, 2, 1, 3, 4, 9, 2, 5, 1, 2, 0, 1, 0, 0, 0, 1, 9.0f),
+            new FeatureQuotas(0, 0, 0, 2, 1, 3, 4, 9, 2, 5, 1, 2, 0, 2, 3, 4, 0, 8, 9.0f),
             1.4f, "void"),
         _ => Build(biome, 1.0f, 0.8f, 1.0f, 45, 4, true, RiverAlgorithm.DrunkardWalk,
-            2, 0.6f, 20, 10, 5, 65, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
+            2, 0.6f, 20, 10, 65, new[] { 0.15f, 0.35f, 0.70f, 0.90f }, false, 0f,
             "wind_motes", 3, new[] { "Forest", "Desert" }, "Body",
             null, null, '♣', new FeatureQuotas()),
     };
 
     private static BiomeGenConfig Build(BiomeType b, float treeDensity, float rockDensity, float bushDensity,
         int waterSeedPct, int caPasses, bool lakesEnabled, RiverAlgorithm river, int minWidth, float spawnChance,
-        int tall, int sparse, int flowers, int baseGrass, float[] thresholds, bool ridge, float ridgeStr,
+        int tall, int sparse, int baseGrass, float[] thresholds, bool ridge, float ridgeStr,
         string? particle, int permille, string[] pockets, string palette,
         string? tint = null, string? entryText = null, char treeGlyph = '♣',
-        FeatureQuotas? quotas = null, float oreVeinDensity = 1.0f, string oreTableId = "default")
+        FeatureQuotas? quotas = null, float oreVeinDensity = 1.0f, string oreTableId = "default",
+        bool caveMode = false, int caveFillPct = 45, int caveSmoothPasses = 4)
         => new(b.ToString(), 1, treeDensity, rockDensity, bushDensity, waterSeedPct, caPasses, lakesEnabled,
-            river, minWidth, spawnChance, tall, sparse, flowers, baseGrass, thresholds, ridge, ridgeStr,
+            river, minWidth, spawnChance, tall, sparse, baseGrass, thresholds, ridge, ridgeStr,
             new AmbientOverlayStub(particle, permille), pockets, palette, tint, entryText, treeGlyph, quotas,
-            oreVeinDensity, oreTableId);
+            oreVeinDensity, oreTableId, CaveMode: caveMode, CaveFillPct: caveFillPct,
+            CaveSmoothPasses: caveSmoothPasses);
 }

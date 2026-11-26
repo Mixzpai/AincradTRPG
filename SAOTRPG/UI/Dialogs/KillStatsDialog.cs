@@ -1,7 +1,7 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.RunState;
+using SAOTRPG.Systems.Turns;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -61,7 +61,7 @@ public static class KillStatsDialog
         });
 
         // Day/night phase
-        dialog.Add(MakeStat("Phase", $"{SAOTRPG.Map.DayNightCycle.PhaseName}", y++));
+        dialog.Add(MakeStat("Phase", $"{SAOTRPG.Map.Lighting.DayNightCycle.PhaseName}", y++));
         y++;
 
         // ── Weapon Proficiency ──

@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.UI.Helpers;
 
 // Terminal.Gui rendering shim.
@@ -35,24 +33,23 @@ public static class Gfx
     // constant and drop the guarded blocks entirely from the per-cell path when off.
     // DebugMode must therefore be final before Gfx is first touched; Program.Main
     // parses every flag ahead of AppHost.Start for exactly this reason.
-    internal static readonly bool Counting = SAOTRPG.UI.DebugMode.PerfSampling;
+    internal static readonly bool Counting = SAOTRPG.Systems.Diagnostics.DebugMode.PerfSampling;
 
     // Counts cells actually committed vs skipped as unchanged, so the per-frame
     // volume reaching the terminal can be told apart from draw-path overhead.
     internal static long CellsWritten, CellsSkipped;
-    // Rows touched and cells actually handed to the driver after span filling —
-    // the transmitted volume, which is what frame time tracks.
+    // Rows with a dirty cell, and the dirty cells the driver will send — the transmitted
+    // volume, which is what flush time tracks.
     internal static long RowsDirty, CellsTransmitted;
-    // Attribute changes along the transmitted spans. The driver emits a colour escape
-    // only when the attribute differs from the previous cell, so this is the count of
-    // escape sequences per frame — ~40 bytes each for truecolor, versus ~1 byte for a
-    // cell that continues the current colour.
-    internal static long AttrRuns;
+    // Attribute changes in transmission order: the driver emits a colour escape (~19 bytes for
+    // a truecolor fg, more when bg or style also change) only when the attribute differs from
+    // the previous cell it sent. Gaps are runs of dirty cells, each costing one cursor move.
+    internal static long AttrRuns, Gaps;
 
-    internal static (long written, long skipped, long rows, long sent, long runs) DrainCounters()
+    internal static (long written, long skipped, long rows, long sent, long runs, long gaps) DrainCounters()
     {
-        var result = (CellsWritten, CellsSkipped, RowsDirty, CellsTransmitted, AttrRuns);
-        CellsWritten = 0; CellsSkipped = 0; RowsDirty = 0; CellsTransmitted = 0; AttrRuns = 0;
+        var result = (CellsWritten, CellsSkipped, RowsDirty, CellsTransmitted, AttrRuns, Gaps);
+        CellsWritten = 0; CellsSkipped = 0; RowsDirty = 0; CellsTransmitted = 0; AttrRuns = 0; Gaps = 0;
         return result;
     }
 
@@ -100,19 +97,19 @@ public static class Gfx
         int rows = contents.GetLength(0), cols = contents.GetLength(1);
         var clip = ClipBounds(buffer, cols, rows);
         var origin = view.ViewportToScreen(new System.Drawing.Point(0, 0));
+        // The visible span is the same on every row, so it is solved once instead of costing four
+        // compares per cell across a full viewport. ClipBounds has already intersected the clip
+        // with the buffer, so these bounds subsume the sx/sy range tests they replace.
+        var (vx0, vy0, vx1, vy1) = VisibleSpan(clip, origin, width, height);
 
-        for (int vy = 0; vy < height; vy++)
+        for (int vy = vy0; vy < vy1; vy++)
         {
             int sy = origin.Y + vy;
-            if (sy < 0 || sy >= rows || sy < clip.Y0 || sy >= clip.Y1) continue;
-
             int rowBase = vy * width;
             bool rowTouched = false;
-            for (int vx = 0; vx < width; vx++)
+            for (int vx = vx0; vx < vx1; vx++)
             {
                 int sx = origin.X + vx;
-                if (sx < 0 || sx >= cols || sx < clip.X0 || sx >= clip.X1) continue;
-
                 Glyph g = src[rowBase + vx];
                 ref Cell existing = ref contents[sy, sx];
                 if (existing.Attribute == g.Attr
@@ -153,69 +150,42 @@ public static class Gfx
         return cell;
     }
 
-    // Marks every cell of every dirty row across the whole buffer, from the row's leftmost dirty
-    // cell to its rightmost.
+    // Counts what the driver will send this frame, for --perf: dirty rows, dirty cells, colour
+    // changes and gaps. Read-only. GameWindow.DrawComplete calls it after every view has painted
+    // and before the driver flushes.
     //
-    // ── DO NOT "OPTIMISE" THIS BY SENDING FEWER CELLS. Tried twice; 5x and 60x slower. ──
-    //
-    // A CLEAN CELL INSIDE A DIRTY ROW COSTS A SYSCALL. A DIRTY ONE IS ALMOST FREE.
-    //
-    // Terminal.Gui's OutputBase.Write(IOutputBuffer) walks every column of every dirty row, and
-    // its clean-cell branch calls SetCursorPositionImpl per clean cell — which in AnsiOutput emits
-    // a cursor escape through its own WriteFile on the console handle. Dirty cells, by contrast,
-    // accumulate into one buffer and leave in a single write. So the cheapest possible frame is one
-    // where every dirty row is 100% dirty, and cost scales with the clean cells you leave *inside*
-    // the span, not with the cells you send.
-    //
-    // Filling lo..hi is therefore optimal, not wasteful. Two measured attempts to send less:
-    //   - bridge only gaps <=12 cells: payload -97% (28,756 -> ~914 cells), flush 19ms -> ~1,100ms
-    //   - drop the window border:      rows 91 -> 1, flush 19ms -> ~105ms even at the title screen
-    // Both lost precisely because they left clean cells inside dirty rows.
-    //
-    // This is also why the host window's border is LOAD-BEARING: it dirties column 0 and column
-    // W-1 on every row, which pins lo/hi to the screen edges and guarantees zero clean-cell walks.
-    // Do not remove it for performance reasons.
-    //
-    // There is no further win here without replacing the driver's write loop.
-    //
-    // Must run after every view has painted but before the driver flushes.
-    public static void FillDirtyRows()
+    // Until Terminal.Gui 2.4.5.2 this pass FILLED each dirty row end to end, because the driver
+    // spent a console write on every clean cell inside a dirty row. The patched driver sends the
+    // frame in one write with one cursor move per gap, so only changed cells go out (docs/PERF.md
+    // section 2). Do not reinstate the fill: the window border dirties every row, so it resends
+    // the whole screen, measured 4-6x slower than sparse on a walking frame.
+    public static void CountTransmitted()
     {
         var buffer = AppHost.App.Driver?.GetOutputBuffer();
         var contents = buffer?.Contents;
         if (contents is null) return;
 
         int rows = contents.GetLength(0), cols = contents.GetLength(1);
+        // Frame-wide, like the driver's own last-attribute: a colour carries across rows and gaps.
+        Attribute? prev = null;
         for (int row = 0; row < rows; row++)
         {
             if (!buffer!.DirtyLines[row]) continue;
 
-            int lo = -1, hi = -1;
+            bool rowSent = false, inGap = true;
             for (int col = 0; col < cols; col++)
             {
-                if (!contents[row, col].IsDirty) continue;
-                if (lo < 0) lo = col;
-                hi = col;
-            }
+                if (!contents[row, col].IsDirty) { inGap = true; continue; }
 
-            if (lo < 0) continue;
-
-            for (int col = lo; col <= hi; col++) contents[row, col].IsDirty = true;
-
-            if (!Counting) continue;
-
-            // Accounting only. Kept as a second pass so the fill above stays a bare
-            // store per cell — the attribute read and compare below exist purely to
-            // count colour escapes and have no effect on what the driver transmits.
-            RowsDirty++;
-            CellsTransmitted += hi - lo + 1;
-            Attribute? prev = null;
-            for (int col = lo; col <= hi; col++)
-            {
+                if (inGap) { Gaps++; inGap = false; }
+                rowSent = true;
+                CellsTransmitted++;
                 Attribute? a = contents[row, col].Attribute;
-                if (col == lo || a != prev) AttrRuns++;
+                if (a != prev) AttrRuns++;
                 prev = a;
             }
+
+            if (rowSent) RowsDirty++;
         }
     }
 
@@ -239,6 +209,19 @@ public static class Gfx
         return (x0, y0, x1, y1);
     }
 
+    // The view-relative rectangle whose screen cells are inside both the buffer and the clip.
+    // Solving it once per pass turns four per-cell compares into loop bounds; ClipBounds has
+    // already intersected the clip with the buffer, so no separate 0..cols test is needed.
+    private static (int X0, int Y0, int X1, int Y1) VisibleSpan(
+        (int X0, int Y0, int X1, int Y1) clip, System.Drawing.Point origin, int width, int height)
+    {
+        int x0 = clip.X0 - origin.X; if (x0 < 0) x0 = 0;
+        int y0 = clip.Y0 - origin.Y; if (y0 < 0) y0 = 0;
+        int x1 = clip.X1 - origin.X; if (x1 > width) x1 = width;
+        int y1 = clip.Y1 - origin.Y; if (y1 > height) y1 = height;
+        return (x0, y0, x1, y1);
+    }
+
     // ── Region snapshot / replay ───────────────────────────────────────
     // Backs a caller-owned frame cache: capture a view's painted cells, then replay
     // them on frames where nothing changed. Cells are copied as structs, so graphemes
@@ -253,18 +236,16 @@ public static class Gfx
 
         int rows = contents.GetLength(0), cols = contents.GetLength(1);
         var origin = view.ViewportToScreen(new System.Drawing.Point(0, 0));
+        // Unclipped — a capture reads whatever is on screen — so the span is the buffer itself.
+        var (vx0, vy0, vx1, vy1) = VisibleSpan((0, 0, cols, rows), origin, width, height);
 
-        for (int vy = 0; vy < height; vy++)
+        for (int vy = vy0; vy < vy1; vy++)
         {
             int sy = origin.Y + vy;
-            if (sy < 0 || sy >= rows) continue;
-
             int rowBase = vy * width;
-            for (int vx = 0; vx < width; vx++)
+            for (int vx = vx0; vx < vx1; vx++)
             {
                 int sx = origin.X + vx;
-                if (sx < 0 || sx >= cols) continue;
-
                 Cell cell = contents[sy, sx];
                 // Never-written cells carry a null attribute; pin the default so a
                 // later replay doesn't hand the driver an unset colour.
@@ -287,19 +268,16 @@ public static class Gfx
         int rows = contents.GetLength(0), cols = contents.GetLength(1);
         var clip = ClipBounds(buffer, cols, rows);
         var origin = view.ViewportToScreen(new System.Drawing.Point(0, 0));
+        var (vx0, vy0, vx1, vy1) = VisibleSpan(clip, origin, width, height);
 
-        for (int vy = 0; vy < height; vy++)
+        for (int vy = vy0; vy < vy1; vy++)
         {
             int sy = origin.Y + vy;
-            if (sy < 0 || sy >= rows || sy < clip.Y0 || sy >= clip.Y1) continue;
-
             int rowBase = vy * width;
             bool rowTouched = false;
-            for (int vx = 0; vx < width; vx++)
+            for (int vx = vx0; vx < vx1; vx++)
             {
                 int sx = origin.X + vx;
-                if (sx < 0 || sx >= cols || sx < clip.X0 || sx >= clip.X1) continue;
-
                 Cell cell = src[rowBase + vx];
 
                 // A dirty row is re-emitted in full on Refresh, so replaying an

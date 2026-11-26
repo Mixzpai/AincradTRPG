@@ -1,0 +1,26 @@
+NAME:          ice_crystal_spring
+DESC:          A spring that has never frozen, ringed by fracture-laced ice and two standing columns of old glacier.
+TAGS:          signature ice spring thaw
+FLOORS:        *
+BIOME:         ice
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: s = Snow
+KFEAT: i = CrackedIce
+KFEAT: P = Pillar
+KFEAT: * = LoreStone
+
+MAP
+sssssssss
+ssiiiiiss
+si.~~~.is
+si~~~~~is
+si~~*~~is
+si~~~~~is
+si.~~~.is
+ssiiiiiss
+sPsssssPs
+ENDMAP

@@ -1,5 +1,5 @@
 NAME:          fountain_garden
-DESC:          Small garden built around a clear fountain, ringed with flowers — a travelers' respite.
+DESC:          Small garden built around a clear fountain, ringed with water reeds — a travelers' respite.
 TAGS:          altar fountain garden any
 FLOORS:        *
 BIOME:         any
@@ -8,7 +8,7 @@ MAX_PER_FLOOR: 1
 ROTATE:        true
 MIRROR:        true
 
-KFEAT: f = Flowers
+KFEAT: f = Reeds
 
 MAP
 #########

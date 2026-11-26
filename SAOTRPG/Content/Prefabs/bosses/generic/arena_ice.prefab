@@ -1,0 +1,34 @@
+NAME:          arena_ice
+DESC:          A vault melted into the glacier and refrozen, its floor fracture-laced and an altar left at the far wall.
+TAGS:          boss generic ice arena
+FLOORS:        *
+BIOME:         ice
+WEIGHT:        30
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: X = LabyrinthEntrance
+KFEAT: i = CrackedIce
+KFEAT: P = Pillar
+KFEAT: A = Shrine
+
+MAP
+#####################
+#...................#
+#.P...............P.#
+#...................#
+#...................#
+#....i.........i....#
+#.........X.........#
+#....i.........i....#
+#...................#
+#...................#
+#.P...............P.#
+#...................#
+#.........A.........#
+#...................#
+##########+##########
+ENDMAP

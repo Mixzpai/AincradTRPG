@@ -1,0 +1,608 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using SAOTRPG.Entities;
+using SAOTRPG.Inventory.Core;
+using SAOTRPG.Items;
+using SAOTRPG.Items.Consumables;
+using SAOTRPG.Items.Equipment;
+using SAOTRPG.Items.Materials;
+using SAOTRPG.Map.Generation;
+using SAOTRPG.Systems.Crafting;
+using SAOTRPG.Systems.Diagnostics;
+using SAOTRPG.Systems.Progression;
+using SAOTRPG.Systems.RunState;
+using SAOTRPG.Systems.Social;
+using SAOTRPG.Systems.Turns;
+
+namespace SAOTRPG.Systems.Persistence;
+
+public static class SaveManager
+{
+    public const int MaxSlots = 3;
+
+    private static readonly string SaveDir =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AincradTRPG");
+
+    // The save file stays indented on purpose: it is read by hand when diagnosing a run, and
+    // measured against the largest real player-data file compacting buys only ~28% (14 KB -> 10 KB),
+    // which does not pay for losing that.
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    // A procedural item's blob is embedded in the save AS AN ESCAPED STRING, so its indentation
+    // lands as literal \n and \" clutter on one line — it costs ~29% per item and makes the
+    // surrounding file harder to read, not easier. Whitespace-only, so older saves still parse.
+    private static readonly JsonSerializerOptions NestedJsonOpts = new()
+    {
+        WriteIndented = false,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private static string SlotPath(int slot) => Path.Combine(SaveDir, $"save_{slot}.json");
+
+    // Read-only seam for Tools/ProgressProbe, which verifies that every SaveData property
+    // survives the real JSON layer. It has to read the file the game actually wrote, and
+    // duplicating the path expression in the probe would let the two drift apart.
+    public static string SaveSlotPath(int slot) => SlotPath(slot);
+
+    public static bool SaveExists(int slot) => File.Exists(SlotPath(slot));
+
+    public static bool AnySaveExists()
+    {
+        for (int i = 1; i <= MaxSlots; i++)
+            if (SaveExists(i)) return true;
+        return false;
+    }
+
+    public static bool SaveGame(Player player, TurnManager turnManager, int slot)
+    {
+        // A dead or won run is over: a save queued in the same input batch must not restore it.
+        if (player.IsDefeated || turnManager.CurrentFloor > 100) return false;
+        try
+        {
+            Directory.CreateDirectory(SaveDir);
+            var data = BuildSaveData(player, turnManager);
+            string json = JsonSerializer.Serialize(data, JsonOpts);
+            string path = SlotPath(slot);
+            string tmpPath = path + ".tmp";
+            File.WriteAllText(tmpPath, json);
+            File.Move(tmpPath, path, overwrite: true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            DebugLogger.LogError($"SaveManager.Save slot {slot}", ex);
+            return false;
+        }
+    }
+
+    public static SaveData? LoadGame(int slot)
+    {
+        try
+        {
+            string path = SlotPath(slot);
+            if (!File.Exists(path)) return null;
+            string json = File.ReadAllText(path);
+            var data = JsonSerializer.Deserialize<SaveData>(json, JsonOpts);
+            if (data == null) return null;
+            MapGenerator.SetGlobalSeed(data.GlobalSeed);
+            MapGenerator.SetPrefabUseCounts(data.PrefabUseCounts);
+            return data;
+        }
+        catch (Exception ex)
+        {
+            DebugLogger.LogError($"SaveManager.Load slot {slot}", ex);
+            return null;
+        }
+    }
+
+    // Current-floor mining vein strikes restore. Called from TurnManager.LoadFromSave
+    // after the floor map is in hand. Null/empty list = legacy save: leave dict empty
+    // so DefaultStrikesForTile re-seeds lazily.
+    public static void RestoreVeinStrikes(SaveData save, Map.GameMap map)
+    {
+        if (save.VeinStrikes == null) return;
+        map.VeinStrikesRemaining.Clear();
+        foreach (var entry in save.VeinStrikes)
+            map.VeinStrikesRemaining[(entry.X, entry.Y)] = entry.Strikes;
+    }
+
+    public static void DeleteSave(int slot)
+    {
+        try
+        {
+            string path = SlotPath(slot);
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch (Exception ex) { DebugLogger.LogError($"SaveManager.Delete slot {slot}", ex); }
+    }
+
+    public static SaveSlotSummary?[] GetSlotSummaries()
+    {
+        var summaries = new SaveSlotSummary?[MaxSlots];
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            int slot = i + 1;
+            if (!SaveExists(slot)) continue;
+            try
+            {
+                string json = File.ReadAllText(SlotPath(slot));
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                int diff = root.TryGetProperty("Difficulty", out var d) ? d.GetInt32() : 3;
+                summaries[i] = new SaveSlotSummary
+                {
+                    Name = (root.TryGetProperty("FirstName", out var fn) ? fn.GetString() : "???") ?? "???",
+                    Level = root.TryGetProperty("Level", out var lv) ? lv.GetInt32() : 1,
+                    Floor = root.TryGetProperty("CurrentFloor", out var fl) ? fl.GetInt32() : 1,
+                    Difficulty = DifficultyData.GetName(diff),
+                    Timestamp = root.TryGetProperty("Timestamp", out var ts) ? ts.GetDateTime() : DateTime.MinValue,
+                    PlayTime = TimeSpan.FromSeconds(root.TryGetProperty("PlayTimeSeconds", out var pt) ? pt.GetInt64() : 0),
+                };
+            }
+            catch (Exception ex) { DebugLogger.LogError($"SaveManager.GetSlotSummaries slot {slot}", ex); }
+        }
+        return summaries;
+    }
+
+    // Build save data from live game state.
+    private static SaveData BuildSaveData(Player player, TurnManager tm) => new()
+    {
+        Timestamp = DateTime.Now, PlayTimeSeconds = (long)tm.TotalPlayTime.TotalSeconds,
+        GlobalSeed = MapGenerator.CurrentGlobalSeed,
+        FirstName = player.FirstName, LastName = player.LastName, Gender = player.Gender,
+        Title = player.Title, PlayerId = player.Id,
+        Level = player.Level, CurrentExperience = player.CurrentExperience,
+        CurrentHealth = player.CurrentHealth, ColOnHand = player.ColOnHand, SkillPoints = player.SkillPoints,
+        Strength = player.Strength, Vitality = player.Vitality, Endurance = player.Endurance,
+        Dexterity = player.Dexterity, Agility = player.Agility, Intelligence = player.Intelligence,
+        BaseAttack = player.BaseAttack, BaseDefense = player.BaseDefense, BaseSpeed = player.BaseSpeed,
+        BaseSkillDamage = player.BaseSkillDamage, BaseCriticalRate = player.BaseCriticalRate,
+        BaseCriticalHitDamage = player.BaseCriticalHitDamage,
+        TurnCount = tm.TurnCount, KillCount = tm.KillCount, TotalColEarned = tm.TotalColEarned,
+        CurrentFloor = tm.CurrentFloor, Difficulty = tm.Difficulty,
+        Satiety = tm.Satiety, KillStreak = tm.KillStreak,
+        WeaponKills = new Dictionary<string, int>(tm.WeaponKills),
+        WeaponProficiencyForks = tm.SnapshotForkChoices(),
+        PendingTalents = tm.SnapshotPendingTalents(),
+        RestCounter = tm.RestCounter,
+        BountyTarget = tm.BountyTarget, BountyKillsNeeded = tm.BountyKillsNeeded,
+        BountyKillsCurrent = tm.BountyKillsCurrent, BountyRewardCol = tm.BountyRewardCol,
+        BountyRewardXp = tm.BountyRewardXp, BountyComplete = tm.BountyComplete,
+        PoisonTurnsLeft = tm.PoisonTurnsLeft, BleedTurnsLeft = tm.BleedTurnsLeft,
+        StunTurnsLeft = tm.StunTurnsLeft, SlowTurnsLeft = tm.SlowTurnsLeft,
+        ShrineBuffTurns = tm.ShrineBuffTurns, LevelUpBuffTurns = tm.LevelUpBuffTurns,
+        ShrineBuffAmount = tm.ShrineBuffAmount, LevelUpBuffAmount = tm.LevelUpBuffAmount,
+        PoisonDamagePerTick = tm.PoisonDamagePerTick,
+        BleedDamagePerTick = tm.BleedDamagePerTick,
+        InvisibilityTurnsLeft = tm.InvisibilityTurnsLeft,
+        TimedBuffs = tm.ActiveBuffs.Select(b => new TimedBuffSave
+        { Stat = b.Stat.ToString(), Potency = b.Potency, TurnsLeft = b.TurnsLeft }).ToList(),
+        // Active food regen buff round-trip.
+        FoodRegenRate = tm.FoodRegenRate, FoodRegenTurnsLeft = tm.FoodRegenTurnsLeft,
+        DiscoveredLore = tm.DiscoveredLore.ToList(),
+        SeenTutorialTips = TutorialSystem.SeenTips.ToList(),
+        ActiveQuests = new List<Quest>(QuestSystem.ActiveQuests),
+        CompletedQuests = new List<Quest>(QuestSystem.CompletedQuests),
+        PinnedQuestId = QuestSystem.PinnedQuestId,
+        IfImplementQuestsCompletedThisRun = tm.IfImplementQuestsCompletedThisRun,
+        HfMissionsCompletedThisRun = tm.HfMissionsCompletedThisRun,
+        PartyMembers = PartySystem.Members.Select(a => new AllySaveData
+        {
+            Name = a.Name, Symbol = a.Symbol, SymbolColor = (int)a.SymbolColor,
+            WeaponType = a.WeaponType, Title = a.Title,
+            Level = a.Level, CurrentHealth = a.CurrentHealth, MaxHealth = a.MaxHealth,
+            Behavior = (int)a.Behavior,
+        }).ToList(),
+        InventoryItems = player.Inventory.Items.Select(SerializeItem).ToList(),
+        EquippedItems = Enum.GetValues(typeof(EquipmentSlot)).Cast<EquipmentSlot>()
+            .Select(s => (slot: s, item: player.Inventory.GetEquipped(s)))
+            .Where(x => x.item != null)
+            .ToDictionary(x => x.slot.ToString(), x => SerializeItem(x.item!)),
+        EquippedSkillIds = tm.EquippedSkills.Select(s => s?.Id).ToList(),
+        SkillCooldowns = new Dictionary<string, int>(
+            tm.EquippedSkills.Where(s => s != null)
+                .Select(s => (s!.Id, cd: tm.GetSkillCooldown(s.Id)))
+                .Where(x => x.cd > 0)
+                .ToDictionary(x => x.Id, x => x.cd)),
+        FiredStoryEventIds = SAOTRPG.Systems.Story.StorySystem.FiredEventIds.ToList(),
+        StoryFlags = SAOTRPG.Systems.Story.StorySystem.Flags.Select(f => f.ToString()).ToList(),
+        FactionReputation = SAOTRPG.Systems.Story.StorySystem.Reputation
+            .ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+        UnlockedUniqueSkills = SAOTRPG.Systems.Skills.UniqueSkillSystem.Unlocked
+            .Select(u => u.ToString()).ToList(),
+        TrapsDisarmed = SAOTRPG.Systems.Skills.UniqueSkillSystem.TrapsDisarmed,
+        DefeatedFieldBosses = tm.DefeatedFieldBosses.ToList(),
+        ActiveRunModifiers = RunModifiers.ToSaveList(),
+        HighestFloorBossCleared = ShopTierSystem.HighestFloorBossCleared,
+        // Life Skills — roundtrip each skill's state.
+        LifeSkills = player.LifeSkills.Skills
+            .ToDictionary(kvp => kvp.Key.ToString(),
+                          kvp => new LifeSkillStateSave
+                          {
+                              Level = kvp.Value.Level,
+                              CurrentXp = kvp.Value.CurrentXp,
+                          }),
+        // Active title id only — unlock set lives in lifetime_stats.json.
+        ActiveTitleId = player.ActiveTitleId,
+        // Karma + Guild — serialize enum as its name so rename migrations
+        // (AincradLiberationSquad → AincradLiberationForce) can hook in at load.
+        Karma = player.Karma,
+        ActiveGuildId = player.ActiveGuildId.ToString(),
+        FoundedGuildName = player.FoundedGuildName,
+        FoundedGuildPerk = player.FoundedGuildPerk,
+        // Investing — snapshot the per-vendor deposit dict. Legacy saves
+        // simply omit it; VendorInvestmentSystem.SetForLoad(null) clears state.
+        VendorInvestments = VendorInvestmentSystem.Snapshot(),
+        // 10-slot consumable quickbar DefinitionIds.
+        QuickbarSlotDefIds = player.Quickbar.SlotItemDefIds.ToList(),
+        // Per-prefab placement counts as of this floor's start, since loading rebuilds this floor.
+        PrefabUseCounts = MapGenerator.GetFloorStartPrefabUseCounts(),
+        // Current-floor mining vein strikes. Discarded on ascent (next floor's map
+        // drops the dict); empty list serializes as omitted.
+        VeinStrikes = tm.Map.VeinStrikesRemaining
+            .Select(kvp => new VeinStrikeEntry { X = kvp.Key.X, Y = kvp.Key.Y, Strikes = kvp.Value })
+            .ToList(),
+        // Per-floor boss-clear flags. Empty = null.
+        DefeatedFloorBosses = tm.DefeatedFloorBosses.Count > 0
+            ? new HashSet<int>(tm.DefeatedFloorBosses) : null,
+    };
+
+    // Item serialization.
+    private static ItemSaveData SerializeItem(BaseItem item)
+    {
+        var save = new ItemSaveData { DefinitionId = item.DefinitionId, Durability = item.ItemDurability };
+        if (item is StackableItem stackable) save.Quantity = stackable.Quantity;
+        if (item is EquipmentBase eq)
+        {
+            save.EnhancementLevel = eq.EnhancementLevel;
+            // IF Refinement: persist slot contents if any slot is occupied.
+            // Empty slot arrays stay null to keep legacy saves clean.
+            if (eq.HasAnyRefinement)
+                save.RefinementSlots = eq.RefinementSlots.ToList();
+        }
+        // Per-level ore DefIds so ore-biased stat bonuses restore exactly.
+        // Null/empty on unenhanced weapons to keep saves clean.
+        if (item is Weapon weaponSave && weaponSave.EnhancementOreHistory.Count > 0)
+            save.EnhancementOreHistory = new List<string>(weaponSave.EnhancementOreHistory);
+        // Persist FD Paired flag only when true. Legacy saves stay lean;
+        // Corruption Stone transforms round-trip the live state.
+        if (item is Weapon pairedSave && pairedSave.IsDualWieldPaired)
+            save.IsDualWieldPaired = true;
+        // Persist Divine Awakening level only when awakened. Null on
+        // unawakened/non-weapon items keeps legacy save shape untouched.
+        if (item is Weapon awakSave && awakSave.AwakeningLevel > 0)
+            save.AwakeningLevel = awakSave.AwakeningLevel;
+        if (item is Weapon reforgeSave)
+            save.ReforgedBonuses = Reforge.RerolledBase(reforgeSave);
+        // Persist a declared durability ceiling so it round-trips. Any equipment may carry one,
+        // not only a Pickaxe — a Torch declares one too, and testing the concrete type meant its
+        // ceiling was silently dropped.
+        if (item is EquipmentBase capSave && capSave.MaxDurability > 0)
+            save.MaxDurability = capSave.MaxDurability;
+        if (item.DefinitionId == null)
+        {
+            save.FullItemJson = SerializeFullItem(item);
+            // FullItemJson Bonuses already include refinement/awakening contributions;
+            // load path must skip the runtime-replay used for DefId items.
+            save.BonusesAlreadyBaked = true;
+        }
+        return save;
+    }
+
+    private static string SerializeFullItem(BaseItem item)
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            ["Type"] = item.GetType().Name, ["Name"] = item.Name, ["Value"] = item.Value,
+            ["Rarity"] = item.Rarity, ["ItemDurability"] = item.ItemDurability, ["Weight"] = item.Weight,
+        };
+
+        switch (item)
+        {
+            case Weapon w:
+                dict["BaseDamage"] = w.BaseDamage; dict["WeaponType"] = w.WeaponType;
+                dict["AttackSpeed"] = w.AttackSpeed; dict["Range"] = w.Range;
+                dict["RequiredLevel"] = w.RequiredLevel; dict["EquipmentType"] = w.EquipmentType;
+                dict["Bonuses"] = SerializeBonuses(w.Bonuses);
+                if (w.HasAnyRefinement) dict["RefinementSlots"] = w.RefinementSlots.ToList();
+                break;
+            case Armor a:
+                dict["BaseDefense"] = a.BaseDefense; dict["ArmorSlot"] = a.ArmorSlot;
+                dict["Weight"] = a.Weight; dict["BlockChance"] = a.BlockChance;
+                dict["RequiredLevel"] = a.RequiredLevel; dict["EquipmentType"] = a.EquipmentType;
+                dict["Bonuses"] = SerializeBonuses(a.Bonuses);
+                if (a.HasAnyRefinement) dict["RefinementSlots"] = a.RefinementSlots.ToList();
+                break;
+            case Accessory acc:
+                dict["AccessorySlot"] = acc.AccessorySlot; dict["MaxEquipped"] = acc.MaxEquipped;
+                dict["RequiredLevel"] = acc.RequiredLevel; dict["EquipmentType"] = acc.EquipmentType;
+                dict["Bonuses"] = SerializeBonuses(acc.Bonuses);
+                break;
+            case DamageItem di:
+                dict["BaseDamage"] = di.BaseDamage; dict["DamageType"] = di.DamageType;
+                dict["AreaOfEffect"] = di.AreaOfEffect; dict["ConsumableType"] = di.ConsumableType;
+                dict["EffectDescription"] = di.EffectDescription;
+                dict["Quantity"] = di.Quantity; dict["MaxStacks"] = di.MaxStacks;
+                break;
+            case Food f:
+                dict["RegenerationRate"] = f.RegenerationRate; dict["RegenerationDuration"] = f.RegenerationDuration;
+                dict["FoodType"] = f.FoodType; dict["ConsumableType"] = f.ConsumableType;
+                dict["EffectDescription"] = f.EffectDescription;
+                dict["Quantity"] = f.Quantity; dict["MaxStacks"] = f.MaxStacks;
+                break;
+            case Potion p:
+                dict["PotionType"] = p.PotionType; dict["Cooldown"] = p.Cooldown;
+                dict["ConsumableType"] = p.ConsumableType; dict["EffectDescription"] = p.EffectDescription;
+                dict["Quantity"] = p.Quantity; dict["MaxStacks"] = p.MaxStacks;
+                dict["Bonuses"] = SerializeBonuses(p.Effects);
+                break;
+            case MobDrop md:
+                dict["SourceMonster"] = md.SourceMonster; dict["DropRate"] = md.DropRate;
+                dict["IsBossDrop"] = md.IsBossDrop; dict["MaterialType"] = md.MaterialType;
+                dict["CraftingTier"] = md.CraftingTier;
+                dict["Quantity"] = md.Quantity; dict["MaxStacks"] = md.MaxStacks;
+                break;
+        }
+
+        return JsonSerializer.Serialize(dict, NestedJsonOpts);
+    }
+
+    private static List<Dictionary<string, object>> SerializeBonuses(StatModifierCollection bonuses)
+    {
+        var list = new List<Dictionary<string, object>>();
+        foreach (var effect in bonuses.Effects)
+            list.Add(new Dictionary<string, object>
+            {
+                ["Type"] = effect.Type.ToString(), ["Potency"] = effect.Potency,
+                ["Duration"] = effect.Duration, ["IsPercentage"] = effect.IsPercentage,
+            });
+        return list;
+    }
+
+    // Item deserialization.
+    public static BaseItem? DeserializeItem(ItemSaveData save)
+    {
+        BaseItem? item;
+        if (save.DefinitionId != null)
+        {
+            item = ItemRegistry.Create(save.DefinitionId);
+            if (item == null) return null;
+            item.ItemDurability = save.Durability;
+            if (item is StackableItem stackable && save.Quantity.HasValue)
+                stackable.Quantity = save.Quantity.Value;
+            // Fresh from Create, Bonuses is exactly the definition's effects: swap in the reforged ones before the replays append.
+            if (item is Weapon reforgeLoad && save.ReforgedBonuses != null)
+                reforgeLoad.Bonuses.Effects = new List<StatEffect>(save.ReforgedBonuses);
+            // If Bonuses are pre-baked at save time, skip the
+            // enhancement/refinement/awakening replay to avoid double-stacking.
+            bool baked = save.BonusesAlreadyBaked == true;
+            // Restore enhancement. Weapons: per-level bonus biased by ore consumed.
+            // Legacy saves (no ore history) → N × Crimson Flame (Attack) migration.
+            if (!baked && item is EquipmentBase eq && save.EnhancementLevel > 0)
+            {
+                eq.EnhancementLevel = save.EnhancementLevel;
+                int bonus = eq is Weapon ? 3 : eq is Armor ? 2 : 1;
+                if (eq is Weapon eqWeapon)
+                {
+                    // Hydrate or migrate the ore history.
+                    if (save.EnhancementOreHistory != null && save.EnhancementOreHistory.Count > 0)
+                    {
+                        eqWeapon.EnhancementOreHistory = new List<string>(save.EnhancementOreHistory);
+                    }
+                    else
+                    {
+                        eqWeapon.EnhancementOreHistory = new List<string>(save.EnhancementLevel);
+                        for (int i = 0; i < save.EnhancementLevel; i++)
+                            eqWeapon.EnhancementOreHistory.Add("ore_crimson_flame");
+                    }
+                    // Apply per-level biased stat bonus.
+                    for (int i = 0; i < save.EnhancementLevel; i++)
+                    {
+                        string oreId = i < eqWeapon.EnhancementOreHistory.Count
+                            ? eqWeapon.EnhancementOreHistory[i] : "ore_crimson_flame";
+                        var stat = Items.Definitions.EnhancementOreDefinitions
+                            .OreDefIdToStat.TryGetValue(oreId, out var s) ? s : StatType.Attack;
+                        eqWeapon.Bonuses.Add(stat, bonus);
+                    }
+                }
+                else
+                {
+                    // Armor / other equipment — unchanged legacy behavior.
+                    for (int i = 0; i < save.EnhancementLevel; i++)
+                    {
+                        if (eq is Armor) eq.Bonuses.Add(StatType.Defense, bonus);
+                        else eq.Bonuses.Add(StatType.Attack, bonus);
+                    }
+                }
+            }
+            // IF Refinement: restore slot DefIds and fold ingot bonuses back
+            // into Bonuses so equipped gear re-grants them. Skip the rehydrate
+            // when Bonuses are already baked (avoid double-stacking).
+            if (item is EquipmentBase eqRef && save.RefinementSlots != null)
+            {
+                for (int i = 0; i < EquipmentBase.RefinementSlotCount && i < save.RefinementSlots.Count; i++)
+                    eqRef.RefinementSlots[i] = save.RefinementSlots[i];
+                if (!baked) Refinement.RehydrateBonuses(eqRef);
+            }
+            // FD Paired flag round-trip. Null (legacy) → definition value kept
+            // (ItemRegistry.Create already ran the Paired() wrapper). Non-null → overwrite.
+            if (save.IsDualWieldPaired.HasValue && item is Weapon pairedLoad)
+                pairedLoad.IsDualWieldPaired = save.IsDualWieldPaired.Value;
+            // Divine Awakening round-trip. Null (legacy) → leaves at 0. Non-null →
+            // set level + re-fold flat ATK bonus into Bonuses.Attack so re-equip grants it.
+            // Skip the ATK re-fold when Bonuses are already baked.
+            if (save.AwakeningLevel.HasValue && save.AwakeningLevel.Value > 0 && item is Weapon awakLoad)
+            {
+                awakLoad.AwakeningLevel = save.AwakeningLevel.Value;
+                if (!baked)
+                {
+                    int bonus = DivineAwakening.ComputeBonusAttack(awakLoad);
+                    if (bonus != 0) awakLoad.Bonuses.Add(StatType.Attack, bonus);
+                }
+            }
+            // Durability-ceiling round-trip. Create has already supplied the definition's ceiling,
+            // so only a saved one overwrites it; gear with none keeps 0 and the floor formula.
+            if (item is EquipmentBase capLoad && save.MaxDurability.HasValue)
+                capLoad.MaxDurability = save.MaxDurability.Value;
+        }
+        else if (save.FullItemJson != null)
+            item = DeserializeFullItem(save.FullItemJson);
+        else
+            return null;
+        return item;
+    }
+
+    private static BaseItem? DeserializeFullItem(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            string typeName = root.GetProperty("Type").GetString() ?? "";
+            string? name = root.TryGetProperty("Name", out var n) ? n.GetString() : null;
+            int value = root.TryGetProperty("Value", out var v) ? v.GetInt32() : 0;
+            string? rarity = root.TryGetProperty("Rarity", out var r) ? r.GetString() : null;
+            int durability = root.TryGetProperty("ItemDurability", out var d) ? d.GetInt32() : 0;
+            int weight = root.TryGetProperty("Weight", out var w) ? w.GetInt32() : 1;
+
+            return typeName switch
+            {
+                "Weapon" => DeserializeWeapon(root, name, value, rarity, durability, weight),
+                "Armor" => DeserializeArmor(root, name, value, rarity, durability, weight),
+                "Accessory" => DeserializeAccessory(root, name, value, rarity, durability, weight),
+                "DamageItem" => DeserializeDamageItem(root, name, value, rarity, durability, weight),
+                "Food" => DeserializeFood(root, name, value, rarity, durability, weight),
+                "Potion" => DeserializePotion(root, name, value, rarity, durability, weight),
+                "MobDrop" => DeserializeMobDrop(root, name, value, rarity, durability, weight),
+                _ => null
+            };
+        }
+        catch (Exception ex)
+        {
+            DebugLogger.LogError($"SaveManager.DeserializeFullItem", ex);
+            return null;
+        }
+    }
+
+    private static Weapon DeserializeWeapon(JsonElement root, string? name, int value, string? rarity, int durability, int weight)
+    {
+        var w = new Weapon
+        {
+            Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
+            BaseDamage = root.TryGetProperty("BaseDamage", out var bd) ? bd.GetInt32() : 0,
+            WeaponType = root.TryGetProperty("WeaponType", out var wt) ? wt.GetString() : null,
+            AttackSpeed = root.TryGetProperty("AttackSpeed", out var a) ? a.GetInt32() : 1,
+            Range = root.TryGetProperty("Range", out var rng) ? rng.GetInt32() : 1,
+            RequiredLevel = root.TryGetProperty("RequiredLevel", out var rl) ? rl.GetInt32() : 1,
+            EquipmentType = root.TryGetProperty("EquipmentType", out var et) ? et.GetString() : "Weapon",
+            Bonuses = DeserializeBonuses(root),
+        };
+        HydrateRefinementSlots(w, root);
+        return w;
+    }
+
+    private static Armor DeserializeArmor(JsonElement root, string? name, int value, string? rarity, int durability, int weight)
+    {
+        var a = new Armor
+        {
+            Name = name, Value = value, Rarity = rarity, ItemDurability = durability,
+            BaseDefense = root.TryGetProperty("BaseDefense", out var bd) ? bd.GetInt32() : 0,
+            ArmorSlot = root.TryGetProperty("ArmorSlot", out var slot) ? slot.GetString() : null,
+            Weight = root.TryGetProperty("Weight", out var w) ? w.GetInt32() : weight,
+            BlockChance = root.TryGetProperty("BlockChance", out var bc) ? bc.GetInt32() : 0,
+            RequiredLevel = root.TryGetProperty("RequiredLevel", out var rl) ? rl.GetInt32() : 1,
+            EquipmentType = root.TryGetProperty("EquipmentType", out var et) ? et.GetString() : "Armor",
+            Bonuses = DeserializeBonuses(root),
+        };
+        HydrateRefinementSlots(a, root);
+        return a;
+    }
+
+    // Hydrate RefinementSlots only — ingot bonuses already in serialized Bonuses.
+    // Slot DefIds restored for UI + future override-socketing.
+    private static void HydrateRefinementSlots(EquipmentBase eq, JsonElement root)
+    {
+        if (!root.TryGetProperty("RefinementSlots", out var slots)) return;
+        int i = 0;
+        foreach (var entry in slots.EnumerateArray())
+        {
+            if (i >= EquipmentBase.RefinementSlotCount) break;
+            eq.RefinementSlots[i] = entry.ValueKind == JsonValueKind.Null ? null : entry.GetString();
+            i++;
+        }
+    }
+
+    private static Accessory DeserializeAccessory(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
+    {
+        Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
+        AccessorySlot = root.TryGetProperty("AccessorySlot", out var slot) ? slot.GetString() : null,
+        MaxEquipped = root.TryGetProperty("MaxEquipped", out var me) ? me.GetInt32() : 1,
+        RequiredLevel = root.TryGetProperty("RequiredLevel", out var rl) ? rl.GetInt32() : 1,
+        EquipmentType = root.TryGetProperty("EquipmentType", out var et) ? et.GetString() : "Accessory",
+        Bonuses = DeserializeBonuses(root),
+    };
+
+    private static DamageItem DeserializeDamageItem(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
+    {
+        Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
+        BaseDamage = root.TryGetProperty("BaseDamage", out var bd) ? bd.GetInt32() : 0,
+        DamageType = root.TryGetProperty("DamageType", out var dt) ? dt.GetString() : null,
+        AreaOfEffect = root.TryGetProperty("AreaOfEffect", out var aoe) ? aoe.GetInt32() : 0,
+        ConsumableType = root.TryGetProperty("ConsumableType", out var ct) ? ct.GetString() : null,
+        EffectDescription = root.TryGetProperty("EffectDescription", out var ed) ? ed.GetString() : null,
+        Quantity = root.TryGetProperty("Quantity", out var q) ? q.GetInt32() : 1,
+        MaxStacks = root.TryGetProperty("MaxStacks", out var ms) ? ms.GetInt32() : 20,
+    };
+
+    private static Food DeserializeFood(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
+    {
+        Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
+        RegenerationRate = root.TryGetProperty("RegenerationRate", out var rr) ? rr.GetInt32() : 0,
+        RegenerationDuration = root.TryGetProperty("RegenerationDuration", out var rd) ? rd.GetInt32() : 0,
+        FoodType = root.TryGetProperty("FoodType", out var ft) ? ft.GetString() : null,
+        ConsumableType = root.TryGetProperty("ConsumableType", out var ct) ? ct.GetString() : null,
+        EffectDescription = root.TryGetProperty("EffectDescription", out var ed) ? ed.GetString() : null,
+        Quantity = root.TryGetProperty("Quantity", out var q) ? q.GetInt32() : 1,
+        MaxStacks = root.TryGetProperty("MaxStacks", out var ms) ? ms.GetInt32() : 99,
+    };
+
+    private static Potion DeserializePotion(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
+    {
+        Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
+        PotionType = root.TryGetProperty("PotionType", out var pt) ? pt.GetString() : null,
+        Cooldown = root.TryGetProperty("Cooldown", out var cd) ? cd.GetInt32() : 0,
+        ConsumableType = root.TryGetProperty("ConsumableType", out var ct) ? ct.GetString() : null,
+        EffectDescription = root.TryGetProperty("EffectDescription", out var ed) ? ed.GetString() : null,
+        Quantity = root.TryGetProperty("Quantity", out var q) ? q.GetInt32() : 1,
+        MaxStacks = root.TryGetProperty("MaxStacks", out var ms) ? ms.GetInt32() : 99,
+        Effects = DeserializeBonuses(root),
+    };
+
+    private static MobDrop DeserializeMobDrop(JsonElement root, string? name, int value, string? rarity, int durability, int weight) => new()
+    {
+        Name = name, Value = value, Rarity = rarity, ItemDurability = durability, Weight = weight,
+        SourceMonster = root.TryGetProperty("SourceMonster", out var sm) ? sm.GetString() : null,
+        DropRate = root.TryGetProperty("DropRate", out var dr) ? dr.GetSingle() : 0,
+        IsBossDrop = root.TryGetProperty("IsBossDrop", out var ibd) && ibd.GetBoolean(),
+        MaterialType = root.TryGetProperty("MaterialType", out var mt) ? mt.GetString() : null,
+        CraftingTier = root.TryGetProperty("CraftingTier", out var ct) ? ct.GetInt32() : 1,
+        Quantity = root.TryGetProperty("Quantity", out var q) ? q.GetInt32() : 1,
+        MaxStacks = root.TryGetProperty("MaxStacks", out var ms) ? ms.GetInt32() : 99,
+    };
+
+    private static StatModifierCollection DeserializeBonuses(JsonElement root)
+    {
+        var collection = new StatModifierCollection();
+        if (!root.TryGetProperty("Bonuses", out var bonuses)) return collection;
+        foreach (var effect in bonuses.EnumerateArray())
+            if (Enum.TryParse<StatType>(effect.GetProperty("Type").GetString(), out var type))
+                collection.Add(type, effect.GetProperty("Potency").GetInt32(),
+                    effect.TryGetProperty("Duration", out var dur) ? dur.GetInt32() : 0,
+                    effect.TryGetProperty("IsPercentage", out var pct) && pct.GetBoolean());
+        return collection;
+    }
+}

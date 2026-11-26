@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.Systems.Story;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Social;
+using SAOTRPG.UI.GameLog;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -211,7 +211,7 @@ public static class GuildRosterDialog
             X = 1, Y = 2,
             Labels = presets.Select(p => $"{p.Name} — {p.Flavor}").ToArray(),
         };
-        SAOTRPG.UI.NavigationHelper.EnableSelectorArrowNav(rg);
+        SAOTRPG.UI.Helpers.NavigationHelper.EnableSelectorArrowNav(rg);
         int result = -1;
         var okBtn = DialogHelper.CreateButton("Select", isDefault: true);
         okBtn.X = Pos.Center() - 8; okBtn.Y = Pos.AnchorEnd(2);

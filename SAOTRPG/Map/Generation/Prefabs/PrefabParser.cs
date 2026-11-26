@@ -1,5 +1,5 @@
 using System.Globalization;
-using SAOTRPG.UI;
+using SAOTRPG.Systems.Diagnostics;
 
 namespace SAOTRPG.Map.Generation.Prefabs;
 

@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Entities
 {
     // Floor boss: multi-phase at 75/50/25% HP, up to 3 per-phase abilities.

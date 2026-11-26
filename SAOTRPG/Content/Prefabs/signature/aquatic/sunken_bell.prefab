@@ -1,0 +1,23 @@
+NAME:          aquatic_sunken_bell
+DESC:          The bell chamber of a drowned campanile, its crown just clear of the shallows and a boardwalk run out to it.
+TAGS:          signature aquatic bell drowned
+FLOORS:        *
+BIOME:         aquatic
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: * = LoreStone
+
+MAP
+~~~~~~~~~
+~~##.##~~
+~#.....#~
+~#.....#~
+~..#*#..~
+~#.....#~
+~#.....#~
+~~##_##~~
+~~~~_~~~~
+ENDMAP

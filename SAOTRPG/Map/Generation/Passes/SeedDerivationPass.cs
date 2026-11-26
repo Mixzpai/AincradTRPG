@@ -10,7 +10,7 @@ public sealed class SeedDerivationPass : IGenerationPass
     {
         // StableHash, not HashCode.Combine: the latter randomises per process, so every pass's
         // RNG — and therefore the whole floor — changed on each launch of the game.
-        int seed = Systems.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber);
+        int seed = SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber);
         ctx.Rng = new Random(seed);
     }
 }

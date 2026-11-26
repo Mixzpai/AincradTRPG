@@ -1,4 +1,3 @@
-using SAOTRPG.UI;
 
 namespace SAOTRPG.Entities
 {
@@ -23,6 +22,12 @@ namespace SAOTRPG.Entities
             public int OverkillDamage { get; set; }
         }
 
+        // Single-use death ward. A subclass that can cheat death once returns true here; the
+        // blow is absorbed, the mob is left on 1 HP and no reward is produced. Placed in
+        // TakeDamage rather than at each attack site so every damage route -- melee, sword
+        // skill, off-hand, cleave, reflect, ally -- is covered by one branch.
+        protected virtual bool TryWardDeath() => false;
+
         // Returns DefeatReward on kill, null on survive. Overkill grants bonus XP.
         public DefeatReward? TakeDamage(int damage)
         {
@@ -33,6 +38,13 @@ namespace SAOTRPG.Entities
             }
 
             CurrentHealth -= damage;
+
+            if (CurrentHealth <= 0 && TryWardDeath())
+            {
+                CurrentHealth = 1;
+                _log?.LogCombat($"  {Name} refuses to fall — the mark holds it at 1 HP!");
+                return null;
+            }
 
             if (CurrentHealth <= 0)
             {

@@ -6,7 +6,9 @@ namespace SAOTRPG.Items;
 // Maps DefinitionId strings to factory methods for recreating items from save data.
 public static class ItemRegistry
 {
-    private static readonly Dictionary<string, Func<BaseItem>> _registry = new();
+    // Pre-sized past the current definition count so the static constructor's several hundred
+    // inserts do not walk the growth ladder, rehashing every entry at each step.
+    private static readonly Dictionary<string, Func<BaseItem>> _registry = new(1024);
 
     static ItemRegistry()
     {
@@ -548,6 +550,11 @@ public static class ItemRegistry
         Register("wooden_pickaxe",   () => PickaxeDefinitions.CreateWoodenPickaxe());
         Register("iron_pickaxe",     () => PickaxeDefinitions.CreateIronPickaxe());
         Register("mithril_pickaxe",  () => PickaxeDefinitions.CreateMithrilPickaxe());
+
+        // Tool-slot light sources. The player emits no light without one equipped.
+        Register("wooden_torch",     () => TorchDefinitions.CreateWoodenTorch());
+        Register("iron_lantern",     () => TorchDefinitions.CreateIronLantern());
+        Register("crystal_lantern",  () => TorchDefinitions.CreateCrystalLantern());
 
         // Accessories
         Register("ring_of_strength", () => AccessoryDefinitions.CreateRingOfStrength());

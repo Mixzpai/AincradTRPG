@@ -1,0 +1,20 @@
+NAME:          hidden_oratory
+DESC:          A single-cell oratory, swept clean, one enchanting stone at the far wall and a door somebody pulled shut behind them.
+TAGS:          vault hidden chamber oratory late
+FLOORS:        70-99
+BIOME:         any
+WEIGHT:        60
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+
+MAP
+#######
+#.....#
+#.....#
+#..E..#
+#.....#
+#.....#
+###+###
+ENDMAP

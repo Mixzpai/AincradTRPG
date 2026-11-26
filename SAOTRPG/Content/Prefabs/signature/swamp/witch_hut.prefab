@@ -1,8 +1,8 @@
 NAME:          swamp_witch_hut
 DESC:          A warped hut on stilts above bog water, ringed by reed-choked braziers and fog.
 TAGS:          signature swamp witch hut
-FLOORS:        6-40
-BIOME:         swamp any
+FLOORS:        *
+BIOME:         swamp
 WEIGHT:        25
 MAX_PER_FLOOR: 1
 ROTATE:        true

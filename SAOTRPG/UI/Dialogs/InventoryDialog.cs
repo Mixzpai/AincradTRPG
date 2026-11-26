@@ -1,14 +1,13 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Items.Materials;
-using SAOTRPG.Inventory.Core;
 using SAOTRPG.UI.Helpers;
 
 using SAOTRPG.Systems.Input;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -245,7 +244,7 @@ public static class InventoryDialog
             else if (item is EquipmentBase equipment)
             {
                 int choice = DialogHelper.Query(name, $"What do you want to do?", "Equip", "Drop", "Cancel");
-                if (choice == 0) { player.EquipItem(equipment); detailLabel.Text = $"Equipped {name}."; }
+                if (choice == 0) detailLabel.Text = player.EquipItem(equipment) ? $"Equipped {name}." : $"Could not equip {name}.";
                 else if (choice == 1 && DialogHelper.ConfirmAction("Drop", name)) player.Inventory.RemoveItem(item);
                 else return;
             }
@@ -278,7 +277,7 @@ public static class InventoryDialog
             var item = GetSelectedItem();
             if (item == null) { detailLabel.Text = ""; compareLabel.Text = ""; return; }
 
-            int sellVal = ShopDialog.CalcSellPrice(item, floor);
+            int sellVal = ShopDialog.CalcSellPrice(item, floor) * (item is StackableItem st ? Math.Max(1, st.Quantity) : 1);
             string rarityTag = item.Rarity != null && item.Rarity != "Common" ? $"[{item.Rarity}] " : "";
             detailLabel.Text = item switch
             {
@@ -302,11 +301,11 @@ public static class InventoryDialog
                 {
                     compareLabel.Visible = true;
                     compareLabel.Text = string.Join("\n", lines);
-                    var verdict = EquipmentComparer.GetVerdict(player, eqItem);
+                    var verdict = GearCompare.GetVerdict(player, eqItem);
                     compareLabel.SchemeName = verdict switch
                     {
-                        EquipmentComparer.CompareResult.Upgrade => ColorSchemes.SuccessName,
-                        EquipmentComparer.CompareResult.Downgrade => ColorSchemes.DangerName,
+                        GearCompare.CompareResult.Upgrade => ColorSchemes.SuccessName,
+                        GearCompare.CompareResult.Downgrade => ColorSchemes.DangerName,
                         _ => ColorSchemes.DimName,
                     };
                 }

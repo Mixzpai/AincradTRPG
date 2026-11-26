@@ -1,4 +1,4 @@
-using SAOTRPG.Items.Equipment;
+﻿using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
@@ -117,7 +117,7 @@ public static class RapierDefinitions
     // ── Lisbeth Rarity 6 Crafted (Rapier) ─────────────────────────
 
     public static Weapon CreateChampionfoilRadiantChariot() => Make("rap_championfoil_radiant_chariot", "Championfoil: Radiant Chariot", 28500, "Legendary", 250, 86, 170,
-        B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Speed, 24).Add(StatType.Agility, 16), "AttackSpeed+3");
+        B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Speed, 24).Add(StatType.Agility, 16), "PostMotion-1");
 
     public static Weapon CreateGlimmerspineSilverBullet() => Make("rap_glimmerspine_silver_bullet", "Glimmerspine: Silver Bullet", 30000, "Legendary", 255, 88, 175,
         B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 30).Add(StatType.Speed, 24), "TrueStrike+15");

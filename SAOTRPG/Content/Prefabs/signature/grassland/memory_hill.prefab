@@ -1,0 +1,24 @@
+NAME:          grassland_memory_hill
+DESC:          A low cairn ring on open ground, a memorial stone at its centre and a name-book left under the one tree.
+TAGS:          signature grassland cairn memorial
+FLOORS:        *
+BIOME:         grassland
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: O = Rock
+KFEAT: * = LoreStone
+
+MAP
+,,,,,,,,,
+,,O,,,O,,
+,,,,,,,,,
+,O,,*,,O,
+,,,,,,,,,
+,,,,J,,,,
+,O,,,,,O,
+,,,,,,,,,
+,,,T,,,,,
+ENDMAP

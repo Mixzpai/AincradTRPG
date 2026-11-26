@@ -1,0 +1,101 @@
+using SAOTRPG.Systems.RunState;
+
+namespace SAOTRPG.Systems.World;
+
+// Per-floor weather. Effects: Clear=+1 regen, Rain=-3 crit, Fog=-20 trap detection, Wind=+5
+// throwable. Rain and Fog also flatten the sun's shadows, which is a render effect and changes
+// no roll.
+public enum WeatherType
+{
+    // Pleasant conditions — +1 passive HP regen bonus.
+    Clear,
+    // Wet conditions — −3 crit rate for all combatants, −10 trap detection.
+    Rain,
+    // Thick air — −20 trap detection. It does NOT reduce the visibility radius: that was claimed
+    // here and in the tutorial for a long time with nothing reading it for vision, while the
+    // Player Guide correctly said "trap detection, not FOV". The comment was the wrong half.
+    Fog,
+    // Tailwind — +5 damage on throwable items, via GetThrowableBonus.
+    Wind
+}
+
+// Manages per-floor weather. Rolled randomly on floor generation using
+// weighted probabilities: Clear 40%, Rain 25%, Fog 15%, Wind 20%.
+public static class WeatherSystem
+{
+    // Current floor weather state.
+    public static WeatherType Current { get; private set; } = WeatherType.Clear;
+
+    // Per-weather config (label, modifiers, flavor). Single table, no switches.
+    private readonly record struct WeatherConfig(
+        string Label,
+        int Weight,
+        int CritModifier,
+        int RegenBonus,
+        int TrapDetectionPenalty,
+        int PoisonDurationBonus,
+        // Extra damage on a thrown item. Advertised in the Guide's weather table, its tips, the
+        // tutorial tip and a journal line — and implemented by nothing for a long time, which
+        // made Windy, one floor in five, a pattern whose only effect was the promise.
+        int ThrowableBonus,
+        // Share of the sun's direct light that still reaches the ground. Cloud and fog scatter
+        // it, and scattered light casts no shadow — so this scales shadow depth and nothing
+        // else. Render-only: it changes no roll and cannot alter a seeded run.
+        float SunlightScale,
+        string FlavorDescription);
+
+    private static readonly Dictionary<WeatherType, WeatherConfig> Configs = new()
+    {
+        [WeatherType.Clear] = new("Clear", 40,  0, 1,   0, 0, 0, 1.00f, ""),
+        [WeatherType.Rain]  = new("Rainy", 25, -3, 0, -10, 1, 0, 0.40f, "Rain patters against the stone walls of the labyrinth."),
+        [WeatherType.Fog]   = new("Foggy", 15,  0, 0, -20, 0, 0, 0.15f, "A thick fog swallows the light, and every edge with it."),
+        // Wind clears the sky rather than clouding it, so the sun is untouched.
+        [WeatherType.Wind]  = new("Windy", 20,  0, 0,   0, 0, 5, 1.00f, "A strong wind sweeps through the corridors."),
+    };
+
+    // How much of the sun's shadow-casting light survives the current weather.
+    public static float SunlightScale => Configs[Current].SunlightScale;
+
+    // Roll weather for floor. Floor param reserved for biome-specific tables.
+    public static void RollWeather(int floor)
+    {
+        int total = 0;
+        foreach (var cfg in Configs.Values) total += cfg.Weight;
+
+        int roll = RunRng.Next(total);
+        int acc = 0;
+        foreach (var (type, cfg) in Configs)
+        {
+            acc += cfg.Weight;
+            if (roll < acc)
+            {
+                Current = type;
+                return;
+            }
+        }
+        Current = WeatherType.Clear;
+    }
+
+    // Returns a short label for the current weather (e.g. "Rainy").
+    public static string GetLabel() => Configs[Current].Label;
+
+    // ── Gameplay modifiers per weather type ─────────────────────────
+
+    // Crit rate modifier. Rain: −3 (slippery), others: 0.
+    public static int GetCritModifier() => Configs[Current].CritModifier;
+
+    // Passive HP regen bonus. Clear: +1 (pleasant), others: 0.
+    public static int GetRegenBonus() => Configs[Current].RegenBonus;
+
+    // Rain hides traps better (harder to detect). Fog hides traps completely until stepped on.
+    public static int GetTrapDetectionPenalty() => Configs[Current].TrapDetectionPenalty;
+
+    // Rain makes gas vents more potent (+1 poison turn).
+    public static int GetPoisonDurationBonus() => Configs[Current].PoisonDurationBonus;
+
+    // A tailwind carries a thrown item harder. Read by HandleThrowable.
+    public static int GetThrowableBonus() => Configs[Current].ThrowableBonus;
+
+    // Returns a flavorful one-liner describing the current weather.
+    public static string GetFlavorDescription() => Configs[Current].FlavorDescription;
+}

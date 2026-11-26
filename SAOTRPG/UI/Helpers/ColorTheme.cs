@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.UI.Helpers;
 
 public enum ThemeId { Default = 0, HighContrast = 1, ColourblindSafe = 2, AmberMono = 3 }

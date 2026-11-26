@@ -1,5 +1,3 @@
-using SAOTRPG.Entities;
-
 namespace SAOTRPG.Systems.Story;
 
 // Scripted story events registry + dispatcher. Static state (matches
@@ -38,7 +36,7 @@ public static class StorySystem
     {
         int before = FiredEventIds.Count;
         FiredEventIds.RemoveWhere(id => id.StartsWith("floor:"));
-        UI.DebugLogger.LogGame("RELOAD", $"StorySystem.ClearPerFloorTriggers removed {before - FiredEventIds.Count}");
+        SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("RELOAD", $"StorySystem.ClearPerFloorTriggers removed {before - FiredEventIds.Count}");
     }
 
     public static void SetFlag(StoryFlag f) => Flags.Add(f);

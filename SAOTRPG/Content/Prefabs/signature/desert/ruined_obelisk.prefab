@@ -1,8 +1,8 @@
 NAME:          desert_ruined_obelisk
 DESC:          A sand-buried obelisk leans askew amid sun-bleached bones and wind-worn stones.
 TAGS:          signature desert obelisk ruins
-FLOORS:        11-40
-BIOME:         desert any
+FLOORS:        *
+BIOME:         desert
 WEIGHT:        25
 MAX_PER_FLOOR: 1
 ROTATE:        true

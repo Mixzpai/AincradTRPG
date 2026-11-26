@@ -10,11 +10,11 @@ MIRROR:        true
 ORIENT:        float
 
 MAP
-###
-#^#
 #.#
 #^#
 #.#
 #^#
-###
+#.#
+#^#
+#.#
 ENDMAP

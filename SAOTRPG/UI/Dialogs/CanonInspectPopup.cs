@@ -1,4 +1,3 @@
-using Terminal.Gui;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.UI.Helpers;

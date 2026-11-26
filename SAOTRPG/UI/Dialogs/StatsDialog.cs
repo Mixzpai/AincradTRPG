@@ -1,7 +1,10 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Combat;
+using SAOTRPG.Systems.Persistence;
+using SAOTRPG.Systems.Progression;
+using SAOTRPG.Systems.Skills;
+using SAOTRPG.Systems.Turns;
 using Skills = SAOTRPG.Systems.Skills;
 
 namespace SAOTRPG.UI.Dialogs;
@@ -30,6 +33,26 @@ public static class StatsDialog
     private static int DialogHeight() =>
         Math.Min(PreferredDialogHeight, Math.Max(20, AppHost.App.Screen.Height - 4));
 
+    // What SPD is worth RIGHT NOW, against the monsters actually standing on this floor. Speed is
+    // a contest rather than a flat bonus, so a bare number cannot say what it buys — and the mob
+    // side is read off the live roster rather than from a copy of MobFactory's own 3 + floor
+    // formula, which would be a second place for that number to rot.
+    //
+    // With nothing alive to pace, the ceiling against a motionless target is shown instead and is
+    // labelled as such: a blank would read as "Speed does nothing here", which is the impression
+    // this whole stat is being dug out of.
+    private static string SpeedFollowUpNote(Player player, TurnManager? turnManager)
+    {
+        var live = turnManager?.Map.Monsters;
+        if (live != null && live.Count > 0)
+        {
+            var speeds = live.Where(m => !m.IsDefeated).Select(m => m.BaseSpeed).OrderBy(v => v).ToList();
+            if (speeds.Count > 0)
+                return $" (+{SpeedContest.FollowUpChance(player.Speed, speeds[speeds.Count / 2])}% follow-up here)";
+        }
+        return $" (+{SpeedContest.FollowUpChance(player.Speed, 0)}% follow-up vs a still target)";
+    }
+
     // Stat definition — name, getter, and tooltip describing what it does.
     // Add new stats here to extend the dialog automatically.
     private record StatDef(string Name, Func<Player, int> GetValue, string Effect);
@@ -40,7 +63,7 @@ public static class StatsDialog
         new("Strength",     p => p.Strength,     "+2 Attack per point"),
         new("Endurance",    p => p.Endurance,     "+2 Defense per point"),
         new("Dexterity",    p => p.Dexterity,     "+Crit Rate"),
-        new("Agility",      p => p.Agility,       "+2 Speed, +Dodge per point"),
+        new("Agility",      p => p.Agility,       "+2 Speed (follow-ups), +Dodge"),
         new("Intelligence", p => p.Intelligence,  "+2 Skill Damage per point"),
     };
 
@@ -139,12 +162,13 @@ public static class StatsDialog
 
         void RefreshCombat()
         {
-            // Speed is a DISPLAY-ONLY stat — Player.Speed is read by this label and one debug
-            // line, by no mechanic — so showing the penalty is the whole of applying it. The ATK
-            // and DEF thirds of fatigue were both live; only SPD was never read, while the Guide
-            // states that fatigue drains it.
-            int spd = player.Speed + (turnManager?.FatigueSpdPenalty ?? 0);
-            combatLabel.Text = $"ATK:{player.Attack} DEF:{player.Defense} SPD:{spd} HP:{player.CurrentHealth}/{player.MaxHealth}";
+            // SPD is the raw derived stat. It used to have a fatigue penalty subtracted here, on
+            // the reasoning that Player.Speed is display-only so the display WAS the mechanic —
+            // but that made this label disagree with the formula the Guide states for SPD, and
+            // fatigue charges attack and defence only.
+            combatLabel.Text = $"ATK:{player.Attack} DEF:{player.Defense} SPD:{player.Speed}"
+                             + SpeedFollowUpNote(player, turnManager)
+                             + $" HP:{player.CurrentHealth}/{player.MaxHealth}";
         }
         RefreshCombat();
 
@@ -242,13 +266,13 @@ public static class StatsDialog
             SchemeName = ColorSchemes.GoldName,
         });
         int lsRow = lsY + 1;
-        foreach (var skill in Enum.GetValues<Systems.LifeSkillType>())
+        foreach (var skill in Enum.GetValues<LifeSkillType>())
         {
             int lvl = player.LifeSkills.GetLevel(skill);
             var (cur, nxt) = player.LifeSkills.GetLevelProgress(skill);
             string bar = BuildProgressBar(cur, nxt, 10);
             string bonus = ActiveBonusSummary(player.LifeSkills, skill);
-            string line = $"  {Systems.LifeSkillSystem.Label(skill),-8} L{lvl,2}/99 {bar} "
+            string line = $"  {SAOTRPG.Systems.Skills.LifeSkillSystem.Label(skill),-8} L{lvl,2}/99 {bar} "
                 + $"{cur}/{Math.Max(1, nxt)}  {bonus}";
             if (line.Length > colW) line = line[..(colW - 1)] + "…";
             dialog.Add(new Label
@@ -289,11 +313,18 @@ public static class StatsDialog
             X = rightX, Y = tY + 1,
             Width = colW,
         }.WithScheme(titleScheme));
-        int unlockedCount = MilestoneRegistry.All
-            .Count(m => m.Reward == RewardType.EquippableTitle
-                && LifetimeStats.IsMilestoneUnlocked(m.Id));
-        int totalTitles = MilestoneRegistry.All
-            .Count(m => m.Reward == RewardType.EquippableTitle);
+        // One snapshot rather than one IsMilestoneUnlocked per row: that helper re-reads and
+        // re-deserializes lifetime_stats.json on every call, which cost 5.6 ms of this dialog's
+        // 7.7 ms build.
+        var unlockedIds = new HashSet<string>(LifetimeStats.Load().UnlockedMilestones,
+                                              StringComparer.Ordinal);
+        int unlockedCount = 0, totalTitles = 0;
+        foreach (var m in MilestoneRegistry.All)
+        {
+            if (m.Reward != RewardType.EquippableTitle) continue;
+            totalTitles++;
+            if (unlockedIds.Contains(m.Id)) unlockedCount++;
+        }
         dialog.Add(new Label
         {
             Text = $"  Titles unlocked: {unlockedCount}/{totalTitles}",
@@ -309,7 +340,7 @@ public static class StatsDialog
             X = rightX, Y = gY,
             SchemeName = ColorSchemes.GoldName,
         });
-        string karmaTier = Systems.KarmaSystem.TierLabel(player.Karma);
+        string karmaTier = SAOTRPG.Systems.Social.KarmaSystem.TierLabel(player.Karma);
         string karmaLine = $"  Karma: {player.Karma,+4} [{karmaTier}]";
         dialog.Add(new Label
         {
@@ -322,8 +353,8 @@ public static class StatsDialog
                 _           => ColorSchemes.BodyName,
             },
         });
-        string guildName = Systems.GuildSystem.ActiveGuildDisplayName(player);
-        string guildPerk = Systems.GuildSystem.ActiveGuildPerkFlavor(player);
+        string guildName = SAOTRPG.Systems.Social.GuildSystem.ActiveGuildDisplayName(player);
+        string guildPerk = SAOTRPG.Systems.Social.GuildSystem.ActiveGuildPerkFlavor(player);
         dialog.Add(new Label
         {
             Text = $"  Guild: {guildName}", X = rightX, Y = gY + 2,
@@ -370,11 +401,11 @@ public static class StatsDialog
 
     // One-line summary of the current active milestone bonus for a skill.
     // Shown alongside the XP bar so the player sees exactly what they have.
-    private static string ActiveBonusSummary(Systems.LifeSkillSystem ls, Systems.LifeSkillType skill)
+    private static string ActiveBonusSummary(LifeSkillSystem ls, LifeSkillType skill)
     {
         int lvl = ls.GetLevel(skill);
         if (lvl < 10) return "";
         int milestone = lvl >= 99 ? 99 : lvl >= 50 ? 50 : lvl >= 25 ? 25 : 10;
-        return "— " + Systems.LifeSkillSystem.MilestoneBonusDescription(skill, milestone);
+        return "— " + SAOTRPG.Systems.Skills.LifeSkillSystem.MilestoneBonusDescription(skill, milestone);
     }
 }

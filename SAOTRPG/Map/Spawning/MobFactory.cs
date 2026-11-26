@@ -1,0 +1,437 @@
+using SAOTRPG.Entities;
+
+namespace SAOTRPG.Map.Spawning;
+
+// Floor-appropriate mobs with scaling + variant rolls. Templates by 0-indexed tier.
+// Variants: 10% Elite (1.5x stats), 3% Champion (2x stats).
+public static class MobFactory
+{
+    // LootTag → themed drops via LootGenerator.MobLootTable, consumed in TurnManager.Loot.
+    // Poison/Bleed etc. for status-inflicters.
+    private record MobTemplate(string Name, char Symbol, Color Color, int Aggro,
+        bool Poison = false, bool Bleed = false, bool Stun = false, bool Slow = false,
+        string LootTag = "generic", int Range = 1, string? Ability = null,
+        bool Swim = false);
+
+    // Floor-tier mob table via FloorToTier(); F1-F5 dedicated canon rosters, later floors share era pools.
+    // Names sourced from SAO canon (Progressive, anime, IF, HF) where possible.
+    private static readonly MobTemplate[][] FloorMobs =
+    {
+        // Tier 0 — Floor 1: Town of Beginnings wilderness (Progressive Vol 1)
+        new[]
+        {
+            new MobTemplate("Frenzy Boar",            'b', Color.BrightRed,     6, LootTag: "beast", Ability: "Charge"),
+            new MobTemplate("Little Nepent",          'p', Color.BrightGreen,   3, Poison: true, LootTag: "plant"),
+            new MobTemplate("Sharp-Hook Nepent",      'p', Color.Green,         4, Bleed: true, LootTag: "plant"),
+            new MobTemplate("Three-Pronged Nepent",   'P', Color.BrightGreen,   5, Poison: true, LootTag: "plant"),
+            new MobTemplate("Dire Wolf",              'w', Color.Gray,          7, LootTag: "beast", Ability: "Leap"),
+            new MobTemplate("Ruin Kobold Trooper",    'k', Color.BrightRed,     5, LootTag: "kobold"),
+            new MobTemplate("Ruin Kobold Sentinel",   's', Color.BrightCyan,    4, LootTag: "kobold"),
+            new MobTemplate("Windwasp",               'i', Color.BrightYellow,  8, LootTag: "insect", Ability: "Leap"),
+        },
+        // Tier 1 — Floor 2: Urbus foothills (Progressive Vol 2)
+        new[]
+        {
+            new MobTemplate("Lesser Taurus",          't', Color.BrightYellow,  6, LootTag: "beast", Ability: "Charge"),
+            new MobTemplate("Trembling Ox",           'o', Color.Yellow,        3, Stun: true, LootTag: "beast", Ability: "Charge"),
+            new MobTemplate("Heavy Hammer Taurus",    'T', Color.BrightRed,     5, Stun: true, LootTag: "beast"),
+            new MobTemplate("Bullbous Bow",           'B', Color.Red,           7, LootTag: "beast", Range: 2),
+            new MobTemplate("Plumed Mist Lizard",     'l', Color.Green,         6, Slow: true, LootTag: "reptile"),
+        },
+        // Tier 2 — Floor 3: Zumfut / Elf War (Progressive Vol 3)
+        new[]
+        {
+            new MobTemplate("Treant Sapling",         'p', Color.Green,         4, LootTag: "plant"),
+            new MobTemplate("Elder Treant",           'P', Color.BrightGreen,   5, Slow: true, LootTag: "plant"),
+            new MobTemplate("Forest Elf Scout",       'e', Color.BrightGreen,   9, LootTag: "humanoid", Range: 2, Ability: "Leap"),
+            new MobTemplate("Kobold Trapper",         'k', Color.Red,           7, Slow: true, LootTag: "kobold"),
+            new MobTemplate("Cave Bat",               'v', Color.DarkGray,      8, LootTag: "insect", Ability: "Leap"),
+            new MobTemplate("Toadstool Walker",       'f', Color.BrightMagenta, 4, Poison: true, LootTag: "plant"),
+        },
+        // Tier 3 — F4 Rovia flooded (Prog Vol 4). All 5 mobs CanSwim — water isn't a free choke on a flood floor.
+        new[]
+        {
+            new MobTemplate("Water Drake",            'd', Color.BrightBlue,    6, LootTag: "dragon", Range: 3, Swim: true),
+            new MobTemplate("Lakeshore Crab",         'c', Color.Cyan,          4, LootTag: "aquatic", Swim: true),
+            new MobTemplate("Giant Clam",             'C', Color.Blue,          2, LootTag: "aquatic", Swim: true),
+            new MobTemplate("Water Wight",            'u', Color.BrightCyan,    7, Slow: true, LootTag: "undead", Swim: true),
+            new MobTemplate("Scavenger Toad",         'f', Color.Green,         4, Poison: true, LootTag: "beast", Swim: true),
+        },
+        // Tier 4 — Floor 5: Karluin / Pitch-Black Cathedral (Progressive Vol 5)
+        new[]
+        {
+            new MobTemplate("Cathedral Bat",          'v', Color.DarkGray,      8, LootTag: "insect", Ability: "Leap"),
+            new MobTemplate("Cursed Ghoul",           'u', Color.BrightMagenta, 5, Stun: true, LootTag: "undead"),
+            new MobTemplate("Shadow Stalker",         'S', Color.DarkGray,     10, LootTag: "undead", Ability: "Leap"),
+            new MobTemplate("Vacant Sentinel",        'G', Color.Gray,          3, Stun: true, LootTag: "construct", Ability: "Charge"),
+            new MobTemplate("Skeleton Warrior",       'z', Color.White,         6, LootTag: "undead"),
+        },
+        // Tier 5 — Floors 6-10: Stone era (mines, sky, coast, puzzle)
+        new[]
+        {
+            new MobTemplate("Ruin Kobold Miner",      'k', Color.Red,           5, LootTag: "kobold"),
+            new MobTemplate("Rock Worm",              'r', Color.BrightYellow,  3, LootTag: "beast"),
+            new MobTemplate("Cave Crawler",           'x', Color.DarkGray,      6, Poison: true, LootTag: "insect"),
+            new MobTemplate("Wind Serpent",           's', Color.BrightCyan,    7, LootTag: "dragon", Range: 2),
+            new MobTemplate("Cloud Wyvern",           'D', Color.BrightBlue,    8, LootTag: "dragon", Ability: "Leap"),
+            new MobTemplate("Sky Dogma Thief",        'h', Color.BrightMagenta, 9, Bleed: true, LootTag: "humanoid", Ability: "Leap"),
+            new MobTemplate("Cursed Stone Golem",     'G', Color.Gray,          3, Stun: true, LootTag: "construct"),
+            new MobTemplate("Puzzle Wraith",          'w', Color.BrightMagenta, 8, LootTag: "undead"),
+        },
+        // Tier 6 — Floors 11-25: mid-tier frontier (mountain, forest, trap)
+        new[]
+        {
+            new MobTemplate("Alpine Wolf",            'w', Color.BrightCyan,    7, LootTag: "beast", Ability: "Leap"),
+            new MobTemplate("Bandit Raider",          'r', Color.Red,           8, Bleed: true, LootTag: "humanoid"),
+            new MobTemplate("Granite Elemental",      'G', Color.Gray,          4, Stun: true, LootTag: "construct", Ability: "Charge"),
+            new MobTemplate("Dark Dwarf Miner",       'd', Color.Red,           5, LootTag: "humanoid"),
+            new MobTemplate("Forest Wolf Alpha",      'W', Color.BrightYellow,  8, LootTag: "beast", Ability: "Leap"),
+            new MobTemplate("Giant Spider",           'x', Color.BrightMagenta, 6, Poison: true, LootTag: "insect", Ability: "Leap"),
+            new MobTemplate("Gemini Dragon Hatchling",'D', Color.BrightGreen,   5, LootTag: "dragon"),
+        },
+        // Tier 7 — Floors 26-50: industrial / martial (KoB frontier, forge, desert, ice)
+        new[]
+        {
+            new MobTemplate("Titan's Hand PKer",      'p', Color.BrightRed,    10, Bleed: true, LootTag: "humanoid", Range: 2),
+            new MobTemplate("Snow Wolf",              'w', Color.White,         8, LootTag: "beast", Ability: "Leap"),
+            new MobTemplate("Frost Goblin",           'g', Color.BrightCyan,    6, Slow: true, LootTag: "humanoid"),
+            new MobTemplate("Drake Rider",            'D', Color.BrightYellow,  8, LootTag: "dragon", Ability: "Charge"),
+            new MobTemplate("Iron Warden",            'W', Color.Gray,          4, LootTag: "construct"),
+            new MobTemplate("Sandstorm Scorpion",     's', Color.Yellow,        6, Poison: true, LootTag: "insect"),
+            new MobTemplate("Crimson Longsword (PK)", 'p', Color.Red,           9, Bleed: true, LootTag: "humanoid"),
+        },
+        // Tier 8 — Floors 51-75: endgame frontier (KoB HQ era, Gleam Eyes approach)
+        new[]
+        {
+            new MobTemplate("Fatal Scythe Echo",      'R', Color.BrightMagenta, 10, Stun: true, LootTag: "undead"),
+            new MobTemplate("Laughing Coffin PKer",   'L', Color.Red,          12, Bleed: true, LootTag: "humanoid", Range: 2),
+            new MobTemplate("Flame Elemental",        'F', Color.BrightRed,     7, LootTag: "elemental", Range: 3),
+            new MobTemplate("Ancient Dragon",         'D', Color.BrightRed,     8, Bleed: true, LootTag: "dragon", Ability: "Charge"),
+            new MobTemplate("Bone Archer",            'z', Color.White,         8, LootTag: "undead", Range: 3),
+            new MobTemplate("Shadow Wraith",          'S', Color.DarkGray,     10, Slow: true, LootTag: "undead", Ability: "Leap"),
+            new MobTemplate("Fallen Paladin",         'u', Color.BrightYellow,  8, Stun: true, LootTag: "humanoid"),
+        },
+        // Tier 9 — Floors 76-100: Hollow Fragment + divine ascension
+        new[]
+        {
+            new MobTemplate("Hollow Mutated Wolf",    'w', Color.BrightMagenta, 10, Bleed: true, LootTag: "hollow", Ability: "Leap"),
+            new MobTemplate("Death Gaze",             'E', Color.DarkGray,     12, Stun: true, LootTag: "undead", Range: 4),
+            new MobTemplate("Crawling Pain",          'x', Color.BrightMagenta, 8, Poison: true, LootTag: "insect"),
+            new MobTemplate("Infected Griffin",       'g', Color.Green,         9, Poison: true, LootTag: "beast", Ability: "Leap"),
+            new MobTemplate("Unholy Dragon",          'D', Color.BrightRed,    10, Bleed: true, LootTag: "dragon", Range: 3),
+            new MobTemplate("Void Seraph",            'A', Color.White,        12, Slow: true, LootTag: "hollow", Range: 3),
+            new MobTemplate("Cardinal Error",         'C', Color.BrightMagenta, 8, LootTag: "hollow"),
+            new MobTemplate("Immortal Echo",          '@', Color.BrightRed,    10, Bleed: true, LootTag: "hollow"),
+        },
+    };
+
+    // F1-5 dedicated tiers; F6-10, F11-25, F26-50, F51-75, F76-100 share era pools.
+    private static int FloorToTier(int floor)
+    {
+        if (floor <= 5)  return floor - 1;
+        if (floor <= 10) return 5;
+        if (floor <= 25) return 6;
+        if (floor <= 50) return 7;
+        if (floor <= 75) return 8;
+        return 9;
+    }
+
+    // Get base mob names for a given floor tier (0-indexed). Used by bounty system.
+    public static string[] GetFloorMobNames(int tier)
+    {
+        tier = Math.Clamp(tier, 0, FloorMobs.Length - 1);
+        return FloorMobs[tier].Select(t => t.Name).ToArray();
+    }
+
+    // Species name → LootTag (walks every tier, first-seen wins). Returns null → caller defaults to "generic".
+    public static string? GetLootTagForName(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        // Exact match first.
+        foreach (var tier in FloorMobs)
+            foreach (var t in tier)
+                if (t.Name == name) return t.LootTag;
+        // Suffix match so "Elite Frenzy Boar" still resolves when prefix wasn't stripped.
+        foreach (var tier in FloorMobs)
+            foreach (var t in tier)
+                if (name.EndsWith(t.Name)) return t.LootTag;
+        return null;
+    }
+
+    // Prefab MONS → Mob; matches Name or snake-case slug ("frenzy_boar" ↔ "Frenzy Boar").
+    // RNG-threaded overload keeps F9 hot-reload deterministic via ctx.Rng.
+    public static Mob? CreateByKey(string key, int floor, int statScale, Random rng)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        string needle = key.Trim();
+        foreach (var tier in FloorMobs)
+            foreach (var t in tier)
+            {
+                if (string.Equals(t.Name, needle, StringComparison.OrdinalIgnoreCase)) return InstantiateTemplate(t, floor, statScale, rng);
+                if (string.Equals(SlugifyName(t.Name), needle, StringComparison.OrdinalIgnoreCase))
+                    return InstantiateTemplate(t, floor, statScale, rng);
+            }
+        return null;
+    }
+
+    // "Frenzy Boar" → "frenzy_boar". Lowercase + non-alphanumeric collapsed to '_'.
+    private static string SlugifyName(string name)
+    {
+        var sb = new System.Text.StringBuilder(name.Length);
+        bool lastUnderscore = false;
+        foreach (char c in name.ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(c)) { sb.Append(c); lastUnderscore = false; }
+            else if (!lastUnderscore && sb.Length > 0) { sb.Append('_'); lastUnderscore = true; }
+        }
+        if (sb.Length > 0 && sb[^1] == '_') sb.Length--;
+        return sb.ToString();
+    }
+
+    // Shared mob builder — mirrors CreateFloorMob scaling but with a known template.
+    // No Elite/Champion variant roll: prefab-placed mobs stay stock so authors control spec.
+    private static Mob InstantiateTemplate(MobTemplate template, int floor, int statScale, Random rng)
+    {
+        int level = Math.Max(1, floor + rng.Next(-1, 3));
+        int Scale(int val) => Math.Max(1, val * statScale / 100);
+        var mob = new Mob
+        {
+            Name = template.Name,
+            Level = level,
+            AggroRange = template.Aggro,
+            BaseAttack = Scale(3 + floor * 2),
+            BaseDefense = Scale(2 + floor),
+            BaseSpeed = 3 + floor,
+            BaseSkillDamage = 1 + floor,
+            Strength = 1 + floor, Vitality = 1 + floor, Endurance = 1 + floor,
+            Dexterity = 1, Agility = 1 + floor, Intelligence = 1,
+            MaxHealth = Scale(15 + (floor * 10) + rng.Next(0, 10)),
+            ExperienceYield = 20 + (floor * 15),
+            ColYield = 5 + (floor * 10),
+        };
+        mob.SetAppearance(template.Symbol, template.Color);
+        mob.CanPoison = template.Poison; mob.CanBleed = template.Bleed;
+        mob.CanStun = template.Stun; mob.CanSlow = template.Slow;
+        mob.LootTag = template.LootTag; mob.AttackRange = template.Range;
+        mob.SpecialAbility = template.Ability; mob.CanSwim = template.Swim;
+        mob.CurrentHealth = mob.MaxHealth;
+        mob.Id = rng.Next(20000, 99999);
+        return mob;
+    }
+
+    // Picks a random tier template, applies stat scaling, rolls Elite/Champion variant.
+    // The stream is explicit because the caller decides it: worldgen passes the derived per-floor
+    // stream so a floor's roster is a pure function of (seed, floor), while a mid-run spawn passes
+    // RunRng.Stream because it happens at a point the player's own choices determined.
+    public static Mob CreateFloorMob(int floor, int statScale, Random rng)
+    {
+        int tier = FloorToTier(Math.Max(1, floor));
+        var templates = FloorMobs[tier];
+        var template = templates[rng.Next(templates.Length)];
+        int level = Math.Max(1, floor + rng.Next(-1, 3));
+
+        int Scale(int val) => Math.Max(1, val * statScale / 100);
+
+        var mob = new Mob
+        {
+            Name = template.Name,
+            Level = level,
+            AggroRange = template.Aggro,
+            BaseAttack = Scale(3 + floor * 2),
+            BaseDefense = Scale(2 + floor),
+            BaseSpeed = 3 + floor,
+            BaseSkillDamage = 1 + floor,
+            Strength = 1 + floor,
+            Vitality = 1 + floor,
+            Endurance = 1 + floor,
+            Dexterity = 1,
+            Agility = 1 + floor,
+            Intelligence = 1,
+            MaxHealth = Scale(15 + (floor * 10) + rng.Next(0, 10)),
+            ExperienceYield = 20 + (floor * 15),
+            ColYield = 5 + (floor * 10)
+        };
+        mob.SetAppearance(template.Symbol, template.Color);
+        mob.CanPoison = template.Poison;
+        mob.CanBleed = template.Bleed;
+        mob.CanStun = template.Stun;
+        mob.CanSlow = template.Slow;
+        mob.LootTag = template.LootTag;
+        mob.AttackRange = template.Range;
+        mob.SpecialAbility = template.Ability;
+        mob.CanSwim = template.Swim;
+
+        // Variant: 10% Elite (1.5x stats/2x reward), 3% Champion (2x stats/3x reward).
+        int variantRoll = rng.Next(100);
+        if (variantRoll < 3)
+        {
+            mob.Variant = VariantChampion;
+            mob.Name = $"{VariantChampion} {template.Name}";
+            mob.BaseAttack = mob.BaseAttack * 2;
+            mob.BaseDefense = mob.BaseDefense * 2;
+            mob.MaxHealth = mob.MaxHealth * 2;
+            mob.ExperienceYield = mob.ExperienceYield * 3;
+            mob.ColYield = mob.ColYield * 3;
+            mob.Level += 3;
+            mob.SetAppearance(char.ToUpper(template.Symbol), Color.BrightMagenta);
+        }
+        else if (variantRoll < 13)
+        {
+            mob.Variant = VariantElite;
+            mob.Name = $"{VariantElite} {template.Name}";
+            mob.BaseAttack = mob.BaseAttack * 3 / 2;
+            mob.BaseDefense = mob.BaseDefense * 3 / 2;
+            mob.MaxHealth = mob.MaxHealth * 3 / 2;
+            mob.ExperienceYield = mob.ExperienceYield * 2;
+            mob.ColYield = mob.ColYield * 2;
+            mob.Level += 2;
+            mob.SetAppearance(template.Symbol, Color.BrightYellow);
+        }
+
+        // Affix roll for elite/champion mobs — random combat modifiers
+        if (mob.Variant is "Elite" or "Champion")
+            ApplyAffix(mob, mob.Variant == "Champion" ? 2 : 1, rng);
+
+        mob.CurrentHealth = mob.MaxHealth;
+        mob.Id = rng.Next(20000, 99999);
+        return mob;
+    }
+
+    // Town Guard — F1 TOB plaza patrol at karma <= -50. Direct-placed by PopulateTownOfBeginnings; mid-tier Lv20.
+    public static Mob CreateTownGuard(Random rng)
+    {
+        var guard = new Mob
+        {
+            Name = "Town Guard",
+            Level = 20,
+            AggroRange = 10,
+            BaseAttack = 25,
+            BaseDefense = 8,
+            BaseSpeed = 8,
+            BaseSkillDamage = 4,
+            Strength = 12, Vitality = 10, Endurance = 10,
+            Dexterity = 8, Agility = 10, Intelligence = 6,
+            MaxHealth = 100,
+            ExperienceYield = 80,
+            ColYield = 40,
+            LootTag = "humanoid",
+            AttackRange = 1,
+            LeashRange = 25,
+        };
+        guard.SetAppearance('G', Color.BrightBlue);
+        guard.CurrentHealth = guard.MaxHealth;
+        guard.Id = rng.Next(20000, 99999);
+        return guard;
+    }
+
+    // ── Affix system — random modifiers for elite/champion mobs ──
+    //
+    // An affix is concatenated into the mob's NAME and shown in Look mode, so every one of these
+    // is advertised to the player. Six carry behaviour that lives outside this file and is matched
+    // on the affix name, so these spellings are a contract with TurnManager: the constants below
+    // are what both sides use.
+    public const string AffixVampiric     = "Vampiric";
+    public const string AffixCrystallite  = "Crystallite";
+    public const string AffixRegenerating = "Regenerating";
+    public const string AffixPackHunter   = "Pack Hunter";
+    public const string AffixEthereal     = "Ethereal";
+    public const string AffixCardinal     = "Cardinal-Marked";
+    public const string AffixImmortal     = "Immortal-Marked";
+
+    private static readonly string[] AffixPoolArray =
+    {
+        "Swift", "Armored", AffixVampiric, "Berserker",
+        AffixCrystallite, AffixRegenerating, AffixPackHunter, AffixEthereal,
+        AffixCardinal, AffixImmortal,
+    };
+
+    public static IReadOnlyList<string> AffixPool => AffixPoolArray;
+
+    // The two power variants. Constants for the same reason the affixes are: they are
+    // concatenated into the mob's NAME, and anything that has to take that name apart again
+    // must use the same spellings.
+    public const string VariantElite    = "Elite";
+    public const string VariantChampion = "Champion";
+
+    // Every prefix that can appear on a generated mob's name, each with its trailing space —
+    // affixes first in pool order, then the variants, which is the order they are concatenated
+    // in. Derived rather than hand-listed: a second copy of this lived in TurnManager.Loot and
+    // would have drifted the first time an affix was added, silently breaking the NamedMobDrops
+    // lookup for that mob (rule 258 — do not hand-write a list the source can supply).
+    public static IReadOnlyList<string> NamePrefixes => NamePrefixesArray;
+
+    private static readonly string[] NamePrefixesArray = BuildNamePrefixes();
+
+    private static string[] BuildNamePrefixes()
+    {
+        var list = new string[AffixPoolArray.Length + 2];
+        for (int i = 0; i < AffixPoolArray.Length; i++) list[i] = AffixPoolArray[i] + " ";
+        list[^2] = VariantElite + " ";
+        list[^1] = VariantChampion + " ";
+        return list;
+    }
+
+    private static void ApplyAffix(Mob mob, int count, Random rng)
+    {
+        var available = new List<string>(AffixPoolArray);
+        var applied = new List<string>();
+
+        for (int i = 0; i < count && available.Count > 0; i++)
+        {
+            int idx = rng.Next(available.Count);
+            string affix = available[idx];
+            available.RemoveAt(idx);
+            applied.Add(affix);
+
+            switch (affix)
+            {
+                case "Swift":
+                    mob.BaseSpeed += 3;
+                    mob.AggroRange += 2;
+                    break;
+                case "Armored":
+                    mob.BaseDefense = mob.BaseDefense * 3 / 2;
+                    break;
+                case AffixVampiric:
+                    // Heals 25% of damage dealt; applied in TurnManager.ApplyMonsterHit.
+                    break;
+                case "Berserker":
+                    mob.BaseAttack = mob.BaseAttack * 13 / 10;  // +30%
+                    mob.BaseDefense = mob.BaseDefense * 8 / 10; // −20%
+                    break;
+                case AffixCrystallite:
+                    // Ice-armored — extra def, plus the slow proc in ApplyMobStatusEffects.
+                    mob.BaseDefense = mob.BaseDefense * 13 / 10;
+                    mob.CanSlow = true;
+                    break;
+                case AffixRegenerating:
+                    // Deeper pool; the per-turn heal is TurnManager.TickAffixRegen.
+                    mob.MaxHealth = mob.MaxHealth * 12 / 10;
+                    break;
+                case AffixPackHunter:
+                    // The adjacency damage bonus is in TurnManager.CalcMonsterDamage.
+                    mob.BaseAttack = mob.BaseAttack * 11 / 10;
+                    mob.AggroRange += 3;
+                    break;
+                case AffixEthereal:
+                    // The incoming-melee miss roll is TurnManager.TryAffixEvade.
+                    mob.BaseSpeed += 2;
+                    break;
+                case AffixCardinal:
+                    // System-glitched. The boon that is live this turn is derived, not stored:
+                    // TurnManager.CardinalBoonOf(mob).
+                    mob.BaseAttack = mob.BaseAttack * 12 / 10;
+                    mob.BaseDefense = mob.BaseDefense * 12 / 10;
+                    break;
+                case AffixImmortal:
+                    // Heathcliff echo. DeathWard is consumed by Monster.TakeDamage.
+                    mob.MaxHealth = mob.MaxHealth * 15 / 10;
+                    mob.DeathWard = true;
+                    break;
+            }
+        }
+
+        mob.Affix = string.Join(" ", applied);
+        mob.Name = $"{mob.Affix} {mob.Name}";
+    }
+}

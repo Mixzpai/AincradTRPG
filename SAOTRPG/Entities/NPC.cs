@@ -1,5 +1,4 @@
-using Terminal.Gui;
-using SAOTRPG.Systems;
+using SAOTRPG.Systems.Social;
 
 namespace SAOTRPG.Entities
 {

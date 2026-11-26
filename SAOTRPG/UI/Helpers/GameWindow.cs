@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.UI.Helpers;
 
 // Full-screen host window for every screen.
@@ -19,24 +17,29 @@ public class GameWindow : Window
     // the terminal runs between this and the application's draw-complete event, so the
     // gap isolates "time spent handing the frame to the terminal" from "time spent
     // drawing views" — the last unsplit segment of a frame. Diagnostic only.
-    internal static long ViewDrawCompleteTicks;
+    public static long ViewDrawCompleteTicks;
 
-    private static readonly bool s_sampling = SAOTRPG.UI.DebugMode.PerfSampling;
+    private static readonly bool s_sampling = SAOTRPG.Systems.Diagnostics.DebugMode.PerfSampling;
 
     public GameWindow()
     {
         DrawComplete += (_, _) =>
         {
-            // Every view has painted; the driver flush follows. Close the gaps in touched
-            // rows first so it writes one run per row instead of thousands of fragments.
-            // This is the render fix — it runs unconditionally, and only the timestamp
-            // below is instrumentation.
-            Gfx.FillDirtyRows();
-            if (s_sampling) ViewDrawCompleteTicks = System.Diagnostics.Stopwatch.GetTimestamp();
+            // Every view has painted; the driver flush follows. Instrumentation only.
+            if (!s_sampling) return;
+            Gfx.CountTransmitted();
+            ViewDrawCompleteTicks = System.Diagnostics.Stopwatch.GetTimestamp();
         };
     }
 
     protected override bool OnClearingViewport() => true;
+
+    // Terminal.Gui redraws the border whenever ANY subview redraws: BorderView blanks its cells and
+    // the line canvas re-resolves them, ~480 KB of garbage a frame at 316x91. The border changes
+    // only when the window itself is invalidated (a resize, a screen swap, a modal closing:
+    // Runnable and DialogHelper.RunModal both SetNeedsDraw it), so a subview-only pass skips it.
+    // DrawingSelf is the patched Terminal.Gui's (vendor/README.md).
+    protected override bool OnDrawingAdornments() => !DrawingSelf;
 
     // Forces one real full-screen clear on the next draw. Call when replacing a
     // screen's contents, where leftover cells would otherwise survive in the gaps

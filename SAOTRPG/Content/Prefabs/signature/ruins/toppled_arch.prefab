@@ -1,0 +1,23 @@
+NAME:          ruins_toppled_arch
+DESC:          A collapsed gate arch, four standing pillars and a lore stone worn smooth by drips.
+TAGS:          signature ruins arch lore
+FLOORS:        *
+BIOME:         ruins
+WEIGHT:        20
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+KFEAT: * = LoreStone
+KFEAT: = = CrackedWall
+
+MAP
+=#.....
+=......
+..P.P..
+...*...
+..P.P..
+......=
+.....#=
+ENDMAP

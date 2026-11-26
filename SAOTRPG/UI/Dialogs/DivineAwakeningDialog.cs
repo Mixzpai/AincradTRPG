@@ -1,9 +1,9 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Equipment;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Crafting;
+using SAOTRPG.UI.Rendering;
 
 namespace SAOTRPG.UI.Dialogs;
 

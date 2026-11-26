@@ -1,5 +1,4 @@
-using Terminal.Gui;
-using SAOTRPG.UI;
+using SAOTRPG.UI.GameLog;
 
 namespace SAOTRPG.Entities
 {

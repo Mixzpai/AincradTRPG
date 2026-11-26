@@ -1,6 +1,7 @@
+using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
-using SAOTRPG.Systems;
-using SAOTRPG.UI;
+using SAOTRPG.Systems.Diagnostics;
+using SAOTRPG.Systems.RunState;
 
 namespace SAOTRPG.Entities
 {
@@ -59,10 +60,14 @@ namespace SAOTRPG.Entities
         };
 
         // Rolls attack against a monster — checks for crit, logs flavor text, returns (damage, wasCrit).
-        public (int Damage, bool IsCrit) AttackMonster(Monster monster)
+        // critChance comes from TurnManager.PlayerCritChance: the roll needs the equipped weapon's
+        // CritRate tag and the weapon-proficiency perk, neither of which the Player can reach. No
+        // default value — the caller must state it, so a new call site cannot silently roll on the
+        // bare stat again.
+        public (int Damage, bool IsCrit) AttackMonster(Monster monster, int critChance)
         {
             int damage = Attack;
-            bool isCrit = RunRng.Next(0, 100) < Math.Max(0, CriticalRate + WeatherSystem.GetCritModifier());
+            bool isCrit = RunRng.Next(0, 100) < critChance;
             if (isCrit)
             {
                 damage += (int)CriticalHitDamage;
@@ -124,6 +129,30 @@ namespace SAOTRPG.Entities
 
             SkillPoints -= points;
             return true;
+        }
+
+        // Permanent base-stat grant (guild perks, milestone rewards); negative v revokes it.
+        // Health is paid as Vitality, 1 per 10 HP, and a grant also heals by v.
+        public void AddBaseStat(StatType stat, int v)
+        {
+            switch (stat)
+            {
+                case StatType.Attack:       BaseAttack      += v; break;
+                case StatType.Defense:      BaseDefense     += v; break;
+                case StatType.Speed:        BaseSpeed       += v; break;
+                case StatType.SkillDamage:  BaseSkillDamage += v; break;
+                case StatType.Strength:     Strength        += v; break;
+                case StatType.Vitality:     Vitality        += v; break;
+                case StatType.Endurance:    Endurance       += v; break;
+                case StatType.Dexterity:    Dexterity       += v; break;
+                case StatType.Agility:      Agility         += v; break;
+                case StatType.Intelligence: Intelligence    += v; break;
+                case StatType.Health:
+                    Vitality += Math.Sign(v) * Math.Max(1, Math.Abs(v) / 10);
+                    if (v > 0)
+                        CurrentHealth = Math.Min(CurrentHealth + v, MaxHealth);
+                    break;
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
-using Terminal.Gui;
-using SAOTRPG.Systems;
-using SAOTRPG.UI;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Diagnostics;
+using SAOTRPG.Systems.Persistence;
+using SAOTRPG.UI.Screens;
 
 namespace SAOTRPG
 {
@@ -14,12 +14,12 @@ namespace SAOTRPG
     {
         static void Main(string[] args)
         {
+            // Debug logger first, so a settings or keybind load error is logged
+            DebugLogger.Init();
+
             // Load user settings and key bindings (both persist across sessions)
             UserSettings.Load();
             SAOTRPG.Systems.Input.Keybinds.Load();
-
-            // Initialize debug logger — writes keystrokes + game output to debug.log
-            DebugLogger.Init();
 
             // Catch any unhandled crash and dump it to debug.log before dying
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
@@ -35,6 +35,19 @@ namespace SAOTRPG
             if (args.Contains("--freeze-anim")) DebugMode.EnableFreezeAnimations();
             if (args.Contains("--perf")) DebugMode.EnablePerfSampling();
             if (args.Contains("--verify-tiles")) DebugMode.EnableVerifyTiles();
+            if (args.Contains("--verify-light")) DebugMode.EnableVerifyLight();
+
+            // --perf implies --quickstart: a perf run wants the map, and driving four screens by
+            // hand is the slow part of taking a measurement. Order matters — the explicit opt-out
+            // is applied last so `--perf --no-quickstart` reaches the title screen, which is the
+            // only way to measure the title screen's own unexplained ~105ms frame.
+            if (args.Contains("--perf") || args.Contains("--quickstart")) DebugMode.EnableQuickStart();
+            if (args.Contains("--no-quickstart")) DebugMode.DisableQuickStart();
+
+            int seedArg = Array.IndexOf(args, "--seed");
+            if (seedArg >= 0 && seedArg + 1 < args.Length
+                && int.TryParse(args[seedArg + 1], out int quickSeed))
+                DebugMode.SetQuickStartSeed(quickSeed);
 
             // Create and initialize the Terminal.Gui application instance.
             // --driver <windows|ansi|dotnet> overrides the backend; the platform
@@ -51,7 +64,7 @@ namespace SAOTRPG
             ColorSchemes.ApplyGlyphs();
 
             // Attach keystroke logger to capture all input
-            DebugLogger.AttachKeyLogger();
+            AppHost.AttachKeyLogger();
 
             // Main window fills entire terminal — all screens render inside this
             var mainWindow = new GameWindow
@@ -62,11 +75,8 @@ namespace SAOTRPG
                 SchemeName = ColorSchemes.WindowName,
             };
 
-            // The border is LOAD-BEARING for render performance — see Gfx.FillDirtyRows. It puts a
-            // dirty cell at both ends of every row, so FillDirtyRows expands each row end to end and
-            // the driver never walks a clean cell. Removing it measured 5-19x SLOWER.
-
-            TitleScreen.Show(mainWindow);
+            if (DebugMode.QuickStart) QuickStart.Launch(mainWindow, DebugMode.QuickStartSeed);
+            else TitleScreen.Show(mainWindow);
             app.Run(mainWindow);
             mainWindow.Dispose();
             AppHost.Stop();

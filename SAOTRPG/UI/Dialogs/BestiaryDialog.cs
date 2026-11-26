@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 
 using SAOTRPG.Systems.Input;
+using SAOTRPG.Systems.Progression;
+using SAOTRPG.Systems.Turns;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -212,7 +212,9 @@ public static class BestiaryDialog
             if (rows.Count == 0)
             {
                 tabLabel.Text = "[ No matches ]";
-                detailView.Text = "  No matches — press C to clear filters.";
+                detailView.Text = "  No matches — press "
+                    + Systems.Input.KeyHints.Key(Systems.Input.GameAction.BestiaryClearFilters)
+                    + " to clear filters.";
                 return;
             }
 

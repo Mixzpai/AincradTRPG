@@ -1,0 +1,33 @@
+NAME:          arena_void
+DESC:          An amphitheatre whose tiers do not agree on which way is down; four columns hold the argument open.
+TAGS:          boss generic void arena
+FLOORS:        *
+BIOME:         void
+WEIGHT:        30
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: X = LabyrinthEntrance
+KFEAT: P = Pillar
+KFEAT: * = LoreStone
+
+MAP
+###################
+#.................#
+#..#...........#..#
+#.................#
+#....P.......P....#
+#.................#
+#........X........#
+#.................#
+#....P.......P....#
+#.................#
+#..#...........#..#
+#.................#
+#........*........#
+#.................#
+#########+#########
+ENDMAP

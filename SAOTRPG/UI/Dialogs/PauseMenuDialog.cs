@@ -1,7 +1,9 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Persistence;
+using SAOTRPG.Systems.Turns;
+using SAOTRPG.UI.GameLog;
+using SAOTRPG.UI.Screens;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -75,7 +77,14 @@ public static class PauseMenuDialog
         {
             e.Handled = true;
             // OptionsScreen rebuilds mainWindow → auto-save first, reload via onBack callback.
-            SaveManager.SaveGame(player, turnManager, saveSlot);
+            // Without that save, Back would reload an older one (or none), so a failure stays here.
+            if (!SaveManager.SaveGame(player, turnManager, saveSlot))
+            {
+                gameLog.LogSystem("[Save failed - Options not opened]");
+                // The log does not repaint beneath this dialog, so say it here too.
+                DialogHelper.ErrorQuery("Options", "Save failed - Options not opened.", "OK");
+                return;
+            }
             gameLog.LogSystem("[Auto-saved for Options]");
             saveFlash[0] = 5;
             AppHost.App.RequestStop();

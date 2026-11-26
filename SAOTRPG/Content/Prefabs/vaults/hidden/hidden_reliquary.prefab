@@ -1,0 +1,22 @@
+NAME:          hidden_reliquary
+DESC:          A reliquary with no door at all - four walls gone to cracks, and whatever was kept safe still inside them.
+TAGS:          vault hidden chamber reliquary late
+FLOORS:        70-99
+BIOME:         any
+WEIGHT:        60
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: * = LoreStone
+
+MAP
+=======
+=.....=
+=.$...=
+=..*..=
+=...$.=
+=.....=
+=======
+ENDMAP

@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Entities;
 
 // Party ally — simple AI: follows player, attacks nearby enemies, uses SAO Switch.

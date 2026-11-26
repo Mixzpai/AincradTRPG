@@ -1,9 +1,8 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
 using SAOTRPG.Entities;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
 using SAOTRPG.Systems.Input;
+using SAOTRPG.Systems.Progression;
 
 namespace SAOTRPG.UI.Dialogs;
 

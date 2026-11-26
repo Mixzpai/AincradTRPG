@@ -1,4 +1,4 @@
-using SAOTRPG.Items.Equipment;
+﻿using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
@@ -126,7 +126,7 @@ public static class OneHandedSwordDefinitions
 
     // Hollow Fragment F83 implement. High-speed fay-forged blade.
     public static Weapon CreateFaybladeTizona() => Make("fayblade_tizona", "Fayblade: Tizona", 17000, "Legendary", 210, 80, 152,
-        B().Add(StatType.Attack, 70).Add(StatType.Speed, 18).Add(StatType.Agility, 15).Add(StatType.Dexterity, 10), "AttackSpeed+2");
+        B().Add(StatType.Attack, 70).Add(StatType.Speed, 18).Add(StatType.Agility, 15).Add(StatType.Dexterity, 10), "PostMotion-1");
 
     // Hollow Fragment F85 implement. +50% damage versus dragons (flavor).
     public static Weapon CreateGodbladeDragonslayer() => Make("godblade_dragonslayer", "Godblade: Dragonslayer", 19000, "Legendary", 220, 82, 160,

@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Entities
 {
     public class Mob : Monster
@@ -16,8 +14,26 @@ namespace SAOTRPG.Entities
         public bool CanStun { get; set; }
         public bool CanSlow { get; set; }
 
-        // Elite/Champion affix (null for normal).
+        // Elite/Champion affix (null for normal). Several affixes are matched by name at the
+        // point their behaviour fires, so the spellings in MobFactory are the contract.
         public string? Affix { get; set; }
+
+        public bool HasAffix(string affix) =>
+            Affix != null && Affix.Contains(affix, System.StringComparison.Ordinal);
+
+        // Immortal-Marked. Absorbs the first blow that would take this mob to 0 HP, then clears.
+        public bool DeathWard { get; set; }
+
+        // Regenerating. Latches the one-time "it is healing" line so the per-turn tick is silent
+        // after the player has been told once.
+        public bool RegenAnnounced { get; set; }
+
+        protected override bool TryWardDeath()
+        {
+            if (!DeathWard) return false;
+            DeathWard = false;
+            return true;
+        }
 
         // Variant: "", "Elite", or "Champion" — boosted stats + better rewards.
         public string Variant { get; set; } = "";

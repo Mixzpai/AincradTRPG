@@ -1,8 +1,8 @@
 NAME:          ruins_collapsed_library
 DESC:          Toppled shelves and scattered journals speak of a library that lost its roof long ago.
 TAGS:          signature ruins library lore
-FLOORS:        5-90
-BIOME:         ruins any
+FLOORS:        *
+BIOME:         ruins
 WEIGHT:        25
 MAX_PER_FLOOR: 1
 ROTATE:        true
@@ -13,17 +13,13 @@ KFEAT: * = LoreStone
 KFEAT: = = CrackedWall
 
 MAP
-############
-#..........#
-#.######...#
-#.J....#.J.#
-#.######...#
-#..........#
-#...*......#
-#..........#
-#...######=#
-#.J.#....#.#
-#...#.J..#.#
-#...######.#
-####+#######
+#########
+#.......#
+#.=====.#
+#.J...J.#
+#.......#
+#...*...#
+#.=====.#
+#.J...J.#
+####+####
 ENDMAP

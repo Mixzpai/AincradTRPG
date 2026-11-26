@@ -1,7 +1,4 @@
-using System.Text;
-using Terminal.Gui;
 using SAOTRPG.Systems.Input;
-using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -279,6 +276,13 @@ internal sealed class BodyRenderView : View
             return true;
         }
 
+        if (Keybinds.IsPressed(GameAction.GuideBack, keyEvent))
+        {
+            RequestPopNavStack?.Invoke();
+            keyEvent.Handled = true;
+            return true;
+        }
+
         switch (keyEvent.KeyCode)
         {
             case KeyCode.CursorUp:
@@ -376,7 +380,6 @@ internal sealed class BodyRenderView : View
                 }
                 break;
 
-            case KeyCode.Backspace:
             case KeyCode.O | KeyCode.CtrlMask:
                 RequestPopNavStack?.Invoke();
                 keyEvent.Handled = true;

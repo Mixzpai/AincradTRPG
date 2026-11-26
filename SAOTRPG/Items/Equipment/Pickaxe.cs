@@ -8,9 +8,6 @@ public class Pickaxe : EquipmentBase
     public int MiningPower { get; set; }
     // % drop chance bonus added to vein loot rolls.
     public int OreQualityBonus { get; set; }
-    // Original durability ceiling — used to repair / display N/M.
-    // Nullable in save; legacy items default to ItemDurability at load.
-    public int MaxDurability { get; set; }
 
     public Pickaxe()
     {

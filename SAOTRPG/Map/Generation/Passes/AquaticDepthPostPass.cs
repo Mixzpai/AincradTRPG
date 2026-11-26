@@ -1,4 +1,5 @@
-using SAOTRPG.Systems;
+
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Generation.Passes;
 
@@ -18,48 +19,71 @@ public sealed class AquaticDepthPostPass : IGenerationPass
         var map = ctx.Map;
         int w = ctx.Width, h = ctx.Height;
 
-        // Pre-count water tiles — if below threshold, stamp beach ring and bail.
+        // This pass draws no rng, so the visit order is free — everything below is row-major, the
+        // order GameMap stores tiles in, and the distance field a multi-source BFS produces is the
+        // true distance to the nearest source whatever order the sources were enqueued in.
+        var tiles = map.Tiles;
+
+        // Pre-count water tiles — if below threshold, stamp beach ring and bail. The water test is
+        // kept because the seed loop below asks it again.
+        var isWater = new bool[w * h];
         int waterCount = 0;
-        for (int x = 0; x < w; x++)
         for (int y = 0; y < h; y++)
         {
-            var t = map.Tiles[x, y].Type;
-            if (t == TileType.Water || t == TileType.WaterDeep) waterCount++;
+            int rowBase = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                var t = tiles[x, y].Type;
+                bool water = t == TileType.Water || t == TileType.WaterDeep;
+                isWater[rowBase + x] = water;
+                if (water) waterCount++;
+            }
         }
         if (waterCount < MinWaterThreshold)
         {
             StampBeachRing(map, w, h);
-            UI.DebugLogger.LogGame("AQUATIC",
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("AQUATIC",
                 $"floor={ctx.FloorNumber} water={waterCount} < {MinWaterThreshold} — stamped beach ring fallback");
             return;
         }
 
-        // Multi-source BFS: all land tiles seed at distance 0; water tiles get positive distance to nearest shore.
-        int[,] dist = new int[w, h];
-        var q = new Queue<(int x, int y)>();
-        for (int x = 0; x < w; x++)
+        // Multi-source BFS: all land tiles seed at distance 0; water tiles get positive distance to
+        // nearest shore. A flat int grid and a flat int queue rather than int[w, h] plus a
+        // Queue<(int, int)> — on a 1000x1000 Aquatic floor the queue held three quarters of a
+        // million tuples and every probe went through a 2D indexer. The frontier is monotonic, so
+        // each cell is enqueued exactly once and w*h slots is an exact bound.
+        var dist = new int[w * h];
+        var q = new int[w * h];
+        int head = 0, tail = 0;
         for (int y = 0; y < h; y++)
         {
-            var t = map.Tiles[x, y].Type;
-            bool isWater = t == TileType.Water || t == TileType.WaterDeep;
-            dist[x, y] = isWater ? int.MaxValue : 0;
-            if (!isWater) q.Enqueue((x, y));
+            int rowBase = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                int i = rowBase + x;
+                if (isWater[i]) { dist[i] = int.MaxValue; continue; }
+                dist[i] = 0;
+                q[tail++] = i;
+            }
         }
 
-        int[] dxs = { -1, 1, 0, 0 };
-        int[] dys = { 0, 0, -1, 1 };
-        while (q.Count > 0)
+        int hLimit = w * (h - 1);
+        while (head < tail)
         {
-            var (cx, cy) = q.Dequeue();
-            int cd = dist[cx, cy];
-            for (int d = 0; d < 4; d++)
-            {
-                int nx = cx + dxs[d], ny = cy + dys[d];
-                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-                if (dist[nx, ny] <= cd + 1) continue;
-                dist[nx, ny] = cd + 1;
-                q.Enqueue((nx, ny));
-            }
+            int cur = q[head++];
+            int cy = cur / w, cx = cur - cy * w;
+            int nd = dist[cur] + 1;
+            if (cx > 0)       Relax(dist, q, ref tail, cur - 1, nd);
+            if (cx < w - 1)   Relax(dist, q, ref tail, cur + 1, nd);
+            if (cur >= w)     Relax(dist, q, ref tail, cur - w, nd);
+            if (cur < hLimit) Relax(dist, q, ref tail, cur + w, nd);
+        }
+
+        static void Relax(int[] dist, int[] q, ref int tail, int ni, int nd)
+        {
+            if (dist[ni] <= nd) return;
+            dist[ni] = nd;
+            q[tail++] = ni;
         }
 
         // BANDS SCALE WITH THE FLOOR, like the lake radius that feeds them. A fixed 2 / 5 was
@@ -76,15 +100,18 @@ public sealed class AquaticDepthPostPass : IGenerationPass
         int beachBand = Math.Max(2, lakeUnit / 3);
         int shallowBand = beachBand + Math.Max(3, lakeUnit);
 
-        for (int x = 0; x < w; x++)
         for (int y = 0; y < h; y++)
         {
-            var t = map.Tiles[x, y].Type;
-            if (t != TileType.Water && t != TileType.WaterDeep) continue;
-            int d = dist[x, y];
-            if (d <= beachBand)        map.Tiles[x, y].Type = TileType.Sand;
-            else if (d <= shallowBand) map.Tiles[x, y].Type = TileType.Water;
-            else                       map.Tiles[x, y].Type = TileType.WaterDeep;
+            int rowBase = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                int i = rowBase + x;
+                if (!isWater[i]) continue;
+                int d = dist[i];
+                if (d <= beachBand)        tiles[x, y].Type = TileType.Sand;
+                else if (d <= shallowBand) tiles[x, y].Type = TileType.Water;
+                else                       tiles[x, y].Type = TileType.WaterDeep;
+            }
         }
     }
 

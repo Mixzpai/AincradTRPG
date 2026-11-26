@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.UI.Helpers;
 
 // Chainable scheme application for dynamically-built schemes (rarity tints, NPC colors).

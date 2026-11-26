@@ -1,0 +1,29 @@
+NAME:          f61_selmburg_jetty
+DESC:          An outlying jetty of Selmburg: stilt huts on a boardwalk over the fog lake, the village well at the shore end, a fisherman's log left in the near hut.
+TAGS:          canon-overlay canon selmburg jetty aquatic f61
+FLOORS:        61
+BIOME:         aquatic
+WEIGHT:        100
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+ORIENT:        float
+
+KFEAT: _ = Path
+KFEAT: J = Journal
+
+MAP
+,,,,,,,,,,,,,,,
+,,,,,,,!,,,,,,,
+,,,,,,,_,,,,,,,
+~~~~~~~_~~~~~~~
+~####~~_~~####~
+~#J.#~~_~~#..#~
+~#..+_____+..#~
+~####~~_~~####~
+~~~~~~~_~~~~~~~
+~####~~_~~####~
+~#..#~~_~~#..#~
+~#..+_____+..#~
+~####~~_~~####~
+ENDMAP

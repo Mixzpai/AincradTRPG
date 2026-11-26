@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Systems.Story;
 
 // 10 milestone events for SAO 100F arc: trigger + predicate + cutscene.

@@ -13,16 +13,18 @@ public sealed class ClusterPass : IGenerationPass
         var cfg = ctx.Config;
         int width = ctx.Width, height = ctx.Height;
 
-        int treeClusters = (int)Math.Round(FloorScale.TreeClusters(ctx.FloorNumber, rng) * cfg.TreeDensity);
+        int treeClusters = (int)Math.Round(
+            FloorScale.TreeClusters(ctx.FloorNumber, rng) * cfg.TreeDensity * ClusterCountScale);
         for (int i = 0; i < treeClusters; i++)
         {
             if (!TryPickInsideDisk(ctx, 8, 8, HeightBias.High, out int cx, out int cy)) continue;
             int radius = rng.Next(3, 7);
             MapGenerator.PlaceCluster(map, cx, cy, radius, TileType.Tree, 0.55, rng);
-            MapGenerator.PlaceCluster(map, cx, cy, radius + 1, TileType.Bush, 0.15 * Math.Max(0.25, cfg.BushDensity), rng);
+            MapGenerator.PlaceCluster(map, cx, cy, radius + 1, TileType.Bush, BushRingFill * cfg.BushDensity, rng);
         }
 
-        int rockClusters = (int)Math.Round(FloorScale.RockClusters(ctx.FloorNumber, rng) * cfg.RockDensity);
+        int rockClusters = (int)Math.Round(
+            FloorScale.RockClusters(ctx.FloorNumber, rng) * cfg.RockDensity * ClusterCountScale);
         for (int i = 0; i < rockClusters; i++)
         {
             if (!TryPickInsideDisk(ctx, 10, 10, HeightBias.Low, out int cx, out int cy)) continue;
@@ -30,6 +32,24 @@ public sealed class ClusterPass : IGenerationPass
             MapGenerator.PlaceCluster(map, cx, cy, radius, TileType.Rock, 0.3, rng);
         }
     }
+
+    // Cluster COUNT is cut by one shared factor rather than by re-tuning eleven biome densities.
+    // A uniform multiplier leaves every declared TreeDensity / RockDensity ratio exactly where it
+    // was, so the per-biome spread stays the biome's own statement; and cutting the count while
+    // keeping the fill gives fewer, denser copses with more open ground between them, where
+    // thinning the fill instead would have given the same number of ragged half-copses.
+    private const double ClusterCountScale = 0.75;
+
+    // Undergrowth fill for the ring one tile outside each tree cluster. Bushes are the densest
+    // decoration on the map — a jungle floor measured 56 per 1,000 walkable cells against 35
+    // trees — because the ring is drawn around EVERY cluster.
+    //
+    // The old coefficient was `0.15 * Math.Max(0.25, cfg.BushDensity)`, and that floor of 0.25 is
+    // the defect worth naming: a biome declaring 0.15 grew 67% more undergrowth than it asked for
+    // and one declaring 0.05 grew five times as much, so the quietest biomes were the ones the
+    // clamp misrepresented most. The clamp is gone; a biome that says it has almost no
+    // undergrowth now gets almost none.
+    private const double BushRingFill = 0.09;
 
     // Which end of the heightmap a cluster prefers. Trees crown the high ground, rocks collect in
     // the low — so a floor reads as a landscape rather than scatter, using the heightmap that was

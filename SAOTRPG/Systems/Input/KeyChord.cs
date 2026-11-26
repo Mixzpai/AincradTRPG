@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Systems.Input;
 
 // One bindable keystroke: a base key plus its modifiers.
@@ -114,8 +112,9 @@ public readonly record struct KeyChord(KeyCode Code, char Rune, bool Shift, bool
         // A single character is a RUNE binding, and this test has to come before the enum parse:
         // KeyCode has members named A-Z whose values are the UPPERCASE letters, so "W" would
         // otherwise parse to KeyCode.W (87) while a typed 'w' arrives as 119 — the binding would
-        // survive a save and then silently stop matching after the next load.
-        if (rest.Length == 1) return new KeyChord(KeyCode.Null, char.ToLowerInvariant(rest[0]), shift, ctrl, alt);
+        // survive a save and then silently stop matching after the next load. Ctrl/Alt letters are
+        // the exception: AsRune is empty under them, so From stores the code and Parse must too.
+        if (rest.Length == 1 && !ctrl && !alt) return new KeyChord(KeyCode.Null, char.ToLowerInvariant(rest[0]), shift, ctrl, alt);
 
         KeyCode code = rest switch
         {

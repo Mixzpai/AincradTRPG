@@ -1,8 +1,8 @@
-using System.Text;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Map.Generation.Prefabs;
-using SAOTRPG.UI;
+using SAOTRPG.Map.Spawning;
+using SAOTRPG.Systems.Diagnostics;
 
 namespace SAOTRPG.Map.Generation.Passes;
 
@@ -52,7 +52,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
         int diskRadius = Math.Min(ctx.Width, ctx.Height) / 2;
         int budget = Math.Clamp(diskRadius / 70, 2, 8);
 
-        var anchors = CollectOpenGroundAnchors(ctx);
+        var anchors = PrefabPlacer.CollectOpenGroundAnchors(ctx, AnchorStride);
         if (anchors.Count == 0)
         {
             DebugLogger.LogGame("PREFAB",
@@ -66,7 +66,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
             var pick = WeightedPick(pool, ctx.Rng);
             if (pick == null) break;
             if (ctx.Rng.NextDouble() > pick.Chance) continue;
-            if (!MapGenerator.TryIncrementPrefabUse(pick.Name, pick.MaxPerGame)) continue;
+            if (!ctx.TryUsePrefab(pick.Name, pick.MaxPerGame)) continue;
 
             var spawnQueue = new List<PrefabSpawnRequest>();
             if (PrefabPlacer.TryPlaceFloating(ctx.Map, pick, ctx.Rng, anchors, ctx.Rooms, ctx, spawnQueue))
@@ -74,7 +74,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
                 DrainSpawnQueue(ctx, pick, spawnQueue);
                 placed++;
             }
-            else RollbackPrefabUse(pick.Name);
+            else ctx.RefundPrefab(pick.Name);
         }
 
         if (placed > 0)
@@ -85,25 +85,13 @@ public sealed class PrefabPlacementPass : IGenerationPass
 
     // One scan per floor, sampled on a stride: a landmark is a large footprint, so anchors a few
     // tiles apart are redundant and a full-resolution list is megabytes for nothing. Measuring the
-    // size of the target BEFORE tuning the search is the ore-vein lesson.
-    private static List<(int X, int Y)> CollectOpenGroundAnchors(WorldContext ctx)
-    {
-        const int Stride = 6;
-        var map = ctx.Map;
-        var anchors = new List<(int X, int Y)>();
-        for (int y = 8; y < ctx.Height - 8; y += Stride)
-        for (int x = 8; x < ctx.Width - 8; x += Stride)
-        {
-            if (!ctx.IsInsideCircle(x, y)) continue;
-            if (!PrefabPlacer.IsClearGround(map.Tiles[x, y].Type)) continue;
-            anchors.Add((x, y));
-        }
-        return anchors;
-    }
+    // size of the target BEFORE tuning the search is the ore-vein lesson. The scan itself lives on
+    // PrefabPlacer, shared with the signature pass, so the two cannot drift on what a site is.
+    private const int AnchorStride = 6;
 
     private static void TryPlaceBossArena(WorldContext ctx, string biome)
     {
-        string bossTag = SlugifyBossName(BossFactory.GetBossName(ctx.FloorNumber));
+        string bossTag = PrefabPlacer.SlugifyBossName(BossFactory.GetBossName(ctx.FloorNumber));
         var bossPool = PrefabLibrary.Shared
             .CandidatesFor(biome, ctx.FloorNumber, new[] { "boss" })
             .ToList();
@@ -117,16 +105,43 @@ public sealed class PrefabPlacementPass : IGenerationPass
         var genericEncompass = bossPool
             .Where(p => p.Tags.Contains("generic") && p.Orient == PrefabOrient.Encompass)
             .ToList();
-        // These are TAGS, not prefab names. They used to read "arena_large"/"arena_medium"/
-        // "arena_small" — the files' NAME field — while arena_large.prefab actually carries
-        // "TAGS: boss generic large any". So the fallback matched nothing and had NEVER once
-        // fired: measured, 60 of 75 sampled floors reached the give-up log, and every one of
-        // them has 3-5 encompass arenas available whose largest is 25x19, which fits any floor's
-        // disk with room to spare.
-        foreach (var sizeTag in new[] { "large", "medium", "small" })
+        // A FIXED large -> medium -> small WALK MAKES EVERY ENTRY BUT THE FIRST DEAD, because the
+        // first one always fits: arena_large is 25x19 and the smallest floor's disk is 100 across.
+        // Measured over 6 seeds x F1-F99 read from the stamp-site log: arena_large stood in
+        // 492 of 582 arenas — 82 of the 97 arena floors on EVERY seed — and arena_medium and
+        // arena_small placed ZERO times. It was one room, on four floors in five, for a whole
+        // climb. (The tag list itself was a separate fix: they used to read the files' NAME
+        // field while arena_large.prefab carries "TAGS: boss generic large any", so the walk
+        // matched nothing and 60 of 75 sampled floors reached the give-up log.)
+        //
+        // Two groups instead, each a weighted draw WITHOUT REPLACEMENT, biome-declared first:
+        // an arena that names this biome is a stronger claim about the floor than the catch-all,
+        // the same order the three prefab passes themselves run in. Falling through to the `any`
+        // group keeps every floor covered, and makes the two dead arenas reachable.
+        //
+        // THE DRAW COMES FROM A STREAM DERIVED FROM (globalSeed, floor), NOT FROM ctx.Rng, so the
+        // selection consumes nothing from the pipeline's stream and no later pass is renumbered
+        // by it — the same reason SignaturePrefabPass and the prefab vendor stock derive theirs.
+        // ctx.Rng is still what orients and stamps the winner, and every generic arena declares
+        // ROTATE + MIRROR, so EnumerateOrientations shuffles the same eight variants and draws
+        // the same seven values whichever arena wins — the STREAM POSITION every later pass sees
+        // is unchanged, so nothing downstream is renumbered by which arena was picked. The map
+        // still differs: a different arena covers different ground, and the passes after it react
+        // to that. `bosses/generic-arenas-all-rotate-and-mirror` holds the draw-count half, which
+        // is the half that would otherwise fail silently.
+        var arenaRng = new Random(SAOTRPG.Systems.RunState.RunRng.StableHash(
+            SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber), "boss-arena", 0));
+        var biomeArenas = genericEncompass.Where(p => NamesBiome(p, biome)).ToList();
+        var anyArenas   = genericEncompass.Where(p => !NamesBiome(p, biome)).ToList();
+        foreach (var group in new[] { biomeArenas, anyArenas })
         {
-            var def = genericEncompass.FirstOrDefault(p => p.Tags.Contains(sizeTag));
-            if (TryPlaceCandidate(ctx, def)) return;
+            while (group.Count > 0)
+            {
+                int idx = WeightedIndex(group, arenaRng);
+                var def = group[idx];
+                group.RemoveAt(idx);
+                if (TryPlaceCandidate(ctx, def)) return;
+            }
         }
 
         // Last resort: weighted pick across everything else (room-anchored boss prefabs).
@@ -144,7 +159,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
     private static bool TryPlaceCandidate(WorldContext ctx, PrefabDefinition? chosen)
     {
         if (chosen == null) return false;
-        if (!MapGenerator.TryIncrementPrefabUse(chosen.Name, chosen.MaxPerGame))
+        if (!ctx.TryUsePrefab(chosen.Name, chosen.MaxPerGame))
         {
             DebugLogger.LogGame("PREFAB", $"'{chosen.Name}' skipped — MAX_PER_GAME={chosen.MaxPerGame} reached");
             return false;
@@ -156,7 +171,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
         else
             placed = PrefabPlacer.TryPlaceInRoom(ctx.Map, ctx.Rooms, chosen, ctx.Rng, out _, ctx, spawnQueue);
         if (placed) DrainSpawnQueue(ctx, chosen, spawnQueue);
-        else RollbackPrefabUse(chosen.Name);
+        else ctx.RefundPrefab(chosen.Name);
         return placed;
     }
 
@@ -190,7 +205,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
             if (pick == null) continue;
             if (ctx.Rng.NextDouble() > pick.Chance) continue;
             // MAX_PER_GAME gate — increment only when pick commits to placement.
-            if (!MapGenerator.TryIncrementPrefabUse(pick.Name, pick.MaxPerGame))
+            if (!ctx.TryUsePrefab(pick.Name, pick.MaxPerGame))
             {
                 DebugLogger.LogGame("PREFAB", $"'{pick.Name}' skipped — MAX_PER_GAME={pick.MaxPerGame} reached");
                 continue;
@@ -204,7 +219,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
             else
             {
                 // Placement failed (e.g. REQUIRES) — roll back the counter increment.
-                RollbackPrefabUse(pick.Name);
+                ctx.RefundPrefab(pick.Name);
             }
         }
 
@@ -215,20 +230,29 @@ public sealed class PrefabPlacementPass : IGenerationPass
     // MONS/ITEM directives fire here — consume queued slot positions into live mobs + ground items.
     // The friendly occupants a prefab may declare. Kept small and explicit — an unknown key
     // logs and leaves the tile bare rather than guessing at something hostile.
-    private static NPC? BuildPrefabNpc(string key, int floor) => key.Trim().ToLowerInvariant() switch
+    private static NPC? BuildPrefabNpc(string key, int floor, Random rng) => key.Trim().ToLowerInvariant() switch
     {
-        "vendor" or "merchant" or "shopkeeper" => NewVendor(floor, "Travelling Merchant", "Wayside Stock"),
-        "trader" => NewVendor(floor, "Caravan Trader", "Caravan Goods"),
-        "guide" => NewVendor(floor, "Ranger Guide", "Ranger's Supplies"),
+        "vendor" or "merchant" or "shopkeeper" => NewVendor(floor, "Travelling Merchant", "Wayside Stock", rng),
+        "trader" => NewVendor(floor, "Caravan Trader", "Caravan Goods", rng),
+        "guide" => NewVendor(floor, "Ranger Guide", "Ranger's Supplies", rng),
         _ => null,
     };
 
-    private static Vendor NewVendor(int floor, string name, string shop)
+    // A stream of its own, and deliberately NOT ctx.Rng: stock draws taken from the pipeline's
+    // stream would renumber every later draw and move the whole floor. This one is derived from
+    // (seed, floor, this vendor's own spawn cell), so the stock is a function of (seed, floor)
+    // while the terrain is byte-identical to a build that never stocked anything.
+    private static Vendor NewVendor(int floor, string name, string shop, Random rng)
     {
         var v = new Vendor { Name = name, ShopName = shop };
-        v.GenerateStock(floor);
+        v.GenerateStock(floor, rng);
         return v;
     }
+
+    private static Random VendorStream(WorldContext ctx, int x, int y) =>
+        new(SAOTRPG.Systems.RunState.RunRng.StableHash(
+            SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber),
+            "prefab-vendor", y * 100003 + x));
 
     private static void DrainSpawnQueue(WorldContext ctx, PrefabDefinition def, List<PrefabSpawnRequest> queue)
     {
@@ -239,7 +263,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
             // (both use 1-7), and a stall's keeper must not come out as a bandit.
             if (req.Kind == "mons" && def.Npcs.TryGetValue(req.Glyph, out var npcKey))
             {
-                var npc = BuildPrefabNpc(npcKey, ctx.FloorNumber);
+                var npc = BuildPrefabNpc(npcKey, ctx.FloorNumber, VendorStream(ctx, req.X, req.Y));
                 if (npc == null)
                 {
                     DebugLogger.LogGame("PREFAB", $"'{def.Name}' unknown NPCS key '{npcKey}' — floor left bare");
@@ -280,15 +304,28 @@ public sealed class PrefabPlacementPass : IGenerationPass
         }
     }
 
-    // Mirror of TryIncrementPrefabUse: called only when the increment optimistically ran but
-    // placement ultimately failed (e.g. all rooms rejected by REQUIRES). Keeps counter honest.
-    private static void RollbackPrefabUse(string name)
+    // True when the prefab names this biome outright. `any` is the catch-all bucket rather than a
+    // biome, so a piece carrying it is NOT a claim about the floor and belongs in the second group.
+    private static bool NamesBiome(PrefabDefinition def, string biome)
     {
-        var counts = MapGenerator.GetCurrentPrefabUseCounts();
-        if (!counts.TryGetValue(name, out int v) || v <= 0) return;
-        counts[name] = v - 1;
-        if (counts[name] == 0) counts.Remove(name);
-        MapGenerator.SetPrefabUseCounts(counts);
+        foreach (var b in def.Biomes)
+            if (string.Equals(b, biome, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    // Weighted index into a list the caller then removes from — a draw without replacement, so a
+    // group with two arenas offers the second one when the first has no seat.
+    private static int WeightedIndex(List<PrefabDefinition> pool, Random rng)
+    {
+        int total = 0;
+        foreach (var p in pool) total += Math.Max(1, p.Weight);
+        int r = rng.Next(total);
+        for (int i = 0; i < pool.Count; i++)
+        {
+            r -= Math.Max(1, pool[i].Weight);
+            if (r < 0) return i;
+        }
+        return pool.Count - 1;
     }
 
     // Candidate fits if base or rotated dims fit the interior. Mirror doesn't change dims.
@@ -311,28 +348,5 @@ public sealed class PrefabPlacementPass : IGenerationPass
             if (r < 0) return p;
         }
         return pool[^1];
-    }
-
-    // "Illfang the Kobold Lord" → "illfang_the_kobold_lord" — canon boss tag convention.
-    private static string SlugifyBossName(string name)
-    {
-        var sb = new StringBuilder(name.Length);
-        bool lastUnderscore = false;
-        foreach (char c in name.ToLowerInvariant())
-        {
-            if (char.IsLetterOrDigit(c))
-            {
-                sb.Append(c);
-                lastUnderscore = false;
-            }
-            else if (!lastUnderscore && sb.Length > 0)
-            {
-                sb.Append('_');
-                lastUnderscore = true;
-            }
-        }
-        // Trim trailing underscore.
-        if (sb.Length > 0 && sb[^1] == '_') sb.Length--;
-        return sb.ToString();
     }
 }

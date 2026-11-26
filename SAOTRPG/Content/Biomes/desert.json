@@ -12,7 +12,6 @@
   "riverSpawnChance": 0.0,
   "grassTallWeight": 2,
   "sparseWeight": 80,
-  "flowersWeight": 1,
   "baseGrassWeight": 17,
   "heightmapThresholds": [0.30, 0.50, 0.75, 0.88],
   "ridgeNoiseEnabled": true,
@@ -33,8 +32,8 @@
     "minGasVents": 0, "maxGasVents": 2,
     "minLoreStones": 1, "maxLoreStones": 2,
     "minJournals": 0, "maxJournals": 2,
-    "minCampfires": 0, "maxCampfires": 1,
-    "minPillars": 0, "maxPillars": 2,
+    "minCampfires": 3, "maxCampfires": 5,
+    "minPillars": 0, "maxPillars": 8,
     "poissonRadius": 8.0
   }
 }

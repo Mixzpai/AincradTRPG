@@ -1,0 +1,24 @@
+NAME:          ice_crevasse_bridge
+DESC:          A crevasse opened across the trail and somebody bridged it with a single snow span; the register of who crossed is cairned at the far end.
+TAGS:          signature ice crevasse bridge
+FLOORS:        *
+BIOME:         ice
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: s = Snow
+KFEAT: O = Rock
+
+MAP
+sssssssss
+sO.....Os
+sss...sss
+≈≈≈≈.≈≈≈≈
+≈≈≈≈.≈≈≈≈
+≈≈≈≈.≈≈≈≈
+sss...sss
+sO..J..Os
+sssssssss
+ENDMAP

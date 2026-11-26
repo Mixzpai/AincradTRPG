@@ -1,5 +1,4 @@
-using Terminal.Gui;
-using SAOTRPG.Systems;
+using SAOTRPG.UI.Effects;
 
 namespace SAOTRPG.Map;
 
@@ -205,17 +204,116 @@ public static class TileDefinitions
         };
     }
 
+    // Per-cell colour variation is a DITHER, not a texture.
+    // The position hash picks one colour from a row per cell, so a row's LIGHTNESS RANGE is noise
+    // inside a field of one tile type. Measured in CIE L* before this cap: Grass era 0 spanned
+    // 34.2 dL*, Tree era 0 31.0, Wall era 0 30.2, Floor era 0 23.5, Mountain 23.0 - on surfaces
+    // covering ~88% of an overworld floor, against a ~1.0 dL* threshold of vision, a renderer
+    // tuned to 0.79 dL* vignette rungs and a 0.46 dL* colour quantizer.
+    //
+    // WHAT IS PRESERVED IS THE ROW'S MEAN, NOT EVERY MEASUREMENT TAKEN AGAINST IT. A row wider
+    // than the cap is compressed toward its own mean lightness, so a field of one terrain keeps
+    // its average brightness - but a measurement that takes a MAXIMUM does move, by half the
+    // compression: a row of span S comes back at span PaletteSpreadCap, so its brightest colour
+    // falls (S - cap)/2 dL* and its darkest rises the same. Widest here is Grass era 0 at
+    // (34.2 - 8)/2 = 13.1 dL* on the brightest blade. TileVerifyProbe --clarity reports the
+    // per-row before/after from PaletteCompressions rather than restating these numbers, because
+    // a figure quoted in a comment is stale the moment a palette row is edited.
+    //
+    // THE DITHER MUST SURVIVE. The hash is doing real anti-banding work on the foreground, so the
+    // cap is a compression and never a collapse - 8 dL* is still ten times the vignette rung.
+    //
+    // Chromaticity is held EXACTLY: a scale applied in LINEAR rgb moves the colour along its own
+    // ray from black, which is a pure lightness move. Hue and era identity cannot drift.
+    public const double PaletteSpreadCap = 8.0;
+
+    // WHAT THE CAP ACTUALLY DID, recorded as it runs rather than described afterwards. Every
+    // compressed row appends (before, after) here, so a check can report the real effect and
+    // notice a palette edit that silently changes it. Appended from static field initialisers
+    // only - Damp is never called at runtime - so this is written once, during type init, and
+    // read-only from then on.
+    private static readonly List<(double Before, double After)> s_compressions = new();
+
+    public static IReadOnlyList<(double Before, double After)> PaletteCompressions => s_compressions;
+
+    private static Color[] Damp(params Color[] row)
+    {
+        if (row.Length < 2) return row;
+        double lo = double.MaxValue, hi = double.MinValue, sum = 0;
+        foreach (var c in row)
+        {
+            double l = LStarOf(c);
+            sum += l;
+            if (l < lo) lo = l;
+            if (l > hi) hi = l;
+        }
+        double span = hi - lo;
+        if (span <= PaletteSpreadCap) return row;
+        double mean = sum / row.Length, k = PaletteSpreadCap / span;
+        var damped = new Color[row.Length];
+        for (int i = 0; i < row.Length; i++)
+            damped[i] = WithLightness(row[i], mean + (LStarOf(row[i]) - mean) * k);
+        double dlo = double.MaxValue, dhi = double.MinValue;
+        foreach (var c in damped)
+        {
+            double l = LStarOf(c);
+            if (l < dlo) dlo = l;
+            if (l > dhi) dhi = l;
+        }
+        s_compressions.Add((span, dhi - dlo));
+        return damped;
+    }
+
+    private static double SrgbToLinear(double channel)
+    {
+        channel /= 255.0;
+        return channel <= 0.04045 ? channel / 12.92 : Math.Pow((channel + 0.055) / 1.055, 2.4);
+    }
+
+    private static byte LinearToSrgb(double u)
+    {
+        u = Math.Clamp(u, 0.0, 1.0);
+        double v = u <= 0.0031308 ? u * 12.92 : 1.055 * Math.Pow(u, 1.0 / 2.4) - 0.055;
+        return (byte)Math.Clamp(Math.Round(v * 255.0), 0.0, 255.0);
+    }
+
+    private static double LuminanceOf(Color c)
+        => 0.2126 * SrgbToLinear(c.R) + 0.7152 * SrgbToLinear(c.G) + 0.0722 * SrgbToLinear(c.B);
+
+    private static double LStarOf(Color c) => LightnessOf(c);
+
+    // The two colour operations the dither is built out of, made public because the renderer's
+    // room tint needs EXACTLY them - a tint that preserves a cell's own lightness is the same
+    // move the cap makes, run in the other direction. One implementation, so the two cannot
+    // disagree about what "lightness" means.
+    public static double LightnessOf(Color c)
+    {
+        double y = LuminanceOf(c);
+        return y > 0.008856 ? 116.0 * Math.Cbrt(y) - 16.0 : 903.3 * y;
+    }
+
+    public static Color WithLightness(Color c, double targetL)
+    {
+        double y0 = LuminanceOf(c);
+        if (y0 <= 0.0) return c;
+        double yt = targetL > 8.0 ? Math.Pow((targetL + 16.0) / 116.0, 3.0) : targetL / 903.3;
+        double k = yt / y0;
+        return new Color(LinearToSrgb(SrgbToLinear(c.R) * k),
+                         LinearToSrgb(SrgbToLinear(c.G) * k),
+                         LinearToSrgb(SrgbToLinear(c.B) * k));
+    }
+
     private static readonly char[] GrassGlyphs = { '.', ',', '\'', '`' };
 
     // Era-indexed palettes; inner[i] array length = N in original `hash % N switch` (byte-identical output).
     // Eras: 0 Verdant, 1 Stone, 2 Crimson, 3 Crystal, 4 Void.
     private static readonly Color[][] GrassColors =
     {
-        /* Era 0 */ new[] { GrassGreen, GrassBright, GrassDim },
-        /* Era 1 */ new[] { GrassGreen, GrassDim, GrassDim },
-        /* Era 2 */ new[] { GrassDim, new Color(100, 80, 70), new Color(100, 80, 70) },
-        /* Era 3 */ new[] { new Color(80, 200, 200), GrassGreen, GrassGreen },
-        /* Era 4 */ new[] { new Color(100, 70, 130), GrassDim, GrassDim },
+        /* Era 0 */ Damp(GrassGreen, GrassBright, GrassDim),
+        /* Era 1 */ Damp(GrassGreen, GrassDim, GrassDim),
+        /* Era 2 */ Damp(GrassDim, new Color(100, 80, 70), new Color(100, 80, 70)),
+        /* Era 3 */ Damp(new Color(80, 200, 200), GrassGreen, GrassGreen),
+        /* Era 4 */ Damp(new Color(100, 70, 130), GrassDim, GrassDim),
     };
 
     private static (char, Color, Color) GrassVisual(int hash)
@@ -225,11 +323,11 @@ public static class TileDefinitions
 
     private static readonly Color[][] TallGrassColors =
     {
-        /* Era 0 */ new[] { GrassBright, GrassGreen },
-        /* Era 1 */ new[] { GrassGreen },
-        /* Era 2 */ new[] { GrassGreen, GrassDim },
-        /* Era 3 */ new[] { new Color(80, 200, 200), GrassGreen },
-        /* Era 4 */ new[] { GrassDim },
+        /* Era 0 */ Damp(GrassBright, GrassGreen),
+        /* Era 1 */ Damp(GrassGreen),
+        /* Era 2 */ Damp(GrassGreen, GrassDim),
+        /* Era 3 */ Damp(new Color(80, 200, 200), GrassGreen),
+        /* Era 4 */ Damp(GrassDim),
     };
 
     private static (char, Color, Color) TallGrassVisual(int hash)
@@ -245,11 +343,11 @@ public static class TileDefinitions
 
     private static readonly Color[][] PathColors =
     {
-        /* Era 0 */ new[] { PathSand, PathDim },
-        /* Era 1 */ new[] { RockGray, PathDim },
-        /* Era 2 */ new[] { PathSand, new Color(180, 100, 80) },
-        /* Era 3 */ new[] { new Color(140, 200, 200), PathSand },
-        /* Era 4 */ new[] { new Color(120, 100, 140), PathDim },
+        /* Era 0 */ Damp(PathSand, PathDim),
+        /* Era 1 */ Damp(RockGray, PathDim),
+        /* Era 2 */ Damp(PathSand, new Color(180, 100, 80)),
+        /* Era 3 */ Damp(new Color(140, 200, 200), PathSand),
+        /* Era 4 */ Damp(new Color(120, 100, 140), PathDim),
     };
 
     private static (char, Color, Color) PathVisual(int hash)
@@ -260,11 +358,11 @@ public static class TileDefinitions
     // Floor palette mirrors original: eras 0/1/3/4 mod 2, era 2 mod 3.
     private static readonly Color[][] FloorColors =
     {
-        /* Era 0 */ new[] { FloorStone, FloorDim },
-        /* Era 1 */ new[] { FloorDim, RockGray },
-        /* Era 2 */ new[] { new Color(180, 100, 90), FloorDim, FloorDim },
-        /* Era 3 */ new[] { new Color(140, 180, 180), FloorStone },
-        /* Era 4 */ new[] { new Color(130, 100, 150), FloorDim },
+        /* Era 0 */ Damp(FloorStone, FloorDim),
+        /* Era 1 */ Damp(FloorDim, RockGray),
+        /* Era 2 */ Damp(new Color(180, 100, 90), FloorDim, FloorDim),
+        /* Era 3 */ Damp(new Color(140, 180, 180), FloorStone),
+        /* Era 4 */ Damp(new Color(130, 100, 150), FloorDim),
     };
 
     private static (char, Color, Color) FloorVisual(int hash)
@@ -274,11 +372,11 @@ public static class TileDefinitions
 
     private static readonly Color[][] WallColors =
     {
-        /* Era 0 */ new[] { WallGray, new Color(200, 195, 185), WallDim },
-        /* Era 1 */ new[] { WallGray, WallDim, WallDim },
-        /* Era 2 */ new[] { new Color(180, 100, 90), WallDim, WallDim },
-        /* Era 3 */ new[] { new Color(140, 200, 220), WallGray, WallGray },
-        /* Era 4 */ new[] { new Color(160, 100, 180), WallDim, WallDim },
+        /* Era 0 */ Damp(WallGray, new Color(200, 195, 185), WallDim),
+        /* Era 1 */ Damp(WallGray, WallDim, WallDim),
+        /* Era 2 */ Damp(new Color(180, 100, 90), WallDim, WallDim),
+        /* Era 3 */ Damp(new Color(140, 200, 220), WallGray, WallGray),
+        /* Era 4 */ Damp(new Color(160, 100, 180), WallDim, WallDim),
     };
 
     private static (char, Color, Color) WallVisual(int hash)
@@ -286,33 +384,36 @@ public static class TileDefinitions
 
     private static readonly Color[][] TreeColors =
     {
-        /* Era 0 */ new[] { GrassGreen, TreeDark, GrassBright },
-        /* Era 1 */ new[] { TreeDark, GrassDim },
-        /* Era 2 */ new[] { GrassDim, TreeDark },
-        /* Era 3 */ new[] { new Color(60, 180, 180), TreeDark },
-        /* Era 4 */ new[] { GrassDim, new Color(100, 60, 120) },
+        /* Era 0 */ Damp(GrassGreen, TreeDark, GrassBright),
+        /* Era 1 */ Damp(TreeDark, GrassDim),
+        /* Era 2 */ Damp(GrassDim, TreeDark),
+        /* Era 3 */ Damp(new Color(60, 180, 180), TreeDark),
+        /* Era 4 */ Damp(GrassDim, new Color(100, 60, 120)),
     };
 
     private static Color TreeColor(int hash) => TreeColors[Era][hash % TreeColors[Era].Length];
 
     private static readonly Color[][] BushColors =
     {
-        /* Era 0 */ new[] { BushGreen, GrassBright },
-        /* Era 1 */ new[] { BushGreen },
-        /* Era 2 */ new[] { BushGreen, GrassDim },
-        /* Era 3 */ new[] { new Color(70, 190, 180), BushGreen },
-        /* Era 4 */ new[] { GrassDim, new Color(120, 80, 150) },
+        /* Era 0 */ Damp(BushGreen, GrassBright),
+        /* Era 1 */ Damp(BushGreen),
+        /* Era 2 */ Damp(BushGreen, GrassDim),
+        /* Era 3 */ Damp(new Color(70, 190, 180), BushGreen),
+        /* Era 4 */ Damp(GrassDim, new Color(120, 80, 150)),
     };
 
     private static Color BushColor(int hash) => BushColors[Era][hash % BushColors[Era].Length];
 
-    private static Color RockColor(int hash) => (hash % 2) == 0 ? RockGray : WallDim;
+    private static readonly Color[] RockColors = Damp(RockGray, WallDim);
+
+    private static Color RockColor(int hash) => RockColors[hash % RockColors.Length];
+
+    private static readonly Color[] MountainColors = Damp(MtnGray, WallGray, WallDim);
 
     private static (char, Color, Color) MountainVisual(int hash)
     {
         char glyph = (hash % 3) == 0 ? '△' : '▲';
-        Color fg = (hash % 3) switch { 0 => MtnGray, 1 => WallGray, _ => WallDim };
-        return (glyph, fg, Color.Black);
+        return (glyph, MountainColors[hash % MountainColors.Length], Color.Black);
     }
 
     private static readonly Color[] FlowerColors =
@@ -369,4 +470,34 @@ public static class TileDefinitions
         Color c = phase % 2 == 0 ? OreDivineFg : new Color(255, 230, 130);
         return ('◈', c, Color.Black);
     }
+
+    // MEASUREMENT SEAM, same family as LightingSystem.SourcesLastUpdate: every position-hashed
+    // colour row exactly as GetVisual reads it. A check brings its own CIE L* and asserts the
+    // spread against PaletteSpreadCap - the game reports what it produced, never the metric.
+    // Declared last so every row above it has been initialised.
+    public static readonly (string Name, Color[] Colors)[] PaletteRows =
+    {
+        ("Grass era0", GrassColors[0]),          ("Grass era1", GrassColors[1]),
+        ("Grass era2", GrassColors[2]),          ("Grass era3", GrassColors[3]),
+        ("Grass era4", GrassColors[4]),
+        ("GrassTall era0", TallGrassColors[0]),  ("GrassTall era1", TallGrassColors[1]),
+        ("GrassTall era2", TallGrassColors[2]),  ("GrassTall era3", TallGrassColors[3]),
+        ("GrassTall era4", TallGrassColors[4]),
+        ("Path era0", PathColors[0]),            ("Path era1", PathColors[1]),
+        ("Path era2", PathColors[2]),            ("Path era3", PathColors[3]),
+        ("Path era4", PathColors[4]),
+        ("Floor era0", FloorColors[0]),          ("Floor era1", FloorColors[1]),
+        ("Floor era2", FloorColors[2]),          ("Floor era3", FloorColors[3]),
+        ("Floor era4", FloorColors[4]),
+        ("Wall era0", WallColors[0]),            ("Wall era1", WallColors[1]),
+        ("Wall era2", WallColors[2]),            ("Wall era3", WallColors[3]),
+        ("Wall era4", WallColors[4]),
+        ("Tree era0", TreeColors[0]),            ("Tree era1", TreeColors[1]),
+        ("Tree era2", TreeColors[2]),            ("Tree era3", TreeColors[3]),
+        ("Tree era4", TreeColors[4]),
+        ("Bush era0", BushColors[0]),            ("Bush era1", BushColors[1]),
+        ("Bush era2", BushColors[2]),            ("Bush era3", BushColors[3]),
+        ("Bush era4", BushColors[4]),
+        ("Mountain", MountainColors),            ("Rock", RockColors),
+    };
 }

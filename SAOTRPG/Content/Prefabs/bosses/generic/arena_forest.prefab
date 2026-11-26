@@ -1,0 +1,33 @@
+NAME:          arena_forest
+DESC:          A hollow under four old roots, the ground beaten flat by whatever has been fought here and two fires still banked.
+TAGS:          boss generic forest arena
+FLOORS:        *
+BIOME:         forest
+WEIGHT:        30
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: X = LabyrinthEntrance
+KFEAT: T = Tree
+KFEAT: F = Campfire
+
+MAP
+#####################
+#...................#
+#.T...............T.#
+#...................#
+#....♣.........♣....#
+#...................#
+#.........X.........#
+#...................#
+#....♣.........♣....#
+#...................#
+#.T...............T.#
+#...................#
+#........F.F........#
+#...................#
+##########+##########
+ENDMAP

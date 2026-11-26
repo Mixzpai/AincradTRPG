@@ -1,12 +1,12 @@
 using System.Collections.ObjectModel;
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Items.Materials;
 using SAOTRPG.Inventory.Core;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Crafting;
+using SAOTRPG.UI.GameLog;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -351,7 +351,7 @@ public static class LisbethCraftDialog
         LisbethRecipes.LowTierEnhanceRecipe recipe)
     {
         var matReq = recipe.Materials[0];
-        int have = CountMaterial(player, matReq.DefId);
+        int have = player.Inventory.CountByDefinitionId(matReq.DefId);
         string matName = ItemRegistry.Create(matReq.DefId)?.Name ?? matReq.DefId;
         var lines = new List<string>
         {
@@ -371,7 +371,7 @@ public static class LisbethCraftDialog
             return $"{weapon.EnhancedName}\n{why}";
         var cost = Reforge.GetCost(weapon);
         var matReq = cost.Mats.Count > 0 ? cost.Mats[0] : null;
-        int have = matReq != null ? CountMaterial(player, matReq.DefId) : 0;
+        int have = matReq != null ? player.Inventory.CountByDefinitionId(matReq.DefId) : 0;
         string matName = matReq != null ? (ItemRegistry.Create(matReq.DefId)?.Name ?? matReq.DefId) : "(none)";
         // Read-only preview; deterministic seed = HashCode of (weapon, EnhancementLevel) for cursor stability.
         int seed = HashCode.Combine(weapon.GetHashCode(), weapon.EnhancementLevel);
@@ -406,7 +406,7 @@ public static class LisbethCraftDialog
         }
         foreach (var mat in cost.Mats)
         {
-            int have = CountMaterial(player, mat.DefId);
+            int have = player.Inventory.CountByDefinitionId(mat.DefId);
             if (have < mat.Qty)
             {
                 string matName = ItemRegistry.Create(mat.DefId)?.Name ?? mat.DefId;
@@ -466,7 +466,7 @@ public static class LisbethCraftDialog
             return;
         }
         var matReq = recipe.Materials[0];
-        int have = CountMaterial(player, matDefId);
+        int have = player.Inventory.CountByDefinitionId(matDefId);
         if (have < matReq.Qty)
         {
             detailLabel.Text = $"Missing {matReq.Qty - have}x {matName}.";
@@ -486,10 +486,10 @@ public static class LisbethCraftDialog
             "Enhance", "Cancel");
         if (confirm != 0) return;
 
-        ConsumeMaterial(player, matDefId, matReq.Qty);
+        player.Inventory.ConsumeByDefinitionId(matDefId, matReq.Qty);
         player.ColOnHand -= recipe.ColCost;
         // Same Anvil-style enhance flow as the Iron path — routes through CraftingDialog so
-        // Bonuses+EnhancementLevel+Equip/Unequip+InvalidateStatCache stays in one code path.
+        // Bonuses + EnhancementLevel + InvalidateStatCache stays in one code path.
         CraftingDialog.ApplyLisbethIronIngotEnhance(player, weapon);
 
         log.LogLoot($"  ◈ Lisbeth bumps {weapon.Name} to +{weapon.EnhancementLevel}! (-{matReq.Qty} {matName}, -{recipe.ColCost:N0} Col)");
@@ -524,7 +524,7 @@ public static class LisbethCraftDialog
             return;
         }
 
-        int haveIron = CountMaterial(player, "iron_ingot");
+        int haveIron = player.Inventory.CountByDefinitionId("iron_ingot");
         var ironReq = recipe.Materials[0];
         if (haveIron < ironReq.Qty)
         {
@@ -546,10 +546,10 @@ public static class LisbethCraftDialog
             "Enhance", "Cancel");
         if (confirm != 0) return;
 
-        ConsumeMaterial(player, "iron_ingot", ironReq.Qty);
+        player.Inventory.ConsumeByDefinitionId("iron_ingot", ironReq.Qty);
         player.ColOnHand -= recipe.ColCost;
         // Routes through CraftingDialog.ApplyLisbethIronIngotEnhance — same Bonuses.Add +
-        // EnhancementLevel + Equip/Unequip + InvalidateStatCache flow as the Anvil enhance path.
+        // EnhancementLevel + InvalidateStatCache flow as the Anvil enhance path.
         CraftingDialog.ApplyLisbethIronIngotEnhance(player, weapon);
 
         log.LogLoot($"  ◈ Lisbeth bumps {weapon.Name} to +{weapon.EnhancementLevel}! (-3 Iron Ingot, -{recipe.ColCost} Col)");
@@ -563,7 +563,7 @@ public static class LisbethCraftDialog
         if (player.ColOnHand < recipe.ColCost) return $"NEED {recipe.ColCost:N0} Col";
         foreach (var mat in recipe.Materials)
         {
-            int have = CountMaterial(player, mat.DefId);
+            int have = player.Inventory.CountByDefinitionId(mat.DefId);
             if (have < mat.Qty)
             {
                 string name = ItemRegistry.Create(mat.DefId)?.Name ?? mat.DefId;
@@ -582,7 +582,7 @@ public static class LisbethCraftDialog
         var matLines = new List<string>();
         foreach (var mat in recipe.Materials)
         {
-            int have = CountMaterial(player, mat.DefId);
+            int have = player.Inventory.CountByDefinitionId(mat.DefId);
             string name = ItemRegistry.Create(mat.DefId)?.Name ?? mat.DefId;
             matLines.Add($"{mat.Qty}x {name} ({have})");
         }
@@ -603,7 +603,7 @@ public static class LisbethCraftDialog
         // Material check
         foreach (var mat in recipe.Materials)
         {
-            int have = CountMaterial(player, mat.DefId);
+            int have = player.Inventory.CountByDefinitionId(mat.DefId);
             if (have < mat.Qty)
             {
                 string name = ItemRegistry.Create(mat.DefId)?.Name ?? mat.DefId;
@@ -631,7 +631,7 @@ public static class LisbethCraftDialog
 
         // Consume materials + Col
         foreach (var mat in recipe.Materials)
-            ConsumeMaterial(player, mat.DefId, mat.Qty);
+            player.Inventory.ConsumeByDefinitionId(mat.DefId, mat.Qty);
         player.ColOnHand -= recipe.ColCost;
 
         // Add weapon — drop at player's feet if inventory full
@@ -662,40 +662,5 @@ public static class LisbethCraftDialog
             detailLabel.Text = "Inventory full! Craft aborted — materials and Col refunded.";
         }
         refresh();
-    }
-
-    private static int CountMaterial(Player player, string defId)
-    {
-        int total = 0;
-        foreach (var item in player.Inventory.Items)
-        {
-            if (item.DefinitionId != defId) continue;
-            if (item is StackableItem s) total += s.Quantity;
-            else total += 1;
-        }
-        return total;
-    }
-
-    private static void ConsumeMaterial(Player player, string defId, int count)
-    {
-        int remaining = count;
-        var toRemove = new List<BaseItem>();
-        foreach (var item in player.Inventory.Items.ToList())
-        {
-            if (remaining <= 0) break;
-            if (item.DefinitionId != defId) continue;
-            if (item is StackableItem s)
-            {
-                if (s.Quantity <= remaining) { remaining -= s.Quantity; toRemove.Add(item); }
-                else { s.Quantity -= remaining; remaining = 0; }
-            }
-            else
-            {
-                toRemove.Add(item);
-                remaining -= 1;
-            }
-        }
-        foreach (var item in toRemove)
-            player.Inventory.RemoveItem(item);
     }
 }

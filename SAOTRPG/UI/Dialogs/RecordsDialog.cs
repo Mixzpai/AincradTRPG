@@ -1,6 +1,5 @@
-using Terminal.Gui;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Persistence;
 
 namespace SAOTRPG.UI.Dialogs;
 

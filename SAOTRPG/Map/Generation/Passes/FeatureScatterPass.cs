@@ -1,5 +1,5 @@
 using SAOTRPG.Map.Generation.Sampling;
-using SAOTRPG.Systems;
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Generation.Passes;
 
@@ -67,42 +67,35 @@ public sealed class FeatureScatterPass : IGenerationPass
         MapGenerator.CarveStraightPath(map, spawnX, spawnY, bossX + bossW / 2, bossY + bossH / 2);
 
         // Scatter foliage EARLY so later grass-targeted features don't overwrite it.
+        //
+        // This route ignored the biome's own TreeDensity and BushDensity entirely, so a Volcanic
+        // floor (declaring 0.2) received the same isolated-tree scatter as a Forest (2.2). It is
+        // the smaller of the two foliage routes -- 640 of floor 1's 13,300 trees against
+        // ClusterPass's copses -- but a single tree standing alone on ash is exactly the kind of
+        // object that reads as noise rather than as landscape, so it is scaled twice: by the
+        // biome that has an opinion about it, and by the clutter factor.
         MapGenerator.ScatterGrassFoliage(map, spawnX, spawnY,
-            FloorScale.ScatteredTrees(ctx.FloorNumber),
-            FloorScale.ScatteredBushes(ctx.FloorNumber), rng);
+            ScatterCount(FloorScale.ScatteredTrees(ctx.FloorNumber), ctx.Config.TreeDensity),
+            ScatterCount(FloorScale.ScatteredBushes(ctx.FloorNumber), ctx.Config.BushDensity), rng);
 
-        // Campfires near clearings.
-        for (int i = 1; i < clearings.Count; i++)
-        {
-            if (rng.Next(3) == 0) continue;
-            int fx = clearings[i].x + rng.Next(-2, 3);
-            int fy = clearings[i].y + rng.Next(-2, 3);
-            if (map.InBounds(fx, fy) && MapGenerator.IsGrassType(map.Tiles[fx, fy].Type))
-                map.Tiles[fx, fy].Type = TileType.Campfire;
-        }
-
-        // Lone Pillar landmark, far from town.
-        for (int attempt = 0; attempt < 20; attempt++)
-        {
-            int lx = rng.Next(15, width - 15), ly = rng.Next(15, height - 15);
-            if (!ctx.IsInsideCircle(lx, ly)) continue;
-            if (MapGenerator.IsGrassType(map.Tiles[lx, ly].Type)
-                && Math.Abs(lx - spawnX) > 20 && Math.Abs(ly - spawnY) > 20)
-            { map.Tiles[lx, ly].Type = TileType.Pillar; break; }
-        }
+        // The campfire-per-clearing roll that used to sit here is gone. It placed one fire per
+        // clearing at 2-in-3 with no budget at all -- four to sixteen fires on a floor whose biome
+        // declared a maximum of two -- and it duplicated what the quota scatter below already
+        // does deliberately. The Lone Pillar landmark went with it for the same reason: one more
+        // unbudgeted instance of a tile the quota already governs.
 
         int lavaPools = FloorScale.LavaPools(ctx.FloorNumber, rng);
         for (int i = 0; i < lavaPools; i++)
         {
             int lx = rng.Next(12, width - 12), ly = rng.Next(12, height - 12);
             if (!ctx.IsInsideCircle(lx, ly)) continue;
-            if (Math.Abs(lx - spawnX) < 10 && Math.Abs(ly - spawnY) < 10) continue;
+            if ((Math.Abs(lx - spawnX) < 10 && Math.Abs(ly - spawnY) < 10) || ctx.IsInTownKeepOut(lx, ly)) continue;
             MapGenerator.PlaceCluster(map, lx, ly, rng.Next(1, 3), TileType.Lava, 0.5, rng);
         }
 
         // Quota-driven Poisson scatter (anvils/shrines/chests/traps/vents/lore/journals/campfires/pillars).
         // Guarantees per-biome minimums first, then fills toward maxima until the point pool runs out.
-        using (Systems.Profiler.Begin("Scatter.QuotaFeatures"))
+        using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.QuotaFeatures"))
             ScatterQuotaFeatures(ctx, map, spawnX, spawnY, width, height, rng);
 
         int dangerClusters = FloorScale.DangerClusters(ctx.FloorNumber, rng);
@@ -110,7 +103,7 @@ public sealed class FeatureScatterPass : IGenerationPass
         {
             int dx = rng.Next(15, width - 15), dy = rng.Next(15, height - 15);
             if (!ctx.IsInsideCircle(dx, dy)) continue;
-            if (Math.Abs(dx - spawnX) < 10 && Math.Abs(dy - spawnY) < 10) continue;
+            if ((Math.Abs(dx - spawnX) < 10 && Math.Abs(dy - spawnY) < 10) || ctx.IsInTownKeepOut(dx, dy)) continue;
             MapGenerator.PlaceCluster(map, dx, dy, 2, TileType.DangerZone, 0.5, rng);
         }
 
@@ -182,17 +175,28 @@ public sealed class FeatureScatterPass : IGenerationPass
         // The biome's own campfire quota governs the wall sconces too. Without this the
         // decorator ignored it and out-produced every other campfire source combined.
         int fireBudget = ctx.Config.FeatureQuotas?.MaxCampfires ?? 3;
-        using (Systems.Profiler.Begin("Scatter.DecorateCorridors"))
+        using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.DecorateCorridors"))
             MapGenerator.DecorateCorridors(map, spawnX, spawnY, rng, fireBudget);
-        using (Systems.Profiler.Begin("Scatter.PlaceWaterFeatures"))
+        using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.PlaceWaterFeatures"))
             MapGenerator.PlaceWaterFeatures(map, spawnX, spawnY, rng);
-        using (Systems.Profiler.Begin("Scatter.DecorateStairRooms"))
+        using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.DecorateStairRooms"))
             MapGenerator.DecorateStairRooms(map, spawnX, spawnY, bossX, bossY, bossW, bossH);
 
-        using (Systems.Profiler.Begin("Scatter.EnsureConnectivity"))
+        using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.EnsureConnectivity"))
             MapGenerator.EnsureConnectivity(map, rooms, clearings);
 
-        UI.DebugLogger.LogGame("MAPGEN", $"  {rooms.Count} rooms, {clearings.Count} clearings");
+        // LAST, because a budget enforced before the last thing that can spend it is a budget for
+        // an intermediate map. Every route that can place a governed feature -- both prefab
+        // passes, the town builders, the corridor sconces, the stair-room decorators and the
+        // quota scatter above -- has run by this point.
+        using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.ReconcileQuotas"))
+            ReconcileFeatureQuotas(ctx, map, spawnX, spawnY, width, height);
+
+        // Re-stamp the floor's only guaranteed exit: every stamp above may have painted over it.
+        // ConnectivityAuditPass tunnels to it if it was walled off.
+        map.Tiles[bossRoom.CenterX, bossRoom.CenterY].Type = TileType.LabyrinthEntrance;
+
+        SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN", $"  {rooms.Count} rooms, {clearings.Count} clearings");
         // ConnectivityAuditPass runs immediately after this one and recounts, so a full sweep
         // here is thrown away — measured 14.6 ms per floor for nothing. What this pass genuinely
         // owes the map is the opacity invalidation, because it wrote tile types through the
@@ -234,7 +238,7 @@ public sealed class FeatureScatterPass : IGenerationPass
         // the floor depend on that count -- and capping the pool therefore shifted the whole layout.
         // Derived per floor, the cap becomes free: the points consumed are identical either way.
         var poissonRng = new Random(
-            Systems.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "poisson"));
+            SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "poisson"));
         var points = PoissonDiskSampler.Sample(width, height, q.PoissonRadius, poissonRng, 30,
             AcceptTile, PoissonMaxSamples);
         int idx = 0;
@@ -261,7 +265,7 @@ public sealed class FeatureScatterPass : IGenerationPass
             // Drained. Callers fall back to rejection sampling, which places features differently,
             // so this is worth seeing rather than absorbing quietly.
             if (points.Count >= PoissonMaxSamples)
-                UI.DebugLogger.LogGame("MAPGEN",
+                SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
                     $"FeatureScatter floor={ctx.FloorNumber} WARN poisson_pool_drained cap={PoissonMaxSamples}");
             px = py = -1;
             return false;
@@ -338,12 +342,233 @@ public sealed class FeatureScatterPass : IGenerationPass
         placedCampfires = Place(TileType.Campfire,      AssignCount(q.MinCampfires, q.MaxCampfires), q.MinCampfires);
         placedPillars   = Place(TileType.Pillar,        AssignCount(q.MinPillars, q.MaxPillars),     q.MinPillars);
 
-        UI.DebugLogger.LogGame("MAPGEN",
+        SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
             $"FeatureQuota floor={floor} biome={ctx.Biome} pool={points.Count} " +
             $"anvils={placedAnvils} shrines={placedShrines} chests={placedChests} " +
             $"traps={placedTraps} vents={placedVents} lore={placedLore} " +
             $"journals={placedJournals} campfires={placedCampfires} pillars={placedPillars}");
     }
+
+    // Scatter counts scaled by the biome's own density and by the shared clutter factor. Never
+    // below 1 where the unscaled count was positive: a biome asking for a tenth of the trees still
+    // gets trees, and a zero would read as the whole route having been switched off.
+    private static int ScatterCount(int baseCount, float biomeDensity)
+    {
+        if (baseCount <= 0) return 0;
+        return Math.Max(1, (int)Math.Round(baseCount * biomeDensity * ScatterFoliageScale));
+    }
+
+    // ── FLOOR-WIDE FEATURE BUDGET ───────────────────────────────────────────────────────────
+    //
+    // A per-biome quota is only a budget if it is spent against everything that can place the
+    // thing it budgets. `ScatterQuotaFeatures` above governs ONE placement route; a stamped
+    // prefab, a town builder, a corridor sconce and a stair-room decorator are four more, and
+    // none of them could see the quota. Measured across 20 floors before this ran: campfires
+    // 10-38 against declared maxima of 0-3, pillars 12-48 against 1-3, anvils 1-6 against 0-2.
+    // Every floor sampled breached on campfires and on pillars.
+    //
+    // Two boundaries, both deliberate and both LOUD when they bind:
+    //
+    //   * A SAFE-ZONE town is furniture, not budget. F1's Town of Beginnings and F48's Lindarth
+    //     are hand-authored, their hearths and anvils are part of the building, and the player
+    //     cannot be attacked standing on them. Cells inside `map.SafeZone` are neither counted
+    //     nor removed.
+    //   * OPEN-GROUND instances go first — nothing with a wall or a door in its eight-neighbour
+    //     ring. That is what separates scatter from architecture: a sconce is against a wall and
+    //     a colonnade is inside a prefab. What happens when the open ground runs out depends on
+    //     WHAT THE FEATURE IS, not on where it sits. A campfire, anvil, shrine, lore stone or
+    //     journal is a single-tile resource: lifting one out of a room leaves the room intact, so
+    //     the budget may reach in. A PILLAR is architecture — a colonnade with two columns missing
+    //     reads as damage, and the boss arena and spawn chamber each frame themselves with four —
+    //     so pillar removal stops at the open ground and the remainder is logged.
+    //
+    // The distinction matters most in a cave biome, where almost every cell has rock in its ring:
+    // Dark carried 11 campfires against a maximum of 4 with open-ground removal alone.
+    private static void ReconcileFeatureQuotas(WorldContext ctx, GameMap map,
+        int spawnX, int spawnY, int width, int height)
+    {
+        FeatureQuotas q = ctx.Config.FeatureQuotas ?? new FeatureQuotas();
+        var budgets = new (TileType Type, int Min, int Max, bool TrimsArchitecture)[]
+        {
+            (TileType.Anvil,         q.MinAnvils,     q.MaxAnvils,     true),
+            (TileType.EnchantShrine, q.MinShrines,    q.MaxShrines,    true),
+            (TileType.LoreStone,     q.MinLoreStones, q.MaxLoreStones, true),
+            (TileType.Journal,       q.MinJournals,   q.MaxJournals,   true),
+            (TileType.Campfire,      q.MinCampfires,  q.MaxCampfires,  true),
+            (TileType.Pillar,        q.MinPillars,    q.MaxPillars,    false),
+        };
+
+        // Its own derived stream, for the same reason the Poisson sampler has one: how many draws
+        // a top-up makes depends on how crowded the floor turned out, so drawing from ctx.Rng
+        // would make the rest of the floor depend on the reconciliation's own workload.
+        var rng = new Random(SAOTRPG.Systems.RunState.RunRng.StableHash(
+            SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber), "quota-reconcile", 0));
+
+        Room? safe = map.SafeZone;
+        var report = new System.Text.StringBuilder();
+
+        foreach (var (type, min, max, trimsArchitecture) in budgets)
+        {
+            var cells = new List<(int X, int Y)>();
+            var open = new List<bool>();
+            int inTown = 0;
+            for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                if (map.Tiles[x, y].Type != type) continue;
+                if (safe.HasValue && safe.Value.Contains(x, y)) { inTown++; continue; }
+                cells.Add((x, y));
+                open.Add(IsOpenGround(map, x, y));
+            }
+
+            int before = cells.Count;
+            var alive = new bool[before];
+            Array.Fill(alive, true);
+            int surviving = before;
+
+            // Thin the densest first: drop whichever removable instance sits closest to another
+            // surviving one, so what is left keeps its spread across the floor. Ties go to the
+            // lowest row-major index, which makes the choice a pure function of the map.
+            //
+            // Open ground is exhausted before architecture is touched at all, so a floor with
+            // enough scatter to pay the excess never loses an authored instance.
+            bool reachIntoArchitecture = false;
+            while (surviving > max)
+            {
+                int victim = -1;
+                long bestDist = long.MaxValue;
+                for (int i = 0; i < before; i++)
+                {
+                    if (!alive[i] || (!open[i] && !reachIntoArchitecture)) continue;
+                    long near = long.MaxValue;
+                    for (int j = 0; j < before; j++)
+                    {
+                        if (j == i || !alive[j]) continue;
+                        long dx = cells[i].X - cells[j].X, dy = cells[i].Y - cells[j].Y;
+                        long d = dx * dx + dy * dy;
+                        if (d < near) near = d;
+                    }
+                    if (victim < 0 || near < bestDist) { bestDist = near; victim = i; }
+                }
+                if (victim < 0)
+                {
+                    if (!trimsArchitecture || reachIntoArchitecture) break;
+                    reachIntoArchitecture = true;
+                    continue;
+                }
+                alive[victim] = false;
+                surviving--;
+                var (vx, vy) = cells[victim];
+                map.Tiles[vx, vy].Type = GroundUnder(map, vx, vy);
+            }
+
+            int afterTrim = surviving;
+            // Rejection-sampled top-up. Bounded: a crowded or tiny floor may simply have nowhere
+            // left, and looping forever to satisfy a minimum is worse than reporting the shortfall.
+            for (int attempt = 0; surviving < min && attempt < TopUpAttempts; attempt++)
+            {
+                int x = rng.Next(8, Math.Max(9, width - 8));
+                int y = rng.Next(8, Math.Max(9, height - 8));
+                if (!ctx.IsInsideCircle(x, y)) continue;
+                if (Math.Abs(x - spawnX) < SpawnHazardExclusion
+                    && Math.Abs(y - spawnY) < SpawnHazardExclusion) continue;
+                if (safe.HasValue && safe.Value.Contains(x, y)) continue;
+                if (!IsPlainGround(map.Tiles[x, y].Type)) continue;
+                if (HasNeighbourOfType(map, x, y, type)) continue;
+                map.Tiles[x, y].Type = type;
+                surviving++;
+            }
+
+            if (before != surviving || surviving > max || surviving < min)
+                report.Append($" {type}={before}->{surviving}[{min}-{max}]");
+            // Fail loud: a floor left outside its own declared budget is a fact about the content,
+            // not something to absorb. Over-budget means authored architecture accounts for more
+            // than the biome allows; under means the floor had nowhere to put the minimum.
+            if (surviving > max)
+                SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
+                    $"FeatureQuota floor={ctx.FloorNumber} biome={ctx.Biome} OVER {type} "
+                    + $"{surviving}>{max} — {before - afterTrim} removed, the rest is wall-adjacent "
+                    + $"or authored ({inTown} more inside the safe zone, exempt)");
+            else if (surviving < min)
+                SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
+                    $"FeatureQuota floor={ctx.FloorNumber} biome={ctx.Biome} UNDER {type} "
+                    + $"{surviving}<{min} — no accepting ground found in {TopUpAttempts} attempts");
+        }
+
+        if (report.Length > 0)
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
+                $"FeatureReconcile floor={ctx.FloorNumber} biome={ctx.Biome}{report}");
+    }
+
+    // Open ground = nothing structural in the eight-neighbour ring. A feature here was scattered;
+    // one against a wall or a door is part of a room, a prefab or a corridor.
+    private static bool IsOpenGround(GameMap map, int x, int y)
+    {
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            if (dx == 0 && dy == 0) continue;
+            int nx = x + dx, ny = y + dy;
+            if (!map.InBounds(nx, ny)) return false;
+            var t = map.Tiles[nx, ny].Type;
+            if (t is TileType.Wall or TileType.CrackedWall or TileType.Door) return false;
+        }
+        return true;
+    }
+
+    private static bool HasNeighbourOfType(GameMap map, int x, int y, TileType type)
+    {
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            if (dx == 0 && dy == 0) continue;
+            if (map.InBounds(x + dx, y + dy) && map.Tiles[x + dx, y + dy].Type == type) return true;
+        }
+        return false;
+    }
+
+    // What a removed feature leaves behind. Taken from the MAJORITY of its walkable neighbours
+    // rather than stamped as Floor, because a fire lifted out of a meadow should leave meadow and
+    // one lifted off a flagstone room should leave flagstone — and an unrecognised type stamped as
+    // Floor is how a wall becomes walkable ground elsewhere in this pipeline.
+    private static TileType GroundUnder(GameMap map, int x, int y)
+    {
+        TileType best = TileType.Floor;
+        int bestCount = 0;
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            if (dx == 0 && dy == 0) continue;
+            int nx = x + dx, ny = y + dy;
+            if (!map.InBounds(nx, ny)) continue;
+            var t = map.Tiles[nx, ny].Type;
+            if (!IsPlainGround(t)) continue;
+            int count = 0;
+            for (int ex = -1; ex <= 1; ex++)
+            for (int ey = -1; ey <= 1; ey++)
+            {
+                if (ex == 0 && ey == 0) continue;
+                if (map.InBounds(x + ex, y + ey) && map.Tiles[x + ex, y + ey].Type == t) count++;
+            }
+            if (count > bestCount) { bestCount = count; best = t; }
+        }
+        return best;
+    }
+
+    // Ground a feature may be placed on or dissolved back into: terrain with no meaning of its
+    // own. Deliberately excludes water, hazards, ore and every interactive tile.
+    private static bool IsPlainGround(TileType t) =>
+        t is TileType.Floor or TileType.Path or TileType.Grass or TileType.GrassTall
+          or TileType.GrassSparse or TileType.Sand or TileType.DuneSand or TileType.Snow
+          or TileType.Ice or TileType.Basalt or TileType.Ash or TileType.Mud or TileType.Reeds;
+
+    // Bounded so a floor with nowhere left to put its minimum reports a shortfall instead of
+    // spinning. 400 darts find accepting ground on every floor that has any.
+    private const int TopUpAttempts = 400;
+
+    // How hard the two unscaled foliage-scatter counts are cut, on top of the biome's own
+    // density. Kept as one named factor so the clutter dial is a single number.
+    private const double ScatterFoliageScale = 0.5;
 
     // Picks the boss room top-left so the room sits halfway between map center and the
     // disk edge along the quadrant diagonal. Falls back to bbox-corner placement when
@@ -418,20 +643,17 @@ public sealed class FeatureScatterPass : IGenerationPass
     // array only because all four are literally {Spike, Alarm}; splitting a pool means giving it
     // its own array, never reordering a shared one.
     private static readonly TileType[] TrapsSpikeAlarm     = { TileType.TrapSpike, TileType.TrapAlarm };
-    private static readonly TileType[] TrapsAlarmSpike     = { TileType.TrapAlarm, TileType.TrapSpike };
-    private static readonly TileType[] TrapsPoisonAlarm    = { TileType.TrapPoison, TileType.TrapAlarm };
-    private static readonly TileType[] TrapsPoisonSpike    = { TileType.TrapPoison, TileType.TrapSpike };
     private static readonly TileType[] TrapsSpikeTeleport  = { TileType.TrapSpike, TileType.TrapTeleport };
-    private static readonly TileType[] TrapsTeleportAlarm  = { TileType.TrapTeleport, TileType.TrapAlarm };
     private static readonly TileType[] TrapsAlarmOnly      = { TileType.TrapAlarm };
-    private static readonly TileType[] TrapsSpikeAlarmPoison =
-        { TileType.TrapSpike, TileType.TrapAlarm, TileType.TrapPoison };
-    // A repeated entry is the weight: Void draws Teleport twice as often as Alarm.
-    private static readonly TileType[] TrapsTeleportHeavy =
-        { TileType.TrapTeleport, TileType.TrapTeleport, TileType.TrapAlarm };
 
     // Pools for the biomes that gain one of the later hazards. Each APPENDS to the sequence that
     // biome already drew, so the earlier entries keep their index and only the added tail is new.
+    //
+    // AND WHEN A BIOME MOVES TO AN APPENDED POOL, ITS OLD ARRAY MUST GO WITH IT. Six superseded
+    // pools were left behind here and sat unreferenced — inert, but a trap: giving Swamp another
+    // hazard by editing the shorter TrapsPoisonAlarm would have changed nothing at all, silently,
+    // because Swamp draws from TrapsPoisonAlarmWeb. A repeated entry is the weight — Void draws
+    // Teleport twice as often as Alarm.
     private static readonly TileType[] TrapsPoisonSpikeWeb =
         { TileType.TrapPoison, TileType.TrapSpike, TileType.TrapWeb };
     private static readonly TileType[] TrapsPoisonAlarmWeb =

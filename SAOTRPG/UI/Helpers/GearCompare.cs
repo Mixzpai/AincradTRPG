@@ -1,5 +1,6 @@
 using SAOTRPG.Entities;
 using SAOTRPG.Inventory.Core;
+using SAOTRPG.Inventory.Equipment;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Equipment;
 
@@ -9,6 +10,30 @@ namespace SAOTRPG.UI.Helpers;
 // changed row; zero-deltas omitted; type-mismatch → banner only. Inline color markers.
 public static class GearCompare
 {
+    // Same table Inventory.Equip uses, so the compare targets the slot the item would really fill.
+    private static readonly EquipmentSlotResolver SlotResolver = new();
+
+    // Comparison verdict — used for color-coding in the UI.
+    public enum CompareResult { Neutral, Upgrade, Downgrade }
+
+    // Net bonus delta against the equipped counterpart; an empty slot is always an upgrade.
+    public static CompareResult GetVerdict(Player player, EquipmentBase item)
+    {
+        var slot = SlotResolver.ResolveSlot(item);
+        if (slot == null) return CompareResult.Neutral;
+        var equipped = player.Inventory.GetEquipped(slot.Value);
+        if (equipped == null) return CompareResult.Upgrade;
+
+        var newStats = SumStats(item);
+        var oldStats = SumStats(equipped);
+        int netDiff = 0;
+        foreach (var (stat, newVal) in newStats)
+            netDiff += newVal - oldStats.GetValueOrDefault(stat, 0);
+        foreach (var (stat, oldVal) in oldStats)
+            if (!newStats.ContainsKey(stat)) netDiff -= oldVal;
+        return netDiff > 0 ? CompareResult.Upgrade : netDiff < 0 ? CompareResult.Downgrade : CompareResult.Neutral;
+    }
+
     // Builds a multi-line diff block suitable for a detail panel.
     // `equipped` may be null → all new stats show as gains.
     public static string BuildDiff(BaseItem? selected, BaseItem? equipped)
@@ -151,12 +176,11 @@ public static class GearCompare
         string special = BuildSpecialDiff(eq, equipped);
         if (!string.IsNullOrEmpty(special)) lines.Add("  " + special);
 
-        var verdict = EquipmentComparer.GetVerdict(player, eq);
-        string tag = verdict switch
+        string tag = GetVerdict(player, eq) switch
         {
-            EquipmentComparer.CompareResult.Upgrade   => "[UPGRADE]",
-            EquipmentComparer.CompareResult.Downgrade => "[DOWNGRADE]",
-            _                                          => "[SIDEGRADE]",
+            CompareResult.Upgrade   => "[UPGRADE]",
+            CompareResult.Downgrade => "[DOWNGRADE]",
+            _                       => "[SIDEGRADE]",
         };
         if (lines.Count < 4) lines.Add(tag);
         return lines.ToArray();
@@ -179,23 +203,5 @@ public static class GearCompare
         return string.Join("  ", parts);
     }
 
-    // Mirror of EquipmentComparer.ResolveSlot — kept local to avoid a
-    // reference churn during partial extraction.
-    private static EquipmentSlot? ResolveSlot(EquipmentBase item)
-    {
-        if (item is Weapon) return EquipmentSlot.Weapon;
-        if (item is Armor armor)
-        {
-            return armor.ArmorSlot?.ToLowerInvariant() switch
-            {
-                "chest"  => EquipmentSlot.Chest,
-                "helmet" => EquipmentSlot.Head,
-                "boots"  => EquipmentSlot.Feet,
-                "shield" => EquipmentSlot.OffHand,
-                "legs"   => EquipmentSlot.Legs,
-                _        => null,
-            };
-        }
-        return null;
-    }
+    private static EquipmentSlot? ResolveSlot(EquipmentBase item) => SlotResolver.ResolveSlot(item);
 }

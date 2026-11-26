@@ -1,5 +1,4 @@
-using SAOTRPG.Map.Generation;
-using SAOTRPG.UI;
+using SAOTRPG.Systems.Diagnostics;
 
 namespace SAOTRPG.Map.Generation.Prefabs;
 
@@ -7,6 +6,33 @@ namespace SAOTRPG.Map.Generation.Prefabs;
 // random order; for each, enumerates rotation/mirror variants until one fits.
 public static class PrefabPlacer
 {
+    // "Illfang the Kobold Lord" -> "illfang_the_kobold_lord" -- the tag a canon boss arena must
+    // carry to be recognised as that floor's arena. Public because the content probe has to
+    // DERIVE the expected tag from the game's own transform: a hand-typed copy would agree with
+    // itself while disagreeing with the placer, which is exactly how f55_xrphan spent its life
+    // tagged `xrphan_the_white_wyrm` against an actual slug of `x_rphan_the_white_wyrm` and was
+    // never once stamped.
+    public static string SlugifyBossName(string name)
+    {
+        var sb = new System.Text.StringBuilder(name.Length);
+        bool lastUnderscore = false;
+        foreach (char c in name.ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(c))
+            {
+                sb.Append(c);
+                lastUnderscore = false;
+            }
+            else if (!lastUnderscore && sb.Length > 0)
+            {
+                sb.Append('_');
+                lastUnderscore = true;
+            }
+        }
+        if (sb.Length > 0 && sb[^1] == '_') sb.Length--;
+        return sb.ToString();
+    }
+
     // Tries each shuffled room until a rotation/mirror variant fits with 1-tile inner margin.
     // chosenRoom = the Room that received the prefab; spawnQueue collects reserved-slot glyphs.
     public static bool TryPlaceInRoom(
@@ -110,6 +136,41 @@ public static class PrefabPlacer
         return false;
     }
 
+    // Candidate stamp sites, sampled on a stride: a landmark is a large footprint, so anchors a
+    // few tiles apart are redundant and a full-resolution list is megabytes for nothing. Shared
+    // rather than per-caller so the two prefab passes cannot drift apart on what counts as a site.
+    // The 8-tile inset keeps a centred footprint off the map edge before the disk mask is asked.
+    public static List<(int X, int Y)> CollectOpenGroundAnchors(WorldContext ctx, int stride)
+    {
+        var map = ctx.Map;
+        var anchors = new List<(int X, int Y)>();
+        for (int y = 8; y < ctx.Height - 8; y += stride)
+        for (int x = 8; x < ctx.Width - 8; x += stride)
+        {
+            if (!ctx.IsInsideCircle(x, y)) continue;
+            if (!IsClearGround(map.Tiles[x, y].Type)) continue;
+            anchors.Add((x, y));
+        }
+        return anchors;
+    }
+
+    // A NECESSARY condition for `def` to stamp centred on this anchor, and cheap enough to run
+    // over every anchor on the floor. Every rotation of a WxH prefab covers at least the
+    // min(W,H)-sided square the placer would centre there, so an anchor that fails this can never
+    // host the prefab in any orientation -- and on a cave floor it fails within two or three cells,
+    // where letting the placer discover it costs a full disk-fit scan per variant.
+    public static bool CouldHostFootprint(GameMap map, int ax, int ay, int side)
+    {
+        int ox = ax - side / 2, oy = ay - side / 2;
+        for (int x = ox - 1; x <= ox + side; x++)
+        for (int y = oy - 1; y <= oy + side; y++)
+        {
+            if (!map.InBounds(x, y)) return false;
+            if (!IsClearGround(map.Tiles[x, y].Type)) return false;
+        }
+        return true;
+    }
+
     // Base terrain only, plus a one-tile skirt so a stamp never butts straight onto a wall or a
     // lake edge. An ALLOWLIST on purpose: an unknown tile is simply never built on, where a
     // denylist would quietly stamp over the next feature anybody adds.
@@ -155,10 +216,8 @@ public static class PrefabPlacer
         foreach (var variant in variants)
         {
             if (variant.Width > map.Width - 2 || variant.Height > map.Height - 2) continue;
-            int ox = (map.Width  - variant.Width)  / 2;
-            int oy = (map.Height - variant.Height) / 2;
             var resolved = variant.Resolved(rng);
-            if (!VariantFitsInDisk(resolved, ox, oy, ctx?.CircleMask)) continue;
+            if (!TryFindEncompassOrigin(map, resolved, ctx, out int ox, out int oy)) continue;
             Stamp(map, resolved, ox, oy, def.KFeat, spawnQueue, ctx);
             DebugLogger.LogGame("PREFAB",
                 $"encompass-placed '{def.Name}' at ({ox},{oy}) {resolved.Width}x{resolved.Height}");
@@ -168,6 +227,49 @@ public static class PrefabPlacer
             $"'{def.Name}' encompass failed — prefab {def.Width}x{def.Height} too big for map {map.Width}x{map.Height}");
         return false;
     }
+
+    // The centre is a PREFERENCE for an encompass prefab, not a constraint. These are 17x14 to
+    // 25x21 arenas on floors hundreds of tiles across, so hard-centring bought nothing and cost
+    // the spawn room whenever it sat near the middle -- F25 measured 0.05% reachable from spawn
+    // until the connectivity audit drilled out, and every one of the 19 encompass prefabs is a
+    // boss arena with the same exposure.
+    //
+    // Rings outward from the centre, in a fixed order and drawing no rng: a floor is a pure
+    // function of (seed, floor) and a random nudge here would break that. Fails rather than
+    // stamping over a room, which drops the caller into its existing canon -> generic ->
+    // room-anchored fallback chain.
+    private static bool TryFindEncompassOrigin(
+        GameMap map, ParsedPrefab v, WorldContext? ctx, out int ox, out int oy)
+    {
+        int cx = (map.Width  - v.Width)  / 2;
+        int cy = (map.Height - v.Height) / 2;
+        var rooms = ctx?.Rooms;
+        int maxRing = Math.Max(map.Width, map.Height) / 2;
+
+        for (int ring = 0; ring <= maxRing; ring += EncompassRingStep)
+        {
+            for (int dy = -ring; dy <= ring; dy += ring == 0 ? 1 : ring)
+            {
+                for (int dx = -ring; dx <= ring; dx += ring == 0 ? 1 : ring)
+                {
+                    if (ring != 0 && Math.Abs(dx) != ring && Math.Abs(dy) != ring) continue;
+                    int x = cx + dx, y = cy + dy;
+                    if (x < 1 || y < 1 || x + v.Width >= map.Width || y + v.Height >= map.Height)
+                        continue;
+                    if (!VariantFitsInDisk(v, x, y, ctx?.CircleMask)) continue;
+                    if (rooms != null && OverlapsAnyRoom(rooms, x, y, v.Width, v.Height)) continue;
+                    ox = x; oy = y;
+                    return true;
+                }
+            }
+        }
+        ox = oy = 0;
+        return false;
+    }
+
+    // Ring granularity. One tile at a time would walk tens of thousands of candidate origins on a
+    // big floor for no gain -- the arena only has to clear a room, not sit at an exact offset.
+    private const int EncompassRingStep = 4;
 
     // True when every non-noop tile in `v` lands inside the disk. Mask null = no constraint.
     private static bool VariantFitsInDisk(ParsedPrefab v, int ox, int oy, bool[,]? mask)

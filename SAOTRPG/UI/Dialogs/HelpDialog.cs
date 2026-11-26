@@ -1,4 +1,3 @@
-using Terminal.Gui;
 using SAOTRPG.Systems.Input;
 using SAOTRPG.UI.Helpers;
 
@@ -48,16 +47,16 @@ public static class HelpDialog
    B .............. Player Guide                 = Bleeding
    Shift+L ........ Legendary panel              = Stunned
    Esc ............ Pause menu                   = Slowed
-                                                 = Shrine buff
+   M .............. Full map                     = Shrine buff
  [ Save / Quickbar / Log ]                       = Level Surge
                                                  = Food Regen
    F5 ............. Save game                    = Invisible
    1-9, 0 ......... Use quickbar slot
    Shift+0-9 ...... Bind item to slot      [ Toggles ]
-
+   Shift+P ........ Message log
                                               Shift+S ... Status tray verbose
-                                              Tab ....... Cycle log tabs
-                                              PgUp/PgDn . Log scroll
+
+
 
                                           [ Debug ]
 
@@ -142,10 +141,12 @@ public static class HelpDialog
         ["Quest Log"]         = GameAction.OpenQuestLog,
         ["Kill Stats"]        = GameAction.OpenKillStats,
         ["Bestiary"]          = GameAction.OpenBestiary,
+        ["Full map"]          = GameAction.OpenWorldMap,
         ["Help (this)"]       = GameAction.OpenHelp,
         ["Player Guide"]      = GameAction.OpenPlayerGuide,
         ["Legendary panel"]   = GameAction.OpenCollectables,
         ["Save game"]         = GameAction.QuickSave,
+        ["Message log"]       = GameAction.OpenMessageLog,
     };
 
     // Rows whose key cell covers a RANGE of bindings rather than one.
@@ -157,7 +158,6 @@ public static class HelpDialog
         ["Skill slots 1-4"]     = () => Span(GameAction.SwordSkill1) + "-" + Span(GameAction.SwordSkill4),
         ["Use quickbar slot"]   = () => Span(GameAction.QuickUse1) + "-" + Span(GameAction.QuickUse10),
         ["Status tray verbose"] = () => Span(GameAction.ToggleStatusTray),
-        ["Log scroll"]          = () => Span(GameAction.LogScrollUp) + "/" + Span(GameAction.LogScrollDown),
     };
 
     private static string Span(GameAction a) => Keybinds.Get(a).Primary.ToString();
@@ -196,7 +196,10 @@ public static class HelpDialog
             if (afterDots >= line.Length || line[afterDots] != ' ') continue;
 
             int descStart = afterDots + 1;
-            string description = line[descStart..].TrimEnd();
+            // Up to the first double space: a left-column row can share its line with the right
+            // column ("Kill Stats            [ Status Tags ]"), and the whole tail never matched.
+            int descEnd = line.IndexOf("  ", descStart, StringComparison.Ordinal);
+            string description = (descEnd < 0 ? line[descStart..] : line[descStart..descEnd]).TrimEnd();
             if (description.Length == 0) continue;
 
             string? replacement =

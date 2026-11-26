@@ -28,7 +28,7 @@ public sealed class OreVeinPlacementPass : IGenerationPass
         var candidates = CollectSeedCandidates(ctx);
         if (candidates.Count == 0)
         {
-            UI.DebugLogger.LogGame("MAPGEN",
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
                 $"OreVein: floor {floor} has no viable host tile — no veins placed");
             return;
         }

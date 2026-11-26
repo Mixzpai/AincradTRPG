@@ -20,6 +20,9 @@ public abstract record EquipmentSpecialEffect
     public sealed record ThrustDmg(int Percent)         : EquipmentSpecialEffect { public override string Key => "ThrustDmg"; }
     public sealed record ComboBonus(int Percent)        : EquipmentSpecialEffect { public override string Key => "ComboBonus"; }
     public sealed record Cleave(int SplashPercent)      : EquipmentSpecialEffect { public override string Key => "Cleave"; }
+    // Adds flat percent to the Speed follow-up roll in TurnManager.HandleCombat, which is the
+    // one place an extra swing is decided.
+    public sealed record ExtraAutoAttack(int ChancePercent) : EquipmentSpecialEffect { public override string Key => "ExtraAutoAttack"; }
 
     // ── On-hit status applies (weapon-only — flavor canon: armor with on-hit-effect would be off-flavor)
     public sealed record BleedOnHit(int ChancePercent)  : EquipmentSpecialEffect { public override string Key => "Bleed"; }
@@ -32,6 +35,9 @@ public abstract record EquipmentSpecialEffect
     // ── Crit-triggered modifiers (weapon-only)
     public sealed record CritHeal(int Percent)          : EquipmentSpecialEffect { public override string Key => "CritHeal"; }
     public sealed record Invisibility(int Turns)        : EquipmentSpecialEffect { public override string Key => "Invisibility"; }
+    // Read by TurnManager.PlayerCritChance, which is the only place a player crit is decided.
+    // 48 weapons carry this tag; before that seam existed each of the three roll sites computed
+    // its own chance from the bare stat and none of them saw it.
     public sealed record CritRateBonus(int Percent)     : EquipmentSpecialEffect { public override string Key => "CritRate"; }
 
     // ── Defensive (additive across weapon + shield slots)
@@ -47,7 +53,6 @@ public abstract record EquipmentSpecialEffect
     // ── Skill modifiers (weapon-only)
     public sealed record SkillCooldownReduction(int Turns) : EquipmentSpecialEffect { public override string Key => "SkillCooldown"; }
     public sealed record PostMotionReduction(int Turns) : EquipmentSpecialEffect { public override string Key => "PostMotion"; }
-    public sealed record AttackSpeedBonus(int Levels)   : EquipmentSpecialEffect { public override string Key => "AttackSpeed"; }
     public sealed record SPRegen(int Amount)            : EquipmentSpecialEffect { public override string Key => "SPRegen"; }
 
     // ── Pre-existing-but-unconsumed (parsed, no-op consumer — flagged at registry build time)
@@ -69,6 +74,7 @@ public abstract record EquipmentSpecialEffect
         "ThrustDmg"        => new ThrustDmg(value),
         "ComboBonus"       => new ComboBonus(value),
         "Cleave"           => new Cleave(value),
+        "ExtraAutoAttack"  => new ExtraAutoAttack(value),
         "Bleed"            => new BleedOnHit(value),
         "Stun"             => new StunOnHit(value),
         "Poison"           => new PoisonOnHit(value),
@@ -88,7 +94,6 @@ public abstract record EquipmentSpecialEffect
         "Barrier"          => new Barrier(value),
         "SkillCooldown"    => new SkillCooldownReduction(value),
         "PostMotion"       => new PostMotionReduction(value),
-        "AttackSpeed"      => new AttackSpeedBonus(value),
         "SPRegen"          => new SPRegen(value),
         "DarknessRending"  => new DarknessRending(value),
         _                  => null,

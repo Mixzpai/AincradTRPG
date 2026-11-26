@@ -1,0 +1,32 @@
+NAME:          arena_aquatic
+DESC:          A tide basin of concentric channels, waded rather than walked, with the stair-mouth on the innermost island.
+TAGS:          boss generic aquatic arena
+FLOORS:        *
+BIOME:         aquatic
+WEIGHT:        30
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: X = LabyrinthEntrance
+KFEAT: P = Pillar
+
+MAP
+#####################
+#...................#
+#..~~~~~~~~~~~~~~~..#
+#..~.............~..#
+#..~.~~~~~~~~~~~.~..#
+#..~.~.........~.~..#
+#..~.~....X....~.~..#
+#..~.~.........~.~..#
+#..~.~~~~~~~~~~~.~..#
+#..~.............~..#
+#..~~~~~~~~~~~~~~~..#
+#...................#
+#....P.........P....#
+#...................#
+##########+##########
+ENDMAP

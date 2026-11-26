@@ -6,14 +6,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);PROFILING</DefineConstants>
+    <!-- 2.4.5.4 = 2.4.5 + the flush, loop-pacing and draw-pass patches in vendor/README.md. Do not build the game against an older one: it sends only changed cells, which an older driver pays a console write per gap cell for (rule 20). A/B old drivers in Tools/FlushBench. -->
+    <TgVersion Condition="'$(TgVersion)' == ''">2.4.5.4</TgVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Terminal.Gui" Version="2.4.5" />
+    <PackageReference Include="Terminal.Gui" Version="$(TgVersion)" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Content\Biomes\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\FloorEntries.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\Prefabs\**\*.prefab">

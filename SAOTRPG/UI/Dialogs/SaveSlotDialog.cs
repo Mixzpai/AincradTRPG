@@ -1,6 +1,6 @@
-using Terminal.Gui;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Persistence;
+using SAOTRPG.Systems.RunState;
 
 namespace SAOTRPG.UI.Dialogs;
 

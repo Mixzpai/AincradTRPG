@@ -1,9 +1,8 @@
-using Terminal.Gui;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Definitions;
-using SAOTRPG.Items.Definitions.Weapons;
 using SAOTRPG.Items.Equipment;
-using SAOTRPG.Systems;
+using SAOTRPG.Systems.Combat;
+using SAOTRPG.Systems.RunState;
 
 namespace SAOTRPG.Entities
 {
@@ -17,9 +16,19 @@ namespace SAOTRPG.Entities
         public List<BaseItem> ShopStock { get; set; } = new();
 
         // Floor-appropriate inventory: consumables + scaled weapon/armor.
-        public void GenerateStock(int floor)
+        // `rng` is supplied by floor generation, whose prefab vendors are part of the floor and
+        // must not depend on how much of the run preceded it. Null keeps the ambient run stream,
+        // which is right for the vendors PopulateFloor places during play.
+        public void GenerateStock(int floor, Random? rng = null)
         {
             ShopStock.Clear();
+
+            // A light is stocked on EVERY floor and never gated. The player emits none of their
+            // own, so a floor whose vendor had no torch could strand a run in the dark with no way
+            // to buy back out of it — and torches burn down, so this is a consumable in practice.
+            ShopStock.Add(TorchDefinitions.CreateWoodenTorch());
+            if (floor >= 10) ShopStock.Add(TorchDefinitions.CreateIronLantern());
+            if (floor >= 40) ShopStock.Add(TorchDefinitions.CreateCrystalLantern());
 
             // Always sell potions + antidotes
             ShopStock.Add(PotionDefinitions.CreateHealthPotion());
@@ -63,7 +72,7 @@ namespace SAOTRPG.Entities
             if (floor >= 5)
             {
                 var accPool = LootGenerator.AccessoryPool;
-                ShopStock.Add(accPool[RunRng.Next(accPool.Length)]());
+                ShopStock.Add(accPool[rng?.Next(accPool.Length) ?? RunRng.Next(accPool.Length)]());
             }
 
             // The baseline ladder, which the Player Guide tells the player to buy here:
@@ -88,17 +97,17 @@ namespace SAOTRPG.Entities
             }
 
             // Floor-scaled equipment — 3-4 random weapons + 1-2 armor.
-            int weaponsAdded = 0, weaponTarget = 3 + RunRng.Next(0, 2);
+            int weaponsAdded = 0, weaponTarget = 3 + (rng?.Next(0, 2) ?? RunRng.Next(0, 2));
             for (int tries = 0; tries < 30 && weaponsAdded < weaponTarget; tries++)
             {
-                var item = LootGenerator.CreateRandomEquipment(floor);
+                var item = LootGenerator.CreateRandomEquipment(floor, rng);
                 if (item is Weapon w) { ShopStock.Add(w); weaponsAdded++; }
             }
 
-            int armorAdded = 0, armorTarget = 1 + RunRng.Next(0, 2);
+            int armorAdded = 0, armorTarget = 1 + (rng?.Next(0, 2) ?? RunRng.Next(0, 2));
             for (int tries = 0; tries < 30 && armorAdded < armorTarget; tries++)
             {
-                var item = LootGenerator.CreateRandomEquipment(floor);
+                var item = LootGenerator.CreateRandomEquipment(floor, rng);
                 if (item is Armor a) { ShopStock.Add(a); armorAdded++; }
             }
 

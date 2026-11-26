@@ -1,0 +1,25 @@
+NAME:          swamp_drowned_shrine
+DESC:          A shrine settling year by year into the bog, its reed platform still above water and its vent still breathing.
+TAGS:          signature swamp shrine bog
+FLOORS:        *
+BIOME:         swamp
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: m = Mud
+KFEAT: r = Reeds
+KFEAT: A = Shrine
+
+MAP
+mmm~~~mmm
+mm~~~~~mm
+m~~rrr~~m
+m~~r_r~~m
+~~~_A_~~~
+m~~r_r~~m
+m~~rrr~~m
+mm~~G~~mm
+mmm~~~mmm
+ENDMAP

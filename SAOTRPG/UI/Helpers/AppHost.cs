@@ -1,4 +1,4 @@
-using Terminal.Gui;
+using SAOTRPG.Systems.Diagnostics;
 
 namespace SAOTRPG.UI.Helpers;
 
@@ -69,8 +69,34 @@ public static class AppHost
         _app = Application.Create().Init(driverName);
         AttachDirtyLineReset(_app);
         LogStartupEnvironment(_app);
-        if (SAOTRPG.UI.DebugMode.PerfSampling) AttachLoopSampler(_app);
+        if (DebugMode.PerfSampling) AttachLoopSampler(_app);
         return _app;
+    }
+
+    // ── Key trace ── Logs every key to debug.log; must run after Start(). No-op unless DebugLogger
+    // is on. Under --debug it appends the focus chain, which names the view that consumed the key.
+    public static void AttachKeyLogger()
+    {
+        if (!DebugLogger.IsEnabled) return;
+        bool traceFocus = DebugMode.IsEnabled;
+        App.Keyboard.KeyDown += (s, e) =>
+            DebugLogger.LogGame("INPUT", traceFocus ? $"Key: {e}  focus: {DescribeFocusChain()}" : $"Key: {e}");
+    }
+
+    // Walks Top -> Focused down the tree, naming each view that holds focus.
+    private static string DescribeFocusChain()
+    {
+        if (App.TopRunnable is not View top) return "<no top>";
+
+        var chain = new System.Text.StringBuilder(top.GetType().Name);
+        var node = top;
+        for (int depth = 0; depth < 12 && node.Focused is { } next; depth++)
+        {
+            chain.Append(" > ").Append(next.GetType().Name);
+            node = next;
+        }
+
+        return chain.ToString();
     }
 
     // ── Main-loop diagnostics ───────────────────────────────────────
@@ -130,11 +156,11 @@ public static class AppHost
         string? wt = Environment.GetEnvironmentVariable("WT_SESSION");
         string host = wt is { Length: > 0 } ? "Windows Terminal" : "conhost (legacy)";
 
-        SAOTRPG.UI.DebugLogger.LogGame("SYSTEM",
+        DebugLogger.LogGame("SYSTEM",
             $"Driver={app.Driver?.GetName() ?? "<null>"} screen={app.Screen.Width}x{app.Screen.Height} " +
             $"cells={app.Screen.Width * app.Screen.Height} maxIterations/s={IterationsPerSecond} " +
             $"host={host} legacyConsole={app.Driver?.IsLegacyConsole} " +
-            $"perfSampling={SAOTRPG.UI.DebugMode.PerfSampling}");
+            $"perfSampling={DebugMode.PerfSampling}");
     }
 
     private static void AttachLoopSampler(IApplication app)
@@ -158,8 +184,8 @@ public static class AppHost
             // folding map-less frames into post (and dividing by all drawn frames) made the
             // split incomparable between runs, which matters now that the frame cache and the
             // beneath-dialog guard make skipping common.
-            long mapStart = SAOTRPG.UI.MapView.LastDrawStartTicks;
-            long mapEnd = SAOTRPG.UI.MapView.LastDrawEndTicks;
+            long mapStart = SAOTRPG.UI.Rendering.MapView.LastDrawStartTicks;
+            long mapEnd = SAOTRPG.UI.Rendering.MapView.LastDrawEndTicks;
             if (mapStart >= s_iterStartTicks && mapEnd >= mapStart)
             {
                 s_preDrawMs += (mapStart - s_iterStartTicks) * toMs;
@@ -210,11 +236,14 @@ public static class AppHost
             int d = Math.Max(1, s_drawFrames);
             // pre/map/post are per map-painting frame; flush is per drawn frame.
             int m = Math.Max(1, s_mapFrames);
-            var tiles = SAOTRPG.UI.MapView.DrainTileLayerCounts();
-            SAOTRPG.UI.DebugLogger.LogGame("PERF",
+            var tiles = SAOTRPG.UI.Rendering.MapView.DrainTileLayerCounts();
+            DebugLogger.LogGame("PERF",
                 $"loop {s_iterations} it/s (ceiling {IterationsPerSecond})" +
                 $" | period avg {period:F1}ms worst {s_periodMaxMs:F0}ms" +
                 $" | drewFrames {s_drawFrames}/{s_iterations}" +
+                // Turn repaints held back by the coalescing window. During sustained movement
+                // this is the flush toll NOT paid; at idle it must read 0.
+                $" | coalesced {SAOTRPG.UI.Rendering.MapView.DrainCoalescedFrames()}" +
                 $" | draw avg {s_drawPhaseMs / d:F1}ms worst {s_drawMaxMs:F0}ms" +
                 $" | mapFrames {s_mapFrames}/{s_drawFrames}" +
                 $" | tileLoops {tiles.loops}/{tiles.paints}" +
@@ -223,15 +252,15 @@ public static class AppHost
                 // movement it should sit far below 1.
                 $" | tileCells {tiles.resolved / Math.Max(1, tiles.paints)}" +
                 $"/{tiles.scanned / Math.Max(1, tiles.paints)}" +
-                $" | pre {s_preDrawMs / m:F1}ms map {SAOTRPG.UI.MapView.DrainDrawAvgMs():F1}ms post {s_postDrawMs / m:F1}ms" +
+                $" | pre {s_preDrawMs / m:F1}ms map {SAOTRPG.UI.Rendering.MapView.DrainDrawAvgMs():F1}ms post {s_postDrawMs / m:F1}ms" +
                 $" (of which flush {s_flushMs / d:F1}ms)" +
                 // Per DRAWN frame, matching flush. Dividing these by iterations instead made a
                 // frame that transmits the whole screen look like it transmitted a few hundred
                 // cells, and comparing that against a per-drawn-frame flush is what produced the
                 // false conclusion that flush does not respond to payload.
                 $" | cells w{cells.written / d} s{cells.skipped / d} sent {cells.sent / d} rows {cells.rows / d}" +
-                $" | escapes {cells.runs / d} (~{(cells.runs * 40 + cells.sent) / d / 1024.0:F0}KB/frame)" +
-                $" | clock {SAOTRPG.Systems.FrameClock.ElapsedMs}ms" +
+                $" | escapes {cells.runs / d} gaps {cells.gaps / d} (~{(cells.runs * 20 + cells.gaps * 9 + cells.sent) / d / 1024.0:F0}KB/frame)" +
+                $" | clock {SAOTRPG.UI.Effects.FrameClock.ElapsedMs}ms" +
                 $" | sizeQuery {sizeMs:F1}ms | cpu {cpuPct:F0}% of wall" +
                 $" | gc0 {gen0 - s_gen0At} gc2 {gen2 - s_gen2At}" +
                 $" | screen {app.Screen.Width}x{app.Screen.Height}");

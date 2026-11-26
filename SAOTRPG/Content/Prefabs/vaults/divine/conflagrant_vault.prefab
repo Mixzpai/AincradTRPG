@@ -9,6 +9,8 @@ MAX_PER_FLOOR: 1
 MAX_PER_GAME:  1
 ROTATE:        true
 MIRROR:        true
+KFEAT: = = CrackedWall
+
 ITEM:          a = conflagrant_flame_bow
 
 MAP
@@ -18,5 +20,5 @@ MAP
 #.#a.#
 #.##.#
 #....#
-######
+##=###
 ENDMAP

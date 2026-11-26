@@ -1,3 +1,4 @@
+
 using SAOTRPG.ThirdParty;
 
 namespace SAOTRPG.Map.Generation;
@@ -11,7 +12,21 @@ public sealed class HeightmapField
     private readonly FastNoiseLite? _ridge;
     private readonly float _ridgeStrength;
     private readonly float _ridgeSpreadFix = 1f;
+    private readonly FastNoiseLite _macro;
     private readonly int _w, _h;
+
+    // LANDFORMS AT THE FLOOR'S OWN SCALE. The detail field's features are ~50 tiles across
+    // whatever the floor's size, so a 1000-tile floor was uniform crumpled noise: no hill, valley
+    // or basin larger than a screen, and nothing for water to collect in. This layer puts about
+    // three across the floor, and lakes and rivers follow it. Never finer than half the detail
+    // field's frequency, so a small floor gets one broad rise rather than a second detail layer.
+    private const float MacroWavelengths = 3f;
+    private const float MacroMaxFrequency = 0.01f;
+    // The detail still reads on top of the landform. Two uncorrelated fields mixed with weights
+    // a and b keep sigma*sqrt(a^2 + b^2) of the spread, so the sum is divided by that: the height
+    // distribution, and every biome threshold read off it, stays as wide as before (rule 279).
+    private const float MacroWeight = 0.9f, DetailWeight = 0.5f;
+    private static readonly float MacroSpreadFix = 1f / MathF.Sqrt(MacroWeight * MacroWeight + DetailWeight * DetailWeight);
 
     // The values every biome used while these were hardcoded. A biome that sets neither is
     // bit-identical to before this knob existed, which is what keeps the blast radius to the
@@ -43,6 +58,14 @@ public sealed class HeightmapField
         _warp = new FastNoiseLite(seed + 1);
         _warp.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
         _warp.SetDomainWarpAmp(warpAmp);
+
+        _macro = new FastNoiseLite(seed + 2);
+        _macro.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        _macro.SetFractalType(FastNoiseLite.FractalType.FBm);
+        _macro.SetFractalOctaves(3);
+        _macro.SetFractalLacunarity(2.0f);
+        _macro.SetFractalGain(0.5f);
+        _macro.SetFrequency(MathF.Min(MacroMaxFrequency, MacroWavelengths / Math.Max(1, Math.Max(w, h))));
 
         _ridgeStrength = ridgeStrength;
         if (_ridgeStrength > 0f)
@@ -90,6 +113,8 @@ public sealed class HeightmapField
             // Restore the spread the blend costs, about the field's midpoint. Clamped below.
             v = 0.5f + (v - 0.5f) * _ridgeSpreadFix;
         }
+        float m = (_macro.GetNoise(fx, fy) + 1f) * 0.5f;
+        v = 0.5f + ((v - 0.5f) * DetailWeight + (m - 0.5f) * MacroWeight) * MacroSpreadFix;
         if (v < 0f) v = 0f; else if (v > 1f) v = 1f;
         return v;
     }
@@ -124,7 +149,7 @@ public sealed class HeightmapField
     {
         // StableHash: HashCode.Combine randomises per process, which made the terrain itself
         // different on every launch for the same seed.
-        int noiseSeed = Systems.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "heightmap");
+        int noiseSeed = SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "heightmap");
         var field = new HeightmapField(noiseSeed, ctx.Width, ctx.Height, RidgeStrength(ctx),
                                        Octaves(ctx), WarpAmp(ctx));
         return field.Materialize();
@@ -139,7 +164,7 @@ public sealed class HeightmapField
         float s = ctx.Config.RidgeNoiseStrength;
         if (s >= 0f && s <= 1f) return s;
         float clamped = s < 0f ? 0f : 1f;
-        UI.DebugLogger.LogGame("HEIGHTMAP",
+        SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("HEIGHTMAP",
             $"biome={ctx.Biome} ridgeNoiseStrength={s} outside [0,1] — clamped to {clamped}");
         return clamped;
     }
@@ -151,7 +176,7 @@ public sealed class HeightmapField
         int o = ctx.Config.HeightmapOctaves;
         if (o >= MinOctaves && o <= MaxOctaves) return o;
         int clamped = Math.Clamp(o, MinOctaves, MaxOctaves);
-        UI.DebugLogger.LogGame("HEIGHTMAP",
+        SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("HEIGHTMAP",
             $"biome={ctx.Biome} heightmapOctaves={o} outside [{MinOctaves},{MaxOctaves}] — "
             + $"clamped to {clamped}");
         return clamped;
@@ -162,7 +187,7 @@ public sealed class HeightmapField
         float a = ctx.Config.HeightmapWarpAmp;
         if (a >= MinWarpAmp && a <= MaxWarpAmp) return a;
         float clamped = Math.Clamp(a, MinWarpAmp, MaxWarpAmp);
-        UI.DebugLogger.LogGame("HEIGHTMAP",
+        SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("HEIGHTMAP",
             $"biome={ctx.Biome} heightmapWarpAmp={a} outside [{MinWarpAmp},{MaxWarpAmp}] — "
             + $"clamped to {clamped}");
         return clamped;

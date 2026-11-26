@@ -1,5 +1,3 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Map;
 
 // Per-cell snapshot of TileDefinitions.GetVisual output. Animated types bypass cache.
@@ -22,7 +20,7 @@ public sealed class TileVisualCache
             return TileDefinitions.GetVisual(type, x, y);
         if (TileDefinitions.IsAnimated(type))
         {
-            using var _ = SAOTRPG.Systems.Profiler.Begin("TileVisual.Animated");
+            using var _ = SAOTRPG.Systems.Diagnostics.Profiler.Begin("TileVisual.Animated");
             var av = TileDefinitions.GetVisual(type, x, y);
             return (av.Glyph, av.Foreground, av.Background);
         }
@@ -31,11 +29,11 @@ public sealed class TileVisualCache
         ref Slot slot = ref _buf[idx];
         if (slot.Cached)
         {
-            using var _ = SAOTRPG.Systems.Profiler.Begin("TileVisual.CacheHit");
+            using var _ = SAOTRPG.Systems.Diagnostics.Profiler.Begin("TileVisual.CacheHit");
             return (slot.Ch, slot.Fg, slot.Bg);
         }
 
-        using (SAOTRPG.Systems.Profiler.Begin("TileVisual.CacheMiss"))
+        using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("TileVisual.CacheMiss"))
         {
             var v = TileDefinitions.GetVisual(type, x, y);
             slot.Ch = v.Glyph; slot.Fg = v.Foreground; slot.Bg = v.Background;

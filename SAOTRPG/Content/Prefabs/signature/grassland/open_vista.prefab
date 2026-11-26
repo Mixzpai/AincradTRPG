@@ -1,15 +1,15 @@
 NAME:          grassland_open_vista
-DESC:          Grassland hill with a lone sentinel tree, a ring of flowers, and a lit campfire at the vista's edge.
+DESC:          Grassland hill with a lone sentinel tree, a ring of waist-high meadow grass, and a lit campfire at the vista's edge.
 TAGS:          signature grassland vista
-FLOORS:        1-40
-BIOME:         grassland any
+FLOORS:        *
+BIOME:         grassland
 WEIGHT:        25
 MAX_PER_FLOOR: 2
 ROTATE:        true
 MIRROR:        true
 
 KFEAT: T = Tree
-KFEAT: f = Flowers
+KFEAT: f = GrassTall
 KFEAT: F = Campfire
 
 MAP

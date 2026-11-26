@@ -6,11 +6,16 @@ namespace SAOTRPG.Inventory.Equipment;
 
 public class EquipmentSlotResolver : IEquipmentSlotResolver
 {
-    private readonly Dictionary<string, EquipmentSlot> _slotMappings = new(StringComparer.OrdinalIgnoreCase);
+    // The default table is identical for every resolver, so it is built once and each instance
+    // copies it. Building it per instance re-ran ~60 ToLowerInvariant allocations and the
+    // dictionary growth ladder; the copy constructor pre-sizes and skips both.
+    private static readonly Dictionary<string, EquipmentSlot> _defaultMappings = BuildDefaultMappings();
+
+    private readonly Dictionary<string, EquipmentSlot> _slotMappings =
+        new(_defaultMappings, StringComparer.OrdinalIgnoreCase);
 
     public EquipmentSlotResolver()
     {
-        RegisterDefaultMappings();
     }
 
     // SPECIFIC BEFORE BROAD, and the order is the whole method.
@@ -60,8 +65,16 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         _slotMappings[equipmentType.ToLowerInvariant()] = slot;
     }
 
-    private void RegisterDefaultMappings()
+    private static Dictionary<string, EquipmentSlot> BuildDefaultMappings()
     {
+        var map = new Dictionary<string, EquipmentSlot>(StringComparer.OrdinalIgnoreCase);
+        void RegisterMapping(string equipmentType, EquipmentSlot slot)
+            => map[equipmentType.ToLowerInvariant()] = slot;
+        void RegisterMany(EquipmentSlot slot, params string[] types)
+        {
+            foreach (var type in types) RegisterMapping(type, slot);
+        }
+
         // Broad category mappings
         RegisterMapping("weapon", EquipmentSlot.Weapon);
         RegisterMapping("armor", EquipmentSlot.Chest);
@@ -99,13 +112,9 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
 
         // Tool slot for pickaxes (mining bump-action).
         RegisterMapping("pickaxe", EquipmentSlot.Tool);
-    }
+        // A torch competes with the pickaxe: carry a light or mine, not both.
+        RegisterMapping("torch", EquipmentSlot.Tool);
 
-    private void RegisterMany(EquipmentSlot slot, params string[] types)
-    {
-        foreach (var type in types)
-        {
-            RegisterMapping(type, slot);
-        }
+        return map;
     }
 }

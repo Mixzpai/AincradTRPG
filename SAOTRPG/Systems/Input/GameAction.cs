@@ -13,6 +13,7 @@ public enum InputContext
     PlayerGuide,
     Milestones,
     Bestiary,
+    WorldMap,
 }
 
 // Every rebindable action.
@@ -37,7 +38,7 @@ public enum GameAction
     Look, OpenInventory, Pickup, AutoExplore, OpenBestiary, OpenStats, OpenHelp,
     OpenPlayerGuide, Rest, OpenQuestLog, OpenKillStats, OpenEquipment, Counter,
     OpenSwordSkills, RangedFire, QuickSave,
-    OpenMilestones, OpenCollectables, ToggleStatusTray, ToggleHeightmap,
+    OpenMilestones, OpenCollectables, ToggleStatusTray, ToggleHeightmap, OpenWorldMap,
 
     // ── Map: sword-skill slots ───────────────────────────────────────
     SwordSkill1, SwordSkill2, SwordSkill3, SwordSkill4,
@@ -47,7 +48,7 @@ public enum GameAction
     QuickUse6, QuickUse7, QuickUse8, QuickUse9, QuickUse10,
 
     // ── Map: log ─────────────────────────────────────────────────────
-    LogScrollUp, LogScrollDown,
+    OpenMessageLog,
 
     // ── Look mode ────────────────────────────────────────────────────
     LookNextTarget, LookPrevTarget, LookInspect,
@@ -70,6 +71,14 @@ public enum GameAction
     MilestoneEquipTitle, MilestoneUnequipTitle,
     MilestoneCycleBucket, MilestoneFocusKillLog,
     MilestoneNextTab, MilestonePrevTab,
+
+    // ── Full map ─────────────────────────────────────────────────────
+    // Panning reads the Map context's movement keys, so a rebound movement key pans as well.
+    WorldMapZoomIn, WorldMapZoomOut, WorldMapCenter, WorldMapNextPoint, WorldMapPrevPoint,
+
+    // ── Message log ──────────────────────────────────────────────────
+    MessageLogUp, MessageLogDown, MessageLogPageUp, MessageLogPageDown,
+    MessageLogFilter, MessageLogResetFilter, MessageLogClose,
 
     // ── Bestiary ─────────────────────────────────────────────────────
     // FloorBand cycles a preset range; the rest of this dialog matches bare runes directly.

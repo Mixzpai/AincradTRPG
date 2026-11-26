@@ -1,4 +1,3 @@
-using Terminal.Gui;
 using SAOTRPG.Systems.Input;
 using SAOTRPG.UI.Helpers;
 
@@ -133,10 +132,10 @@ public static class KeybindDialog
                 capturing = null;
 
                 status.Text = reserved != null
-                    ? $"{chord} is already {reserved} on that screen — it will win first."
+                    ? $"{chord} is also used by {reserved} on that screen — only one will work."
                     : clashes.Count == 0
                         ? $"{target.Label} bound to {chord}."
-                        : $"{chord} also runs {string.Join(", ", clashes.Select(c => c.Label))} — that one wins first.";
+                        : $"{chord} is also used by {string.Join(", ", clashes.Select(c => c.Label))} — only one will work.";
                 status.SchemeName = clashes.Count == 0 && reserved == null
                     ? ColorSchemes.SuccessName : ColorSchemes.DangerName;
 

@@ -1,6 +1,6 @@
 NAME:          treasure_dragon_hoard
 DESC:          Four chests piled on a lava-moated island, guarded by something enormous.
-TAGS:          vault treasure dragon boss volcanic
+TAGS:          vault treasure dragon guarded volcanic
 FLOORS:        40-99
 BIOME:         volcanic any
 WEIGHT:        12

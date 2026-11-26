@@ -1,0 +1,24 @@
+NAME:          volcanic_fumarole_field
+DESC:          A blistered dome over a vent field, cracked through on every side, the ash inside too hot to have settled.
+TAGS:          signature volcanic fumarole vents
+FLOORS:        *
+BIOME:         volcanic
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: n = Ash
+KFEAT: * = LoreStone
+
+MAP
+nnn===nnn
+nn=...=nn
+n=..G..=n
+=.......=
+=.G.*.G.=
+=.......=
+n=..G..=n
+nn=...=nn
+nnn===nnn
+ENDMAP

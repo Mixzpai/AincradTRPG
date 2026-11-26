@@ -1,0 +1,24 @@
+NAME:          desert_sunken_spire
+DESC:          The top storey of a tower the dunes swallowed; the cracked walls are the only way in and a surveyor's journal is still on the sill.
+TAGS:          signature desert spire buried
+FLOORS:        *
+BIOME:         desert
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: s = Sand
+KFEAT: * = LoreStone
+
+MAP
+sssssssss
+ss#=#=#ss
+s#.....#s
+s=..*..=s
+s#.....#s
+s#..J..#s
+s=.....=s
+ss#=#=#ss
+sssssssss
+ENDMAP

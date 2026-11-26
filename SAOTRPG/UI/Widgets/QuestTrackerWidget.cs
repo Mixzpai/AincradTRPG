@@ -1,6 +1,5 @@
-using Terminal.Gui;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Social;
 
 namespace SAOTRPG.UI.Widgets;
 
@@ -25,6 +24,7 @@ public class QuestTrackerWidget : View
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
+        using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Draw.QuestTracker");
         // A modal above us has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
 

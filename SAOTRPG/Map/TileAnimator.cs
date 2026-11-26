@@ -1,12 +1,11 @@
-using Terminal.Gui;
-
 namespace SAOTRPG.Map;
 
 // Ambient-tile frame registry. Maps TileType → animation (frames + per-frame ms).
 // MapView renders from the registry each frame, FOV-gated and density-capped to 3.
 public static class TileAnimator
 {
-    // A single animation: frame glyphs cycled at IntervalMs per frame, rendered in Color.
+    // A single animation. The overlay draws no frame glyph: Frames.Length x IntervalMs is one
+    // brightness-pulse cycle.
     public readonly record struct Animation(char[] Frames, int IntervalMs, Color Color, int Priority);
 
     // Priority values — higher = render first when over the density cap.
@@ -58,23 +57,15 @@ public static class TileAnimator
     // Chest is an overlay sparkle (not a replacement glyph) — treated as an event burst.
     public static bool IsSparkleOverlay(TileType type) => type is TileType.Chest;
 
-    // Resolve the current-frame glyph for a tile, using the wall-clock so animations run
-    // smoothly regardless of viewport redraw cadence.
-    public static (char Glyph, Color Color) CurrentFrame(TileType type)
-    {
-        if (!Registry.TryGetValue(type, out var anim) || anim.Frames.Length == 0)
-            return ('?', Color.White);
-        long now = SAOTRPG.Systems.FrameClock.AmbientMs;
-        int idx = (int)((now / anim.IntervalMs) % anim.Frames.Length);
-        return (anim.Frames[idx], anim.Color);
-    }
+    // Chest glint period; the Player Guide reads it.
+    public const int SparkleCycleMs = 2000;
 
-    // Chest glint: 200ms burst every 2000ms. Returns the sparkle glyph or null if the
+    // Chest glint: 200ms burst every SparkleCycleMs. Returns the sparkle glyph or null if the
     // sparkle is in the "off" phase of its cycle.
     public static (char Glyph, Color Color)? ChestSparkle()
     {
-        long now = SAOTRPG.Systems.FrameClock.AmbientMs;
-        long phase = now % 2000;
+        long now = SAOTRPG.UI.Effects.FrameClock.AmbientMs;
+        long phase = now % SparkleCycleMs;
         if (phase > 200) return null;
         char[] glyphs = { '·', '◇', '*' };
         int idx = (int)((phase / 70) % glyphs.Length);

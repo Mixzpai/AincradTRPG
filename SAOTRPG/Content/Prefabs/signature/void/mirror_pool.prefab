@@ -1,0 +1,21 @@
+NAME:          void_mirror_pool
+DESC:          A pool that reflects the ceiling of a floor nobody has built, walled in by geometry that has already failed once.
+TAGS:          signature void pool mirror
+FLOORS:        *
+BIOME:         void
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: * = LoreStone
+
+MAP
+.......
+.=====.
+.=~~~=.
+.=~*~=.
+.=~~~=.
+.=====.
+.......
+ENDMAP

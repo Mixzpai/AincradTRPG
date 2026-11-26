@@ -1,12 +1,13 @@
-using Terminal.Gui;
-using SAOTRPG.UI;
 using SAOTRPG.Items;
 using SAOTRPG.Items.Consumables;
 using SAOTRPG.Items.Definitions;
 using SAOTRPG.Items.Definitions.Weapons;
 using SAOTRPG.Items.Equipment;
 using SAOTRPG.Inventory.Logging;
-using SAOTRPG.Systems;
+using SAOTRPG.Systems.Persistence;
+using SAOTRPG.Systems.RunState;
+using SAOTRPG.Systems.Skills;
+using SAOTRPG.UI.GameLog;
 using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;
 using EquipmentSlot = SAOTRPG.Inventory.Core.EquipmentSlot;
 
@@ -49,7 +50,7 @@ namespace SAOTRPG.Entities
 
         // 10-slot consumable quickbar bound to keys 1-0 (D1..D0). Per-player,
         // persisted via SaveData. Manual bind via Shift+N; auto-fill on pickup.
-        public Systems.QuickbarState Quickbar { get; set; } = new();
+        public QuickbarState Quickbar { get; set; } = new();
 
         // Active guild; single-membership (joining forces leaving current).
         public Systems.Story.Faction ActiveGuildId { get; set; } = Systems.Story.Faction.None;
@@ -67,21 +68,27 @@ namespace SAOTRPG.Entities
             + LifeSkills.RunningSpeedBonus();
         public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
 
-        // Derived stat readers. Equipment Bonuses fold into Base* via ApplyStat;
-        // GetTotalEquipmentBonus also tallies for display so stats stay live when gear durability hits 0.
+        // Gear stats live only in the equipment cache (broken pieces skipped, set bonuses folded in).
+        // Attributes read and write the EFFECTIVE value; the setter stores it net of gear, so `+=`
+        // moves only the base and a saved effective value round-trips once gear is back on.
+        private int Gear(StatType stat) => Inventory?.GetTotalEquipmentBonus(stat) ?? 0;
+        public new int Strength { get => base.Strength + Gear(StatType.Strength); set => base.Strength = value - Gear(StatType.Strength); }
+        public new int Vitality { get => base.Vitality + Gear(StatType.Vitality); set => base.Vitality = value - Gear(StatType.Vitality); }
+        public new int Endurance { get => base.Endurance + Gear(StatType.Endurance); set => base.Endurance = value - Gear(StatType.Endurance); }
+        public new int Dexterity { get => base.Dexterity + Gear(StatType.Dexterity); set => base.Dexterity = value - Gear(StatType.Dexterity); }
+        public new int Agility { get => base.Agility + Gear(StatType.Agility); set => base.Agility = value - Gear(StatType.Agility); }
+        public new int Intelligence { get => base.Intelligence + Gear(StatType.Intelligence); set => base.Intelligence = value - Gear(StatType.Intelligence); }
+        // Entity's versions read the raw Dexterity, so the player's are restated over the effective one.
+        public new int CriticalRate => BaseCriticalRate + Gear(StatType.CritRate) + (Dexterity / 2);
+        public new int CriticalHitDamage => BaseCriticalHitDamage + Dexterity;
 
-        // Fork passives + (eventually) weapon-mastery layers stack here.
-        public int BaseAttackSpeedBonus { get; set; }
-        public int AttackSpeedBonus => BaseAttackSpeedBonus
-            + Inventory.GetTotalEquipmentBonus(StatType.AttackSpeed);
-
-        // Katana Iaijutsu fork: +5% damage on first strike vs each new encounter.
+        // Katana Iaijutsu fork: +25% damage on the first strike against each enemy per floor.
         // Combat layer flips on encounter start.
         public bool KatanaIaijutsuActive { get; set; }
         // Bow Marksman Eye fork: extra effective range overflow on bow shots.
         public int BowRangeOverflow { get; set; }
 
-        // New player: Iron Sword + Health Potion, full HP.
+        // New player: Iron Sword + Health Potion + a lit Wooden Torch, full HP.
         public static Player CreateNewPlayer(string firstName, string lastName, string gender, IGameLog log, IInventoryLogger? inventoryLogger = null)
         {
             var player = new Player
@@ -97,11 +104,17 @@ namespace SAOTRPG.Entities
             player.CurrentHealth = player.MaxHealth;
             player.Inventory.AddItem(OneHandedSwordDefinitions.CreateIronSword());
             player.Inventory.AddItem(PotionDefinitions.CreateHealthPotion());
+            // Equipped, not merely carried. The player casts no light of their own, so a run that
+            // began with the torch sitting in the backpack would open on a dark screen and read as
+            // a rendering fault rather than as a mechanic.
+            var torch = Items.Definitions.TorchDefinitions.CreateWoodenTorch();
+            player.Inventory.AddItem(torch);
+            player.Inventory.Equip(torch, player);
             return player;
         }
 
         // Reconstructs a player from a save file, restoring inventory and equipped items.
-        public static Player LoadFromSave(Systems.SaveData save, IGameLog log, IInventoryLogger? inventoryLogger = null)
+        public static Player LoadFromSave(SaveData save, IGameLog log, IInventoryLogger? inventoryLogger = null)
         {
             var player = new Player
             {
@@ -111,9 +124,6 @@ namespace SAOTRPG.Entities
                 CurrentExperience = save.CurrentExperience,
                 CurrentHealth = save.CurrentHealth,
                 ColOnHand = save.ColOnHand, SkillPoints = save.SkillPoints,
-                Strength = save.Strength, Vitality = save.Vitality,
-                Endurance = save.Endurance, Dexterity = save.Dexterity,
-                Agility = save.Agility, Intelligence = save.Intelligence,
                 BaseAttack = save.BaseAttack, BaseDefense = save.BaseDefense,
                 BaseSpeed = save.BaseSpeed, BaseSkillDamage = save.BaseSkillDamage,
                 BaseCriticalRate = save.BaseCriticalRate,
@@ -125,7 +135,7 @@ namespace SAOTRPG.Entities
 
             foreach (var itemData in save.InventoryItems)
             {
-                var item = Systems.SaveManager.DeserializeItem(itemData);
+                var item = SAOTRPG.Systems.Persistence.SaveManager.DeserializeItem(itemData);
                 if (item != null) player.Inventory.AddItem(item);
             }
 
@@ -133,21 +143,26 @@ namespace SAOTRPG.Entities
             {
                 if (Enum.TryParse<EquipmentSlot>(kvp.Key, out var slot))
                 {
-                    var item = Systems.SaveManager.DeserializeItem(kvp.Value);
+                    var item = SAOTRPG.Systems.Persistence.SaveManager.DeserializeItem(kvp.Value);
                     if (item is Items.Equipment.EquipmentBase equipment)
                         player.Inventory.ForceEquipForLoad(slot, equipment);
                 }
             }
+
+            // Saved attributes are effective values, so they are set only once the gear is worn.
+            player.Strength = save.Strength; player.Vitality = save.Vitality;
+            player.Endurance = save.Endurance; player.Dexterity = save.Dexterity;
+            player.Agility = save.Agility; player.Intelligence = save.Intelligence;
 
             // Life Skills: hydrate Level + CurrentXp; missing entries keep default L1/0 (legacy saves load cleanly).
             if (save.LifeSkills != null)
             {
                 foreach (var kvp in save.LifeSkills)
                 {
-                    if (Enum.TryParse<Systems.LifeSkillType>(kvp.Key, out var skillType)
+                    if (Enum.TryParse<LifeSkillType>(kvp.Key, out var skillType)
                         && player.LifeSkills.Skills.TryGetValue(skillType, out var state))
                     {
-                        state.Level = Math.Clamp(kvp.Value.Level, 1, Systems.LifeSkillSystem.MaxLevel);
+                        state.Level = Math.Clamp(kvp.Value.Level, 1, SAOTRPG.Systems.Skills.LifeSkillSystem.MaxLevel);
                         state.CurrentXp = Math.Max(0, kvp.Value.CurrentXp);
                     }
                 }
@@ -157,13 +172,13 @@ namespace SAOTRPG.Entities
             // bonus from prior session, so storing the id only avoids double-apply.
             // The unlock set itself lives in LifetimeStats.UnlockedMilestones.
             if (!string.IsNullOrEmpty(save.ActiveTitleId)
-                && Systems.LifetimeStats.IsMilestoneUnlocked(save.ActiveTitleId))
+                && SAOTRPG.Systems.Persistence.LifetimeStats.IsMilestoneUnlocked(save.ActiveTitleId))
             {
                 player.ActiveTitleId = save.ActiveTitleId;
             }
 
             // Karma+Guild hydration; "AincradLiberationSquad" migrates to AincradLiberationForce.
-            player.Karma = Math.Clamp(save.Karma, Systems.KarmaSystem.Min, Systems.KarmaSystem.Max);
+            player.Karma = Math.Clamp(save.Karma, SAOTRPG.Systems.Social.KarmaSystem.Min, SAOTRPG.Systems.Social.KarmaSystem.Max);
             string guildName = save.ActiveGuildId ?? "None";
             if (guildName == "AincradLiberationSquad") guildName = "AincradLiberationForce";
             if (Enum.TryParse<Systems.Story.Faction>(guildName, out var fac))
@@ -178,7 +193,7 @@ namespace SAOTRPG.Entities
             // with empty list stay at defaults (all null = empty).
             if (save.QuickbarSlotDefIds != null)
             {
-                for (int qi = 0; qi < Systems.QuickbarState.SlotCount
+                for (int qi = 0; qi < SAOTRPG.Systems.RunState.QuickbarState.SlotCount
                     && qi < save.QuickbarSlotDefIds.Count; qi++)
                 {
                     player.Quickbar.SlotItemDefIds[qi] = save.QuickbarSlotDefIds[qi];
@@ -191,28 +206,14 @@ namespace SAOTRPG.Entities
         public bool EquipItem(EquipmentBase equipment) => Inventory.Equip(equipment, this);
         public void UseItem(Consumable consumable) => Inventory.UseConsumable(consumable, this);
 
-        // Active-title display name (fallback to Player.Title). Sidebar HUD formatted for 48-col panel.
+        // Active-title display name (fallback to Player.Title).
         public string EffectiveTitleName()
         {
             if (ActiveTitleId != null
-                && Systems.MilestoneRegistry.ById.TryGetValue(ActiveTitleId, out var ms)
-                && ms.Reward == Systems.RewardType.EquippableTitle)
+                && SAOTRPG.Systems.Progression.MilestoneRegistry.ById.TryGetValue(ActiveTitleId, out var ms)
+                && ms.Reward == SAOTRPG.Systems.Progression.RewardType.EquippableTitle)
                 return ms.Name;
             return Title;
-        }
-
-        public string GetStatsDisplay()
-        {
-            string sp = SkillPoints > 0 ? $"  ({SkillPoints} SP)" : "";
-            return
-$@"{FirstName} {LastName}
-{EffectiveTitleName()}  Lv.{Level}{sp}
-
-ATK {Attack,-4} DEF {Defense,-4} SPD {Speed}
-CRT {CriticalRate}%   CD +{CriticalHitDamage,-3} SD {SkillDamage}
-
-VIT {Vitality,-3} STR {Strength,-3} END {Endurance,-3}
-DEX {Dexterity,-3} AGI {Agility,-3} INT {Intelligence,-3}";
         }
     }
 }

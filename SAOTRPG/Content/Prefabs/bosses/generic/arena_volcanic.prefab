@@ -1,0 +1,32 @@
+NAME:          arena_volcanic
+DESC:          A cinder ring cut into the basalt, four vents breathing at the corners and the stair-mouth open at its heart.
+TAGS:          boss generic volcanic arena
+FLOORS:        *
+BIOME:         volcanic
+WEIGHT:        30
+MAX_PER_FLOOR: 1
+MAX_PER_GAME:  0
+ROTATE:        true
+MIRROR:        true
+ORIENT:        encompass
+
+KFEAT: X = LabyrinthEntrance
+KFEAT: * = LoreStone
+
+MAP
+#####################
+#...................#
+#.=...............=.#
+#...................#
+#....G.........G....#
+#...................#
+#.........X.........#
+#...................#
+#....G.........G....#
+#...................#
+#.=...............=.#
+#...................#
+#.........*.........#
+#...................#
+##########+##########
+ENDMAP

@@ -1,0 +1,23 @@
+NAME:          urban_lantern_crossing
+DESC:          A paved crossing under four lamp columns, the district bounty board still posted and a ledger left open beneath it.
+TAGS:          signature urban crossing lantern
+FLOORS:        *
+BIOME:         urban
+WEIGHT:        25
+MAX_PER_FLOOR: 1
+ROTATE:        true
+MIRROR:        true
+
+KFEAT: P = Pillar
+
+MAP
+##_____##
+#_______#
+_________
+_..P.P.._
+_...B..._
+_..P.P.._
+_________
+#_______#
+##__J__##
+ENDMAP

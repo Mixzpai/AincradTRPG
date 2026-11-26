@@ -1,8 +1,9 @@
-using Terminal.Gui;
 using SAOTRPG.Entities;
 using SAOTRPG.Inventory.Core;
-using SAOTRPG.Systems;
 using SAOTRPG.UI.Helpers;
+using SAOTRPG.Systems.Skills;
+using SAOTRPG.Systems.Turns;
+using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.UI.Widgets;
 
@@ -39,7 +40,7 @@ public class StatusTrayWidget : View
     {
         _tm = tm;
         _player = player;
-        VerboseMode = Systems.UserSettings.Current.StatusTrayVerbose;
+        VerboseMode = SAOTRPG.Systems.Persistence.UserSettings.Current.StatusTrayVerbose;
         CanFocus = false;
         SchemeName = ColorSchemes.BodyName;
     }
@@ -77,8 +78,8 @@ public class StatusTrayWidget : View
     public void ToggleVerbose()
     {
         VerboseMode = !VerboseMode;
-        Systems.UserSettings.Current.StatusTrayVerbose = VerboseMode;
-        Systems.UserSettings.Save();
+        SAOTRPG.Systems.Persistence.UserSettings.Current.StatusTrayVerbose = VerboseMode;
+        SAOTRPG.Systems.Persistence.UserSettings.Save();
         SetNeedsDraw();
     }
 
@@ -89,9 +90,33 @@ public class StatusTrayWidget : View
     // hues separate by luminance under Colourblind Safe.
     private static ColorTheme T => ColorSchemes.Theme;
 
-    private List<TrayEntry> CollectEntries()
+    // What the tray shows now, and what it last drew. A redraw is not free when nothing changed:
+    // Terminal.Gui's clip bookkeeping for one dirty view measured ~20 KB a draw, and the HUD
+    // refreshes every turn and every tween frame.
+    private readonly List<TrayEntry> _entries = new(), _shown = new();
+    private bool _shownVerbose;
+
+    // Called on every HUD refresh: marks the tray for redraw only when its contents moved.
+    public void Refresh()
     {
-        var entries = new List<TrayEntry>();
+        CollectEntries(_entries);
+        if (_shownVerbose == VerboseMode && _entries.Count == _shown.Count)
+        {
+            bool same = true;
+            for (int i = 0; i < _entries.Count && same; i++)
+            {
+                TrayEntry a = _entries[i], b = _shown[i];
+                same = a.Letter == b.Letter && a.Color == b.Color && a.Stacks == b.Stacks
+                       && a.Duration == b.Duration && ReferenceEquals(a.VerboseName, b.VerboseName);
+            }
+            if (same) return;
+        }
+        SetNeedsDraw();
+    }
+
+    private void CollectEntries(List<TrayEntry> entries)
+    {
+        entries.Clear();
 
         // ── 1) Combat debuffs ────────────────────────────────────────
         if (_tm.IsBleeding)
@@ -183,8 +208,6 @@ public class StatusTrayWidget : View
             }
             return a.SeverityOrder.CompareTo(b.SeverityOrder);
         });
-
-        return entries;
     }
 
     private string FormatEntry(TrayEntry e)
@@ -207,6 +230,7 @@ public class StatusTrayWidget : View
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
+        using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Draw.StatusTray");
         // A modal above us has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
 
@@ -223,7 +247,11 @@ public class StatusTrayWidget : View
         for (int row = 0; row < vp.Height; row++)
             for (int c = 0; c < vp.Width; c++) batch.Put(c, row, ' ', blank);
 
-        var entries = CollectEntries();
+        CollectEntries(_entries);
+        _shown.Clear();
+        _shown.AddRange(_entries);
+        _shownVerbose = VerboseMode;
+        var entries = _entries;
         if (entries.Count == 0) return true;
 
         int col = 0;
