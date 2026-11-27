@@ -6,11 +6,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);PROFILING</DefineConstants>
-    <!-- 2.4.5.4 = 2.4.5 + the flush, loop-pacing and draw-pass patches in vendor/README.md. Do not build the game against an older one: it sends only changed cells, which an older driver pays a console write per gap cell for (rule 20). A/B old drivers in Tools/FlushBench. -->
-    <TgVersion Condition="'$(TgVersion)' == ''">2.4.5.4</TgVersion>
+    <!-- Terminal.Gui is our fork, built from vendor/Terminal.Gui-2.4.5 (vendor/README.md): change
+         its source and build. -p:TgVersion=2.4.5.3 builds against a packed version in
+         vendor/packages instead, for an A/B; nothing older than 2.4.5.2 sends only changed cells
+         the way the game needs (rule 20). -->
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- Always Release, as the package it replaced was: a Debug Terminal.Gui tracks every View's
+       disposal (DEBUG_IDISPOSABLE). -->
+  <ItemGroup Condition="'$(TgVersion)' == ''">
+    <ProjectReference Include="..\vendor\Terminal.Gui-2.4.5\Terminal.Gui\Terminal.Gui.csproj"
+                      SetConfiguration="Configuration=Release" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TgVersion)' != ''">
     <PackageReference Include="Terminal.Gui" Version="$(TgVersion)" />
   </ItemGroup>
 

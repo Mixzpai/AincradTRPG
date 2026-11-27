@@ -25,10 +25,8 @@ public static class InventoryDialog
     private enum FilterMode { All, Weapons, Armor, Materials, Consumables }
     private static readonly string[] FilterLabels = { "All", "Weapons", "Armor", "Materials", "Consumables" };
 
-    // Strip order, and the action each tab answers to. The strip used to number its tabs by
-    // position, which disagreed with the bindings by one — the tab drawn "2 Weapons" was
-    // selected by pressing 1 — so both the order and the digits now come from the binding table
-    // and follow a rebind.
+    // Strip order, and the action each tab answers to. The digits drawn on the strip come from
+    // the binding table, not from tab position, so they match the keys and follow a rebind.
     private static readonly FilterMode[] TabOrder =
     {
         FilterMode.Weapons, FilterMode.Armor, FilterMode.Materials,
@@ -164,12 +162,12 @@ public static class InventoryDialog
         };
 
         // ── Footer ───────────────────────────────────────────────────
-        // Action buttons removed — replaced by Enter-to-act popup.
+        // Item actions live in the Enter-to-act popup, not in footer buttons.
         var sortBtn = DialogHelper.CreateButton("Sort");
         sortBtn.X = 1; sortBtn.Y = Pos.AnchorEnd(2);
 
-        // Keys the player can rebind are read from the table, not written out. "1-5: filter"
-        // was a straight transcription and it disagreed with the bindings.
+        // Keys the player can rebind are read from the binding table, not written out, so the
+        // hint cannot disagree with the bindings.
         var hintLabel = new Label
         {
             Text = $"Enter: act | {Keybinds.Get(GameAction.InvCompare).Primary}: lore | "
@@ -207,7 +205,7 @@ public static class InventoryDialog
         }
 
         // Preserve selected item ref across refilter/sort so the cursor doesn't
-        // jump to row 0 every time. If the prior selection no longer matches
+        // jump to row 0 every time. If the prior selection does not match
         // the filter, fall back to row 0.
         void RefreshAfterChange()
         {
@@ -259,9 +257,9 @@ public static class InventoryDialog
 
         // ── Event wiring ── Enter → context popup.
         // Enter is Command.Accept on a ListView, and Activated answers Command.Activate (Space).
-        // An unhandled Accept bubbles to the dialog's default button — Close — so before this
-        // handler existed the advertised "Enter: act" simply shut the inventory. Claiming it
-        // here stops the bubble. Space keeps working through Activated.
+        // An unhandled Accept bubbles to the dialog's default button — Close — and the advertised
+        // "Enter: act" would shut the inventory. Claiming it here stops the bubble. Space keeps
+        // working through Activated.
         listView.Accepting += (s, e) =>
         {
             e.Handled = true;
@@ -334,7 +332,7 @@ public static class InventoryDialog
         };
 
         // Bare 1-5 cycles filter category. Shift+1-5 stays as quickbar-bind
-        // (next handler), so we must reject any modifier here.
+        // (next handler), so any modifier is rejected here.
         listView.KeyDown += (s, e) =>
         {
             if (e.IsShift || (e.KeyCode & KeyCode.CtrlMask) != 0
@@ -354,7 +352,7 @@ public static class InventoryDialog
             e.Handled = true;
         };
 
-        // 'L' = Lore: open canon citation popup for selected item.
+        // 'L' = Lore: open the lore citation popup for selected item.
         // Listed before the Shift+N handler so unmodified L is captured first.
         listView.KeyDown += (s, e) =>
         {
@@ -404,10 +402,10 @@ public static class InventoryDialog
 
     // Quickbar slot 1-10 for a Shift+digit keystroke, or 0 for anything else.
     //
-    // The rune first: Shift sets KeyCode.ShiftMask, so comparing the whole KeyCode against a
-    // bare KeyCode.D1 never matched and this binding was dead. A driver may report either the
-    // digit or the symbol Shift produces over it on a US layout, so both readings are accepted;
-    // the masked KeyCode covers a layout whose symbols differ.
+    // The rune first: Shift sets KeyCode.ShiftMask, so the whole KeyCode never equals a bare
+    // KeyCode.D1. A driver may report either the digit or the symbol Shift produces over it on
+    // a US layout, so both readings are accepted; the masked KeyCode covers a layout whose
+    // symbols differ.
     private static int QuickbarSlotFor(Key e)
     {
         int slot = (char)e.AsRune.Value switch
@@ -427,7 +425,7 @@ public static class InventoryDialog
     }
 
     // Render the 5-tab filter strip. Active tab bracketed, others dimmed by surrounding
-    // spaces. Single Label so we don't fight focus. Each tab prints the key actually bound to
+    // spaces. Single Label so it takes no focus. Each tab prints the key actually bound to
     // it, so the strip cannot drift from the bindings and a rebind moves the digit.
     private static string BuildTabStrip(FilterMode active)
     {

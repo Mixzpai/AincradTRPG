@@ -18,11 +18,11 @@ public enum InputContext
 
 // Every rebindable action.
 //
-// NOT here, deliberately: Esc, Enter, Tab and the cursor keys where they drive Terminal.Gui's own
+// Not here, deliberately: Esc, Enter, Tab and the cursor keys where they drive Terminal.Gui's own
 // focus and list navigation. Those are the framework's contract, not game keybinds — Terminal.Gui
 // binds Esc to Command.Quit at the application level, so a player who rebound it could strand
 // themselves in a dialog with no way out and no way back to the rebind screen to undo it. The
-// cursor keys stay bound to movement and reticle motion as ALTERNATES, which is rebindable; it is
+// cursor keys stay bound to movement and reticle motion as alternates, which is rebindable; it is
 // only their list-navigation role that is fixed. Debug instrumentation (Shift+F10/F11/F12
 // profiler, F9 biome reload) is dev tooling and is not exposed either.
 public enum GameAction
@@ -39,6 +39,8 @@ public enum GameAction
     OpenPlayerGuide, Rest, OpenQuestLog, OpenKillStats, OpenEquipment, Counter,
     OpenSwordSkills, RangedFire, QuickSave,
     OpenMilestones, OpenCollectables, ToggleStatusTray, ToggleHeightmap, OpenWorldMap,
+    // The wait menu ('|').
+    WaitMenu,
 
     // ── Map: sword-skill slots ───────────────────────────────────────
     SwordSkill1, SwordSkill2, SwordSkill3, SwordSkill4,
@@ -67,7 +69,7 @@ public enum GameAction
 
     // ── Milestones ───────────────────────────────────────────────────
     // CycleBucket drives the Collectables source filter and FocusKillLog moves between the
-    // Monument's two lists; both surfaces existed with no key that reached them.
+    // Monument's two lists.
     MilestoneEquipTitle, MilestoneUnequipTitle,
     MilestoneCycleBucket, MilestoneFocusKillLog,
     MilestoneNextTab, MilestonePrevTab,

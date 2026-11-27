@@ -137,11 +137,10 @@ public static class EquipmentDialog
         {
             parts.Add($"DMG: {w.BaseDamage}");
             if (!string.IsNullOrEmpty(w.WeaponType)) parts.Add($"Type: {w.WeaponType}");
-            // NOT "SPD". Weapon.AttackSpeed is a 0-3 weight class whose only consumer is
-            // GetSwingDurationMs -- how long the swing ARC is drawn for -- while SPD on the
-            // character sheet is Player.Speed, which buys follow-up strikes. Printing both under
-            // the same three letters read as one stat, and a player comparing a rapier's SPD 0
-            // against their own SPD 180 was comparing an animation length with a combat number.
+            // Labelled "Swing", not "SPD". Weapon.AttackSpeed is a 0-3 weight class whose only
+            // consumer is GetSwingDurationMs (how long the swing arc is drawn for), while SPD on
+            // the character sheet is Player.Speed, which buys follow-up strikes. One label for
+            // both would make an animation length read as a combat number.
             if (w.AttackSpeed > 0) parts.Add($"Swing: {w.AttackSpeed}");
         }
         else if (eq is Armor a)
@@ -163,9 +162,9 @@ public static class EquipmentDialog
             bonuses.Add($"{ShortStatName(effect.Type)} {sign}{effect.Potency}");
         }
         if (bonuses.Count > 0) parts.Add(string.Join(", ", bonuses));
-        // Anything declaring its own ceiling shows N/M with a critical/low tag; other gear keeps
-        // the legacy single-number DUR. Gated on the CEILING rather than on `is Pickaxe`, or a
-        // torch — which declares one too — reads out with no denominator.
+        // Anything declaring its own ceiling shows N/M with a critical/low tag; other gear shows
+        // a single-number DUR. Gated on the ceiling rather than on `is Pickaxe` because a torch
+        // declares one too.
         if (eq.MaxDurability > 0)
         {
             int max = eq.MaxDurability;

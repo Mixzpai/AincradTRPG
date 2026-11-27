@@ -2,7 +2,7 @@ using SAOTRPG.Items.Materials;
 
 namespace SAOTRPG.Items.Definitions;
 
-// IM Enhancement Ores: 1 ore per enhance level biases BonusPerLevel into a stat. Crimson Flame→ATK, Adamant→DEF(+Dur), Crust→VIT, Sharp Blade→DEX, Flowing Water→SPD, Wind Flower→AGI, Ash White→INT.
+// Enhancement Ores: 1 ore per enhance level biases BonusPerLevel into a stat. Crimson Flame→ATK, Adamant→DEF(+Dur), Crust→VIT, Sharp Blade→DEX, Flowing Water→SPD, Wind Flower→AGI, Ash White→INT.
 // All Uncommon Materials, stack 20, 80-120 Col. Drop from themed mobs (3-5%) and bosses (15-30%).
 public static class EnhancementOreDefinitions
 {
@@ -21,7 +21,7 @@ public static class EnhancementOreDefinitions
     public static EnhancementOre CreateAdamant()
     {
         var o = Make("ore_adamant", "Adamant Ore", 110, StatType.Defense);
-        o.DurabilityBonus = 10;  // canon: Adamant reinforces the weapon
+        o.DurabilityBonus = 10;  // Adamant also reinforces the weapon's durability
         return o;
     }
 

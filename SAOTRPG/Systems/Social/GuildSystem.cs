@@ -6,7 +6,7 @@ using SAOTRPG.UI.GameLog;
 
 namespace SAOTRPG.Systems.Social;
 
-// Guilds: 8 SAO-canon + 1 player-founded. Single-guild membership; join = flat
+// Guilds: 8 established + 1 player-founded. Single-guild membership; join = flat
 // stat perk; swap = karma+rep penalty. HQ NPCs gate Prove-Yourself + signature quests.
 public static class GuildSystem
 {
@@ -28,7 +28,7 @@ public static class GuildSystem
         string Description,
         string RecruiterName);
 
-    // The 8 canon guilds + player-founded placeholder. Order roughly follows
+    // The 8 established guilds + player-founded placeholder. Order roughly follows
     // HQ floor ascending so the roster dialog reads naturally.
     public static readonly Dictionary<Faction, GuildDef> Guilds = new()
     {
@@ -196,8 +196,8 @@ public static class GuildSystem
     // Fires after Join() successfully seats the player in a guild.
     public static event Action<Faction>? GuildJoined;
 
-    // Apply / reverse a guild's flat passive bonus. Mirrors TitleSystem's
-    // base-stat poke pattern so all derived-stat pipelines pick it up.
+    // Apply / reverse a guild's flat passive bonus. Same base-stat poke as title
+    // bonuses (Player.AddBaseStat), so all derived-stat pipelines pick it up.
     public static void ApplyGuildPerk(Player player, GuildDef guild, int sign = +1)
     {
         foreach (var (stat, value) in guild.PerkBonuses)
@@ -291,7 +291,7 @@ public static class GuildSystem
         log.Log("  The chest was a mimic. The trap took them all. Only you walk out.");
         log.LogSystem("══════════════════════════════════════");
 
-        // Silent leave (skip generic penalty), apply canon -5 karma.
+        // Silent leave (skip generic penalty), apply the -5 Black Cats karma.
         Leave(player, log, silent: true);
         KarmaSystem.Adjust(player, KarmaSystem.DeltaBlackCatsFall, "Moonlit Black Cats fell on F27", log);
 

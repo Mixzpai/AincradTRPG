@@ -26,7 +26,10 @@ public class GameMap
     }
     public TileAccessor Tiles => new(this);
     public List<Entity> Entities { get; } = new();
-    public HashSet<(int X, int Y)> NewlyRevealed { get; } = new();
+    // The tiles the last sweep explored for the first time, each once (the sink tests the explored
+    // flag first). A list rather than a set, so an add does not hash and a clear does not walk a
+    // grown table.
+    public List<(int X, int Y)> NewlyRevealed { get; } = new();
 
     // Doors the player has walked through. A closed door blocks sight and an open one does
     // not, so the opacity table below has to move with this set — mutate only via OpenDoor.
@@ -51,7 +54,7 @@ public class GameMap
     public bool[,]? CircleMask { get; set; }
 
     // True when this floor has open sky above it, which is what lets the sun cast shadows across
-    // it. Defaults to FALSE and is set by the generation pipeline, so a map built by any other
+    // it. Defaults to false and is set by the generation pipeline, so a map built by any other
     // route — the labyrinth, the Ruby Palace — gets no sunlight without having to know the rule.
     public bool HasSky { get; set; }
 
@@ -71,12 +74,11 @@ public class GameMap
 
     // Sight-blocking flag per cell, y*Width + x to match _tiles.
     //
-    // The shadowcaster calls BlocksSight once per visited cell — around 75,000 per move in
-    // open terrain at the runtime FOV radius — and resolving it from _tiles costs one cache
-    // miss per cell across a 15 MB array (Tile is 16 bytes, floors run to 1000x1000). The
-    // identical scan against this 1 MB table measured 2.1x faster. Rebuilt lazily because
-    // mapgen writes tile types straight through the Tiles indexer without raising
-    // OnTileTypeChanged; every runtime mutation goes through SetTileType and updates in place.
+    // The shadowcaster calls BlocksSight once per visited cell, and a 1-byte-per-cell table keeps
+    // that scan in cache where the 16-byte Tile array (floors run to 1000x1000) would miss on
+    // most cells. Rebuilt lazily because mapgen writes tile types straight through the Tiles
+    // indexer without raising OnTileTypeChanged; every runtime mutation goes through SetTileType
+    // and updates in place.
     private readonly bool[] _opaque;
     private bool _opaqueStale = true;
 
@@ -84,31 +86,28 @@ public class GameMap
     // (player position, radius, opacity), so an unchanged stamp means an unchanged answer.
     private int _sightVersion;
 
-    // Last inputs the visible set was computed from. FOV is ~70% of a player turn, and a turn
-    // that does not MOVE the player — an attack, a rest, a mining strike, a wait — recomputed the
-    // identical answer every time.
+    // Last inputs the visible set was computed from, so a turn that does not move the player (an
+    // attack, a rest, a mining strike, a wait) reuses the answer instead of recomputing it.
     private int _fovX = int.MinValue, _fovY = int.MinValue, _fovRadius = -1, _fovVersion = -1;
 
-    // The cells the last full shadowcast marked visible. Needed because the sweep also stamps
-    // _lastSeenTurn, which drives the memory fade — skipping the recompute without refreshing it
-    // would make tiles the player is LOOKING AT fade as though last seen many turns ago, the
-    // moment they walk away. Refreshing this list is O(visible) instead of O(disk).
+    // The runs the last full shadowcast marked visible, as (start index, count, stride) triples.
+    // Needed because the sweep also stamps _lastSeenTurn, which drives the memory fade — skipping
+    // the recompute without refreshing it would make tiles the player is looking at fade as
+    // though last seen many turns ago, the moment they walk away.
     //
-    // A plain array rather than a List: it is appended to once per revealed cell, tens of
-    // thousands of times per move, and the interface call plus reloaded backing field cost about
-    // 6% of the sweep. It grows on demand and is never shrunk.
-    private int[] _visibleCells;
-    private int _visibleCellCount;
+    // Runs, not cells: a sweep marks far fewer runs than cells, and only a still turn reads the
+    // list, so a moving turn should not pay a write per cell. Grows on demand.
+    private int[] _visibleRuns;
+    private int _visibleRunInts;
 
     // Bounding box of the last sweep's reveals, inclusive; _visY1 < 0 means nothing is marked.
     // The next sweep clears exactly this box, which is what keeps every true cell in _visible a
-    // cell the LAST sweep marked — whatever the sweep's shape, radius or origin.
+    // cell the last sweep marked, whatever the sweep's shape, radius or origin.
     private int _visX0, _visX1, _visY0, _visY1 = -1;
 
-    // Row-major (y*Width + x), matching _tiles and _opaque. These were [x, y], which strides
-    // by Height between adjacent columns — and every hot consumer walks x fastest: the
-    // shadowcaster's north/south scans, and the map tile loop. On a 1000x1000 floor
-    // _lastSeenTurn alone is 4 MB, so that stride cost a cache line per revealed cell.
+    // Row-major (y*Width + x), matching _tiles and _opaque. Every hot consumer walks x fastest
+    // (the shadowcaster's north/south scans, the map tile loop), and on a 1000x1000 floor
+    // _lastSeenTurn alone is 4 MB, so a column-major stride would cost a cache line per cell.
     private readonly bool[] _visible;
     private readonly bool[] _explored;
     private readonly int[] _visitCounts;
@@ -130,16 +129,12 @@ public class GameMap
     private List<(int X, int Y, TileType Type)>? _emissiveTiles;
     private HashSet<(int X, int Y)>? _emissivePositions;
 
-    // LAVA IS NOT A LAMP, IT IS A FIELD, and lighting it per tile blew the map out. Measured on
-    // a Volcanic floor: 220 lava tiles, the largest CONNECTED run only 9 and just one tile fully
-    // enclosed — so merging by connectivity would have removed a single source. They are
-    // scattered but locally dense, and every one was its own radius-5 lamp at full brightness, so
-    // their contributions summed and clamped: around the densest cluster, FIFTY-ODD CELLS SAT AT
-    // EXACTLY 255 with no falloff and no detail, and the lava read as a white hole in the floor.
-    //
-    // Grouped by PROXIMITY instead — one lamp per occupied cell of a coarse grid, sitting on the
-    // member tile nearest the group's centre so the light never starts inside a wall, and grown
-    // slightly by how many tiles it stands for. A wider fire, not a brighter one.
+    // Lava lights as a field, not as one lamp per tile. Lava is scattered but locally dense, so
+    // per-tile lamps would sum and clamp to flat white around a cluster, and connected runs are
+    // too short for merging by connectivity to help. Tiles are grouped by proximity instead: one
+    // lamp per occupied cell of a LavaClusterCell grid, sitting on the member tile nearest the
+    // group's centre so the light never starts inside a wall, and grown slightly by how many
+    // tiles it stands for. A wider fire, not a brighter one.
     //
     // Only lava clusters. A campfire or a shrine is a discrete landmark the player navigates by,
     // and sliding two of them together would move the light off both.
@@ -149,8 +144,8 @@ public class GameMap
     private Dictionary<(int Bx, int By), List<(int X, int Y, TileType Type, int Count)>>? _sourceBuckets;
     public const int EmissiveBucketShift = 6; // 64-cell buckets
 
-    // Sparse item storage — Items field hoisted off Tile struct. Lazy-allocated on first add.
-    // _itemsAt.Keys IS the set of tiles with items (replaces former _itemTiles HashSet).
+    // Sparse item storage, kept off the Tile struct. Lazy-allocated on first add.
+    // _itemsAt.Keys is the set of tiles with items.
     private Dictionary<(int X, int Y), List<BaseItem>>? _itemsAt;
     private static readonly List<BaseItem> EmptyItems = new(0);
 
@@ -212,18 +207,15 @@ public class GameMap
         _explored = new bool[width * height];
         _visitCounts = new int[width * height];
         _lastSeenTurn = new int[width * height];
-        // Sized so a sweep at the shipped FOV radius never has to grow it: the widest
-        // measured reveal count is ~101,000. It grows on demand if a larger radius appears.
-        _visibleCells = new int[Math.Min(width * height, 1 << 17)];
+        // Three ints a run; a sweep in the open delivers a few thousand. Grows on demand.
+        _visibleRuns = new int[1 << 15];
         _wallGlyphCache = new char[width, height];
         _transitionCache = new byte[width, height];
         Lighting = new LightingSystem(width, height);
-        // TileType.Grass is 0 → struct default would be Grass; explicitly seed Wall to match prior behavior
-        // (mapgen overwrites; rare runtime allocation paths still expect a Wall floor).
-        // Array.Fill was measured here and is SLOWER, not faster: Tile is a 16-byte struct, which has
-        // no vectorized path in Span<T>.Fill, so the generic implementation loses to this loop
-        // (Release, 1M cells, min of 12 interleaved reps: 3.47 ms loop vs 4.20 ms Fill). The step is
-        // also 0.3% of a floor build, so it is irreducible AND immaterial. Do not "optimize" it.
+        // TileType.Grass is 0, so the struct default would be Grass; seed Wall explicitly
+        // (mapgen overwrites; rare runtime allocation paths expect a Wall floor).
+        // A plain loop rather than Array.Fill: Tile is a 16-byte struct, which has no vectorized
+        // path in Span<T>.Fill.
         for (int i = 0; i < _tiles.Length; i++)
             _tiles[i] = new Tile(TileType.Wall);
     }
@@ -233,7 +225,7 @@ public class GameMap
     // Hot-path: no bounds check. Caller validates via InBounds.
     public ref Tile RefTile(int x, int y) => ref _tiles[y * Width + x];
 
-    // Returns a copy. Out-of-bounds yields a fresh Wall sentinel (matches pre-refactor OutOfBounds semantics).
+    // Returns a copy. Out-of-bounds yields a fresh Wall sentinel.
     public Tile GetTile(int x, int y) => InBounds(x, y) ? _tiles[y * Width + x] : MakeOutOfBounds();
 
     public bool InBounds(int x, int y) => (uint)x < (uint)Width && (uint)y < (uint)Height;
@@ -249,10 +241,8 @@ public class GameMap
     public bool IsVisibleUnchecked(int x, int y) => _visible[y * Width + x];
     public bool IsExploredUnchecked(int x, int y) => _explored[y * Width + x];
 
-    // MEASUREMENT SEAM, same family as LightingSystem.SourcesLastUpdate: the inclusive box the
-    // last shadowcast revealed into. Every visible cell lies inside it — a check that finds one
-    // outside has found a stale cell, which is exactly the defect the clear above used to leave.
-    // Empty (Y1 < 0) before the first sweep.
+    // The inclusive box the last shadowcast revealed into; every visible cell lies inside it.
+    // Empty (Y1 < 0) before the first sweep. Read by the verification probes.
     public (int X0, int Y0, int X1, int Y1) LastSweepBounds => (_visX0, _visY0, _visX1, _visY1);
     public int GetLastSeenTurnUnchecked(int x, int y) => _lastSeenTurn[y * Width + x];
 
@@ -266,10 +256,9 @@ public class GameMap
         }
     }
 
-    // Throws the opacity table away WITHOUT the full walkable/explored sweep. Mapgen passes write
-    // tile types through the Tiles indexer, bypassing OnTileTypeChanged, so a pass that changes
-    // terrain must invalidate — but only the LAST pass needs the counts, and they were being
-    // recomputed twice per floor over a million cells.
+    // Throws the opacity table away without the full walkable/explored recount. Mapgen passes
+    // write tile types through the Tiles indexer, bypassing OnTileTypeChanged, so a pass that
+    // changes terrain must invalidate; only the last pass needs the counts (RecountWalkableTiles).
     public void InvalidateOpacity() { _opaqueStale = true; _sightVersion++; }
 
     // Bumped whenever sight-blocking could have changed. Read by anything caching a field
@@ -314,8 +303,8 @@ public class GameMap
     }
 
     // Share of a carried light's reach that sight always covers. On a dim biome the night radius
-    // floors at 8 while an Iron Lantern lights 11 and a Crystal Lantern 15, so the pool's outer
-    // ring was lit and never marked visible. 0 is the previous behaviour (sight ignored the light).
+    // floors at 8 while an Iron Lantern lights 11 and a Crystal Lantern 15, so without this the
+    // pool's outer ring would be lit and never marked visible. 0 makes sight ignore the light.
     private const float CarriedLightSightShare = 1f;
 
     public void UpdateVisibility(int playerX, int playerY, int radius = 80,
@@ -325,35 +314,46 @@ public class GameMap
         if (_opaqueStale) RebuildOpacity();
         radius = Math.Max(radius, (int)(carriedLightRadius * CarriedLightSightShare));
 
-        // THE VISIBLE SET IS A PURE FUNCTION OF (position, radius, opacity). A turn that does not
-        // move the player — an attack, a rest, a mining strike, a wait — used to recompute the
-        // identical answer, and the shadowcast is ~70% of a turn. Lighting still runs below,
-        // because ambient light tracks the day/night clock and does change on a still turn.
+        // Light first: sight past the night radius reads the field, and lighting reads no sight.
+        Lighting.Update(this, playerX, playerY, carriedLightRadius);
+        int litReach = Math.Max(8, DayNightCycle.FovRadius
+                                   + Systems.World.BiomeSystem.VisionModifier * DayNightCycle.FovMultiplier);
+        bool placedLights = Lighting.SourcesLastUpdate > (carriedLightRadius > 0 ? 1 : 0);
+        if (!LitSight || litReach <= radius || !placedLights) litReach = 0;
+        int litStamp = litReach > 0 ? Lighting.FieldStamp : 0;
+
+        // The visible set is a pure function of (position, radius, opacity), plus the light field
+        // when lit cells past the radius count, so a turn that does not move the player (an
+        // attack, a rest, a mining strike, a wait) reuses it. Lighting runs above either way: the
+        // sky moves on a still turn.
         //
         // NewlyRevealed is cleared either way: nothing was revealed, and the minimap reads its
         // count to fire the reveal flash.
         if (playerX == _fovX && playerY == _fovY && radius == _fovRadius
-            && _sightVersion == _fovVersion)
+            && _sightVersion == _fovVersion && litReach == _fovLitReach && litStamp == _fovLitStamp)
         {
             NewlyRevealed.Clear();
             RevealGeneration++;
             int seenNow = DayNightCycle.CurrentTurn;
-            int[] cells = _visibleCells;
-            int n = _visibleCellCount;
-            for (int i = 0; i < n; i++) _lastSeenTurn[cells[i]] = seenNow;
-            Lighting.Update(this, playerX, playerY, carriedLightRadius);
+            int[] runs = _visibleRuns;
+            int n = _visibleRunInts;
+            for (int k = 0; k < n; k += 3)
+            {
+                int start = runs[k], count = runs[k + 1], stride = runs[k + 2];
+                if (stride == 1) _lastSeenTurn.AsSpan(start, count).Fill(seenNow);
+                else for (int j = 0, i = start; j < count; j++, i += stride) _lastSeenTurn[i] = seenNow;
+            }
             return;
         }
         _fovX = playerX; _fovY = playerY; _fovRadius = radius; _fovVersion = _sightVersion;
+        _fovLitReach = litReach; _fovLitStamp = litStamp;
 
-        // Clear exactly what the LAST sweep wrote. This used to clear a box of the NEW radius
-        // around the NEW position, and every true cell outside that box survived it: the sweep's
-        // reach is an aspect-corrected ellipse twice as wide as the radius, so a walk left stale
-        // cells at the far horizontal reach, a shrinking radius (dusk) left a permanent ring and a
-        // teleport left the whole old disc. At midnight 94.6% of the cells the map called visible
-        // were stale, and the night bubble the radius describes never appeared. The sink records
-        // the bounding box of its reveals; clearing that box needs no knowledge of the sweep's
-        // shape, and in enclosed terrain it is far smaller than any radius-derived box.
+        // Clear exactly what the last sweep wrote. A box of the new radius around the new
+        // position would not do: the sweep's reach is an aspect-corrected ellipse twice as wide
+        // as the radius, so a walk would leave stale cells at the far horizontal reach, a
+        // shrinking radius (dusk) a permanent ring and a teleport the whole old disc. The sink
+        // records the bounding box of its reveals; clearing that box needs no knowledge of the
+        // sweep's shape, and in enclosed terrain it is far smaller than any radius-derived box.
         if (_visY1 >= 0)
         {
             int n = _visX1 - _visX0 + 1;
@@ -370,19 +370,69 @@ public class GameMap
             Explored = _explored,
             Tiles = _tiles,
             NewlyRevealed = NewlyRevealed,
-            Cells = _visibleCells,
+            Runs = _visibleRuns,
             Width = Width,
             Turn = DayNightCycle.CurrentTurn,
             MinX = int.MaxValue, MinY = int.MaxValue, MaxX = -1, MaxY = -1,
         };
         using (Profiler.Begin("FOV.Compute"))
             Shadowcaster.ComputeRuns(playerX, playerY, radius, _opaque, Width, Height, ref sink);
-        _visibleCells = sink.Cells;
-        _visibleCellCount = sink.Count;
+        if (litReach > 0)
+        {
+            var (ar, ag, ab) = DayNightCycle.Ambient;
+            var (lx0, ly0, lx1, ly1) = Lighting.LitRegion;
+            var lit = new LitSink
+            {
+                Inner = sink, Lighting = Lighting, X0 = lx0, Y0 = ly0, X1 = lx1, Y1 = ly1,
+                MinR = ar + LitSightThreshold, MinG = ag + LitSightThreshold, MinB = ab + LitSightThreshold,
+            };
+            using (Profiler.Begin("FOV.Lit"))
+                Shadowcaster.ComputeRuns(playerX, playerY, litReach, _opaque, Width, Height, ref lit);
+            sink = lit.Inner;
+        }
+        _visibleRuns = sink.Runs;
+        _visibleRunInts = sink.RunInts;
         _visX0 = sink.MinX; _visX1 = sink.MaxX; _visY0 = sink.MinY; _visY1 = sink.MaxY;
         ExploredTileCount += sink.NewlyExplored;
         _exploredCount += sink.NewlyExploredWalkable;
-        Lighting.Update(this, playerX, playerY, carriedLightRadius);
+    }
+
+    // Past the night radius a cell in line of sight is still seen when a placed light lifts it
+    // this far above the sky on some channel, out to noon sight on this biome, so a lit tile is
+    // seen at any range. 16 of 255 is where a campfire's pool has faded to ~4%.
+    public const float LitSightThreshold = 16f;
+    private int _fovLitReach, _fovLitStamp;
+
+    // Off skips the far sweep. Toggled by the verification probes.
+    public static bool LitSight { get; set; } = true;
+
+    // The far sweep's sink: admits a cell the near sweep did not, inside the lit region, when lit.
+    private struct LitSink : Shadowcaster.IFovRunSink
+    {
+        public VisibilitySink Inner;
+        public LightingSystem Lighting;
+        public int X0, Y0, X1, Y1;
+        public float MinR, MinG, MinB;
+
+        public void Reveal(int x, int y)
+        {
+            if ((uint)(x - X0) >= (uint)(X1 - X0) || (uint)(y - Y0) >= (uint)(Y1 - Y0)) return;
+            if (Inner.Visible[y * Inner.Width + x]) return;
+            var l = Lighting.GetLightUnchecked(x, y);
+            if (l.R >= MinR || l.G >= MinG || l.B >= MinB) Inner.Reveal(x, y);
+        }
+
+        public void RevealRow(int y, int x0, int x1)
+        {
+            if ((uint)(y - Y0) >= (uint)(Y1 - Y0)) return;
+            for (int x = Math.Max(x0, X0), end = Math.Min(x1, X1 - 1); x <= end; x++) Reveal(x, y);
+        }
+
+        public void RevealColumn(int x, int y0, int y1)
+        {
+            if ((uint)(x - X0) >= (uint)(X1 - X0)) return;
+            for (int y = Math.Max(y0, Y0), end = Math.Min(y1, Y1 - 1); y <= end; y++) Reveal(x, y);
+        }
     }
 
     // Public opacity test used by LightingSystem for light propagation. Ensures the table is
@@ -398,6 +448,17 @@ public class GameMap
     // and cannot afford a call plus a staleness test for each. Row-major (y*Width + x), the same
     // layout as every other per-cell grid here.
     public ReadOnlySpan<bool> OpacityTable
+    {
+        get
+        {
+            if (_opaqueStale) RebuildOpacity();
+            return _opaque;
+        }
+    }
+
+    // The same table as an array, for the light cache's worker; brought up to date here, on the
+    // thread that owns the map, never on the worker.
+    internal bool[] OpacityArray
     {
         get
         {
@@ -432,10 +493,10 @@ public class GameMap
                  or TileType.Tree or TileType.TreePine or TileType.Rock;
     }
 
-    // What the shadowcast writes, as a struct so the JIT can inline it into the sweep. A delegate
-    // here cost an indirect call per revealed cell. The sweep never hands it an off-map cell.
+    // What the shadowcast writes, as a struct so the JIT can inline it into the sweep instead of
+    // making an indirect call per revealed cell. The sweep never hands it an off-map cell.
     //
-    // 98% of reveals arrive as run tails, so those take the row/column forms: the row index is
+    // Nearly all reveals arrive as run tails, so those take the row/column forms: the row index is
     // computed once per run, the visible flag and last-seen stamp (order-free, idempotent) fill
     // as spans, and the explored scan skips already-explored stretches. The cell list and the
     // newly-revealed set are appended cell by cell in ascending order — the same sequence the
@@ -446,14 +507,14 @@ public class GameMap
         public int[] LastSeen;
         public bool[] Explored;
         public Tile[] Tiles;
-        public HashSet<(int X, int Y)> NewlyRevealed;
-        public int[] Cells;
-        public int Count;
+        public List<(int X, int Y)> NewlyRevealed;
+        public int[] Runs;
+        public int RunInts;
         public int Width;
         public int Turn;
         public int NewlyExplored;
         public int NewlyExploredWalkable;
-        // Bounding box of everything revealed, inclusive — kept per RUN, not per cell, so it costs
+        // Bounding box of everything revealed, inclusive — kept per run, not per cell, so it costs
         // a few compares per run tail. GameMap clears this box before the next sweep.
         public int MinX, MaxX, MinY, MaxY;
 
@@ -463,13 +524,11 @@ public class GameMap
             if (x > MaxX) MaxX = x;
             if (y < MinY) MinY = y;
             if (y > MaxY) MaxY = y;
-            // One index for all four row-major grids — this runs tens of thousands of times per move.
+            // One index for all four row-major grids — this runs for every revealed cell.
             int i = y * Width + x;
             Visible[i] = true;
             LastSeen[i] = Turn;
-            int[] cells = Cells;
-            if ((uint)Count >= (uint)cells.Length) cells = Grow();
-            cells[Count++] = i;
+            AddRun(i, 1, 1);
             if (!Explored[i])
             {
                 Explored[i] = true;
@@ -489,11 +548,7 @@ public class GameMap
             int i0 = y * Width + x0;
             Visible.AsSpan(i0, n).Fill(true);
             LastSeen.AsSpan(i0, n).Fill(Turn);
-            int[] cells = Cells;
-            while (Count + n > cells.Length) cells = Grow();
-            var dst = cells.AsSpan(Count, n);
-            for (int k = 0; k < dst.Length; k++) dst[k] = i0 + k;
-            Count += n;
+            AddRun(i0, n, 1);
 
             // On a walked floor most of a run is already explored: a vector search jumps over
             // each explored stretch and only a cell that is new takes the per-cell body.
@@ -514,23 +569,19 @@ public class GameMap
         }
 
         // A column strides by Width, so nothing fills as a span; the index is still stepped
-        // rather than multiplied per cell, and the list bound is checked once per run.
+        // rather than multiplied per cell.
         public void RevealColumn(int x, int y0, int y1)
         {
             if (x < MinX) MinX = x;
             if (x > MaxX) MaxX = x;
             if (y0 < MinY) MinY = y0;
             if (y1 > MaxY) MaxY = y1;
-            int n = y1 - y0 + 1;
-            int[] cells = Cells;
-            while (Count + n > cells.Length) cells = Grow();
-            int count = Count;
             int i = y0 * Width + x;
+            AddRun(i, y1 - y0 + 1, Width);
             for (int y = y0; y <= y1; y++, i += Width)
             {
                 Visible[i] = true;
                 LastSeen[i] = Turn;
-                cells[count++] = i;
                 if (!Explored[i])
                 {
                     Explored[i] = true;
@@ -539,15 +590,23 @@ public class GameMap
                     NewlyRevealed.Add((x, y));
                 }
             }
-            Count = count;
+        }
+
+        private void AddRun(int start, int count, int stride)
+        {
+            int[] runs = Runs;
+            int k = RunInts;
+            if (k + 3 > runs.Length) runs = Grow();
+            runs[k] = start; runs[k + 1] = count; runs[k + 2] = stride;
+            RunInts = k + 3;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private int[] Grow()
         {
-            var bigger = new int[Cells.Length * 2];
-            Array.Copy(Cells, bigger, Count);
-            Cells = bigger;
+            var bigger = new int[Runs.Length * 2];
+            Array.Copy(Runs, bigger, RunInts);
+            Runs = bigger;
             return bigger;
         }
     }
@@ -607,9 +666,9 @@ public class GameMap
         }
     }
 
-    // --- Sparse Items API (replaces former Tile.Items list) ---
+    // --- Sparse Items API ---
 
-    // O(1) check; lazy-dict friendly. Replaces former Tile.HasItems property + _itemTiles HashSet.
+    // O(1) check; false while the lazy dictionary is unallocated.
     public bool HasItemsAt(int x, int y) => _itemsAt != null && _itemsAt.ContainsKey((x, y));
 
     public IReadOnlyList<BaseItem> GetItemsAt(int x, int y)
@@ -658,7 +717,7 @@ public class GameMap
     // --- Tile mutation + cache invalidation ---
 
     // Centralized setter with auto wall/emissive invalidation. Direct RefTile(x,y).Type = ... is allowed in mapgen,
-    // but runtime mutations MUST use this OR call Invalidate* helpers or caches go stale.
+    // but runtime mutations must use this or call Invalidate* helpers, or caches go stale.
     public void SetTileType(int x, int y, TileType newType)
     {
         if (!InBounds(x, y)) return;
@@ -693,7 +752,7 @@ public class GameMap
     // would skip its bounds and no-op guards.
     private void OnTileTypeChanged(int x, int y, TileType oldType, TileType newType)
     {
-        // The version moves FIRST: a subscriber below records SightVersion to decide whether the
+        // The version moves first: a subscriber below records SightVersion to decide whether the
         // next lighting sweep patches one cell or rebuilds the whole caster-height table.
         _sightVersion++;
         // External visual-cache subscribers fire first so they see post-tile-flip state. The
@@ -882,7 +941,8 @@ public class GameMap
         }
     }
 
-    // Iterate emissives whose bucket intersects the player ROI; bucketRadius is in 64-cell buckets.
+    // Builds the clustered source list (lava grouped per LavaClusterCell, everything else one
+    // source per tile) and its 64-cell bucket index. Dropped whenever the emissive list changes.
     private void EnsureSourcesBuilt()
     {
         if (_emissiveSources != null) return;
@@ -949,10 +1009,11 @@ public class GameMap
         }
     }
 
-    // Separate reaches per axis, because the region a light can MATTER in is not square: the
+    // Separate reaches per axis, because the region a light can matter in is not square: the
     // renderer draws a wide, short viewport, so a source far above or below the player cannot
     // touch a drawn cell however close it is horizontally.
-    // Raw tiles, ungrouped — a probe seam, so a linear filter over the list rather than buckets.
+    // Raw tiles, ungrouped. Read by the verification probes, so a linear filter over the list
+    // rather than buckets.
     public IEnumerable<(int X, int Y, TileType Type)> EmissiveTilesNear(
         int playerX, int playerY, int bucketRadiusX, int bucketRadiusY)
     {

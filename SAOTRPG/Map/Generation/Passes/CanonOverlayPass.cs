@@ -4,34 +4,32 @@ using SAOTRPG.Systems.RunState;
 
 namespace SAOTRPG.Map.Generation.Passes;
 
-// Places the set-piece authored for THIS FLOOR, ahead of the biome landmark and the general
+// Places the set-piece authored for this floor, ahead of the biome landmark and the general
 // prefab draw.
 //
 // The distinction from SignaturePrefabPass is the subject, not the mechanism: a signature piece
 // says "this is a Forest floor", a canon-overlay piece says "this is Coral Village". Most floors
-// have no canon piece and never will, so an empty pool is the ordinary case and is silent.
+// have no such piece, so an empty pool is the ordinary case and is silent.
 //
-// It runs FIRST of the three prefab passes because it is the most specific claim about the floor
-// and because open ground is not evenly available: a cave biome leaves ~33-37% of the disk clear
-// with a wall 1.55 tiles away on average, and a 13-wide footprint has zero host sites there at
-// stride 1. Where ground is scarce, the piece that names the floor gets the pick of it.
+// It runs first of the three prefab passes because it is the most specific claim about the floor
+// and because open ground is not evenly available: a cave biome leaves little of the disk clear,
+// and a wide footprint can have no host sites there at all. Where ground is scarce, the piece
+// that names the floor gets the pick of it.
 //
-// The pieces are DATA, not stamp routines in C#. A hand-coded routine is invisible to the glyph
-// validation and to the reachability sweep the content probe runs over every authored grid, and
-// it would have to re-derive the one-tile skirt that is the reason a stamp cannot disconnect a
-// floor.
+// The pieces are data, not stamp routines in C#. A hand-coded routine would bypass the parser's
+// glyph validation, and it would have to re-derive the one-tile skirt that is the reason a stamp
+// cannot disconnect a floor.
 public sealed class CanonOverlayPass : IGenerationPass
 {
     public string Name => "CanonOverlay";
 
     // Anchors are sampled on a stride, with a finer retry for a floor whose only host sites fall
-    // between the coarse samples. Same two constants as the signature pass, for the same measured
-    // reason -- a 7x7 footprint on Dark has a site at every floor-run at stride 1 and none on 2 of
-    // 14 at stride 6.
+    // between the coarse samples. Same two constants as the signature pass, for the same reason:
+    // on a cave floor a small footprint's only sites can all fall between coarse samples.
     private const int CoarseStride = 6;
     private const int FineStride = 2;
 
-    // Host sites to collect per candidate before choosing. The site test is NECESSARY, not
+    // Host sites to collect per candidate before choosing. The site test is necessary, not
     // sufficient -- the disk mask and the room rects still get a veto -- so the sample has to be
     // deep enough that the placer is not left holding near-misses.
     private const int SiteSample = 128;
@@ -52,7 +50,7 @@ public sealed class CanonOverlayPass : IGenerationPass
         var pool = PrefabLibrary.Shared.CandidatesFor(biome, ctx.FloorNumber, CanonTag)
             .Where(p => p.Orient != PrefabOrient.Encompass)
             .ToList();
-        // No canon piece for this floor is the normal case for ~95 floors of 99. Silent on
+        // No set-piece for this floor is the normal case for most floors. Silent on
         // purpose: a line per floor per run would be noise, and the loud case below is the one
         // that means something went wrong.
         if (pool.Count == 0) return;
@@ -60,7 +58,7 @@ public sealed class CanonOverlayPass : IGenerationPass
         // Its own stream, derived from (globalSeed, floor) exactly as SeedDerivationPass, the
         // signature pass and the prefab vendor stock derive theirs. Two reasons it is not
         // ctx.Rng: a draw here would renumber every later pass and move the whole floor, and the
-        // seed must come from the CONTEXT rather than from RunRng.Seed -- that is the RUN's seed,
+        // seed must come from the context rather than from RunRng.Seed -- that is the run's seed,
         // read from a mutable static, and a floor built ahead of the player runs on a worker that
         // can be handed a different one.
         var rng = new Random(RunRng.StableHash(
@@ -93,7 +91,7 @@ public sealed class CanonOverlayPass : IGenerationPass
             (anchors[i], anchors[j]) = (anchors[j], anchors[i]);
         }
 
-        // Filter per candidate FIRST, then choose among what the terrain can take. Choosing first
+        // Filter per candidate first, then choose among what the terrain can take. Choosing first
         // and discovering the terrain second means a floor pays a full failed search for a
         // footprint that has never fitted on it.
         var feasible = new List<(PrefabDefinition Def, List<(int X, int Y)> Sites)>();
@@ -111,7 +109,7 @@ public sealed class CanonOverlayPass : IGenerationPass
         }
         if (feasible.Count == 0) return false;
 
-        // Weighted draw without replacement, so a floor carrying two canon pieces still lands one
+        // Weighted draw without replacement, so a floor carrying two set-pieces still lands one
         // when the first has no seat.
         while (feasible.Count > 0)
         {

@@ -10,7 +10,7 @@ namespace SAOTRPG.UI.Rendering;
 // cursor. Cells come from MinimapView.SampleRegion and names from MinimapView.Legend, so the
 // two maps always draw and name a tile the same way.
 //
-// Lives inside a dialog, so it carries no beneath-a-dialog paint guard (rule 23).
+// Lives inside a dialog, so it carries no beneath-a-dialog paint guard.
 public class WorldMapView : View
 {
     // Tiles per cell. A terminal cell is twice as tall as it is wide, so every level after the
@@ -349,7 +349,7 @@ public class WorldMapView : View
         if (groups.Count == 0) Row(r => Text(0, r, "Nothing found yet", muted));
         for (int gi = 0; gi < groups.Count && gi < groupRows; gi++)
         {
-            // A list the panel cannot fit says so (rule 220).
+            // A list the panel cannot fit says so.
             if (gi == groupRows - 1 && groups.Count > groupRows)
             {
                 int rest = groups.Count - gi;

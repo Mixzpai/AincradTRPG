@@ -6,9 +6,9 @@ namespace SAOTRPG.Map.Generation.Passes;
 // Stamps 1-2 climatically-close sub-biome pockets: always on a band-edge floor, and on a stable
 // fraction of the interior ones. Consumed by BaseTerrainPass via ctx.PocketBiomeMap lookup.
 //
-// The tile that pass stamps is the pocket's ONLY expression. The biome tint, the ambient
+// The tile that pass stamps is the pocket's only expression. The biome tint, the ambient
 // particles, the tree/rock/bush densities, the lakes, the rivers, the feature quotas, the trap
-// pools, the ore table and the entry text all read the HOST config, and GameMap carries no
+// pools, the ore table and the entry text all read the host config, and GameMap carries no
 // per-cell biome — so a pocket is a palette, not a region.
 public sealed class PocketBiomePass : IGenerationPass
 {
@@ -26,7 +26,7 @@ public sealed class PocketBiomePass : IGenerationPass
         if (ctx.FloorNumber <= 1 || ctx.FloorNumber >= 100) return false;
         if (ctx.Config.PocketCandidates == null || ctx.Config.PocketCandidates.Length == 0) return false;
         if (IsBandEdgeFloor(ctx.FloorNumber)) return true;
-        // Decided by a STABLE hash of (seed, floor), never ctx.Rng: ShouldRun has to be pure. A
+        // Decided by a stable hash of (seed, floor), never ctx.Rng: ShouldRun has to be pure. A
         // draw here would consume from the stream on floors where the pass then does not run,
         // shifting every later pass by whether a pass was skipped.
         return (uint)SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "pocket-midband")
@@ -50,7 +50,7 @@ public sealed class PocketBiomePass : IGenerationPass
         var picks = PickPocketBiomes(ctx, pocketCount);
         if (picks.Count == 0) { ctx.PocketBiomeMap = null; return; }
 
-        // SpecialAreaPass town/boss overlays (which run later at position 12) stamp over any
+        // SpecialAreaPass town/boss overlays (which run later) stamp over any
         // pocket tiles that collide with safe zones, so a pocket never has to avoid them here.
         int diskRadius = Math.Min(w, h) / 2;
         if (diskRadius < MinPocketRadius * 3)
@@ -69,17 +69,14 @@ public sealed class PocketBiomePass : IGenerationPass
         }
 
         // Domain warp for the seed-distance test, so a pocket edge is not a perfect circle. The
-        // deformation is small against the radius — measured, the boundary runs 6-7% longer than
-        // the circle of the same area, so this softens an edge rather than shaping one.
-        // Was GlobalSeed ^ a constant, which carries no floor term — every floor's pockets shared
-        // one wobble field, so their edges deformed identically. Invisible while only band-edge
-        // floors had pockets; obvious once most floors do.
+        // deformation is small against the radius, so this softens an edge rather than shaping
+        // one. Seeded per floor, so each floor's pocket edges deform differently.
         var wobble = new FastNoiseLite(
             SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "pocket-wobble"));
         wobble.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         wobble.SetFrequency(0.07f);
 
-        // Parallel across rows. Every RNG draw for this pass happened ABOVE (pocket count, seed
+        // Parallel across rows. Every RNG draw for this pass happened above (pocket count, seed
         // positions, radii, the shuffle), so the loop body is a pure function of (x, y) against a
         // fixed seed list and each cell writes its own slot — output is identical whatever order
         // rows complete in. `claimed` only feeds the debug line, so it accumulates thread-locally
@@ -106,21 +103,14 @@ public sealed class PocketBiomePass : IGenerationPass
     // Below this the fork costs more than the work; the high floors are 100x100.
     private const int ParallelCellThreshold = 65536;
 
-    // A pocket's radius is a SHARE of the floor's own disk radius and nothing else. The previous
-    // rule was `Clamp(diskRadius / 5, 8, 60)`, and the absolute ceiling turned the scaling off
-    // again on every floor whose disk radius exceeds 300 — floors 2-44, which are the largest
-    // disks and the ones the scaling was written for. Measured over four seeds: single-pocket
-    // coverage was 1.79% of the disk on F2-20 against 4.38% on F45-60, so the biggest floors got
-    // the smallest pocket relative to the ground they cover. The 8 never bound at all, since the
-    // smallest floor is 100x100 and 50/5 is already 10.
+    // A pocket's radius is a share of the floor's own disk radius and nothing else: an absolute
+    // ceiling would switch the scaling off on the largest disks, the floors it matters most for.
     //
-    // The share is DELIBERATELY not larger than what floors 45+ already produced. Feature and
-    // entity placement is gated on `MapGenerator.IsGrassType`, which accepts none of the
-    // biome-native ground tiles (Sand, DuneSand, Snow, Ice, Basalt, Ash, Mud, Reeds), so a pocket
-    // whose biome stamps those is a placement dead zone and a grass pocket on a floor made of
-    // them is a placement magnet — measured 0.28x and 11.6x the surrounding feature density.
-    // Growing pockets before that gate widens would redistribute the floor's content, not its
-    // terrain.
+    // The share is deliberately modest. Feature and entity placement is gated on
+    // `MapGenerator.IsGrassType`, which accepts none of the biome-native ground tiles (Sand,
+    // DuneSand, Snow, Ice, Basalt, Ash, Mud, Reeds), so a pocket whose biome stamps those is a
+    // placement dead zone and a grass pocket on a floor made of them is a placement magnet.
+    // Larger pockets would redistribute the floor's content, not just its terrain.
     private const double PocketRadiusDiskFraction = 0.163;
     private const int MinPocketRadius = 8;
 
@@ -128,12 +118,11 @@ public sealed class PocketBiomePass : IGenerationPass
     // not it is taken, so the stream position for every later pass is a constant.
     private const int SeedCandidates = 8;
 
-    // The playable area is the inscribed DISK, and a pocket seed used to be drawn uniformly over
-    // the SQUARE that contains it: a quarter of that square is outside the disk outright, and a
-    // seed near the rim loses most of its pocket to the mountain ring. Measured over 40 seeds on
-    // floor 2, three produced no pocket cell at all and the coverage spread was CV 0.35.
+    // The playable area is the inscribed disk, not the square that contains it: a quarter of that
+    // square is outside the disk outright, and a seed near the rim loses most of its pocket to the
+    // mountain ring.
     //
-    // Candidates are tested against the REAL mask rather than a reconstructed circle, because
+    // Candidates are tested against the real mask rather than a reconstructed circle, because
     // FloorMask wobbles the radius by up to 7 tiles and a rebuilt circle disagrees with the map.
     // A candidate wins when it and its four half-radius axis probes are all inside, which bounds
     // how much of the pocket the ring can eat without pinning every pocket to the middle. The

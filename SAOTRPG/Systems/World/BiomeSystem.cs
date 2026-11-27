@@ -1,6 +1,6 @@
 namespace SAOTRPG.Systems.World;
 
-// Floor→biome map with passive effects. SAO canon themes + originals.
+// Floor→biome map with passive effects.
 // Effects apply per-turn + on floor entry.
 
 public enum BiomeType
@@ -51,7 +51,7 @@ public static class BiomeSystem
         [BiomeType.Void]      = new("The Void",        1, 0,  0, (1, 10),  0,  0, "Reality warps around you. Nothing here follows natural law."),
     };
 
-    // Fallback for unmapped BiomeType (defensive — should not hit).
+    // Fallback for an unmapped BiomeType (every member is mapped above).
     private static readonly BiomeConfig _fallback = new(
         DisplayName: "Unknown",
         SatietyDrainBonus: 0,
@@ -64,10 +64,10 @@ public static class BiomeSystem
 
     private static BiomeConfig Config => _configs.TryGetValue(Current, out var c) ? c : _fallback;
 
-    // Map floor number to biome using SAO canon + original designs.
+    // Map floor number to biome: named floors first, then banded eras.
     public static BiomeType GetBiome(int floor) => floor switch
     {
-        // SAO canon floors
+        // Floors 1-15, each named
         1 => BiomeType.Grassland,
         2 => BiomeType.Grassland,    // savanna/mesa
         3 => BiomeType.Forest,       // dark ancient forest
@@ -84,16 +84,15 @@ public static class BiomeSystem
         14 => BiomeType.Forest,      // dense forest
         15 => BiomeType.Volcanic,    // crimson era peak
 
-        // Canon-anchored per-floor overrides inside otherwise-banded ranges. Each one names a
-        // floor FLOOR_CANON gives an explicit biome for, where the surrounding band says otherwise.
+        // Per-floor overrides inside otherwise-banded ranges, for named floors whose setting
+        // differs from the surrounding band.
         //
         // The Dark and Ruins bands carry CaveMode, so a floor left in one of them does not merely
-        // wear the wrong palette — it generates as a cellular-automata cavern, 32-50% open with a
-        // wall 1.6 tiles away on average. That is survivable on a floor canon leaves unspecified
-        // and a flat contradiction on one canon names a city, a lake resort or a forest. Every
-        // override below whose old value was Dark or Ruins is there for that reason.
+        // wear the wrong palette — it generates as a cellular-automata cavern, which contradicts a
+        // floor that is a city, a lake resort or a forest. Several overrides below lift a floor
+        // out of a Dark or Ruins band for that reason.
         22 => BiomeType.Forest,      // Coral Village — lakeside forest, Forest of Wandering, Yui found here
-        24 => BiomeType.Aquatic,     // Panareze — lake resort; the lake-town read Selmburg already uses
+        24 => BiomeType.Aquatic,     // Panareze — lake resort; the same lake-town reading as Selmburg
         35 => BiomeType.Grassland,   // Mishe — gentle hills, Hill of Memories, pastoral spring
         48 => BiomeType.Ice,         // Lindarth — ice canyon, Lisbeth's smithy, snowstorms
         49 => BiomeType.Urban,       // Myujen — white-stone city, marble architecture
@@ -106,8 +105,8 @@ public static class BiomeSystem
         76 => BiomeType.Urban,       // Algade — gambling city, casino district and arena
         78 => BiomeType.Forest,      // forest floor of the demigod era
         79 => BiomeType.Ice,         // ice plains
-        // No sky biome exists, so a sanctum above the cloud line takes the same reading the
-        // celestial garden (F90) and the palace approach (F96-99) already take.
+        // There is no sky biome, so a sanctum above the cloud line takes the same reading as the
+        // celestial garden (F90) and the palace approach (F96-99).
         80 => BiomeType.Void,        // sky sanctum
         85 => BiomeType.Volcanic,    // volcanic ruin
 
@@ -121,10 +120,8 @@ public static class BiomeSystem
         >= 46 and <= 50 => BiomeType.Dark,      // nightmare era (F48-F50 overridden above)
         >= 51 and <= 55 => BiomeType.Forest,    // ancient forest (F55 overridden above)
         >= 56 and <= 57 => BiomeType.Ruins,     // mountain era (F56 overridden above)
-        // Era III names desert among its themes and the canon weather table puts a sandstorm on
-        // F59; F58-60 is a silent frontier band, so this is the one place a desert can sit without
-        // displacing a canon-named floor -- and it is now the ONLY place, since F11 Taft went back
-        // to the alpine reading its LN entry gives it.
+        // The weather table puts a sandstorm on F59, and F58-60 is a frontier band with no named
+        // floor, so a desert sits here without displacing one. This is the only Desert band.
         >= 58 and <= 60 => BiomeType.Desert,    // rugged frontier — F59 sandstorm
         >= 61 and <= 65 => BiomeType.Volcanic,  // infernal era (F61 overridden above)
         >= 66 and <= 70 => BiomeType.Void,      // cosmic era
@@ -140,18 +137,15 @@ public static class BiomeSystem
 
     // Sub-variant of the floor's biome, or null to use the biome's own config.
     //
-    // A biome that holds a long band generates the same floor over and over: Forest spans 14
-    // floors and measured within 0.2 percentage points of itself on tree share across all of them.
-    // A variant names a Content/Biomes/<biome>_<variant>.json that REPLACES the base config for
-    // those floors, so the band splits into recognisably different places without a second
-    // BiomeType or a second code path.
+    // A biome that holds a long band would generate the same floor over and over. A variant names
+    // a Content/Biomes/<biome>_<variant>.json that replaces the base config for those floors, so
+    // the band splits into recognisably different places without a second BiomeType or a second
+    // code path.
     //
-    // Keyed off GetBiome, so a floor that stops being Forest loses its Forest variant by
-    // construction rather than by anyone remembering to delete the row. The bands follow
-    // FLOOR_CANON's own Terrain Notes column.
+    // Keyed off GetBiome, so a floor that is not Forest can never carry a Forest variant.
     public static string? GetVariant(int floor) => GetBiome(floor) switch
     {
-        // Ice holds two very different canon places: the frozen-lake band F16-20 and F48's ice
+        // Ice holds two very different places: the frozen-lake band F16-20 and F48's ice
         // canyon on one side, and Taft's mountain trails on the other. The base config drowns a
         // trail floor in frozen pools, so Taft takes a variant that trades the water for relief.
         BiomeType.Ice => floor == 11 ? "alpine" : null,
@@ -163,14 +157,14 @@ public static class BiomeSystem
             22 => "enchanted",              // Coral Village — Forest of Wandering, golden hour
             >= 26 and <= 30 => "jungle",    // jungle era
             >= 51 and <= 54 => "ancient",   // ancient forest, deep canopy
-            // F14 stays on the base config deliberately, so the file every variant was derived
-            // from is still reachable and still measured.
+            // F14 stays on the base config deliberately, so the base Forest file still generates
+            // a floor of its own.
             _ => null,
         },
         _ => null,
     };
 
-    // Every (biome, variant) pair the table above can produce, DERIVED by sweeping the climb
+    // Every (biome, variant) pair the table above can produce, derived by sweeping the climb
     // rather than hand-listed beside it — a hand-written copy of a table is the thing that drifts.
     // The loader validates each one at load, so a declared variant with no file fails loudly.
     public static IReadOnlyList<(BiomeType Biome, string Variant)> DeclaredVariants()
@@ -194,7 +188,7 @@ public static class BiomeSystem
     public static void SetFloor(int floor)
     {
         Current = GetBiome(floor);
-        // The variant, when the floor declares one, is what GENERATION used — so the render side
+        // The variant, when the floor declares one, is what generation used — so the render side
         // has to resolve the same one or the tint, the tree glyph and the atmosphere would all
         // describe a floor that was not built.
         CurrentGenConfig = Map.Generation.BiomeGenConfigLoader.VariantFor(Current, floor)
@@ -203,33 +197,41 @@ public static class BiomeSystem
         Map.TileDefinitions.CurrentTreeGlyph = CurrentGenConfig?.TreeGlyph ?? '♣';
     }
 
-    // Display name for the biome.
-    // Read-only access to any biome's config, not just the current floor's. The Player Guide's
-    // biome table was transcribed from this dictionary by hand and had drifted — it credited
-    // Desert with -5 vision when its VisionModifier is 0 — so the table is generated now.
-    // The current biome's passive effect in one short phrase, for the sidebar. The biome NAME was
-    // shown and the effect was not, so a player on a Darkness floor saw their sight collapse with
-    // nothing on screen connecting the two — the number lived only in the Player Guide. Built
-    // from the same config the Guide's table is generated from, so the two cannot disagree.
+    // The current biome's passive effect in one short phrase, for the sidebar, so the player can
+    // connect a penalty (a Darkness floor's sight loss, say) to the floor rather than finding the
+    // number only in the Player Guide. Built from the same config the Guide's biome table is
+    // generated from, so the two cannot disagree.
+    // Kept per config, which is immutable: the sidebar reads this on every redraw.
     public static string EffectSummary
     {
         get
         {
             var c = Config;
-            if (c.VisionModifier != 0) return $"{c.VisionModifier} vis";
-            if (c.EnvironmentDamage.Interval > 0)
-                return $"{c.EnvironmentDamage.Damage}dmg/{c.EnvironmentDamage.Interval}t";
-            if (c.AttackModifier != 0) return $"{c.AttackModifier} ATK";
-            if (c.StepPoisonChance > 0) return $"{c.StepPoisonChance}% psn";
-            if (c.SlipChance > 0) return $"{c.SlipChance}% slip";
-            if (c.SatietyDrainBonus > 0) return $"+{c.SatietyDrainBonus} hunger";
-            return string.Empty;
+            if (!ReferenceEquals(c, _summaryOf)) { _summary = Summarize(c); _summaryOf = c; }
+            return _summary;
         }
     }
+    private static BiomeConfig? _summaryOf;
+    private static string _summary = "";
 
+    private static string Summarize(BiomeConfig c)
+    {
+        if (c.VisionModifier != 0) return $"{c.VisionModifier} vis";
+        if (c.EnvironmentDamage.Interval > 0)
+            return $"{c.EnvironmentDamage.Damage}dmg/{c.EnvironmentDamage.Interval}t";
+        if (c.AttackModifier != 0) return $"{c.AttackModifier} ATK";
+        if (c.StepPoisonChance > 0) return $"{c.StepPoisonChance}% psn";
+        if (c.SlipChance > 0) return $"{c.SlipChance}% slip";
+        if (c.SatietyDrainBonus > 0) return $"+{c.SatietyDrainBonus} hunger";
+        return string.Empty;
+    }
+
+    // Read-only access to any biome's config, not just the current floor's. The Player Guide's
+    // biome table is generated from it.
     public static BiomeConfig ConfigFor(BiomeType biome) =>
         _configs.TryGetValue(biome, out var c) ? c : _fallback;
 
+    // Display name for the current biome.
     public static string DisplayName => Config.DisplayName;
 
     // -- Per-turn passive effects --
@@ -255,6 +257,6 @@ public static class BiomeSystem
 
     // Floor entry flavor message. A floor may override the biome's line with one of its own from
     // Content/FloorEntries.json; a biome's message otherwise describes every floor in its band
-    // identically, and the longest band is 16 floors.
+    // identically.
     public static string GetEntryMessage(int floor) => FloorEntries.For(floor) ?? Config.EntryMessage;
 }

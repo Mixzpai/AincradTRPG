@@ -10,8 +10,8 @@ using SAOTRPG.UI.GameLog;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Lisbeth R6 crafting (F48 Lindarth). 18 canon HF recipes + iron-ingot enhance lane.
-// F1/F2 swap section. R6 = 3M Col + rare mats; Iron Ingot Enhance = 200 Col + 3 iron_ingot per +1.
+// Lisbeth R6 crafting (F48 Lindarth): R6 weapon recipes + ingot enhance and reforge lanes.
+// F1-F5 swap section. R6 = 3M Col + rare mats; Iron Ingot Enhance = 200 Col + 3 iron_ingot per +1.
 public static class LisbethCraftDialog
 {
     private const int DialogWidth = 86, DialogHeight = 26;
@@ -44,7 +44,7 @@ public static class LisbethCraftDialog
             SchemeName = ColorSchemes.GoldName,
         };
 
-        // Tab strip: highlights active section (F1 R6 | F2 Iron Ingot Enhance).
+        // Tab strip: highlights the active section (F1-F5).
         var tabLabel = new Label
         {
             Text = "",
@@ -152,7 +152,7 @@ public static class LisbethCraftDialog
             listView.SetNeedsDraw();
         }
 
-        // Shared printer for the four enhance-mode lists. Caller passes the
+        // Shared printer for the three enhance-mode lists. Caller passes the
         // recipe + a label like "Common/Uncommon" used in the empty-list message.
         static void PrintEnhanceCandidates(
             ObservableCollection<string> names,
@@ -262,7 +262,7 @@ public static class LisbethCraftDialog
         // F1-F5 toggle modes. Dialog level is safe here only because these are function keys: a
         // focused ListView consumes printable runes before its own KeyDown is raised, but not
         // F-keys. A rune binding would have to live on the list itself.
-        // Selection reset (D4) — heterogeneous lists across modes; out-of-range guards
+        // Selection reset — heterogeneous lists across modes; out-of-range guards
         // exist in handlers but resetting to 0 prevents an obviously-wrong row stickying.
         dialog.KeyDown += (s, k) =>
         {
@@ -387,7 +387,7 @@ public static class LisbethCraftDialog
     }
 
     // Reforge with explicit before/after confirmation modal.
-    // Player MUST accept the new roll — never auto-applied because random rolls can wipe good ones.
+    // Player must accept the new roll — never auto-applied because random rolls can wipe good ones.
     private static void TryReforge(Player player, Weapon weapon, IGameLog log,
         Label detailLabel, Action refresh)
     {
@@ -613,7 +613,7 @@ public static class LisbethCraftDialog
             }
         }
 
-        // Inventory space check — craft fails loud if full.
+        // Unknown DefId fails loud before anything is spent.
         var crafted = ItemRegistry.Create(recipe.WeaponDefId);
         if (crafted == null)
         {
@@ -634,7 +634,7 @@ public static class LisbethCraftDialog
             player.Inventory.ConsumeByDefinitionId(mat.DefId, mat.Qty);
         player.ColOnHand -= recipe.ColCost;
 
-        // Add weapon — drop at player's feet if inventory full
+        // Add weapon — refund the cost if the inventory is full
         bool added = player.Inventory.AddItem(crafted);
         if (added)
         {
@@ -644,11 +644,9 @@ public static class LisbethCraftDialog
         }
         else
         {
-            log.LogLoot($"  ◈ Lisbeth crafts {crafted.Name} — inventory full, she sets it aside for you.");
-            detailLabel.Text = $"◈ {crafted.Name} crafted, but your pack is full. " +
-                "Make room and talk to Lisbeth to take it.";
+            log.LogLoot($"  Your pack is full — Lisbeth cannot hand over {crafted.Name}. Materials and Col refunded.");
             detailLabel.SchemeName = ColorSchemes.DangerName;
-            // No pickup-later persistence, so refund materials if AddItem fails (fail-loud path).
+            // Nothing holds a crafted weapon for later, so the cost goes back to the pack.
             foreach (var mat in recipe.Materials)
             {
                 var matItem = ItemRegistry.Create(mat.DefId);

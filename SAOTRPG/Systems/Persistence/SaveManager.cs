@@ -23,18 +23,15 @@ public static class SaveManager
     private static readonly string SaveDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AincradTRPG");
 
-    // The save file stays indented on purpose: it is read by hand when diagnosing a run, and
-    // measured against the largest real player-data file compacting buys only ~28% (14 KB -> 10 KB),
-    // which does not pay for losing that.
+    // The save file stays indented on purpose: it is read by hand when diagnosing a run.
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    // A procedural item's blob is embedded in the save AS AN ESCAPED STRING, so its indentation
-    // lands as literal \n and \" clutter on one line — it costs ~29% per item and makes the
-    // surrounding file harder to read, not easier. Whitespace-only, so older saves still parse.
+    // A procedural item's blob is embedded in the save as an escaped string, so indentation would
+    // land as literal \n and \" clutter on one line and make the surrounding file harder to read.
     private static readonly JsonSerializerOptions NestedJsonOpts = new()
     {
         WriteIndented = false,
@@ -43,9 +40,8 @@ public static class SaveManager
 
     private static string SlotPath(int slot) => Path.Combine(SaveDir, $"save_{slot}.json");
 
-    // Read-only seam for Tools/ProgressProbe, which verifies that every SaveData property
-    // survives the real JSON layer. It has to read the file the game actually wrote, and
-    // duplicating the path expression in the probe would let the two drift apart.
+    // Read-only seam for the verification probes, which read the file the game actually wrote;
+    // exposing the path keeps one copy of the path expression.
     public static string SaveSlotPath(int slot) => SlotPath(slot);
 
     public static bool SaveExists(int slot) => File.Exists(SlotPath(slot));
@@ -100,8 +96,8 @@ public static class SaveManager
     }
 
     // Current-floor mining vein strikes restore. Called from TurnManager.LoadFromSave
-    // after the floor map is in hand. Null/empty list = legacy save: leave dict empty
-    // so DefaultStrikesForTile re-seeds lazily.
+    // after the floor map is in hand. A null list leaves the dict untouched, so
+    // DefaultStrikesForTile re-seeds lazily.
     public static void RestoreVeinStrikes(SaveData save, Map.GameMap map)
     {
         if (save.VeinStrikes == null) return;
@@ -162,7 +158,7 @@ public static class SaveManager
         BaseAttack = player.BaseAttack, BaseDefense = player.BaseDefense, BaseSpeed = player.BaseSpeed,
         BaseSkillDamage = player.BaseSkillDamage, BaseCriticalRate = player.BaseCriticalRate,
         BaseCriticalHitDamage = player.BaseCriticalHitDamage,
-        TurnCount = tm.TurnCount, KillCount = tm.KillCount, TotalColEarned = tm.TotalColEarned,
+        TurnCount = tm.TurnCount, PlayerMoves = tm.PlayerMoves, KillCount = tm.KillCount, TotalColEarned = tm.TotalColEarned,
         CurrentFloor = tm.CurrentFloor, Difficulty = tm.Difficulty,
         Satiety = tm.Satiety, KillStreak = tm.KillStreak,
         WeaponKills = new Dictionary<string, int>(tm.WeaponKills),
@@ -228,14 +224,14 @@ public static class SaveManager
                           }),
         // Active title id only — unlock set lives in lifetime_stats.json.
         ActiveTitleId = player.ActiveTitleId,
-        // Karma + Guild — serialize enum as its name so rename migrations
-        // (AincradLiberationSquad → AincradLiberationForce) can hook in at load.
+        // Karma + Guild — serialize enum as its name so a renamed member
+        // (AincradLiberationSquad → AincradLiberationForce) can be mapped at load.
         Karma = player.Karma,
         ActiveGuildId = player.ActiveGuildId.ToString(),
         FoundedGuildName = player.FoundedGuildName,
         FoundedGuildPerk = player.FoundedGuildPerk,
-        // Investing — snapshot the per-vendor deposit dict. Legacy saves
-        // simply omit it; VendorInvestmentSystem.SetForLoad(null) clears state.
+        // Investing — snapshot the per-vendor deposit dict. A save without
+        // it loads via VendorInvestmentSystem.SetForLoad(null), which clears state.
         VendorInvestments = VendorInvestmentSystem.Snapshot(),
         // 10-slot consumable quickbar DefinitionIds.
         QuickbarSlotDefIds = player.Quickbar.SlotItemDefIds.ToList(),
@@ -259,8 +255,8 @@ public static class SaveManager
         if (item is EquipmentBase eq)
         {
             save.EnhancementLevel = eq.EnhancementLevel;
-            // IF Refinement: persist slot contents if any slot is occupied.
-            // Empty slot arrays stay null to keep legacy saves clean.
+            // Refinement: persist slot contents if any slot is occupied.
+            // Empty slot arrays stay null to keep saves lean.
             if (eq.HasAnyRefinement)
                 save.RefinementSlots = eq.RefinementSlots.ToList();
         }
@@ -268,19 +264,18 @@ public static class SaveManager
         // Null/empty on unenhanced weapons to keep saves clean.
         if (item is Weapon weaponSave && weaponSave.EnhancementOreHistory.Count > 0)
             save.EnhancementOreHistory = new List<string>(weaponSave.EnhancementOreHistory);
-        // Persist FD Paired flag only when true. Legacy saves stay lean;
+        // Persist the dual-wield paired flag only when true;
         // Corruption Stone transforms round-trip the live state.
         if (item is Weapon pairedSave && pairedSave.IsDualWieldPaired)
             save.IsDualWieldPaired = true;
-        // Persist Divine Awakening level only when awakened. Null on
-        // unawakened/non-weapon items keeps legacy save shape untouched.
+        // Persist Divine Awakening level only when awakened; null on
+        // unawakened/non-weapon items.
         if (item is Weapon awakSave && awakSave.AwakeningLevel > 0)
             save.AwakeningLevel = awakSave.AwakeningLevel;
         if (item is Weapon reforgeSave)
             save.ReforgedBonuses = Reforge.RerolledBase(reforgeSave);
         // Persist a declared durability ceiling so it round-trips. Any equipment may carry one,
-        // not only a Pickaxe — a Torch declares one too, and testing the concrete type meant its
-        // ceiling was silently dropped.
+        // not only a Pickaxe — a Torch declares one too.
         if (item is EquipmentBase capSave && capSave.MaxDurability > 0)
             save.MaxDurability = capSave.MaxDurability;
         if (item.DefinitionId == null)
@@ -381,14 +376,14 @@ public static class SaveManager
             // enhancement/refinement/awakening replay to avoid double-stacking.
             bool baked = save.BonusesAlreadyBaked == true;
             // Restore enhancement. Weapons: per-level bonus biased by ore consumed.
-            // Legacy saves (no ore history) → N × Crimson Flame (Attack) migration.
+            // No saved ore history → N × Crimson Flame (Attack).
             if (!baked && item is EquipmentBase eq && save.EnhancementLevel > 0)
             {
                 eq.EnhancementLevel = save.EnhancementLevel;
                 int bonus = eq is Weapon ? 3 : eq is Armor ? 2 : 1;
                 if (eq is Weapon eqWeapon)
                 {
-                    // Hydrate or migrate the ore history.
+                    // Hydrate the ore history, or default it.
                     if (save.EnhancementOreHistory != null && save.EnhancementOreHistory.Count > 0)
                     {
                         eqWeapon.EnhancementOreHistory = new List<string>(save.EnhancementOreHistory);
@@ -411,7 +406,7 @@ public static class SaveManager
                 }
                 else
                 {
-                    // Armor / other equipment — unchanged legacy behavior.
+                    // Armor / other equipment — flat Defense (armor) or Attack per level.
                     for (int i = 0; i < save.EnhancementLevel; i++)
                     {
                         if (eq is Armor) eq.Bonuses.Add(StatType.Defense, bonus);
@@ -419,7 +414,7 @@ public static class SaveManager
                     }
                 }
             }
-            // IF Refinement: restore slot DefIds and fold ingot bonuses back
+            // Refinement: restore slot DefIds and fold ingot bonuses back
             // into Bonuses so equipped gear re-grants them. Skip the rehydrate
             // when Bonuses are already baked (avoid double-stacking).
             if (item is EquipmentBase eqRef && save.RefinementSlots != null)
@@ -428,11 +423,11 @@ public static class SaveManager
                     eqRef.RefinementSlots[i] = save.RefinementSlots[i];
                 if (!baked) Refinement.RehydrateBonuses(eqRef);
             }
-            // FD Paired flag round-trip. Null (legacy) → definition value kept
+            // Dual-wield paired flag round-trip. Null → definition value kept
             // (ItemRegistry.Create already ran the Paired() wrapper). Non-null → overwrite.
             if (save.IsDualWieldPaired.HasValue && item is Weapon pairedLoad)
                 pairedLoad.IsDualWieldPaired = save.IsDualWieldPaired.Value;
-            // Divine Awakening round-trip. Null (legacy) → leaves at 0. Non-null →
+            // Divine Awakening round-trip. Null → leaves at 0. Non-null →
             // set level + re-fold flat ATK bonus into Bonuses.Attack so re-equip grants it.
             // Skip the ATK re-fold when Bonuses are already baked.
             if (save.AwakeningLevel.HasValue && save.AwakeningLevel.Value > 0 && item is Weapon awakLoad)
@@ -523,7 +518,7 @@ public static class SaveManager
     }
 
     // Hydrate RefinementSlots only — ingot bonuses already in serialized Bonuses.
-    // Slot DefIds restored for UI + future override-socketing.
+    // Slot DefIds restored for the UI and override-socketing.
     private static void HydrateRefinementSlots(EquipmentBase eq, JsonElement root)
     {
         if (!root.TryGetProperty("RefinementSlots", out var slots)) return;

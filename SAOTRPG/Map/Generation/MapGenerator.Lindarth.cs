@@ -54,7 +54,7 @@ public static partial class MapGenerator
         SetTileSafe(map, clusterX + 2, clusterY + 2, TileType.Anvil);
         rooms.Add(new Room(clusterX - 1, clusterY - 2, 7, 7));
 
-        // 5. Crystallite Refinery — east of forge, canon tie to Frost Dragon.
+        // 5. Crystallite Refinery — east of forge, tied to the Frost Dragon's crystallite.
         int refW = 8, refH = 6;
         int refX = sx + 6, refY = sy - 5;
         BuildStructure(map, refX, refY, refW, refH);
@@ -63,7 +63,7 @@ public static partial class MapGenerator
         SetTileSafe(map, refX + refW - 3, refY + refH / 2, TileType.Pillar, TileType.Floor);
         rooms.Add(new Room(refX, refY, refW, refH));
 
-        // 6. Mithril Smelter — south-east of plaza, mithril work canon.
+        // 6. Mithril Smelter — south-east of plaza, for mithril work.
         int smW = 8, smH = 6;
         int smX = sx + 6, smY = sy + 4;
         BuildStructure(map, smX, smY, smW, smH);

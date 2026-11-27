@@ -89,7 +89,7 @@ public partial class TurnManager
         TileType.Mountain    => "Mountain rock",
         TileType.Rock        => "Boulder",
         TileType.Door        => "Doorway",
-        TileType.StairsUp    => _map.Entities.Any(e => e is Boss && !e.IsDefeated)
+        TileType.StairsUp    => FloorBossAlive()
             ? "Stairs leading up [SEALED — defeat the Boss]"
             : "Stairs leading up [OPEN]",
         TileType.TrapSpike     => "Suspicious ground...",
@@ -124,8 +124,17 @@ public partial class TurnManager
         _                      => "Unknown terrain"
     };
 
-    // Compass direction toward nearest monster (HUD display).
+    // Compass direction toward nearest monster (HUD display), or "" with none on the floor.
     public string GetDangerCompass()
+    {
+        Span<char> buf = stackalloc char[DangerCompassMaxLength];
+        return new string(buf[..WriteDangerCompass(buf)]);
+    }
+
+    public const int DangerCompassMaxLength = 24;
+
+    // The same text written into `dest`, which must hold DangerCompassMaxLength; returns its length.
+    public int WriteDangerCompass(Span<char> dest)
     {
         Monster? closest = null;
         int closestDist = int.MaxValue;
@@ -135,7 +144,7 @@ public partial class TurnManager
             int dist = Math.Abs(m.X - _player.X) + Math.Abs(m.Y - _player.Y);
             if (dist < closestDist) { closest = m; closestDist = dist; }
         }
-        if (closest == null) return "";
+        if (closest == null) return 0;
         int dx = closest.X - _player.X, dy = closest.Y - _player.Y;
         string dir = (dx, dy) switch
         {
@@ -145,7 +154,9 @@ public partial class TurnManager
             ( > 0,    0) => "E",  ( < 0,    0) => "W",
             _ => "?"
         };
-        return $"Threat: {dir}({closestDist})";
+        if (!dest.TryWrite($"Threat: {dir}({closestDist})", out int written))
+            throw new ArgumentException($"needs {DangerCompassMaxLength} chars", nameof(dest));
+        return written;
     }
 
     // Contextual action hint based on surroundings.
@@ -176,16 +187,25 @@ public partial class TurnManager
     }
 
     // Count of living monsters on the current floor.
-    public int GetMonsterCount() =>
-        _map.Monsters.Count(m => !m.IsDefeated);
+    public int GetMonsterCount()
+    {
+        int n = 0;
+        foreach (var m in _map.Monsters)
+            if (!m.IsDefeated) n++;
+        return n;
+    }
 
     // Floor danger label based on average monster level vs player.
     public string GetFloorDangerLabel()
     {
-        var monsters = _map.Monsters.Where(m => !m.IsDefeated).ToList();
-        if (monsters.Count == 0) return "Cleared";
-        double avgLevel = monsters.Average(m => (double)m.Level);
-        int diff = (int)Math.Round(avgLevel) - _player.Level;
+        // A loop, not LINQ: the sidebar asks on every HUD refresh, so this must not allocate a
+        // list of the floor's monsters.
+        int alive = 0;
+        long levels = 0;
+        foreach (var m in _map.Monsters)
+            if (!m.IsDefeated) { alive++; levels += m.Level; }
+        if (alive == 0) return "Cleared";
+        int diff = (int)Math.Round((double)levels / alive) - _player.Level;
         return diff switch
         {
             >= 5  => "Deadly",  >= 3 => "Dangerous", >= 1 => "Hard",

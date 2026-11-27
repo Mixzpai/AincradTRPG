@@ -21,15 +21,14 @@ public sealed class WorldContext
     // run stream, because a pass must reproduce from the floor's derived seed alone.
     public Random Rng { get; set; } = null!;
 
-    // Per-game prefab MAX_PER_GAME ledger, SCOPED TO THIS GENERATION. It starts as a copy of the
+    // Per-game prefab MAX_PER_GAME ledger, scoped to this generation. It starts as a copy of the
     // game's ledger and is committed back only when the finished floor is actually adopted, so a
     // floor built ahead of time and then discarded cannot leave the caps advanced.
     //
     // It also has to be per-context rather than static because generation may run off the UI
-    // thread. Measured on the static Dictionary it replaced: eight threads incrementing it lose
-    // ~10% of their increments outright and intermittently throw InvalidOperationException with
-    // the collection corrupted — i.e. a MAX_PER_GAME:1 landmark could place twice and a floor
-    // could stop reproducing, both in silence.
+    // thread: concurrent increments on a shared Dictionary lose counts and can corrupt the
+    // collection, so a MAX_PER_GAME:1 landmark could place twice and a floor could stop
+    // reproducing, both in silence.
     public Dictionary<string, int> PrefabUseCounts { get; set; } = new();
 
     // Returns true if placement is allowed, and charges the cap. maxPerGame <= 0 = unlimited.
@@ -62,11 +61,11 @@ public sealed class WorldContext
     public Room? BossRoom { get; set; }
 
 
-    // Set by PocketBiomePass on band-edge floors. Per-tile override biome;
+    // Set by PocketBiomePass on floors that get pockets. Per-tile override biome;
     // null entries (and null map) fall back to ctx.Biome in BaseTerrainPass.
     public BiomeType?[,]? PocketBiomeMap { get; set; }
 
-    // Circular playable disk; null on towns + F100 (no circular bound).
+    // Circular playable disk; null on F100 (no circular bound).
     // Built once per floor by GenerationPipeline.BuildCircleMask before passes run.
     public bool[,]? CircleMask { get; set; }
 
@@ -98,7 +97,7 @@ public sealed class WorldContext
         Width = width;
         Height = height;
         Biome = biome;
-        // A floor may declare a sub-variant of its biome, and the variant file REPLACES the base
+        // A floor may declare a sub-variant of its biome, and the variant file replaces the base
         // config for that floor. The caller supplies the biome's own config, which is still what
         // every floor without a declared variant generates from — and what a declared variant
         // falls back to, loudly, when its file cannot be read.

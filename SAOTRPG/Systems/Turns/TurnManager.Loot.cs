@@ -17,7 +17,7 @@ public partial class TurnManager
     {
         int mx = monster.X, my = monster.Y;
 
-        // Canon-named mob drops: check overrides BEFORE the generic tag roll.
+        // Named mob drops: check overrides before the generic tag roll.
         // Some mobs have multiple rolls (e.g. Frenzy Boar drops meat + hide + maybe tusk).
         string baseName = StripPrefixes(monster.Name);
         if (LootGenerator.NamedMobDrops.TryGetValue(baseName, out var namedDrops))
@@ -79,7 +79,7 @@ public partial class TurnManager
             if (gear != null) DropItem(mx, my, gear, monster.Name);
         }
 
-        // IM Enhancement Ores — themed mob drops, once per kill. Rare-boss
+        // Enhancement Ores — themed mob drops, once per kill. Rare-boss
         // drops use RollBossOreDrops in TurnManager.Combat.
         if (monster is Mob mob2
             && LootGenerator.OreByLootTag.TryGetValue(mob2.LootTag, out var oreDefId)
@@ -223,13 +223,11 @@ public partial class TurnManager
         };
     }
 
-    // Strip Elite/Champion + affix prefixes to resolve the base canon mob name
+    // Strip Elite/Champion + affix prefixes to resolve the base mob name
     // for NamedMobDrops lookup. Affixes are space-separated before the variant.
     //
-    // Taken from MobFactory, which is what applies them. A hand-written second copy used to sit
-    // here; it happened to agree, but an affix added to the pool would not have been added to it,
-    // and the failure is silent — the name never resolves, so that mob's named drop simply stops
-    // appearing and looks like bad luck.
+    // Taken from MobFactory, which is what applies them, so a new affix is stripped too. A name
+    // that fails to resolve loses its named drop silently, which looks like bad luck.
     private static IReadOnlyList<string> KnownPrefixes => SAOTRPG.Map.Spawning.MobFactory.NamePrefixes;
 
     private static string StripPrefixes(string name)

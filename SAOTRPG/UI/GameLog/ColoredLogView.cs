@@ -5,7 +5,7 @@ namespace SAOTRPG.UI.GameLog;
 // Where a message came from: the classifier's fallback when no phrase decides its type.
 public enum LogCategory { General, Combat, System, Item, Dialog }
 
-// One message: its text, its CDDA type, how many times it repeated, and the turn it was last said.
+// One message: its text, its message type, how many times it repeated, and the turn it was last said.
 public sealed class LogEntry
 {
     public required string Text { get; init; }
@@ -13,16 +13,16 @@ public sealed class LogEntry
     public int Count { get; internal set; } = 1;
     public int Turn { get; internal set; }
 
-    // CDDA's "%s x %d".
+    // A repeated message reads "text x count".
     public string Display => Count > 1 ? $"{Text} x {Count}" : Text;
 }
 
-// The sidebar message log, drawn as CDDA draws its own: the newest line on the bottom row,
-// wrapped lines flush, nothing else in the pane. A line is in its type's colour while new, in the
-// type's darker colour for five turns after that, then grey. MessageLogView is the full window.
+// The sidebar message log: the newest line on the bottom row, wrapped lines flush, nothing else
+// in the pane. A line is in its type's colour while new, in the type's darker colour for five
+// turns after that, then grey. MessageLogView is the full window.
 public class ColoredLogView : View
 {
-    // CDDA's MESSAGE_LIMIT default. It trims before it adds, so the log holds one more.
+    // Most messages kept. It trims before it adds, so the log holds one more.
     public const int MessageLimit = 255;
 
     private readonly List<LogEntry> _entries = new();
@@ -31,12 +31,12 @@ public class ColoredLogView : View
     private readonly List<(LogEntry Owner, string Text)> _rows = new();
     private int _rowsWidth = -1;
 
-    // CDDA's curmes: the turn up to which the player has seen the log.
+    // curmes: the turn up to which the player has seen the log.
     private int _curmes, _drawnTurn;
 
     public ColoredLogView() => CanFocus = false;
 
-    // The current turn (CDDA's calendar::turn), set by GameLogView. A new turn ages the lines, so
+    // The current turn, set by GameLogView. A new turn ages the lines, so
     // it repaints while the newest line is still short of grey; nothing else marks the log then.
     public int Now
     {
@@ -70,7 +70,7 @@ public class ColoredLogView : View
         if (string.IsNullOrEmpty(text)) return;
         var tone = LogTones.Classify(text, category);
 
-        // CDDA coalesces with the last message only: same type and text, within three turns.
+        // Coalesces with the last message only: same type and text, within three turns.
         if (_entries.Count > 0 && _entries[^1] is var last
             && last.Text == text && last.Tone == tone && last.Turn + 3 >= turn)
         {
@@ -100,8 +100,8 @@ public class ColoredLogView : View
         SetNeedsDraw();
     }
 
-    // CDDA moves curmes to the current turn after each sidebar draw, and draws once per input.
-    // This view draws every frame, so curmes moves once per turn change, which is when CDDA's would.
+    // Marks the log seen up to the turn last drawn. The view draws every frame, so curmes moves
+    // once per turn change rather than once per draw.
     public void AdvanceCurmes()
     {
         if (Now == _drawnTurn) return;
@@ -109,10 +109,10 @@ public class ColoredLogView : View
         _drawnTurn = Now;
     }
 
-    // Closing the message log window marks everything read, as CDDA's does.
+    // Closing the message log window marks everything read.
     public void MarkSeen() => _curmes = _drawnTurn = Now;
 
-    // CDDA's get_color: new from curmes on, slightly old for five turns before it, then grey.
+    // A line's colour: new from curmes on, slightly old for five turns before it, then grey.
     public Color ColorFor(LogEntry e) =>
         e.Turn >= _curmes ? LogTones.ColorOf(e.Tone)
         : e.Turn + 5 >= _curmes ? LogTones.ColorOf(e.Tone, old: true)
@@ -120,15 +120,15 @@ public class ColoredLogView : View
 
     // ── Rows ──
 
-    // Wraps for this width when the rows were built for another. Public so TileVerifyProbe can
-    // drive the row cache without a terminal; the draw calls it with the pane's width.
+    // Wraps for this width when the rows were built for another. Public so the verification probes
+    // can drive the row cache without a terminal; the draw calls it with the pane's width.
     public void EnsureRows(int width)
     {
         if (width != _rowsWidth) RebuildRows(width);
     }
 
-    // The reference: a full rewrap of the history, compared row by row with the incremental
-    // cache, which is then put back so the cache under test keeps evolving incrementally.
+    // Rows where the incremental cache differs from a full rewrap of the history, for the
+    // verification probes. The incremental rows are put back so the cache keeps evolving incrementally.
     public int CountRowMismatches()
     {
         if (_rowsWidth <= 0) return 0;
@@ -150,7 +150,7 @@ public class ColoredLogView : View
         _rowsWidth = width;
     }
 
-    // Word-wrapped and flush, as CDDA folds a message; a word longer than the line is cut.
+    // Word-wrapped and flush; a word longer than the line is cut.
     internal static void Wrap(LogEntry e, int width, List<(LogEntry Owner, string Text)> rows)
     {
         string text = e.Display;
@@ -177,7 +177,7 @@ public class ColoredLogView : View
     protected override bool OnDrawingContent(DrawContext? context)
     {
         using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Draw.Log");
-        // A modal above us has already painted this pass; drawing now would erase it.
+        // A modal above this view has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
 
         var vp = Viewport;

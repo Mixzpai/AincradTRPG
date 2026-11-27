@@ -11,7 +11,7 @@ public enum QuestStatus { Active, Complete, TurnedIn }
 
 // Milestone subcategory tag. None = generic procgen quest with no milestone affinity.
 // IfImplement counts toward hf_element_researcher (100); HfMission counts toward
-// hf_debug_field_tester (80). Default None ensures legacy quests round-trip cleanly.
+// hf_debug_field_tester (80). Default None, so an untagged quest round-trips cleanly.
 public enum QuestSubCategory { None, IfImplement, HfMission }
 
 public class Quest
@@ -46,7 +46,7 @@ public class Quest
     // If true, the quest survives floor changes (e.g. multi-floor story quests).
     public bool Persistent { get; set; }
 
-    // Milestone affinity. None on legacy/untagged quests; set at creation time
+    // Milestone affinity. None on untagged quests; set at creation time
     // (fixture handlers, procgen predicates) to feed run-counter increments on turn-in.
     public QuestSubCategory SubCategory { get; set; } = QuestSubCategory.None;
 
@@ -142,7 +142,7 @@ public static class QuestSystem
     };
 
     // Single dispatcher -- parameterizes over per-type target pool, count formula,
-    // template set, id tag, and reward formula. Exact per-type reward math preserved.
+    // template set, id tag, and reward formula.
     private static Quest Generate(QuestType type, int floor, string giver)
     {
         // Per-type target string (mob name, item name, or literal) + target count.
@@ -298,7 +298,7 @@ public static class QuestSystem
             if (PinnedQuestId == q.Id) PinnedQuestId = null;
             QuestTurnedIn?.Invoke(q);
         }
-        // Auto-repin to next active quest if we lost our pin.
+        // Auto-repin to the next active quest when nothing is pinned (e.g. the pin was turned in).
         if (PinnedQuestId == null && ActiveQuests.Count > 0)
             PinnedQuestId = ActiveQuests[0].Id;
         return (col, xp);

@@ -50,9 +50,8 @@ public static class TileDefinitions
 
     // Ore vein palette. Mineable variants use a slight pulse/contrast shade.
     //
-    // Iron and Mithril were both '◊' and told apart by hue alone — the one place on the map where
-    // an information channel had no second cue. Mithril is '◆' (filled) now, so the valuable vein
-    // reads without colour. Divine keeps its own '◈'/'◊' pulse.
+    // Iron is '◊' and Mithril '◆' (filled), so the valuable vein reads without colour. Divine has
+    // its own '◈', pulsing in colour only.
     private static readonly Color OreIronFg          = new(170, 170, 180);
     private static readonly Color OreIronDepletedFg  = new(110, 110, 115);
     private static readonly Color OreMithrilFg       = new(190, 210, 255);
@@ -67,27 +66,25 @@ public static class TileDefinitions
     // drive the realtime repaint gate when in the viewport.
     //
     // Water and WaterDeep are deliberately absent: their visuals here are pure functions of the
-    // position hash with no clock input, so listing them only cost work — every water cell
-    // skipped the visual cache and held the repaint gate open. Water's clock dependency comes
-    // from MapView.ResolveWater instead, and the frame cache tracks it separately.
+    // position hash with no clock input, so listing them would only make every water cell skip
+    // the visual cache and hold the repaint gate open. Water's clock dependency comes from
+    // MapView.ResolveWater instead, and the frame cache tracks it separately.
     public static bool IsAnimated(TileType type) =>
         type is TileType.Lava or TileType.Campfire or TileType.OreVeinDivine;
 
-    // PATH-D-PORT: the authored appearance of every tile, and the boundary between a LOGICAL tile
-    // and a terminal cell. Two inputs a port must preserve: the position hash, which is what makes
-    // a field of grass look varied without storing per-cell data, and the wall-clock reads inside
+    // The authored appearance of every tile, and the boundary between a logical tile and a
+    // terminal cell. It depends on two inputs: the position hash, which is what makes a field of
+    // grass look varied without storing per-cell data, and the wall-clock reads inside
     // LavaVisual/CampfireVisual/the divine ore, whose step constants are deliberately slow because
-    // every phase turnover costs a terminal flush — a renderer without that cost can raise them.
-    // ONE GLYPH PER MEANING, because colour is the only other channel and an accessibility theme
+    // every phase turnover costs a terminal flush.
+    // One glyph per meaning, because colour is the only other channel and an accessibility theme
     // may collapse it (Amber Mono maps the world to luma). Two merges here are deliberate and
-    // must stay: every trap draws as open ground ON PURPOSE, and the '.'/',' ground family is one
+    // must stay: every trap draws as open ground on purpose, and the '.'/',' ground family is one
     // meaning — walkable open terrain — in several terrain flavours separated by hue alone, which
-    // is decoration rather than information. '~' is likewise one meaning: shallow walkable water
-    // and loose dry ground are all crossable at no cost. What may never merge is a pair that
-    // differs in whether the player can walk it.
-    // THE MAP'S OWN LEGEND, declared once so the Player Guide renders it rather than describing
-    // it in prose. The Guide called the chest a "gold diamond" and it had stopped being one — a
-    // written-out glyph is a claim that survives only until somebody edits the table above.
+    // is decoration rather than information. '~' is likewise one family: shallow water and loose
+    // ground. What may never merge is a pair that differs in whether the player can walk it.
+    // The map's own legend, declared once so the Player Guide renders it rather than describing
+    // it in prose: a glyph written out in prose goes stale as soon as the table above changes.
     // Landmarks and hazards only: the terrain a player walks over needs no key.
     public static readonly (TileType Type, string Meaning)[] MapLegend =
     {
@@ -158,10 +155,9 @@ public static class TileDefinitions
             TileType.Pillar       => ('║', WallGray, Color.Black),
             TileType.LoreStone    => ('‡', ShrineViolet, Color.Black),
             TileType.MonumentOfSwordsmen => ('M', GoldBright, Color.Black),
-            // CORRUPTED GROUND DAMAGES YOU AND CAN KILL — "corrupted ground" is a recorded
-            // killer name — and it drew an orange '.', which is the open-ground glyph. Under a
-            // theme that collapses colour it was ordinary floor. Traps disguise themselves on
-            // purpose; this is not a trap, it is terrain that hurts, and it should read as such.
+            // Corrupted ground damages you and can kill, so it has its own glyph rather than the
+            // open-ground '.', which under a theme that collapses colour reads as ordinary floor.
+            // Traps disguise themselves on purpose; this is not a trap, it is terrain that hurts.
             TileType.DangerZone   => ('%', LavaOrange, Color.Black),
             TileType.Anvil        => ('╬', GoldBright, Color.Black),
             TileType.BountyBoard  => ('▣', FountainCyan, Color.Black),
@@ -188,9 +184,8 @@ public static class TileDefinitions
             TileType.Basalt     => ('.',  BasaltDark,     Color.Black),
             TileType.Ash        => (':',  AshWarmGray,    Color.Black),
             TileType.Mud        => ('~',  MudBrown,       Color.Black),
-            // POISONS ON ENTRY. FB-742 moved this onto '~' reasoning that bog water is shallow walkable
-    // water — right about walkability, wrong about harm. Same tilde family, because it IS water,
-    // but its own mark: wading it costs you 1 + floor/2 damage a turn.
+            // Poisons on entry. Same tilde family, because it is water, but its own mark rather
+            // than '~': wading it costs you 1 + floor/2 damage a turn.
     TileType.BogWater   => ('\u223d',  BogWaterGreen,  Color.Black),
             TileType.Reeds      => ('|',  ReedsYellowGrn, Color.Black),
             // Ore veins. Divine pulses warm via animation phase; others static.
@@ -204,34 +199,27 @@ public static class TileDefinitions
         };
     }
 
-    // Per-cell colour variation is a DITHER, not a texture.
-    // The position hash picks one colour from a row per cell, so a row's LIGHTNESS RANGE is noise
-    // inside a field of one tile type. Measured in CIE L* before this cap: Grass era 0 spanned
-    // 34.2 dL*, Tree era 0 31.0, Wall era 0 30.2, Floor era 0 23.5, Mountain 23.0 - on surfaces
-    // covering ~88% of an overworld floor, against a ~1.0 dL* threshold of vision, a renderer
-    // tuned to 0.79 dL* vignette rungs and a 0.46 dL* colour quantizer.
+    // Per-cell colour variation is a dither, not a texture.
+    // The position hash picks one colour from a row per cell, so a row's lightness range is noise
+    // inside a field of one tile type, and every row is capped at this span in CIE L*.
     //
-    // WHAT IS PRESERVED IS THE ROW'S MEAN, NOT EVERY MEASUREMENT TAKEN AGAINST IT. A row wider
-    // than the cap is compressed toward its own mean lightness, so a field of one terrain keeps
-    // its average brightness - but a measurement that takes a MAXIMUM does move, by half the
-    // compression: a row of span S comes back at span PaletteSpreadCap, so its brightest colour
-    // falls (S - cap)/2 dL* and its darkest rises the same. Widest here is Grass era 0 at
-    // (34.2 - 8)/2 = 13.1 dL* on the brightest blade. TileVerifyProbe --clarity reports the
-    // per-row before/after from PaletteCompressions rather than restating these numbers, because
-    // a figure quoted in a comment is stale the moment a palette row is edited.
+    // What is preserved is the row's mean, not its extremes. A row wider than the cap is
+    // compressed toward its own mean lightness, so a field of one terrain keeps its average
+    // brightness, but a row of span S comes back at span PaletteSpreadCap, so its brightest
+    // colour falls (S - cap)/2 dL* and its darkest rises the same. PaletteCompressions records
+    // the per-row before/after.
     //
-    // THE DITHER MUST SURVIVE. The hash is doing real anti-banding work on the foreground, so the
-    // cap is a compression and never a collapse - 8 dL* is still ten times the vignette rung.
+    // The dither must survive: the hash does real anti-banding work on the foreground, so the cap
+    // is a compression and never a collapse, and 8 dL* stays well above the vignette step.
     //
-    // Chromaticity is held EXACTLY: a scale applied in LINEAR rgb moves the colour along its own
+    // Chromaticity is held exactly: a scale applied in linear rgb moves the colour along its own
     // ray from black, which is a pure lightness move. Hue and era identity cannot drift.
     public const double PaletteSpreadCap = 8.0;
 
-    // WHAT THE CAP ACTUALLY DID, recorded as it runs rather than described afterwards. Every
-    // compressed row appends (before, after) here, so a check can report the real effect and
-    // notice a palette edit that silently changes it. Appended from static field initialisers
-    // only - Damp is never called at runtime - so this is written once, during type init, and
-    // read-only from then on.
+    // What the cap did, recorded as it runs: every compressed row appends (before, after) here.
+    // Read by the verification probes. Appended from static field initialisers only - Damp is
+    // never called at runtime - so this is written once, during type init, and read-only from
+    // then on.
     private static readonly List<(double Before, double After)> s_compressions = new();
 
     public static IReadOnlyList<(double Before, double After)> PaletteCompressions => s_compressions;
@@ -283,7 +271,7 @@ public static class TileDefinitions
     private static double LStarOf(Color c) => LightnessOf(c);
 
     // The two colour operations the dither is built out of, made public because the renderer's
-    // room tint needs EXACTLY them - a tint that preserves a cell's own lightness is the same
+    // room tint needs exactly them - a tint that preserves a cell's own lightness is the same
     // move the cap makes, run in the other direction. One implementation, so the two cannot
     // disagree about what "lightness" means.
     public static double LightnessOf(Color c)
@@ -305,7 +293,7 @@ public static class TileDefinitions
 
     private static readonly char[] GrassGlyphs = { '.', ',', '\'', '`' };
 
-    // Era-indexed palettes; inner[i] array length = N in original `hash % N switch` (byte-identical output).
+    // Era-indexed palettes; a row's length is the N in `hash % N`, and a repeated entry weights the pick.
     // Eras: 0 Verdant, 1 Stone, 2 Crimson, 3 Crystal, 4 Void.
     private static readonly Color[][] GrassColors =
     {
@@ -333,8 +321,8 @@ public static class TileDefinitions
     private static (char, Color, Color) TallGrassVisual(int hash)
         => ('"', TallGrassColors[Era][hash % TallGrassColors[Era].Length], Color.Black);
 
-    // A third of shallow-water cells used to draw the DEEP-water glyph, which is a Swimming L25
-    // gate — a route-planning lie on the tile a player is deciding whether to cross.
+    // Shallow water never draws the deep-water '≈': that glyph marks a Swimming L25 gate, and
+    // showing it here would mislead a player deciding whether to cross.
     private static (char, Color, Color) WaterVisual(int hash)
         => ((hash % 3) == 0 ? '∼' : '~', WaterBlue, Color.Black);
 
@@ -355,7 +343,7 @@ public static class TileDefinitions
             PathColors[Era][hash % PathColors[Era].Length],
             Color.Black);
 
-    // Floor palette mirrors original: eras 0/1/3/4 mod 2, era 2 mod 3.
+    // Floor palette: eras 0/1/3/4 mod 2, era 2 mod 3.
     private static readonly Color[][] FloorColors =
     {
         /* Era 0 */ Damp(FloorStone, FloorDim),
@@ -431,7 +419,7 @@ public static class TileDefinitions
             Color.Black);
 
     // Step lengths for the clock-driven tile visuals. Deliberately slow: these tiles are
-    // re-resolved on idle frames now, so every phase turnover writes cells and costs a terminal
+    // re-resolved on idle frames, so every phase turnover writes cells and costs a terminal
     // flush. They also read as a nervous flicker at anything much quicker. The `+ hash` offsets
     // below keep neighbouring tiles out of lockstep so the field breathes instead of pulsing.
     private const int LavaStepMs     = 500;
@@ -441,8 +429,8 @@ public static class TileDefinitions
     // Lava pulses between orange and yellow.
     private static (char, Color, Color) LavaVisual(int hash)
     {
-        // Dashes, not tildes: lava drew the shallow-water glyph for half its phases, so a lethal
-        // blocking tile read as water a player could wade across.
+        // Dashes, not tildes: '~' is the shallow-water glyph, and a lethal blocking tile must not
+        // read as water a player could wade across.
         int phase = ((int)(AnimClockMs / LavaStepMs) + hash) % 4;
         char glyph = phase < 2 ? '-' : '=';
         // Pulse color between orange and bright yellow
@@ -459,22 +447,20 @@ public static class TileDefinitions
         return (glyph, c, Color.Black);
     }
 
-    // Divine vein pulses between '◈' (cool) and '◊' (warm).
+    // Divine vein pulses between two warm golds.
     private static (char, Color, Color) DivineVeinVisual(int hash)
     {
-        // Glyph held constant at '◈' and the pulse carried by colour alone: it used to alternate
-        // to '◊', which is Iron's, so for half of every cycle a divine vein and an iron vein were
-        // the same glyph in different hues — a colour-only distinction on the most valuable tile
-        // on the map.
+        // Glyph held constant at '◈' and the pulse carried by colour alone: '◊' is Iron's glyph,
+        // and alternating to it would leave the most valuable tile on the map told apart from
+        // iron by hue alone for half of every cycle.
         int phase = ((int)(AnimClockMs / DivineStepMs) + hash) % 4;
         Color c = phase % 2 == 0 ? OreDivineFg : new Color(255, 230, 130);
         return ('◈', c, Color.Black);
     }
 
-    // MEASUREMENT SEAM, same family as LightingSystem.SourcesLastUpdate: every position-hashed
-    // colour row exactly as GetVisual reads it. A check brings its own CIE L* and asserts the
-    // spread against PaletteSpreadCap - the game reports what it produced, never the metric.
-    // Declared last so every row above it has been initialised.
+    // Every position-hashed colour row exactly as GetVisual reads it, read by the verification
+    // probes (like LightingSystem.SourcesLastUpdate): the game reports what it produced, never a
+    // metric. Declared last so every row above it has been initialised.
     public static readonly (string Name, Color[] Colors)[] PaletteRows =
     {
         ("Grass era0", GrassColors[0]),          ("Grass era1", GrassColors[1]),

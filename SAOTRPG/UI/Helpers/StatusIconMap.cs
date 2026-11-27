@@ -2,17 +2,12 @@ using SAOTRPG.Systems.Turns;
 
 namespace SAOTRPG.UI.Helpers;
 
-// The 3-4 letter status codes, and the ONE list of them.
+// The 3-4 letter status codes, and the one list of them.
 //
-// Three surfaces used to hand-maintain their own copy — this file, HelpDialog's legend and the
-// Player Guide's "Status Effect Abbreviations" topic — and all three had drifted: BAR shipped
-// without reaching either of the other two, and the timed-buff rows added later reached neither.
-// AllCodes is the source now; the Guide generates its table from it and ContentProbe asserts the
-// Help legend never names a code that does not exist.
-// Reserved-but-unused codes (BRN/FRZ/IAI/MSE/DVN) intentionally omitted — they have no backing
-// TurnManager state today. BAR was on that list and should not have been: _barrierRemaining is
-// refilled every floor from equipped Barrier+N effects and spent in ProcessMonsterTurn, and the
-// Player Guide tells the player to build around it — it simply had no accessor to read.
+// AllCodes is the source: the Player Guide's "Status Effect Abbreviations" topic generates its
+// table from it, and HelpDialog's legend must name only codes listed here.
+// Reserved-but-unused codes (BRN/FRZ/IAI/MSE/DVN) are intentionally omitted — they have no
+// backing TurnManager state.
 public static class StatusIconMap
 {
     public readonly record struct StatusIcon(string Abbrev, Color Color, int Count);
@@ -32,16 +27,18 @@ public static class StatusIconMap
         ("REGN", "Food regen — HP each turn"),
         ("INV",  "Invisible — most mobs cannot see you"),
         ("BAR",  "Barrier — damage it absorbs before your HP, not turns"),
-        // Must stay short enough to render on ONE line: a table row that crosses the Guide's wrap
+        // Must stay short enough to render on one line: a table row that crosses the Guide's wrap
         // is re-flowed by WrapTo, whose tokeniser collapses the padding and breaks the column.
         ("ATK",  "Timed buff on that stat — also DEF, SPD, STR, VIT, END, DEX, AGI, INT, CRT"),
     };
 
     // Build the active icon list. Order: hard debuffs first, then buffs.
-    // Count = remaining turns; 0 = duration-less indicator.
-    public static List<StatusIcon> Collect(TurnManager tm)
+    // Count = remaining turns; 0 = duration-less indicator. `into` is cleared and filled when
+    // given, so a caller asking every draw reuses one list.
+    public static List<StatusIcon> Collect(TurnManager tm, List<StatusIcon>? into = null)
     {
-        var icons = new List<StatusIcon>();
+        var icons = into ?? new List<StatusIcon>();
+        icons.Clear();
 
         // Debuffs
         if (tm.IsBleeding)
@@ -62,20 +59,20 @@ public static class StatusIconMap
             icons.Add(new("REGN", Color.BrightGreen, tm.FoodRegenTurnsLeft));
         if (tm.IsInvisible)
             icons.Add(new("INV", Color.White, tm.InvisibilityTurnsLeft));
-        // Barrier is a damage POOL, not a duration — Count is absorb remaining, not turns.
+        // Barrier is a damage pool, not a duration — Count is absorb remaining, not turns.
         if (tm.BarrierRemaining > 0)
             icons.Add(new("BAR", Color.BrightCyan, tm.BarrierRemaining));
 
-        // Timed potion buffs, one row per stat. A buff the player cannot see is the same defect
-        // Barrier had: live, logged, and invisible — and here it also has to be visible for the
-        // player to know when it is about to run out.
-        foreach (var buff in tm.ActiveBuffs)
-            icons.Add(new(BuffCode(buff.Stat), Color.BrightMagenta, buff.TurnsLeft));
+        // Timed potion buffs, one row per stat, so the player can see each one and when it is
+        // about to run out.
+        var buffs = tm.ActiveBuffs;
+        for (int i = 0; i < buffs.Count; i++)
+            icons.Add(new(BuffCode(buffs[i].Stat), Color.BrightMagenta, buffs[i].TurnsLeft));
 
-        // Fatigue. FatigueAtkPenalty and FatigueDefPenalty feed SIX combat damage sites — the
-        // attack roll, sword skills and four defence formulas — so a tired player was taking
-        // -4 ATK and -1 DEF with nothing on screen to explain it. Count 0 because this is a
-        // THRESHOLD rather than a countdown: it clears by resting or sleeping, not by waiting.
+        // Fatigue. FatigueAtkPenalty and FatigueDefPenalty feed six combat damage sites — the
+        // attack roll, sword skills and four defence formulas — so the tray must show when they
+        // apply. Count 0 because this is a threshold rather than a countdown: it clears by
+        // resting or sleeping, not by waiting.
         if (tm.FatigueAtkPenalty <= -4)
             icons.Add(new("EXH", Color.BrightRed, 0));
         else if (tm.FatigueAtkPenalty < 0)

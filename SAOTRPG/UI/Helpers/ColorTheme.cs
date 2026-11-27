@@ -8,10 +8,10 @@ public enum ThemeId { Default = 0, HighContrast = 1, ColourblindSafe = 2, AmberM
 //
 // The rules a theme has to keep, inherited from the palette design:
 //   1. At most one saturated accent. Everything else is a value ramp between Muted and Emph.
-//   2. Hierarchy lives in BRIGHTNESS, hue only reinforcing it — strip the colour out and the
+//   2. Hierarchy lives in brightness, hue only reinforcing it — strip the colour out and the
 //      screens must still read. That is also what makes a colourblind theme possible at all.
 //
-// Ok / Warn / Info / Crit are the four SEMANTIC hues. They are what the HP bar zones, the status
+// Ok / Warn / Info / Crit are the four semantic hues. They are what the HP bar zones, the status
 // tray and the log categories paint with, so a theme reaches them; and in Colourblind Safe they
 // are separated by luminance as well as hue, because that is the only channel that survives.
 public sealed record ColorTheme(
@@ -46,7 +46,7 @@ public sealed record ColorTheme(
         Info: new(0x5A, 0xB0, 0xE0),
         Crit: new(0xE5, 0x48, 0x4D));
 
-    // Pushes the text ramp apart and brightens the accent. Only VALUES move — the hues are the
+    // Pushes the text ramp apart and brightens the accent. Only values move — the hues are the
     // default theme's — so it helps on a dim panel, in glare, or with low vision without
     // changing what any colour means.
     public static readonly ColorTheme HighContrast = new(
@@ -64,7 +64,7 @@ public sealed record ColorTheme(
         Info: new(0x8C, 0xD6, 0xFF),
         Crit: new(0xFF, 0x7B, 0x7B));
 
-    // Retires the red/green status pair, which is the one genuinely dangerous collision here:
+    // Replaces the red/green status pair, which is the one genuinely dangerous collision here:
     // deuteranopia and protanopia together affect roughly 8% of men, and both flatten red
     // against green. Ok and Crit move to a blue/orange axis, which survives all three common
     // types, and the accent moves off amber so it cannot be confused with Crit.
@@ -84,8 +84,7 @@ public sealed record ColorTheme(
         Crit: new(0xFF, 0xC4, 0x68));
 
     // A single-hue terminal, the SAO system-window motif taken literally. Aesthetic rather than
-    // accessible, but it is the strongest test that hierarchy really does live in brightness:
-    // with one hue, value is the only thing left to carry it.
+    // accessible: with one hue, brightness is the only thing left to carry hierarchy.
     public static readonly ColorTheme AmberMono = new(
         ThemeId.AmberMono, "Amber Mono", "Single-hue amber terminal.",
         Base:    new(0x00, 0x00, 0x00),
@@ -103,12 +102,12 @@ public sealed record ColorTheme(
 
     // ── The world ────────────────────────────────────────────────────
     //
-    // Tiles, terrain and weather are NOT role colours. A tile's colour is an identity — grass is
-    // green — not a semantic slot, so a theme TRANSFORMS the authored colour rather than replacing
+    // Tiles, terrain and weather are not role colours. A tile's colour is an identity — grass is
+    // green — not a semantic slot, so a theme transforms the authored colour rather than replacing
     // it. That keeps one authored palette instead of four, and means a tile added later follows
     // every theme without anyone picking three more constants for it.
     //
-    // Default and Colourblind Safe are the IDENTITY transform: the world carries no information
+    // Default and Colourblind Safe are the identity transform: the world carries no information
     // that hue alone conveys (rarity, tier and status are all glyph- or letter-backed), so
     // recolouring it would buy a colourblind player nothing and cost the game its look.
     public bool TintsWorld => Id is ThemeId.AmberMono or ThemeId.HighContrast;

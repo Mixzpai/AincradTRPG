@@ -9,9 +9,9 @@ public sealed class BaseTerrainPass : IGenerationPass
     public string Name => "BaseTerrain";
     public bool ShouldRun(WorldContext ctx) => true;
 
-    // Everything the per-tile stampers used to recompute out of the biome config on every cell:
-    // the weighted pick's running totals and the two height thresholds. They are pure functions of
-    // the config, and the loop runs a million times on floor 1.
+    // Everything the per-tile stamp would otherwise recompute out of the biome config on every
+    // cell: the weighted pick's running totals and the two height thresholds. They are pure
+    // functions of the config, and the loop runs once per cell of the floor.
     private readonly struct Stamp
     {
         public readonly BiomeType Biome;
@@ -29,8 +29,7 @@ public sealed class BaseTerrainPass : IGenerationPass
             CumSparse = CumTall + cfg.SparseWeight;
             TotalWeight = Math.Max(1, CumSparse + flowersWeight);
             var th = cfg.HeightmapThresholds;
-            // Each biome's stamper carried its own fallback pair; they are folded in here in the
-            // same order the switch below reads them.
+            // Per-biome fallback thresholds for a config that omits them.
             TLow = th.Length > 1 ? th[1] : DefaultLow(biome);
             TMid = th.Length > 2 ? th[2] : DefaultMid(biome);
         }
@@ -88,52 +87,42 @@ public sealed class BaseTerrainPass : IGenerationPass
             int bi = (int)effective;
             if (!pocketBuilt![bi])
             {
-                // A pocket never grows flowers: the garden switch is a property of the FLOOR, and
-                // a pocket pulling a weight of its own is how an Ice floor came to carry them.
+                // A pocket never grows flowers: the garden switch is a property of the floor, not
+                // of the pocket's biome.
                 pocketStamps![bi] = new Stamp(BiomeGenConfigLoader.Get(effective), effective, 0);
                 pocketBuilt[bi] = true;
             }
             tiles[x, y].Type = Pick(in pocketStamps![bi], rng, heights != null, hv);
         }
 
-        // The carve runs LAST and only for a biome that asks for it, so a biome that does not is
-        // byte-identical to before. It is a HOST-biome decision: a pocket cell keeps its own
-        // palette above, but whether the floor is a cavern is a property of the floor.
+        // The carve runs last and only for a biome that asks for it. It is a host-biome decision:
+        // a pocket cell keeps its own palette above, but whether the floor is a cavern is a
+        // property of the floor.
         //
-        // Floria is exempt because canon's flower-garden floor happens to sit in the Dark band,
-        // and burying an open garden under rock contradicts what the floor is for.
-        //
-        // THE EXEMPTION IS UNCONDITIONAL, and it does NOT depend on whether the flower tile is
-        // currently drawn. Floria is an open garden floor in canon; a cavern there contradicts the
-        // floor whatever its ground is textured with. Gating this on FloriaFlowersWeight was tried
-        // and reverted: it made a CANON decision depend on a RENDERING one, and it put
-        // cave/config-predicts-the-ground and cave/walls-are-always-close red, because SeedProbe's
-        // IsCaveFloor encodes the same standing exemption and the two must agree.
+        // Floria is exempt because the flower-garden floor sits in the Dark band, and burying an
+        // open garden under rock contradicts what the floor is for. The exemption is
+        // unconditional and must not depend on FloriaFlowersWeight: Floria is an open garden floor
+        // whatever its ground is textured with.
         if (hostCfg.CaveMode && ctx.FloorNumber != FloriaFloor) CarveCaves(ctx, hostCfg);
     }
 
-    // Canon's flower garden, which sits in the Dark band. Named because two separate rules in
+    // The flower-garden floor, which sits in the Dark band. Named because two separate rules in
     // Execute turn on it.
     public const int FloriaFloor = 47;
 
-    // THE ONE LINE THAT RESTORES THE FLOWER GARDEN, AND IT IS OFF.
+    // Flowers weight for the Floria floor; 0 turns its flower ground off.
     //
-    // TileType.Flowers no longer reaches the map from terrain generation on any floor: the
-    // per-biome flowersWeight knob is gone, and this is the only weight left that can select the
-    // branch in PickDefault. A garden of '✿ ❀ ✻' in four saturated hues covered 21.8% of F47's
-    // walkable ground, which is the single largest source of visual noise the map had.
-    //
-    // Set this to 30 and F47 — and no other floor — is a flower garden again. Nothing else has
-    // to change. The Flowers tile itself stays live: four prefabs carry a 'KFEAT: f = Flowers'
-    // line, so its glyph, its minimap colour and its flavour text all still have a source.
+    // This is the only weight that can select the Flowers branch in PickDefault, so while it is 0
+    // terrain generation places no Flowers on any floor; a positive value (30, say) makes F47, and
+    // no other floor, a flower garden. The Flowers tile itself stays live: prefabs carrying a
+    // 'KFEAT: f = Flowers' line give its glyph, minimap colour and flavour text a source.
     public const int FloriaFlowersWeight = 0;
 
     private static readonly int BiomeCount = Enum.GetValues<BiomeType>().Length;
 
     // Per-tile dispatcher. Aquatic falls through to default weighted grass (AquaticDepthPostPass
-    // handles shore/depth); signature biomes stamp their own bedrock. The rng draw sequence is
-    // exactly what the four separate stampers used to make, in the same order and under the same
-    // short-circuits — that ordering IS the floor.
+    // handles shore/depth); signature biomes stamp their own bedrock. The rng draw sequence, its
+    // order and its short-circuits are part of the floor's identity.
     private static TileType Pick(in Stamp s, Random rng, bool hasHeights, float hv)
         => s.Biome switch
         {
@@ -153,8 +142,8 @@ public sealed class BaseTerrainPass : IGenerationPass
         if (r < s.CumGrass) pick = TileType.Grass;
         else if (r < s.CumTall) pick = TileType.GrassTall;
         else if (r < s.CumSparse) pick = TileType.GrassSparse;
-        // Reachable only when the Stamp was built with a non-zero flowers weight, which is now
-        // exactly one thing: BaseTerrainPass.FloriaFlowersWeight, and it is 0. See the note there.
+        // Reachable only when the Stamp was built with a non-zero flowers weight, which only
+        // BaseTerrainPass.FloriaFlowersWeight can supply.
         else pick = TileType.Flowers;
 
         if (hasHeights)
@@ -190,39 +179,35 @@ public sealed class BaseTerrainPass : IGenerationPass
 
     // ── Cellular-automata caves ─────────────────────────────────────────────────────────────
     //
-    // The Dark and Ruins biomes used to be de-treed Grassland: 99% of the disk open, mean 8-way
-    // openness 7.94 of 8. The carve buries most of it, leaving ONE connected system of chambers
-    // and tunnels, so a catacomb floor reads as a catacomb.
+    // Buries most of an open disk, leaving one connected system of chambers and tunnels, so a
+    // catacomb floor reads as a catacomb rather than as an open field.
     //
     // Three properties are load-bearing:
     //
-    //   * It runs AFTER the terrain stamp rather than instead of it. Every in-disk cell still gets
-    //     its biome tile and still consumes exactly the draws it did before, so the whole point of
-    //     the change is where the walls are, not where anything else moved to.
-    //   * It draws from a stream of its OWN, derived from (seed, floor). Its draw count is a
+    //   * It runs after the terrain stamp rather than instead of it. Every in-disk cell still gets
+    //     its biome tile and still consumes the same draws, so the carve decides where the walls
+    //     are and moves nothing else.
+    //   * It draws from a stream of its own, derived from (seed, floor). Its draw count is a
     //     function of the floor's area, so taking it from ctx.Rng would shift every later pass by
     //     how big the disk happens to be.
-    //   * It hands the rest of the pipeline ONE region. A pocket left sealed here is a pocket the
+    //   * It hands the rest of the pipeline one region. A pocket left sealed here is a pocket the
     //     later passes will scatter chests into and the audit will then have to tunnel to.
 
     // Wider than SpecialAreaPass's radius-12 spawn clear and BuildTown's ±11 campfires, so the
     // town overlay is never stamped half into rock.
     //
-    // It is NOT what keeps the player from starting sealed in, and the sabotage that proved that
-    // is worth recording: deleting this opening moved the worst end-to-end reachability across 15
-    // cave floor/seed pairs by 0.24 points and failed nothing, because SpecialAreaPass re-clears
-    // the square anyway and the audit then drills its way out. What it buys is that the plaza is
-    // part of the cavern rather than a walled box with a drilled doorway — a difference no
-    // end-to-end measurement can see, which is why `ContentProbe` checks it at the pass instead.
+    // It is not what keeps the player from starting sealed in: SpecialAreaPass re-clears the
+    // square anyway and the audit then drills its way out. What it buys is that the plaza is part
+    // of the cavern rather than a walled box with a drilled doorway.
     private const int SpawnPlazaRadius = 14;
 
     // A cavern this much smaller than the disk means the smoothing sealed the floor rather than
-    // carving it, and the run is about to be a long walk through a closet. Disclosed, not fixed:
-    // the numbers that produce it are in the biome's JSON, and silently widening them would hide
-    // that the author asked for something the algorithm cannot give.
+    // carving it. Logged, not corrected: the numbers that produce it are in the biome's JSON, and
+    // silently widening them would hide that the author asked for something the algorithm cannot
+    // give.
     private const double MinOpenShare = 0.15;
 
-    // How big an open pocket has to be before it earns a tunnel. A SHARE of the disk, never an
+    // How big an open pocket has to be before it earns a tunnel. A share of the disk, never an
     // absolute tile count: floors run 1000x1000 down to 100x100, and a constant would mean "every
     // three-tile nook" at one end of the climb and "nothing at all" at the other. The absolute
     // floor only takes over on the smallest disks, where the share is under a chamber's worth.
@@ -263,22 +248,19 @@ public sealed class BaseTerrainPass : IGenerationPass
             }
         }
 
-        // Smooth. Two rules, and BOTH halves are needed:
+        // Smooth. Two rules:
         //
-        //   shaping  rock if the 3x3 is majority rock, OR if the 5x5 is almost entirely open
+        //   shaping  rock if the 3x3 is majority rock, or if the 5x5 is almost entirely open
         //   polish   rock if the 3x3 is majority rock
         //
         // The 5x5 term plants rock in the middle of any wide empty space, which finishes the rock
-        // masses with intrusions instead of smooth edges. ABLATED at the shipped settings across
-        // three floors and two seeds, it is worth a 12% tightening and no more: mean distance to
-        // the nearest wall 1.78 -> 1.57 tiles, mean 8-way openness 6.85 -> 6.68, open share
-        // 34.8-50.8% -> 33.0-48.1%. Modest, measured, and kept — but it is NOT what makes the
-        // floor a cave. That is the seed fill, and the number to reach for is CaveFillPct.
+        // masses with intrusions instead of smooth edges. It tightens the cave modestly; it is not
+        // what makes the floor a cave. That is the seed fill, and the number to reach for is
+        // CaveFillPct.
         //
-        // Note the centre cell counts in BOTH windows. Excluding it from the 3x3 — the "5 of 8
+        // The centre cell counts in both windows. Excluding it from the 3x3 — the "5 of 8
         // neighbours" rule that looks equivalent — is an erosion rule rather than a smoothing one
-        // and collapses outright: measured at fill 45, 45% rock became 4% after four passes. The
-        // arithmetic agrees, since for independent cells at p=0.45 P(>=5 of 8) is 0.26, so the
+        // and collapses outright: for independent cells at p=0.45, P(>=5 of 8) is 0.26, so the
         // first pass halves the rock and every pass after halves what is left.
         const int PolishPasses = 2;
         var sat = new int[(w + 1) * (h + 1)];
@@ -351,20 +333,18 @@ public sealed class BaseTerrainPass : IGenerationPass
         // Keeping only the largest region is the obvious reading and it is a soft-lock waiting to
         // happen. Above the percolation threshold — which is where rock actually dominates and the
         // floor reads as a cave rather than as a boulder field — the open phase stops spanning the
-        // disk, and MEASURED the largest region drops from 35% of the disk at fill 50 to 8% at
-        // fill 51. A generator that has to sit on a cliff edge to stay playable is not a generator.
+        // disk, and the largest region's share of it collapses within a single point of fill.
         //
-        // So: take the largest as the trunk and TUNNEL to every other chamber worth having, plus
-        // the spawn plaza whatever its size. The result is one connected component BY
-        // CONSTRUCTION rather than by luck, and the tunnels are the thing the roadmap actually
-        // asked for.
+        // So: take the largest as the trunk and tunnel to every other chamber worth having, plus
+        // the spawn plaza whatever its size. The result is one connected component by
+        // construction rather than by luck.
         int spawnLabel = label[sy * w + sx];
         int minChamber = Math.Max(MinChamberCells, (int)(inDisk * MinChamberShare));
         var joined = new bool[id + 1];
         if (biggest > 0) joined[biggest] = true;
 
-        // A route longer than this through solid rock is not a tunnel, it is a motorway. Scaled
-        // to the disk's own radius for the same reason minChamber is a share.
+        // A route longer than this through solid rock would be a long straight corridor rather
+        // than a tunnel. Scaled to the disk's own radius for the same reason minChamber is a share.
         int diskRadius = (int)Math.Sqrt(inDisk / Math.PI);
         int maxTunnel = Math.Max(MinTunnelReach, (int)(diskRadius * MaxTunnelReachShare));
 
@@ -403,9 +383,9 @@ public sealed class BaseTerrainPass : IGenerationPass
                 + "— the plaza did not reach the cavern and the floor may be unfinishable");
     }
 
-    // ONE breadth-first sweep outward from the trunk, through rock and open alike, gives every
+    // One breadth-first sweep outward from the trunk, through rock and open alike, gives every
     // other chamber its shortest route home at once: BFS visits in non-decreasing distance, so the
-    // first cell of a chamber it reaches IS that chamber's nearest connection point, and walking
+    // first cell of a chamber it reaches is that chamber's nearest connection point, and walking
     // the predecessor chain back from it is the route. Carving one chamber's route cannot
     // invalidate another's, because every route ends at the trunk the sweep started from.
     //
@@ -458,11 +438,10 @@ public sealed class BaseTerrainPass : IGenerationPass
         // the player stands, and burying the route to it is the one failure that ends a run on
         // arrival.
         //
-        // A chamber too far through solid rock is BURIED rather than reached, because the
-        // alternative is a corridor as long as the route. Measured at fill 52 without this: 208
-        // tunnels opening 61,172 cells on floor 5 — 8.5% of the disk turned into long straight
-        // passages, and at fill 56 the map became vertical stripes. Burying costs nothing; the
-        // chamber was never reachable and now simply is not there.
+        // A chamber too far through solid rock is buried rather than reached, because the
+        // alternative is a corridor as long as the route, and at high fill enough of them turn the
+        // disk into long straight passages. Burying costs nothing: the chamber was never
+        // reachable.
         int tunnels = 0, cells = 0, buriedFar = 0;
         for (int r = 1; r < joined.Length; r++)
         {
@@ -507,8 +486,8 @@ public sealed class BaseTerrainPass : IGenerationPass
     }
 
     // Summed-area table over the rock grid, so a window query costs four loads whatever its size.
-    // The 5x5 rule would otherwise be 25 random probes per cell per pass — 116 million of them on
-    // a floor-5 disk — and the point of the table is that the two window sizes then cost the same.
+    // The 5x5 rule would otherwise be 25 random probes per cell per pass; with the table the two
+    // window sizes cost the same.
     private static void BuildSat(byte[] rock, int[] sat, int w, int h)
     {
         int stride = w + 1;

@@ -40,9 +40,7 @@ public static class AccessoryDefinitions
         600, "Rare", 12, "Necklace", 1,
         new StatModifierCollection().Add(StatType.Vitality, 8));
 
-    // Bracelets. The slot existed in the enum and the equipment screen from the start and had
-    // nothing that could reach it — every accessory resolved to it by accident before FB-724,
-    // and to Ring or Necklace correctly afterwards, which left it genuinely empty.
+    // Bracelets: the only accessories that equip to the Bracelet slot.
     public static Accessory CreateLeatherBracer() => Make("leather_bracer", "Leather Bracer",
         320, "Uncommon", 4, "Bracelet", 1,
         new StatModifierCollection().Add(StatType.Defense, 6).Add(StatType.Dexterity, 6));

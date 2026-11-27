@@ -1,7 +1,7 @@
 namespace SAOTRPG.Systems.Crafting;
 
-// HF Lisbeth Rarity 6 recipes (18 weapons, F48 Lindarth, 3M Col + 3-5 rare mats).
-// Mats cross-checked vs ItemRegistry DefIds.
+// Lisbeth's Rarity 6 recipes (F48 Lindarth, 3M Col + 3-5 rare mats).
+// Material ids are ItemRegistry DefIds.
 public static class LisbethRecipes
 {
     public record MaterialRequirement(string DefId, int Qty);
@@ -11,10 +11,10 @@ public static class LisbethRecipes
         int ColCost,
         MaterialRequirement[] Materials);
 
-    // Canon 3M Col per craft.
+    // 3M Col per craft.
     private const int CanonColCost = 3_000_000;
 
-    // 18 Lisbeth Rarity 6 recipes, each mixing rare-tier mob drops from
+    // Lisbeth Rarity 6 recipes, each mixing rare-tier mob drops from
     // MobDropDefinitions so crafting routes through multiple sources.
     public static readonly Recipe[] All =
     {
@@ -163,9 +163,9 @@ public static class LisbethRecipes
     };
 
     // Low-tier enhance recipe: iron_ingot ×3 + 200 Col enables a +1 enhancement
-    // attempt on Common/Uncommon weapons up to +5 cap. Routes through the existing
-    // CraftingDialog enhance flow (mat counter + ore picker) — does NOT directly
-    // mutate EnhancementLevel. Separate from R6 HF recipes by design.
+    // attempt on Common/Uncommon weapons up to +5 cap. Routes through the
+    // CraftingDialog enhance flow (mat counter + ore picker) — does not directly
+    // mutate EnhancementLevel. Separate from the Rarity 6 recipes.
     public record LowTierEnhanceRecipe(
         string DisplayName,
         int ColCost,
@@ -203,8 +203,8 @@ public static class LisbethRecipes
     };
 
     // High-tier enhance: crystallite_ingot ×3 + 5000 Col enables a +1 attempt on
-    // Epic/Legendary weapons up to +10 cap. crystallite_ingot is the existing Frost
-    // Dragon F48 boss drop (IngredientDefinitions); reused here as the high-tier mat.
+    // Epic/Legendary weapons up to +10 cap. crystallite_ingot is the Frost Dragon
+    // F48 boss drop (IngredientDefinitions), also used here as the high-tier mat.
     public static readonly LowTierEnhanceRecipe[] HighTierEnhanceRecipes =
     {
         new(

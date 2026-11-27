@@ -2,7 +2,7 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.Items.Definitions;
 
-// IF Refinement Ingots — 12 canon ingots across Common/Rare/Epic/Legendary.
+// Refinement Ingots across Common/Rare/Epic/Legendary.
 // Flavor stats lacking from StatType remapped: DEX=crit, SPD=attack-speed/durability, VIT=HPRegen/block, INT=skill-CD.
 public static class IngotDefinitions
 {

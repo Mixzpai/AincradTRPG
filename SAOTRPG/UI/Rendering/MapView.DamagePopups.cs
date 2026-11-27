@@ -35,7 +35,6 @@ public partial class MapView
     // Max concurrent popups per (x,y) frame before coalesce.
     private const int PopupMaxPerTile = 3;
     private readonly List<DamagePopup> _popups = new();
-    private readonly HashSet<int> _dotTickFirstSeen = new();
 
     // Called by TurnManager.Combat via the DamageDealt event. Caller-driven targeting
     // (monster tile for player hits); maxTargetHp drives <2% chip-damage suppression.
@@ -99,8 +98,6 @@ public partial class MapView
         DirtyFrame();
     }
 
-
-    public void ResetDotTracking() => _dotTickFirstSeen.Clear();
 
     // Clears pending popups + projectiles — called when a modal dialog opens
     // so overlays don't leak past the z-order boundary.

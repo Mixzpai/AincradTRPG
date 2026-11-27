@@ -5,7 +5,7 @@ using SAOTRPG.UI.GameLog;
 namespace SAOTRPG.Systems.Progression;
 
 // Contextual tutorial system — shows first-time tips triggered by game events.
-// Each tip fires ONCE per save file and is logged with a [TIP] prefix.
+// Each tip fires once per save file and is logged with a [TIP] prefix.
 public static class TutorialSystem
 {
     // Tips already shown this session (persisted via SaveData).

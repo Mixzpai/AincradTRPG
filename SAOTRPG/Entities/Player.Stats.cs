@@ -62,8 +62,7 @@ namespace SAOTRPG.Entities
         // Rolls attack against a monster — checks for crit, logs flavor text, returns (damage, wasCrit).
         // critChance comes from TurnManager.PlayerCritChance: the roll needs the equipped weapon's
         // CritRate tag and the weapon-proficiency perk, neither of which the Player can reach. No
-        // default value — the caller must state it, so a new call site cannot silently roll on the
-        // bare stat again.
+        // default value — the caller must state it, so no call site can roll on the bare stat.
         public (int Damage, bool IsCrit) AttackMonster(Monster monster, int critChance)
         {
             int damage = Attack;

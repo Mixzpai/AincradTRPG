@@ -105,7 +105,7 @@ public static class FlavorText
 
     // ── Movement & Environment ──────────────────────────────────────────
 
-    public const int FootstepChance = 4;  // reduced from 12 -- less log spam
+    public const int FootstepChance = 4;  // kept low to limit log spam
 
     public static readonly Dictionary<TileType, string[]> TerrainFlavors = new()
     {
@@ -228,7 +228,7 @@ public static class FlavorText
 
     // ── Atmosphere ──────────────────────────────────────────────────────
 
-    public const int AmbientChance = 2;  // reduced from 4 -- less log spam
+    public const int AmbientChance = 2;  // kept low to limit log spam
 
     public static readonly string[] AmbientMessages =
     {
@@ -259,14 +259,15 @@ public static class FlavorText
         "You sense something lurking nearby...", "The hairs on your neck stand up. Something is close.",
     };
 
-    public const int MilestoneInterval = 100;
+    // Every hour of game time; {0} is how long the run has lasted ("3 hours").
+    public const int MilestoneInterval = SAOTRPG.Systems.World.GameClock.TurnsPerHour;
 
     public static readonly string[] MilestoneMessages =
     {
-        "You've survived {0} turns in Aincrad. Keep pushing forward.",
-        "{0} turns in. Aincrad hasn't broken you yet.",
-        "Turn {0}. Lesser adventurers would have given up by now.",
-        "{0} turns and counting. Aincrad remembers the persistent.",
+        "You've survived {0} in Aincrad. Keep pushing forward.",
+        "{0} in. Aincrad hasn't broken you yet.",
+        "{0} gone. Lesser adventurers would have given up by now.",
+        "{0} and counting. Aincrad remembers the persistent.",
     };
 
     public const int IdleThreshold = 15;

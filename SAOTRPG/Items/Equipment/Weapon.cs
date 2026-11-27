@@ -12,14 +12,14 @@ public class Weapon : EquipmentBase
     // Tile range for attacks. 1 = melee, 2+ = ranged.
     public int Range { get; set; }
 
-    // IM Last-Attack-Bonus weapons trade enhance-ability for higher flat stats; false blocks CraftingDialog Enhance.
+    // Last-Attack-Bonus weapons trade enhance-ability for higher flat stats; false blocks CraftingDialog Enhance.
     public bool IsEnhanceable { get; set; } = true;
 
-    // IM Enhancement Ores (System 3): per-level ore DefId history (len == EnhancementLevel).
-    // Legacy saves auto-populate with Crimson Flame (Attack) so existing +N still reads +N Attack.
+    // Enhancement Ores: per-level ore DefId history (len == EnhancementLevel).
+    // A save with no history is filled with Crimson Flame (Attack) on load, so +N reads as +N Attack.
     public List<string> EnhancementOreHistory { get; set; } = new();
 
-    // FD Paired — pre-tuned dual-wield, OffHand without DualBlades unlock. Systems.DualWieldPairs lists canon partners → Pair Resonance synergy.
+    // Paired — pre-tuned dual-wield, OffHand without DualBlades unlock. Systems.DualWieldPairs lists partner weapons → Pair Resonance synergy.
     public bool IsDualWieldPaired { get; set; } = false;
 
     // Divine Awakening level (0-◈3). Selka F65 bumps this via

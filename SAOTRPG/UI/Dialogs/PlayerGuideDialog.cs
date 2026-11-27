@@ -10,9 +10,9 @@ using SAOTRPG.Systems.Turns;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Player Guide — opened with B ("Book"). Two-pane Wikipedia-style reference.
+// Player Guide — opened with B ("Book"). Two-pane reference reader.
 //
-// Left pane (sidebar): pinned "/" search field at top, then 5 collapsible
+// Left pane (sidebar): pinned "/" search field at top, then collapsible
 // category headers ([+]/[-] with (N/M) or (N/??) counts), child topics
 // indented underneath when expanded. Categories collapsed by default;
 // expand-state persists across sessions via ProfileData.GuideExpandedCategories.
@@ -22,7 +22,7 @@ namespace SAOTRPG.UI.Dialogs;
 // auto-extracted See also list, auto-computed Referenced by footer.
 //
 // Key dispatch: child widgets consume keys before dialog.KeyDown can see
-// them, so ALL navigation is wired on the focused widget directly.
+// them, so all navigation is wired on the focused widget directly.
 public static partial class PlayerGuideDialog
 {
     // Backlinks are informative in small numbers and noise in large ones — a hub topic
@@ -48,7 +48,7 @@ public static partial class PlayerGuideDialog
     private static TurnManager? _activeTm;
     private static Player? _activePlayer;
 
-    // Sidebar categories in canonical category-jump 1..N order.
+    // Sidebar categories in category-jump 1..N order.
     // Also the digit-jump order, and the order the sidebar reads top to bottom — so it doubles as
     // the Guide's implicit reading order. Getting Started leads for that reason.
     private static readonly string[] CategoryOrder =
@@ -83,8 +83,7 @@ public static partial class PlayerGuideDialog
     // ── Search match ──
     // Case-insensitive substring over title, body and tags, plus the alias table. Tags are what
     // let a subject word reach pages that never use it. Static rather than a local function so the
-    // audit tool can run the real matcher instead of a copy of it — the Guide states search
-    // examples in its own prose, and those are only true if something checks them.
+    // audit tool can run the real matcher against the search examples the Guide's prose gives.
     private static bool Matches(PlayerGuideContent.GuideEntry e, string query)
     {
         if (string.IsNullOrEmpty(query)) return true;
@@ -97,10 +96,9 @@ public static partial class PlayerGuideDialog
         return PlayerGuideContent.AliasMatches(e.Title, q);
     }
 
-    // The corpus body is ~400,000 chars. Lowering it inside the predicate meant one full copy of
-    // every topic per keystroke — 777 KB of garbage and ~4 ms a character while the player types.
-    // Cached rather than switched to OrdinalIgnoreCase so the comparison stays byte-for-byte the
-    // one the search examples in the Guide's own prose were written against.
+    // Lowered once per entry and cached: lowering inside the predicate would copy every topic's
+    // body on each keystroke while the player types. Cached rather than switched to
+    // OrdinalIgnoreCase so the comparison stays the exact one the Guide's search examples assume.
     private static readonly Dictionary<PlayerGuideContent.GuideEntry, string> LowerBodyCache = new();
     private static readonly Dictionary<PlayerGuideContent.GuideEntry, string> LowerTitleCache = new();
 
@@ -145,8 +143,8 @@ public static partial class PlayerGuideDialog
         _activeTm = turnManager;
         _activePlayer = player;
         // A modal cannot be open while the player climbs, so the floor gate reads one value for
-        // the whole session. Without this every Floors topic re-read and re-deserialized
-        // lifetime_stats.json on the keystroke that opened it.
+        // the whole session, and a Floors topic does not re-read and re-deserialize
+        // lifetime_stats.json on the keystroke that opens it.
         _maxFloorSnapshot = SAOTRPG.Systems.Persistence.LifetimeStats.Load().MaxFloorReached;
 
         int screenW = AppHost.App.Screen.Width;
@@ -161,7 +159,7 @@ public static partial class PlayerGuideDialog
 
         var entries = PlayerGuideContent.Entries;
 
-        // Bucket entries by category (only the 5 known categories — anything
+        // Bucket entries by category (the CategoryOrder categories — anything
         // outside falls through to a "spillover" bucket bound to the original key).
         var entriesByCat = new Dictionary<string, List<PlayerGuideContent.GuideEntry>>(StringComparer.OrdinalIgnoreCase);
         foreach (var cat in CategoryOrder)
@@ -218,7 +216,7 @@ public static partial class PlayerGuideDialog
             Width = LeftPaneWidth - 2,
             Height = Dim.Fill(3),
             SchemeName = ColorSchemes.ListSelectionName,
-            // Type-ahead off — it swallows the search key and the 1-6 category jumps.
+            // Type-ahead off — it swallows the search key and the digit category jumps.
             // ListView.OnKeyDown eats a printable rune before KeyDown is raised, so one arrow
             // key would kill every letter and digit binding for the rest of the session.
             KeystrokeNavigator = null,
@@ -247,12 +245,12 @@ public static partial class PlayerGuideDialog
         };
         // Custom render surface — paints body content rune-by-rune with
         // per-token color, tracks See-also bullets for yellow-highlight focus.
-        // Replaces a TextView so we get inline cyan [[brackets]], Gold section
-        // rules, and per-row focus tinting (TextView shares one Scheme for all content).
+        // A custom view rather than a TextView for inline cyan [[brackets]], Gold section
+        // rules, and per-row focus tinting (TextView applies one Scheme to all content).
         // bodyHeader sits at Y=0; the body fills directly under it (no rule
         // separator — header carries its own category color as the divider).
-        // Bottom 2 rows reserved for footerFlash + hint (Close button removed —
-        // [Esc] Close corner hint suffices).
+        // Bottom 2 rows reserved for footerFlash + hint; there is no Close button,
+        // the [Esc] close hint covers it.
         var bodyText = new BodyRenderView
         {
             X = LeftPaneWidth + 2, Y = 1,
@@ -260,17 +258,17 @@ public static partial class PlayerGuideDialog
             Height = Dim.Fill(2),
         };
 
-        // Footer trim — 6 segments separated by " · ", target ≤100 chars.
+        // Footer — 7 segments separated by " · ", kept to ≤100 chars.
         var hint = new Label
         {
-            Text = "[/] search · [←→] panes · [↑↓] move · [Enter] follow · [1-5] category · [?] help · [Esc] close",
+            Text = $"[/] search · [←→] panes · [↑↓] move · [Enter] follow · [1-{CategoryJumpCount}] category · [?] help · [Esc] close",
             X = 1, Y = Pos.AnchorEnd(1),
             Width = Dim.Fill(1),
             SchemeName = ColorSchemes.DimName,
         };
 
         // Transient flash for stat-dump confirm / search status. Floats one
-        // row above the footer hint; Close button is gone so AnchorEnd(2) is free.
+        // row above the footer hint; there is no Close button, so AnchorEnd(2) is free.
         var footerFlash = new Label
         {
             Text = "",
@@ -279,8 +277,8 @@ public static partial class PlayerGuideDialog
             SchemeName = ColorSchemes.SuccessName,
             Visible = false,
         };
-        // Generation counter, because Flash is called from KEY HANDLERS and so can fire again
-        // before the previous 3s window closes. Without it the older timeout clears the NEWER
+        // Generation counter, because Flash is called from key handlers and so can fire again
+        // before the previous 3s window closes. Without it the older timeout clears the newer
         // message early — flash at t=0 and t=2s, and the second one vanishes at t=3s instead of
         // t=5s. IsOpen alone is a retire condition, not a re-entrancy guard.
         int flashGen = 0;
@@ -355,9 +353,8 @@ public static partial class PlayerGuideDialog
 
                 if (filterActive && matched == 0) continue;
 
-                // A title match outranks a body match. Without this, searching "reforge" listed
-                // "Lisbeth — Rarity 6 Craft Line" and "Sealed Weapons" — which merely mention the
-                // word — above the Reforge topic itself. OrderByDescending is stable, so entries
+                // A title match outranks a body match, so the topic named for the query lists
+                // above topics that merely mention the word. OrderByDescending is stable, so entries
                 // keep their declaration order within each group, and categories keep the fixed
                 // order the unfiltered sidebar uses.
                 if (filterActive)
@@ -443,7 +440,7 @@ public static partial class PlayerGuideDialog
         }
 
         // Opens the first still-collapsed <details:> block on the topic the sidebar has selected.
-        // Shared by the sidebar and the body: the Guide opens with focus on the SIDEBAR, so a key
+        // Shared by the sidebar and the body: the Guide opens with focus on the sidebar, so a key
         // wired only inside BodyRenderView is one the player cannot reach from where they start —
         // while the collapsed row naming that key is already on screen beside them.
         bool ToggleDisclosureOnSelected()
@@ -662,7 +659,7 @@ public static partial class PlayerGuideDialog
 
         sidebar.KeyDown += (s, e) =>
         {
-            // Tested ahead of everything else, mirroring BodyRenderView, so a rebind onto a key
+            // Checked ahead of everything else, mirroring BodyRenderView, so a rebind onto a key
             // the global handler also claims resolves the same way from both panes.
             if (Keybinds.IsPressed(GameAction.GuideExpand, e) && ToggleDisclosureOnSelected())
             {
@@ -764,7 +761,7 @@ public static partial class PlayerGuideDialog
         // Up/Down inside the body cycles See-also bullets (yellow highlight)
         // OR scrolls if the entry has no cross-refs. Left returns to sidebar.
         // Enter on a focused bullet follows the link; otherwise toggles the
-        // ▸/▾ disclosure block on the rendered cursor row (handled here so we
+        // ▸/▾ disclosure block on the rendered cursor row (handled here so it
         // can read sidebar selection state for the topic key).
         bodyText.LinkActivated += target => TryNavigateByTitle(target, pushStack: true);
         bodyText.RequestSidebarFocus += () => sidebar.SetFocus();
@@ -772,8 +769,8 @@ public static partial class PlayerGuideDialog
         {
             if (!PopNavStack()) Flash("history empty", ColorSchemes.Dim);
         };
-        // BodyRenderView has no cursor concept (it's a paint surface), so <details:> toggling is
-        // best-effort: the first collapsed block on the selected topic.
+        // BodyRenderView has no cursor concept (it's a paint surface), so <details:> toggling
+        // targets the first collapsed block on the selected topic.
         bodyText.OnEnterToggleDisclosure = ToggleDisclosureOnSelected;
         bodyText.KeyDown += (s, e) =>
         {
@@ -839,9 +836,9 @@ public static partial class PlayerGuideDialog
     private static bool HandleGlobalGuideKey(KeyCode key, System.Text.Rune rune,
         Action onSearch, Action<int> onCategory, Action onHelp, Action onExport)
     {
-        // Range rather than one case per digit: this was D1-D5 when there were five categories,
-        // and adding Floors as a sixth left it with no shortcut. JumpToCategory range-checks
-        // against CategoryOrder, so an out-of-range digit is a no-op rather than a crash.
+        // Range rather than one case per digit, so every category up to the ninth has a shortcut.
+        // JumpToCategory range-checks against CategoryOrder, so an out-of-range digit is a no-op
+        // rather than a crash.
         if (key >= KeyCode.D1 && key <= KeyCode.D9)
         {
             onCategory((int)(key - KeyCode.D0));
@@ -907,13 +904,14 @@ public static partial class PlayerGuideDialog
         return header.ToString();
     }
 
-    // ── Wikipedia-style body renderer ──
+    // ── Body renderer ──
     // Pipeline: NormalizeLegacyBody → progressive-disclosure expand → append
-    // unified See-also block → wrap. The See-also block merges outgoing
-    // references (extracted from RAW body so legacy SEE ALSO paragraphs still
-    // contribute) with incoming references (the reverse map), deduped. All
-    // refs render as focusable bullets — BodyRenderView tints the focused row
-    // yellow and the user navigates with Up/Down then follows with Enter.
+    // See also + Referenced by → wrap. See also lists outgoing references
+    // (extracted from the raw body so authored SEE ALSO paragraphs still
+    // contribute); Referenced by lists incoming ones (the reverse map), deduped
+    // against See also. All refs render as focusable bullets — BodyRenderView
+    // tints the focused row yellow and the user navigates with Up/Down then
+    // follows with Enter.
     private static string RenderEntryBody(PlayerGuideContent.GuideEntry e, int wrapCols,
         Dictionary<string, List<string>> referencedBy)
     {
@@ -937,6 +935,7 @@ public static partial class PlayerGuideDialog
         srcBody = PlayerGuideContent.ResolveStatusCodes(srcBody);
         srcBody = PlayerGuideContent.ResolveStatusLetters(srcBody);
         srcBody = PlayerGuideContent.ResolveMinimapLegend(srcBody);
+        srcBody = PlayerGuideContent.ResolveOvermapLegend(srcBody);
         srcBody = PlayerGuideContent.ResolveLogTones(srcBody);
         srcBody = PlayerGuideContent.ResolveAnimatedTiles(srcBody);
         srcBody = PlayerGuideContent.ResolveOreDensity(srcBody);
@@ -954,18 +953,16 @@ public static partial class PlayerGuideDialog
         string normalized = NormalizeLegacyBody(srcBody, wrapCols);
         string disclosureRendered = RenderBodyWithDetails(TopicKey(e), normalized);
 
-        // Outgoing refs: extract from RAW body (after MigrateBracketsToDouble)
-        // so links inside legacy SEE ALSO paragraphs — which NormalizeLegacyBody
-        // strips — still feed the unified block.
+        // Outgoing refs: extract from the raw body (after MigrateBracketsToDouble)
+        // so links inside authored SEE ALSO paragraphs — which NormalizeLegacyBody
+        // strips — still feed the See also block.
         var migratedRawLines = srcBody.Replace("\r\n", "\n").Split('\n');
         var migratedRaw = string.Join("\n", migratedRawLines.Select(MigrateBracketsToDouble));
         var outgoing = ExtractInlineLinks(migratedRaw);
 
-        // Two sections, not one. Merging backlinks into "See also" buried the handful of
-        // cross-references the author chose under everything that happens to point here:
-        // Floor Scaling Formulas is linked by all 99 floors, so its page was 65 links and 60%
-        // link-list. Authored links stay first and complete; backlinks get their own capped
-        // footer, which is what the file header has always described.
+        // Two sections, not one, so the handful of cross-references the author chose are not
+        // buried under everything that points here (a hub topic can be linked from every floor).
+        // Authored links stay first and complete; backlinks get their own capped footer.
         var seen = new HashSet<string>(outgoing, StringComparer.OrdinalIgnoreCase) { e.Title };
         var backlinks = new List<string>();
         if (referencedBy.TryGetValue(e.Title, out var incoming))
@@ -1008,9 +1005,8 @@ public static partial class PlayerGuideDialog
     }
 
     // Same substitution PlayerGuideContent.ResolveLandmarkKinds performs, with the block held.
-    // Building it walks 11 biomes x 100 floors of prefab candidates — 18.6 ms, measured, on the one
-    // topic that carries the token — and the prefab library has no hot-reload path, so the answer
-    // cannot change within a process.
+    // Building it walks every biome's prefab candidates across all 100 floors, and the prefab
+    // library has no hot-reload path, so the answer cannot change within a process.
     private static string? _landmarkKindsBlock;
 
     private static string ResolveLandmarkKindsCached(string src)
@@ -1027,34 +1023,35 @@ public static partial class PlayerGuideDialog
         return src.Replace(PlayerGuideContent.LandmarkKindsToken, _landmarkKindsBlock);
     }
 
-    // The navigation topic describes the sidebar, so it must read the sidebar rather than a
-    // transcription of it — a sixth category appeared once and left the page claiming five.
+    // The navigation topic describes the sidebar, so it reads the sidebar rather than a
+    // transcription of it, and the page follows any change to the category list.
     // The digit form is padded to a fixed width so the surrounding key table stays in column.
     private static string ResolveCategoryTokens(string body)
     {
         if (!body.Contains("{{CATEGORY_", StringComparison.Ordinal)) return body;
-        int n = Math.Min(CategoryOrder.Length, 9);   // the sidebar binds D1-D9
         return body
             .Replace("{{CATEGORY_COUNT}}", CategoryOrder.Length.ToString())
-            .Replace("{{CATEGORY_DIGITS}}", $"1 - {n}");
+            .Replace("{{CATEGORY_DIGITS}}", $"1 - {CategoryJumpCount}");
     }
 
+    // How many categories a digit key reaches: the sidebar binds D1-D9.
+    private static int CategoryJumpCount => Math.Min(CategoryOrder.Length, 9);
+
     // ── Topic stat block ──
-    // Every entry carries a "┌─ … └─" metadata box that NormalizeLegacyBody strips, so it was
-    // invisible for the game's whole life — searchable (EntryMatches reads the raw Body) but never
-    // read by a player. Surfaced here for every category.
+    // Every entry carries a "┌─ … └─" metadata box that NormalizeLegacyBody strips from the body.
+    // It is searchable (EntryMatches reads the raw Body) and is rendered here, for every
+    // category, as a stat block.
     //
-    // The labels are deliberately NOT reduced to a shared vocabulary. They are per-topic infobox
+    // The labels are deliberately not reduced to a shared vocabulary. They are per-topic infobox
     // rows — "Base radius" on Vision & FOV, "Cooldown" on sword-skill timing, "Bleed"/"Poison" on
-    // the status topic — so the variety IS the content, and flattening it would delete facts. Only
-    // true synonyms were merged.
+    // the status topic — so the variety is the content, and flattening it would delete facts.
     //
     // The title is already the heading directly above, so a "Topic:" row would just repeat it.
     private const string StatBoxSkippedField = "Topic";
 
     // Reads the "┌─ … └─" header box into its label/value rows. Separate from the rendering below
-    // because the rows are also the topic's structured metadata — a checker that wants the Boss or
-    // Biome a Floors topic claims must read them exactly as the block does.
+    // because the rows are also the topic's structured metadata — the audit tool reads the Boss
+    // or Biome a Floors topic claims exactly as the block does.
     private static List<(string Label, string Value)> ParseStatFields(string body)
     {
         var fields = new List<(string Label, string Value)>();
@@ -1068,8 +1065,8 @@ public static partial class PlayerGuideDialog
             string content = line[2..];
             int colon = content.IndexOf(':');
 
-            // A box row with no colon continues the previous row's value — four World topics wrap
-            // a long list that way, and treating the wrap as its own field renders it as garbage.
+            // A box row with no colon continues the previous row's value — some topics wrap a
+            // long list that way, and treating the wrap as its own field would render a bogus row.
             if (colon < 0)
             {
                 string cont = content.Trim();
@@ -1099,9 +1096,9 @@ public static partial class PlayerGuideDialog
         var sb = new System.Text.StringBuilder();
         foreach ((string label, string value) in fields)
         {
-            // Hanging indent: a folded row can outrun the pane (the longest is 107 cols against a
-            // 90 wrap), and letting the generic wrapper break it would drop the continuation to
-            // column 0 and lose the label/value alignment the block exists for.
+            // Hanging indent: a folded row can outrun the pane, and letting the generic wrapper
+            // break it would drop the continuation to column 0 and lose the label/value
+            // alignment the block exists for.
             string[] wrapped = WrapValue(value, room);
             sb.Append("  ").Append(label.PadRight(pad)).Append("   ").Append(wrapped[0]).Append('\n');
             for (int i = 1; i < wrapped.Length; i++)
@@ -1130,11 +1127,11 @@ public static partial class PlayerGuideDialog
         return lines.ToArray();
     }
 
-    // ── Legacy body normalization ──
-    // Strips the "┌─ ... └─" topic-meta block at the top of every legacy entry.
+    // ── Body normalization ──
+    // Strips the "┌─ ... └─" topic-meta block at the top of every entry.
     // Converts SECTION-CAPS lines to "--- Section ---" rules.
     // Drops the trailing "SEE ALSO" paragraph (auto-rebuilt from inline brackets).
-    // Migrates [bracket] tokens (single) to [[bracket]] (double); leaves existing
+    // Converts [bracket] tokens (single) to [[bracket]] (double); leaves existing
     // double-brackets untouched.
     // Normalizes leading "·" / "-" / "•" bullets to "  * ".
     private static string NormalizeLegacyBody(string body, int wrapCols)
@@ -1159,16 +1156,16 @@ public static partial class PlayerGuideDialog
             }
         }
 
-        // Legacy "SEE ALSO" / "REFERENCED BY" sections are dropped here — both are
-        // auto-rebuilt at the end of RenderEntryBody from inline [[brackets]] and
-        // the cross-entry reverse map. Keeping the legacy paragraphs would
+        // Authored "SEE ALSO" / "REFERENCED BY" sections are dropped here — both are
+        // auto-rebuilt at the end of RenderGatedBody from inline [[brackets]] and
+        // the cross-entry reverse map. Keeping the authored paragraphs would
         // double-render the same content.
         bool skipUntilNextSection = false;
         for (int i = start; i < lines.Length; i++)
         {
             string line = lines[i];
 
-            // Migrate [bracket] -> [[bracket]] on this line. Skip already-doubled.
+            // Convert [bracket] -> [[bracket]] on this line. Skip already-doubled.
             line = MigrateBracketsToDouble(line);
 
             // Section header detection: bare ALL-CAPS word at line start, not indented.
@@ -1274,13 +1271,13 @@ public static partial class PlayerGuideDialog
         return result;
     }
 
-    // C4 (smart): detect consecutive indented rows that look like table rows,
+    // Detect consecutive indented rows that look like table rows,
     // treat them as one block, and re-emit each row with the first field
     // padded to the block's max first-field width. Continuations (deeper
     // indent than the block's base, OR same-indent single-field rows) flow
     // under their parent without breaking the block.
     //
-    // The split is done at the FIRST 2+ space gap on each row — that's the
+    // The split is done at the first 2+ space gap on each row — that's the
     // boundary between the skill/label and "everything else". The "rest" is
     // emitted verbatim so any column-2/3 alignment authored in the source is
     // preserved (e.g., aligned XP-source / L10-effect columns).
@@ -1291,9 +1288,9 @@ public static partial class PlayerGuideDialog
     // distort the alignment.
     // Hard ceiling on the first column's pad, guarding against one pathological row pushing every
     // other column across the pane. It has to be at least as wide as the widest first cell any
-    // real table uses, because a cell wider than the pad keeps its own width and breaks the column
-    // on that row — 32 covers the corpus (the guild roster's 31-character names are the widest).
-    // Raising it is safe; layout/wrap-90 catches the point where a table stops fitting.
+    // real table uses (the guild roster's 31-character names), because a cell wider than the pad
+    // keeps its own width and breaks the column on that row. Raising it is safe as long as the
+    // tables still fit the 90-column wrap.
     private const int MaxFirstFieldPad = 32;
 
     private static List<string> AlignTableBlocks(List<string> lines)
@@ -1342,11 +1339,10 @@ public static partial class PlayerGuideDialog
             if (blockRows.Count >= 2)
             {
                 // Pad to the widest first field, so every row's second column starts in the same
-                // place. A row wider than the pad is NOT truncated — it keeps its own width and
+                // place. A row wider than the pad is not truncated — it keeps its own width and
                 // breaks the column on that row, which is why this has to be the real maximum:
-                // a percentile was tried and it guarantees the outlier rows come out misaligned.
-                // MaxFirstFieldPad is the only guard needed against one runaway row dragging the
-                // whole block across the pane.
+                // a percentile would leave the outlier rows misaligned. MaxFirstFieldPad is the
+                // only guard needed against one runaway row dragging the whole block across the pane.
                 // Columns beyond the first stay hand-aligned in the source; padding them here is
                 // not safe, because a padded row that crosses the wrap is re-flowed by WrapTo,
                 // which collapses its internal runs of spaces and destroys the block.
@@ -1383,7 +1379,7 @@ public static partial class PlayerGuideDialog
         return result;
     }
 
-    // Split a line into (indent, firstField, rest) at the FIRST 2+ space gap.
+    // Split a line into (indent, firstField, rest) at the first 2+ space gap.
     // Returns (indent, null, null) when no 2+ gap exists (single-token line,
     // bullet, prose). Single-space gaps inside firstField — rare for table
     // rows — are kept as part of firstField, so the split point is the
@@ -1415,7 +1411,7 @@ public static partial class PlayerGuideDialog
         return (indent, null, null);
     }
 
-    // C3: drop sections whose content is empty or trivial markers like "None.",
+    // Drop sections whose content is empty or trivial markers like "None.",
     // "N/A", "(none yet)", "(coming soon)". Walks the rule-delimited blocks and
     // skips ones with under 30 non-whitespace chars OR starting with a known
     // empty marker. Section header rule itself is dropped along with its body.
@@ -1452,7 +1448,7 @@ public static partial class PlayerGuideDialog
                 }
                 else
                 {
-                    // Drop trailing blank line we just emitted before the rule.
+                    // Drop the trailing blank line already emitted before the rule.
                     while (result.Count > 0 && result[^1].Trim().Length == 0)
                         result.RemoveAt(result.Count - 1);
                 }
@@ -1477,7 +1473,7 @@ public static partial class PlayerGuideDialog
 
     // Section rule: "--- Name ---" with dashes filling out to body wrap width.
     // Trailing dashes auto-extend so the rule visually reaches the right margin
-    // at any pane width (mockup contract).
+    // at any pane width.
     private static string SectionRule(string title, int cols)
     {
         string head = $"--- {title} ";
@@ -1529,14 +1525,14 @@ public static partial class PlayerGuideDialog
     private static readonly HashSet<string> LinkTargets =
         new(PlayerGuideContent.Entries.Select(e => e.Title), StringComparer.OrdinalIgnoreCase);
 
-    // Promote single-bracket tokens to double, so a legacy "SEE ALSO" paragraph written as
+    // Promote single-bracket tokens to double, so a "SEE ALSO" paragraph written as
     // "[Critical Hits] · [Combo Attacks]" still feeds the cross-reference block.
     //
-    // A token is only promoted when it NAMES A TOPIC. The Guide quotes the game's own UI strings in
+    // A token is only promoted when it names a topic. The Guide quotes the game's own UI strings in
     // prose — [SEALED], [NEW], [locked], [UPGRADE], the [F1][F2][F3][F4] quickbar diagram — and
-    // promoting those turned them into links to topics that do not exist, visible both inline and as
-    // dead bullets in See also. The old rule promoted everything and tried to except keybind tokens
-    // by shape, which cannot distinguish a link from a screen label.
+    // promoting those would turn them into links to topics that do not exist, visible both inline
+    // and as dead bullets in See also. Telling keybind tokens apart by shape cannot distinguish a
+    // link from a screen label, so the test is membership in LinkTargets.
     private static string MigrateBracketsToDouble(string line)
     {
         if (string.IsNullOrEmpty(line)) return line;
@@ -1613,8 +1609,12 @@ public static partial class PlayerGuideDialog
 
     // The map is a pure function of the static corpus — MigrateBracketsToDouble reads only
     // LinkTargets, which is itself derived from Entries — so it is built once rather than on every
-    // open (5.3 ms, measured). Only the shared array is cached; the audit seam hands in its own.
+    // open. Only the shared array is cached; the audit seam hands in its own.
     private static Dictionary<string, List<string>>? _sharedReferencedBy;
+
+    // The Guide's shared content, built ahead of its first open (DialogPrewarm, on a worker). A
+    // race with an open on the UI thread builds the same map twice; either copy is the answer.
+    internal static void Prewarm() => SharedReferencedByMap(PlayerGuideContent.Entries);
 
     private static Dictionary<string, List<string>> SharedReferencedByMap(
         PlayerGuideContent.GuideEntry[] entries)
@@ -1629,7 +1629,7 @@ public static partial class PlayerGuideDialog
         var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var e in entries)
         {
-            // Pre-migrate single-brackets to capture both forms uniformly.
+            // Pre-convert single-brackets to capture both forms uniformly.
             string body = MigrateBracketsToDouble(e.Body ?? "");
             foreach (Match m in DoubleBracketRegex.Matches(body))
             {
@@ -1763,8 +1763,8 @@ public static partial class PlayerGuideDialog
             }
 
             // A horizontal rule authored under a table header is one unbreakable token, so the
-            // wrapper would pass it through at its full width. Clipping is the right answer for a
-            // rule — it is decoration sized to its table, and a narrower pane simply wants less.
+            // wrapper would pass it through at its full width. A rule is clipped instead: it is
+            // decoration sized to its table, and a narrower pane simply wants less.
             if (IsRuleLine(rest))
             {
                 outSb.Append(line, 0, cols);
@@ -1832,7 +1832,7 @@ public static partial class PlayerGuideDialog
         return result;
     }
 
-    // ── ? keybindings overlay ── Modal 60x22; any key dismisses.
+    // ── ? keybindings overlay ── Modal 62x32; any key dismisses.
     private static void ShowKeybindOverlay()
     {
         const int W = 62, H = 32;
@@ -1844,7 +1844,7 @@ public static partial class PlayerGuideDialog
             "  Right       expand category, OR cross to body and",
             "              highlight the first See-also bullet (yellow)",
             "  Left        collapse category, OR jump to its header",
-            "  1 - 6       jump to category (auto-expand)",
+            $"  1 - {CategoryJumpCount}       jump to category (auto-expand)",
             "  Enter       expand header / cross to body See-also",
             "",
             "BODY (right pane)",
@@ -1920,7 +1920,7 @@ public static partial class PlayerGuideDialog
         string skillList = skills.Count == 0 ? "None" : string.Join(", ", skills);
 
         // Divine objects — aggregate inventory + equipped slots; cap denominator
-        // is the lore total (17 Divines), not the legacy 7-canon-knight count.
+        // is the lore total of 17 Divines.
         var divineNames = new List<string>();
         foreach (var it in p.Inventory.Items)
             if (it.Rarity == "Divine" && !string.IsNullOrEmpty(it.Name))

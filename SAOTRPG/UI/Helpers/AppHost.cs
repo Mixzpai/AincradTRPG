@@ -3,9 +3,9 @@ using SAOTRPG.Systems.Diagnostics;
 namespace SAOTRPG.UI.Helpers;
 
 // Owns the single Terminal.Gui application instance for the process.
-// Terminal.Gui's instance-based IApplication model replaced the static Application
-// facade; the game's static screen/dialog architecture reaches the running instance
-// through here rather than threading it through every Show() signature.
+// Terminal.Gui's application is an IApplication instance; the game's static screen/dialog
+// architecture reaches the running instance through here rather than threading it through
+// every Show() signature.
 public static class AppHost
 {
     // Main-loop iteration ceiling. The loop drains the input queue once per
@@ -17,21 +17,17 @@ public static class AppHost
 
     private static IApplication? _app;
 
-    // The running application. Throws if reached before Start().
-    // A timeout that fires ONCE and cannot stack, said in code rather than in a comment.
+    // A timeout that fires once and cannot stack, stated in code rather than in a comment.
     //
-    // The standing rule is that an AddTimeout registered from an event handler needs a
-    // re-entrancy guard, because each call stacks another concurrent callback — auto-explore
-    // once ran seven explorers off seven keypresses. A genuinely one-shot registration needs no
-    // guard, but "this one is fine" was recorded in the checker as a (file, line) pair, and an
-    // unrelated edit two lines above moved the line and failed the suite. Comments cannot carry
-    // it either: `invariants.py` strips them first, deliberately, so that prose cannot satisfy a
-    // guard check. A named call is the one form that is both self-documenting and machine-visible.
+    // An AddTimeout registered from an event handler needs a re-entrancy guard, because each
+    // call stacks another concurrent callback. A one-shot registration needs no guard, and this
+    // named call marks one as such.
     //
     // Use it only where the registration genuinely cannot happen twice concurrently.
     public static void AddOneShotTimeout(TimeSpan delay, Func<bool> callback) =>
         App.AddTimeout(delay, callback);
 
+    // The running application. Throws if reached before Start().
     public static IApplication App =>
         _app ?? throw new InvalidOperationException("AppHost.Start() must run before any UI work.");
 
@@ -39,7 +35,7 @@ public static class AppHost
     // i.e. a dialog is open above it.
     //
     // Terminal.Gui enumerates its session stack top-first and draws it in that order without
-    // reversing, so the window beneath a dialog paints AFTER the dialog does. The framework
+    // reversing, so the window beneath a dialog paints after the dialog does. The framework
     // relies on lower views being clean to make that harmless, but this game's toasts, tweens
     // and HUD refresh keep the map marked dirty, so it repaints every frame and overwrites the
     // dialog — leaving it invisible but still alive and holding focus. Views beneath a dialog
@@ -66,6 +62,12 @@ public static class AppHost
     public static IApplication Start(string? driverName = null)
     {
         Application.MaximumIterationsPerSecond = IterationsPerSecond;
+        // A local console reports its size through the console API, synchronously. The default
+        // asks the terminal over ANSI twice a second and parses each answer as input, which is
+        // most of what an idle screen allocates. Redirected stdio has no console to ask, so it
+        // keeps the query.
+        if (!Console.IsOutputRedirected && !Console.IsInputRedirected)
+            Terminal.Gui.Drivers.Driver.SizeDetection = Terminal.Gui.Drivers.SizeDetectionMode.Polling;
         _app = Application.Create().Init(driverName);
         AttachDirtyLineReset(_app);
         LogStartupEnvironment(_app);
@@ -121,10 +123,10 @@ public static class AppHost
     private static double s_periodMaxMs;
     private static long s_prevIterTicks;
     private static int s_gen0At, s_gen2At;
-    // Processor time consumed by this process. Compared against wall time it
-    // separates "our code is slow" from "we are parked waiting on the terminal":
-    // rendering the glyphs happens in the terminal emulator's process, not ours,
-    // and a full write pipe blocks us without burning any CPU here.
+    // Processor time consumed by this process. Compared against wall time it separates time
+    // spent in this process from time parked waiting on the terminal: rendering the glyphs
+    // happens in the terminal emulator's process, and a full write pipe blocks this one without
+    // burning any CPU here.
     private static TimeSpan s_cpuAt = System.Diagnostics.Process.GetCurrentProcess().TotalProcessorTime;
 
     // Resets the driver's per-row dirty flags after every flush.
@@ -135,8 +137,8 @@ public static class AppHost
     // emits a cursor move per clean cell. LayoutAndDrawComplete fires immediately after
     // Refresh, so clearing here keeps the next flush proportional to what actually changed.
     //
-    // This is a render fix, not instrumentation — it subscribes unconditionally and must
-    // never be folded back into the sampler below.
+    // This is part of rendering, not instrumentation — it subscribes unconditionally and must
+    // stay out of the sampler below.
     private static void AttachDirtyLineReset(IApplication app)
     {
         app.LayoutAndDrawComplete += (_, _) =>
@@ -147,10 +149,9 @@ public static class AppHost
     }
 
     // One-line startup breadcrumb: which backend, how many cells, which terminal emulator.
-    // Unconditional — it costs a single log line and every render bug report starts here.
-    // Which emulator is hosting us decides how the frame is rasterised; Windows Terminal
-    // advertises itself via WT_SESSION, and without it we are almost certainly on conhost,
-    // whose VT escape handling is emulated and CPU-bound.
+    // Unconditional — it costs a single log line. The hosting emulator decides how the frame
+    // is rasterised; Windows Terminal advertises itself via WT_SESSION, and without it the host
+    // is almost certainly conhost, whose VT escape handling is emulated and CPU-bound.
     private static void LogStartupEnvironment(IApplication app)
     {
         string? wt = Environment.GetEnvironmentVariable("WT_SESSION");
@@ -180,10 +181,9 @@ public static class AppHost
             if (total > s_drawMaxMs) s_drawMaxMs = total;
 
             // Bracket around the map's own paint. Only frames where the map actually painted
-            // can be split into pre/map/post, and they are averaged over their own count:
-            // folding map-less frames into post (and dividing by all drawn frames) made the
-            // split incomparable between runs, which matters now that the frame cache and the
-            // beneath-dialog guard make skipping common.
+            // can be split into pre/map/post, and they are averaged over their own count: the
+            // frame cache and the beneath-dialog guard make map-less frames common, and folding
+            // them into post would make the split incomparable between runs.
             long mapStart = SAOTRPG.UI.Rendering.MapView.LastDrawStartTicks;
             long mapEnd = SAOTRPG.UI.Rendering.MapView.LastDrawEndTicks;
             if (mapStart >= s_iterStartTicks && mapEnd >= mapStart)
@@ -242,22 +242,20 @@ public static class AppHost
                 $" | period avg {period:F1}ms worst {s_periodMaxMs:F0}ms" +
                 $" | drewFrames {s_drawFrames}/{s_iterations}" +
                 // Turn repaints held back by the coalescing window. During sustained movement
-                // this is the flush toll NOT paid; at idle it must read 0.
+                // this is the flush toll not paid; at idle it must read 0.
                 $" | coalesced {SAOTRPG.UI.Rendering.MapView.DrainCoalescedFrames()}" +
                 $" | draw avg {s_drawPhaseMs / d:F1}ms worst {s_drawMaxMs:F0}ms" +
                 $" | mapFrames {s_mapFrames}/{s_drawFrames}" +
                 $" | tileLoops {tiles.loops}/{tiles.paints}" +
                 // Cells the tile layer had to resolve against cells it scanned, per frame that
-                // painted tiles. This is the damage tracker's hit rate: during sustained
-                // movement it should sit far below 1.
+                // painted tiles: the damage tracker's hit rate, the share of scanned cells that
+                // had to be resolved.
                 $" | tileCells {tiles.resolved / Math.Max(1, tiles.paints)}" +
                 $"/{tiles.scanned / Math.Max(1, tiles.paints)}" +
                 $" | pre {s_preDrawMs / m:F1}ms map {SAOTRPG.UI.Rendering.MapView.DrainDrawAvgMs():F1}ms post {s_postDrawMs / m:F1}ms" +
                 $" (of which flush {s_flushMs / d:F1}ms)" +
-                // Per DRAWN frame, matching flush. Dividing these by iterations instead made a
-                // frame that transmits the whole screen look like it transmitted a few hundred
-                // cells, and comparing that against a per-drawn-frame flush is what produced the
-                // false conclusion that flush does not respond to payload.
+                // Per drawn frame, matching flush: dividing by iterations would make a frame
+                // that transmits the whole screen look like it transmitted a few hundred cells.
                 $" | cells w{cells.written / d} s{cells.skipped / d} sent {cells.sent / d} rows {cells.rows / d}" +
                 $" | escapes {cells.runs / d} gaps {cells.gaps / d} (~{(cells.runs * 20 + cells.gaps * 9 + cells.sent) / d / 1024.0:F0}KB/frame)" +
                 $" | clock {SAOTRPG.UI.Effects.FrameClock.ElapsedMs}ms" +

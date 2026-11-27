@@ -56,15 +56,14 @@ public static partial class MapGenerator
             map.PlaceEntity(mob, wx, wy);
         }
 
-        // ONE floor boss per floor, and it STANDS ON THE STAIRS UP — so a map with no StairsUp gets
+        // One floor boss per floor, and it stands on the stairs up, so a map with no StairsUp gets
         // no floor boss. That single rule covers all three cases without anything having to know
         // which map it is on: a normal overworld carries only an archway and therefore no boss (its
-        // archway is ungated, exactly as floor 1 already was), a labyrinth carries StairsUp and the
-        // boss stands on it, and F100's throne room carries StairsUp for the player-clone.
+        // archway is ungated, like floor 1's), a labyrinth carries StairsUp and the boss stands on
+        // it, and F100's throne room carries StairsUp for the player-clone.
         //
-        // Both maps used to get one, because EnterLabyrinth calls PopulateFloor again — measured,
-        // the same canonical boss twice per floor with identical stats. FLOOR_CANON describes "a
-        // northern labyrinth tower leading to THE floor boss", singular.
+        // EnterLabyrinth calls PopulateFloor again, so a boss on every map would put the floor's
+        // single boss on it twice.
         var wayUp = FarthestReachable(map, FloodFrom(map, rooms[0].CenterX, rooms[0].CenterY),
             rooms[0].CenterX, rooms[0].CenterY, TileType.StairsUp);
         if (wayUp.x >= 0)
@@ -120,7 +119,7 @@ public static partial class MapGenerator
             }
         }
 
-        // Progressive-canon NPCs (Ran/Klein/Argo): gated by floor + room count. Order must match RNG consumption order.
+        // Story NPCs (Ran/Klein/Argo): gated by floor + room count. Order must match RNG consumption order.
         PlaceNpcsFromTable(map, rooms, floor, rng);
 
         // Monster dens — scaled to floor area. None in the Ruby Palace: any den cuts its chamber links.
@@ -180,11 +179,10 @@ public static partial class MapGenerator
                 map.Tiles[sx, sy].Type = TileType.SecretShrine;
         }
 
-        // THE LAST THING TO TOUCH THE MAP OWNS THE WAY UP. Each carver guarantees a reachable
+        // The last thing to touch the map owns the way up. Each carver guarantees a reachable
         // StairsUp and then this method stamps 5x5 dens — walls and all — with no connectivity
         // test of any kind: a den dropped across a one-wide approach severs it, and the floor
-        // becomes a run that cannot be finished. Measured on floor 77, where the spawn could reach
-        // 1,309 of 1,376 walkable cells and the way up sat in the other 67.
+        // becomes a run that cannot be finished.
         EnsureWayUpIsReachable(map, player.X, player.Y, floor);
     }
 
@@ -201,11 +199,11 @@ public static partial class MapGenerator
 
     // Restores "the player can walk to the way up" once every stamp on the map has run.
     //
-    // THE FLOOD IS THROUGH BlocksMovement, the predicate the player actually walks by, NOT through
+    // The flood is through BlocksMovement, the predicate the player actually walks by, not through
     // the connectivity audit's. The two disagree about several tile types and it is this one the
-    // run depends on; checking the other answers a question nobody asked.
+    // run depends on.
     //
-    // TWO reachable approaches, not one, because the floor boss stands ON the stairs: the first
+    // Two reachable approaches, not one, because the floor boss stands on the stairs: the first
     // free neighbour is spent the moment it steps aside, and a one-cell alcove then leaves the
     // player nowhere to stand while the tile is occupied.
     private static void EnsureWayUpIsReachable(GameMap map, int spawnX, int spawnY, int floor)
@@ -245,8 +243,8 @@ public static partial class MapGenerator
 
             map.Tiles[target.X, target.Y].Type = TileType.Floor;
             CarveCorridorL(map, spawnX, spawnY, target.X, target.Y);
-            // BOTH ENDS ARE RE-STAMPED: the tunnel starts ON the spawn cell and paves what it
-            // walks, so without this a rescued way up costs the floor its way OUT instead.
+            // Both ends are re-stamped: the tunnel starts on the spawn cell and paves what it
+            // walks, so without this a rescued way up costs the floor its way out instead.
             map.Tiles[spawnX, spawnY].Type = spawnType;
             map.Tiles[stairs.X, stairs.Y].Type = TileType.StairsUp;
             tunnels++;
@@ -297,7 +295,7 @@ public static partial class MapGenerator
             ShopName = "Agil's General Store",
         };
         vendor.GenerateStock(floor);
-        // IF canon: Anneal Blade — iconic starter 1H sword; Agil always stocks one (with markup).
+        // Anneal Blade, the starter 1H sword: Agil always stocks one, at a markup.
         var anneal = ItemRegistry.Create("anneal_blade");
         if (anneal != null)
         {
@@ -445,7 +443,7 @@ public static partial class MapGenerator
         Func<int, List<Room>, int> IdxMax,
         Func<WorldSpawn> Create)[] FloorNpcSpawns =
     {
-        // Ran the Brawler — Progressive-canon F2 Martial Arts trial giver.
+        // Ran the Brawler — F2 Martial Arts trial giver.
         ((f, r) => f == 2 && r.Count > 2,
          (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('R', Color.BrightGreen)
@@ -500,7 +498,7 @@ public static partial class MapGenerator
              Dialogue = "My sister's blade waits for a worthy wielder. Show me you can honor her memory.",
          }),
 
-        // Agil's Apprentice — F55 gates axe_ground_gorge behind a 15-kill quest (replaces old floor-banded pool drop).
+        // Agil's Apprentice — F55 gates axe_ground_gorge behind a 15-kill quest.
         ((f, r) => f == 55 && r.Count > 2,
          (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('G', Color.BrightYellow)
@@ -527,17 +525,17 @@ public static partial class MapGenerator
              Dialogue = "The grimoire hungers for a wielder. Break the wards below, and we will see if its pages open to you.",
          }),
 
-        // Yulier (F40) — KoB-era Asuna friend, gives Lambent Light rapier. LN canon.
+        // Yulier (F40) — KoB-era Asuna friend, gives Lambent Light rapier.
         ((f, r) => f == 40 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('Y', Color.BrightYellow) { Name = "Yulier",
              Dialogue = "I served beside Asuna once. She gave me her old rapier — but Lambent Light deserves a wielder, not a memorial." }),
 
-        // Jun (F76) — Sleeping Knights survivor; Mother's Rosario handover. LN MR-arc canon.
+        // Jun (F76) — Sleeping Knights survivor; Mother's Rosario handover.
         ((f, r) => f == 76 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('J', Color.BrightMagenta) { Name = "Jun",
              Dialogue = "Yuuki's sword waits with us. The Sleeping Knights agreed: it goes to the next worthy hand. Are you that hand?" }),
 
-        // ── HF Hollow Mission questgivers (9): each gates a canon HNM weapon behind a kill-count quest.
+        // ── Hollow Mission questgivers (9): each gates a Hollow Named Monster weapon behind a kill-count quest.
 
         ((f, r) => f == 79 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('E', Color.BrightMagenta) { Name = "Scholar Ellroy",
@@ -567,12 +565,12 @@ public static partial class MapGenerator
          () => new WorldSpawn('C', Color.Gray) { Name = "Sentinel Captain",
              Dialogue = "The guardians have fallen, one by one. Hold their line and Gungnir is yours." }),
 
-        // Lisbeth (F48 Lindarth) — canon smithing hub; opens Rarity 6 craft dialog.
+        // Lisbeth (F48 Lindarth) — smithing hub; opens Rarity 6 craft dialog.
         ((f, r) => f == 48 && r.Count > 2, (f, r) => 1, (f, r) => r.Count,
          () => new WorldSpawn('L', Color.BrightMagenta) { Name = "Lisbeth",
              Dialogue = "Lindarth's the heart of my forge. Got Col and rare materials? I'll craft you something the labyrinth won't forget." }),
 
-        // ── HF Implement System questgivers (4): F84 Spiralblade, F85 Crusher, F92 Aurumbrand, F99 Deathglutton.
+        // ── Implement System questgivers (4): F84 Spiralblade, F85 Crusher, F92 Aurumbrand, F99 Deathglutton.
         ((f, r) => f == 84 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('V', Color.BrightCyan) { Name = "Spiralist Vey",
              Dialogue = "Geometry broke here. Ten failed spirals and the rapier answers." }),
@@ -623,7 +621,7 @@ public static partial class MapGenerator
          () => new WorldSpawn('P', Color.Red) { Name = "PoH's Herald",
              Dialogue = "PoH is always listening. When you have earned enough crimson, come back — we'll be watching." }),
 
-        // ── IF Element Research questgivers — kill-count quests on IF anchor floor bands.
+        // ── Element Research questgivers — kill-count quests on each element series' anchor floors.
 
         // F5 Karluin cursed-ruins / Pitch-Black Cathedral.
         ((f, r) => f == 5 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
@@ -653,7 +651,7 @@ public static partial class MapGenerator
          () => new WorldSpawn('J', Color.BrightCyan) { Name = "Element-Hermit Joze",
              Dialogue = "Eight glow-creatures lit these wetlands. I want eight returned to the index." }),
 
-        // F14 dense forest / IF Integral Series anchor.
+        // F14 dense forest / Integral Series anchor.
         ((f, r) => f == 14 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('L', Color.BrightGreen) { Name = "Druid-Researcher Lael",
              Dialogue = "The canopy holds the first IF binding. Twelve deep-wood kills renew it." }),
@@ -667,7 +665,7 @@ public static partial class MapGenerator
          () => new WorldSpawn('P', Color.BrightGreen) { Name = "Forest-Element Hermit Pell",
              Dialogue = "The grove quiets at ten, no fewer. Integral listens only to a quiet grove." }),
 
-        // F25 twilight forest ridge / IF Nox Series anchor.
+        // F25 twilight forest ridge / Nox Series anchor.
         ((f, r) => f == 25 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('O', Color.BrightMagenta) { Name = "Twilight-Sage Orune",
              Dialogue = "The Two-Headed Giant's shadow carries Nox residue. Twelve fall and it fixes." }),
@@ -684,7 +682,7 @@ public static partial class MapGenerator
          () => new WorldSpawn('S', Color.BrightMagenta) { Name = "Twilight-Cipher Senne",
              Dialogue = "Ten of the lesser dread fall, and the audit closes." }),
 
-        // F61-65 infernal era / IF Rosso Series anchor (Crimson Forneus).
+        // F61-65 infernal era / Rosso Series anchor (Crimson Forneus).
         ((f, r) => f == 61 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('T', Color.BrightRed) { Name = "Pyromancer-Archivist Tassel",
              Dialogue = "Forneus's ash hangs in the fog-lake. Twelve kills clear it for a sample." }),
@@ -722,7 +720,7 @@ public static partial class MapGenerator
          () => new WorldSpawn('T', Color.Yellow) { Name = "Forge-Sage Tehan",
              Dialogue = "Twelve fall before the anvil's call holds steady. The forge does not lie." }),
 
-        // F84-90 demigod era / IF Yasha & Gaou anchors.
+        // F84-90 demigod era / Yasha & Gaou Series anchors.
         ((f, r) => f == 84 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
          () => new WorldSpawn('L', Color.BrightCyan) { Name = "Yasha-Anchorite Lien",
              Dialogue = "The spiral on this floor is Yasha's index point. Ten failed spirals close it." }),
@@ -757,7 +755,7 @@ public static partial class MapGenerator
          () => new WorldSpawn('C', Color.BrightYellow) { Name = "Garden-Sage Calor",
              Dialogue = "The garden flowers bloom by Gaou-element flow. Ten kills steady it for the catalogue." }),
 
-        // ── HF Hollow Mission gap-fillers — kill-count quests on F77-F97 gap floors.
+        // ── Hollow Mission gap-fillers — kill-count quests on F77-F97 gap floors.
 
         // F77 hill-zone, Crystalize Claw band.
         ((f, r) => f == 77 && r.Count > 2, (f, r) => 2, (f, r) => r.Count,
@@ -900,7 +898,7 @@ public static partial class MapGenerator
         return (bestX, bestY);
     }
 
-    // Walkable-region flood from spawn, using the SAME blocking predicate the connectivity audit
+    // Walkable-region flood from spawn, using the same blocking predicate the connectivity audit
     // uses so placement and auditing cannot disagree about what "reachable" means.
     private static bool[] FloodFrom(GameMap map, int sx, int sy)
     {
@@ -999,8 +997,8 @@ public static partial class MapGenerator
 
     // Bresenham line carve (no jitter) for main roads; clears trees/bushes in the way.
     // breachWalls lets a carve cut a doorway through a built wall. Off for ordinary roads, which
-    // must not punch holes in rooms; on for the connectivity audit, whose whole job is to guarantee
-    // a region is reachable and which could not do it while walls stopped the carve dead.
+    // must not punch holes in rooms; on for the connectivity audit, which must guarantee a region
+    // is reachable even where a wall stands in the way.
     // `touched` collects the row-major index of every in-bounds cell the carve passed over, so a
     // caller holding a derived per-cell table can refresh exactly those cells instead of rebuilding
     // the whole thing. Null for every caller that does not.
@@ -1043,9 +1041,9 @@ public static partial class MapGenerator
             return;
         }
         // LabyrinthEntrance is guarded for the same reason as the stairs: it is an exit, and a road
-        // carved to it ends ON it. FeatureScatterPass writes the entrance and then carves spawn ->
-        // entrance, so without this the tile was overwritten with Path one line after creation and
-        // the floor had no way up at all.
+        // carved to it ends on it. FeatureScatterPass writes the entrance and then carves spawn ->
+        // entrance, so without this the tile would be overwritten with Path and the floor would
+        // have no way up at all.
         if (t == TileType.Wall || t == TileType.Floor || t == TileType.Door
             || t == TileType.StairsUp || t == TileType.StairsDown
             || t == TileType.LabyrinthEntrance

@@ -175,29 +175,30 @@ public static class AsciiPortraits
     public static string[] Get(string key)
         => All.TryGetValue(key, out var p) ? p : Array.Empty<string>();
 
-    // Name → portrait key for common NPC/boss injection.
-    // Used by dialogs/boss banners to map a display name to a registered portrait.
+    // Display name to portrait key, for dialogs and boss banners. A name that only refers to a
+    // character ("Crystal Wyrm of Lisbeth's Forge") gets no portrait.
     public static string? KeyForName(string? name)
     {
         if (string.IsNullOrEmpty(name)) return null;
         string n = name.ToLowerInvariant();
-        if (n.Contains("kirito")) return "kirito";
-        if (n.Contains("asuna")) return "asuna";
-        if (n.Contains("klein")) return "klein";
-        if (n.Contains("silica")) return "silica";
-        if (n.Contains("agil")) return "agil";
-        if (n.Contains("lisbeth")) return "lisbeth";
-        if (n.Contains("argo")) return "argo";
-        if (n.Contains("kizmel")) return "kizmel";
-        if (n.Contains("sachi")) return "sachi";
-        if (n.Contains("kibaou")) return "kibaou";
-        if (n.Contains("illfang")) return "illfang";
-        if (n.Contains("asterius")) return "asterius";
-        if (n.Contains("gleam eyes")) return "gleam_eyes";
-        if (n.Contains("skull reaper")) return "skull_reaper";
-        if (n.Contains("fatal scythe")) return "fatal_scythe";
-        if (n.Contains("heathcliff")) return "heathcliff_boss";
-        if (n.Contains("kayaba")) return "kayaba";
+        bool Has(string key) => n.Contains(key) && !n.Contains("of " + key);
+        if (Has("kirito")) return "kirito";
+        if (Has("asuna")) return "asuna";
+        if (Has("klein")) return "klein";
+        if (Has("silica")) return "silica";
+        if (Has("agil")) return "agil";
+        if (Has("lisbeth")) return "lisbeth";
+        if (Has("argo")) return "argo";
+        if (Has("kizmel")) return "kizmel";
+        if (Has("sachi")) return "sachi";
+        if (Has("kibaou")) return "kibaou";
+        if (Has("illfang")) return "illfang";
+        if (Has("asterius")) return "asterius";
+        if (Has("gleam eyes")) return "gleam_eyes";
+        if (Has("skull reaper")) return "skull_reaper";
+        if (Has("fatal scythe")) return "fatal_scythe";
+        if (Has("heathcliff")) return "heathcliff_boss";
+        if (Has("kayaba")) return "kayaba";
         return null;
     }
 }

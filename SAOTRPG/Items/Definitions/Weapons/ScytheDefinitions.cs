@@ -2,7 +2,7 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions.Weapons;
 
-// Scythe registry. Slow, long-reach (Range 2), high per-hit, STR-scaling. SAO Last Recollection canon (Dorothy's class).
+// Scythe registry. Slow, long-reach (Range 2), high per-hit, STR-scaling. Dorothy's weapon class.
 public static class ScytheDefinitions
 {
     private static Weapon Make(string id, string name, int value, string rarity, int durability,
@@ -35,7 +35,7 @@ public static class ScytheDefinitions
 
     // ── Hollow Area Uniques (Scythe) ─────────────────────────────
 
-    // HF F70 Hollow Area. Reaper Scythe — hollow grim warscythe, dark bleed affinity.
+    // F70 Hollow Area. Reaper Scythe — hollow grim warscythe, dark bleed affinity.
     public static Weapon CreateReaperScythe() => Make("scy_reaper_scythe", "Reaper Scythe", 11500, "Epic", 180, 65, 120,
         B().Add(StatType.Attack, 58).Add(StatType.Strength, 22).Add(StatType.Dexterity, 14), "Bleed+25");
 
@@ -44,13 +44,13 @@ public static class ScytheDefinitions
     public static Weapon CreateEldarkRadiusSigma() => Make("scy_eldark_radius_sigma", "Eldark Radius Sigma", 31000, "Legendary", 265, 89, 178,
         B().Add(StatType.Attack, 88).Add(StatType.Strength, 28).Add(StatType.Dexterity, 18), "DarknessRending+25");
 
-    // ── SAO Last Recollection Game-Original (Scythe) ─────────────────
+    // ── Dorothy's scythes ────────────────────────────────────────────
 
-    // Azuretear Scythe — Dorothy's base scythe (LR canon). Epic F50-65.
+    // Azuretear Scythe — Dorothy's base scythe. Epic F50-65.
     public static Weapon CreateAzuretearScythe() => Make("scy_azuretear_scythe", "Azuretear Scythe", 5400, "Epic", 165, 50, 115,
         B().Add(StatType.Attack, 56).Add(StatType.Strength, 18).Add(StatType.Dexterity, 10), "Bleed+20");
 
-    // ── Divine 8th — Starlight Banner (Dorothy LR canon). F78 quest reward, purification scythe with CDR + holy damage. Non-enhanceable.
+    // ── Divine 8th — Starlight Banner (Dorothy's). F78 quest reward, purification scythe with CDR + holy damage. Non-enhanceable.
     public static Weapon CreateStarlightBanner()
     {
         var w = Make("scy_starlight_banner", "Starlight Banner", 48000, "Divine", 999, 82, 188,

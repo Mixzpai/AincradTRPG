@@ -3,11 +3,11 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Systems.Combat;
 
-// Armour set bonuses. Four material tiers already ship a matched Chest / Helmet / Boots trio, and
-// those three occupy DIFFERENT equipment slots, so a full set is wearable rather than aspirational.
-// Membership is read off the pieces that exist rather than invented: no new items are added here.
+// Armour set bonuses. Each of four material tiers has matched pieces that occupy different
+// equipment slots, so a full set is wearable. Membership is read off existing items; no new
+// items are added here.
 //
-// The bonus is deliberately a REASON TO MATCH rather than a reason to ignore better gear. Each
+// The bonus is a reason to match rather than a reason to ignore better gear. Each
 // tier's 2-piece is worth roughly a fifth of one piece's Defense and the full set roughly a half,
 // so mixing a higher-tier chest into a lower-tier set stays the right call whenever the raw stat
 // gap is wide — the set is a tiebreak, not a trap.
@@ -19,8 +19,8 @@ public static class EquipmentSets
         string Name,
         string Flavor,
         string[] MemberDefIds,
-        SetBonus[] TwoPiece,
-        SetBonus[] ThreePiece);
+        SetBonus[] PartialSet,
+        SetBonus[] FullSet);
 
     public static readonly SetDef[] All =
     {
@@ -44,7 +44,7 @@ public static class EquipmentSets
             new[] { new SetBonus(StatType.Defense, 28), new SetBonus(StatType.Vitality, 10),
                     new SetBonus(StatType.Endurance, 8) }),
 
-        // Celestial: 90/70/58 Defense per piece — the endgame trio.
+        // Celestial: 90/70/58 Defense per piece — the endgame set.
         new("Celestial Regalia", "Worn by nobody the records name.",
             new[] { "celestial_chestplate", "celestial_helmet", "celestial_legs", "celestial_boots" },
             new[] { new SetBonus(StatType.Defense, 18) },
@@ -53,8 +53,7 @@ public static class EquipmentSets
     };
 
     // Every member DefinitionId → (which set, a flat index over all members). Built once so
-    // counting worn pieces is one dictionary probe per equipped item instead of a fresh HashSet
-    // of the wearer's ids plus a lookup per member.
+    // counting worn pieces is one dictionary lookup per equipped item.
     private static readonly Dictionary<string, (int SetIdx, int Flat)> MemberIndex = BuildMemberIndex();
     private static readonly int MemberCount = MemberIndex.Count;
 
@@ -72,8 +71,7 @@ public static class EquipmentSets
     // way as All. Allocation-free: the stat-bonus cache rebuilds through here on every equip,
     // unequip, break and refinement.
     //
-    // Counts DISTINCT DefinitionIds, matching the set-of-ids this replaced — wearing the same
-    // piece twice must not count twice. Callers pass the items they consider live; Inventory
+    // Counts distinct DefinitionIds — wearing the same piece twice must not count twice. Callers pass the items they consider live; Inventory
     // excludes anything at zero durability, because broken gear grants no bonuses and must not
     // count toward a set either.
     public static void CountWorn(List<EquipmentBase> equipped, Span<int> counts)
@@ -91,11 +89,11 @@ public static class EquipmentSets
         }
     }
 
-    // The bonuses a set grants at `worn` pieces, or null below the two-piece threshold. The 3-piece
-    // REPLACES the 2-piece rather than stacking on it, so each tier's full-set line reads as the
+    // The bonuses a set grants at `worn` pieces, or null below the two-piece threshold. The full set
+    // replaces the 2-piece rather than stacking on it, so each tier's full-set line reads as the
     // whole reward. Both consumers below route through here, so that rule lives in one place.
     public static SetBonus[]? BonusesFor(SetDef set, int worn) =>
-        worn < 2 ? null : (worn >= set.MemberDefIds.Length ? set.ThreePiece : set.TwoPiece);
+        worn < 2 ? null : (worn >= set.MemberDefIds.Length ? set.FullSet : set.PartialSet);
 
     // Sets with at least two pieces worn, and how many.
     public static List<(SetDef Set, int Worn)> ActiveSets(IEnumerable<EquipmentBase> equipped)

@@ -4,10 +4,9 @@ namespace SAOTRPG.Systems.World;
 
 // Per-floor entry prose, loaded from Content/FloorEntries.json and keyed by floor number.
 //
-// A biome's entry message is written once and read on every floor that biome holds — Void spans 14
-// of them — so the line that greets the player says the same thing about fourteen different places.
-// An override here replaces it for one floor, which is what lets a canon-anchored floor introduce
-// ITSELF rather than its band.
+// A biome's entry message is written once and read on every floor that biome holds, so the line
+// that greets the player says the same thing about many different places. An override here
+// replaces it for one floor, which is what lets a named floor introduce itself rather than its band.
 //
 // Content only: the text is atmosphere, never a claim about a mechanic, a key or a number, because
 // a floor's mechanics move and this file has no way to know when they do.
@@ -16,11 +15,10 @@ public static class FloorEntries
     private static IReadOnlyDictionary<int, string>? _cached;
 
     // Why the file was not read, or null when it was. Published rather than logged alone: a missing
-    // override file degrades to the biome message on all 100 floors, which is exactly what "no
-    // overrides authored yet" also looks like, and nothing on screen distinguishes them.
-    // The getter has to force the load. Read before anything else touched the file it answered
-    // null — "nothing went wrong" — for the one state it exists to report, and the sabotage that
-    // deletes the file was caught only by a neighbouring precondition.
+    // override file degrades to the biome message on all 100 floors, which looks exactly like a
+    // file with no overrides, and nothing on screen distinguishes them.
+    // The getter forces the load, so it cannot answer null merely because nothing has read the
+    // file yet.
     public static string? LoadFailure { get { Load(); return _loadFailure; } }
     private static string? _loadFailure;
 
@@ -28,8 +26,8 @@ public static class FloorEntries
 
     public static IReadOnlyDictionary<int, string> All { get { Load(); return _cached!; } }
 
-    // F9 hot-reload. Called from BiomeGenConfigLoader.Invalidate, which is the one content-reload
-    // seam the game already has.
+    // F9 hot-reload. Called from BiomeGenConfigLoader.Invalidate, the game's one content-reload
+    // seam.
     public static void Invalidate() { _cached = null; _loadFailure = null; }
 
     private static void Load()
@@ -51,7 +49,7 @@ public static class FloorEntries
                 using var doc = JsonDocument.Parse(File.ReadAllText(path));
                 foreach (var prop in doc.RootElement.EnumerateObject())
                 {
-                    // A key that is not a floor, or an entry that is blank, is dropped LOUDLY. The
+                    // A key that is not a floor, or an entry that is blank, is dropped loudly. The
                     // alternative is an authored line that silently never shows.
                     if (!int.TryParse(prop.Name, out int floor) || floor < 1 || floor > 100)
                     {

@@ -11,9 +11,7 @@ public enum WeatherType
     Clear,
     // Wet conditions — −3 crit rate for all combatants, −10 trap detection.
     Rain,
-    // Thick air — −20 trap detection. It does NOT reduce the visibility radius: that was claimed
-    // here and in the tutorial for a long time with nothing reading it for vision, while the
-    // Player Guide correctly said "trap detection, not FOV". The comment was the wrong half.
+    // Thick air — −20 trap detection. It does not reduce the visibility radius.
     Fog,
     // Tailwind — +5 damage on throwable items, via GetThrowableBonus.
     Wind
@@ -34,9 +32,7 @@ public static class WeatherSystem
         int RegenBonus,
         int TrapDetectionPenalty,
         int PoisonDurationBonus,
-        // Extra damage on a thrown item. Advertised in the Guide's weather table, its tips, the
-        // tutorial tip and a journal line — and implemented by nothing for a long time, which
-        // made Windy, one floor in five, a pattern whose only effect was the promise.
+        // Extra damage on a thrown item, read through GetThrowableBonus.
         int ThrowableBonus,
         // Share of the sun's direct light that still reaches the ground. Cloud and fog scatter
         // it, and scattered light casts no shadow — so this scales shadow depth and nothing
@@ -56,8 +52,8 @@ public static class WeatherSystem
     // How much of the sun's shadow-casting light survives the current weather.
     public static float SunlightScale => Configs[Current].SunlightScale;
 
-    // Roll weather for floor. Floor param reserved for biome-specific tables.
-    public static void RollWeather(int floor)
+    // Rolls the weather for a new floor; every floor rolls the same weighted table.
+    public static void RollWeather()
     {
         int total = 0;
         foreach (var cfg in Configs.Values) total += cfg.Weight;

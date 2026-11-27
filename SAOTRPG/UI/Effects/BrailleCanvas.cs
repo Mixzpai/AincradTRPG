@@ -6,7 +6,7 @@ public static class BrailleCanvas
 {
     public static char Braille(byte dotMask) => (char)(0x2800 | dotMask);
 
-    // Common pattern library — bit positions verified against U+2800 base.
+    // Common patterns; bit positions are offsets from the U+2800 base.
     // Cell layout (Unicode 8-dot order): col-left=1,2,3,7 col-right=4,5,6,8.
     public const byte FullCell    = 0xFF; // ⣿
     public const byte LeftHalf    = 0x47; // dots 1,2,3,7 → ⡇
@@ -18,8 +18,6 @@ public static class BrailleCanvas
     public const byte CornerNE    = 0x08; // dot 4
     public const byte CornerSW    = 0x40; // dot 7
     public const byte CornerSE    = 0x80; // dot 8
-
-    // Drop alternate bits — preserves rough density at half. Fast popcount-aware reduction.
 
     // Pick `dotCount` dots deterministically by seed. Fisher-Yates over the 8 positions.
     public static byte SpreadDots(int seed, int dotCount)

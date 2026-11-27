@@ -73,16 +73,18 @@ public class QuickbarState
     }
 
     // Single-character display glyph: first letter of item name, or '·' empty.
-    // Count suffix (stackable qty) omitted here — HUD shows glyph only per research.
+    // Count is the stacked quantity; the HUD draws the glyph only.
     public (char Glyph, bool Filled, int Count) SlotDisplay(int slot, Player player)
     {
         if (IsEmpty(slot)) return ('·', false, 0);
         string? defId = SlotItemDefIds[slot];
         int count = 0;
         string? firstName = null;
-        foreach (var item in player.Inventory.Items)
+        // Indexed: the read-only view's enumerator is boxed, and the HUD asks every refresh.
+        var items = player.Inventory.Items;
+        for (int i = 0; i < items.Count; i++)
         {
-            if (item is Consumable c && c.DefinitionId == defId)
+            if (items[i] is Consumable c && c.DefinitionId == defId)
             {
                 count += c.Quantity;
                 firstName ??= c.Name;

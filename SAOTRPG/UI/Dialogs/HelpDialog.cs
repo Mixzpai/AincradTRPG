@@ -3,10 +3,10 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Keybinding + glyph reference (H). Single-popup, no scroll, no search —
+// Keybinding + glyph reference (H). Single popup, no search —
 // pure reference: keybinds left, glyph + status legends right.
-// Status abbreviations are overlaid as colored Labels — Terminal.Gui v2
-// doesn't support inline color markup, so per-keyword tinting needs separate Labels.
+// Status abbreviations are overlaid as colored Labels — Terminal.Gui
+// has no inline color markup, so per-keyword tinting needs separate Labels.
 // Status section uses blank-space placeholders (not underscores — those clip per font).
 public static class HelpDialog
 {
@@ -22,7 +22,7 @@ public static class HelpDialog
    Shift+Dir ...... Sprint                  ~  Water       =  Deep Water
    Ctrl+Dir ....... Stealth move            ♣  Tree        ※  Bush
    Space .......... Wait                    &  Campfire    ⊙  Fountain
-                                            +  Door        ☥  Shrine
+   | .............. Wait menu               +  Door        ☥  Shrine
  [ Combat & Actions ]                       >  Stairs Up   <  Stairs Down
                                             ▒  Cracked     Π  Labyrinth
    Bump ........... Attack / Talk           V  Vendor      N  NPC
@@ -30,7 +30,7 @@ public static class HelpDialog
    F1-F4 .......... Skill slots 1-4         B  Boss
    V .............. Counter stance
    \ .............. Ranged fire (Bow)     [ Items on Ground ]
-   R .............. Rest (3 turns)
+   R .............. Sleep
    X .............. Auto-explore            .  Common      o  Uncommon
    L .............. Look mode               +  Rare        *  Legendary
    G .............. Pickup                  ◈  Divine
@@ -123,7 +123,7 @@ public static class HelpDialog
     };
 
 
-    // Which action each reference row describes. The row's DESCRIPTION is the key here, because
+    // Which action each reference row describes. The row's description is the key here, because
     // that is the part of the line that does not change when a binding does.
     private static readonly Dictionary<string, GameAction> RowActions = new()
     {
@@ -131,7 +131,8 @@ public static class HelpDialog
         ["Sword Skill menu"]  = GameAction.OpenSwordSkills,
         ["Counter stance"]    = GameAction.Counter,
         ["Ranged fire (Bow)"] = GameAction.RangedFire,
-        ["Rest (3 turns)"]    = GameAction.Rest,
+        ["Sleep"]             = GameAction.Rest,
+        ["Wait menu"]         = GameAction.WaitMenu,
         ["Auto-explore"]      = GameAction.AutoExplore,
         ["Look mode"]         = GameAction.Look,
         ["Pickup"]            = GameAction.Pickup,
@@ -149,7 +150,7 @@ public static class HelpDialog
         ["Message log"]       = GameAction.OpenMessageLog,
     };
 
-    // Rows whose key cell covers a RANGE of bindings rather than one.
+    // Rows whose key cell covers a range of bindings rather than one.
     private static readonly Dictionary<string, Func<string>> RowRanges = new()
     {
         ["Move"]                = () => Span(GameAction.MoveNorth) + " / " + Alt(GameAction.MoveNorth),
@@ -162,8 +163,7 @@ public static class HelpDialog
 
     private static string Span(GameAction a) => Keybinds.Get(a).Primary.ToString();
 
-    // The reference's key cells are narrow, so the long key names are abbreviated the way this
-    // table already wrote them by hand.
+    // The reference's key cells are narrow, so the long key names are abbreviated.
     private static string Compact(string key) =>
         key.Replace("PageUp", "PgUp").Replace("PageDown", "PgDn");
 
@@ -174,7 +174,7 @@ public static class HelpDialog
 
     // Rewrites each reference row's key cell with what is actually bound.
     //
-    // Substituted IN PLACE, preserving every column: the glyph and status overlays below are
+    // Substituted in place, preserving every column: the glyph and status overlays below are
     // positioned by hardcoded (column, row) coordinates against this text, so a row that changed
     // length would silently drag them out of alignment. An over-long binding is clipped rather
     // than allowed to push the layout.
@@ -197,7 +197,7 @@ public static class HelpDialog
 
             int descStart = afterDots + 1;
             // Up to the first double space: a left-column row can share its line with the right
-            // column ("Kill Stats            [ Status Tags ]"), and the whole tail never matched.
+            // column ("Kill Stats            [ Status Tags ]"), so the whole tail is not the key.
             int descEnd = line.IndexOf("  ", descStart, StringComparison.Ordinal);
             string description = (descEnd < 0 ? line[descStart..] : line[descStart..descEnd]).TrimEnd();
             if (description.Length == 0) continue;
@@ -209,7 +209,7 @@ public static class HelpDialog
             if (replacement is null) continue;
 
             // The key cell runs from firstChar to descStart, dot leader included. The rebuilt cell
-            // has to be EXACTLY that wide: key + space + dots + space. Clipping to cell-3 leaves
+            // has to be exactly that wide: key + space + dots + space. Clipping to cell-3 leaves
             // room for at least one dot, which is what the narrowest rows here already use.
             int cell = descStart - firstChar;
             replacement = Compact(replacement);
@@ -231,8 +231,8 @@ public static class HelpDialog
         var goldScheme  = SolidScheme(Color.BrightYellow);
 
         // Render the Content as a stack of per-line Labels. Static read-only
-        // reference — Labels give per-token color (TG v2 TextView shares one
-        // Scheme across all its content, which is the wrong primitive here).
+        // reference — Labels give per-token color (TextView applies one
+        // Scheme to all its content).
         var lines = LiveKeys(Content.Replace("\r\n", "\n").Split('\n'));
         for (int row = 0; row < lines.Length; row++)
         {
@@ -313,7 +313,7 @@ public static class HelpDialog
 
     // Build a Scheme where every state (Normal / Focus / HotNormal /
     // HotFocus / Disabled) renders fg-on-Black. Used for static-content Labels
-    // so TG v2 doesn't fall back to a Disabled-state DarkGray.
+    // so Terminal.Gui doesn't fall back to a Disabled-state DarkGray.
     private static Scheme SolidScheme(Color fg)
     {
         var attr = Gfx.Attr(fg, Color.Black);

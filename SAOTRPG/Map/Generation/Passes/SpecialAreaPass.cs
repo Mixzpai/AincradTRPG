@@ -18,7 +18,7 @@ public sealed class SpecialAreaPass : IGenerationPass
         ctx.SpawnY = spawnY;
 
         // Spawn must land inside the disk; map center should always be inside (the disk
-        // is centered on bbox), but keep the assert as a tripwire if FloorMask.Build changes.
+        // is centered on bbox); the assert guards that assumption about FloorMask.Build.
         System.Diagnostics.Debug.Assert(
             ctx.IsInsideCircle(spawnX, spawnY),
             $"SpecialAreaPass: spawn ({spawnX},{spawnY}) outside disk on F{ctx.FloorNumber}");
@@ -40,10 +40,8 @@ public sealed class SpecialAreaPass : IGenerationPass
         }
         else
         {
-            // The F47 spawn-plaza flower scatter that used to sit here is gone with the rest of
-            // them; BaseTerrainPass.FloriaFlowersWeight is the single switch that governs the
-            // garden now, and a second uncoordinated source is what made "remove the flowers"
-            // a four-file job.
+            // No flower scatter here: BaseTerrainPass.FloriaFlowersWeight is the single switch
+            // that governs the F47 garden.
             MapGenerator.ClearArea(map, spawnX, spawnY, 12, TileType.Grass);
             ctx.Rooms.Add(new Room(spawnX - 5, spawnY - 5, 11, 11));
             MapGenerator.BuildTown(map, spawnX, spawnY, ctx.Rooms);

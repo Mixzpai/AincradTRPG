@@ -18,14 +18,14 @@ public class QuestTrackerWidget : View
         SchemeName = ColorSchemes.BodyName;
     }
 
-    // Children repaint every cell they own, and the framework clear would otherwise blank
-    // this widget during the window where it skips painting beneath a dialog.
+    // The draw pass paints every cell this widget owns, and the framework clear would otherwise
+    // blank it during the window where it skips painting beneath a dialog.
     protected override bool OnClearingViewport() => true;
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
         using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Draw.QuestTracker");
-        // A modal above us has already painted this pass; drawing now would erase it.
+        // A modal above this view has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
 
         var vp = Viewport;
@@ -36,8 +36,8 @@ public class QuestTrackerWidget : View
         // Empty-state: blank both rows (widget effectively hides).
         if (quest == null)
         {
-            BlankRow(batch, 0, vp.Width);
-            if (vp.Height > 1) BlankRow(batch, 1, vp.Width);
+            BlankRow(ref batch, 0, vp.Width);
+            if (vp.Height > 1) BlankRow(ref batch, 1, vp.Width);
             return true;
         }
 
@@ -48,11 +48,11 @@ public class QuestTrackerWidget : View
             ? TextHelpers.Truncate($"COMPLETE — return to {quest.GiverName}", TrackerWidth)
             : BuildProgressLine(quest);
 
-        DrawRow(batch, 0, line1, nameColor, vp.Width);
+        DrawRow(ref batch, 0, line1, nameColor, vp.Width);
         if (vp.Height > 1)
         {
             Color line2Color = complete ? Color.BrightGreen : Color.Gray;
-            DrawRow(batch, 1, line2, line2Color, vp.Width);
+            DrawRow(ref batch, 1, line2, line2Color, vp.Width);
         }
         return true;
     }
@@ -76,7 +76,7 @@ public class QuestTrackerWidget : View
 
     // Batched rather than the framework's SetAttribute/Move/AddRune trio, which re-parses the
     // grapheme and allocates per cell. Identical output: same glyphs, attributes and columns.
-    private static void DrawRow(Gfx.Batch batch, int row, string text, Color fg, int width)
+    private static void DrawRow(ref Gfx.Batch batch, int row, string text, Color fg, int width)
     {
         var attr = Gfx.Attr(fg, Color.Black);
         int i = 0;
@@ -84,7 +84,7 @@ public class QuestTrackerWidget : View
         for (; i < width; i++) batch.Put(i, row, ' ', attr);
     }
 
-    private static void BlankRow(Gfx.Batch batch, int row, int width)
+    private static void BlankRow(ref Gfx.Batch batch, int row, int width)
     {
         var attr = Gfx.Attr(Color.Black, Color.Black);
         for (int i = 0; i < width; i++) batch.Put(i, row, ' ', attr);

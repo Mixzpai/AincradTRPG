@@ -17,7 +17,7 @@ public static class ScreenHeader
     // A filled-pip meter — the game's one way of showing a quantity at a glance, so difficulty
     // risk and stat allocation read as the same kind of thing.
     //
-    // The distinction is carried by the GLYPH, not by colour: a meter usually lives inside a
+    // The distinction is carried by the glyph, not by colour: a meter usually lives inside a
     // label string that has a single scheme, so its filled cells cannot be tinted separately
     // from the text around them.
     public static string Meter(int filled, int total)
@@ -58,8 +58,7 @@ public static class ScreenHeader
     //
     // Takes its origin and width from the caller so the caption aligns with the column it
     // heads — the screens are centred compositions, and a header anchored to the screen edge
-    // would float free of its own content. Replaces the old centred "[ Foo ]", whose brackets
-    // are ASCII-era ornament and whose centring meant it lined up with nothing.
+    // would float free of its own content.
     //
     // Two labels rather than one padded string, because the caption and the rule need
     // different attributes and a Label carries a single scheme.

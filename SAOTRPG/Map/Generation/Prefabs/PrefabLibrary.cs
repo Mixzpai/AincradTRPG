@@ -18,14 +18,14 @@ public sealed class PrefabLibrary
     // below and SignaturePrefabPass have to mean the same string by it.
     public const string SignatureTag = "signature";
 
-    // The tag that marks a FLOOR's guaranteed canon set-piece. Same contract as SignatureTag and
+    // The tag that marks a floor's guaranteed set-piece. Same contract as SignatureTag and
     // for the same reason: CanonOverlayPass owns the placement, so the general weighted draw must
     // not be able to stamp a second copy of the same landmark.
     public const string CanonOverlayTag = "canon-overlay";
 
     // Every tag whose prefabs belong to a guarantee pass. A prefab carrying one of these is
-    // invisible to an untagged query. A set rather than two special cases, so a third guarantee
-    // pass is one line here and cannot pick up half the contract.
+    // invisible to an untagged query. A set rather than special cases, so every guarantee pass
+    // gets the whole contract from one entry here.
     private static readonly string[] GuaranteedTags = { SignatureTag, CanonOverlayTag };
 
     public int Count => _byName.Count;
@@ -89,11 +89,11 @@ public sealed class PrefabLibrary
     // Pool of candidates matching biome + floor + optional tag filter.
     // "any"-biome prefabs always included. Empty Floors list = any floor.
     //
-    // A prefab carrying a GUARANTEED tag (`signature`, `canon-overlay`) is EXCLUDED from an
+    // A prefab carrying a guaranteed tag (`signature`, `canon-overlay`) is excluded from an
     // untagged query. Each is placed by the pass that owns its guarantee; leaving one in the
-    // general weighted draw as well put a second copy of the same landmark on 9% of floors, which
-    // is what the MAX_PER_FLOOR the files all declare was asking for and nothing enforces.
-    // Asking for the tag explicitly still returns them.
+    // general weighted draw as well would put a second copy of the same landmark on some floors,
+    // against the MAX_PER_FLOOR the files declare, which nothing else enforces. Asking for the
+    // tag explicitly still returns them.
     public IEnumerable<PrefabDefinition> CandidatesFor(string biome, int floor, IEnumerable<string>? tagsRequired = null)
     {
         LoadAll();

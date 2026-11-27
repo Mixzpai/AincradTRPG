@@ -11,9 +11,7 @@ public static class ProficiencyHelper
     // Returns box-formatted proficiency lines for summary cards.
     // Each line: "  │  Sword            Adept      +4  │"
     // Appended into the death/victory summary card, so every row must be exactly
-    // SummaryFormatter.BoxInner columns between the edges. This block used to render one column
-    // wide on its blank and heading rows and one column narrow on its data rows, which bowed the
-    // card's right edge in and out across the proficiency section.
+    // SummaryFormatter.BoxInner columns between the edges, or the card's right edge bows.
     public static string BuildBoxRows(TurnManager tm)
     {
         if (tm.WeaponKills.Count == 0) return "";
@@ -46,7 +44,7 @@ public static class ProficiencyHelper
         var (rank, bonus, _) = GetDetailCore(tm, wpnType);
         int lvl = tm.GetProficiencyLevel(wpnType);
         var picks = tm.GetForkChoices(wpnType);
-        // Fork tags: F1..F4 with P=picked / · = unpicked / ? = PENDING (level met).
+        // Fork tags: F1..F4 with 1/2 = picked option / · = unpicked / ? = pending (level met).
         var tags = new System.Text.StringBuilder();
         int[] forkLevels = { 25, 50, 75, 100 };
         for (int i = 0; i < 4; i++)

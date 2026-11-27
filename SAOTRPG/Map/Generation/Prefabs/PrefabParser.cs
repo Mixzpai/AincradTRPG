@@ -69,6 +69,12 @@ public static class PrefabParser
             if (line.Length == 0) continue;
             if (line.StartsWith('#') || line.StartsWith("//")) continue;
 
+            if (seenEnd)
+            {
+                DebugLogger.LogGame("PREFAB", $"{Path.GetFileName(sourcePath)}: \"{line}\" after ENDMAP — skipped");
+                return null;
+            }
+
             if (line.Equals("MAP", StringComparison.Ordinal))
             {
                 inMap = true;

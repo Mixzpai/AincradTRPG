@@ -152,8 +152,8 @@ public static class Bestiary
         }
     }
 
-    // Read-only snapshot for UI display. Ordered by TimesKilled desc to
-    // preserve legacy behavior used by MonumentDialog and title-unlock code.
+    // Read-only snapshot for UI display. Ordered by TimesKilled desc, which
+    // MonumentDialog and title-unlock code rely on.
     public static IReadOnlyList<Entry> GetAll() =>
         _entries.Select(kv => ToEntry(kv.Key, kv.Value))
             .OrderByDescending(e => e.TimesKilled)
@@ -254,17 +254,15 @@ public static class Bestiary
     public static int DiscoveredCount() => _entries.Count;
 
     // Total roster: MobFactory + BossFactory + FieldBoss (exact registry lengths)
-    // so completion meter matches reality. RosterCount props back true counts;
-    // catch fallbacks mirror current registry size (100 bosses, 33 field bosses).
+    // so the completion meter matches the roster. RosterCount props back true counts;
+    // the catch fallbacks are fixed counts (100 bosses, 33 field bosses).
     public static int TotalRosterCount()
     {
         int total = 0;
-        foreach (int tier in Enumerable.Range(0, 10))
-        {
-            try { total += SAOTRPG.Map.Spawning.MobFactory.GetFloorMobNames(tier).Length; } catch { }
-        }
-        try { total += SAOTRPG.Map.Spawning.BossFactory.RosterCount; } catch { total += 100; }
-        try { total += SAOTRPG.Map.Spawning.FieldBossFactory.RosterCount; } catch { total += 33; }
+        for (int tier = 0; tier < SAOTRPG.Map.Spawning.MobFactory.TierCount; tier++)
+            total += SAOTRPG.Map.Spawning.MobFactory.GetFloorMobNames(tier).Length;
+        total += SAOTRPG.Map.Spawning.BossFactory.RosterCount;
+        total += SAOTRPG.Map.Spawning.FieldBossFactory.RosterCount;
         return Math.Max(total, _entries.Count);  // never show < discovered
     }
 }

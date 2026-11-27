@@ -1,7 +1,7 @@
 namespace SAOTRPG.Systems.Crafting;
 
 // Cooking recipe tiers. Gold/Legendary gated behind having Asuna in the party
-// (her canonical Extra Skill: Cooking).
+// (her Extra Skill: Cooking).
 public enum RecipeTier { Bronze, Silver, Gold, Legendary }
 
 // A cooking recipe: named inputs → single output. Output is also a
@@ -16,7 +16,6 @@ public record Recipe(
 );
 
 // Static recipe registry. Grouped by tier; Gold/Legendary require Asuna.
-// All canonical where possible — see DEFERRED.md for the research sourcing.
 public static class RecipeData
 {
     public static readonly Recipe[] All =

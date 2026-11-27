@@ -4,33 +4,29 @@ using SAOTRPG.Systems.RunState;
 
 namespace SAOTRPG.Map.Generation.Passes;
 
-// Places the landmark authored for THIS floor's biome, before the general prefab pass runs.
+// Places the landmark authored for this floor's biome, before the general prefab pass runs.
 //
 // The general pass draws its open-ground landmarks from every prefab whose floor range covers the
-// floor -- around 80 candidates -- with a budget of 2 to 7 picks, so a biome's own signature piece
-// is roughly 3% of the weighted draw. Measured over 594 floor-runs (6 seeds x F1-F99): 4.7% of
-// floors carried the landmark written for their biome, and Ruins, Dark and Desert carried theirs
-// on zero floors.
+// floor, with a small budget of picks, so a biome's own signature piece is a few percent of the
+// weighted draw and most floors would never carry theirs.
 //
 // Two things this pass does that the weighted route cannot:
-//   * it selects from the biome's OWN signature pool rather than the whole library, and
-//   * it tests anchors until it has enough host SITES rather than throwing a fixed number of
-//     random darts. On a cave floor the sites that can host a landmark are ~0.2% of the open
-//     ground, so it ends up sweeping the whole floor there and stopping after a handful of tests
-//     on open terrain -- the same shape as the ore-vein seeding fix, where random darts at a
-//     sparse target were the wall.
+//   * it selects from the biome's own signature pool rather than the whole library, and
+//   * it tests anchors until it has enough host sites rather than throwing a fixed number of
+//     random darts. On a cave floor the sites that can host a landmark are a tiny fraction of the
+//     open ground, so it ends up sweeping the whole floor there and stopping after a handful of
+//     tests on open terrain -- the same reason ore-vein seeding scans rather than throws darts.
 public sealed class SignaturePrefabPass : IGenerationPass
 {
     public string Name => "SignaturePrefab";
 
     // Anchors are sampled on a stride; a landmark is a large footprint, so sites a few tiles apart
     // are redundant. The fine pass is a fallback for a floor whose only host sites fall between the
-    // coarse samples -- measured on Dark, where a 7x7 footprint has no coarse site on 2 floor-runs
-    // in 14 and a site at every one of them once the grid is refined.
+    // coarse samples, which happens on cave floors.
     private const int CoarseStride = 6;
     private const int FineStride = 2;
 
-    // How many host sites to collect per candidate before choosing. The site test is a NECESSARY
+    // How many host sites to collect per candidate before choosing. The site test is a necessary
     // condition, not a sufficient one — the disk mask and the room rects still get a veto — so the
     // sample has to be deep enough that the placer is not left with a handful of near-misses.
     private const int SiteSample = 128;
@@ -63,7 +59,7 @@ public sealed class SignaturePrefabPass : IGenerationPass
         // Its own stream, derived from (globalSeed, floor) the same way SeedDerivationPass and the
         // prefab vendor stock derive theirs. Two reasons it is not ctx.Rng: a draw here would
         // renumber every later pass and move the whole floor, and the seed must come from the
-        // context rather than RunRng.Seed, which is the RUN's seed -- a floor built ahead of the
+        // context rather than RunRng.Seed, which is the run's seed -- a floor built ahead of the
         // player runs on a worker and can be handed a different one.
         var rng = new Random(RunRng.StableHash(
             RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber), "signature-prefab", 0));
@@ -89,13 +85,13 @@ public sealed class SignaturePrefabPass : IGenerationPass
             (anchors[i], anchors[j]) = (anchors[j], anchors[i]);
         }
 
-        // Filter per candidate FIRST, then choose among what the terrain can actually take. The
-        // order matters: choosing first and discovering the terrain second means a Ruins floor
-        // pays a full failed search for a 12x13 piece that has never once fitted on one.
+        // Filter per candidate first, then choose among what the terrain can actually take. The
+        // order matters: choosing first and discovering the terrain second means a cave floor
+        // pays a full failed search for a large piece that never fits on it.
         //
-        // The scan stops at SiteSample hits. An early floor carries ~26,000 anchors and the
-        // footprint test does not short-circuit on open ground, so filtering all of them cost
-        // 36.5 ms of mean floor build for a list the placer takes one entry from.
+        // The scan stops at SiteSample hits. An early floor carries tens of thousands of anchors
+        // and the footprint test does not short-circuit on open ground, while the placer takes
+        // one entry from the list.
         var feasible = new List<(PrefabDefinition Def, List<(int X, int Y)> Sites)>();
         foreach (var def in pool)
         {

@@ -4,23 +4,18 @@ namespace SAOTRPG.Map.Generation;
 
 // Builds the next floor while the player is still on the current one, so the stairs do not stall.
 //
-// WHY THIS IS SOUND. A floor is a pure function of (seed, floor) plus the per-game prefab cap
+// This is sound because a floor is a pure function of (seed, floor) plus the per-game prefab cap
 // ledger, and nothing between arriving on a floor and leaving it moves the ledger: the labyrinth
 // draws from its own derived stream and charges no caps. So the floor built on arrival is the
-// floor the transition would have built. That is measured, not argued — SeedProbe walks whole runs
-// through this class and compares every floor AND the ledger after it against a plain sequential
-// build.
+// floor the transition would have built.
 //
-// TWO GENERATIONS MUST NEVER OVERLAP, and that is enforced here rather than hoped for. They share
-// the biome-config cache and the prefab library, and until the cap ledger moved into WorldContext
-// they shared a plain Dictionary — measured on it, eight threads lose ~10% of their increments and
-// intermittently throw with the collection corrupted, which would read as a landmark placing twice
-// or a floor that stops reproducing, in silence. Take and Invalidate therefore JOIN the running
-// build before releasing the slot, and Request refuses while the slot is set.
+// Two generations must never overlap. They share the biome-config cache and the prefab library,
+// and concurrent use corrupts shared state silently (a landmark placing twice, a floor that stops
+// reproducing). Take and Invalidate therefore join the running build before releasing the slot,
+// and Request refuses while the slot is set.
 //
-// All three entry points are called from the UI thread today, which would serialise them anyway.
-// The locking does not rely on that: nothing enforces it, and a caller moved off the UI thread
-// later would otherwise reopen the window silently.
+// All three entry points are called from the UI thread, which would serialise them anyway. The
+// locking does not rely on that: nothing enforces it.
 //
 // The fallback is the synchronous path, so a prefetch that is missing, stale, faulted or still
 // running costs nothing but the time it would have cost anyway.
@@ -33,10 +28,8 @@ public static class FloorPrefetch
     private static int _taskSeed;
     private static long _taskEpoch;
 
-    // Counts builds that are queued or executing, NOT slots that are occupied. The distinction is
-    // load-bearing for the checks: an earlier version reported the slot, which Take and Invalidate
-    // clear before they join — so "nothing is running" was true whether or not they had joined,
-    // and a sabotage that removed the join came back green. This counter observes the worker.
+    // Counts builds that are queued or executing, not slots that are occupied, so it observes the
+    // worker itself rather than the slot bookkeeping around it.
     private static int _buildsRunning;
 
     // Bumped by anything that invalidates a floor built earlier: a new run, a load, an F9 biome
@@ -46,9 +39,9 @@ public static class FloorPrefetch
     public static int Hits { get; private set; }
     public static int Misses { get; private set; }
 
-    // The CAP LEDGER, not the whole WorldContext. A finished floor is held for as long as the
+    // The cap ledger, not the whole WorldContext. A finished floor is held for as long as the
     // player stays on the previous one, and the context retains per-pass scratch the map does not
-    // need — PocketBiomeMap alone is 8 bytes a cell, ~7.9 MB on a 991x991 floor, live for nothing.
+    // need (PocketBiomeMap alone is 8 bytes a cell).
     private readonly record struct Result(GameMap Map, List<Room> Rooms, Dictionary<string, int> Counts);
 
     // Discards any in-flight or completed prefetch. Called on new run, load and biome hot-reload.
@@ -60,8 +53,8 @@ public static class FloorPrefetch
             _epoch++;
             running = _task;
         }
-        // Join with the slot STILL OCCUPIED. The work cannot be cancelled mid-pass, and letting it
-        // run on while a fresh generation starts is exactly the overlap this class prevents.
+        // Join with the slot still occupied. The work cannot be cancelled mid-pass, and letting it
+        // run on while a fresh generation starts is the overlap this class prevents.
         WaitQuietly(running);
         lock (Gate) if (ReferenceEquals(_task, running)) _task = null;
     }
@@ -73,12 +66,12 @@ public static class FloorPrefetch
         if (floor < 1 || floor > 100) return;
 
         // F100 is the hand-authored Ruby Palace and does not run the pipeline, so there is no
-        // detached form of it to build — prefetching it returned a pipeline floor instead of the
-        // throne room, silently, on every seed. It is a 50x35 hand-stamped map and costs nothing
-        // to build on the spot. Any future floor that bypasses the pipeline belongs here too.
+        // detached form of it to build: a prefetch would return a pipeline floor instead of the
+        // throne room. It is a 50x35 hand-stamped map, cheap to build on the spot. Every floor
+        // that bypasses the pipeline must be excluded here.
         if (FloorScale.IsCastleFloor(floor)) return;
 
-        // Warm every lazily-built cache the pipeline reads BEFORE any work is queued. Both the
+        // Warm every lazily-built cache the pipeline reads before any work is queued. Both the
         // biome table and the prefab library are read-only once populated, but their first
         // population is not synchronized and is documented single-threaded.
         Generation.Prefabs.PrefabLibrary.Shared.LoadAll();
@@ -149,7 +142,7 @@ public static class FloorPrefetch
         return (result.Map, result.Rooms);
     }
 
-    // True while a build is queued or executing. Read by checks, not by gameplay.
+    // True while a build is queued or executing. Read by the verification probes, not by gameplay.
     public static bool InFlight => Volatile.Read(ref _buildsRunning) > 0;
 
     public static void ResetCountersForTest() { Hits = 0; Misses = 0; }

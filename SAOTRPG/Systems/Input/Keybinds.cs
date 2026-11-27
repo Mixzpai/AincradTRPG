@@ -4,9 +4,8 @@ namespace SAOTRPG.Systems.Input;
 
 // One rebindable action: what it is, where it applies, and the two chords bound to it.
 //
-// Two chords rather than one because the game has always accepted WASD *and* the cursor keys for
-// movement, and collapsing that to a single binding would be a feature removal disguised as a
-// refactor. Either slot may be cleared; an action with neither is simply unbound.
+// Two chords rather than one because movement accepts both WASD and the cursor keys. Either slot
+// may be cleared; an action with neither is unbound.
 public sealed class ActionBinding
 {
     public required GameAction Action { get; init; }
@@ -95,7 +94,7 @@ public static class Keybinds
         _ => (0, 0),
     };
 
-    // Every OTHER action in the same context already using this chord. The rebind screen shows
+    // Every other action in the same context already using this chord. The rebind screen shows
     // these rather than refusing the change: a player who wants to move a binding needs to see
     // what they are about to displace.
     public static IEnumerable<ActionBinding> Conflicts(ActionBinding target, KeyChord chord)
@@ -151,18 +150,15 @@ public static class Keybinds
     };
 
     // ── Reserved keys ────────────────────────────────────────────────
-    // Runes a dialog matches DIRECTLY rather than through a binding, declared so Conflicts()
-    // can see them. They are deliberately not rebindable, for two reasons that no rebind table
-    // can express: a tag chip or a tab digit is POSITIONAL (it means "the Nth of these"), and a
-    // sort suffix is SEQUENTIAL (it means nothing except immediately after the sort key). Listing
-    // either as a standalone action would put rows in the rebind screen that do nothing on their
-    // own — the advertises-what-does-not-work defect this codebase keeps deleting.
+    // Runes a dialog matches directly rather than through a binding, declared so Conflicts()
+    // can see them. They are not rebindable: a tag chip or a tab digit is positional (it means
+    // "the Nth of these"), and a sort suffix is sequential (it means nothing except immediately
+    // after the sort key). Listing either as a standalone action would put rows in the rebind
+    // screen that do nothing on their own.
     //
-    // Adding a rune to a dialog's own switch without adding it here is drift, and
-    // Tools/DialogKeyProbe sweeps every letter and digit against this table to catch it.
+    // Every rune a dialog's own switch matches must be listed here.
     // Sequential = the rune only means anything immediately after another key, so pressing it
-    // on its own does nothing. That is what makes it unbindable, and it is also why a probe
-    // sweeping bare keypresses cannot observe it.
+    // on its own does nothing.
     private static readonly Dictionary<InputContext, (char Rune, string Use, bool Sequential)[]>
         ReservedKeys = new()
     {
@@ -192,8 +188,7 @@ public static class Keybinds
             ? list : Enumerable.Empty<(char, string, bool)>();
 
     // What already claims this chord in this context outside the binding table, if anything.
-    // Conflicts() alone cannot answer that, which is why adding a Bestiary key needed a hand
-    // check against a rune switch.
+    // Conflicts() sees only the binding table, so it cannot answer that.
     public static string? ReservedUse(InputContext context, KeyChord chord)
     {
         if (chord.Rune == '\0' || chord.Shift || chord.Ctrl || chord.Alt) return null;
@@ -292,6 +287,7 @@ public static class Keybinds
             B(GameAction.MoveSouthWest, InputContext.Map, "Move south-west", C('z')),
             B(GameAction.MoveSouthEast, InputContext.Map, "Move south-east", C('c')),
             B(GameAction.Wait,          InputContext.Map, "Wait a turn",     K(KeyCode.Space)),
+            B(GameAction.WaitMenu,      InputContext.Map, "Wait...",         C('|')),
 
             // ── Map: actions ─────────────────────────────────────────
             B(GameAction.Look,             InputContext.Map, "Look around",       C('l')),
@@ -302,7 +298,7 @@ public static class Keybinds
             B(GameAction.OpenStats,        InputContext.Map, "Character sheet",   C('p')),
             B(GameAction.OpenHelp,         InputContext.Map, "Help / key list",   C('h')),
             B(GameAction.OpenPlayerGuide,  InputContext.Map, "Player guide",      C('b')),
-            B(GameAction.Rest,             InputContext.Map, "Rest",              C('r')),
+            B(GameAction.Rest,             InputContext.Map, "Sleep",             C('r')),
             B(GameAction.OpenQuestLog,     InputContext.Map, "Quest log",         C('j')),
             B(GameAction.OpenKillStats,    InputContext.Map, "Kill statistics",   C('k')),
             B(GameAction.OpenEquipment,    InputContext.Map, "Equipment",         C('t')),
@@ -373,15 +369,14 @@ public static class Keybinds
             B(GameAction.MilestoneUnequipTitle, InputContext.Milestones, "Unequip title", C('u')),
             B(GameAction.MilestoneCycleBucket,   InputContext.Milestones, "Cycle collectable bucket", C('b')),
             B(GameAction.MilestoneFocusKillLog,  InputContext.Milestones, "Focus the kill log",       C('k')),
-            // Bound rather than hardcoded, and this does NOT breach the rule that keeps Tab
-            // fixed: that rule protects Tab in its LIST-NAVIGATION role, and this dialog claimed
-            // it for category cycling, which is exactly what removed focus movement from the
-            // dialog. Making the claim rebindable lets a player hand Tab back to the framework.
-            // It is also the only way the claim can be seen at all — ReservedKeys is keyed by
-            // rune, and Tab has none, so it could never have been declared there.
+            // Bound rather than hardcoded. Tab stays fixed only in its list-navigation role; this
+            // dialog claims it for category cycling, which takes focus movement away from the
+            // dialog, so the claim is rebindable and a player can hand Tab back to the framework.
+            // ReservedKeys is keyed by rune and Tab has none, so a binding is the only place
+            // the claim can be declared.
             // Two actions, not one with Shift reversing it: exact-match is the default and
-            // movement's loose match is the documented single exception, and separate actions
-            // keep both directions independently visible to Conflicts.
+            // movement's loose match is the single exception, and separate actions keep both
+            // directions independently visible to Conflicts.
             B(GameAction.MilestoneNextTab, InputContext.Milestones, "Next category",     K(KeyCode.Tab)),
             B(GameAction.MilestonePrevTab, InputContext.Milestones, "Previous category", S2(KeyCode.Tab)),
 
@@ -395,7 +390,7 @@ public static class Keybinds
             B(GameAction.WorldMapPrevPoint, InputContext.WorldMap, "Previous point of interest", S2(KeyCode.Tab)),
 
             // ── Message log ──────────────────────────────────────────
-            // CDDA's MESSAGE_LOG keys, two per action; Esc closes it as it closes every dialog.
+            // Two keys per action; Esc closes it as it closes every dialog.
             B(GameAction.MessageLogUp,          InputContext.Log, "Scroll up",    K(KeyCode.CursorUp), C('k')),
             B(GameAction.MessageLogDown,        InputContext.Log, "Scroll down",  K(KeyCode.CursorDown), C('j')),
             B(GameAction.MessageLogPageUp,      InputContext.Log, "Page up",      K(KeyCode.PageUp)),
@@ -407,9 +402,9 @@ public static class Keybinds
             // ── Bestiary ─────────────────────────────────────────────
             B(GameAction.BestiarySearch,    InputContext.Bestiary, "Search",             C('/')),
             // Conflicts() cannot vet this: every other key on that dialog is matched by a bare
-            // rune switch rather than bound here. Checked by hand against it — y b u c s and the
-            // tag chips 1-9 0 a w are taken, 'f' appears only inside the sort-suffix branch,
-            // which returns early and is reachable only after 's'.
+            // rune switch rather than bound here. In that switch y b u c s and the tag chips
+            // 1-9 0 a w are taken, and 'f' appears only inside the sort-suffix branch, which
+            // returns early and is reachable only after 's'.
             B(GameAction.BestiaryFloorBand, InputContext.Bestiary, "Cycle floor band", C('f')),
             B(GameAction.BestiaryBossOnly,          InputContext.Bestiary, "Boss-only filter",   C('b')),
             B(GameAction.BestiaryShowUndiscovered,  InputContext.Bestiary, "Show undiscovered",  C('u')),

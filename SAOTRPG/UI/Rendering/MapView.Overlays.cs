@@ -18,7 +18,6 @@ public partial class MapView
     {
         using var _overlaysScope = Profiler.Begin("MapView.Overlays");
         RenderHeightmapOverlay(w, h);
-        // Biome tint overlay disabled — overwrote ASCII glyph contrast. Kept method for potential revival at subtle alpha.
         if (SAOTRPG.Systems.Persistence.UserSettings.Current.ShowFootsteps) RenderFootstepTrail(w, h);
         RenderBossBar(w);
         RenderCorpseMarkers(w, h);
@@ -33,12 +32,12 @@ public partial class MapView
         RenderScorchMarks(w, h);
         RenderMobTrails(w, h);
         RenderAggroIndicators(w, h);
-        // Ambient tile layer (implemented by TileAnimations partial — stub here).
+        // Ambient tile layer, implemented in MapView.TileAnimations.
         RenderAmbientTiles(w, h);
         RenderSkillFlashes(w, h, dtMs);
         RenderKillStreakFlash(w, h, dtMs);
         RenderLevelUpFlash(w, h, dtMs);
-        // Border flash draws LAST to win the cell over the low-HP background pulse.
+        // Border flash draws last to win the cell over the low-HP background pulse.
         RenderRainOverlay(w, h);
         RenderBossEntrance(w, h);
         RenderLowHpPulse(w, h);
@@ -46,7 +45,7 @@ public partial class MapView
         RenderLookMode(w, h);
         RenderRangedFireMode(w, h);
         TickShake(dtMs);
-        // Particles draw BELOW projectiles + popups so later passes overwrite.
+        // Particles draw below projectiles + popups so later passes overwrite.
         RenderParticles(w, h, dtMs);
         RenderProjectiles(w, h, dtMs);
         RenderDamagePopups(w, h, dtMs);
@@ -54,7 +53,7 @@ public partial class MapView
         // debug modes replace all of it. Toasts and the divine banner still land on top.
         RenderLightDebugOverlay(w, h);
         RenderToasts(w, h);
-        // Divine obtain banner draws LAST — above every other overlay so the
+        // Divine obtain banner draws last — above every other overlay so the
         // 3s celebration is unmissable; auto-dismisses via DivineObtainBanner.Tick.
         RenderDivineObtainBanner(w, h);
     }
@@ -152,11 +151,9 @@ public partial class MapView
         }
     }
 
-    // The biome tint wash used to live here as an uncalled overlay pass. It is in
-    // MapView.Rendering's ApplyLighting now, which is the seam every visible cell already passes
-    // through and the only one the tile-layer cache can see — as an overlay it repainted the whole
-    // viewport every frame, and it blended against the tile's UNLIT background, discarding the
-    // lighting it was drawn on top of.
+    // The biome tint wash is not an overlay: it is applied in MapView.Rendering's ApplyLighting,
+    // the seam every visible cell passes through and the only one the tile-layer cache can see,
+    // so it neither repaints the whole viewport every frame nor discards the lighting beneath it.
 
     private void RenderFootstepTrail(int w, int h)
     {
@@ -269,9 +266,8 @@ public partial class MapView
         }
     }
 
-    // Repaints loose items unlit, so a drop stays findable at the dark edge of sight. It must
-    // carry the RARITY colour: painting a flat white here discarded the one channel that tells
-    // a Legendary from vendor junk, on every visible item, every frame.
+    // Repaints loose items unlit, so a drop stays findable at the dark edge of sight. It carries
+    // the rarity colour, the one channel that tells a Legendary from vendor junk.
     private void RenderLootSparkle(int w, int h)
     {
         foreach (var (mx, my) in _map.ItemTiles)
@@ -427,13 +423,12 @@ public partial class MapView
         }
     }
 
-    // Cyan apostrophes give Rain weather a visible overlay. Fog removed (visual noise).
+    // Cyan apostrophes give Rain weather a visible overlay.
     //
-    // Anchored to the WORLD, not the viewport. Drops fall down a fixed lattice of map columns, so
-    // walking scrolls the rain lines past you the way terrain scrolls; picking viewport columns
-    // instead dragged the whole pattern along with the camera. Position is also a pure function of
-    // the wall-clock step rather than Random.Shared per frame — re-rolling every frame ran the rain
-    // at whatever the frame rate happened to be, which read as a strobe and ignored --freeze-anim.
+    // Anchored to the world, not the viewport: drops fall down a fixed lattice of map columns, so
+    // walking scrolls the rain lines past the player the way terrain scrolls. Position is a pure
+    // function of the wall-clock step, not a per-frame random roll, so the rain moves at a fixed
+    // rate whatever the frame rate and stops under --freeze-anim.
     //
     // Spacing and period are the density dials: roughly (viewportW / spacing) lines, each carrying
     // (viewportH / period) drops.

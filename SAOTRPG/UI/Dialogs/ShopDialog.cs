@@ -63,7 +63,7 @@ public static class ShopDialog
             foreach (var defId in newFlags) ShopTierSystem.MarkSeen(defId);
         }
 
-        // Per-vendor invested stock — tiers beyond the global band, scoped to THIS vendor.
+        // Per-vendor invested stock — tiers beyond the global band, scoped to this vendor.
         foreach (var item in VendorInvestmentSystem.BuildVendorExtraStock(vendor))
         {
             if (!string.IsNullOrEmpty(item.DefinitionId)
@@ -154,9 +154,9 @@ public static class ShopDialog
         var investBtn = DialogHelper.CreateButton("Invest");
         var closeBtn = DialogHelper.CreateButton("Leave", isDefault: true);
 
-        // Flat, not nested. These six sat inside a CanFocus=false container, which Terminal.Gui
-        // refuses to traverse — twelve Tab presses never left the list, so every shop action was
-        // unreachable by keyboard. Pos.Align centres them as a group with no width to maintain.
+        // Flat, not nested: Terminal.Gui does not traverse a CanFocus=false container, so buttons
+        // inside one are unreachable by keyboard. Pos.Align centres them as a group with no width
+        // to maintain.
         foreach (var b in new[] { buyBtn, sellBtn, junkBtn, repairBtn, investBtn, closeBtn })
         {
             b.X = Pos.Align(Alignment.Center,
@@ -462,7 +462,7 @@ public static class ShopDialog
         };
 
         // Enter is Command.Accept. Unclaimed it bubbles to the dialog's default button — the
-        // "Leave" button — so the advertised "Enter: buy/sell" shut the shop instead. Routing it
+        // "Leave" button — so the advertised "Enter: buy/sell" would shut the shop. Routing it
         // to whichever button owns the current mode keeps one copy of the buy/sell logic.
         listView.Accepting += (s, e) =>
         {
@@ -481,12 +481,9 @@ public static class ShopDialog
     private static string BuildComparison(BaseItem shopItem, Player player) =>
         shopItem is not EquipmentBase eq ? "" : GearCompare.BuildDiffForPlayer(player, eq);
 
-    // Sell price w/ floor bonus. With `player`: symmetric karma mult (Honorable +10%, Shady -10%).
-    // Outlaw (karma ≤ -50) already blocked at entry.
     // What the vendor charges. Karma tier, Bargaining and Beater all stack multiplicatively
     // (L99 Bargaining × Honorable = 0.85 × 0.90 = 0.765). Public and static so the sell side can
-    // be checked against it — while this was a local function inside Show(), nothing could compare
-    // the two, and the sell price silently overtook it partway up the tower.
+    // be capped against it.
     public static int CalcBuyPrice(BaseItem item, Player? player = null)
     {
         float karmaMul = player == null ? 1f : KarmaSystem.ShopPriceMultiplier(player.Karma);
@@ -501,6 +498,8 @@ public static class ShopDialog
     // price partway up the tower — buy, sell straight back, repeat, for unbounded Col.
     private const float VendorSpread = 0.9f;
 
+    // Sell price w/ floor bonus. With `player`: symmetric karma mult (Honorable +10%, Shady -10%).
+    // Outlaw (karma ≤ -50) already blocked at entry.
     public static int CalcSellPrice(BaseItem item, int floor = 1, Player? player = null)
     {
         int basePrice = Math.Max(1, item.Value / 2);
@@ -515,10 +514,9 @@ public static class ShopDialog
             float sellBargain = 2f - LifeSkillSystem.BargainingDiscount(player);
             raw = Math.Max(1, (int)Math.Round(raw * sellMul * sellBargain));
         }
-        // Tied to THIS player's buy price, not a neutral one: whatever discounts they can buy at,
-        // the vendor must not then buy back above. A consequence worth knowing — deep enough that
-        // the ceiling binds, a heavy discount lowers the sell price too, because it lowered what
-        // the same item costs to acquire.
+        // Tied to this player's buy price, not a neutral one: whatever discounts they can buy at,
+        // the vendor must not then buy back above. Where the ceiling binds, a heavy discount
+        // lowers the sell price too, because it lowered what the same item costs to acquire.
         return Math.Min(raw, Math.Max(1, (int)(CalcBuyPrice(item, player) * VendorSpread)));
     }
 

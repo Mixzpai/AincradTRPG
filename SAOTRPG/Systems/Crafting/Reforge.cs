@@ -28,7 +28,7 @@ public static class Reforge
         };
     }
 
-    // Eligibility: Common-Legendary, IsEnhanceable (LAB-sealed weapons rejected), Divine inelgible.
+    // Eligibility: Common-Legendary, IsEnhanceable (LAB-sealed weapons rejected), Divine ineligible.
     public static bool IsEligible(Weapon weapon, out string? reason)
     {
         string rarity = weapon.Rarity ?? "";
@@ -52,7 +52,7 @@ public static class Reforge
     }
 
     // Preview a roll for the given seed without mutating the weapon. Caller renders
-    // both before/after for the saotrpg-ui confirmation modal.
+    // both before/after in the confirmation modal.
     public static PreviewResult PeekRoll(Weapon weapon, int seed)
     {
         string before = DescribeBonuses(weapon.Bonuses);
@@ -91,10 +91,8 @@ public static class Reforge
         foreach (var mat in cost.Mats) player.Inventory.ConsumeByDefinitionId(mat.DefId, mat.Qty);
         player.ColOnHand -= cost.ColCost;
 
-        // The GAMEPLAY stream, not a fresh Random. An unseeded `new Random()` here meant two
-        // players on one seed got different reforge results from identical play, breaking the
-        // guarantee that a run reproduces from its seed — and it is a stat-mutating roll, so
-        // it is gameplay by what it DOES whatever folder it sits in.
+        // The gameplay stream, not a fresh Random: this is a stat-mutating roll, so it must
+        // reproduce from the run's seed like any other gameplay draw.
         var newBonuses = RollBonuses(weapon, weapon.Rarity ?? "Common", RunRng.Stream);
         weapon.Bonuses = newBonuses;
         player.Inventory.InvalidateStatCache();
@@ -129,7 +127,7 @@ public static class Reforge
     }
 
     // A weapon's own effects lead Bonuses; every other source appends after them.
-    // shortcut: a procedural weapon has no definition, so assume LootGenerator.MakeWeapon's two; store a count if that changes.
+    // A procedural weapon has no definition, so it is assumed to carry LootGenerator.MakeWeapon's two.
     private static int BaseEffectCount(Weapon weapon) =>
         Math.Min(weapon.Bonuses.Effects.Count,
             weapon.DefinitionId != null && ItemRegistry.Create(weapon.DefinitionId) is Weapon def

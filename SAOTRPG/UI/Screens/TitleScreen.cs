@@ -8,9 +8,8 @@ namespace SAOTRPG.UI.Screens;
 // Main title screen -- Aincrad floating castle with menu.
 public static class TitleScreen
 {
-    // Solid letterforms. The font this came from draws a 3D edge with box-drawing glyphs; those
-    // are gone, which is what dated it, and it also freed a row — the old last line was pure
-    // shadow. Each row is its own Label so it can carry one step of a vertical gradient.
+    // Solid letterforms with no box-drawing 3D edge. Each row is its own Label so it can carry one
+    // step of a vertical gradient.
     private static readonly string[] BannerRows =
     {
         " █████  ██ ███    ██  ██████ ██████   █████  ██████  ",
@@ -46,9 +45,8 @@ public static class TitleScreen
     //
     // The rows above are a design for a terminal with room for the banner, the cards and the
     // bottom-anchored footer. The footer keeps its anchor whatever the height, so on a short
-    // terminal the fixed rows walk into it — at the documented 120x30 minimum the card block
-    // landed exactly on the footer rule. Everything above the footer shifts up by however many
-    // rows are missing, and nothing moves at all once there is room.
+    // terminal the fixed rows would walk into it. Everything above the footer shifts up by
+    // however many rows are missing, and nothing moves at all once there is room.
     private static int Squeeze(int interiorHeight) =>
         interiorHeight <= 0
             ? 0
@@ -59,9 +57,8 @@ public static class TitleScreen
     private static Pos Row(int designRow, View host) =>
         Pos.Func(v => designRow - Squeeze(v?.Viewport.Height ?? 0), host);
 
-    // Gradient endpoints for the banner, top to bottom: the SAO system-window cyan falling into
-    // the interface accent.
-    // PATH-D-PORT: a per-row colour ramp. A renderer swap reimplements the lerp, nothing else.
+    // Gradient endpoints for the banner's per-row colour ramp (see Lerp), top to bottom: the SAO
+    // system-window cyan falling into the interface accent.
     private static readonly Color BannerTop    = new(0x4F, 0xC3, 0xF7);
     private static readonly Color BannerBottom = new(0xFF, 0xB4, 0x54);
 
@@ -92,9 +89,8 @@ public static class TitleScreen
         DebugLogger.LogScreen("TitleScreen");
 
         // Aincrad floats, so there is sky above and below it. The field spans the whole screen
-        // and thins towards the middle, which is what turns the empty rows into composed space
-        // rather than the void a four-row scatter at the top left behind. Static and sparse: it
-        // never animates and never rises above one glyph in forty cells.
+        // and thins towards the middle, so the empty rows read as composed space. Static and
+        // sparse: it never animates and never rises above one glyph in thirty cells.
         var stars = new Label
         {
             Text = "", Id = "starfield", X = 0, Y = 0,
@@ -153,7 +149,7 @@ public static class TitleScreen
         var optionsBtn  = MenuBtn("Options",   menuX, menuY + 3, false);
         var exitBtn     = MenuBtn("Exit",      menuX, menuY + 4, false);
 
-        // Last-run card: turns a dead status line into the reason to press Load.
+        // Last-run card: shows the newest save, the run Load would resume.
         var runLines = BuildRunCard(RunCardWidth - Card.ChromeWidth);
         var runLabels = new Label[runLines.Length];
         for (int i = 0; i < runLines.Length; i++)
@@ -344,6 +340,6 @@ public static class TitleScreen
         }
     }
 
-    // Routes to RecordsDialog — 80x30 summary + achievements + recent runs + leaderboard.
+    // Routes to RecordsDialog — 80x30 summary + career stats + recent runs + leaderboard.
     private static void ShowRecords() => Dialogs.RecordsDialog.Show();
 }

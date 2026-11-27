@@ -48,7 +48,7 @@ public sealed class OreVeinPlacementPass : IGenerationPass
         }
     }
 
-    // Floor-band base vein counts (locked in scout 2.5).
+    // Floor-band base vein counts.
     private static int BaseVeinsForFloor(int floor, Random rng)
     {
         if (floor <= 1) return 0;
@@ -93,32 +93,18 @@ public sealed class OreVeinPlacementPass : IGenerationPass
         _ => TileType.OreVeinIron,
     };
 
-    // Seed must be a Wall in interior, outside SafeZone, inside disk, and >=4 tiles from any room.
-    // WHAT ROCK AN ORE VEIN MAY REPLACE.
-    //
-    // Both the seed picker and the grower used to require TileType.Wall, and the heightmap
-    // overworld barely produces Wall: measured on floor 2, 377 Wall tiles against 216,827
-    // Mountain — and the few Wall tiles that exist are prefab interiors, which IsTooCloseToRoom
-    // then rejects. So all 40 seed attempts failed on every floor and NOT ONE ORE VEIN EVER
-    // SPAWNED: 0 of 21 floors across 3 seeds. The whole Mining life skill — three pickaxe tiers,
-    // MiningOreTables, the biome Enhancement Ore that OreTableId selects, the mining perks and
-    // milestones — sat downstream of a pass that could never place anything.
-    //
-    // Wall stays in the set because labyrinth floors are built from it; Mountain and Rock are the
-    // overworld's stone and are what the pass's own comment ("terrain rocks already exist") always
-    // meant.
+    // What rock an ore vein may replace. The heightmap overworld's stone is Mountain and Rock; it
+    // has few Wall tiles, and those are prefab interiors, which IsTooCloseToRoom rejects. Wall
+    // stays in the set because labyrinth floors are built from it.
     private static bool IsVeinHost(TileType t) =>
         t is TileType.Wall or TileType.Mountain or TileType.Rock;
 
-    // EVERY TILE A VEIN COULD SEED ON, collected in one scan.
+    // Every tile a vein could seed on — a host, inside the disk, in the interior and at least 4
+    // tiles from any room — collected in one scan.
     //
-    // This used to throw 40 random darts at the whole map and keep the first that landed on a
-    // valid host. Measured, the viable pool is 7,770 tiles of ~1,000,000 on floor 2 — 0.8% — so
-    // the darts almost never landed and no floor got any ore at all. Widening the host test alone
-    // moved it from 0 of 21 floors to 2 of 21: the sampling, not the predicate, was the wall.
-    //
-    // One scan of a 1000x1000 floor is cheap beside the passes that already walk every cell, and
-    // it makes placement DETERMINISTIC in the useful sense: if hosts exist, veins are placed.
+    // Viable hosts are a tiny fraction of the map, so random darts would almost never land. One
+    // scan of a 1000x1000 floor is cheap beside the passes that already walk every cell, and it
+    // makes placement deterministic in the useful sense: if hosts exist, veins are placed.
     private static List<(int X, int Y)> CollectSeedCandidates(WorldContext ctx)
     {
         var map = ctx.Map;

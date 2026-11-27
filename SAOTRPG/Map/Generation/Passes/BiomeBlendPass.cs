@@ -1,7 +1,7 @@
 namespace SAOTRPG.Map.Generation.Passes;
 
-// Softens tile edges (forest→tall-grass, rocks/shores→sparse). Byte snapshot replaces 4-byte enum,
-// CircleMask gate skips non-disk tiles.
+// Softens tile edges (forest→tall-grass, rocks/shores→sparse). Reads a byte snapshot rather than
+// the 4-byte enum grid; CircleMask gate skips non-disk tiles.
 public sealed class BiomeBlendPass : IGenerationPass
 {
     public string Name => "BiomeBlend";
@@ -43,12 +43,12 @@ public sealed class BiomeBlendPass : IGenerationPass
         return cls;
     }
 
-    // Byte-snapshot variant. Drops 4MB→1MB at 1000x1000; CircleMask gate skips off-disk tiles.
+    // One byte a cell in the snapshot; CircleMask gate skips off-disk tiles.
     //
-    // The snapshot is FLAT and column-major (x*h + y), which is the layout the 3x3 scan below wants
+    // The snapshot is flat and column-major (x*h + y), which is the layout the 3x3 scan below wants
     // — the inner loop walks y, so each of the three sampled columns is a contiguous run. It is
-    // FILLED row-major, because that is the order GameMap stores tiles in and streaming the 16 MB
-    // tile grid matters more than the strided writes into a 1 MB table.
+    // filled row-major, because that is the order GameMap stores tiles in and streaming the large
+    // tile grid matters more than the strided writes into the small table.
     private static void BlendBiomes(GameMap map, Random rng, bool[,]? circleMask,
         float forestFringeChance, float rockFringeChance, float shoreFringeChance)
     {

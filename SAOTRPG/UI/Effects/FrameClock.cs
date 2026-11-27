@@ -3,7 +3,7 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Effects;
 
-// Canonical real-time wall-clock for animations. Single global tick; replaces per-MapView TickFrameClock.
+// The real-time wall clock every animation reads: one global tick shared by all views.
 // Pause-on-modal: animations freeze while a Dialog/overlay is on top of the main Toplevel.
 public static class FrameClock
 {
@@ -19,15 +19,13 @@ public static class FrameClock
     public static long ElapsedMs => _elapsedMs;
 
     // Clock for ambient, continuously-looping visuals — flickering tiles, water flow, rain,
-    // shrine sparkle. Pinned by --freeze-anim so a perf run can separate timed animation from
-    // other sources of per-frame cell churn, and by the reduce-motion setting.
+    // shrine sparkle. Pinned to 0 by --freeze-anim and by the reduce-motion setting.
     //
     // Event-scoped timers (toasts, banners, effect lifetimes) must keep reading ElapsedMs:
-    // freezing those would stop them ever expiring, which is the failure the paused-clock bug
-    // already produced once.
+    // freezing those would stop them ever expiring.
     public static long AmbientMs => Motion.Animate ? _elapsedMs : 0L;
 
-    // True while an explicit Pause() is held OR something is stacked above the root session.
+    // True while an explicit Pause() is held or something is stacked above the root session.
     private static bool IsPaused => _pauseDepth > 0 || ModalOnTop();
 
     // Call once per render frame. Returns dtMs since last call, clamped to 200ms.
@@ -46,7 +44,7 @@ public static class FrameClock
         return (int)dtMs;
     }
 
-    // Explicit pause hooks (DialogHelper.RunModal). Belt-and-suspenders alongside ModalOnTop().
+    // Explicit pause hooks, called by DialogHelper.RunModal in addition to the ModalOnTop() test.
     public static void Pause() => _pauseDepth++;
     // Drops the baseline too: Tick is not called beneath a dialog, so its paused branch never
     // resets it, and the first frame after would otherwise see the whole dialog as one dt.
@@ -57,11 +55,9 @@ public static class FrameClock
 
     // True when a dialog or overlay sits above the root session.
     //
-    // Depth, not IRunnable.IsModal: Terminal.Gui sets IsModal on EVERY runnable it pushes —
-    // including the main window at startup — and restores it on the runnable beneath a closing
-    // dialog. Testing it therefore reports "modal" during ordinary gameplay, which pinned this
-    // clock paused permanently: Tick returned 0 forever, so ElapsedMs never advanced, every
-    // wall-clock animation froze, and every timer that decrements by dt stopped expiring.
+    // Depth, not IRunnable.IsModal: Terminal.Gui sets IsModal on every runnable it pushes,
+    // including the main window, and restores it on the runnable beneath a closing dialog, so
+    // IsModal reads true during ordinary gameplay and would hold this clock paused forever.
     private static bool ModalOnTop()
     {
         int depth = AppHost.App.SessionStack?.Count ?? 0;

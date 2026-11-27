@@ -3,6 +3,7 @@ using SAOTRPG.UI.Helpers;
 using SAOTRPG.Systems.Persistence;
 using SAOTRPG.Systems.RunState;
 using SAOTRPG.Systems.Turns;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Screens;
 
@@ -74,7 +75,7 @@ public static class VictoryScreen
         int summaryLines = summaryText.Split('\n').Length;
         int buttonY = SummaryY + summaryLines + 1;
 
-        var returnBtn = new Button
+        var returnBtn = new PlainButton
         {
             Text = " Return to Title ",
             X = Pos.Center(), Y = buttonY,
@@ -125,7 +126,7 @@ public static class VictoryScreen
             StatRow("Floors Cleared", 100) +
             StatRow("Enemies Slain",  kills) +
             StatRow("Turns Taken",    turns) +
-            StatRow("Col Earned",     player.ColOnHand) +
+            StatRow("Col Earned",     turnManager?.TotalColEarned ?? player.ColOnHand) +
             StatRow("Items Held",     itemCount) +
             StatRow("Final Level",    player.Level);
 

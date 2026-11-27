@@ -6,7 +6,7 @@ using SAOTRPG.UI.GameLog;
 namespace SAOTRPG.Systems.Crafting;
 
 // Cooking pipeline: ingredient check → consume → output. Gold/Legendary
-// recipes require Asuna to be in the party (canonical Cooking Extra Skill).
+// recipes require Asuna to be in the party (her Cooking Extra Skill).
 public static class CookingSystem
 {
     // Check whether the player can currently cook this recipe.
@@ -55,7 +55,7 @@ public static class CookingSystem
         return output;
     }
 
-    // Asuna gating — Canon: her Cooking Extra Skill unlocks the top tiers.
+    // Asuna gating — her Cooking Extra Skill unlocks the top tiers.
     private static bool HasAsuna()
     {
         foreach (var ally in PartySystem.Members)

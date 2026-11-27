@@ -10,7 +10,7 @@ public static class KarmaSystem
     public const int Min = -100;
     public const int Max = +100;
 
-    // Canonical event deltas (consts so quest/combat hooks match guide).
+    // Event deltas (consts so quest/combat hooks match the Player Guide).
     public const int DeltaPkKill          = +2;  // PKer (hostile human)
     public const int DeltaPeacefulKill    = -5;  // non-hostile creature
     public const int DeltaQuestComplete   = +3;
@@ -23,7 +23,7 @@ public static class KarmaSystem
     // Fires after Adjust applies a non-zero clamp delta. (oldKarma, newKarma, oldTier, newTier).
     public static event Action<int, int, Tier, Tier>? KarmaChanged;
 
-    // Hostile-human mob name fragments. Kills here GAIN karma.
+    // Hostile-human mob name fragments. Kills here gain karma.
     private static readonly string[] PkerFragments =
     {
         "Titan's Hand", "Crimson Longsword", "Laughing Coffin PKer", "Fallen Paladin",

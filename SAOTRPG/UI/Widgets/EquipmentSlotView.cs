@@ -29,7 +29,7 @@ public class EquipmentSlotView : View
         (EquipmentSlot.LeftRing,  '\u25CB', Color.BrightMagenta,  "Left Ring"),  // ○
         (EquipmentSlot.Bracelet,  '\u25CB', Color.BrightGreen,    "Bracelet"),   // ○
         (EquipmentSlot.Necklace,  '\u25CB', Color.BrightGreen,    "Necklace"),   // ○
-        // Pickaxe + future utility tools. Icon ⛏-like '⚒' renders broadly across terminals.
+        // Pickaxe and other utility tools. Icon ⛏-like '⚒' renders broadly across terminals.
         (EquipmentSlot.Tool,      '\u2692', Color.BrightCyan,     "Tool"),       // ⚒
     };
 

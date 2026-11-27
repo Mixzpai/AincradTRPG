@@ -1,7 +1,7 @@
 namespace SAOTRPG.UI.Helpers;
 
 // Centralized app version string — avoids duplicating the reflection call
-// across TitleScreen, OptionsScreen, and any future version displays.
+// across TitleScreen, OptionsScreen, and any other version display.
 public static class AppVersion
 {
     // Display-ready version string, e.g. "v0.1.0".

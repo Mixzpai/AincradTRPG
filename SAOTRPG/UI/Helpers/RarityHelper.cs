@@ -52,8 +52,8 @@ public static class RarityHelper
         _           => "?"
     };
 
-    // Item name color based on rarity tier. Divine uses BrightRed — the "sacred
-    // flame" / Mirror-tier / Exotic-tier convention above Legendary yellow.
+    // Item name color based on rarity tier. Divine uses BrightRed, the "sacred
+    // flame" tier above Legendary yellow.
     public static Color GetColor(string? rarity) => rarity switch
     {
         "Divine"    => Color.BrightRed,

@@ -1,3 +1,5 @@
+using SAOTRPG.UI.Widgets;
+
 namespace SAOTRPG.UI.Helpers;
 
 // Shared dialog utilities: factory, separators, buttons, confirm, Esc-close, close footer.
@@ -10,7 +12,7 @@ public static class DialogHelper
         => "  " + new string(ScreenHeader.Hairline, Math.Max(0, dialogWidth - padding));
 
     // Creates a standard dialog button with consistent styling.
-    public static Button CreateButton(string text, bool isDefault = false) => new()
+    public static Button CreateButton(string text, bool isDefault = false) => new PlainButton
     {
         Text = $" {text} ",
         SchemeName = ColorSchemes.ButtonName,
@@ -31,7 +33,7 @@ public static class DialogHelper
     // Idle rows pad 2 spaces each side so horizontal alignment stays stable when focus moves.
     public static Button CreateMenuButton(string text, bool isDefault = false)
     {
-        var btn = new Button
+        var btn = new PlainButton
         {
             Text = isDefault ? $"► {text} ◄" : $"  {text}  ",
             SchemeName = ColorSchemes.MenuButtonName,
@@ -54,21 +56,16 @@ public static class DialogHelper
 
     // Focus marker for a vertical menu row.
     //
-    // Was U+258C LEFT HALF BLOCK, on the theory that a left-edge bar reads as a modern selection
-    // idiom. Measured on the real screen it was present and drawn at 10.79:1 against the row — and
-    // the dev still could not see it, so contrast was never the problem: a half-block one column
-    // from the label, in the SAME colour as the label, does not read as a marker.
-    //
-    // U+25B8 is in Geometric Shapes, the same block as the U+25BA already used by the horizontal
-    // button rows and known to render on this terminal, so coverage is near-certain. If it still
-    // reads light, U+25BA is the proven glyph and this is the one constant to change.
+    // A marker one column from the label, in the same colour as the label, reads as a marker only
+    // through its shape, so it is a pointer rather than a half-block bar. U+25B8 is in Geometric
+    // Shapes, the same block as the U+25BA used by the horizontal button rows.
     public const char MenuRowMarker = '▸';
 
     // Default width of a menu row. Wide enough for the longest label the game uses plus the
     // bar and its padding; the row tints across this whole width when focused.
     public const int MenuRowWidth = 24;
 
-    // A row in a VERTICAL menu list: fixed width, label left-aligned, an accent bar at the
+    // A row in a vertical menu list: fixed width, label left-aligned, an accent bar at the
     // left edge and a surface tint across the full row when focused.
     //
     // This is the idiom for a stacked menu. Horizontal button rows keep CreateMenuButton and
@@ -77,12 +74,12 @@ public static class DialogHelper
     // the accent colour nor the surface lift.
     //
     // Why the label is padded: Terminal.Gui's Button paints the Focus attribute only behind its
-    // TEXT, not across its frame. Measured — a 24-column button with a 10-column label tinted
-    // 10 cells and left the other 14 on the Normal attribute. Padding the label to the row
-    // width makes the whole row text, which gives one continuous run and needs no custom View.
+    // text, not across its frame, so a short label would tint only its own cells. Padding the
+    // label to the row width makes the whole row text, which gives one continuous run and needs
+    // no custom View.
     public static Button CreateMenuRow(string text, int width = MenuRowWidth, bool isDefault = false)
     {
-        var btn = new Button
+        var btn = new PlainButton
         {
             Text = RowText(text, width, isDefault),
             Width = width, Height = 1,
@@ -102,7 +99,6 @@ public static class DialogHelper
         return btn;
     }
 
-    // The bar occupies the first cell so the label never shifts between states.
     // Re-renders a menu row whose label changes while it is on screen, keeping the focus
     // decoration the row currently has. Callers must not assign Text directly: the row's own
     // focus handler re-wraps whatever it finds there, so a raw label would lose its padding and
@@ -110,6 +106,7 @@ public static class DialogHelper
     public static void SetMenuRowLabel(Button row, string label, int width = MenuRowWidth) =>
         row.Text = RowText(label, width, row.HasFocus);
 
+    // The marker occupies the first cell so the label never shifts between states.
     private static string RowText(string label, int width, bool focused) =>
         ((focused ? MenuRowMarker + " " : "  ") + label).PadRight(width);
 
@@ -117,13 +114,13 @@ public static class DialogHelper
     private static string RowLabel(string rowText) =>
         rowText.Trim().TrimStart(MenuRowMarker).Trim();
 
-    // Strips ► … ◄ mirror (and legacy single-direction) so core label can be rewrapped.
+    // Strips the ► … ◄ mirror pair (and a single trailing ►) so the core label can be rewrapped.
     private static string StripMenuMarkers(string text)
     {
         var s = text.Trim();
         if (s.StartsWith("► ")) s = s[2..];
         if (s.EndsWith(" ◄")) s = s[..^2];
-        if (s.EndsWith(" ►")) s = s[..^2];  // legacy guard
+        if (s.EndsWith(" ►")) s = s[..^2];  // single-direction form
         return s.Trim();
     }
 
@@ -131,7 +128,7 @@ public static class DialogHelper
     // so every popup looks identical from frame inward.
     //
     // Requested dimensions are clamped to the screen. Most callers pass fixed constants
-    // sized for a comfortable terminal, which overflow on a small one; clamping here fixes
+    // sized for a comfortable terminal, which overflow on a small one; clamping here covers
     // every call site at once. Dialogs that already size themselves against Screen pass
     // values inside the bound, so the clamp is a no-op for them.
     public static Dialog Create(string title, int width, int height)
@@ -153,7 +150,7 @@ public static class DialogHelper
 
     // A ListView opens with SelectedItem null. Nothing is highlighted, ValueChanged has never
     // fired so any detail pane beside it is still blank, and the player's first arrow key is
-    // spent selecting row 0 instead of moving — measured, the first Down is reported handled and
+    // spent selecting row 0 instead of moving — the first Down is reported handled and
     // changes nothing. Seed row 0 once the source is populated, after ValueChanged is wired.
     // Re-assigning Source resets it to null, so refresh paths call this too.
     public static void SelectFirstRow(ListView list)
@@ -222,7 +219,7 @@ public static class DialogHelper
         };
     }
 
-    // True when the dialog has content below its clamped height AND no way to reach it.
+    // True when the dialog has content below its clamped height and no way to reach it.
     // EnableKeyScroll marks itself here so DiscloseClippedContent stops calling scrollable rows
     // "hidden" — that message is only honest while they are genuinely unreachable.
     private static readonly HashSet<Dialog> s_scrollable = new();
@@ -230,9 +227,9 @@ public static class DialogHelper
     // Says so in the title bar when a dialog's content runs past the height it was clamped to.
     //
     // Create() clamps a requested height to the screen, and a dialog that does not scroll then
-    // draws everything below that clamp nowhere, with no key that reaches it. Silently looking
-    // fine while withholding content is the one failure mode this project rules out; the title
-    // is the only region guaranteed not to collide with the content being reported on.
+    // draws everything below that clamp nowhere, with no key that reaches it. Withheld content
+    // must never look fine; the title is the only region guaranteed not to collide with the
+    // content being reported on.
     public static void DiscloseClippedContent(Dialog dialog)
     {
         string baseTitle = dialog.Title;
@@ -272,7 +269,7 @@ public static class DialogHelper
     public static bool ConfirmAction(string action, string itemName)
         => Query(action, $"{action} {itemName}?", "Yes", "No") == 0;
 
-    // MessageBox wrappers: TG requires an IApplication and returns a nullable index.
+    // MessageBox wrappers: Terminal.Gui requires an IApplication and returns a nullable index.
     // Centralizing keeps call sites terse and gives one adaptation point for API moves.
     // Returns -1 when the box is dismissed without a button.
     public static int Query(string title, string message, params string[] buttons)
@@ -303,7 +300,7 @@ public static class DialogHelper
         closeBtn.Y = Pos.AnchorEnd(2);
         closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
-        // Same key/action treatment the screens use, rather than the older "[Esc] Close".
+        // Same key/action treatment the screens use.
         var hintPairs = new[] { ("esc", "close") };
         var escHint = ScreenHeader.KeyHints(
             Pos.AnchorEnd(ScreenHeader.KeyHintsWidth(hintPairs) + 2), Pos.AnchorEnd(1), hintPairs);
@@ -339,9 +336,11 @@ public static class DialogHelper
         {
             // Under reduce-motion the dialog simply appears. The fade is the transition, not the
             // dialog — skipping it changes nothing about what is on screen a moment later.
+            // 120 ms from a third of full colour: a dialog reads as there at once, and the
+            // transition is still seen.
             if (SAOTRPG.UI.Effects.Motion.Animate)
-                FadeInDialog(dialog, durationMs: 200,
-                    SAOTRPG.UI.Effects.EasingHelper.EasingType.EaseOut);
+                FadeInDialog(dialog, durationMs: 120,
+                    SAOTRPG.UI.Effects.EasingHelper.EasingType.EaseOut, startAlpha: 0.35f);
             AppHost.App.Run(dialog);
         }
         finally
@@ -354,25 +353,28 @@ public static class DialogHelper
             // Force underlying view redraw so dialog cells aren't served stale by the frame cache.
             SAOTRPG.UI.Rendering.MapView.MarkFrameDirty();
             (AppHost.App.TopRunnable as View)?.SetNeedsDraw();
+            // Now, not on the loop's next paced tick, so the closed dialog does not stay on screen
+            // for one more frame after the key that closed it.
+            AppHost.App.LayoutAndDraw();
         }
     }
 
-    // Schedules a per-frame Scheme ramp from black→baseline.
+    // Schedules a per-frame Scheme ramp from startAlpha of the baseline up to it.
     // Stopwatch-driven so it runs independently of the paused FrameClock.
     private static void FadeInDialog(Dialog dialog, int durationMs,
-        SAOTRPG.UI.Effects.EasingHelper.EasingType easing)
+        SAOTRPG.UI.Effects.EasingHelper.EasingType easing, float startAlpha)
     {
         var originalScheme = dialog.GetScheme();
-        if (originalScheme == null) return; // belt-and-suspenders for safety
+        if (originalScheme == null) return; // nothing to fade from
         long startTicks = System.Diagnostics.Stopwatch.GetTimestamp();
         long target = (long)(durationMs *
             (System.Diagnostics.Stopwatch.Frequency / 1000.0));
         if (target <= 0) return; // degenerate guard
 
-        // Snap to black at frame 0 so the first paint isn't full-color.
-        dialog.SetScheme(SAOTRPG.UI.Effects.EasingHelper.ScaleScheme(originalScheme, 0f));
+        // The first paint is at startAlpha, not full colour.
+        dialog.SetScheme(SAOTRPG.UI.Effects.EasingHelper.ScaleScheme(originalScheme, startAlpha));
 
-        // One per dialog OBJECT — two opens are two dialogs, each easing its own captured
+        // One per dialog object — two opens are two dialogs, each easing its own captured
         // instance, so there is no shared state to race.
         AppHost.AddOneShotTimeout(TimeSpan.FromMilliseconds(16), () =>
         {
@@ -380,7 +382,7 @@ public static class DialogHelper
 
             long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - startTicks;
             float t = Math.Clamp((float)elapsed / target, 0f, 1f);
-            float alpha = SAOTRPG.UI.Effects.EasingHelper.Ease(t, easing);
+            float alpha = startAlpha + (1f - startAlpha) * SAOTRPG.UI.Effects.EasingHelper.Ease(t, easing);
             dialog.SetScheme(SAOTRPG.UI.Effects.EasingHelper.ScaleScheme(originalScheme, alpha));
             dialog.SetNeedsDraw();
             if (t >= 1f)

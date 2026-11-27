@@ -3,7 +3,6 @@
 namespace SAOTRPG.Items.Definitions.Weapons;
 
 // Scimitar registry. Fast curved slashers: trade block chance for attack speed, natural bleed affinity.
-// Canon: HR, HF, IM.
 public static class ScimitarDefinitions
 {
     private static Weapon Make(string id, string name, int value, string rarity, int durability,
@@ -34,7 +33,7 @@ public static class ScimitarDefinitions
     public static Weapon CreateCelestialScimitar() => Make("celestial_scimitar", "Celestial Scimitar", 6000, "Legendary", 200, 75, 118,
         B().Add(StatType.Attack, 62).Add(StatType.Dexterity, 18).Add(StatType.Agility, 12));
 
-    // ── HR Scimitar Chain: Moonstruck Saber → Diablo Esperanza → Iblis → Satanachia.
+    // ── Scimitar Evolution Chain: Moonstruck Saber → Diablo Esperanza → Iblis → Satanachia.
 
     // Moonstruck Saber, lunar-tempered curved blade. T1 of the Satanachia chain.
     public static Weapon CreateMoonstruckSaber() => Make("moonstruck_saber", "Moonstruck Saber", 1800, "Rare", 120, 15, 62,
@@ -48,25 +47,25 @@ public static class ScimitarDefinitions
     public static Weapon CreateIblis() => Make("iblis", "Iblis", 12000, "Legendary", 210, 60, 145,
         B().Add(StatType.Attack, 75).Add(StatType.Dexterity, 22).Add(StatType.Agility, 14), "Bleed+20");
 
-    // T4 Divine — Scimitar chain apex (no prior Legendary peer).
+    // T4 Divine — Scimitar chain apex.
     public static Weapon CreateSatanachia() => Make("satanachia", "Satanachia", 40000, "Divine", 999, 80, 165,
         B().Add(StatType.Attack, 85).Add(StatType.Dexterity, 26).Add(StatType.Agility, 18).Add(StatType.Strength, 14), "Bleed+25");
 
-    // ── HF Implement System (Scimitar) — F80-F99 implements filling Scimitar gaps.
+    // ── Quest and field-boss rewards (Scimitar) — F80-F99.
 
-    // HF F80 implement. Arcaneblade — soul-binder curve edge; SP gain on hit (flavor).
+    // F80 field-boss drop. Arcaneblade — soul-binder curve edge; SP gain on hit (flavor).
     public static Weapon CreateArcanebladeSoulBinder() => Make("sci_arcaneblade_soul_binder", "Arcaneblade: Soul Binder", 15000, "Legendary", 195, 76, 140,
         B().Add(StatType.Attack, 72).Add(StatType.Dexterity, 22).Add(StatType.Agility, 16), "SPOnHit+5");
 
-    // HF F83 implement. Fellblade — ruinous doom; drains party HP for +50% ATK (flavor).
+    // F83 field-boss drop. Fellblade — ruinous doom; drains party HP for +50% ATK (flavor).
     public static Weapon CreateFellbladeRuinousDoom() => Make("sci_fellblade_ruinous_doom", "Fellblade: Ruinous Doom", 17000, "Legendary", 205, 79, 155,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 18).Add(StatType.Dexterity, 20), "PartyHPDrainATK+50");
 
-    // HF F99 implement. Deathglutton — forbidden blade; -80% HP for +100% ATK (flavor).
+    // F99 quest reward. Deathglutton — forbidden blade; -80% HP for +100% ATK (flavor).
     public static Weapon CreateDeathgluttonEpetamu() => Make("sci_deathglutton_epetamu", "Deathglutton: Epetamu", 36000, "Legendary", 265, 95, 185,
         B().Add(StatType.Attack, 95).Add(StatType.Dexterity, 28).Add(StatType.Agility, 22).Add(StatType.Strength, 18), "HPCostATKBonus+100");
 
-    // ── Hollow Fragment Avatar Weapons (Scimitar) ─────────────────
+    // ── Avatar Weapons (Scimitar) ─────────────────────────────────
 
     public static Weapon CreateSaphirAvatar() => Make("sci_saphir_avatar", "Saphir Avatar", 20500, "Legendary", 220, 82, 160,
         B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 24).Add(StatType.Agility, 18), "CritRate+20");
@@ -76,19 +75,19 @@ public static class ScimitarDefinitions
     public static Weapon CreateCrescentbladeOriginalSin() => Make("sci_crescentblade_original_sin", "Crescentblade: Original Sin", 29500, "Legendary", 255, 88, 172,
         B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 28).Add(StatType.Agility, 20), "LifeSteal+10");
 
-    // ── Infinity Moment shop scimitars ──────────────────────────────
+    // ── Shop scimitars ──────────────────────────────────────────────
 
-    // IM Epic-band shop weapon. Venom-etched apothecary blade.
+    // Epic-band shop weapon. Venom-etched apothecary blade.
     public static Weapon CreatePoisonedSyringe() => Make("sci_poisoned_syringe", "Poisoned Syringe", 5800, "Epic", 160, 38, 128,
         B().Add(StatType.Attack, 54).Add(StatType.Dexterity, 22).Add(StatType.Agility, 10), "Poison+25");
 
-    // IM Legendary-band shop weapon. Swan-feather light curve, weightless swing.
+    // Legendary-band shop weapon. Swan-feather light curve, weightless swing.
     public static Weapon CreateSilverWing() => Make("sci_silver_wing", "Silver Wing", 20000, "Legendary", 225, 78, 162,
         B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 24).Add(StatType.Agility, 20), "PostMotion-1");
 
-    // ── Infinity Moment LAB scimitar (non-enhanceable) ──────────────
+    // ── LAB scimitar (non-enhanceable) ──────────────────────────────
 
-    // IM F93 floor-boss LAB reward. Refracting mirage edge, blinds on cut.
+    // F93 floor-boss LAB reward. Refracting mirage edge, blinds on cut.
     public static Weapon CreateGlowHaze()
     {
         var w = Make("sci_glow_haze", "Glow Haze", 24500, "Legendary", 240, 83, 172,
@@ -98,9 +97,9 @@ public static class ScimitarDefinitions
         return w;
     }
 
-    // ── Alicization Lycoris DLC (Scimitar) — Legendary F85-99 ────────
+    // ── Late Legendaries (Scimitar) — F85-99 ─────────────────────────
 
-    // Savage Sandstorm — DLC desert-edge scimitar, crit-on-whirl.
+    // Savage Sandstorm — desert-edge scimitar, crit-on-whirl.
     public static Weapon CreateSavageSandstorm() => Make("sci_savage_sandstorm", "Savage Sandstorm", 19800, "Legendary", 220, 85, 158,
         B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Agility, 18), "CritRate+20");
 }

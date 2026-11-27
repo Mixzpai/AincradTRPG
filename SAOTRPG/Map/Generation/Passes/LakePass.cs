@@ -21,12 +21,10 @@ public sealed class LakePass : IGenerationPass
         for (int i = 0; i < lakeCount; i++)
         {
             if (!TryPickLakeCenter(ctx, width, height, out int cx, out int cy)) continue;
-            // Radius scales with the floor's disk, the same correction PocketBiomePass needed.
-            // A flat 4-6 was sized for the old small floors: on a 1000x1000 map six puddles of
-            // radius 5 cover about 0.03% of the ground, which is what a Forest floor measured
-            // when no river rolled — an amount of water no player would ever notice. A twelfth of
-            // the disk radius keeps a lake readable at both ends of the climb. Still exactly ONE
-            // draw, so the stream position for every later pass is unchanged.
+            // Radius scales with the floor's disk, as PocketBiomePass's does: a fixed small radius
+            // would leave a large floor with an amount of water no player would notice. A
+            // twentieth of the disk radius, clamped, keeps a lake readable at both ends of the
+            // climb. Exactly one draw whatever the radius.
             int diskRadius = Math.Min(width, height) / 2;
             int baseR = Math.Clamp(diskRadius / 20, 4, 40);
             int radius = baseR + rng.Next(baseR / 3 + 1);
@@ -74,7 +72,7 @@ public sealed class LakePass : IGenerationPass
         return (seedPct, caPasses);
     }
 
-    // The LOWEST of eight in-disk candidates, not the first: water collects in low ground, and
+    // The lowest of eight in-disk candidates, not the first: water collects in low ground, and
     // GenerateLake then fills only cells under a rise above this point, so the shore follows the
     // contours. Every candidate costs its two draws whether chosen or not, as ClusterPass's do.
     private static bool TryPickLakeCenter(WorldContext ctx, int width, int height,

@@ -21,15 +21,14 @@ public partial class TurnManager
             MilestoneSystem.CheckLifeSkillLevel(_player, skill, level);
         };
 
-        // Food XP — separate ConsumableUsed sub so ctor handler is untouched.
+        // Food XP — a separate ConsumableUsed subscription, independent of the ctor's handler.
         _player.Inventory.Events.ConsumableUsed += (_, e) =>
         {
             if (e.Consumable is Food) GrantEatingXp();
         };
     }
 
-    // Called from ProcessRest — awards Sleep XP per rest action (one grant
-    // covers the 3 heal ticks so the curve stays tunable).
+    // Called on waking — one Sleep XP grant per sleep, however long it lasted.
     public void GrantRestSleepXp()
     {
         _player.LifeSkills.GrantXp(LifeSkillType.Sleep, 20);
@@ -42,14 +41,14 @@ public partial class TurnManager
         _player.LifeSkills.GrantXp(LifeSkillType.Sleep, 10);
     }
 
-    // Called from ProcessPlayerMove's normal-step branch (NOT sprint, NOT
+    // Called from ProcessPlayerMove's normal-step branch (not sprint, not
     // stealth). +1 XP per tile walked.
     public void GrantWalkingXp()
     {
         _player.LifeSkills.GrantXp(LifeSkillType.Walking, 1);
     }
 
-    // ProcessSprint: +2 XP per sprint step (2 tiles covered; canon 2x-speed).
+    // ProcessSprint: +2 XP per sprint step (2 tiles covered at double speed).
     public void GrantSprintRunningXp()
     {
         _player.LifeSkills.GrantXp(LifeSkillType.Running, 2);

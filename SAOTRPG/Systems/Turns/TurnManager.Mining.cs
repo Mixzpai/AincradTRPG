@@ -12,7 +12,7 @@ namespace SAOTRPG.Systems.Turns;
 public partial class TurnManager
 {
     // Default strikes per tier (mirrors OreVeinPlacementPass.DefaultStrikes).
-    // Used as fallback if VeinStrikesRemaining lacks an entry (legacy save / unseeded vein).
+    // Used as fallback if VeinStrikesRemaining lacks an entry (an unseeded vein).
     private static int DefaultStrikesForTile(TileType t) => t switch
     {
         TileType.OreVeinIron    => 3,
@@ -81,12 +81,8 @@ public partial class TurnManager
         if (remaining <= 0)
             DepleteVein(tx, ty, tile.Type);
 
-        // Standard turn-consume tail (mirrors swing/move).
-        AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-        if (_player.IsDefeated) { TurnCompleted?.Invoke(); return true; }
-        ProcessEntityTurns();
-        PassiveRegen();
+        // One strike, one turn (mirrors swing/move).
+        if (!SpendMoves(NormalSpeed)) { TurnCompleted?.Invoke(); return true; }
         UpdateVisibility();
         TurnCompleted?.Invoke();
         return true;
@@ -125,9 +121,8 @@ public partial class TurnManager
     {
         if (pick.ItemDurability <= 0) return;
 
-        // Mining L10: every other strike is free. This is the perk the Player Guide advertises as
-        // "free dur every other strike", and it is also what makes the L99 milestone's "durability
-        // damage halved" true — both strings described a perk nothing read.
+        // Mining L10: every other strike costs no durability. This is also what makes the L99
+        // milestone's "durability damage halved" true.
         _miningStrikeCount++;
         if (_player.LifeSkills.MiningEveryOtherStrikeFree && _miningStrikeCount % 2 == 0)
             return;

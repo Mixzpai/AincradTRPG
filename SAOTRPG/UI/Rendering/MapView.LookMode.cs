@@ -98,7 +98,7 @@ public partial class MapView
         SetNeedsDraw();
     }
 
-    // 1-based jump. Silent no-op on out-of-range so we don't surprise-exit look mode.
+    // 1-based jump. Silent no-op on out-of-range, so the key does not drop out of look mode.
     private void JumpToTarget(int oneBasedIdx)
     {
         int zeroIdx = oneBasedIdx - 1;
@@ -334,7 +334,7 @@ public partial class MapView
         }
     }
 
-    // Explicit labels (not enum ToString) so we can shorten/decorate without touching enum order.
+    // Explicit labels (not enum ToString), so a label can be shortened without touching the enum.
     private static string SortLabel(LookSort s) => s switch
     {
         LookSort.Dist   => "Dist",
@@ -360,7 +360,7 @@ public partial class MapView
         return name.Length > max ? name[..max] : name;
     }
 
-    // Pull fg Color so we can re-pair it with the dim panel bg for unselected rows.
+    // Pull fg Color so it can be re-paired with the dim panel bg for unselected rows.
     private static Color ExtractFg(Attribute a) => a.Foreground;
 
     private void RenderStatPanel(Monster monster, int sx, int sy, int vpWidth, int vpHeight)

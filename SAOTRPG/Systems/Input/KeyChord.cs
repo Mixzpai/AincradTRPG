@@ -3,11 +3,11 @@ namespace SAOTRPG.Systems.Input;
 // One bindable keystroke: a base key plus its modifiers.
 //
 // Two ways to identify the base key, and both are needed. A key with a KeyCode member (cursor
-// keys, F-keys, Space, Tab) is matched on that. A printable key is matched on its RUNE, because
+// keys, F-keys, Space, Tab) is matched on that. A printable key is matched on its rune, because
 // a printable key's KeyCode carries the character in its low bits but a driver may report either
-// the produced character or the physical key with a modifier bit set — measured on Terminal.Gui
-// 2.4.5, Key('+').WithShift is 0x1000002B, which no bare KeyCode compare matches, while AsRune
-// still reads '+'. Some keys have no KeyCode member at all: '\' is one, and it is bound in game.
+// the produced character or the physical key with a modifier bit set — Key('+').WithShift is
+// 0x1000002B, which no bare KeyCode compare matches, while AsRune still reads '+'. Some keys have
+// no KeyCode member at all: '\' is one, and it is bound in game.
 public readonly record struct KeyChord(KeyCode Code, char Rune, bool Shift, bool Ctrl, bool Alt)
 {
     public static readonly KeyChord None = new(KeyCode.Null, '\0', false, false, false);
@@ -109,8 +109,8 @@ public readonly record struct KeyChord(KeyCode Code, char Rune, bool Shift, bool
         }
         if (rest.Length == 0) return None;
 
-        // A single character is a RUNE binding, and this test has to come before the enum parse:
-        // KeyCode has members named A-Z whose values are the UPPERCASE letters, so "W" would
+        // A single character is a rune binding, and this test has to come before the enum parse:
+        // KeyCode has members named A-Z whose values are the uppercase letters, so "W" would
         // otherwise parse to KeyCode.W (87) while a typed 'w' arrives as 119 — the binding would
         // survive a save and then silently stop matching after the next load. Ctrl/Alt letters are
         // the exception: AsRune is empty under them, so From stores the code and Parse must too.

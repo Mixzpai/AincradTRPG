@@ -1,6 +1,8 @@
 using SAOTRPG.UI.Dialogs;
 using SAOTRPG.UI.Helpers;
 using SAOTRPG.Systems.Persistence;
+using SAOTRPG.Systems.Input;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Screens;
 
@@ -9,10 +11,8 @@ namespace SAOTRPG.UI.Screens;
 public static class OptionsScreen
 {
     // The form is left-anchored inside the tab block: label column, a two-column gutter, then the
-    // control column. It used to hang off ScreenHeader.Axis, i.e. the page's own centre once the
-    // settings moved into tabs — which left ~19 dead columns down the left and pushed the control
-    // column so far right that the widest selector (Footstep Style, 52 columns) ran off the page
-    // edge at every terminal width, 316x91 included. Absolute columns cannot drift with the page.
+    // control column. Absolute columns cannot drift with the page; hanging the form off the page's
+    // centre would push the widest selector (Footstep Style, 52 columns) past the page edge.
     private const int LabelX     = 1;
     private const int LabelWidth = 22;
     private const int ControlX   = LabelX + LabelWidth + 2;
@@ -27,7 +27,7 @@ public static class OptionsScreen
 
     private static EventHandler<Key>? _escHandler;
 
-    // Unhook before transitioning AWAY. Terminal.Gui binds Esc to Command.Quit at the application
+    // Unhook before transitioning away. Terminal.Gui binds Esc to Command.Quit at the application
     // level, so a screen that does not consume Esc exits the game — this one has to consume it,
     // and then has to give it back when it leaves.
     public static void UnhookEscHandler(Window mainWindow)
@@ -44,9 +44,8 @@ public static class OptionsScreen
         NavigationHelper.UnhookScreenEscHandlers(mainWindow);
         var settings = UserSettings.Current;
 
-        // The settings used to be one ~71-row column, which did not fit the documented 120x30
-        // minimum. They are grouped into tabs instead: each page is short enough to read at a
-        // glance, and Left/Right moves between groups.
+        // The settings are grouped into tabs so they fit the documented 120x30 minimum: each page
+        // is short enough to read at a glance, and Left/Right moves between groups.
         //
         // Each page is still a scrolling container, because the longest group can outgrow a short
         // terminal on its own. Terminal.Gui scrolls a container on neither key presses nor focus
@@ -92,7 +91,7 @@ public static class OptionsScreen
 
         var (header, headerRule) = ScreenHeader.Create("Options", 1, 20);
 
-        // Below the tab block, not at Y=4 — that row is the tab bar now, and the confirmation
+        // Below the tab block, not at Y=4 — that row is the tab bar, and the confirmation
         // would print across the group captions the moment a setting changed.
         var saveLabel = new Label
         {
@@ -162,7 +161,7 @@ public static class OptionsScreen
         currentPage = displayPage;
         y = 1;
 
-        // Style + Length + Opacity replace the single ShowFootsteps toggle.
+        // Footstep trail: Style + Length + Opacity.
         var footstepStyleLabel = FormLabel("Footstep Style", y);
         var footstepStyleRadio = Radio("Footstep Style", y,
             new[] { "Off", "Dots", "Dashes", "Paws", "Boots", "Chevrons" },
@@ -459,7 +458,7 @@ public static class OptionsScreen
         y = 1;
 
         var keybindLabel = FormLabel("Key Bindings", y);
-        var keybindBtn = new Button
+        var keybindBtn = new PlainButton
         {
             Text = " Rebind ", X = ControlX, Y = y,
             SchemeName = ColorSchemes.ButtonName,
@@ -470,13 +469,15 @@ public static class OptionsScreen
         y += 2;
 
         var keyRefLabel = FormLabel("Key Reference", y);
-        var keyRefBtn = new Button
+        var keyRefBtn = new PlainButton
         {
-            Text = " Open (H) ", X = ControlX, Y = y,
+            Text = KeyRefText(), X = ControlX, Y = y,
             SchemeName = ColorSchemes.ButtonName,
             ShadowStyle = null,
         };
         keyRefBtn.Accepting += (s, e) => { e.Handled = true; HelpDialog.Show(); };
+        // Runs after the rebind dialog closes, so the label names the key as bound now.
+        keybindBtn.Accepting += (s, e) => keyRefBtn.Text = KeyRefText();
         TrackFocus(keyRefBtn);
         y += 3;
 
@@ -557,13 +558,12 @@ public static class OptionsScreen
             tagStyleLabels[0], tagStyleLabels[1], tagStyleLabels[2]);
         int aboutRows = y;
 
-        aboutPage.Add(keybindLabel, keybindBtn, versionLabel, tributeLabel);
+        aboutPage.Add(keybindLabel, keybindBtn, keyRefLabel, keyRefBtn, versionLabel, tributeLabel);
 
         // Each page scrolls independently, so each needs its own content height — and a page
         // whose declared height falls short of its layout puts the last control past the end of
-        // the scroll range, where no key reaches it. These were hand-maintained constants and had
-        // drifted on three of the five pages, About by one row in the direction that clips. Take
-        // the row the builder actually reached instead, so the two cannot disagree again.
+        // the scroll range, where no key reaches it. Each takes the row its builder actually
+        // reached rather than a hand-maintained constant, so the two cannot disagree.
         gameplayPage.SetContentHeight(gameplayRows);
         displayPage.SetContentHeight(displayRows);
         accessPage.SetContentHeight(accessRows);
@@ -582,5 +582,7 @@ public static class OptionsScreen
 
     private static Label FormLabel(string text, int y) =>
         ScreenHeader.FormLabel(text, LabelX, y, LabelWidth);
+
+    private static string KeyRefText() => $" Open ({KeyHints.Key(GameAction.OpenHelp)}) ";
 
 }

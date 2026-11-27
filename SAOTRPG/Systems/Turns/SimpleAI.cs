@@ -20,25 +20,18 @@ public static class SimpleAI
     // deriving from Monster rather than Mob.
     public const int DefaultAggroRange = 6;
 
-    // HOW MUCH FURTHER A MONSTER NOTICES YOU IN THE DARK.
+    // How much further a monster notices you in the dark. The night costs the player sight
+    // (VisibilityRadius falls to MinVisibility), and this widens a monster's reach to match.
     //
-    // The night already costs the player sight: VisibilityRadius collapses from the open-field
-    // reach to MinVisibility, roughly a tenth of it. Nothing moved in the other direction, so a
-    // monster's reach was the one thing in the world the sun did not touch.
-    //
-    // FIFTEEN PERCENT, AND IT IS ROUNDED RATHER THAN TRUNCATED — that is not a style choice, it
-    // decides whether the knob does anything at all. Aggro ranges in the bestiary are small
-    // integers (2 to 12, median 7), so a 15% bonus is a fraction of a tile for most of them.
-    // Truncating leaves 31 of the 66 mob templates completely unaffected, including every
-    // early-floor mob with a range under 7 — the knob would read as live, measure as live in a
-    // unit test on a large number, and be dead across the whole first act. Rounded, it is +1 tile
-    // for ranges 4 through 9 and +2 for 10 and 12, and dead only for 2 and 3, where a +15% that
-    // rounded up would be a +33% to +50% jump instead.
+    // Rounded rather than truncated: aggro ranges are small integers, so a 15% bonus is a
+    // fraction of a tile for most of them and truncating would leave every range under 7
+    // unchanged. Rounded, it is +1 tile for ranges 4 through 9 and +2 for 10 and 12, and nothing
+    // for 2 and 3, where any extra tile would be a +33% to +50% jump.
     private const float NightAggroBonus = 0.15f;
 
-    // The aggro range a monster is actually using this turn. BOTH readers go through here —
-    // the decision below and TurnManager's sound cues, which derive their audible radius from
-    // it. Two copies of this would let the world grow quieter exactly as it grew more dangerous.
+    // The aggro range a monster is using this turn. Both readers go through here — the decision
+    // below and TurnManager's sound cues, which derive their audible radius from it — so the two
+    // cannot disagree.
     public static int EffectiveAggroRange(Monster monster) =>
         EffectiveAggroRange(monster as Mob);
 
@@ -61,8 +54,8 @@ public static class SimpleAI
         int ady = distY < 0 ? -distY : distY;
         int chebyshev = adx > ady ? adx : ady;
 
-        // ONE type test, not three. Aggro range, attack range and the leash all want the same
-        // cast, and this runs once per monster per turn on a floor carrying a few hundred.
+        // One type test shared by aggro range, attack range and the leash: this runs once per
+        // monster per turn.
         var mob = monster as Mob;
 
         int aggro = EffectiveAggroRange(mob);
@@ -179,10 +172,8 @@ public static class SimpleAI
     // Pick a random walkable direction from the 8 cardinal/diagonal options.
     private static (int dx, int dy) Wander(Monster monster, GameMap map)
     {
-        // STACK, NOT HEAP. This ran once per monster per turn for every mob out of aggro range,
-        // and a `new int[8]` is ~56 bytes each time: measured 64 B per DecideAction call, which
-        // was 17.5 KB of the 17.9 KB a moving turn allocated on a 267-monster floor. The two
-        // sibling shufflers in TurnManager.AI already do it this way.
+        // Stack buffer, not a heap array: this runs once per monster per turn for every mob out
+        // of aggro range. The sibling shufflers in TurnManager.AI do the same.
         Span<int> indices = stackalloc int[8];
         for (int i = 0; i < 8; i++) indices[i] = i;
         Shuffle(indices);
@@ -204,8 +195,8 @@ public static class SimpleAI
     private static bool CanMoveTo(GameMap map, Monster monster, int x, int y)
     {
         if (!map.InBounds(x, y)) return false;
-        // RefTile, not GetTile: only three fields are read, and copying the whole 16-byte struct
-        // out of a 16 MB grid is pure overhead on the hottest map probe outside the shadowcast.
+        // RefTile, not GetTile: only three fields are read, so copying the whole 16-byte struct
+        // out of the grid is wasted work on one of the hottest map lookups.
         ref var tile = ref map.RefTile(x, y);
         if (tile.Occupant != null) return false;
         if (!tile.BlocksMovement) return true;
@@ -215,8 +206,8 @@ public static class SimpleAI
     }
 
     // Fisher-Yates in-place shuffle for direction randomization.
-    // Span so the caller can shuffle a stack buffer. Same Fisher-Yates, same draw order, so the
-    // rng stream is untouched — a mob picks exactly the direction it picked before.
+    // Span so the caller can shuffle a stack buffer. The draw order is part of the seeded RunRng
+    // stream, so changing it changes which direction a mob picks.
     private static void Shuffle(Span<int> array)
     {
         for (int i = array.Length - 1; i > 0; i--)

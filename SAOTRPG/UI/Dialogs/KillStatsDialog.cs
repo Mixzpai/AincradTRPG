@@ -116,7 +116,7 @@ public static class KillStatsDialog
         DialogHelper.RunModal(dialog);
     }
 
-    // Right-aligned stat value for a clean column look.
+    // Stat row: the label is padded to 8 columns so the values line up.
     private static Label MakeStat(string label, string value, int y) => new()
     {
         Text = $"  {label,-8} {value}", X = 1, Y = y,

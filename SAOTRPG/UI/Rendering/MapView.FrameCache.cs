@@ -21,8 +21,8 @@ namespace SAOTRPG.UI.Rendering;
 // back off the driver, so an overdrawn or clipped cell can never leak into the cache.
 //
 // The layer is kept current incrementally. Holding a movement key scrolls the camera one
-// column per step, and recomputing all ~28,756 cells for that costs more than the terminal
-// does. Instead the buffer is memmoved by the camera delta and only *changed* cells are
+// column per step, and recomputing every viewport cell for that would dominate the frame.
+// Instead the buffer is memmoved by the camera delta and only *changed* cells are
 // resolved. What changed is established two ways:
 //
 //   * per cell, by comparing the inputs the resolve reads (TileKey) against the values it
@@ -33,11 +33,10 @@ namespace SAOTRPG.UI.Rendering;
 // Inputs that repaint the whole viewport at once — a tile-type change, a screen-wide crit
 // flash, a status tint — fall back to a full recompute rather than being tracked.
 //
-// PATH-D-PORT: the erase-and-replace only works because the tile layer covers every cell of
-// the viewport, so replaying it wipes whatever the overlays drew last frame. A renderer whose
-// tile pass can leave cells untouched needs an explicit overlay-region clear instead. The
-// snapshot/replay primitives are Gfx.CaptureRegion / BlitRegion for the frame layer and
-// Gfx.BlitGlyphs for the tile layer; the damage tracking above is renderer-independent.
+// The erase-and-replace depends on the tile layer covering every cell of the viewport, so
+// replaying it wipes whatever the overlays drew last frame; a tile pass that left a cell
+// untouched would leak the previous frame's overlay there. The snapshot/replay primitives are
+// Gfx.CaptureRegion / BlitRegion for the frame layer and Gfx.BlitGlyphs for the tile layer.
 public partial class MapView
 {
     // Stores driver Cells directly, so capture and replay are plain struct copies — no
@@ -52,11 +51,10 @@ public partial class MapView
 
     // ── Turn-repaint coalescing ────────────────────────────────────────
     // The map scrolls on every turn, so a turn repaint changes essentially every viewport cell
-    // and pays a full-screen flush. Flush is a flat toll per DRAWN frame — measured ~24ms at
-    // 316x91, of which at least ~7.5ms is our own per-cell CPU — so at the OS key-repeat rate a
-    // held direction key buys ~30 of them a second. Holding the previous frame for a few tens of
-    // milliseconds halves that without changing how fast the player moves: turns still resolve
-    // at key rate, only the painting is coalesced.
+    // and pays a full-screen flush, a flat cost per drawn frame. Holding the previous frame for a
+    // few tens of milliseconds paints fewer of them while a direction key auto-repeats, without
+    // changing how fast the player moves: turns still resolve at key rate, only the painting is
+    // coalesced.
     //
     // Scoped to TURN dirt only. Dirt with no turn behind it is a UI response (a dialog closing,
     // a toast, look mode) and repaints immediately, so nothing the player pokes feels laggier.
@@ -65,8 +63,8 @@ public partial class MapView
 
     // A flag rather than a sentinel timestamp: CaptureFrame can allocate _frameBuf and then
     // return early when the driver yields no snapshot, which would leave a sentinel unstamped
-    // while _frameBuf is non-null. Subtracting a long.MinValue sentinel overflows, the window
-    // test reads true forever, and the map freezes. There is no arithmetic to get wrong here.
+    // while _frameBuf is non-null, and subtracting a long.MinValue sentinel overflows, so the
+    // window test would read true forever and freeze the map.
     private bool _hasRepainted;
     private long _lastRepaintMs;
     private bool _repaintTailArmed;
@@ -110,7 +108,7 @@ public partial class MapView
     private Color? _tileStatusTint;
 
     // The night exposure the layer was built with. It scales every lit cell and the per-cell scan
-    // cannot see it, so it belongs here with the theme. THE GAIN ALONE IS SUFFICIENT: below the
+    // cannot see it, so it belongs here with the theme. The gain alone is sufficient: below the
     // knee it is a strictly decreasing function of the sky level, so it pins the whole operator,
     // and at 1.0 the operator is the identity whatever the knee and shoulder are.
     private float _tileExposure = 1f;
@@ -127,6 +125,23 @@ public partial class MapView
     // animate on otherwise-idle frames.
     private int _timeVaryingCount;
 
+    // A sky step is spread over a few frames. A step of the sky moves every lit cell at once, each
+    // by less than a just-noticeable difference (a channel moves at most ~15.7 of 255), so the
+    // patch resolves at most a quarter of the viewport's such cells a frame and leaves the rest,
+    // stale keys and all, for the next; the resolve and the flush to the terminal spread with it.
+    // Any other change, a torch's pool included, is resolved on the frame it happens.
+    private const float SubtleLight = 16f;
+    private const int LightSpreadFrames = 4;
+    private bool _tileDeferred;
+    private bool[]? _tileDeferMask;
+    private bool _deferTailArmed;
+    private static int s_spreadFrames, s_spreadCells;
+
+    // Read-only, for the verification probes: whether cells are still held back, and running totals.
+    public bool LightCellsPending => _tileDeferred;
+    public static int SpreadFrames => s_spreadFrames;
+    public static int SpreadCells => s_spreadCells;
+
     // Set by the scan: true when an animated tile (lava, campfire, divine ore) is actually
     // on screen. Gates the 50ms repaint timer so floors that merely contain water somewhere
     // don't repaint continuously.
@@ -138,13 +153,13 @@ public partial class MapView
     {
         // Sampled inputs. A difference in any of these means the cell must be resolved again.
         public byte Flags;
-        // Quantized distance-from-player band driving the edge vignette. It HAS to be sampled here:
+        // Quantized distance-from-player band driving the edge vignette. It has to be sampled here:
         // the vignette moves with the player, so without it the incremental patch would carry a
         // cell's old shading to its new distance and the map would dim wrongly as you walk.
         public byte Vignette;
         // View-edge feather depth, 0-9: 0 nothing unseen within two cells, 1 an unseen cell at
         // Chebyshev distance 2, 2-9 an adjacent one. Drives the background's feather, so it is a
-        // per-cell render input and has to be sampled here — it reads NEIGHBOURS' visibility over
+        // per-cell render input and has to be sampled here — it reads neighbours' visibility over
         // a 5x5, which Flags (this cell's own) cannot see.
         public byte ViewEdge;
         // What the last resolve found at this cell. These are outputs, not inputs, so they are
@@ -177,17 +192,22 @@ public partial class MapView
             if (Vignette != other.Vignette || ViewEdge != other.ViewEdge) return false;
             return Light.R == other.Light.R && Light.G == other.Light.G && Light.B == other.Light.B;
         }
+
+        // True when the light is the only input that moved, and by no more than a sky step moves it.
+        public bool SubtleLightChange(in TileKey other)
+        {
+            if (Flags != other.Flags || Type != other.Type || Fade != other.Fade) return false;
+            if ((Flags & FVisible) == 0 || Vignette != other.Vignette || ViewEdge != other.ViewEdge) return false;
+            return MathF.Abs(Light.R - other.Light.R) <= SubtleLight
+                   && MathF.Abs(Light.G - other.Light.G) <= SubtleLight
+                   && MathF.Abs(Light.B - other.Light.B) <= SubtleLight;
+        }
     }
 
-    // ── Measurement seam ───────────────────────────────────────────────────────────────────────
-    // THE COMPOSED COLOUR OF A CELL IS THE ONE THING THIS FILE PRODUCES THAT NOTHING ELSE CAN
-    // RECOMPUTE, and a check that reimplements ApplyLighting to get at it is measuring its own
-    // arithmetic rather than the renderer's. --verify-tiles already proves the layer equals a full
-    // recompute; this exposes what the layer holds, which is what Gfx.BlitGlyphs puts on screen.
-    //
-    // Reading the driver's buffer back instead was tried and does not work offline: under
-    // redirected stdio 25,238 of 28,756 cells come back with no grapheme at all, so a probe that
-    // reads the terminal measures the harness.
+    // ── Layer read-back ────────────────────────────────────────────────────────────────────────
+    // The composed colour of each cell, exactly what Gfx.BlitGlyphs puts on screen, exposed for
+    // the verification probes so they never reimplement ApplyLighting. The driver's own buffer
+    // cannot stand in: under redirected stdio most of its cells hold no grapheme.
     //
     // Read-only and per cell, in the same family as LightingSystem.SourcesLastUpdate — it cannot
     // write the layer or fake a value. The region travels with the camera, so a caller needs
@@ -227,7 +247,7 @@ public partial class MapView
         s_externalTilesFull = true;
     }
 
-    // Instance-level mark — public so MapView's own mutators (AddDamageFlash etc.) can dirty
+    // Instance-level mark, so MapView's own mutators (AddDamageFlash etc.) can dirty
     // without the static pulse. Marks the tile layer for a scan, not for a full recompute:
     // the scan establishes what actually changed.
     internal void DirtyFrame()
@@ -262,19 +282,20 @@ public partial class MapView
     // True when a recompute is needed: instance flag, external pulse, animation tail, or no
     // buffer yet.
     //
-    // Clock-driven tiles on screen count too. Without that the finished-frame blit returns
-    // before any tile or overlay work, so campfires, lava and water only animated while
-    // something else happened to keep the frame dirty.
+    // Clock-driven tiles on screen count too: otherwise the finished-frame blit returns before
+    // any tile or overlay work, and campfires, lava and water would animate only while
+    // something else kept the frame dirty.
     private bool IsFrameDirty(int width, int height)
     {
         // s_externalTilesFull is tested as well as s_externalDirty: the two are cleared at
         // different points of a painted frame, so a pulse landing between them would otherwise
         // leave the tile layer marked for rebuild on a frame that never repaints.
         //
-        // These are structural and are NEVER coalesced: a stale buffer, a resize, an external
+        // These are structural and are never coalesced: a stale buffer, a resize, an external
         // pulse or a live animation each mean the previous frame is not a valid stand-in.
         if (s_externalDirty || s_externalTilesFull || _animTailDirty) return true;
         if (_timeVaryingCount > 0) return true;
+        if (_tileDeferred) return true;
         if (_frameBuf == null) return true;
         if (_frameW != width || _frameH != height) return true;
 
@@ -314,6 +335,20 @@ public partial class MapView
         });
     }
 
+    // Cells held back owe the next frame. A mark made inside this draw pass is cleared when it
+    // ends, so the nudge comes from a timeout after it, one at a time.
+    private void ArmDeferredRedraw()
+    {
+        if (_deferTailArmed) return;
+        _deferTailArmed = true;
+        AppHost.AddOneShotTimeout(TimeSpan.FromMilliseconds(1), () =>
+        {
+            _deferTailArmed = false;
+            if (_tileDeferred) SetNeedsDraw();
+            return false;
+        });
+    }
+
     // Allocates or resizes the tile-layer buffers. Returns true when they were replaced,
     // which means their contents are meaningless and the layer has to be rebuilt.
     private bool EnsureTileBuffers(int width, int height)
@@ -324,6 +359,8 @@ public partial class MapView
         _tileBuf = new Gfx.Glyph[n];
         _tileKey = new TileKey[n];
         _tileDamage = new bool[n];
+        _tileDeferMask = new bool[n];
+        _tileDeferred = false;
         _tileW = width;
         _tileH = height;
         return true;
@@ -333,12 +370,12 @@ public partial class MapView
     private bool NeedsFullTileRecompute()
     {
         if (_tileFullDirty || s_externalTilesFull) return true;
-        // Also the backstop for the BIOME WASH, which is a whole-viewport input to every cell the
+        // Also the backstop for the biome wash, which is a whole-viewport input to every cell the
         // tile loop resolves and gets no field of its own here. It cannot change without the map
         // object changing: it is read from BiomeSystem.CurrentGenConfig, which only SetFloor
         // writes, and both routes to SetFloor — entering a floor and the F9 biome hot-reload —
-        // build a new GameMap. Add explicit tracking the moment a config can be swapped in place,
-        // or the map keeps painting the previous biome's palette until something else dirties it.
+        // build a new GameMap. A config swapped in place would need its own tracking here, or the
+        // map would keep painting the previous biome's palette until something else dirtied it.
         if (!ReferenceEquals(_tileMap, _map)) return true;
         // A screen-wide fg boost and a status tint touch every cell; the scan samples neither.
         if (_critScreenFlashRemainingMs > 0 != _tileCritFlash) return true;
@@ -358,7 +395,7 @@ public partial class MapView
     private bool NeedsTileScan()
     {
         if (_tileDirty || s_externalDirty || _tileTailDirty) return true;
-        if (_timeVaryingCount > 0) return true;
+        if (_timeVaryingCount > 0 || _tileDeferred) return true;
         if (_tileDamagePoints.Count > 0) return true;
         if (EffOffsetX != _tileOffX || EffOffsetY != _tileOffY) return true;
         if (DayNightCycle.CurrentTurn != _tileTurn) return true;
@@ -400,7 +437,7 @@ public partial class MapView
 
         _frameDirty = false;
         s_externalDirty = false;
-        // Stamped only on a SUCCESSFUL capture, so a failed one cannot start a coalesce window
+        // Stamped only on a successful capture, so a failed one cannot start a coalesce window
         // against a frame that was never stored.
         _lastRepaintMs = FrameClock.ElapsedMs;
         _hasRepainted = true;

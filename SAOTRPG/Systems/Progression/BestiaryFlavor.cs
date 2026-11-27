@@ -1,16 +1,13 @@
 namespace SAOTRPG.Systems.Progression;
 
 // Bestiary flavor. Keyed by mob base Name (strip Elite/Champion affixes).
-// Non-canon → GenerateGenericBlurb (LootTag + floor band).
+// Names without an entry → GenerateGenericBlurb (LootTag + floor band).
 public static class BestiaryFlavor
 {
     // ByMobName is keyed by the name an entity actually spawns under, and a key that matches
-    // nothing is authored text the player never sees. Eleven late-floor blurbs were keyed to
-    // Hollow Fragment's boss names while BossFactory.BossRoster uses this game's own; ten were
-    // re-keyed off the floor each blurb states about itself, and the remainder are listed in
-    // Tools/ContentProbe with the reason each cannot be mapped. Lookup only strips prefixes,
-    // so a key that is not a real spawn name is unreachable — there is no fuzzy fallback.
-    // Strip Elite/Champion/affix prefixes to hit canonical key; matches MobFactory naming.
+    // nothing is authored text the player never sees. Lookup only strips prefixes, so a key
+    // that is not a real spawn name is unreachable — there is no fuzzy fallback.
+    // Strip Elite/Champion/affix prefixes to hit the base key; matches MobFactory naming.
     public static string Lookup(string name, string? lootTag = null,
         int minFloor = 1, int maxFloor = 100)
     {
@@ -19,7 +16,7 @@ public static class BestiaryFlavor
         // Try exact match first.
         if (ByMobName.TryGetValue(name, out var canon)) return canon;
 
-        // Try stripping up to two known prefixes ("Elite ", "Champion ", affix).
+        // Try stripping up to three leading words ("Elite ", "Champion ", affix).
         string stripped = name;
         for (int i = 0; i < 3; i++)
         {
@@ -33,7 +30,7 @@ public static class BestiaryFlavor
         return GenerateGenericBlurb(name, lootTag ?? "generic", minFloor, maxFloor);
     }
 
-    // Non-canon mobs receive a short 1-2 sentence blurb based on loot tag
+    // Mobs without an entry receive a short 1-2 sentence blurb based on loot tag
     // and floor band. Keeps tone neutral and varied.
     public static string GenerateGenericBlurb(string name, string lootTag,
         int minFloor, int maxFloor)
@@ -65,11 +62,11 @@ public static class BestiaryFlavor
         return $"{tagLine} Seen on {band}.";
     }
 
-    // Canon SAO monster flavor. Keys must match MobFactory/BossFactory Name
+    // Authored monster flavor. Keys must match MobFactory/BossFactory Name
     // fields exactly — new entries auto-appear in the Bestiary Lore tab.
     public static readonly Dictionary<string, string> ByMobName = new()
     {
-        // ── Floor 1 mobs (Progressive Vol 1) ─────────────────────────────
+        // ── Floor 1 mobs ──────────────────────────────────────────────────
         ["Frenzy Boar"] =
             "A tusked boar driven mad by the Aincrad air, roaming the grasslands " +
             "of the Town of Beginnings and Horunka. Telegraphs a straight-line charge " +
@@ -114,7 +111,7 @@ public static class BestiaryFlavor
             "the Wind Wasp Needle — a low-tier crafting reagent. Travels in drift-" +
             "patterns; baiting them into a corridor neutralizes their leap.",
 
-        // ── Floor 2 mobs (Progressive Vol 2) ─────────────────────────────
+        // ── Floor 2 mobs ──────────────────────────────────────────────────
         ["Lesser Taurus"] =
             "A minotaur-kin of the Urbus foothills. Smaller than the Taurus Kings " +
             "but faster on the turn. Charges like a freight train when you drop " +
@@ -139,7 +136,7 @@ public static class BestiaryFlavor
             "A feathered reptile that breathes a cold mist, slowing anything caught " +
             "in the cloud. Uses terrain to flank; don't fight it in open space.",
 
-        // ── Floor 3 mobs (Progressive Vol 3 — Elf War) ───────────────────
+        // ── Floor 3 mobs (Elf War) ────────────────────────────────────────
         ["Treant Sapling"] =
             "A young walking-tree of Zumfut. Slow and weak alone, but the " +
             "forest floors spawn them in thickets. Each kill risks pulling the " +
@@ -169,7 +166,7 @@ public static class BestiaryFlavor
             "A bipedal fungus-thing. Releases poison spores on death — finish it " +
             "from two tiles away or accept the dot.",
 
-        // ── Floor 4 mobs (Progressive Vol 4 — Rovia flooded) ─────────────
+        // ── Floor 4 mobs (Rovia flooded) ──────────────────────────────────
         ["Water Drake"] =
             "A long-bodied serpent-dragon of Rovia's flooded streets. Swims as well " +
             "as it walks. Ranged bite attack from deep water — positioning beats " +
@@ -193,7 +190,7 @@ public static class BestiaryFlavor
             "A heavy-bodied toad that feeds on Rovia's drift-corpses. Poisonous " +
             "tongue-lash, weak constitution — a clean critical usually one-shots.",
 
-        // ── Floor 5 mobs (Progressive Vol 5 — Pitch-Black Cathedral) ─────
+        // ── Floor 5 mobs (Pitch-Black Cathedral) ──────────────────────────
         ["Cathedral Bat"] =
             "A twisted bat that nests in the Karluin cathedral rafters. Hunts " +
             "by sound and leaps the last of the distance. Detection is by range " +
@@ -219,7 +216,7 @@ public static class BestiaryFlavor
             "A plated skeletal soldier. Straightforward melee opponent — no " +
             "special abilities, just consistent pressure and decent HP.",
 
-        // ── Boss roster (canon) ──────────────────────────────────────────
+        // ── Boss roster ─────────────────────────────────────────────────
         ["Illfang the Kobold Lord"] =
             "The Floor 1 boss and the first monster to kill a frontline clearer. " +
             "Four HP bars, talwar-and-buckler until the last bar — when he swaps " +
@@ -276,7 +273,7 @@ public static class BestiaryFlavor
             "triangulated its weak spot. The last encounter of the original " +
             "death-game clear.",
 
-        // ── Hollow Fragment Floor 76-100 bosses ──────────────────────────
+        // ── Floor 76-100 bosses ─────────────────────────────────────────
         ["The Ghastlygaze"] =
             "The Floor 76 boss — an all-seeing aberration from Hollow Fragment. " +
             "Paralyzes anyone it makes eye contact with. Raid comp required " +
@@ -454,7 +451,7 @@ public static class BestiaryFlavor
             "A Floor 48 field boss. A white wyrm of the Crystallite Cave. Canon " +
             "source of the Crystallite Ingot Lisbeth forged Dark Repulser from.",
 
-        // ── Endgame era mobs (F51-75) — mix of canon + themed ────────────
+        // ── Endgame era mobs (F51-75) ────────────────────────────────────
         ["Fatal Scythe Echo"] =
             "A lesser echo of the Floor 1 Fatal Scythe hidden-boss. Appears " +
             "in the endgame labyrinth as a wandering terror; two-hit combos " +

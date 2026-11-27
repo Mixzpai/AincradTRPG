@@ -23,7 +23,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
 
         string biome = ctx.Biome.ToString().ToLowerInvariant();
 
-        // 1) Boss-arena placement — prefer canon-boss slug tag; fallback to generic.
+        // 1) Boss-arena placement — prefer the floor boss's slug tag; fallback to generic.
         TryPlaceBossArena(ctx, biome);
 
         // 2) Room-embedding — skip first (spawn) and last (boss) rooms.
@@ -34,12 +34,10 @@ public sealed class PrefabPlacementPass : IGenerationPass
         TryPlaceOpenGroundPrefabs(ctx, biome);
     }
 
-    // Rooms are wide and shallow — the largest interior any floor produces is 23x6 — so a prefab
-    // taller than that has no room to embed in, and only boss-tagged prefabs reach the encompass
-    // route. That left 44 of 82 non-boss prefabs with NO PLACEMENT ROUTE: every shrine, every
-    // vault, every treasure room, every merchant camp, all eleven biome signature pieces. They
-    // stamp onto open wilderness ground now, which is also where a player would expect to stumble
-    // on one.
+    // Rooms are wide and shallow, so a tall prefab has no room to embed in, and only boss-tagged
+    // prefabs reach the encompass route. Every other piece — shrines, vaults, treasure rooms,
+    // merchant camps — stamps onto open wilderness ground here, which is also where a player
+    // would expect to stumble on one.
     private static void TryPlaceOpenGroundPrefabs(WorldContext ctx, string biome)
     {
         var pool = PrefabLibrary.Shared.CandidatesFor(biome, ctx.FloorNumber)
@@ -84,9 +82,9 @@ public sealed class PrefabPlacementPass : IGenerationPass
     }
 
     // One scan per floor, sampled on a stride: a landmark is a large footprint, so anchors a few
-    // tiles apart are redundant and a full-resolution list is megabytes for nothing. Measuring the
-    // size of the target BEFORE tuning the search is the ore-vein lesson. The scan itself lives on
-    // PrefabPlacer, shared with the signature pass, so the two cannot drift on what a site is.
+    // tiles apart are redundant and a full-resolution list would be megabytes for nothing. The
+    // scan itself lives on PrefabPlacer, shared with the signature pass, so the two cannot drift
+    // on what a site is.
     private const int AnchorStride = 6;
 
     private static void TryPlaceBossArena(WorldContext ctx, string biome)
@@ -100,35 +98,29 @@ public sealed class PrefabPlacementPass : IGenerationPass
         var canonHit = bossPool.FirstOrDefault(p => p.Tags.Contains(bossTag));
         if (TryPlaceCandidate(ctx, canonHit)) return;
 
-        // Canon fell out (typically encompass disk-fit failure on small late floors).
-        // Walk the generic encompass arenas large→small before giving up.
+        // The named arena fell out (typically encompass disk-fit failure on small late floors).
+        // Try the generic encompass arenas before giving up.
         var genericEncompass = bossPool
             .Where(p => p.Tags.Contains("generic") && p.Orient == PrefabOrient.Encompass)
             .ToList();
-        // A FIXED large -> medium -> small WALK MAKES EVERY ENTRY BUT THE FIRST DEAD, because the
-        // first one always fits: arena_large is 25x19 and the smallest floor's disk is 100 across.
-        // Measured over 6 seeds x F1-F99 read from the stamp-site log: arena_large stood in
-        // 492 of 582 arenas — 82 of the 97 arena floors on EVERY seed — and arena_medium and
-        // arena_small placed ZERO times. It was one room, on four floors in five, for a whole
-        // climb. (The tag list itself was a separate fix: they used to read the files' NAME
-        // field while arena_large.prefab carries "TAGS: boss generic large any", so the walk
-        // matched nothing and 60 of 75 sampled floors reached the give-up log.)
+        // A fixed large -> medium -> small walk would make every entry but the first dead,
+        // because the first one always fits: arena_large is 25x19 and the smallest floor's disk
+        // is 100 across.
         //
-        // Two groups instead, each a weighted draw WITHOUT REPLACEMENT, biome-declared first:
+        // Two groups instead, each a weighted draw without replacement, biome-declared first:
         // an arena that names this biome is a stronger claim about the floor than the catch-all,
         // the same order the three prefab passes themselves run in. Falling through to the `any`
-        // group keeps every floor covered, and makes the two dead arenas reachable.
+        // group keeps every floor covered.
         //
-        // THE DRAW COMES FROM A STREAM DERIVED FROM (globalSeed, floor), NOT FROM ctx.Rng, so the
+        // The draw comes from a stream derived from (globalSeed, floor), not from ctx.Rng, so the
         // selection consumes nothing from the pipeline's stream and no later pass is renumbered
         // by it — the same reason SignaturePrefabPass and the prefab vendor stock derive theirs.
         // ctx.Rng is still what orients and stamps the winner, and every generic arena declares
         // ROTATE + MIRROR, so EnumerateOrientations shuffles the same eight variants and draws
-        // the same seven values whichever arena wins — the STREAM POSITION every later pass sees
-        // is unchanged, so nothing downstream is renumbered by which arena was picked. The map
-        // still differs: a different arena covers different ground, and the passes after it react
-        // to that. `bosses/generic-arenas-all-rotate-and-mirror` holds the draw-count half, which
-        // is the half that would otherwise fail silently.
+        // the same seven values whichever arena wins — the stream position every later pass sees
+        // does not depend on which arena was picked. The map still differs: a different arena
+        // covers different ground, and the passes after it react to that. Every generic arena
+        // must keep declaring ROTATE + MIRROR, or the draw count would silently vary.
         var arenaRng = new Random(SAOTRPG.Systems.RunState.RunRng.StableHash(
             SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber), "boss-arena", 0));
         var biomeArenas = genericEncompass.Where(p => NamesBiome(p, biome)).ToList();
@@ -148,8 +140,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
         var fallback = WeightedPick(bossPool.Where(p => p.Orient != PrefabOrient.Encompass).ToList(), ctx.Rng);
         if (TryPlaceCandidate(ctx, fallback)) return;
 
-        // Says what actually happened rather than guessing at a cause. The old wording blamed
-        // the disk, which was never the reason and sent one investigation down the wrong path.
+        // Says what actually happened rather than guessing at a cause.
         DebugLogger.LogGame("PREFAB",
             $"floor={ctx.FloorNumber} no boss arena placed (canon, generic and room-anchored all "
             + "declined); boss spawning into the procedural boss room only");
@@ -238,10 +229,10 @@ public sealed class PrefabPlacementPass : IGenerationPass
         _ => null,
     };
 
-    // A stream of its own, and deliberately NOT ctx.Rng: stock draws taken from the pipeline's
+    // A stream of its own, and deliberately not ctx.Rng: stock draws taken from the pipeline's
     // stream would renumber every later draw and move the whole floor. This one is derived from
     // (seed, floor, this vendor's own spawn cell), so the stock is a function of (seed, floor)
-    // while the terrain is byte-identical to a build that never stocked anything.
+    // and stocking a vendor never changes the terrain.
     private static Vendor NewVendor(int floor, string name, string shop, Random rng)
     {
         var v = new Vendor { Name = name, ShopName = shop };
@@ -305,7 +296,7 @@ public sealed class PrefabPlacementPass : IGenerationPass
     }
 
     // True when the prefab names this biome outright. `any` is the catch-all bucket rather than a
-    // biome, so a piece carrying it is NOT a claim about the floor and belongs in the second group.
+    // biome, so a piece carrying it is not a claim about the floor and belongs in the second group.
     private static bool NamesBiome(PrefabDefinition def, string biome)
     {
         foreach (var b in def.Biomes)

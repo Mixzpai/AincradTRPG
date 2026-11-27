@@ -1,6 +1,6 @@
 namespace SAOTRPG.Items.Consumables;
 
-// HF canon corruption: consumable-on-weapon transformation (post-F100 boss unreachable in our run).
+// Consumable that transforms one target weapon into its Corrupted variant.
 // Drops from F95+ field bosses at 10%; dispatched via TurnManager.HandleCorruptionStone.
 public class CorruptionStone : Consumable
 {

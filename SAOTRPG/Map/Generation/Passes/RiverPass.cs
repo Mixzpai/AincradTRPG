@@ -2,8 +2,8 @@ namespace SAOTRPG.Map.Generation.Passes;
 
 // A river runs from high ground down the land to the edge of the disk, the way water drains.
 // Both algorithms follow the same drainage; DrunkardWalk adds a meander on top, DownslopeTrace
-// runs straight down it. Without a heightmap, DrunkardWalk's old edge-to-edge walk is the
-// fallback. Gated on width >= 80 (same as LakePass).
+// runs straight down it. Without a heightmap, an edge-to-edge drunkard walk is the fallback.
+// Gated on width >= 80 (same as LakePass).
 public sealed class RiverPass : IGenerationPass
 {
     public string Name => "River";
@@ -26,8 +26,7 @@ public sealed class RiverPass : IGenerationPass
 
     // How deep a depression on the river's course must be before it pools into a lake, and how
     // much the river may pool in all (a share of the map), so one wide basin cannot drown the
-    // floor: a budget per pond let a long course pool again and again into one sheet (measured,
-    // F44 Aquatic, 34% of a viewport).
+    // floor: a budget per pond would let a long course pool again and again into one sheet.
     private const float PondDepth = 0.03f;
     private const double MaxPondShare = 0.0015;
 
@@ -57,8 +56,8 @@ public sealed class RiverPass : IGenerationPass
             if (pondBudget > 0 && filled[at] - heights[cx, cy] > PondDepth && !pooled[at])
                 pondBudget -= Pool(ctx, heights, filled, at, pondBudget, pooled);
 
-            // The meander: the old walk's drift, as an offset across the course that never strays
-            // more than two cells from the valley floor.
+            // The meander: a drunkard-walk drift, as an offset across the course that never
+            // strays more than two cells from the valley floor.
             int ox = 0, oy = 0;
             if (meander)
             {
@@ -123,9 +122,9 @@ public sealed class RiverPass : IGenerationPass
     // lowest drained cell is taken next, and each neighbour it reaches drains into it at the
     // higher of the two heights, which fills a depression instead of trapping a trace in it.
     // A bucket queue over quantized heights keeps this linear (a 1000x1000 floor is ~785k cells).
-    // FIRST IN, FIRST OUT within a bucket: a filled basin is flat, and a stack there grew the
-    // drainage depth-first into snaking chains, so a river crossing a basin wandered all over it
-    // (a 7,283-cell course on F44). A queue drains a flat by the shortest route from its spill.
+    // First in, first out within a bucket: a filled basin is flat, and a stack there would grow
+    // the drainage depth-first into snaking chains, so a river crossing a basin would wander all
+    // over it. A queue drains a flat by the shortest route from its spill.
     internal static (int[] Next, float[] Filled) Drainage(WorldContext ctx, float[,] heights)
     {
         int w = ctx.Width, h = ctx.Height, n = w * h;

@@ -2,13 +2,12 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.Items.Definitions;
 
-// Tool-slot light sources. The player emits nothing on their own, so one of these is what stands
-// between you and a black screen at midnight. Three tiers cover the climb:
+// Tool-slot light sources; the player emits no light of their own. Three tiers:
 // Wooden (TOB starter), Iron Lantern (F10+), Crystal Lantern (F40+ endgame).
 //
-// Radii are chosen against the renderer, not by feel: LightingSystem clamps a source at
-// MaxSourceRadius (16), and its penumbra only softens a source of radius 6 or more — so the
-// starter torch sits just above that gate and the endgame lantern just under the ceiling.
+// LightingSystem clamps a source at MaxSourceRadius (16), and its penumbra only softens a source
+// of radius 6 or more, so the starter torch sits just above that gate and the endgame lantern
+// just under the ceiling.
 public static class TorchDefinitions
 {
     private static Torch Make(
@@ -22,7 +21,7 @@ public static class TorchDefinitions
         };
 
     // Starter light — every run begins with one equipped, and vendors stock it from floor 1.
-    // Cheap and brittle: the point is that running out is a real event, not that it is precious.
+    // Cheap and brittle, so running out is a real event.
     public static Torch CreateWoodenTorch() => Make(
         "wooden_torch", "Wooden Torch", 40, "Common",
         maxDurability: 60, lightRadius: 7, requiredLevel: 1);

@@ -6,6 +6,7 @@ using SAOTRPG.Systems.Progression;
 using SAOTRPG.Systems.Skills;
 using SAOTRPG.Systems.Turns;
 using Skills = SAOTRPG.Systems.Skills;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -18,9 +19,8 @@ public static class StatsDialog
     // Single-column width, and the widest the two-column form is allowed to grow.
     private const int DialogWidth  = 64;
     private const int WideDialogWidth = 116;
-    // Below this the second column has nowhere to go and the layout stays single-column. A
-    // bounded region that clips its own content horizontally is the same defect as clipping it
-    // vertically, so the reflow is opt-in on measured width rather than always on.
+    // Below this the second column has nowhere to go and the layout stays single-column, so the
+    // reflow depends on the screen width rather than always being on and clipping horizontally.
     private const int TwoColumnMinWidth = 100;
 
     private static int DialogWidthFor() =>
@@ -33,14 +33,13 @@ public static class StatsDialog
     private static int DialogHeight() =>
         Math.Min(PreferredDialogHeight, Math.Max(20, AppHost.App.Screen.Height - 4));
 
-    // What SPD is worth RIGHT NOW, against the monsters actually standing on this floor. Speed is
+    // What SPD is worth right now, against the monsters actually standing on this floor. Speed is
     // a contest rather than a flat bonus, so a bare number cannot say what it buys — and the mob
     // side is read off the live roster rather than from a copy of MobFactory's own 3 + floor
-    // formula, which would be a second place for that number to rot.
+    // formula, which would be a second copy of that number to keep in step.
     //
     // With nothing alive to pace, the ceiling against a motionless target is shown instead and is
-    // labelled as such: a blank would read as "Speed does nothing here", which is the impression
-    // this whole stat is being dug out of.
+    // labelled as such: a blank would read as "Speed does nothing here".
     private static string SpeedFollowUpNote(Player player, TurnManager? turnManager)
     {
         var live = turnManager?.Map.Monsters;
@@ -120,7 +119,7 @@ public static class StatsDialog
 
             var nameLabel  = new Label { Text = $"{Stats[idx].Name}:",   X = 1,  Y = row, Width = 14 };
             var valLabel   = new Label { Text = $"{Stats[idx].GetValue(player),3}", X = 16, Y = row, Width = 4 };
-            var addBtn     = new Button { Text = "+1", X = 21, Y = row, SchemeName = ColorSchemes.ButtonName,
+            var addBtn     = new PlainButton { Text = "+1", X = 21, Y = row, SchemeName = ColorSchemes.ButtonName,
                                            ShadowStyle = null };
             var effectLabel = new Label { Text = Stats[idx].Effect,       X = 28, Y = row };
 
@@ -162,10 +161,8 @@ public static class StatsDialog
 
         void RefreshCombat()
         {
-            // SPD is the raw derived stat. It used to have a fatigue penalty subtracted here, on
-            // the reasoning that Player.Speed is display-only so the display WAS the mechanic —
-            // but that made this label disagree with the formula the Guide states for SPD, and
-            // fatigue charges attack and defence only.
+            // SPD is the raw derived stat with no fatigue penalty: it has to agree with the formula
+            // the Guide states for SPD, and fatigue charges attack and defence only.
             combatLabel.Text = $"ATK:{player.Attack} DEF:{player.Defense} SPD:{player.Speed}"
                              + SpeedFollowUpNote(player, turnManager)
                              + $" HP:{player.CurrentHealth}/{player.MaxHealth}";
@@ -314,8 +311,7 @@ public static class StatsDialog
             Width = colW,
         }.WithScheme(titleScheme));
         // One snapshot rather than one IsMilestoneUnlocked per row: that helper re-reads and
-        // re-deserializes lifetime_stats.json on every call, which cost 5.6 ms of this dialog's
-        // 7.7 ms build.
+        // re-deserializes lifetime_stats.json on every call.
         var unlockedIds = new HashSet<string>(LifetimeStats.Load().UnlockedMilestones,
                                               StringComparer.Ordinal);
         int unlockedCount = 0, totalTitles = 0;
@@ -372,8 +368,8 @@ public static class StatsDialog
                 SchemeName = ColorSchemes.DimName,
             });
         }
-        // Anchored, not placed after the guild block: at gY + 4 it fell below the clamped
-        // height at EVERY terminal size, and it is the only route to the guild roster.
+        // Anchored, not placed after the guild block: gY + 4 lies below the clamped height, and
+        // this button is the only route to the guild roster.
         var rosterBtn = DialogHelper.CreateButton("View All Guilds");
         rosterBtn.X = rightX; rosterBtn.Y = Pos.AnchorEnd(4);
         rosterBtn.Accepting += (s, e) =>
@@ -384,7 +380,7 @@ public static class StatsDialog
         dialog.Add(rosterBtn);
 
         // No hint label here: AddCloseFooter already draws an esc hint on AnchorEnd(1), and a
-        // second one occupied the same row.
+        // second one would occupy the same row.
         dialog.Add(spLabel, combatLabel);
         DialogHelper.AddCloseFooter(dialog);
         DialogHelper.DiscloseClippedContent(dialog);

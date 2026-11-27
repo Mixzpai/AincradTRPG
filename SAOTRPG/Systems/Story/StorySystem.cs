@@ -9,7 +9,7 @@ public static class StorySystem
     public static Dictionary<Faction, int> Reputation { get; set; } = new();
 
     // GameScreen wires this on init so StorySystem.Fire can show a modal
-    // cutscene synchronously. Null during headless tests or before UI init.
+    // cutscene synchronously. Null when running headless or before UI init.
     public static Action<CutsceneScript>? Handler { get; set; }
 
     private static readonly List<NarrativeEvent> _events = new();
@@ -22,7 +22,7 @@ public static class StorySystem
         StoryEvents.RegisterAll(_events);
     }
 
-    // Wipe run-state (called on new game). Permanent profile data is NOT cleared.
+    // Wipe run-state (called on new game). Permanent profile data is not cleared.
     public static void Reset()
     {
         FiredEventIds.Clear();
@@ -31,7 +31,7 @@ public static class StorySystem
     }
 
     // F9 hot-reload latch reset — drops "floor:"-prefixed fired ids so regenerated NPCs
-    // re-trigger first-meet lines. Stub filter pending a proper floor-scoped id convention.
+    // re-trigger first-meet lines. Only ids with that prefix are treated as floor-scoped.
     public static void ClearPerFloorTriggers()
     {
         int before = FiredEventIds.Count;

@@ -17,7 +17,7 @@ public static partial class MapGenerator
     }
 
     // Per-prefab-name MAX_PER_GAME tracker. Saved via SaveData.PrefabUseCounts;
-    // loaded on save-load, cleared on new-run. NOT reset on floor change — per-game cap.
+    // loaded on save-load, cleared on new-run. Not reset on floor change — per-game cap.
     private static Dictionary<string, int> _prefabUseCounts = new();
     // The ledger before the current floor was charged. A save stores this, because loading rebuilds that floor.
     private static Dictionary<string, int> _floorStartCounts = new();
@@ -28,12 +28,12 @@ public static partial class MapGenerator
     public static void SetPrefabUseCounts(Dictionary<string, int>? counts) =>
         _prefabUseCounts = _floorStartCounts = counts ?? new();
 
-    // The cap ledger is CHARGED THROUGH WorldContext, not here. A generation takes a copy, spends
+    // The cap ledger is charged through WorldContext, not here. A generation takes a copy, spends
     // against it, and commits only when its floor is adopted — so a floor built ahead of the
     // player and then discarded leaves no trace, and two generations can never share the
-    // dictionary. There is deliberately no static charge method: the previous one was an
-    // unsynchronized Dictionary write reachable from a pass, and eight threads on it lose ~10% of
-    // their increments and intermittently corrupt the collection outright.
+    // dictionary. There is deliberately no static charge method: an unsynchronized Dictionary
+    // write reachable from a pass would lose increments and corrupt the collection under
+    // concurrent generation.
     private static void CommitPrefabUse(Dictionary<string, int> counts)
     {
         _floorStartCounts = _prefabUseCounts;
@@ -41,15 +41,15 @@ public static partial class MapGenerator
     }
 
     // Floor-generation entry point. Only F100 Ruby Palace bypasses; every other floor
-    // (F1 included — SpecialAreaPass stamps the town overlay) runs the full 16-pass pipeline.
+    // (F1 included — SpecialAreaPass stamps the town overlay) runs the full pass pipeline.
     public static (GameMap Map, List<Room> Rooms) GenerateFloor(int floorNumber, int width = 0, int height = 0)
     {
         bool defaultDims = width <= 0 || height <= 0;
         if (defaultDims)
             (width, height) = FloorScale.GetDimensions(floorNumber);
 
-        // A floor built ahead of the player is adopted here, which is what keeps the whole feature
-        // out of the transition code: AscendFloor is unchanged and simply finds the work done.
+        // A floor built ahead of the player is adopted here, which keeps prefetching out of the
+        // transition code: AscendFloor simply finds the work done.
         // Take joins any in-flight build even when it cannot use it, so a generation never runs
         // beside another one. Only the default-dimension form can be served — a caller asking for
         // its own size is asking for a different map.
@@ -74,13 +74,12 @@ public static partial class MapGenerator
     // The pipeline half of GenerateFloor with the ledger commit left to the caller, so a floor can
     // be built ahead of time and only charge its caps if it is actually adopted.
     //
-    // SAFE OFF THE UI THREAD because it WRITES no shared state: the context owns everything the
+    // Safe off the UI thread because it writes no shared state: the context owns everything the
     // passes produce, including the cap ledger. What it reads — the seed, the biome table and the
     // prefab library — is immutable once populated, and FloorPrefetch.Request warms the two lazy
-    // caches before queueing any work. It draws nothing from the gameplay stream either; SeedProbe
-    // section 38 asserts that across all 100 floors, because a draw here would race the turn loop.
-    // Note this does NOT handle floors that bypass the pipeline: F100 has no detached form, and
-    // Request refuses it.
+    // caches before queueing any work. It draws nothing from the gameplay stream either, because a
+    // draw here would race the turn loop. It does not handle floors that bypass the pipeline: F100
+    // has no detached form, and Request refuses it.
     internal static (GameMap Map, List<Room> Rooms, Generation.WorldContext Ctx) GenerateFloorDetached(
         int floorNumber, int width, int height, int seed)
     {
@@ -92,11 +91,11 @@ public static partial class MapGenerator
     // Adopt a detached generation: its scoped ledger becomes the game's.
     internal static void AdoptDetached(Dictionary<string, int> counts) => CommitPrefabUse(counts);
 
-    // `seed` is EXPLICIT rather than read from the static here, because a detached build runs on a
-    // worker: reading CurrentGlobalSeed inside the build lets a new run's seed land mid-generation,
-    // so the floor would be built from one seed while the prefetch recorded another. Harmless today
-    // (a seed change goes through Invalidate, which discards the result) but the two must not be
-    // able to disagree. The synchronous path passes the same static it always read.
+    // `seed` is explicit rather than read from the static here, because a detached build runs on a
+    // worker: reading CurrentGlobalSeed inside the build would let a new run's seed land
+    // mid-generation, so the floor would be built from one seed while the prefetch recorded
+    // another. A seed change goes through Invalidate, which discards the result, but the two must
+    // not be able to disagree. The synchronous path passes the static.
     private static Generation.WorldContext BuildContext(int floorNumber, int width, int height, int seed)
     {
         var biome = BiomeSystem.GetBiome(floorNumber);
@@ -127,16 +126,14 @@ public static partial class MapGenerator
         new Generation.Passes.BiomeBlendPass(),
         new Generation.Passes.SpecialAreaPass(),
         // The three prefab passes run most-specific first, because open ground is scarce on a
-        // cave biome and whoever asks first gets the pick of it: the floor's own canon set-piece,
+        // cave biome and whoever asks first gets the pick of it: the floor's own set-piece,
         // then the biome's landmark, then the general weighted draw working around both.
         new Generation.Passes.CanonOverlayPass(),
         new Generation.Passes.SignaturePrefabPass(),
         new Generation.Passes.PrefabPlacementPass(),
         new Generation.Passes.FeatureScatterPass(),
-        // AmbientOverlayPass was here and is gone. It seeded biome particles straight into
-        // ParticleQueue — a render system — from inside generation, read a UI setting to decide
-        // how many, and drew ~500k rng values doing it. The atmosphere is maintained around the
-        // camera by MapView now; generation has no opinion about it.
+        // No atmosphere pass: biome particles are a render concern, maintained around the camera
+        // by MapView.
         new Generation.Passes.ConnectivityAuditPass(),
     };
 
@@ -202,8 +199,8 @@ public static partial class MapGenerator
                 if (map.InBounds(x, y)) map.Tiles[x, y].Type = TileType.Floor;
         rooms.Add(new Room(trX, trY, trW, trH));
         // The way out of Aincrad. GameWon fires only from AscendFloor, which is reachable only by
-        // stepping on StairsUp -- and the palace had none, so the game could not be finished at all.
-        // Placed at the throne itself, which is also where the player-clone is posted.
+        // stepping on StairsUp, so without it the game could not be finished. Placed at the throne
+        // itself, which is also where the player-clone is posted.
         if (map.InBounds(cx, trY + trH / 2)) map.Tiles[cx, trY + trH / 2].Type = TileType.StairsUp;
         if (map.InBounds(cx, trY + trH - 1)) map.Tiles[cx, trY + trH - 1].Type = TileType.Door;
         if (map.InBounds(trX + 2, trY + 1)) map.Tiles[trX + 2, trY + 1].Type = TileType.Campfire;
@@ -234,11 +231,9 @@ public static partial class MapGenerator
             for (int y = 0; y < h; y++)
             {
                 var t = map.Tiles[x, y].Type;
-                // EXITS COUNT AS OPEN. Omitting them meant a StairsUp written above was judged
-                // "not open", found to touch floor, and WALLED OVER — the tile was created and
-                // destroyed within the same function. Same shape as the archway that FeatureScatter
-                // carved away with its own approach road: a whitelist that does not know about a
-                // tile silently deletes it.
+                // Exits count as open; otherwise the StairsUp written above would be judged "not
+                // open", found to touch floor, and walled over. A whitelist that does not know
+                // about a tile silently deletes it.
                 isOpen[x, y] = t == TileType.Floor || t == TileType.Door
                     || t == TileType.Campfire || t == TileType.Shrine
                     || t == TileType.Chest || t == TileType.Pillar
@@ -313,33 +308,7 @@ public static partial class MapGenerator
         return true;
     }
 
-    // Mountain perimeter: single walker invoked 4x with different coord mappers.
-    internal static void BuildJaggedMountainBorder(GameMap map, Random rng)
-    {
-        int w = map.Width, h = map.Height;
-        WalkMountainEdge(map, w, (i, j) => (i, j), rng);
-        WalkMountainEdge(map, w, (i, j) => (i, h - 1 - j), rng);
-        WalkMountainEdge(map, h, (i, j) => (j, i), rng);
-        WalkMountainEdge(map, h, (i, j) => (w - 1 - j, i), rng);
-    }
-
-    private static void WalkMountainEdge(GameMap map, int length, Func<int, int, (int X, int Y)> toCoord, Random rng)
-    {
-        const int maxThick = 4;
-        int t = 1 + rng.Next(2);
-        for (int i = 0; i < length; i++)
-        {
-            if (rng.Next(3) == 0)
-                t = Math.Clamp(t + rng.Next(-1, 2), 1, maxThick);
-            for (int j = 0; j < t; j++)
-            {
-                var (x, y) = toCoord(i, j);
-                if (map.InBounds(x, y)) map.Tiles[x, y].Type = TileType.Mountain;
-            }
-        }
-    }
-
-    // 5x5 walled building via BuildStructure; rewrites default south door to requested side. doorSide: 0=N,1=E,2=S,3=W.
+    // 5x5 walled building via BuildStructure; rewrites default south door to the given side. doorSide: 0=N,1=E,2=S,3=W.
     private static void BuildTownBuilding(GameMap map, int cx, int cy, TileType feature, int doorSide)
     {
         int sx = cx - 2, sy = cy - 2;
@@ -405,10 +374,10 @@ public static partial class MapGenerator
         }
     }
 
-    // Blocking table for EnsureConnectivity, indexed by tile type. DERIVED from the predicate
+    // Blocking table for EnsureConnectivity, indexed by tile type. Derived from the predicate
     // below rather than hand-listed, so the two cannot drift; a table load replaces a seven-way
     // pattern match run once per cell of the floor.
-    // NOTE this list is NOT the same as ConnectivityAuditPass.IsAuditBlocking — that one also
+    // This list is not the same as ConnectivityAuditPass.IsAuditBlocking — that one also
     // treats CrackedWall as blocking. Kept separate deliberately.
     private static readonly byte[] ConnectivityBlockingLut = BuildConnectivityBlockingLut();
 
@@ -431,15 +400,13 @@ public static partial class MapGenerator
         if (clearings.Count == 0) return;
         int w = map.Width, h = map.Height;
 
-        // FLAT ARRAYS AND A FLAT BLOCKING TABLE. This was a bool[w, h], a Queue<(int, int)> and a
-        // `map.Tiles[nx, ny].Type` probe per neighbour — a 16-byte struct through a 2D indexer, in
-        // random order, four times per visited cell. Measured on a 1000x1000 floor: 2M random
-        // probes cost 169.3 ms that way against 13.3 ms through a byte table. Same shape, and the
-        // same fix, as ConnectivityAuditPass.FloodFill.
+        // Flat arrays and a flat blocking table: probing `map.Tiles[nx, ny].Type` per neighbour
+        // would read a 16-byte struct through a 2D indexer, in random order, four times per
+        // visited cell. Same shape as ConnectivityAuditPass.FloodFill.
         //
-        // Output-neutral by construction: this BFS draws no rng and only ever ASKS which cells are
+        // Output-neutral by construction: this BFS draws no rng and only ever asks which cells are
         // reachable. The carve decisions below read `reached`, whose contents do not depend on how
-        // it is stored. Proven anyway by diffing floor signatures.
+        // it is stored.
         var blocked = new byte[w * h];
         var lut = ConnectivityBlockingLut;
         var tiles = map.Tiles;

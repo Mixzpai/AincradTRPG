@@ -13,6 +13,11 @@ namespace SAOTRPG.Entities
         // Aquatic mobs — binary Water/WaterDeep gate (no slow penalty). Default false → water is a choke.
         public bool CanSwim { get; set; }
 
+        // Monster speed and move points: it gains MoveSpeed points a turn and acts while it
+        // has any (TurnManager.ProcessEntityTurns). 100 acts once a second, like the player.
+        public int MoveSpeed { get; set; } = 100;
+        public int Moves { get; set; }
+
         // Reward data returned on kill; includes overkill info.
         public class DefeatReward
         {

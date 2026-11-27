@@ -2,7 +2,8 @@ using SAOTRPG.Items.Equipment;
 
 namespace SAOTRPG.UI.Rendering;
 
-// Dramatic 3-second non-modal overlay; MapView.RenderDivineObtainBanner polls IsActive each frame.
+// A 3-second non-modal overlay for a divine weapon; MapView.RenderDivineObtainBanner polls
+// IsActive each frame.
 // Input is never captured — the player can keep fighting while the banner fades.
 public static class DivineObtainBanner
 {
@@ -65,7 +66,7 @@ public static class DivineObtainBanner
     // Set in TriggerAwakening; mirrors _awakeningLevel for explicit particle-system contract.
     public static int AwakeningParticleLevel { get; private set; }
 
-    // True when the awakening banner is active and we are still inside the first
+    // True when the awakening banner is active and still inside the first
     // half of its duration window (emit phase). Consumed by MapView.Particles.
     public static bool ShouldEmitParticlesThisFrame
     {

@@ -1,7 +1,7 @@
 namespace SAOTRPG.Map.Generation.Prefabs;
 
 // Runtime view of a PrefabDefinition: carries an ActiveMap that may be rotated,
-// mirrored, and Subst/NSubst-resolved. Original def map is never mutated.
+// mirrored, and Subst/NSubst-resolved. The source definition's map is never mutated.
 public sealed class ParsedPrefab
 {
     public PrefabDefinition Source { get; }
@@ -88,7 +88,7 @@ public sealed class ParsedPrefab
         }
 
         // SHUFFLE: Fisher-Yates permute positions of each group's glyphs. Order
-        // matters — runs AFTER SUBST/NSUBST so final glyphs shuffle, not placeholders.
+        // matters — runs after SUBST/NSUBST so final glyphs shuffle, not placeholders.
         foreach (string group in Source.Shuffle)
         {
             if (group.Length < 2) continue;

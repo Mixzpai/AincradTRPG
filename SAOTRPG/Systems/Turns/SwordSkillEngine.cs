@@ -108,7 +108,7 @@ public partial class TurnManager
         int totalDamage = (int)(baseAtk * skillMul);
 
         // SkillDamage flat bonus (post-multiplier) so gear contributes to all skills.
-        // Multi-hit: /4 per extra hit to preserve old scaling.
+        // Multi-hit: each extra hit adds a quarter of SkillDamage.
         totalDamage += _player.SkillDamage;
         if (skill.Hits > 1)
             totalDamage += _player.SkillDamage * (skill.Hits - 1) / 4;
@@ -145,7 +145,7 @@ public partial class TurnManager
 
             WeaponSwing?.Invoke(_player.X, _player.Y, monster.X, monster.Y,
                 GetSwingColor(wpn, anyCrit), GetSwingDurationMs(wpn));
-            // Multi-hit cascade (Starburst Stream 16 / Eclipse 27 / MR 11):
+            // Multi-hit cascade (Starburst Stream 16 / Eclipse 27 / Mother's Rosario 11):
             // emit MultiHitStream-flagged popups at 40ms stagger so they
             // bypass the 3-per-tile coalesce and register as a visible storm.
             if (skill.Hits >= 4)
@@ -194,9 +194,10 @@ public partial class TurnManager
         }
 
         // ── Cooldown + post-motion ───────────────────────────────────
-        // SkillCooldownReduction.Turns is negative (e.g. -1) — flat add to cd.
+        // The weapon effect's Turns is negative (e.g. -1) and adds; the SkillCooldown stat is a
+        // positive reduction and subtracts.
         int cdReduction = wpn?.FirstEffect<EquipmentSpecialEffect.SkillCooldownReduction>()?.Turns ?? 0;
-        int cd = Math.Max(0, skill.CooldownTurns + cdReduction);
+        int cd = Math.Max(0, skill.CooldownTurns + cdReduction - _player.SkillCooldownReduction);
         if (cd > 0)
             _skillCooldowns[skill.Id] = cd;
         int pmReduction = wpn?.FirstEffect<EquipmentSpecialEffect.PostMotionReduction>()?.Turns ?? 0;
@@ -207,12 +208,8 @@ public partial class TurnManager
             _log.LogCombat($"  Post-motion delay: {_postMotionDelay} turn(s) of vulnerability!");
         }
 
-        // ── Advance turn ─────────────────────────────────────────────
-        AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-        if (_player.IsDefeated) return;
-        ProcessEntityTurns();
-        PassiveRegen();
+        // ── Spend the swing's time ───────────────────────────────────
+        if (!SpendMoves(AttackMoves())) return;
         UpdateVisibility();
         TurnCompleted?.Invoke();
     }
@@ -220,21 +217,17 @@ public partial class TurnManager
     private void ExecuteCounterSkill(SwordSkill skill)
     {
         _counterStance = true;
+        _riposteMultiplier = skill.DamageMultiplier;
         _log.LogCombat($"*{skill.Name}! You enter a counter stance with {skill.DamageMultiplier:F1}x riposte power!");
         CombatTextEvent?.Invoke(_player.X, _player.Y, $"*{skill.Name}!", Color.BrightYellow);
 
         if (skill.CooldownTurns > 0)
             _skillCooldowns[skill.Id] = skill.CooldownTurns;
 
-        AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-        if (_player.IsDefeated) return;
-        ProcessEntityTurns();
+        // The stance covers the monster turns SpendMoves runs; ProcessMonsterAttack ripostes.
+        if (!SpendMoves(NormalSpeed)) return;
 
-        // Counter riposte applied 1.5x default; skill multiplier override
-        // handled in ProcessMonsterAttack via _counterStance flag.
         _counterStance = false;
-        PassiveRegen();
         TurnCompleted?.Invoke();
     }
 
@@ -248,7 +241,7 @@ public partial class TurnManager
     {
         var targets = new List<Entity>();
         int range = skill.Range;
-        // Marksman Eye fork (Bow proficiency 25) extends range on bow skills only.
+        // Marksman Eye fork (Bow proficiency L50) extends range on bow skills only.
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         if (wpn?.WeaponType == "Bow") range += _player.BowRangeOverflow;
 
@@ -313,7 +306,7 @@ public partial class TurnManager
         }
     }
 
-    // Called from AdvanceTurn to tick down skill cooldowns and post-motion.
+    // Called from TickPerTurnTimers to tick down skill cooldowns and post-motion.
     private readonly List<string> _expiredCooldowns = new();
 
     private void TickSkillCooldowns()
@@ -324,9 +317,8 @@ public partial class TurnManager
             if (_postMotionDelay == 0) _log.LogCombat("Post-motion delay has ended.");
         }
 
-        // Reused buffer, and skipped outright when nothing is on cooldown. This runs on EVERY
-        // turn through TickPerTurnTimers, so a fresh List was a heap allocation per keystroke over
-        // a table that is usually empty.
+        // Reused buffer, and skipped outright when nothing is on cooldown: this runs on every
+        // turn through TickPerTurnTimers, over a table that is usually empty.
         if (_skillCooldowns.Count == 0) return;
         _expiredCooldowns.Clear();
         foreach (var kvp in _skillCooldowns)

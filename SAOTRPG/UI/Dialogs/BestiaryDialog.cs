@@ -9,7 +9,7 @@ using SAOTRPG.Systems.Turns;
 namespace SAOTRPG.UI.Dialogs;
 
 // Monster compendium (Y from map). Persists selection/tab/sort/filter across opens within a run.
-// Size = min(screen-6, 120x45). Left list + right tabbed detail, filter chips under title, footer hint.
+// Size = min(screen-6, 130x45). Left list + right tabbed detail, filter chips under title, footer hint.
 public static class BestiaryDialog
 {
     private const int MaxWidth = 130;
@@ -191,8 +191,8 @@ public static class BestiaryDialog
             string undiscMark = filter.ShowUndiscovered ? "[x]" : "[ ]";
             // The chips above carry no digits of their own, so the row that reports filter state
             // also names the keys that change it.
-            // The band is shown only while one is selected. A permanent range readout is what
-            // FB-655 removed: it advertised a filter with no control behind it.
+            // The band is shown only while one is selected, so the row never advertises a
+            // filter that is not in effect.
             string bandMark = filter.BandActive ? $"  {filter.BandLabel}" : "";
             indicatorLabel.Text =
                 $"B:{bossMark}Boss  U:{undiscMark}Undisc{bandMark}  " +
@@ -289,16 +289,13 @@ public static class BestiaryDialog
             }
         };
 
-        // Two-key S-prefix sort state. Scoped to this dialog instance: as a static it survived
-        // the dialog closing, so an S left armed ate the first keystroke of the next open.
+        // Two-key S-prefix sort state. Scoped to this dialog instance so an S left armed cannot
+        // eat the first keystroke of the next open.
         bool awaitingSortSuffix = false;
 
-        // Primary keybind handler on listView. Letters go via
-        // e.AsRune.Value (the typed character); control keys go via
-        // e.KeyCode. Mixing the two matches how PlayerGuideDialog wires
-        // keys — KeyCode.A-Z match in the OnKeyDown override path but
-        // not reliably in the KeyDown event path, which is why every
-        // letter binding has to use AsRune.
+        // Primary keybind handler on listView. Letters go via e.AsRune.Value (the typed
+        // character); control keys go via e.KeyCode. KeyCode.A-Z match in the OnKeyDown
+        // override path but not reliably in the KeyDown event path, so letters use AsRune.
         listView.KeyDown += (s, e) =>
         {
             if (Keybinds.IsPressed(GameAction.BestiarySearch, e))
@@ -399,7 +396,7 @@ public static class BestiaryDialog
             }
 
             // Tag chips: 1-9, 0, 'a'/'w' map 12 tags. Raw rune (not lowercased) drives digits.
-            // 'a' collides with sort-suffix — only reachable when NOT awaiting.
+            // 'a' collides with sort-suffix — only reachable when not awaiting.
             int tagIdx = TagIndexFor((char)e.AsRune.Value);
             if (tagIdx >= 0 && tagIdx < KnownTags.Length)
             {
@@ -543,8 +540,6 @@ public static class BestiaryDialog
         sb.AppendLine();
         if (e.DeathsCausedAcrossRuns > 0)
             sb.AppendLine($"  Lifetime deaths caused: {e.DeathsCausedAcrossRuns}");
-        sb.AppendLine();
-        sb.AppendLine("  (kill-per-run sparkline coming in a future update)");
         return sb.ToString();
     }
 
@@ -572,7 +567,7 @@ public static class BestiaryDialog
         return char.ToUpper(s[0]) + s[1..];
     }
 
-    // Map a tag-toggle key to the index in KnownTags. 1-9, 0, a, b cover 12.
+    // Map a tag-toggle key to the index in KnownTags. 1-9, 0, a, w cover 12.
     private static int TagIndexFor(char ch) => ch switch
     {
         '1' => 0, '2' => 1, '3' => 2, '4' => 3, '5' => 4,

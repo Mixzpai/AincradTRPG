@@ -11,9 +11,9 @@ namespace SAOTRPG.Systems.Social;
 // optional and they AND together, so `new DialogueCondition(MinFloorReached: 20)` reads as the
 // whole requirement rather than as one clause of a form the author has to complete.
 //
-// The conditions map onto state that already exists — karma, faction reputation, story flags and
-// lifetime floor progress — deliberately: a gate on a concept the game does not model would be a
-// promise nothing can keep, and this project has spent a long time removing exactly that shape.
+// The conditions map onto state the game actually models — karma, faction reputation, story flags
+// and lifetime floor progress — deliberately: a gate on a concept the game does not model would be
+// a promise nothing can keep.
 public sealed record DialogueCondition(
     int? MinFloorReached = null,
     int? KarmaAtLeast = null,

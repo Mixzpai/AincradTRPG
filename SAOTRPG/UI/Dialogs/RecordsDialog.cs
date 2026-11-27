@@ -4,7 +4,7 @@ using SAOTRPG.Systems.Persistence;
 namespace SAOTRPG.UI.Dialogs;
 
 // Lifetime Records (TitleScreen → Records). 80x30: banner + Summary/Career panels + Floor/Win bars, tabbed table (Recent Runs | Victory Leaderboard), Close.
-// Tab or ←/→ cycle tabs; leaderboard sort via [/] or Sort button (Col/Turns/Level/Kills/PlayTime/Date/Grade).
+// Tab cycles tabs (←/→ move focus between the buttons); leaderboard sort via [/] or Sort button (Col/Turns/Level/Kills/PlayTime/Date/Grade).
 public static class RecordsDialog
 {
     private const int DialogWidth = 80;
@@ -14,9 +14,8 @@ public static class RecordsDialog
     private enum SortKey { Col, Turns, Level, Kills, PlayTime, Date, Grade }
 
     // Columns between the two │ edges of the Summary / Career Stats panels. Every row has to
-    // agree on this or the box renders ragged, which it did: the borders came out 37 columns
-    // wide against body rows of 36, so the right edge of all twelve data rows sat one column
-    // inside the corners. Rows are built by the three helpers below rather than hand-spaced.
+    // agree on this or the box renders ragged, so rows are built by the three helpers below
+    // rather than hand-spaced.
     private const int BoxInner = 35;
 
     // Columns the label plus its dot leader occupy inside a row.
@@ -99,8 +98,8 @@ public static class RecordsDialog
         };
 
         // ── Progress bars ───────────────────────────────────────────────
-        // Career-stats panel grew by 2 rows (IF/HF lifetime hi-water) so the
-        // bar strip + tab strip drop down by 2 to keep clearance.
+        // Placed below the 8-row Career Stats panel (which includes the IF/HF
+        // lifetime high-water rows) so the bar strip + tab strip keep clearance.
         int barRowY = 12;
         var floorBar = new Label
         {
@@ -163,7 +162,7 @@ public static class RecordsDialog
         closeBtn.X = Pos.Center(); closeBtn.Y = Pos.AnchorEnd(2);
         closeBtn.Accepting += (s, e) => { e.Handled = true; AppHost.App.RequestStop(); };
 
-        // ── Nav: Tab + Left/Right cycles tabs; `[`/`]` cycles sort ──────
+        // ── Nav: Tab cycles tabs; `[`/`]` cycles sort ──────
         dialog.KeyDown += (s, e) =>
         {
             if (e.KeyCode == KeyCode.Tab)
@@ -207,7 +206,7 @@ public static class RecordsDialog
     private static string BoxBottom() => "└" + new string('─', BoxInner) + "┘";
 
     // "│ Runs ............. 42             │" — value clipped rather than allowed to
-    // push the right edge out, which is how the death/victory card used to burst its box.
+    // push the right edge out.
     private static string BoxRow(string label, string value)
     {
         string cell = " " + (label + " ").PadRight(LeaderWidth, '.') + " " + value;
@@ -249,7 +248,7 @@ public static class RecordsDialog
         return sb.ToString();
     }
 
-    // Legacy "Unknown" (pre-PlayerName saves) → em-dash; truncates >15 chars for column width.
+    // "Unknown" (no PlayerName recorded) → em-dash; truncates >15 chars for column width.
     private static string DisplayName(string name)
     {
         if (string.IsNullOrWhiteSpace(name) || name == "Unknown") return "—";

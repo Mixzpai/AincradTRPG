@@ -41,7 +41,7 @@ public static class EasingHelper
         return new Color((byte)(c.R * alpha), (byte)(c.G * alpha), (byte)(c.B * alpha));
     }
 
-    // Returns a NEW Scheme with all five Attributes' fg + bg scaled by alpha.
+    // Returns a new Scheme with all five Attributes' fg + bg scaled by alpha.
     // Used by the dialog fade-in to ramp the whole scheme up from black.
     public static Scheme ScaleScheme(Scheme baseScheme, float alpha)
     {

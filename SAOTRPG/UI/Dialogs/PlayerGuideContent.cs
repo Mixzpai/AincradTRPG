@@ -11,25 +11,20 @@ public static class PlayerGuideContent
     // Placeholder in the controls topic, replaced at render time with the player's real bindings.
     public const string BindingsToken = "{{BINDINGS}}";
 
-    // {{KEY:SomeAction}} renders as whatever that action is currently bound to. Any topic naming a
-    // key is otherwise a claim that survives rebinding by luck — the controls page was rewritten
-    // for that reason, and the same rot applies wherever else a key is written out.
+    // {{KEY:SomeAction}} renders as whatever that action is currently bound to, so a key named in
+    // prose stays correct after a rebind.
     private static readonly System.Text.RegularExpressions.Regex KeyTokenRx =
         new(@"\{\{KEY:([A-Za-z0-9]+)\}\}");
 
-    // The status tray's own code list, rendered at read time. This table was hand-written and
-    // had drifted twice — BAR shipped without it and the timed-buff rows never reached it — so it
-    // is generated from StatusIconMap.AllCodes, the one place the codes are declared.
+    // The status tray's own code list, rendered at read time from StatusIconMap.AllCodes, the one
+    // place the codes are declared.
     public const string StatusCodesToken = "{{STATUS_CODES}}";
 
-    // The letter tray's own key, rendered at read time. The hand-written version described three
-    // letters as meaning something they do not (X, C, D) and invented a fourth (Z).
-    // The minimap's glyph legend, rendered from MinimapView.Legend at read time.
-    // Per-biome ore density, read from the biome JSONs at render.
-    //
-    // The hand-written version listed a "Cave" biome the game does not have, and omitted Ice,
-    // Desert and Dark — three of the four richest. Fifth generator here to replace a
-    // transcription that had already rotted.
+    // The letter tray's own key, rendered at read time from StatusTrayWidget.AllLetters.
+    // The full map's glyph legend, rendered from MinimapView.Legend at read time, and the
+    // sidebar overmap's terrain legend from OvermapView.Legend.
+    // Per-biome ore density, read from the biome JSONs at render, so the table lists exactly the
+    // biomes the game has.
     public const string OreDensityToken = "{{ORE_DENSITY}}";
 
     internal static string BuildOreDensityBlock()
@@ -60,8 +55,8 @@ public static class PlayerGuideContent
     public const string LandmarkKindsToken = "{{LANDMARK_KINDS}}";
 
     // Counted off the prefab library itself, so a new hand-authored landmark reaches this page
-    // without anyone editing it — and the page can never claim a kind that no longer ships.
-    // Categories only: a prefab's NAME is an internal id and must not appear in player text.
+    // without anyone editing it — and the page never claims a kind the library does not hold.
+    // Categories only: a prefab's name is an internal id and must not appear in player text.
     internal static string BuildLandmarkKindsBlock()
     {
         var lib = Map.Generation.Prefabs.PrefabLibrary.Shared;
@@ -105,10 +100,8 @@ public static class PlayerGuideContent
             ? src
             : src.Replace(LandmarkKindsToken, BuildLandmarkKindsBlock());
 
-    // {{GLYPH:Campfire}} renders the mark that tile actually draws, inline in prose. Every
-    // written-out glyph in this corpus has eventually gone stale — the chest was a "gold diamond"
-    // for a shipment after it stopped being one — so naming a glyph in words is not allowed to
-    // survive anywhere a token can stand instead.
+    // {{GLYPH:Campfire}} renders the mark that tile actually draws, inline in prose, so a glyph
+    // is never named in words anywhere a token can stand instead.
     internal static string ResolveGlyphTokens(string src)
     {
         if (!src.Contains("{{GLYPH:", System.StringComparison.Ordinal)) return src;
@@ -131,7 +124,7 @@ public static class PlayerGuideContent
 
     // Read off the biome configs, because "how many fires a floor holds" is a tuning value and a
     // typed number would be wrong the next time anyone edits a JSON. Reports the range across
-    // biomes rather than one figure — the answer genuinely differs by where you are.
+    // biomes rather than one figure — the answer differs by biome.
     internal static string BuildCampfireQuotaBlock()
     {
         int lo = int.MaxValue, hi = 0;
@@ -152,13 +145,10 @@ public static class PlayerGuideContent
 
     public const string BiomeEffectsToken = "{{BIOME_EFFECTS}}";
 
-    // TENTH generator. The hand-written table it replaces was mostly right, and the two things
-    // it got wrong are the kind only a generator catches: it omitted The Void's +1 hunger/turn
-    // entirely, and it called the Desert and Volcanic satiety drain "thirst" when the stat is
-    // satiety, which the game elsewhere calls hunger. Built from BiomeSystem's own config table,
-    // so a tuning change reaches the page.
+    // Built from BiomeSystem's own config table, so a tuning change reaches the page. The satiety
+    // drain is labelled "hunger", the name the game uses for that stat elsewhere.
     //
-    // Only PASSIVE per-turn effects belong here — Ruins' trap density and Settlement's vendors
+    // Only passive per-turn effects belong here — Ruins' trap density and Settlement's vendors
     // are real but are not config fields, so they stay in prose beneath the table rather than
     // being invented as rows.
     internal static string BuildBiomeEffectsBlock()
@@ -189,7 +179,7 @@ public static class PlayerGuideContent
 
     public const string MapLegendToken = "{{MAP_LEGEND}}";
 
-    // Renders the glyph the renderer ACTUALLY draws, by asking it. Several tiles vary their glyph
+    // Renders the glyph the renderer actually draws, by asking it. Several tiles vary their glyph
     // with a position hash or an animation phase, so a fixed sample point would be one arbitrary
     // frame — take the distinct set and show them together.
     internal static string BuildMapLegendBlock()
@@ -204,9 +194,8 @@ public static class PlayerGuideContent
                 if (g != ' ' && !glyphs.Contains(g)) glyphs.Add(g);
             }
             if (glyphs.Count == 0) continue;
-            // QUOTED, because the body renderer normalises a leading "- " into a bullet: lava
-            // draws '-' and the legend rendered it as '*', so the generated block lied about the
-            // very glyph it exists to show. A quote can never begin a bullet.
+            // Quoted, because the body renderer normalises a leading "- " into a bullet and lava
+            // draws '-'. A quote can never begin a bullet.
             var cell = string.Join(" ", glyphs.ConvertAll(g => "'" + g + "'"));
             sb.Append("  ").Append(cell.PadRight(9))
               .Append("  ").Append(meaning).Append('\n');
@@ -221,11 +210,9 @@ public static class PlayerGuideContent
 
     public const string AnimatedTilesToken = "{{ANIMATED_TILES}}";
 
-    // What actually animates, read from the two registries that decide it. The hand-written
-    // catalogue named three tiles by their INTERNAL stand-in — a bounty board was documented as a
-    // "Terminal", a lever as a "Fan", an enchant shrine as a "Torch" — so a player looking for a
-    // fan would never find one. Names come from MapLegend, which is the player-facing wording, so
-    // an internal name cannot leak back in.
+    // What actually animates, read from the two registries that decide it. Names come from
+    // MapLegend, which is the player-facing wording, so a tile's internal stand-in name (a bounty
+    // board drawn as a "Terminal", say) never reaches the page.
     internal static string BuildAnimatedTilesBlock()
     {
         var names = new System.Collections.Generic.Dictionary<Map.TileType, string>();
@@ -248,8 +235,7 @@ public static class PlayerGuideContent
         }
 
         // The terrain clock is a second, independent path — these tiles animate from
-        // TileDefinitions rather than the registry above, and the catalogue used to omit lava
-        // entirely while listing three animations that do not exist.
+        // TileDefinitions rather than the registry above.
         foreach (Map.TileType t in System.Enum.GetValues<Map.TileType>())
         {
             if (!Map.TileDefinitions.IsAnimated(t)) continue;
@@ -260,8 +246,8 @@ public static class PlayerGuideContent
 
         rows.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
         // Column widths come from the data. A fixed pad puts every column after an over-long cell
-        // out of line, which is the table defect this Guide has hit before; the renderer itself
-        // only ever pads the first column, so the rest are ours to align.
+        // out of line, and the renderer only ever pads the first column, so the rest are aligned
+        // here.
         int wName = 0, wLook = 0;
         foreach (var (name, look, _) in rows)
         {
@@ -325,10 +311,22 @@ public static class PlayerGuideContent
             ? src
             : src.Replace(MinimapLegendToken, BuildMinimapLegendBlock());
 
-    // The day clock's length, read from the constant that runs it. This page said
-    // "400-turn clock" in three places against a cycle of 4,000 — the transcription was a factor
-    // of ten out, and the tip built on it was timed against a day that does not exist. Eighth
-    // generator here, eighth rotted transcription it replaced.
+    public const string OvermapLegendToken = "{{OVERMAP_LEGEND}}";
+
+    internal static string BuildOvermapLegendBlock()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (glyph, colour, meaning) in OvermapView.Legend)
+            sb.Append("  ").Append(glyph).Append("  ").Append(meaning).Append(" (").Append(colour).Append(")\n");
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    public static string ResolveOvermapLegend(string src) =>
+        !src.Contains(OvermapLegendToken, System.StringComparison.Ordinal)
+            ? src
+            : src.Replace(OvermapLegendToken, BuildOvermapLegendBlock());
+
+    // The day clock's length, read from the constant that runs it.
     public const string DayClockToken = "{{DAY_CLOCK}}";
 
     public static string ResolveDayClock(string src) =>
@@ -336,18 +334,14 @@ public static class PlayerGuideContent
             ? src
             : src.Replace(DayClockToken, SAOTRPG.Map.Lighting.DayNightCycle.CycleLength.ToString("N0"));
 
-    // HOW LONG THE NIGHT IS — the mechanical night, not the dark half of the clock. The two are
-    // not the same length and the difference is nearly a factor of two: half the cycle is 2,000
-    // turns, while Night is the bucket the game charges hunger and aggro for, and it is under a
-    // third of it. A hand-written "a night is 2000 turns" was sitting in the light topic, sizing
-    // a torch against a night that does not exist.
+    // How long the night is: the mechanical night, the bucket the game charges hunger and aggro
+    // for, not the dark half of the clock. The two differ by nearly a factor of two.
     //
-    // Closed form from the two constants that decide it, NOT a sweep: sweeping means writing to
+    // Closed form from the two constants that decide it, not a sweep: sweeping means writing to
     // DayNightCycle.CurrentTurn, which is the live clock the renderer reads, and SunLevel is
     // pinned to zero under the Starless Night modifier — so a swept figure would report a whole
-    // cycle of night on that run. Rounded to ten turns because the shipped level is quantized and
-    // this form is not, which is worth about fifteen turns. GuideAudit sweeps the real clock and
-    // asserts this agrees with it to within one quantization step.
+    // cycle of night on that run. Rounded to ten turns because the in-game sun level is quantized
+    // and this form is not.
     public const string NightShareToken = "{{NIGHT_SHARE}}";
 
     public static int NightTurnsPerCycle()
@@ -359,9 +353,7 @@ public static class PlayerGuideContent
         return (int)System.Math.Round(turns / 10.0) * 10;
     }
 
-    // PUBLIC so the corpus checker can assert this exact string reaches the page. Removing the
-    // resolve call deletes the sentence rather than leaving a token behind, so a token-shaped
-    // check cannot see it go.
+    // Public so the Guide audit tool can look for this exact string on the rendered page.
     public static string BuildNightShareBlock()
     {
         int turns = NightTurnsPerCycle();
@@ -374,9 +366,8 @@ public static class PlayerGuideContent
             ? src
             : src.Replace(NightShareToken, BuildNightShareBlock());
 
-    // WHAT SPEED BUYS, read off SpeedContest rather than transcribed. Every number in this
-    // sentence is a constant the combat roll uses, and the last topic here that transcribed a
-    // formula instead of generating it was out by a factor of ten.
+    // What speed buys, read off SpeedContest rather than transcribed: every number in this
+    // sentence is a constant the combat roll uses.
     public const string SpeedRuleToken = "{{SPEED_RULE}}";
 
     public static string BuildSpeedRuleBlock() =>
@@ -423,11 +414,9 @@ public static class PlayerGuideContent
         return sb.ToString().TrimEnd('\n');
     }
 
-    // THE PROFICIENCY FORK TABLES ARE GENERATED FROM TurnManager.GetForkOptions, not transcribed.
-    // The transcription had drifted three ways at once: two topics named passives no fork offers,
-    // the Katana and Bow pairs were filed under L25 when they are picked at L50, and the damage
-    // cap was written as +120 against a real +55. Spliced into the body at class init rather than
-    // through a render token, so the corpus a checker reads is the generated text.
+    // The proficiency fork tables are generated from TurnManager.GetForkOptions, not transcribed.
+    // Spliced into the body at class init rather than through a render token, so the raw corpus
+    // already holds the generated text.
     private static string ForkTable(IEnumerable<(string Name, string What)> rows)
     {
         var sb = new System.Text.StringBuilder();
@@ -490,11 +479,11 @@ public static class PlayerGuideContent
         });
     }
 
-    // The controls page is GENERATED from the live binding table, never transcribed. Keys became
-    // rebindable, so any hand-written key list is wrong for anyone who has changed one — and this
-    // topic calls itself the reference. Substituting at render time (not at type-init) also means
-    // a rebind made mid-session shows up the next time the page is opened.
-    // The dozen actions that carry a first floor, in the order a player meets them. Generated from
+    // The controls page is generated from the live binding table, never transcribed: keys are
+    // rebindable, so a hand-written key list would be wrong for anyone who has changed one.
+    // Substituting at render time (not at type-init) means a rebind made mid-session shows up
+    // the next time the page is opened.
+    // The actions that carry a first floor, in the order a player meets them. Generated from
     // the same table as the full reference, so a rebind moves both.
     public const string EssentialsToken = "{{ESSENTIALS}}";
 
@@ -553,8 +542,8 @@ public static class PlayerGuideContent
             sb.Append('\n');
         }
 
-        // Unbound actions are a real state the player can reach from the rebind screen, and a
-        // reference that silently omitted them would be the same lie in a new place.
+        // Unbound actions are a real state the player can reach from the rebind screen, so the
+        // reference lists them rather than silently omitting them.
         string[] unbound = Keybinds.Bindings
             .Where(b => !b.Primary.IsBound && !b.Alternate.IsBound)
             .Select(b => b.Label).ToArray();
@@ -566,16 +555,12 @@ public static class PlayerGuideContent
 
     // Search aliases: the words a player types for things the Guide names differently.
     //
-    // Search is substring-only over title and body, which is the right behaviour — a subsequence
-    // match would surface noise — but it cannot bridge vocabulary. Nothing in the corpus contains
-    // the word "potion", so a player searching for one finds nothing at all. Each alias is a word
-    // someone would actually type, mapped to the topics that answer it.
+    // Search is substring-only over title and body (a subsequence match would surface noise), so
+    // it cannot bridge vocabulary. Each alias is a word someone would actually type, mapped to the
+    // topics that answer it.
     //
-    // An alias earns its place only if a bare substring search misses the topic; the audit tool
-    // asserts both halves of that, so a word that stops being needed shows up as dead weight.
-    // Pruned to what the audit could prove earns its place. A first draft carried twice as many —
-    // "potion", "xp", "swim", "perk" and a dozen others — every one of which the plain substring
-    // search already found, because the word was sitting in the topic's own title or body.
+    // An alias earns its place only if a bare substring search misses the topic; a word already
+    // in the topic's own title or body needs no alias.
     public static readonly (string Word, string[] Topics)[] SearchAliases =
     {
         ("die",           new[] { "Permadeath & Save Deletion" }),
@@ -585,15 +570,10 @@ public static class PlayerGuideContent
         ("currency",      new[] { "Col Economy — How You Earn" }),
         ("buy",           new[] { "Dynamic Shop Tiering (F50+)" }),
         ("sell",          new[] { "Vendor Investing" }),
-        // "merchant" was here until Vendors gained a See-also link to Prefab Rooms — Merchant
-        // Stalls, which put the word in its body; the plain search finds it now.
         ("hotkey",        new[] { "Controls & Keybindings", "Quick-Use Slots" }),
         ("tutorial",      new[] { "Start Here" }),
         ("colorblind",    new[] { "Colour Themes" }),
         ("accessibility", new[] { "Footstep Trail Settings" }),
-        // The "armour" alias is gone entirely: it bridged the British spelling to American-spelled
-        // topics, and the Armour Sets topic now carries the word in its own title and in the
-        // slots topic's See-also, so a plain substring search reaches both.
         ("quit",          new[] { "Save System" }),
     };
 
@@ -610,9 +590,9 @@ public static class PlayerGuideContent
         return false;
     }
 
-    // Tags are the topic's concept vocabulary, and they are SEARCHABLE — a topic matches a query
-    // that any of its tags contains. That is what makes "unique-skills" find all eight of them and
-    // "life-skills" all six, none of which carry the phrase in their own text.
+    // Tags are the topic's concept vocabulary, and they are searchable — a topic matches a query
+    // that any of its tags contains. That is what lets "unique-skills" and "life-skills" find
+    // every topic of that kind, though none of them carry the phrase in their own text.
     //
     // Lowercase kebab-case, and singular/plural forms are not worth distinguishing: the match is a
     // substring, so "weapon" already finds everything tagged "weapons".
@@ -1250,12 +1230,13 @@ public static class PlayerGuideContent
             "something else. It is not a penalty on the sheet — the heal simply\n" +
             "stops ticking, and the tray's Regen mark goes out with it.\n\n" +
             "HOW FAST IT DRAINS\n" +
-            "One point every 12 turns, and three things change that:\n\n" +
+            "One point every 260 turns (4 minutes 20 seconds), and three things\n" +
+            "change that:\n\n" +
             "  Biome       Desert, Volcanic and the Void each add a point per drain\n" +
-            "  Night       an extra point every 48 turns — 25% while the sun is down\n" +
+            "  Night       an extra point every 1040 turns — 25% while the sun is down\n" +
             "  Iron Rank   doubles the whole bill, night and biome included\n\n" +
             "The biome column is per-floor and [[Biomes]] carries the whole table.\n" +
-            "A full bar is about 1,200 turns of walking against a day that runs\n" +
+            "A full bar lasts about seven hours against a day that runs\n" +
             "{{DAY_CLOCK}} turns, so you will empty it two or three times between one\n" +
             "noon and the next. Food is routine maintenance, not an emergency\n" +
             "measure, and the night surcharge costs roughly one ration a night\n" +
@@ -1729,26 +1710,28 @@ public static class PlayerGuideContent
             "\u250c\u2500 World\n" +
             "\u2502 Topic: Minimap\n" +
             "\u2502 Location: Top-right panel\n" +
-            "\u2502 Shows: Explored ground, scaled to fit\n" +
+            "\u2502 Shows: The ground around you, one cell per 24x24 tiles\n" +
             "\u2514\u2500\n\n" +
             "SUMMARY\n" +
-            "A scaled view of everything you have explored on this floor. Each cell\n" +
-            "stands for a block of the real map, so a single mark can be several\n" +
-            "tiles; what it shows is the most important thing in that block.\n\n" +
-            "Priority runs entities and items first, then landmarks, then terrain —\n" +
-            "so a monster never hides behind the ground it is standing on, and a\n" +
-            "shrine never hides behind a tree.\n\n" +
-            "Press {{KEY:OpenWorldMap}} on the map for the same view at the size of the\n" +
-            "screen, with a cursor and a list of everything found: see [Full Map].\n\n" +
+            "An overmap of the floor around you, drawn the way Cataclysm: Dark\n" +
+            "Days Ahead draws its own. Each cell is a 24-by-24 patch of ground,\n" +
+            "marked with what that patch mostly is: field, forest, a lake, a road.\n" +
+            "Your own patch is the middle cell, on a blue background.\n\n" +
+            "A grey # is ground you have not seen yet. A patch you can see into that\n" +
+            "holds three or more monsters shows a pack instead: z, then Z, in light\n" +
+            "green, green, yellow, light red and red as it grows past 250. Once you\n" +
+            "have seen the floor's way up, its patch sits on red; off the minimap,\n" +
+            "a red * on the edge sits on the line toward it.\n\n" +
+            "Press {{KEY:OpenWorldMap}} on the map for every tile you have explored,\n" +
+            "with a cursor and a list of everything found: see [Full Map].\n\n" +
             "LEGEND\n" +
-            MinimapLegendToken + "\n\n" +
+            OvermapLegendToken + "\n\n" +
             "TIPS\n" +
-            "The two water marks are worth learning apart: shallow water costs you\n" +
-            "nothing at Swimming L1, while deep water needs L25 and will simply\n" +
-            "refuse you until then. Planning a route around the wrong one wastes a\n" +
-            "long walk.\n\n" +
+            "A patch shows what most of it is, so a small pond or a chest inside a\n" +
+            "forest patch is not on it. Open the full map before crossing ground\n" +
+            "you do not know.\n\n" +
             "SEE ALSO\n" +
-            "[Full Map] \u00b7 [Swimming (Life Skill)] \u00b7 [Mining \u2014 Tool Slot & Ore Veins] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
+            "[Full Map] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
         {
             Tags = new[] { "minimap", "navigation", "ui" }
         },
@@ -1760,17 +1743,19 @@ public static class PlayerGuideContent
             "\u2502 Shows: Every explored tile, at a zoom you choose\n" +
             "\u2514\u2500\n\n" +
             "SUMMARY\n" +
-            "The minimap at the size of the screen. It opens on you, zoomed to\n" +
-            "fit the ground you have explored, and draws every tile with the\n" +
-            "minimap's own marks, so the two always agree and share one legend.\n" +
-            "Explored ground with nothing on it shows as a dot, so the edge of\n" +
-            "what you know reads at every zoom. No turns pass while it is open.\n\n" +
+            "Every tile you have explored, at the size of the screen. It opens on\n" +
+            "you, zoomed to fit the ground you know. Zoomed out, a cell stands for\n" +
+            "a block of tiles and shows the most important thing in it: whoever is\n" +
+            "there first, then a landmark, then the ground, so a monster never\n" +
+            "hides behind a tree. Explored ground with nothing on it shows as a\n" +
+            "dot, so the edge of what you know reads at every zoom. No turns pass\n" +
+            "while it is open.\n\n" +
             "THE PANEL\n" +
             "The right-hand panel lists every point of interest found so far,\n" +
             "one row per kind: the ways off the floor first, then who is about,\n" +
             "then the places to use. A row gives the count and the nearest\n" +
             "one's compass bearing and distance in moves. Monsters count only\n" +
-            "while in sight, as on the minimap. The bottom line names what is\n" +
+            "while in sight. The bottom line names what is\n" +
             "under the cursor and how far it lies from you.\n\n" +
             "KEYS\n" +
             "  {{KEY:MoveNorth}} {{KEY:MoveWest}} {{KEY:MoveSouth}} {{KEY:MoveEast}}   Move the cursor one cell; hold Shift for eight\n" +
@@ -1784,8 +1769,14 @@ public static class PlayerGuideContent
             "in each cell, because a terminal cell is twice as tall as it is wide:\n" +
             "the floor keeps its true shape. The closest step is the main map's\n" +
             "own one tile per cell.\n\n" +
+            "The two water marks are worth learning apart: shallow water costs you\n" +
+            "nothing at Swimming L1, while deep water needs L25 and will simply\n" +
+            "refuse you until then. Planning a route around the wrong one wastes a\n" +
+            "long walk.\n\n" +
+            "LEGEND\n" +
+            MinimapLegendToken + "\n\n" +
             "SEE ALSO\n" +
-            "[Minimap] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
+            "[Minimap] \u00b7 [Swimming (Life Skill)] \u00b7 [Mining \u2014 Tool Slot & Ore Veins] \u00b7 [Biomes] \u00b7 [Mechanical Tiles]")
         {
             Tags = new[] { "map", "full-map", "world-map", "navigation", "poi", "ui" }
         },
@@ -1867,7 +1858,7 @@ public static class PlayerGuideContent
             "│ Topic: Vision & FOV\n" +
             "│ Bright day: Past the edge of the panel\n" +
             "│ Deep night: 18 tiles, and 8 in the worst biome\n" +
-            "│ Modifiers: Time of day, biome, carried light\n" +
+            "│ Modifiers: Time of day, biome, carried and placed light\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "You see a shadowcast field shaped by the hour and the biome — never\n" +
@@ -1880,6 +1871,9 @@ public static class PlayerGuideContent
             "  Bright day   as far as the map panel reaches, and past it\n" +
             "  Deep night   18 tiles, a bubble around you\n" +
             "  Hard floor   8 tiles, whatever else is subtracted\n\n" +
+            "Those are tiles up and down. A tile is twice as tall as it is wide,\n" +
+            "so sight reaches twice as many to either side, and the bubble is\n" +
+            "round on screen.\n\n" +
             "Because the day end tracks the panel, a taller terminal genuinely\n" +
             "sees further; the night end does not move, so night is far more\n" +
             "levelling than the numbers suggest. A biome penalty comes off on\n" +
@@ -1898,9 +1892,15 @@ public static class PlayerGuideContent
             "dawn. One cue at a time, and not every turn. Treat it as a bearing\n" +
             "rather than a position: it tells you something is near and unseen,\n" +
             "which at night is most of what there is to know.\n\n" +
+            "SEEING LIGHTS AT NIGHT\n" +
+            "At night, ground that a campfire, lava, a shrine, a fountain or a\n" +
+            "lit doorway lights is seen in line of sight out to your bright-day\n" +
+            "range, and so is anything standing on it. Moonlight alone does not\n" +
+            "do this, and a light put out stops being seen at once. A distant\n" +
+            "camp at night shows you its fire and who sits by it.\n\n" +
             "Light is carried, not innate — a torch or lantern in the Tool slot\n" +
-            "lights a pool around you, and glowing tiles light their own. That\n" +
-            "is a separate system from this one and [[Light & Shadow]] covers it.\n\n" +
+            "lights a pool around you, and glowing tiles light their own.\n" +
+            "[[Light & Shadow]] covers the lights themselves.\n\n" +
             "TIPS\n" +
             "Hug shrine and campfire glow when exploring Darkness or Forest\n" +
             "floors; the extra light can reveal traps before you step on them.\n" +
@@ -2893,6 +2893,69 @@ public static class PlayerGuideContent
 
         // ── 3. World & Exploration ──
 
+        new("World", "Time & Actions",
+            "┌─ World\n" +
+            "│ Topic: Time & Actions\n" +
+            "│ Clock: One turn is one second\n" +
+            "│ Day: {{DAY_CLOCK}} turns\n" +
+            "│ Wait menu: {{KEY:WaitMenu}}\n" +
+            "│ Sleep: {{KEY:Rest}}\n" +
+            "└─\n\n" +
+            "SUMMARY\n" +
+            "Time runs the way it runs in Cataclysm: Dark Days Ahead. A turn is one\n" +
+            "second, and a day is {{DAY_CLOCK}} of them. Every turn you and every\n" +
+            "monster gain 100 move points, and act while any are left. Each action\n" +
+            "spends points, and the world moves on each time yours run out. The\n" +
+            "clock on the action bar is the game's; the run begins at 1:00 PM on\n" +
+            "Year 1, Autumn, day 67, the hour the death game began.\n\n" +
+            "WHAT ACTIONS COST\n" +
+            "  Step on flat ground   100 points, one second\n" +
+            "  Long or soft ground   150 points: reeds, mud, dunes, snow\n" +
+            "  Tall grass            250 points\n" +
+            "  Shallow water         250 points, half from Swimming L10\n" +
+            "  Deep water            400 points, half from Swimming L50\n" +
+            "  A bush                400 points\n" +
+            "  Sprint                each step at half its cost\n" +
+            "  Stealth move          each step at twice its cost\n" +
+            "  Wait                  the rest of this turn\n" +
+            "  Potion or item        200 or 100 points\n" +
+            "  A meal                5,000 points, fifty seconds\n\n" +
+            "A step costs the average of the tile you leave and the tile you\n" +
+            "enter, so the edge of tall grass is cheaper than its middle.\n" +
+            "Monsters pay the same costs, and a swimmer crosses water as\n" +
+            "flat ground.\n\n" +
+            "HOW LONG A SWING TAKES\n" +
+            "A blow costs half the weapon's attack time, plus a skill cost\n" +
+            "that shrinks as your proficiency with that weapon grows, less half\n" +
+            "your Dexterity up to 20. A dagger is quick and a two-handed sword\n" +
+            "is slow, and a master of either swings far faster than a novice:\n\n" +
+            "  Empty hands        65\n" +
+            "  Dagger             74\n" +
+            "  One-Handed Sword   108\n" +
+            "  Katana             113\n" +
+            "  Axe                142\n" +
+            "  Two-Handed Sword   173\n\n" +
+            "No blow costs less than 25 points.\n\n" +
+            "WAITING AND SLEEPING\n" +
+            "{{KEY:WaitMenu}} opens the wait menu: twenty seconds up to six hours,\n" +
+            "or until daylight, noon, night or midnight. {{KEY:Rest}} sleeps until\n" +
+            "you are healed, at least an hour and at most eight, and a full sleep\n" +
+            "clears fatigue. Either stops when a monster comes into view, comes\n" +
+            "within five tiles, or hurts you, and any key stops it at once.\n\n" +
+            "FAST MONSTERS\n" +
+            "An ordinary monster has 100 speed, the same as you. A Swift one has\n" +
+            "130 and an Ethereal one 120, so they act an extra time every few\n" +
+            "turns.\n\n" +
+            "TIPS\n" +
+            "Fight from flat ground and let a chaser come through the grass to\n" +
+            "you: every step it takes there costs it more than yours cost you.\n" +
+            "Never eat with a monster in sight; a meal is fifty seconds of free\n" +
+            "blows. Drink the potion instead, which takes two.\n\n" +
+            "SEE ALSO\n" +
+            "[Day/Night Cycle] · [Hunger, Satiety & Fatigue] · [Campfires — Rest & Sleep XP] · [Sprint & Stealth Move] · [Weapon Proficiency Ranks]")
+        {
+            Tags = new[] { "time", "clock", "speed", "turns", "wait", "sleep" }
+        },
         new("World", "Day/Night Cycle",
             "┌─ World\n" +
             "│ Topic: Day/Night Cycle\n" +
@@ -2918,21 +2981,23 @@ public static class PlayerGuideContent
             "south at noon to west at dusk, dragging every shadow round with it.\n" +
             "The sky runs cool moonlit blue at night, deep amber while the sun is\n" +
             "near the horizon and neutral off-white at noon — the warmest hour is\n" +
-            "not the brightest one.\n\n" +
+            "not the brightest one. Under the moon alone the ground fades to a\n" +
+            "cool grey, as night vision does; a torch or a fire keeps its colour.\n\n" +
             "WHAT THE NIGHT COSTS\n" +
             "Four things change the moment the phase turns, and they are one\n" +
             "switch rather than four sliding curves:\n\n" +
             "  Sight     collapses to the torch bubble — see [[Vision & FOV]]\n" +
             "  Aggro     every monster notices you about 15% further off\n" +
             "  Warnings  the range you hear something you cannot see grows with it\n" +
-            "  Hunger    an extra satiety point every 48 turns, 25% more than by day\n\n" +
+            "  Hunger    an extra satiety point every 1040 turns, 25% more than by day\n\n" +
             "The aggro figure is rounded, not truncated, so on most of the\n" +
             "bestiary it is a real extra tile rather than a fraction of one. Set\n" +
             "against the sight you lose at the same moment, the practical effect\n" +
             "is that things reach you before you see them.\n\n" +
             "WAITING FOR DAWN\n" +
-            "The {{KEY:Wait}} key passes a turn without moving, and a passed turn is\n" +
-            "a real turn: monsters act, timers tick and the sun climbs. Waiting out the\n" +
+            "The {{KEY:Wait}} key passes a second without moving, and {{KEY:WaitMenu}}\n" +
+            "waits longer, up to six hours or until daylight. Passed time is real:\n" +
+            "monsters act, timers tick and the sun climbs. Waiting out the\n" +
             "worst of a night is a legitimate move when you are low, out of\n" +
             "light or cornered somewhere defensible. It is not free — satiety\n" +
             "drains on the night's faster clock while you stand there, and\n" +
@@ -2946,9 +3011,9 @@ public static class PlayerGuideContent
             "Shadows are longest early and late and shortest at noon, so a shape\n" +
             "you cannot place at dusk may simply be a tree lying across the\n" +
             "ground. If a night catches you without a light, waiting it out beside\n" +
-            "a campfire with {{KEY:Wait}} costs less than walking blind.\n\n" +
+            "a campfire with {{KEY:WaitMenu}} costs less than walking blind.\n\n" +
             "SEE ALSO\n" +
-            "[Vision & FOV] · [Light & Shadow] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move] · [Unique Skill: Darkness Blade] · [Run Modifiers (12 Optional Challenges)] · [Weather]")
+            "[Time & Actions] · [Vision & FOV] · [Light & Shadow] · [Hunger, Satiety & Fatigue] · [Sprint & Stealth Move] · [Unique Skill: Darkness Blade] · [Run Modifiers (12 Optional Challenges)] · [Weather]")
         {
             Tags = new[] { "world", "weather", "floors", "night", "difficulty" }
         },
@@ -3017,9 +3082,9 @@ public static class PlayerGuideContent
             "uses, so underground you are choosing between digging and seeing.\n" +
             "A new run starts with a Wooden Torch already equipped.\n" +
             "\n" +
-            "  Wooden Torch      7 tiles    60 fuel    1980 turns   L1\n" +
-            "  Iron Lantern      11 tiles   140 fuel   4620 turns   L5\n" +
-            "  Crystal Lantern   15 tiles   300 fuel   9900 turns   L25\n" +
+            "  Wooden Torch      7 tiles    60 fuel    43200 turns    L1\n" +
+            "  Iron Lantern      11 tiles   140 fuel   100800 turns   L5\n" +
+            "  Crystal Lantern   15 tiles   300 fuel   216000 turns   L25\n" +
             "\n" +
             "THE LEVEL COLUMN IS A GATE\n" +
             "Buying a lantern under its level leaves you carrying something that\n" +
@@ -3031,7 +3096,7 @@ public static class PlayerGuideContent
             "the Crystal Lantern from Floor 40, so the shelf usually runs ahead\n" +
             "of the level requirement rather than behind it.\n" +
             "\n" +
-            "A lit torch spends one fuel every 33 turns, and only while it is\n" +
+            "A lit torch spends one fuel every 720 turns, and only while it is\n" +
             "equipped — shelving it stops the burn. Night lasts {{NIGHT_SHARE}}, so the\n" +
             "starter torch covers a whole one with something in hand for the\n" +
             "dusk either side; unequipping at dawn to swing a pickaxe is what\n" +
@@ -3085,7 +3150,10 @@ public static class PlayerGuideContent
             "WHERE IT DOES NOT APPLY. There is no sun inside a labyrinth or in the\n" +
             "throne room on Floor 100, so those are lit by torch, glow and contact\n" +
             "shading alone. Ground you have explored but cannot currently see is\n" +
-            "drawn from memory and carries no lighting at all.\n" +
+            "drawn from memory and carries no lighting at all, except that after\n" +
+            "dark a remembered fire, lava pool or shrine keeps an ember of its\n" +
+            "own colour, so you can still steer by it. A lit pool in line of\n" +
+            "sight is not memory at night: it is seen ([[Vision & FOV]]).\n" +
             "\n" +
             "MEMORY ALSO DIMS WITH AGE. Remembered ground holds full strength for\n" +
             "a while after you look away and then fades toward a dim floor, so an\n" +
@@ -3333,22 +3401,21 @@ public static class PlayerGuideContent
             "feed you; satiety is untouched by a campfire, and the +20 belongs\n" +
             "to fountains.\n\n" +
             "CAMPING BESIDE IT DOES NOT\n" +
-            "Rest on any tile adjacent to a lit fire and it heals 6 HP a turn\n" +
-            "instead of the usual 3 HP a turn. A rest is 3 turns either way, so\n" +
-            "that is 18 HP beside a fire against 9 HP anywhere else, and the\n" +
-            "fire is still burning when you stand up. Nothing limits how often\n" +
-            "you do it. Diagonals count; the fire has to be lit, so ash warms\n" +
-            "nothing.\n\n" +
+            "Sleep ({{KEY:Rest}}) on any tile adjacent to a lit fire and the fire\n" +
+            "doubles your healing while you sleep. A sleep lasts at least 1 hour\n" +
+            "and at most 8 hours, and you wake once you are healed; the fire is\n" +
+            "still burning when you get up. Nothing limits how often you do it.\n" +
+            "Diagonals count; the fire has to be lit, so ash warms nothing.\n\n" +
             "That is the whole decision the tile poses: spend it now for a heal\n" +
             "you cannot repeat, or keep it and camp beside it as often as you\n" +
             "like. Camping wins on total healing over a floor; stepping on wins\n" +
             "when the heal has to land this turn, or when you are carrying a\n" +
             "status you need gone.\n\n" +
-            "  Step on it      15 + 5 per floor   once, then ash\n" +
-            "  Camp beside     6 HP a turn        every rest, and the fire lives\n" +
-            "  Rest anywhere   3 HP a turn        every rest, no fire needed\n\n" +
+            "  Step on it       15 + 5 per floor   once, then ash\n" +
+            "  Sleep beside     double healing     every sleep, and the fire lives\n" +
+            "  Sleep anywhere   ordinary healing   every sleep, no fire needed\n\n" +
             "WHAT A FIRE BANKS\n" +
-            "Stepping on one banks +10 Sleep XP. A rest banks +20, and the same\n" +
+            "Stepping on one banks +10 Sleep XP. A sleep banks +20, and the same\n" +
             "+20 whether or not there is a fire beside you — camping heals\n" +
             "faster, it does not level Sleep faster. Sleep compounds toward the\n" +
             "L10/25/50/99 max-HP milestones, so both are worth having.\n\n" +
@@ -3357,7 +3424,7 @@ public static class PlayerGuideContent
             "floor holds a countable number, and where you spend them is the\n" +
             "decision. A spent fire leaves ash you can walk over.\n\n" +
             "TIPS\n" +
-            "Fight NEXT to a fire rather than on it. Every rest between pulls\n" +
+            "Fight NEXT to a fire rather than on it. Every sleep between pulls\n" +
             "runs at double rate and the fire is still there for the walk out,\n" +
             "which is worth more over a floor than the single big heal. Save\n" +
             "the step-on for the moment you are hurt, poisoned AND far from the\n" +
@@ -3802,7 +3869,7 @@ public static class PlayerGuideContent
             "rule, and the guard is scaled to the floor rather than to the\n" +
             "template.\n\n" +
             "TIPS\n" +
-            "The minimap marks the ones worth the detour — a chest, an anvil,\n" +
+            "The full map marks the ones worth the detour — a chest, an anvil,\n" +
             "an enchanting shrine, a lore stone — so sweep it before you commit\n" +
             "to a direction. Otherwise scan for the signature silhouettes: a\n" +
             "clean rectangle of decoration flags a prefab. Search Mode clears\n" +
@@ -6105,7 +6172,7 @@ public static class PlayerGuideContent
             "A small widget under the minimap showing one pinned quest and its live\n" +
             "progress, so checking on it costs no keystrokes. Your first quest pins\n" +
             "itself; after that you choose which one sits there.\n\n" +
-            "It sits in the MAP card under the minimap's legend and shows your\n" +
+            "It sits in the MAP card under the minimap and shows your\n" +
             "pinned quest in two lines: the title, then its live progress. On\n" +
             "completion both turn green and the second line reads \"COMPLETE —\n" +
             "return to\" the quest giver.\n\n" +
@@ -6114,7 +6181,7 @@ public static class PlayerGuideContent
             "it manually —\n" +
             "only one quest is pinned at a time, so pinning a new one\n" +
             "replaces the previous. The widget takes its two rows only while a\n" +
-            "quest is pinned; with none, the minimap grows into them. P only\n" +
+            "quest is pinned; with none, the minimap or the log takes them. P only\n" +
             "binds inside the Quest Log dialog, so the widget never steals input.\n\n" +
             "  line 1   quest title, truncated to fit\n" +
             "  line 2   progress (3/5 Kobolds · F2) or the COMPLETE line\n\n" +
@@ -6809,7 +6876,7 @@ public static class PlayerGuideContent
             "│ NPC: N/A (system)\n" +
             "│ Floor: All\n" +
             "│ Quest: Options > About > Key Bindings\n" +
-            "│ Reward: 91 actions, two chords each\n" +
+            "│ Reward: 92 actions, two chords each\n" +
             "└─\n\n" +
             "SUMMARY\n" +
             "Every gameplay key can be changed, and bindings are grouped by where\n" +
@@ -11011,8 +11078,8 @@ public static class PlayerGuideContent
     };
 
     // Gate boss-drop names with "???" until the boss is killed.
-    // Floor bosses: per-floor HashSet (Q16). Field bosses: best-effort gating by floor reach
-    // (floor <= turnManager.CurrentFloor) — exact field-boss-name → FieldBossId map TBD.
+    // Floor bosses: per-floor HashSet. Field bosses: gated by floor reach instead
+    // (floor <= turnManager.CurrentFloor), because there is no field-boss-name → FieldBossId map.
     // LAB section gates same as floor bosses — clearing the floor reveals the LAB drop too.
     public static string GateBossDropReferenceBody(string body, TurnManager? tm)
     {
@@ -11046,7 +11113,7 @@ public static class PlayerGuideContent
                     bool revealed = section switch
                     {
                         1 or 2 => tm.DefeatedFloorBosses.Contains(floor),
-                        3 or 4 => tm.CurrentFloor >= floor, // best-effort field-boss gate
+                        3 or 4 => tm.CurrentFloor >= floor, // field bosses: floor reach, not the kill
                         _      => true,
                     };
                     if (!revealed)

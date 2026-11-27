@@ -28,7 +28,7 @@ public static class ProfileData
 
     private static bool _loaded;
 
-    // A read that FAILED is not the same as no file at all, and the difference decides whether the
+    // A read that failed is not the same as no file at all, and the difference decides whether the
     // next write is allowed. A missing profile is a fresh install and must save normally; a file
     // that exists and could not be read is corrupt or transiently locked, and overwriting it turns
     // a recoverable problem into a permanent one -- HasCompletedGame gates a whole feature and
@@ -61,10 +61,8 @@ public static class ProfileData
         }
     }
 
-    // Re-read the profile from disk, discarding whatever is in memory. A measurement seam in the
-    // same family as SaveManager.SaveSlotPath: the round-trip check has to prove that what reached
-    // the file is what comes back, and a checker carrying its own copy of the load would be
-    // testing its own arithmetic instead.
+    // Re-read the profile from disk, discarding whatever is in memory. Read by the verification
+    // probes, so a round trip goes through this class's own load rather than a copy of it.
     public static void ReloadFromDisk()
     {
         _loaded = false;
@@ -118,18 +116,14 @@ public static class ProfileData
     }
 
     // Written through a temporary file and renamed into place, the same shape UserSettings,
-    // Keybinds and SaveManager already use. A plain WriteAllText truncates first, so a crash
-    // between the truncate and the write leaves a partial file that will not parse -- and the
-    // loader's fallback is to start fresh, which silently destroys HasCompletedGame and every
-    // guide unlock at once.
+    // Keybinds and SaveManager use. A plain WriteAllText truncates first, so a crash between the
+    // truncate and the write leaves a partial file that will not parse -- and the loader's
+    // fallback is to start fresh, which would destroy HasCompletedGame and every guide unlock.
     //
-    // Measured, the rename form costs 2.7x a direct write (1,380 us against 574 us on a 1.8 KB
-    // profile). That is affordable only because the write COUNT is bounded: Save runs when a
-    // collection actually gains a member, so it is one write per newly-discovered topic, capped
-    // by the roster -- 40 over a thorough floor-1 clear and a few hundred across a whole
-    // 100-floor game, not per turn. Coalescing was measured and declined for that reason; a
-    // deferred write that never flushes would lose progress silently, which is a far worse trade
-    // than a few hundred milliseconds spread over an entire game.
+    // The rename form is slower than a direct write, which is affordable because the write count
+    // is bounded: Save runs only when a collection gains a member, so it is one write per newly
+    // discovered topic, capped by the roster, not per turn. Writes are not deferred: a deferred
+    // write that never flushes would lose progress silently.
     private static void Save()
     {
         if (_loadFailed)
@@ -166,9 +160,8 @@ public static class ProfileData
 
         // Player Guide persistence. Lists (not HashSets) so System.Text.Json
         // reflection round-trips cleanly without needing a source-gen context.
-        // Legacy fields (GuideBookmarks, GuideRecentlyViewed, GuideVisitedTopics)
-        // were dropped in the guide rewrite; the deserializer ignores unknown
-        // properties so old profiles load cleanly.
+        // The deserializer ignores unknown properties, so a profile carrying
+        // extra fields still loads cleanly.
         public List<string> GuideKnownTopics { get; set; } = new();
         public List<string> GuideExpandedCategories { get; set; } = new();
     }

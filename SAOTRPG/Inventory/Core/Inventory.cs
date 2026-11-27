@@ -16,14 +16,12 @@ public class Inventory
 
     // Equipped gear, indexed by (int)EquipmentSlot. An array rather than a
     // Dictionary<EquipmentSlot, EquipmentBase?>: enums do not implement IEquatable, so a
-    // dictionary keyed by one keeps a non-null comparer and pays two virtual calls per lookup —
-    // measured at 32.3 ns against ~1 ns for an array index. GetEquipped has 70 call sites and
-    // TurnManager.SumAllSlots alone walks every slot five times per defence event.
+    // dictionary keyed by one pays two virtual comparer calls per lookup, and slot lookups sit
+    // on the combat path (TurnManager.SumAllSlots walks every slot several times per defence event).
     //
-    // EquipmentSlot is contiguous from 0, and SlotCount is asserted against the enum below, so
+    // EquipmentSlot is contiguous from 0, and SlotCount is taken from the enum below, so
     // the index is the slot's own value. An out-of-range slot throws rather than landing in a
-    // phantom entry that grants stats but can never be seen or unequipped, which is what the
-    // dictionary did.
+    // phantom entry that grants stats but can never be seen or unequipped.
     private static readonly int SlotCount = Enum.GetValues<EquipmentSlot>().Length;
     private readonly EquipmentBase?[] _equippedItems = new EquipmentBase?[SlotCount];
 
@@ -86,9 +84,8 @@ public class Inventory
         return true;
     }
 
-    // First same-named stack in backpack order, exactly as OfType<StackableItem>()
-    // .FirstOrDefault(i => i.Name == stackable.Name) picked — but the predicate captured
-    // `stackable`, so that pair allocated a closure plus an OfType iterator on every pickup.
+    // First same-named stack in backpack order. A plain loop, so a pickup allocates no closure
+    // or iterator.
     private bool TryStackItem(StackableItem stackable)
     {
         StackableItem? existingStack = null;
@@ -147,7 +144,7 @@ public class Inventory
             return false;
         }
 
-        // Dual Blades / FD Paired auto-route: occupied Weapon + empty OffHand routes second weapon to OffHand when
+        // Dual Blades / paired-weapon auto-route: occupied Weapon + empty OffHand routes second weapon to OffHand when
         // (a) Dual Blades unlocked AND incoming is 1H sword, OR (b) IsDualWieldPaired (no unlock needed).
         if (slot == EquipmentSlot.Weapon
             && _equippedItems[(int)EquipmentSlot.Weapon] != null
@@ -162,10 +159,8 @@ public class Inventory
         }
 
         // Ring overflow, the same shape as the dual-wield route above. Every ring resolves to
-        // RightRing, so a second one used to evict the first — and `Accessory.MaxEquipped`, which
-        // rings set to 2, was declared, serialized and consulted by NOTHING. Honouring it here is
-        // what makes the LeftRing slot reachable at all: before this it was unreachable by
-        // construction, exactly like the six slots FB-724 unlocked.
+        // RightRing, so a second ring whose `Accessory.MaxEquipped` is 2 or more goes to an empty
+        // LeftRing instead of evicting the first. This is the only route into LeftRing.
         if (slot == EquipmentSlot.RightRing
             && _equippedItems[(int)EquipmentSlot.RightRing] != null
             && _equippedItems[(int)EquipmentSlot.LeftRing] == null
@@ -272,7 +267,7 @@ public class Inventory
     // Invalidate after durability/enhancement/repair changes that bypass Equip/Unequip.
     public void InvalidateStatCache() => _statBonusCache = null;
 
-    // The equipped piece actually PROVIDING the light — the widest non-broken radius, plus the
+    // The equipped piece actually providing the light — the widest non-broken radius, plus the
     // slot it sits in so a caller can spend or destroy it. Null when nothing is lit, which is the
     // normal state for a player carrying none rather than an error. Broken gear is skipped on the
     // same rule the stat loop uses: a torch burned down to zero durability has gone out.
@@ -303,10 +298,10 @@ public class Inventory
     public int GetEquippedLightRadius() => GetActiveLightSource()?.Item.LightRadius ?? 0;
 
     // Backpack lights that could take over from a spent one, best first: widest radius, then
-    // LOWEST remaining durability, so partial torches are burned down before fresh ones — which
+    // lowest remaining durability, so partial torches are burned down before fresh ones — which
     // is what a player swapping by hand would do.
     //
-    // RequiredLevel is filtered HERE rather than left to Equip. Equip refuses a level it cannot
+    // RequiredLevel is filtered here rather than left to Equip. Equip refuses a level it cannot
     // meet and returns false, so an unfiltered "widest radius" pick would hand a level-1 player
     // the Iron Lantern (RequiredLevel 5), fail, and leave them dark while appearing to work.
     // This narrows the field; it does not promise the equip succeeds, and the caller still tests

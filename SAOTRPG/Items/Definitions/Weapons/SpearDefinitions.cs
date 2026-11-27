@@ -48,7 +48,7 @@ public static class SpearDefinitions
     public static Weapon CreateAnubisSpear() => Make("anubis_spear", "Anubis Spear", 1400, "Rare", 110, 35, 50,
         B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 10));
 
-    // ── HR Spear Chain: Heart Piercer → Trishula → Vijaya → Caladbolg.
+    // ── Spear Evolution Chain: Heart Piercer → Trishula → Vijaya → Caladbolg.
 
     // Heart Piercer, a pikeman's long-point — unerring thrust at range. T1 of the Caladbolg chain.
     public static Weapon CreateHeartPiercer() => Make("heart_piercer", "Heart Piercer", 1800, "Rare", 120, 15, 58,
@@ -66,27 +66,27 @@ public static class SpearDefinitions
     public static Weapon CreateCaladbolg() => Make("caladbolg", "Caladbolg", 18000, "Divine", 999, 80, 135,
         B().Add(StatType.Attack, 72).Add(StatType.Dexterity, 22).Add(StatType.Strength, 18), "RushRange+1");
 
-    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+    // ── Quest and field-boss Legendaries ───────────────────────────
 
-    // Hollow Fragment F83 implement. Cú Chulainn's barbed spear; strikes true (flavor).
+    // F83 field-boss drop. Cú Chulainn's barbed spear; strikes true (flavor).
     public static Weapon CreateDemonspearGaeBolg() => Make("demonspear_gae_bolg", "Demonspear: Gae Bolg", 16500, "Legendary", 200, 79, 150,
         B().Add(StatType.Attack, 72).Add(StatType.Dexterity, 20).Add(StatType.Strength, 15), "TrueStrike+10");
 
-    // Hollow Fragment F91 implement. King Arthur's holy lance; sustaining regen (flavor).
+    // F91 quest reward. King Arthur's holy lance; sustaining regen (flavor).
     public static Weapon CreateSaintspearRhongomyniad() => Make("saintspear_rhongomyniad", "Saintspear: Rhongomyniad", 23000, "Legendary", 230, 86, 163,
         B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 25).Add(StatType.Vitality, 18), "HPRegen+5");
 
-    // Hollow Fragment F98 implement. Odin's spear; returns SP with each strike (flavor).
+    // F98 quest reward. Odin's spear; returns SP with each strike (flavor).
     public static Weapon CreateGodspearGungnir() => Make("godspear_gungnir", "Godspear: Gungnir", 35000, "Legendary", 270, 94, 185,
         B().Add(StatType.Attack, 95).Add(StatType.Strength, 22).Add(StatType.Dexterity, 25).Add(StatType.Agility, 18).Add(StatType.Vitality, 15), "SPRegen+3");
 
-    // ── Integral Factor Series (Spear entries) ──────────────────────
+    // ── Series weapons (Spear entries) ──────────────────────────────
 
     // F61 Rosso Series spear. Sigrun — valkyrie-spear of the red-victory.
     public static Weapon CreateRossoSigrun() => Make("spr_rosso_sigrun", "Rosso Sigrun", 14200, "Legendary", 220, 55, 142,
         B().Add(StatType.Attack, 70).Add(StatType.Dexterity, 22).Add(StatType.Strength, 16), "RushRange+1");
 
-    // ── Hollow Fragment Avatar Weapons (Spear) ────────────────────
+    // ── Avatar Weapons (Spear) ────────────────────────────────────
 
     public static Weapon CreateAsleigeonAvatar() => Make("spr_asleigeon_avatar", "Asleigeon Avatar", 21500, "Legendary", 230, 82, 160,
         B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Strength, 18), "TrueStrike+20");
@@ -96,19 +96,19 @@ public static class SpearDefinitions
     public static Weapon CreateHeavenslanceElpisOrder() => Make("spr_heavenslance_elpis_order", "Heavenslance: Elpis Order", 30500, "Legendary", 260, 88, 175,
         B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 26).Add(StatType.Strength, 18).Add(StatType.Vitality, 20), "HPRegen+5");
 
-    // ── Infinity Moment shop spears ─────────────────────────────────
+    // ── Shop spears ─────────────────────────────────────────────────
 
-    // IM Epic-band shop weapon. Straight-thrust cavalry pike, heavy stab stack.
+    // Epic-band shop weapon. Straight-thrust cavalry pike, heavy stab stack.
     public static Weapon CreateFoaStoss() => Make("spr_foa_stoss", "Foa Stoss", 5000, "Epic", 160, 36, 125,
         B().Add(StatType.Attack, 55).Add(StatType.Dexterity, 18).Add(StatType.Strength, 12), "ThrustDmg+20");
 
-    // IM Legendary-band shop weapon. Cresting-wave polearm, frost spray.
+    // Legendary-band shop weapon. Cresting-wave polearm, frost spray.
     public static Weapon CreateWaveSchneider() => Make("spr_wave_schneider", "Wave Schneider", 20500, "Legendary", 225, 78, 163,
         B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 24).Add(StatType.Strength, 16), "FrostDamage+25");
 
-    // ── Infinity Moment LAB spear (non-enhanceable) ─────────────────
+    // ── LAB spear (non-enhanceable) ─────────────────────────────────
 
-    // IM F98 floor-boss LAB reward. Moon-whisper spear; power waxes at night.
+    // F98 floor-boss LAB reward. Moon-whisper spear; power waxes at night.
     public static Weapon CreateLunaticRoof()
     {
         var w = Make("spr_lunatic_roof", "Lunatic Roof", 27500, "Legendary", 255, 87, 185,
@@ -118,35 +118,35 @@ public static class SpearDefinitions
         return w;
     }
 
-    // ── Memory Defrag Originals (Spear entries) ────────────────────────
+    // ── Uniques (Spear entries) ────────────────────────────────────────
 
-    // MD Epic. Oceanic trident-spear, brine-iron tip.
+    // Epic. Oceanic trident-spear, brine-iron tip.
     public static Weapon CreateNeoAtlantis() => Make("spr_neo_atlantis", "Neo Atlantis", 5800, "Epic", 165, 50, 120,
         B().Add(StatType.Attack, 55).Add(StatType.Dexterity, 18).Add(StatType.Strength, 12), "FrostDamage+15");
 
-    // ── Alicization Lycoris Normal Raid (Spear) — Epic F70-85 ────────
+    // ── Raid drops (Spear) — Epic F70-85 ─────────────────────────────
 
     // Heavenstriker — skyward-point ascending spear, holy motif.
     public static Weapon CreateHeavenstriker() => Make("spr_heavenstriker", "Heavenstriker", 7000, "Epic", 175, 71, 128,
         B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 20).Add(StatType.Strength, 14), "HolyDamage+15");
 
-    // ── Alicization Lycoris Extreme Raid (Spear) — Legendary F85-95 ──
+    // ── Extreme Raid drops (Spear) — Legendary F85-95 ────────────────
 
     // Arctic Pillar — frost-bound spear shaft, freeze on thrust.
     public static Weapon CreateArcticPillar() => Make("spr_arctic_pillar", "Arctic Pillar", 19200, "Legendary", 222, 85, 158,
         B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Strength, 14), "Freeze+25");
 
-    // ── Alicization Lycoris Relic Boss Drops (Spear) — Legendary F80-95 ─
+    // ── Relic Boss Drops (Spear) — Legendary F80-95 ──────────────────
 
-    // Frostpeak — glacial-tip relic spear, matches AL Relic band.
+    // Frostpeak — glacial-tip relic spear.
     public static Weapon CreateFrostpeak() => Make("spr_frostpeak", "Frostpeak", 18500, "Legendary", 218, 82, 152,
         B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 22).Add(StatType.Strength, 14), "Freeze+25");
 
-    // ── LS Top-Tier (Spear), Legendary F80-95 — Brave Song heroic-call polearm, combo-extender.
+    // ── Top-Tier (Spear), Legendary F80-95 — Brave Song heroic-call polearm, combo-extender.
     public static Weapon CreateBraveSong() => Make("spr_brave_song", "Brave Song", 19500, "Legendary", 225, 84, 158,
         B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 24).Add(StatType.Strength, 14), "ComboBonus+40");
 
-    // ── SAO Lost Song Mythological (Spear) — Legendary F75-99 ──────
+    // ── Mythological (Spear) — Legendary F75-99 ────────────────────
 
     // Divine Laevateinn — Surtr's flame-spear, burn on thrust.
     public static Weapon CreateDivineLaevateinn() => Make("spr_divine_laevateinn", "Divine Laevateinn", 20500, "Legendary", 230, 86, 165,

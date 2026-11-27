@@ -37,7 +37,7 @@ public static class MaceDefinitions
     public static Weapon CreateMinotaurWarhammer() => Make("minotaur_warhammer", "Warhammer of the Minotaur", 1600, "Epic", 120, 35, 52,
         B().Add(StatType.Attack, 30).Add(StatType.Strength, 14), "StunChance+15");
 
-    // ── HR Mace Chain: Lunatic Press → Nemesis → Yggdrasil → Mjolnir.
+    // ── Mace Evolution Chain: Lunatic Press → Nemesis → Yggdrasil → Mjolnir.
 
     // Lunatic Press, moon-forged bludgeon whose weight breaks plate. T1 of the Mjolnir chain.
     public static Weapon CreateLunaticPress() => Make("lunatic_press", "Lunatic Press", 2000, "Rare", 120, 15, 65,
@@ -59,25 +59,25 @@ public static class MaceDefinitions
     public static Weapon CreateMaceOfLord() => Make("mace_of_lord", "Mace of Lord", 4800, "Rare", 220, 20, 52,
         B().Add(StatType.Attack, 28).Add(StatType.Strength, 14).Add(StatType.Vitality, 6), "DurabilityBonus+50");
 
-    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+    // ── Quest and field-boss Legendaries ───────────────────────────
 
-    // Hollow Fragment F77 implement. Healer-god's rod; steady life regen (flavor).
+    // F77 field-boss drop. Healer-god's rod; steady life regen (flavor).
     public static Weapon CreateMaceOfAsclepius() => Make("mace_of_asclepius", "Mace of Asclepius", 13500, "Legendary", 190, 73, 135,
         B().Add(StatType.Attack, 62).Add(StatType.Vitality, 25).Add(StatType.Strength, 15).Add(StatType.Defense, 15), "HPRegen+3");
 
-    // Hollow Fragment F79 implement. Coiled eternity; periodic barrier procs (flavor).
+    // F79 quest reward. Coiled eternity; periodic barrier procs (flavor).
     public static Weapon CreateInfiniteOuroboros() => Make("infinite_ouroboros", "Infinite Ouroboros", 14500, "Legendary", 200, 75, 140,
         B().Add(StatType.Attack, 65).Add(StatType.Vitality, 28).Add(StatType.Defense, 18), "Barrier+20");
 
-    // Hollow Fragment F88 implement. Heavenly mace; resists interrupts (flavor).
+    // F88 quest reward. Heavenly mace; resists interrupts (flavor).
     public static Weapon CreateStarmaceElysium() => Make("starmace_elysium", "Starmace: Elysium", 21000, "Legendary", 240, 84, 158,
         B().Add(StatType.Attack, 75).Add(StatType.Vitality, 30).Add(StatType.Defense, 25).Add(StatType.Strength, 15), "Uninterruptible+50");
 
-    // F38 Obsidian Black Knight drop (AL Divine Beast tier). Thorn bludgeon, heavy + bleed proc.
+    // F38 Obsidian Black Knight drop (Divine Beast tier). Thorn bludgeon, heavy + bleed proc.
     public static Weapon CreateCactusBludgeon() => Make("cactus_bludgeon", "Cactus Bludgeon", 13500, "Legendary", 205, 36, 112,
         B().Add(StatType.Attack, 58).Add(StatType.Strength, 22).Add(StatType.Vitality, 18), "Bleed+15");
 
-    // ── Hollow Fragment Avatar Weapons (Mace) ────────────────────
+    // ── Avatar Weapons (Mace) ────────────────────────────────────
 
     public static Weapon CreateIjelfurAvatar() => Make("mce_ijelfur_avatar", "Ijelfur Avatar", 20500, "Legendary", 235, 82, 158,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 24).Add(StatType.Vitality, 18), "Stun+15");
@@ -90,17 +90,17 @@ public static class MaceDefinitions
     public static Weapon CreatePhotonHammerXPSmasher() => Make("mce_photon_hammer_xp_smasher", "Photon Hammer: XP Smasher", 30500, "Legendary", 260, 90, 175,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 28).Add(StatType.Vitality, 18), "XPBonus+20");
 
-    // ── Fractured Daydream — Character Core Canon (Mace) ───────────────
+    // ── Companion signature weapons (Mace) ─────────────────────────────
 
     // Lisbeth Plain Mace — F40+ starter craft/shop; intentionally Rare (not Legendary) as entry-tier.
     public static Weapon CreatePlainMace() => Make("mce_plain_mace", "Plain Mace", 1600, "Rare", 140, 25, 55,
         B().Add(StatType.Attack, 28).Add(StatType.Strength, 12).Add(StatType.Vitality, 6), "DurabilityBonus+30");
 
-    // Lisbeth canon — Grida Replicant. F85+ Legendary.
+    // Lisbeth's Grida Replicant. F85+ Legendary.
     public static Weapon CreateGridaReplicant() => Make("mce_grida_replicant", "Grida Replicant", 24500, "Legendary", 245, 85, 168,
         B().Add(StatType.Attack, 84).Add(StatType.Strength, 26).Add(StatType.Vitality, 18), "Stun+20");
 
-    // ── Fractured Daydream — Elemental Variants (Mace) ─────────────────
+    // ── Elemental Variants (Mace) ──────────────────────────────────────
 
     // Lisbeth fire variant. Blazing Torch — forge-glow mace.
     public static Weapon CreateBlazingTorch() => Make("mce_blazing_torch", "Blazing Torch", 5400, "Epic", 165, 50, 115,
@@ -110,13 +110,13 @@ public static class MaceDefinitions
     public static Weapon CreateElementalHammer() => Make("mce_elemental_hammer", "Elemental Hammer", 5500, "Epic", 165, 55, 116,
         B().Add(StatType.Attack, 54).Add(StatType.Strength, 16).Add(StatType.Vitality, 10), "HolyDamage+15");
 
-    // ── Alicization Lycoris Extreme Raid (Mace) — Legendary F85-95 ────
+    // ── Extreme Raid drops (Mace) — Legendary F85-95 ──────────────────
 
     // Starshatter — celestial-crowned warmace, stun-biased.
     public static Weapon CreateStarshatter() => Make("mce_starshatter", "Starshatter", 19500, "Legendary", 225, 85, 158,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 26).Add(StatType.Vitality, 14), "Stun+20");
 
-    // ── Alicization Lycoris Relic Boss Drops (Mace) — Legendary F80-95 ─
+    // ── Relic Boss Drops (Mace) — Legendary F80-95 ───────────────────
 
     // Beasthowl — fanged warmace, roaring-impact stun.
     public static Weapon CreateBeasthowl() => Make("mce_beasthowl", "Beasthowl", 18200, "Legendary", 215, 82, 150,
@@ -126,7 +126,7 @@ public static class MaceDefinitions
     public static Weapon CreateWhirlpoolHammer() => Make("mce_whirlpool_hammer", "Whirlpool Hammer", 18500, "Legendary", 218, 83, 152,
         B().Add(StatType.Attack, 76).Add(StatType.Strength, 24).Add(StatType.Vitality, 12), "Slow+20");
 
-    // ── LS Top-Tier (Mace), Legendary F80-95 — Caduceus herald's staff-mace, lifeflow motif.
+    // ── Top-Tier (Mace), Legendary F80-95 — Caduceus herald's staff-mace, lifeflow motif.
     public static Weapon CreateCaduceus() => Make("mce_caduceus", "Caduceus", 19800, "Legendary", 225, 84, 158,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 24).Add(StatType.Vitality, 18), "HPRegen+5");
 }

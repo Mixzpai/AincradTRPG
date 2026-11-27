@@ -24,8 +24,7 @@ public static class LifetimeStats
         public long PlayTimeSeconds { get; set; }
         public bool Victory { get; set; }
         public string Date { get; set; } = "";
-        // Legacy entries default to "Unknown" / 0 since old saves lack
-        // these fields. Deserializer leaves them at default; no migration needed.
+        // An entry written without these fields deserializes to "Unknown" / 0.
         public string PlayerName { get; set; } = "Unknown";
         public int TurnCount { get; set; }
     }
@@ -42,7 +41,7 @@ public static class LifetimeStats
         public int DeathsCaused { get; set; }
         public string LastSeenDate { get; set; } = "";
         // Encounter loot tag persisted across runs.
-        // Nullable: legacy entries → null, resolved at load via MobFactory fallback.
+        // Nullable: an entry without one reads as null, resolved at load via MobFactory fallback.
         public string? LootTag { get; set; }
     }
 
@@ -65,13 +64,13 @@ public static class LifetimeStats
         public List<RunEntry> RecentRuns { get; set; } = new();
         // Victory-only list, uncapped (leaderboard sorts at display time).
         public List<RunEntry> VictoryRuns { get; set; } = new();
-        // Cross-run bestiary knowledge, keyed by mob Name. Legacy saves
-        // start empty and get populated the first time Bestiary.Save runs.
+        // Cross-run bestiary knowledge, keyed by mob Name. Starts empty and
+        // is populated the first time Bestiary.Save runs.
         public Dictionary<string, BestiaryKnowledge> BestiaryKnown { get; set; } = new();
 
         // All milestone IDs the player has unlocked, persisted across permadeath.
         // Single source of truth for achievements / titles / life-skill bonuses /
-        // collectables. Missing on legacy data → empty list.
+        // collectables. Missing from the file → empty list.
         public List<string> UnlockedMilestones { get; set; } = new();
 
         // Cross-run best counts for QuestSubCategory turn-ins. Updated on each
@@ -87,39 +86,32 @@ public static class LifetimeStats
         public int WeaponUpgrades { get; set; }
     }
 
-    // ── THE READ CACHE, AND WHY IT IS GUARDED BY THE FILE'S OWN TIMESTAMP ──────────────────
+    // ── The read cache, guarded by the file's own timestamp ────────────────────────────────
     //
-    // Load used to read and re-deserialize the whole file on every call. It is not a UI-only
-    // path: measured over a 900-turn seeded run that fought its way through a floor, it was
-    // called 722 times at 0.22 ms and ~10 KB each -- 10% of all turn time, and about 7.6 MB of
-    // garbage -- because Bestiary.RecordEncounter and the MilestoneSystem hooks reach it from
-    // inside the turn loop.
+    // Load is not a UI-only path: Bestiary.RecordEncounter and the MilestoneSystem hooks reach it
+    // from inside the turn loop, so it serves a cached instance instead of re-reading and
+    // re-deserializing the whole file on every call.
     //
     // The cache is keyed on the file's LastWriteTimeUtc rather than trusting Save() alone. This
-    // file is the permadeath ledger and it is moved aside and back by the probe harnesses, so a
-    // cache that only invalidated on OUR writes would serve a previous run's stats after an
-    // external swap -- silent, and in the worst direction. A missing file reads as a fixed
-    // sentinel, so deleting it invalidates too. One attribute query against a read plus a parse.
+    // file is the permadeath ledger and an external tool may move it aside and back, so a cache
+    // that only invalidated on this class's own writes would serve a previous run's stats after
+    // an external swap. A missing file reads as a fixed sentinel, so deleting it invalidates too.
     //
-    // CALLERS MUST NOT MUTATE WITHOUT SAVING. Load now hands back the cached instance rather
-    // than a private copy, which is what makes it free. Every mutating call site today follows
-    // the read with Save() in the same block; Tools/ProgressProbe holds that as a check, by
-    // comparing the cached view against the file after a run.
+    // Callers must not mutate without saving. Load hands back the cached instance rather than a
+    // private copy; every mutating call site follows the read with Save() in the same block.
     private static Data? _cache;
     private static long _cacheTicks = -1;
     private static long _cacheLength = -1;
     // The last read of an existing file failed; Save must not overwrite it with defaults.
     private static bool _loadFailed;
 
-    // Write time AND length, from one attribute query. Write time alone is not enough: NTFS
+    // Write time and length, from one attribute query. Write time alone is not enough: NTFS
     // stamps come off the system clock, whose update granularity is coarser than a fast
     // write-read-write, so two writes can share a timestamp. A different length settles those,
-    // and our own Save() refreshes the cache directly so it never depends on this at all.
-    // ONE FileInfo, re-stated rather than reallocated. The cache removed the parse, so this guard
-    // is now the entire cost of a Load — and Load runs 3.12 times per turn, so a fresh FileInfo at
-    // 96 B each was ~300 B of per-turn garbage against the 8 KB budget ProgressProbe holds.
-    // Refresh() re-stats the same object: 0 B and 39.5 us against 96 B and 41.7. FilePath is
-    // static readonly, so the object can never be bound to a stale path.
+    // and Save() refreshes the cache directly so it never depends on this at all.
+    // One FileInfo, re-stated rather than reallocated: this guard is the entire cost of a cached
+    // Load, which runs several times per turn, so it must not allocate. FilePath is static
+    // readonly, so the object can never be bound to a stale path.
     private static FileInfo? _stat;
 
     private static void ReadStamp(out long ticks, out long length)
@@ -135,11 +127,8 @@ public static class LifetimeStats
         catch { ticks = -2; length = -2; }
     }
 
-    // Times Load has been called this process. A measurement seam, in the same family as
-    // LightingSystem.SourcesLastUpdate and MapView.DrainFramesDrawn: the cache makes a repeat
-    // Load nearly free, so ALLOCATION can no longer tell "read once" apart from "read once per
-    // row" -- 337 cache hits cost less than the refresh they sit inside. The call count still
-    // separates them absolutely, and it is the property the caller actually cares about.
+    // Times Load has been called this process. Read by the verification probes: a cached Load
+    // allocates almost nothing, so only the call count tells "read once" from "read once per row".
     public static long LoadCalls;
 
     // Load stats from disk. Returns empty stats if file missing or corrupt.
@@ -164,7 +153,7 @@ public static class LifetimeStats
             _cacheTicks = -3; _cacheLength = -3;
             return _cache ??= new Data();
         }
-        // Re-stat AFTER reading: if something rewrote the file while it was being read, what was
+        // Re-stat after reading: if something rewrote the file while it was being read, what was
         // parsed does not match the stamp taken before, so refuse to cache it.
         ReadStamp(out long after, out long afterLen);
         if (after == ticks && afterLen == length) { _cacheTicks = ticks; _cacheLength = length; }
@@ -172,7 +161,7 @@ public static class LifetimeStats
         return _cache;
     }
 
-    // Save stats to disk. Silent on failure.
+    // Save stats to disk. A failure is logged, never thrown.
     public static void Save(Data data)
     {
         if (_loadFailed)
@@ -185,7 +174,7 @@ public static class LifetimeStats
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             string json = JsonSerializer.Serialize(data, JsonOpts);
             // Write-and-rename, like SaveManager, UserSettings, Keybinds and ProfileData. This is
-            // the permadeath ledger and it is written DURING PLAY, so its exposure window is the
+            // the permadeath ledger and it is written during play, so its exposure window is the
             // widest of the set: WriteAllText truncates first, and Load answers a parse failure by
             // starting from defaults — a torn write would silently reset every milestone unlock,
             // victory run and bestiary entry, and the next Save would make that permanent.

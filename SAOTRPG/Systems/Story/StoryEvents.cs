@@ -1,6 +1,6 @@
 namespace SAOTRPG.Systems.Story;
 
-// 10 milestone events for SAO 100F arc: trigger + predicate + cutscene.
+// Key story events across the 100 floors: trigger + predicate + cutscene.
 // StorySystem owns firing/persistence/replay.
 public static class StoryEvents
 {

@@ -32,7 +32,7 @@ public sealed class IcePostWaterPass : IGenerationPass
         }
 
         // First pass: record which water tiles border land so the edge becomes CrackedIce.
-        // Out-of-bounds neighbours do not count as land, exactly as the bounds `continue` did.
+        // Out-of-bounds neighbours do not count as land.
         var isEdge = new bool[w * h];
         for (int y = 0; y < h; y++)
         {

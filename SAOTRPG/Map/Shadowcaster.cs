@@ -2,34 +2,31 @@ using System.Runtime.CompilerServices;
 
 namespace SAOTRPG.Map;
 
-// Symmetric recursive shadowcasting (Albert Ford — albertford.com/shadowcasting/).
+// Symmetric recursive shadowcasting.
 // Used for player FOV and per-light-source propagation.
 //
-// This is the hottest loop on the turn path: a player FOV sweep at the shipped radius visits
-// ~60,000-110,000 cells and reveals ~90% of them, and it runs on every keystroke. Four things
-// shape the code, all measured rather than assumed:
+// This is the hottest loop on the turn path: a player FOV sweep at the runtime radius visits tens
+// of thousands of cells, and it runs on every keystroke. Four things shape the code:
 //
 //   * The sight-blocking table is read directly as a span rather than through a predicate
-//     delegate, and the sink is a generic struct rather than a callback delegate. Two indirect
-//     calls per visited cell were the single largest cost.
+//     delegate, and the sink is a generic struct rather than a callback delegate, so a visited
+//     cell costs no indirect call.
 //   * A row is split into an off-map prefix, the on-map middle and an off-map suffix, so the
 //     bounds test does not run per cell.
-//   * The middle is walked as RUNS of same-blocking cells. Nothing inside a run can change the
+//   * The middle is walked as runs of same-blocking cells. Nothing inside a run can change the
 //     sector, so only a run's first cell needs the full per-cell body and the rest is one
-//     contiguous reveal range. Runs measure ~37 cells on real floors, and 98% of reveals are
-//     run tails.
+//     contiguous reveal range; most reveals are run tails.
 //   * An open row's continuation at the next depth — the tail call of the recursive form — is a
 //     loop, and everything a cardinal holds constant travels in one context struct, so a child
-//     row is a five-argument call instead of twelve. In the open the recursion was `radius`
-//     frames deep per cardinal.
+//     row is a five-argument call instead of twelve and the open-ground recursion does not go
+//     `radius` frames deep per cardinal.
 //
-// The reveal SET and the reveal ORDER are unchanged by all of this — the order matters because
-// GameMap stamps a last-seen turn and appends to a visible-cell list as it goes. TileVerifyProbe
-// --light holds the shipped sweep against a per-cell reference as a SEQUENCE.
+// The reveal set and the reveal order are both part of the contract: the order matters because
+// GameMap stamps a last-seen turn and appends to a visible-cell list as it goes.
 //
-// With the game's sink ~56% of a sweep was the sink's own per-cell writes, so a run's tail is
-// handed to the sink as ONE call (IFovRunSink) and the sink hoists the row index, fills spans and
-// skips explored stretches. A per-cell sink still sees the same sequence through an adapter.
+// A run's tail is handed to the sink as one call (IFovRunSink), so the sink can hoist the row
+// index, fill spans and skip explored stretches. A per-cell sink still sees the same sequence
+// through an adapter.
 public static class Shadowcaster
 {
     // A struct sink lets the JIT devirtualize and inline the per-cell reveal. Implementations
@@ -98,21 +95,25 @@ public static class Shadowcaster
         if ((uint)ox < (uint)width && (uint)oy < (uint)height) sink.Reveal(ox, oy);
         if (radius < 1) return;
 
+        // The east/west cones own every cell with |dx| > |dy|, and the ellipse reaches |dx| =
+        // radius x aspect there, so they sweep to ReachX; stopping them at depth `radius` like the
+        // north/south pair would clip the visual circle to a square.
+        int reachX = ReachX(radius);
         int rSq = radius * radius;
-        int n = radius + 1;
-        Span<int> nsMax = n <= MaxStackRadius ? stackalloc int[n] : new int[n];
-        Span<int> ewMax = n <= MaxStackRadius ? stackalloc int[n] : new int[n];
-        BuildColumnBounds(radius, rSq, nsMax, ewMax);
+        Span<int> nsMax = radius + 1 <= MaxStackRadius ? stackalloc int[radius + 1] : new int[radius + 1];
+        Span<int> ewMax = reachX + 1 <= MaxStackRadius ? stackalloc int[reachX + 1] : new int[reachX + 1];
+        BuildColumnBounds(radius, reachX, rSq, nsMax, ewMax);
 
-        // The cardinal picks a fixed line and a fixed step, so the 4-way transform that used to
-        // run per cell is resolved once per cardinal: a row is a map row (along x, north/south)
-        // or a map column (along y, east/west).
-        scoped var ctx = new ScanCtx { Opaque = opaque, Radius = radius, Width = width };
+        // The cardinal picks a fixed line and a fixed step, so the 4-way transform is resolved
+        // once per cardinal rather than per cell: a row is a map row (along x, north/south) or a
+        // map column (along y, east/west).
+        scoped var ctx = new ScanCtx { Opaque = opaque, Width = width };
         for (int cardinal = 0; cardinal < 4; cardinal++)
         {
             bool alongX = cardinal == 0 || cardinal == 2;
             ctx.AlongX = alongX;
             ctx.Rad = alongX ? nsMax : ewMax;
+            ctx.MaxDepth = alongX ? radius : reachX;
             ctx.Origin = alongX ? ox : oy;
             ctx.Limit = alongX ? width : height;
             ctx.Cross = alongX ? height : width;
@@ -122,24 +123,34 @@ public static class Shadowcaster
         }
     }
 
+    // The farthest |dx| the ellipse admits on the origin's own row: the depth the east/west
+    // cones sweep to. Found by testing the same float expression the bounds use.
+    public static int ReachX(int radius)
+    {
+        int rSq = radius * radius;
+        int x = (int)(radius * Generation.FloorMask.CellAspectRatio);
+        while (x > 0 && (float)(x * x) * InvAspectSq > rSq) x--;
+        while ((float)((x + 1) * (x + 1)) * InvAspectSq <= rSq) x++;
+        return x;
+    }
+
     // The widest column the aspect-corrected ellipse admits at each depth — one table for a row
-    // swept along x (north/south) and one for a row swept along y (east/west). This replaces a
-    // per-cell `dx*dx*InvAspectSq + dy*dy <= rSq`: along a row one of dx/dy is pinned to +/-depth,
-    // so the test collapses to a constant range on the column index.
+    // swept along x (north/south, depth |dy| up to radius) and one for a row swept along y
+    // (east/west, depth |dx| up to ReachX). This stands in for a per-cell
+    // `dx*dx*InvAspectSq + dy*dy <= rSq`: along a row one of dx/dy is pinned to +/-depth, so the
+    // test collapses to a constant range on the column index.
     //
-    // The bound is found by testing the ORIGINAL float expression rather than by solving it, so
+    // The bound is found by testing that float expression itself rather than by solving it, so
     // the admitted set is identical and not merely close, whatever the aspect constant rounds to.
     // The expression is monotone in |col| and the bound is monotone in depth, so one decrementing
     // walk finds every entry. The re-solve arms are unreachable at an aspect of 2.0 (the bound
     // never drops below zero before the last depth) but live for an aspect under 1.0.
-    private static void BuildColumnBounds(int radius, int rSq, Span<int> nsMax, Span<int> ewMax)
+    private static void BuildColumnBounds(int radius, int reachX, int rSq, Span<int> nsMax, Span<int> ewMax)
     {
         int ns = -1, ew = -1;
         for (int d = 1; d <= radius; d++)
         {
             float fixedNs = (float)(d * d);
-            float fixedEw = (float)(d * d) * InvAspectSq;
-
             if (ns < 0)
             {
                 double est = (rSq - (double)fixedNs) / InvAspectSq;
@@ -148,7 +159,11 @@ public static class Shadowcaster
             }
             while (ns >= 0 && (float)(ns * ns) * InvAspectSq + fixedNs > rSq) ns--;
             nsMax[d] = ns;
+        }
 
+        for (int d = 1; d <= reachX; d++)
+        {
+            float fixedEw = (float)(d * d) * InvAspectSq;
             if (ew < 0)
             {
                 double est = rSq - (double)fixedEw;
@@ -166,7 +181,7 @@ public static class Shadowcaster
     {
         public ReadOnlySpan<bool> Opaque;
         public Span<int> Rad;
-        public int Radius, Width, Origin, Limit, Cross, LineBase, LineStep;
+        public int MaxDepth, Width, Origin, Limit, Cross, LineBase, LineStep;
         public bool AlongX;
     }
 
@@ -177,12 +192,12 @@ public static class Shadowcaster
         double startSlope, double endSlope)
         where TSink : struct, IFovRunSink
     {
-        int radius = ctx.Radius, width = ctx.Width;
+        int maxDepth = ctx.MaxDepth, width = ctx.Width;
         ReadOnlySpan<bool> opaque = ctx.Opaque;
         bool alongX = ctx.AlongX;
         int origin = ctx.Origin, inLo = -origin, inHi = ctx.Limit - 1 - origin;
 
-        for (; depth <= radius; depth++)
+        for (; depth <= maxDepth; depth++)
         {
             double symLo = depth * startSlope;
             double symHi = depth * endSlope;
@@ -207,8 +222,8 @@ public static class Shadowcaster
             int fixedLine = ctx.LineBase + ctx.LineStep * depth;
             if ((uint)fixedLine >= (uint)ctx.Cross) return;
 
-            // -1 unknown, 0 floor, 1 wall. A three-state int rather than a bool? — the lifted
-            // comparisons on Nullable<bool> were two tests each, per cell.
+            // -1 unknown, 0 floor, 1 wall. A three-state int rather than a bool?, whose lifted
+            // comparisons cost two tests each, per cell.
             int prev = -1;
 
             // Columns that land on the map, so the middle loop needs no per-cell bounds test.
@@ -242,7 +257,7 @@ public static class Shadowcaster
                     runEnd = c - 1;
                 }
 
-                // The run's first cell takes the full body. Reveal comes BEFORE the narrowing:
+                // The run's first cell takes the full body. Reveal comes before the narrowing:
                 // the transition cell is admitted by the sector as it stood when the cell was
                 // reached.
                 if (isWall ? (col >= -rad && col <= rad) : (col >= revLo && col <= revHi))

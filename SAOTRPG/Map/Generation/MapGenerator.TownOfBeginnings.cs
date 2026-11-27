@@ -93,14 +93,13 @@ public static partial class MapGenerator
             map.Tiles[px, py].Type = TileType.Grass;
         }
 
-        // ── 13. Monument of Swordsmen — canon TOB placement: plaza park west side, 2 tiles off boulevard, pillar-flanked.
+        // ── 13. Monument of Swordsmen — plaza park west side, 2 tiles off boulevard, pillar-flanked.
         int swmX = sx - 4, swmY = parkCy;
         if (map.InBounds(swmX, swmY))
         {
             map.Tiles[swmX, swmY].Type = TileType.MonumentOfSwordsmen;
-            // Grass or Floor only: the park is stamped Grass a few lines up and nothing in the
-            // town grows flowers any more, so a Flowers arm here would be a guard that can never
-            // match.
+            // Grass or Floor only: the park is stamped Grass above and nothing in the town grows
+            // flowers.
             SetTileSafe(map, swmX - 1, swmY, TileType.Pillar, TileType.Grass);
             SetTileSafe(map, swmX + 1, swmY, TileType.Pillar, TileType.Grass);
             SetTileSafe(map, swmX - 1, swmY, TileType.Pillar, TileType.Floor);

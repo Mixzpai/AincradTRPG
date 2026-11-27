@@ -49,7 +49,7 @@ public sealed class FeatureScatterPass : IGenerationPass
             MapGenerator.CarvePath(map, clearings[^1].x, clearings[^1].y, clearings[0].x, clearings[0].y, rng);
 
         // Boss room: rotates through 4 quadrants, halfway between center and disk edge.
-        // Bbox-corner fallback (towns/F100 with null mask) preserves legacy behavior.
+        // Bbox-corner fallback when there is no circle mask.
         int bossW = Math.Min(13, width / 4);
         int bossH = Math.Min(11, height / 4);
         int bossQuadrant = (ctx.FloorNumber - 1) % 4;
@@ -66,23 +66,14 @@ public sealed class FeatureScatterPass : IGenerationPass
         map.Tiles[bossX + bossW / 2, bossY + bossH / 2].Type = TileType.LabyrinthEntrance;
         MapGenerator.CarveStraightPath(map, spawnX, spawnY, bossX + bossW / 2, bossY + bossH / 2);
 
-        // Scatter foliage EARLY so later grass-targeted features don't overwrite it.
+        // Scatter foliage early so later grass-targeted features don't overwrite it.
         //
-        // This route ignored the biome's own TreeDensity and BushDensity entirely, so a Volcanic
-        // floor (declaring 0.2) received the same isolated-tree scatter as a Forest (2.2). It is
-        // the smaller of the two foliage routes -- 640 of floor 1's 13,300 trees against
-        // ClusterPass's copses -- but a single tree standing alone on ash is exactly the kind of
-        // object that reads as noise rather than as landscape, so it is scaled twice: by the
-        // biome that has an opinion about it, and by the clutter factor.
+        // The smaller of the two foliage routes (ClusterPass makes the copses), but a single tree
+        // standing alone on ash reads as noise rather than as landscape, so it is scaled twice: by
+        // the biome's own TreeDensity / BushDensity, and by the clutter factor.
         MapGenerator.ScatterGrassFoliage(map, spawnX, spawnY,
             ScatterCount(FloorScale.ScatteredTrees(ctx.FloorNumber), ctx.Config.TreeDensity),
             ScatterCount(FloorScale.ScatteredBushes(ctx.FloorNumber), ctx.Config.BushDensity), rng);
-
-        // The campfire-per-clearing roll that used to sit here is gone. It placed one fire per
-        // clearing at 2-in-3 with no budget at all -- four to sixteen fires on a floor whose biome
-        // declared a maximum of two -- and it duplicated what the quota scatter below already
-        // does deliberately. The Lone Pillar landmark went with it for the same reason: one more
-        // unbudgeted instance of a tile the quota already governs.
 
         int lavaPools = FloorScale.LavaPools(ctx.FloorNumber, rng);
         for (int i = 0; i < lavaPools; i++)
@@ -139,7 +130,7 @@ public sealed class FeatureScatterPass : IGenerationPass
             map.Tiles[srX + 2, srY + 2].Type = TileType.Chest;
         }
 
-        // Hazards + vents are now handled by ScatterQuotaFeatures above.
+        // Hazards + vents are placed by ScatterQuotaFeatures above.
 
         // Lever/pressure plate puzzles linked to sealed doors.
         int puzzleCount = 1 + rng.Next(0, 2);
@@ -172,8 +163,8 @@ public sealed class FeatureScatterPass : IGenerationPass
             }
         }
 
-        // The biome's own campfire quota governs the wall sconces too. Without this the
-        // decorator ignored it and out-produced every other campfire source combined.
+        // The biome's own campfire quota governs the wall sconces too; uncapped, the decorator
+        // would out-produce every other campfire source combined.
         int fireBudget = ctx.Config.FeatureQuotas?.MaxCampfires ?? 3;
         using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.DecorateCorridors"))
             MapGenerator.DecorateCorridors(map, spawnX, spawnY, rng, fireBudget);
@@ -185,7 +176,7 @@ public sealed class FeatureScatterPass : IGenerationPass
         using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Scatter.EnsureConnectivity"))
             MapGenerator.EnsureConnectivity(map, rooms, clearings);
 
-        // LAST, because a budget enforced before the last thing that can spend it is a budget for
+        // Last, because a budget enforced before the last thing that can spend it is a budget for
         // an intermediate map. Every route that can place a governed feature -- both prefab
         // passes, the town builders, the corridor sconces, the stair-room decorators and the
         // quota scatter above -- has run by this point.
@@ -198,9 +189,9 @@ public sealed class FeatureScatterPass : IGenerationPass
 
         SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN", $"  {rooms.Count} rooms, {clearings.Count} clearings");
         // ConnectivityAuditPass runs immediately after this one and recounts, so a full sweep
-        // here is thrown away — measured 14.6 ms per floor for nothing. What this pass genuinely
-        // owes the map is the opacity invalidation, because it wrote tile types through the
-        // indexer. Nothing reads the walkable count between the two passes.
+        // here would be thrown away. What this pass owes the map is the opacity invalidation,
+        // because it wrote tile types through the indexer. Nothing reads the walkable count
+        // between the two passes.
         map.InvalidateOpacity();
     }
 
@@ -229,14 +220,13 @@ public sealed class FeatureScatterPass : IGenerationPass
             return MapGenerator.IsGrassType(t) || t == TileType.Floor || t == TileType.Path;
         }
 
-        // Cap the pool. Uncapped this returns ~13,500 points on a 991x991 floor at 170 ms --
-        // roughly 87% of this pass -- and the placements below consume a few hundred. The
-        // sampler appends only, so a capped run gives byte-identical points for everything
-        // actually used; verified by floor signature across floors and seeds.
-        // Its OWN derived stream, not ctx.Rng. The sampler's draw count depends on how many points
-        // it happens to generate, so drawing from the shared stream made every later placement on
-        // the floor depend on that count -- and capping the pool therefore shifted the whole layout.
-        // Derived per floor, the cap becomes free: the points consumed are identical either way.
+        // Cap the pool: uncapped, a large floor generates far more points than the few hundred
+        // the placements below consume, and sampling them dominates this pass. The sampler
+        // appends only, so a capped run gives byte-identical points for everything actually used.
+        // Its own derived stream, not ctx.Rng. The sampler's draw count depends on how many points
+        // it happens to generate, so drawing from the shared stream would make every later
+        // placement on the floor depend on that count, and the cap would shift the whole layout.
+        // Derived per floor, the cap is free: the points consumed are identical either way.
         var poissonRng = new Random(
             SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "poisson"));
         var points = PoissonDiskSampler.Sample(width, height, q.PoissonRadius, poissonRng, 30,
@@ -358,32 +348,30 @@ public sealed class FeatureScatterPass : IGenerationPass
         return Math.Max(1, (int)Math.Round(baseCount * biomeDensity * ScatterFoliageScale));
     }
 
-    // ── FLOOR-WIDE FEATURE BUDGET ───────────────────────────────────────────────────────────
+    // ── Floor-wide feature budget ───────────────────────────────────────────────────────────
     //
     // A per-biome quota is only a budget if it is spent against everything that can place the
-    // thing it budgets. `ScatterQuotaFeatures` above governs ONE placement route; a stamped
+    // thing it budgets. `ScatterQuotaFeatures` above governs one placement route; a stamped
     // prefab, a town builder, a corridor sconce and a stair-room decorator are four more, and
-    // none of them could see the quota. Measured across 20 floors before this ran: campfires
-    // 10-38 against declared maxima of 0-3, pillars 12-48 against 1-3, anvils 1-6 against 0-2.
-    // Every floor sampled breached on campfires and on pillars.
+    // none of them sees the quota.
     //
-    // Two boundaries, both deliberate and both LOUD when they bind:
+    // Two boundaries, both deliberate and both logged when they bind:
     //
-    //   * A SAFE-ZONE town is furniture, not budget. F1's Town of Beginnings and F48's Lindarth
+    //   * A safe-zone town is furniture, not budget. F1's Town of Beginnings and F48's Lindarth
     //     are hand-authored, their hearths and anvils are part of the building, and the player
     //     cannot be attacked standing on them. Cells inside `map.SafeZone` are neither counted
     //     nor removed.
-    //   * OPEN-GROUND instances go first — nothing with a wall or a door in its eight-neighbour
+    //   * Open-ground instances go first — nothing with a wall or a door in its eight-neighbour
     //     ring. That is what separates scatter from architecture: a sconce is against a wall and
     //     a colonnade is inside a prefab. What happens when the open ground runs out depends on
-    //     WHAT THE FEATURE IS, not on where it sits. A campfire, anvil, shrine, lore stone or
+    //     what the feature is, not on where it sits. A campfire, anvil, shrine, lore stone or
     //     journal is a single-tile resource: lifting one out of a room leaves the room intact, so
-    //     the budget may reach in. A PILLAR is architecture — a colonnade with two columns missing
+    //     the budget may reach in. A pillar is architecture — a colonnade with two columns missing
     //     reads as damage, and the boss arena and spawn chamber each frame themselves with four —
     //     so pillar removal stops at the open ground and the remainder is logged.
     //
-    // The distinction matters most in a cave biome, where almost every cell has rock in its ring:
-    // Dark carried 11 campfires against a maximum of 4 with open-ground removal alone.
+    // The distinction matters most in a cave biome, where almost every cell has rock in its ring,
+    // so open-ground removal alone cannot bring the count down to the budget.
     private static void ReconcileFeatureQuotas(WorldContext ctx, GameMap map,
         int spawnX, int spawnY, int width, int height)
     {
@@ -527,7 +515,7 @@ public sealed class FeatureScatterPass : IGenerationPass
         return false;
     }
 
-    // What a removed feature leaves behind. Taken from the MAJORITY of its walkable neighbours
+    // What a removed feature leaves behind. Taken from the majority of its walkable neighbours
     // rather than stamped as Floor, because a fire lifted out of a meadow should leave meadow and
     // one lifted off a flagstone room should leave flagstone — and an unrecognised type stamped as
     // Floor is how a wall becomes walkable ground elsewhere in this pipeline.
@@ -563,7 +551,7 @@ public sealed class FeatureScatterPass : IGenerationPass
           or TileType.Ice or TileType.Basalt or TileType.Ash or TileType.Mud or TileType.Reeds;
 
     // Bounded so a floor with nowhere left to put its minimum reports a shortfall instead of
-    // spinning. 400 darts find accepting ground on every floor that has any.
+    // spinning.
     private const int TopUpAttempts = 400;
 
     // How hard the two unscaled foliage-scatter counts are cut, on top of the biome's own
@@ -572,7 +560,7 @@ public sealed class FeatureScatterPass : IGenerationPass
 
     // Picks the boss room top-left so the room sits halfway between map center and the
     // disk edge along the quadrant diagonal. Falls back to bbox-corner placement when
-    // no mask (towns/F100) so legacy behavior is preserved.
+    // there is no circle mask.
     private static (int X, int Y) PickBossRoomOrigin(WorldContext ctx, int spawnX, int spawnY,
         int bossW, int bossH, int quadrant)
     {
@@ -598,8 +586,8 @@ public sealed class FeatureScatterPass : IGenerationPass
             return (bx, by);
         }
 
-        // Diagonal direction per quadrant; walk inward from the disk edge until we
-        // find a position whose 4 corners all fit inside the disk.
+        // Diagonal direction per quadrant; walk inward from the disk edge until a
+        // position's 4 corners all fit inside the disk.
         int sxDir = quadrant == 1 || quadrant == 2 ? -1 : 1;
         int syDir = quadrant == 2 || quadrant == 3 ? -1 : 1;
         int cx = spawnX, cy = spawnY;
@@ -624,20 +612,16 @@ public sealed class FeatureScatterPass : IGenerationPass
     }
 
     // How close to spawn a scattered feature may land, as a Chebyshev box. Shared with
-    // ConnectivityAuditPass, whose trap sweep used a SMALLER radius than this exclusion and could
-    // therefore only ever catch hazards placed by paths that bypass AcceptTile -- which is exactly
-    // what it exists for, and which it was missing.
+    // ConnectivityAuditPass, whose trap sweep covers the same box so it catches hazards placed by
+    // paths that bypass AcceptTile.
     public const int SpawnHazardExclusion = 10;
 
-    // MEASURED, not guessed. Across 40 floors x 2 seeds the pass consumes at most ~60 points, so
-    // this is 4x headroom. Bracketed by bisection: at 30 the pool drained 22 times and the floor
-    // layouts changed; at 60 it drained 0 times and every signature matched the uncapped run. The
-    // drain warning validated itself in the process -- output changed EXACTLY when it fired.
-    // If a config ever exceeds this the pool drains and placement falls back to rejection sampling,
-    // which CHANGES the layout, so a drain is logged rather than left silent.
+    // Cap on the Poisson pool, with ample headroom over the points the pass consumes. If a config
+    // exceeds it the pool drains and placement falls back to rejection sampling, which changes the
+    // layout, so a drain is logged rather than left silent.
     private const int PoissonMaxSamples = 256;
 
-    // Trap pools, shared by every biome that draws the same hazards in the same ORDER. Order is
+    // Trap pools, shared by every biome that draws the same hazards in the same order. Order is
     // load-bearing: the draw is rng.Next(pool.Length), so {Spike, Alarm} and {Alarm, Spike} consume
     // the same value and place a different trap. Ice/Desert/Grassland and the fallback share one
     // array only because all four are literally {Spike, Alarm}; splitting a pool means giving it
@@ -646,14 +630,12 @@ public sealed class FeatureScatterPass : IGenerationPass
     private static readonly TileType[] TrapsSpikeTeleport  = { TileType.TrapSpike, TileType.TrapTeleport };
     private static readonly TileType[] TrapsAlarmOnly      = { TileType.TrapAlarm };
 
-    // Pools for the biomes that gain one of the later hazards. Each APPENDS to the sequence that
-    // biome already drew, so the earlier entries keep their index and only the added tail is new.
+    // Pools for the biomes that also draw web, magnet or rune traps. Each is a base pool with
+    // those hazards appended, so the base entries keep their index and only the tail is extra.
     //
-    // AND WHEN A BIOME MOVES TO AN APPENDED POOL, ITS OLD ARRAY MUST GO WITH IT. Six superseded
-    // pools were left behind here and sat unreferenced — inert, but a trap: giving Swamp another
-    // hazard by editing the shorter TrapsPoisonAlarm would have changed nothing at all, silently,
-    // because Swamp draws from TrapsPoisonAlarmWeb. A repeated entry is the weight — Void draws
-    // Teleport twice as often as Alarm.
+    // A biome draws from exactly one array, so a superseded shorter pool must be deleted rather
+    // than left beside its successor, where editing it would silently change nothing. A repeated
+    // entry is the weight — Void draws Teleport twice as often as Alarm.
     private static readonly TileType[] TrapsPoisonSpikeWeb =
         { TileType.TrapPoison, TileType.TrapSpike, TileType.TrapWeb };
     private static readonly TileType[] TrapsPoisonAlarmWeb =

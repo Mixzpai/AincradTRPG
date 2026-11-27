@@ -2,7 +2,7 @@ using SAOTRPG.Systems.Diagnostics;
 
 namespace SAOTRPG.UI.GameLog;
 
-// Live game log → ColoredLogView, which types each line the way CDDA does and ages it by turn.
+// Live game log → ColoredLogView, which types each line by meaning and ages it by turn.
 // Also forwards to DebugLogger for file-based debug output.
 public class GameLogView : IGameLog
 {
@@ -37,7 +37,7 @@ public class GameLogView : IGameLog
         _logView.AddEntry(message, LogCategory.Item, CurrentTurn);
     }
 
-    // NPC dialogue: typed info, as CDDA types speech.
+    // NPC dialogue: typed info.
     public void LogDialog(string message)
     {
         DebugLogger.LogGame("DIALOG", message);

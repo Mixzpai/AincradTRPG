@@ -1,21 +1,21 @@
 namespace SAOTRPG.Systems.Skills;
 
-// FD Paired Dual-Wield registry. Both halves equipped → Pair Resonance:
+// Paired Dual-Wield registry. Both halves equipped → Pair Resonance:
 // +10% combined dmg, +5% crit re-roll. Solo "Dual" weapons use IsDualWieldPaired.
 public static class DualWieldPairs
 {
     // Symmetric pairs (both directions stored). Checked by HandleCombat.
     public static readonly Dictionary<string, string> Pairs = new()
     {
-        // Kirito canon — Elucidator + Dark Repulser (SAO Aincrad-arc).
+        // Kirito's Aincrad pair — Elucidator + Dark Repulser.
         ["elucidator"] = "dark_repulser",
         ["dark_repulser"] = "elucidator",
 
-        // FD fire — Elucidator Rouge + Flare Pulsar.
+        // Fire pair — Elucidator Rouge + Flare Pulsar.
         ["ohs_elucidator_rouge"] = "ohs_flare_pulsar",
         ["ohs_flare_pulsar"] = "ohs_elucidator_rouge",
 
-        // Alicization Underworld Kirito — Black Iron Dual A/B.
+        // Underworld Kirito — Black Iron Dual A/B.
         ["ohs_black_iron_dual_sword_a"] = "ohs_black_iron_dual_sword_b",
         ["ohs_black_iron_dual_sword_b"] = "ohs_black_iron_dual_sword_a",
 

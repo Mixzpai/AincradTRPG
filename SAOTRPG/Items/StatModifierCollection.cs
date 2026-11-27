@@ -18,12 +18,8 @@ public class StatModifierCollection
     // declare duration 0 and are unaffected; only the buff potions use this.
     public IEnumerable<StatEffect> TimedEffects => Effects.Where(e => e.Duration > 0);
 
-    // Apply the INSTANT effects to the player — a duration is not this type's business.
-    //
-    // This used to apply everything, duration and all, and nothing ever took a timed effect back:
-    // an Iron Skin Potion reading "Increases Defense by 10 for 30 turns" added 10 Defense
-    // PERMANENTLY, and it stacks to 20 in a single inventory slot. TurnManager owns timed buffs
-    // now and applies them itself; leaving them here would double-apply and never expire.
+    // Apply the instant (Duration 0) effects to the target. Timed effects are applied and expired
+    // by TurnManager; applying them here as well would double-apply them and never take them back.
     public void ApplyTo(IStatModifiable target)
     {
         foreach (var effect in Effects)
@@ -53,17 +49,14 @@ public class StatModifierCollection
             case StatType.Dexterity: target.Dexterity += value; break;
             case StatType.Agility: target.Agility += value; break;
             case StatType.Intelligence: target.Intelligence += value; break;
-            // The last four channels have plumbing and NO consumer. Nothing grants them today, so
-            // nothing is broken — but each one silently does nothing if content starts to, and for
-            // three of them a same-named WORKING mechanism exists elsewhere, which is the trap:
+            // The last four channels have no consumer, and no item or perk grants them. Granting
+            // one does nothing; three share a name with a mechanism that does work elsewhere:
             //   AttackSpeed   tallies only; combat reads Weapon.AttackSpeed.
             //   BlockChance   tallies only; TryShieldBlock reads Armor.BlockChance and the
             //                 BlockChanceBonus special effect.
             //   SkillCooldown writes a field nothing reads; SwordSkillEngine reads the equipment
-            //                 SPECIAL EFFECT of the same name.
+            //                 special effect of the same name.
             //   HPRegen       writes a field nothing reads; regen derives from Vitality.
-            // invariants.py stats/every-granted-stat-reaches-a-mechanic fails if content grants one,
-            // and fails again if one is ever wired up and left in that record.
             case StatType.CritRate:       target.BaseCriticalRate += value; break;
             case StatType.AttackSpeed:    break;
             case StatType.BlockChance:    break;

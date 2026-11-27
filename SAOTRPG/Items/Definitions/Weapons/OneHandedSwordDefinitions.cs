@@ -19,7 +19,7 @@ public static class OneHandedSwordDefinitions
 
     private static StatModifierCollection B() => new();
 
-    // FD Paired marker — IsDualWieldPaired=true enables OffHand without DualBlades unlock + Pair Resonance lookup (Systems.DualWieldPairs).
+    // Paired marker — IsDualWieldPaired=true enables OffHand without DualBlades unlock + Pair Resonance lookup (Systems.DualWieldPairs).
     // Applied to 3 pairs (Elucidator/Dark Repulser, Elucidator Rouge/Flare Pulsar, Black Iron A/B) and 3 solo "Dual" weapons (Chaos Raider, Lightning Divider, Murasama G4 in Katana).
     private static Weapon Paired(Weapon w) { w.IsDualWieldPaired = true; return w; }
 
@@ -38,17 +38,17 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateCelestialBlade() => Make("celestial_blade", "Celestial Blade", 6000, "Legendary", 200, 75, 130,
         B().Add(StatType.Attack, 70).Add(StatType.Strength, 20).Add(StatType.Agility, 10));
 
-    // --- Named / SAO Legendary Weapons ---
+    // --- Named / Legendary Weapons ---
 
-    // IF canon F1-2 craftable baseline — Lisbeth starter forge.
+    // F1-2 craftable baseline — Lisbeth starter forge.
     public static Weapon CreateAnnealBlade() => Make("anneal_blade", "Anneal Blade", 180, "Uncommon", 80, 1, 25,
         B().Add(StatType.Attack, 10).Add(StatType.Dexterity, 2));
 
-    // IF canon F4-5 upgrade of Anneal Blade. Re-heated, folded, harder bite.
+    // F4-5 upgrade of Anneal Blade. Re-heated, folded, harder bite.
     public static Weapon CreateToughAnnealBlade() => Make("tough_anneal_blade", "Tough Anneal Blade", 420, "Rare", 120, 4, 38,
         B().Add(StatType.Attack, 18).Add(StatType.Strength, 3));
 
-    // IF canon F8-10 rare drop. Black-tempered cousin — longer cooldown forge, razor-fine bleed edge.
+    // F8-10 rare drop. Black-tempered cousin — longer cooldown forge, razor-fine bleed edge.
     public static Weapon CreatePitchBlackAnnealBlade() => Make("pitch_black_anneal_blade", "Pitch-black Anneal Blade", 780, "Rare", 140, 8, 48,
         B().Add(StatType.Attack, 24).Add(StatType.Dexterity, 4), "Bleed+10");
 
@@ -70,7 +70,7 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateLiberator() => Make("liberator", "Liberator", 15000, "Legendary", 250, 75, 140,
         B().Add(StatType.Attack, 65).Add(StatType.Strength, 25), "BlockChance+15");
 
-    // ── HR Evolution Chain (1H): Final Espada → Asmodeus → Final Avalanche → Tyrfing.
+    // ── Evolution Chain (1H): Final Espada → Asmodeus → Final Avalanche → Tyrfing.
 
     // Final Espada, gleaming duel-sword. T1 of the Tyrfing chain.
     public static Weapon CreateFinalEspada() => Make("final_espada", "Final Espada", 1900, "Rare", 120, 15, 62,
@@ -100,11 +100,11 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateCrimsonLongsword() => Make("crimson_longsword", "Crimson Longsword", 4200, "Epic", 150, 25, 62,
         B().Add(StatType.Attack, 34).Add(StatType.Strength, 12).Add(StatType.Dexterity, 6), "Bleed+15");
 
-    // Remains Heart — Lisbeth masterwork (IM/HF); her character quest reward. Strongest enhanceable 1H sword.
+    // Remains Heart — Lisbeth masterwork; her character quest reward. Strongest enhanceable 1H sword.
     public static Weapon CreateRemainsHeart() => Make("remains_heart", "Remains Heart", 22000, "Legendary", 240, 85, 158,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 22).Add(StatType.Dexterity, 12).Add(StatType.Defense, 10), "SkillCooldown-1");
 
-    // AL Divine Beast drops — hand-placed rewards from F1-F50 non-canon floor bosses.
+    // Divine Beast drops — hand-placed rewards from the F1-F50 Divine Beast floor bosses.
 
     // F17 Gelidus the Frozen Colossus drops. Storm-wrapped blade. "Squall" flavor.
     public static Weapon CreateSavageSquall() => Make("savage_squall", "Savage Squall", 9500, "Legendary", 180, 38, 110,
@@ -114,27 +114,27 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateVoidEater() => Make("void_eater", "Void Eater", 15000, "Legendary", 210, 35, 135,
         B().Add(StatType.Attack, 68).Add(StatType.Strength, 20).Add(StatType.Dexterity, 12).Add(StatType.Agility, 8), "SkillCooldown-1");
 
-    // ── HF/IM Legendaries: F77-F99 HF canon endgame drops.
+    // ── Endgame Legendaries: F77-F99 quest and boss rewards.
 
-    // Hollow Fragment F90 floor-boss weapon. Holy radiance, blessed steel.
+    // F90 quest reward: High Priestess Sola's trial. Holy radiance, blessed steel.
     public static Weapon CreateEurynomesHolySword() => Make("eurynomes_holy_sword", "Eurynome's Holy Sword", 18000, "Legendary", 220, 85, 155,
         B().Add(StatType.Attack, 75).Add(StatType.Strength, 22).Add(StatType.Dexterity, 12), "HolyDamage+20");
 
-    // Hollow Fragment F81 implement. Absorbs 20% HP on hit (flavor).
+    // F81 quest reward. Absorbs 20% HP on hit (flavor).
     public static Weapon CreateFiendbladeDeathbringer() => Make("fiendblade_deathbringer", "Fiendblade: Deathbringer", 16000, "Legendary", 200, 78, 148,
         B().Add(StatType.Attack, 72).Add(StatType.Strength, 20).Add(StatType.Dexterity, 10), "Bleed+25");
 
-    // Hollow Fragment F83 implement. High-speed fay-forged blade.
+    // F83 quest reward. High-speed fay-forged blade.
     public static Weapon CreateFaybladeTizona() => Make("fayblade_tizona", "Fayblade: Tizona", 17000, "Legendary", 210, 80, 152,
         B().Add(StatType.Attack, 70).Add(StatType.Speed, 18).Add(StatType.Agility, 15).Add(StatType.Dexterity, 10), "PostMotion-1");
 
-    // Hollow Fragment F85 implement. +50% damage versus dragons (flavor).
+    // F85 field-boss drop. +50% damage versus dragons (flavor).
     public static Weapon CreateGodbladeDragonslayer() => Make("godblade_dragonslayer", "Godblade: Dragonslayer", 19000, "Legendary", 220, 82, 160,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 25).Add(StatType.Dexterity, 12), "DragonSlayer+50");
 
-    // ── Divine Objects (Alicization Sacred Object tier): above Legendary, hand-placed, unbreakable, bypass block rolls (armor DR still applies).
+    // ── Divine Objects (Sacred Object tier): above Legendary, hand-placed, unbreakable, bypass block rolls (armor DR still applies).
 
-    // Kirito's Priority 46 — Gigas Cedar top branch; canonical Underworld "bypass armor" feel.
+    // Kirito's Priority 46 — Gigas Cedar top branch; armor-piercing.
     public static Weapon CreateNightSkySword() => Make("night_sky_sword", "Night Sky Sword", 40000, "Divine", 999, 80, 180,
         B().Add(StatType.Attack, 95).Add(StatType.Strength, 28).Add(StatType.Agility, 15).Add(StatType.Dexterity, 12), "ArmorPierce+30");
 
@@ -154,7 +154,7 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateBlackLilySword() => Make("black_lily_sword", "Black Lily Sword", 50000, "Divine", 999, 90, 190,
         B().Add(StatType.Attack, 100).Add(StatType.Strength, 28).Add(StatType.Dexterity, 22), "SeveringStrike+50");
 
-    // ── IF Series (1H): Epic F14, Epic F25, Legendary F61+.
+    // ── Series weapons (1H): Epic F14, Epic F25, Legendary F61+.
 
     // F14 Integral Series 1H sword. Radgrid, a valkyrie-name longsword of the dawn series.
     public static Weapon CreateIntegralRadgrid() => Make("ohs_integral_radgrid", "Integral Radgrid", 4800, "Epic", 160, 14, 82,
@@ -176,23 +176,23 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateGaouReginleifr() => Make("ohs_gaou_reginleifr", "Gaou Reginleifr", 26000, "Legendary", 255, 88, 170,
         B().Add(StatType.Attack, 84).Add(StatType.Strength, 26).Add(StatType.Agility, 14).Add(StatType.Dexterity, 14), "SkillCooldown-1");
 
-    // ── Hollow Fragment Implement System (1H Sword) ───────────────
+    // ── Quest rewards (1H Sword) ──────────────────────────────────
 
-    // HF F92 implement. Aurumbrand — Hauteclaire; -20% incoming damage shroud (flavor). Quest NPC reward.
+    // F92 quest NPC reward. Aurumbrand — Hauteclaire; -20% incoming damage shroud (flavor).
     public static Weapon CreateAurumbrandHauteclaire() => Make("ohs_aurumbrand_hauteclaire", "Aurumbrand: Hauteclaire", 23000, "Legendary", 240, 86, 162,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 22).Add(StatType.Vitality, 18).Add(StatType.Dexterity, 16), "DamageReduction+20");
 
     // ── Hollow Area Uniques (1H) — balanced-variety rare chest drops.
 
-    // HF F35 Hollow Area. Traitorblade — cursed duel-edge, pitch-dark finish.
+    // F35 Hollow Area. Traitorblade — cursed duel-edge, pitch-dark finish.
     public static Weapon CreateTraitorbladeArguteBrand() => Make("ohs_traitorblade_argute_brand", "Traitorblade: Argute Brand", 2400, "Rare", 130, 30, 65,
         B().Add(StatType.Attack, 34).Add(StatType.Dexterity, 10).Add(StatType.Agility, 6), "Bleed+15");
 
-    // HF F82 Hollow Area. Fake Sword Velocious Brain — artificer's replica, mind-piercing pommel.
+    // F82 Hollow Area. Fake Sword Velocious Brain — artificer's replica, mind-piercing pommel.
     public static Weapon CreateFakeSwordVelociousBrain() => Make("ohs_velocious_brain", "Fake Sword: Velocious Brain", 16500, "Legendary", 200, 75, 138,
         B().Add(StatType.Attack, 72).Add(StatType.Strength, 20).Add(StatType.Dexterity, 20), "SkillDamage+20");
 
-    // ── Lisbeth Rarity 6 Crafted (1H) — HF Lisbeth-only; cost 3M Col + rare materials.
+    // ── Lisbeth Rarity 6 Crafted (1H) — Lisbeth-only; cost 3M Col + rare materials.
 
     public static Weapon CreateVariableVVice() => Make("ohs_variable_v_vice", "Variable V Vice", 28000, "Legendary", 250, 88, 168,
         B().Add(StatType.Attack, 82).Add(StatType.Strength, 24).Add(StatType.Dexterity, 20), "CritRate+18");
@@ -203,9 +203,9 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateMarginlessBlade() => Make("ohs_marginless_blade", "Marginless Blade", 32000, "Legendary", 260, 92, 180,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 28).Add(StatType.Dexterity, 22).Add(StatType.Agility, 16), "ComboBonus+50");
 
-    // ── Memory Defrag — Alicization gap weapons (Legendary) ────────────
+    // ── Underworld weapons (Legendary) ─────────────────────────────────
 
-    // MD-awakened Fragrant Olive — stronger raw damage, loses Divine crit-bypass. F65+ quest reward.
+    // Awakened Fragrant Olive — stronger raw damage, loses Divine crit-bypass. F65+ quest reward.
     public static Weapon CreateUnfoldingTruthFragrantOlive() => Make("ohs_unfolding_truth_fragrant_olive", "Unfolding Truth Fragrant Olive Sword", 26000, "Legendary", 250, 65, 170,
         B().Add(StatType.Attack, 85).Add(StatType.Strength, 24).Add(StatType.Dexterity, 16).Add(StatType.Agility, 14), "HolyAoE+20");
 
@@ -221,31 +221,31 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateBlackIronDualSwordB() => Paired(Make("ohs_black_iron_dual_sword_b", "Black Iron Dual Sword (Off-hand)", 22000, "Legendary", 240, 80, 155,
         B().Add(StatType.Attack, 76).Add(StatType.Strength, 22).Add(StatType.Agility, 18), "CritRate+15"));
 
-    // ── Memory Defrag Originals (1H Sword entries) ─────────────────────
+    // ── Uniques (1H Sword entries) ─────────────────────────────────────
 
-    // MD event weapon. Celestial choir blade wielded by the Diva. Legendary.
+    // Event weapon. Celestial choir blade wielded by the Diva. Legendary.
     public static Weapon CreateSwordOfDiva() => Make("ohs_sword_of_diva", "Sword of Diva", 24000, "Legendary", 240, 80, 162,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 24).Add(StatType.Dexterity, 16), "HolyDamage+20");
 
-    // MD Rare. Knight-order saber, sapphire-blue finish.
+    // Rare. Knight-order saber, sapphire-blue finish.
     public static Weapon CreateCobaltTristan() => Make("ohs_cobalt_tristan", "Cobalt Tristan", 2800, "Rare", 130, 32, 70,
         B().Add(StatType.Attack, 36).Add(StatType.Strength, 10).Add(StatType.Dexterity, 8), "CritRate+10");
 
-    // MD Rare. Ocean-forged longsword, brine-blue edge.
+    // Rare. Ocean-forged longsword, brine-blue edge.
     public static Weapon CreateAtlantisSword() => Make("ohs_atlantis_sword", "Atlantis Sword", 2900, "Rare", 130, 30, 72,
         B().Add(StatType.Attack, 36).Add(StatType.Strength, 10).Add(StatType.Dexterity, 8), "FrostDamage+10");
 
-    // MD Epic. Keepsake blade that heals its bearer between strikes.
+    // Epic. Keepsake blade that heals its bearer between strikes.
     public static Weapon CreateEternalPromise() => Make("ohs_eternal_promise", "Eternal Promise", 6200, "Epic", 165, 50, 125,
         B().Add(StatType.Attack, 55).Add(StatType.Strength, 15).Add(StatType.Vitality, 12), "HPRegen+3");
 
-    // ── Fractured Daydream — Character Core Canon (1H Sword) ───────────
+    // ── Companion signature weapons (1H Sword) ─────────────────────────
 
-    // Kirito canon — red-edged successor to Elucidator. F98+ rare drop.
+    // Kirito's red-edged successor to Elucidator. F98+ rare drop.
     public static Weapon CreateElucidatorRouge() => Paired(Make("ohs_elucidator_rouge", "Elucidator Rouge", 27000, "Legendary", 250, 90, 172,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 26).Add(StatType.Agility, 14), "Burn+15"));
 
-    // Kirito dual-wield chaos blade, F85+ drop. Solo "Dual": bypasses DualBlades unlock, no canon partner.
+    // Kirito dual-wield chaos blade, F85+ drop. Solo "Dual": bypasses DualBlades unlock, no partner weapon.
     public static Weapon CreateChaosRaiderDual() => Paired(Make("ohs_chaos_raider_dual", "Chaos Raider", 19500, "Legendary", 230, 78, 158,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 22).Add(StatType.Dexterity, 18), "ComboBonus+30"));
 
@@ -253,21 +253,21 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateGoldenOsmanthusSword() => Make("ohs_golden_osmanthus", "Golden Osmanthus Sword", 21000, "Legendary", 235, 75, 162,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 22).Add(StatType.Dexterity, 16).Add(StatType.Agility, 10), "HolyDamage+18");
 
-    // Oberon canon — fairy-king regalia blade. F75+ rare drop.
+    // Oberon's fairy-king regalia blade. F75+ rare drop.
     public static Weapon CreateTanquiem() => Make("ohs_tanquiem", "Tanquiem", 20500, "Legendary", 235, 75, 160,
         B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 22).Add(StatType.Agility, 14), "ParryChance+15");
 
-    // Administrator canon — Pontifex's blade. F95+ Legendary.
+    // The Administrator's blade (Pontifex). F95+ Legendary.
     public static Weapon CreateSilveryRuler() => Make("ohs_silvery_ruler", "Silvery Ruler", 29000, "Legendary", 260, 92, 178,
         B().Add(StatType.Attack, 88).Add(StatType.Strength, 26).Add(StatType.Dexterity, 18), "HolyDamage+20");
 
-    // ── Fractured Daydream — Elemental Variants (1H Sword) ─────────────
+    // ── Elemental Variants (1H Sword) ──────────────────────────────────
 
     // Kirito fire variant. Flare Pulsar — solar-burst edge.
     public static Weapon CreateFlarePulsar() => Paired(Make("ohs_flare_pulsar", "Flare Pulsar", 5400, "Epic", 160, 50, 115,
         B().Add(StatType.Attack, 52).Add(StatType.Strength, 15).Add(StatType.Dexterity, 10), "Burn+20"));
 
-    // Kirito thunder dual — Solo "Dual": bypasses unlock, no canon partner.
+    // Kirito thunder dual — Solo "Dual": bypasses unlock, no partner weapon.
     public static Weapon CreateLightningDividerDual() => Paired(Make("ohs_lightning_divider_dual", "Lightning Divider", 5600, "Epic", 160, 55, 118,
         B().Add(StatType.Attack, 54).Add(StatType.Strength, 14).Add(StatType.Dexterity, 12), "Stun+10"));
 
@@ -303,7 +303,7 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateAbyssKeeper() => Make("ohs_abyss_keeper", "Abyss Keeper", 3300, "Rare", 130, 48, 78,
         B().Add(StatType.Attack, 38).Add(StatType.Strength, 10).Add(StatType.Vitality, 10), "Bleed+15");
 
-    // Oberon light — fae-king holy blade (FD event). DefId `ohs_excalibur_oberon` disambiguates Arthurian name.
+    // Oberon light — fae-king holy blade. DefId `ohs_excalibur_oberon` disambiguates Arthurian name.
     public static Weapon CreateExcaliburOberon() => Make("ohs_excalibur_oberon", "Excalibur", 5800, "Epic", 165, 55, 122,
         B().Add(StatType.Attack, 54).Add(StatType.Strength, 14).Add(StatType.Dexterity, 12), "HolyDamage+15");
 
@@ -311,23 +311,23 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateBloodthirst() => Make("ohs_bloodthirst", "Bloodthirst", 5500, "Epic", 160, 55, 118,
         B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 14).Add(StatType.Agility, 10), "Burn+20");
 
-    // ── AL Normal Raid (1H), Epic F70-85 — canon AL raid boss drops.
+    // ── Raid drops (1H), Epic F70-85 — raid boss drops.
 
     // Dragonstar — celestial-edged longsword, star-pattern temper line.
     public static Weapon CreateDragonstar() => Make("ohs_dragonstar", "Dragonstar", 7200, "Epic", 175, 70, 128,
         B().Add(StatType.Attack, 62).Add(StatType.Strength, 16).Add(StatType.Dexterity, 12), "CritRate+15");
 
-    // Superior Blade — plain-but-perfect cutting longsword, canonical AL farm drop.
+    // Superior Blade — plain-but-perfect cutting longsword, farm drop.
     public static Weapon CreateSuperiorBlade() => Make("ohs_superior_blade", "Superior Blade", 6800, "Epic", 170, 72, 132,
         B().Add(StatType.Attack, 66).Add(StatType.Strength, 18).Add(StatType.Dexterity, 10));
 
-    // ── AL Extreme Raid (1H), Legendary F85-95 — higher stat band than Normal.
+    // ── Extreme Raid drops (1H), Legendary F85-95 — higher stat band than raid drops.
 
     // Blade of the Lightwolf — silvered wolf-crest longsword, lightning affinity.
     public static Weapon CreateBladeOfTheLightwolf() => Make("ohs_blade_of_the_lightwolf", "Blade of the Lightwolf", 19500, "Legendary", 220, 85, 158,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 22).Add(StatType.Agility, 14), "CritRate+20");
 
-    // ── Alicization Lycoris Relic Boss Drops (1H Sword) — Legendary F80-95 ─
+    // ── Relic Boss Drops (1H Sword) — Legendary F80-95 ───────────────────
 
     // Scorching Blade — ember-scarred longsword, relic-bound flame motif.
     public static Weapon CreateScorchingBlade() => Make("ohs_scorching_blade", "Scorching Blade", 18500, "Legendary", 215, 82, 152,
@@ -341,41 +341,41 @@ public static class OneHandedSwordDefinitions
     public static Weapon CreateDragoncrest() => Make("ohs_dragoncrest", "Dragoncrest", 19200, "Legendary", 220, 84, 158,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 24).Add(StatType.Dexterity, 12), "DragonSlayer+25");
 
-    // ── Alicization Lycoris DLC (1H Sword) — Legendary F85-99 ───────
+    // ── Late Legendaries (1H Sword) — F85-99 ────────────────────────
 
-    // Illustrious Sword — DLC radiant longsword, consecrated edge.
+    // Illustrious Sword — radiant longsword, consecrated edge.
     public static Weapon CreateIllustriousSword() => Make("ohs_illustrious_sword", "Illustrious Sword", 20500, "Legendary", 225, 86, 162,
         B().Add(StatType.Attack, 82).Add(StatType.Strength, 22).Add(StatType.Dexterity, 14), "HolyDamage+20");
 
-    // ── SAO Lost Song Top-Tier (1H Sword) — Legendary F80-95 ──────────
+    // ── Top-Tier (1H Sword) — Legendary F80-95 ────────────────────────
 
-    // Blazing Sword — canonical LS fire-tier 1H apex.
+    // Blazing Sword — fire-tier 1H apex.
     public static Weapon CreateBlazingSword() => Make("ohs_blazing_sword", "Blazing Sword", 19000, "Legendary", 218, 82, 156,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 20).Add(StatType.Dexterity, 12), "Burn+25");
 
-    // ── SAO Last Recollection DLC skins (1H Sword) ────────────────────
+    // ── Light-motif blades (1H Sword) ─────────────────────────────────
 
-    // Rainbow Blade Ex Eterna — prismatic-refraction LR DLC longsword.
+    // Rainbow Blade Ex Eterna — prismatic-refraction longsword.
     public static Weapon CreateRainbowBladeExEterna() => Make("ohs_rainbow_blade_ex_eterna", "Rainbow Blade Ex Eterna", 22500, "Legendary", 225, 90, 168,
         B().Add(StatType.Attack, 88).Add(StatType.Strength, 22).Add(StatType.Dexterity, 16).Add(StatType.Agility, 10), "CritRate+25,ComboBonus+30");
 
-    // Aetherial Glow — mid-tier LR DLC longsword, soft halo motif.
+    // Aetherial Glow — mid-tier longsword, soft halo motif.
     public static Weapon CreateAetherialGlow() => Make("ohs_aetherial_glow", "Aetherial Glow", 5400, "Epic", 160, 60, 118,
         B().Add(StatType.Attack, 52).Add(StatType.Strength, 14).Add(StatType.Dexterity, 10), "HolyDamage+15");
 
-    // ── LS Easter Eggs (1H), Epic F50-70 — GGO photon-blade cameos that crossed into LS.
+    // ── Photon blades (1H), Epic F50-70.
 
-    // Kagetsu-4 — corrupted GGO photon-pistol-flavored blade. DefId safe ASCII.
+    // Kagetsu-4 — photon blade. DefId safe ASCII.
     public static Weapon CreateKagetsu4() => Make("ohs_kagetsu_4", "Kagetsu-4", 3400, "Epic", 150, 52, 118,
         B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 16).Add(StatType.Agility, 10), "CritRate+20");
 
-    // Laser Sword HG — GGO photon sword easter egg, blinding edge.
+    // Laser Sword HG — photon sword, blinding edge.
     public static Weapon CreateLaserSwordHG() => Make("ohs_laser_sword_hg", "Laser Sword HG", 3300, "Epic", 150, 52, 116,
         B().Add(StatType.Attack, 50).Add(StatType.Dexterity, 14).Add(StatType.Agility, 10), "BlindOnHit+10");
 
     // ── Corrupted Variants (1H) — Corruption Stone consumable only; not in loot pools. Legendary tier (not Divine).
 
-    // Corrupted Elucidator — higher raw stats than base, HolyDamage penalty per canon.
+    // Corrupted Elucidator — higher raw stats than base, with a HolyDamage penalty.
     public static Weapon CreateCorruptedElucidator() => Paired(Make("ohs_corrupted_elucidator", "Corrupted Elucidator",
         22000, "Legendary", 220, 60, 175,
         B().Add(StatType.Attack, 92).Add(StatType.Strength, 22).Add(StatType.Agility, 12).Add(StatType.Dexterity, 10),

@@ -12,15 +12,13 @@ public partial class TurnManager
     private (int x, int y) _exploreTarget = (-1, -1);
     private int _exploreLastRevealCount;
 
-    // SCRATCH FOR THE EXPLORE BFS AND THE A* — flat, row-major (y * Width + x), matching every
-    // other per-cell grid in the game, and STAMPED rather than cleared.
+    // Scratch for the explore BFS and the A*: flat, row-major (y * Width + x), matching every
+    // other per-cell grid in the game, and stamped rather than cleared.
     //
     // A repath happens on nearly every auto-explore step (needRepath fires whenever the explored
-    // count moves, which is what walking into new ground does), and auto-explore steps on a 60 ms
-    // timer. Clearing cost more than searching: the BFS cleared a bool[1M] and an int[1M] — 5 MB
-    // of memset — and the A* wrote -1 into two int[1M] grids through 2D indexers, two million
-    // element writes, on every single call. A generation counter answers "have I touched this
-    // cell THIS search" for free.
+    // count moves, which is what walking into new ground does), and clearing whole-floor grids on
+    // every call would cost more than the search itself. A generation counter answers "has this
+    // search touched this cell" without a clear.
     private int[]? _searchStamp;      // shared by the BFS and the A*; they never run concurrently
     private int[]? _searchDist;       // BFS distance / A* g-score
     private int[]? _searchFrom;       // A* parent, encoded x * Height + y
@@ -28,9 +26,8 @@ public partial class TurnManager
     private readonly Queue<(int x, int y)> _bfsQueue = new(256);
     private readonly PriorityQueue<(int x, int y), int> _astarOpen = new();
 
-    // Grows on demand rather than being sized once: floors shrink with depth today, so a grid
-    // allocated on floor 1 happens to fit every later one — but nothing enforces that, and a
-    // bigger floor would have indexed past the end.
+    // Grows on demand rather than being sized once, so a floor larger than any before it cannot
+    // index past the end.
     private void EnsureSearchGrids(int cells)
     {
         if (_searchStamp != null && _searchStamp.Length >= cells) return;
@@ -169,10 +166,10 @@ public partial class TurnManager
                 ref var tile = ref _map.RefTile(nx, ny);
                 if (tile.BlocksMovement || (tile.Occupant != null && tile.Occupant != _player))
                 {
-                    // Stamp the REJECTION too. A blocked cell is never enqueued either way, so the
-                    // flood is unchanged -- but without this every wall beside the frontier is
-                    // fetched out of the 16 MB tile grid once per adjacent cell, up to eight times.
-                    // Nothing mutates the map during the search, so one answer per cell is enough.
+                    // Stamp the rejection too. A blocked cell is never enqueued either way, and the
+                    // stamp stops every wall beside the frontier being re-read from the tile grid
+                    // once per adjacent cell. Nothing mutates the map during the search, so one
+                    // answer per cell is enough.
                     stamp[ni] = gen;
                     continue;
                 }
@@ -219,7 +216,7 @@ public partial class TurnManager
                 int visits = _map.GetVisitCount(nx, ny);
                 if (visits > 2) ng += visits / 2;
                 int ni = ny * w + nx;
-                // An unstamped cell is the old `== -1` sentinel: never reached in this search.
+                // An unstamped cell has not been reached in this search.
                 if (stamp[ni] != gen || ng < g[ni])
                 {
                     stamp[ni] = gen;
@@ -250,9 +247,8 @@ public partial class TurnManager
         return path;
     }
 
-    // Up to 64 grid probes per frontier cell. The inner ring is skipped for an already-explored
-    // neighbour, and RefTile avoids copying a 16-byte tile out of a multi-megabyte grid to read
-    // one field. Same probes, same order, same score.
+    // Up to 64 grid reads per frontier cell. The inner ring is skipped for an already-explored
+    // neighbour, and RefTile avoids copying a 16-byte tile out of the grid to read one field.
     private int ScoreExploreCandidate(int x, int y)
     {
         int score = 0;
@@ -279,7 +275,7 @@ public partial class TurnManager
         return score;
     }
 
-    // Evaluated for EVERY cell the explore BFS dequeues, which is most of the reachable floor on
+    // Evaluated for every cell the explore BFS dequeues, which is most of the reachable floor on
     // every repath. Away from the border all eight neighbours are in bounds by construction, so
     // the interior arm drops eight redundant bounds tests (IsExplored bounds-checks again inside).
     // The result is a plain OR over the eight, so visiting them in a different order cannot change

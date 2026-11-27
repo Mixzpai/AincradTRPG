@@ -2,7 +2,7 @@ using SAOTRPG.Items.Materials;
 
 namespace SAOTRPG.Items.Consumables;
 
-// IF Refinement Ingot — socketable into equipment's 3 RefinementSlots via Refinement.Socket (never Use()'d).
+// Refinement Ingot — socketable into equipment's 3 RefinementSlots via Refinement.Socket (never Use()'d).
 // Extends Material (not Consumable) — raw crafting-stat input, routed through Refinement vs Evolve.
 public class Ingot : Material
 {

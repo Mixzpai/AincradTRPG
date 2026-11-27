@@ -37,9 +37,9 @@ public static class PoissonDiskSampler
         active.Add(seed);
         grid[(int)(sx / cellSize), (int)(sy / cellSize)] = seed;
 
-        // maxSamples stops a maximal packing we do not need. Bridson only ever APPENDS to
-        // `samples`, so truncating here leaves every earlier point exactly as it would have
-        // been -- callers that consume a prefix get identical results for far less work.
+        // maxSamples stops short of a maximal packing the caller does not need. Bridson only ever
+        // appends to `samples`, so truncating here leaves every earlier point exactly as it would
+        // have been -- callers that consume a prefix get identical results for far less work.
         while (active.Count > 0 && samples.Count < maxSamples)
         {
             int idx = rng.Next(active.Count);

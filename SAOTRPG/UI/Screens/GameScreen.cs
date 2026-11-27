@@ -26,6 +26,8 @@ public static partial class GameScreen
     // AnimationIntervalMs paces the clock-driven-tile repaint. Must stay at or below half the
     // shortest tile animation step (TileDefinitions.LavaStepMs, 500ms) or phases get skipped.
     private const int AnimationIntervalMs = 250, AutoExploreStepMs = 80;
+    // Turns of a wait or sleep run per frame: an hour in about half a minute of frames.
+    private const int ActivityTurnsPerFrame = 120;
 
     // Bumped every time the game screen is built. Repeating timeouts capture the value
     // current at wiring time and retire themselves once it moves on: they are never
@@ -34,6 +36,8 @@ public static partial class GameScreen
     // it, that run's GameMap (a 1000x1000 tile array on Floor 1).
     private static int s_screenGeneration;
     private const int HpBarWidth = 16, XpBarWidth = 10;
+    // A HUD line's stack buffer: well past the widest screen, so nothing is cut off.
+    private const int HudLineCapacity = 512;
 
     // Fixed sidebar width so stats layout is stable across terminal widths.
     internal const int SidebarWidth = 56;
@@ -41,8 +45,7 @@ public static partial class GameScreen
     private static readonly string RuleLine = new('─', SidebarInner);
 
     // Every key here is a {{KEY:Action}} token, resolved through KeyHints when the strip is
-    // logged. This is the densest key prose in the game and it was hardcoded, so a single rebind
-    // made three lines wrong on the first turn of every run.
+    // logged, so the strip follows a rebind.
     private static readonly string[] WelcomeHelpLines =
     {
         "  Move: {{MOVEKEYS}}  |  Diag: {{DIAGKEYS}}  |  Wait: {{KEY:Wait}}  |  Help: {{KEY:OpenHelp}}",
@@ -89,9 +92,8 @@ public static partial class GameScreen
             // Fresh run → zero out per-prefab MAX_PER_GAME counts.
             MapGenerator.SetPrefabUseCounts(null);
 
-            // Mint the run's seed here, before anything generates. Nothing else did: the seed was
-            // a static initialiser, so every run in one process shared a world until the player
-            // relaunched the executable.
+            // Mint the run's seed here, before anything generates, so each run in one process
+            // gets its own world.
             int seed = runSeed ?? RunRng.NewSeed();
             MapGenerator.SetGlobalSeed(seed);
             RunRng.Reseed(seed);
@@ -127,10 +129,10 @@ public static partial class GameScreen
         };
 
         // A card is a frame, not a parent: each is added before its content, a sibling inset by
-        // Card.InsideX (rule 333). Rows are placed below, once the stats panel exists.
+        // Card.InsideX. Rows are placed below, once the stats panel exists.
         var mapCard = new Card("MAP", 0, 0, Dim.Fill(), SidebarLayout.CardChrome + 1);
-        var minimapView = new MinimapView(map, player)
-        { X = Card.InsideX(0), Y = 1, Width = Dim.Fill(2), Height = 1, ShowLegend = true };
+        var minimapView = new OvermapView(map, player)
+        { X = Card.InsideX(0), Y = 1, Width = Dim.Fill(2), Height = 1 };
         var questTracker = new QuestTrackerWidget { X = Card.InsideX(0), Y = 1, Visible = false };
         var statusCard = new Card("STATUS", 0, 0, Dim.Fill(), SidebarLayout.CardChrome + 1);
         var logCard = new Card("LOG", 0, 0, Dim.Fill(), SidebarLayout.CardChrome + 1);
@@ -188,7 +190,7 @@ public static partial class GameScreen
         };
         // Row 0: HP/XP/Status bars + Inventory button (right)
         var hpLabel = new HudLine { X = 1, Y = 0, Width = 62, SchemeName = ColorSchemes.BodyName };
-        var inventoryBtn = new Button
+        var inventoryBtn = new PlainButton
         { Text = " Inventory ", X = Pos.AnchorEnd(16), Y = 0, SchemeName = ColorSchemes.ButtonName,
           ShadowStyle = null };
         // Row 1: Floor info + weapon + context
@@ -213,6 +215,8 @@ public static partial class GameScreen
         Color[] lastHpZone = { Color.Black };
         // The minimap follows the turn: the player, the visible set and the reveals all move with it.
         int[] minimapTurn = { -1 };
+        // RefreshHud asks whether any status icon is up on every refresh; one list serves it.
+        var iconScratch = new List<StatusIconMap.StatusIcon>();
 
         // Status tray — starts col 64 (right of HP bars), 2-row tall.
         // Second-row wrap handled inside the widget when col budget exceeded.
@@ -233,11 +237,11 @@ public static partial class GameScreen
         // views' Visible flags; RefreshHud re-lays the column out when one changes.
         SidebarLayout.Heights Plan() => SidebarLayout.For(rightPanel.Viewport.Height,
             statsPanel.PreferredHeight, StatsPanelWidget.MinHeight,
-            1 + (questTracker.Visible ? QuestTrackerWidget.TrackerHeight : 0),
+            questTracker.Visible ? QuestTrackerWidget.TrackerHeight : 0,
             statusIconRow.Visible ? IconRowHeight : 0, statsPanel.RowsAt);
         mapCard.Height = Dim.Func(_ => Plan().MapCard);
-        minimapView.Height = Dim.Func(_ => Plan().Minimap + 1);            // + its legend row
-        questTracker.Y = Pos.Func(_ => 1 + Plan().Minimap + 1);
+        minimapView.Height = Dim.Func(_ => Plan().Minimap);
+        questTracker.Y = Pos.Func(_ => 1 + Plan().Minimap);
         statusCard.Y = Pos.Func(_ => Plan().MapCard);
         statusCard.Height = Dim.Func(_ => Plan().StatusCard);
         statsPanel.Y = Pos.Func(_ => Plan().MapCard + 1);
@@ -248,14 +252,14 @@ public static partial class GameScreen
         coloredLog.Y = Pos.Func(_ => Plan().MapCard + Plan().StatusCard + 1);
         coloredLog.Height = Dim.Func(_ => Plan().LogCard - SidebarLayout.CardChrome);
         int laidStatsHeight = -1;
-        // Shift+S toggles verbose labels (session-local; not persisted).
+        // Shift+S toggles verbose labels (persisted through UserSettings).
         mapView.StatusTrayVerboseToggleRequested += () => statusTray.ToggleVerbose();
 
         // F9 — biome JSON hot-reload. Re-reads Content/Biomes/*.json, regenerates
         // the current floor, and re-rolls mobs/loot via PopulateFloor.
         mapView.BiomeReloadRequested += () =>
         {
-            // A floor built ahead of this point was built from the OLD JSON, and clearing the config
+            // A floor built ahead of this point was built from the old JSON, and clearing the config
             // cache is unsafe while a worker reads it — so drop the prefetch and join it first.
             FloorPrefetch.Invalidate();
             SAOTRPG.Map.Generation.BiomeGenConfigLoader.Invalidate();
@@ -280,10 +284,10 @@ public static partial class GameScreen
         // Assigning View.Text re-runs text formatting and marks the view for redraw.
         // RefreshHud runs every frame while a stat bar tween is in flight, so writing
         // unchanged text would repaint the whole HUD each frame.
-        static void SetTextIfChanged(View view, string text)
+        static void SetTextIfChanged(View view, ReadOnlySpan<char> text)
         {
-            if (!string.Equals(view.Text, text, StringComparison.Ordinal))
-                view.Text = text;
+            if (!view.Text.AsSpan().SequenceEqual(text))
+                view.Text = new string(text);
         }
 
         void RefreshHud()
@@ -291,11 +295,11 @@ public static partial class GameScreen
             using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Hud.Refresh");
             // Trigger icon-row repaint each HUD tick so countdowns tick down.
             statusIconRow.SetNeedsDraw();
-            statsPanel.Refresh();
+            using (SAOTRPG.Systems.Diagnostics.Profiler.Begin("Hud.StatsPanel")) statsPanel.Refresh();
 
             // A sidebar part that came or went re-lays the column out; Plan reads the flags.
             bool pinned = QuestSystem.PinnedQuest() != null;
-            bool iconsOn = StatusIconMap.Collect(turnManager).Count > 0;
+            bool iconsOn = StatusIconMap.Collect(turnManager, iconScratch).Count > 0;
             if (pinned != questTracker.Visible || iconsOn != statusIconRow.Visible
                 || statsPanel.PreferredHeight != laidStatsHeight)
             {
@@ -313,20 +317,29 @@ public static partial class GameScreen
             int dispHp  = mapView.DisplayedPlayerHp;
             int dispXp  = mapView.DisplayedPlayerXp;
             int dispSat = mapView.DisplayedPlayerSat;
-            string hpBar = StatBarHelper.Build(dispHp, player.MaxHealth, HpBarWidth);
-            string xpBar = StatBarHelper.Build(dispXp, player.ExperienceRequired, XpBarWidth);
-            string satBar = StatBarHelper.Build(dispSat, TurnManager.MaxSatiety, 6);
-            string durWarns = DurabilityHelper.BuildWarningTags(player.Inventory);
-            string statusTags = StatusTagBuilder.Build(turnManager, durWarns);
-            string saveTag = saveFlash[0] > 0 ? "  [Saved]" : "";
-            if (saveFlash[0] > 0) saveFlash[0]--;
-            string weatherTag = WeatherSystem.Current != WeatherType.Clear
-                ? $"  [{WeatherSystem.GetLabel()}]" : "";
+
+            // Every line is written into stack memory and handed to its HudLine, which copies it
+            // only when it differs, so a refresh that changes nothing allocates nothing.
+            Span<char> buf = stackalloc char[HudLineCapacity];
 
             // Row 0: HP | XP | SAT | Status effects (numerator uses tweened display).
-            hpLabel.Line = $"HP {hpBar} {dispHp}/{player.MaxHealth}" +
-                           $" | XP {xpBar} Lv{player.Level}" +
-                           $" | SAT {satBar}" + statusTags + weatherTag + saveTag;
+            var w = new LineWriter(buf);
+            w.Append("HP ");
+            StatBarHelper.Write(ref w, dispHp, player.MaxHealth, HpBarWidth);
+            w.Append(' '); w.Append(dispHp); w.Append('/'); w.Append(player.MaxHealth);
+            w.Append(" | XP ");
+            StatBarHelper.Write(ref w, dispXp, player.ExperienceRequired, XpBarWidth);
+            w.Append(" Lv"); w.Append(player.Level);
+            w.Append(" | SAT ");
+            StatBarHelper.Write(ref w, dispSat, TurnManager.MaxSatiety, 6);
+            StatusTagBuilder.Write(ref w, turnManager);
+            DurabilityHelper.WriteWarningTags(ref w, player.Inventory);
+            if (WeatherSystem.Current != WeatherType.Clear)
+            {
+                w.Append("  ["); w.Append(WeatherSystem.GetLabel()); w.Append(']');
+            }
+            if (saveFlash[0] > 0) { w.Append("  [Saved]"); saveFlash[0]--; }
+            hpLabel.Set(w.Text);
             // HP zone color drives the row tint. Critical (<25%) escalates to
             // ColorSchemes.Danger so the existing low-HP redline behavior persists.
             var hpZone = StatBarHelper.ZoneColor(dispHp, player.MaxHealth);
@@ -340,61 +353,69 @@ public static partial class GameScreen
 
             // Row 1: Floor context line
             var wpn = player.Inventory.GetEquipped(SAOTRPG.Inventory.Core.EquipmentSlot.Weapon);
-            string profTag = "";
-            if (wpn is Weapon w && !string.IsNullOrEmpty(w.WeaponType))
+            w = new LineWriter(buf);
+            w.Append('F'); w.Append(turnManager.CurrentFloor);
+            w.Append(" | "); w.Append(player.ColOnHand); w.Append('c');
+            w.Append(" | WPN: ");
+            if (wpn != null)
             {
-                int bonus = turnManager.GetProficiencyBonus(w.WeaponType);
-                if (bonus > 0) profTag = $"+{bonus}";
+                w.Append(wpn.Name);
+                w.Append(' ');
+                if (wpn is Weapon wpnWeapon && !string.IsNullOrEmpty(wpnWeapon.WeaponType))
+                {
+                    int bonus = turnManager.GetProficiencyBonus(wpnWeapon.WeaponType);
+                    if (bonus > 0) { w.Append('+'); w.Append(bonus); }
+                }
             }
-            string wpnName = wpn != null ? $"{wpn.Name} {profTag}" : "Fists";
-            int mobsLeft = turnManager.GetMonsterCount();
+            else w.Append("Fists");
+            w.Append(" | Mobs: "); w.Append(turnManager.GetMonsterCount());
+
+            // The danger compass the tips list describes: it points toward nearby threats, and
+            // writes nothing with no monster on the floor, so it self-suppresses like the hint.
+            Span<char> compass = stackalloc char[TurnManager.DangerCompassMaxLength];
+            int compassLen = turnManager.WriteDangerCompass(compass);
+            if (compassLen > 0) { w.Append(" | "); w.Append(compass[..compassLen]); }
+
+            Span<char> clock = stackalloc char[GameClock.TimeOfDayMaxLength];
+            w.Append(" | ");
+            w.Append(clock[..GameClock.WriteTimeOfDay(turnManager.TurnCount, clock)]);
             string ctxHint = turnManager.GetContextHint();
-            string hintTag = ctxHint.Length > 0 ? $" | {ctxHint}" : "";
-
-            // The tips list tells the player "the danger compass points toward nearby threats",
-            // and nothing called GetDangerCompass — the feature was written and never shown.
-            // It returns "" with no monster on the floor, so it self-suppresses like the hint.
-            string compass = turnManager.GetDangerCompass();
-            string compassTag = compass.Length > 0 ? $" | {compass}" : "";
-
-            infoLabel.Line = $"F{turnManager.CurrentFloor}" +
-                             $" | {player.ColOnHand}c" +
-                             $" | WPN: {wpnName}" +
-                             $" | Mobs: {mobsLeft}" +
-                             compassTag +
-                             $" | T{turnManager.TurnCount}" +
-                             hintTag;
+            if (ctxHint.Length > 0) { w.Append(" | "); w.Append(ctxHint); }
+            infoLabel.Set(w.Text);
 
             // Row 2 left: 10-slot quickbar. "N G" pairs separated by 1-col gutter
-            // (29 cols total). Slot number dim-gray, glyph bright when filled / `·` dim when empty.
-            var qb = new System.Text.StringBuilder();
+            // (29 cols total). The glyph encodes the slot's state (`·` when empty).
+            w = new LineWriter(buf);
             for (int qs = 0; qs < QuickbarState.SlotCount; qs++)
             {
-                var (glyph, filled, _) = player.Quickbar.SlotDisplay(qs, player);
+                var (glyph, _, _) = player.Quickbar.SlotDisplay(qs, player);
                 // Slot number: 1..9 then 0 for slot 10.
                 char slotDigit = qs == 9 ? '0' : (char)('1' + qs);
-                if (qs > 0) qb.Append(' ');
-                qb.Append(slotDigit); qb.Append(glyph);
-                _ = filled; // glyph already encodes state (· when empty)
+                if (qs > 0) w.Append(' ');
+                w.Append(slotDigit); w.Append(glyph);
             }
-            hotbarLabel.Line = qb.ToString();
+            hotbarLabel.Set(w.Text);
 
             // Row 2 right: F1-F4 shrunk to 4-cell [FN] labels so quickbar fits.
             // Full skill name surfaces in the game log on use; cooldown turns
             // sit as a trailing ( N ) marker only when non-zero.
-            var sb = new System.Text.StringBuilder();
+            w = new LineWriter(buf);
             for (int si = 0; si < turnManager.EquippedSkills.Length; si++)
             {
                 var sk = turnManager.EquippedSkills[si];
-                if (sk == null) { sb.Append($"[F{si + 1}]·   "); continue; }
+                w.Append("[F"); w.Append(si + 1); w.Append(']');
+                if (sk == null) { w.Append("·   "); continue; }
                 int cd = turnManager.GetSkillCooldown(sk.Id);
-                string tag = cd > 0 ? $"({cd})" : "   ";
-                sb.Append($"[F{si + 1}]{tag} ");
+                if (cd > 0) { w.Append('('); w.Append(cd); w.Append(')'); }
+                else w.Append("   ");
+                w.Append(' ');
             }
-            if (turnManager.PostMotionDelay > 0) sb.Append($"!DLY{turnManager.PostMotionDelay}");
-            skillBarLabel.Line = sb.ToString();
+            if (turnManager.PostMotionDelay > 0) { w.Append("!DLY"); w.Append(turnManager.PostMotionDelay); }
+            skillBarLabel.Set(w.Text);
 
-            SetTextIfChanged(inventoryBtn, $" Inventory ({player.Inventory.Items.Count}) ");
+            w = new LineWriter(buf);
+            w.Append(" Inventory ("); w.Append(player.Inventory.Items.Count); w.Append(") ");
+            SetTextIfChanged(inventoryBtn, w.Text);
             // The tracker repaints every refresh; the tray only when what it shows changed.
             questTracker.SetNeedsDraw();
             if (turnManager.TurnCount != minimapTurn[0])
@@ -435,7 +456,7 @@ public static partial class GameScreen
         foreach (var helpLine in WelcomeHelpLines) gameLog.Log(Systems.Input.KeyHints.Resolve(helpLine));
         gameLog.Log("");
 
-        WeatherSystem.RollWeather(startFloor);
+        WeatherSystem.RollWeather();
         BiomeSystem.SetFloor(startFloor);
         if (saveData == null)
             gameLog.Log($"Biome: {BiomeSystem.DisplayName} -- {BiomeSystem.GetEntryMessage(startFloor)}");
@@ -493,13 +514,13 @@ public static partial class GameScreen
             log.LogSystem("  [Beater] All factions scorn you. Shop prices hiked.");
         }
 
-        // Hollow Ingress — strip all sword skill unlocks + kill counts.
+        // Hollow Ingress — sword skill unlocks are stripped by the turn code; announced here.
         if (RunModifiers.IsActive(RunModifier.HollowIngress))
         {
             log.LogSystem("  [Hollow Ingress] All Sword Skills locked. Earn them via combat.");
         }
 
-        // Sword Art Only + Naked Ingress — strip invalid starting equipment.
+        // Sword Art Only + Naked Ingress — equipment limits enforced by Inventory; announced here.
         if (RunModifiers.IsActive(RunModifier.SwordArtOnly))
             log.LogSystem("  [Sword Art Only] Only One-Handed Swords may be equipped.");
         if (RunModifiers.IsActive(RunModifier.NakedIngress))

@@ -27,7 +27,7 @@ public static class ItemRegistry
         Register("elucidator",          () => OneHandedSwordDefinitions.CreateElucidator());
         Register("dark_repulser",       () => OneHandedSwordDefinitions.CreateDarkRepulser());
         Register("liberator",           () => OneHandedSwordDefinitions.CreateLiberator());
-        // HR Evolution Chain (1H Sword): Final Espada -> Asmodeus -> Final Avalanche -> Tyrfing
+        // Evolution Chain (1H Sword): Final Espada -> Asmodeus -> Final Avalanche -> Tyrfing
         Register("final_espada",        () => OneHandedSwordDefinitions.CreateFinalEspada());
         Register("asmodeus",            () => OneHandedSwordDefinitions.CreateAsmodeus());
         Register("final_avalanche",     () => OneHandedSwordDefinitions.CreateFinalAvalanche());
@@ -36,10 +36,10 @@ public static class ItemRegistry
         Register("blue_boar",           () => OneHandedSwordDefinitions.CreateBlueBoar());
         Register("crimson_longsword",   () => OneHandedSwordDefinitions.CreateCrimsonLongsword());
         Register("remains_heart",       () => OneHandedSwordDefinitions.CreateRemainsHeart());
-        // Alicization Lycoris Divine Beast drops (1H Sword)
+        // Divine Beast drops (1H Sword)
         Register("savage_squall",       () => OneHandedSwordDefinitions.CreateSavageSquall());
         Register("void_eater",          () => OneHandedSwordDefinitions.CreateVoidEater());
-        // Hollow Fragment / Infinity Moment Legendaries (1H Sword)
+        // Endgame Legendaries (1H Sword)
         Register("eurynomes_holy_sword",  () => OneHandedSwordDefinitions.CreateEurynomesHolySword());
         Register("fiendblade_deathbringer", () => OneHandedSwordDefinitions.CreateFiendbladeDeathbringer());
         Register("fayblade_tizona",       () => OneHandedSwordDefinitions.CreateFaybladeTizona());
@@ -61,7 +61,7 @@ public static class ItemRegistry
         Register("wind_fleuret",        () => RapierDefinitions.CreateWindFleuret());
         Register("agate_rapier",        () => RapierDefinitions.CreateAgateRapier());
         Register("lambent_light",       () => RapierDefinitions.CreateLambentLight());
-        // HR Evolution Chain (Rapier): Prima Sabre -> Pentagramme -> Charadrios -> Hexagramme
+        // Evolution Chain (Rapier): Prima Sabre -> Pentagramme -> Charadrios -> Hexagramme
         Register("prima_sabre",         () => RapierDefinitions.CreatePrimaSabre());
         Register("pentagramme",         () => RapierDefinitions.CreatePentagramme());
         Register("charadrios",          () => RapierDefinitions.CreateCharadrios());
@@ -70,7 +70,7 @@ public static class ItemRegistry
         Register("mothers_rosario",     () => RapierDefinitions.CreateMothersRosario());
         // Divine Objects (Rapier)
         Register("heaven_piercing_blade", () => RapierDefinitions.CreateHeavenPiercingBlade());
-        // Alicization Lycoris Divine Beast drops (Rapier)
+        // Divine Beast drops (Rapier)
         Register("midnight_rain",       () => RapierDefinitions.CreateMidnightRain());
 
         // ── Daggers ──────────────────────────────────────────────────
@@ -82,14 +82,14 @@ public static class ItemRegistry
         Register("assassin_dagger",     () => DaggerDefinitions.CreateAssassinDagger());
         Register("snow_warheit",        () => DaggerDefinitions.CreateSnowWarheit());
         Register("mate_chopper",        () => DaggerDefinitions.CreateMateChopper());
-        // HR Evolution Chain (Dagger): Heated Razor -> Valkyrie -> Misericorde -> The Iron Maiden
+        // Evolution Chain (Dagger): Heated Razor -> Valkyrie -> Misericorde -> The Iron Maiden
         Register("heated_razor",        () => DaggerDefinitions.CreateHeatedRazor());
         Register("valkyrie",            () => DaggerDefinitions.CreateValkyrie());
         Register("misericorde",         () => DaggerDefinitions.CreateMisericorde());
         Register("iron_maiden_dagger",  () => DaggerDefinitions.CreateTheIronMaiden());
         Register("argos_claws",         () => DaggerDefinitions.CreateArgosClaws());
         Register("stout_brave",         () => DaggerDefinitions.CreateStoutBrave());
-        // Alicization Lycoris Divine Beast drops (Dagger)
+        // Divine Beast drops (Dagger)
         Register("phantasmagoria",      () => DaggerDefinitions.CreatePhantasmagoria());
 
         // ── Two-Handed Swords ────────────────────────────────────────
@@ -99,17 +99,17 @@ public static class ItemRegistry
         Register("adamantite_greatsword", () => TwoHandedSwordDefinitions.CreateAdamantiteGreatsword());
         Register("celestial_greatsword",  () => TwoHandedSwordDefinitions.CreateCelestialGreatsword());
         Register("tyrant_dragon",         () => TwoHandedSwordDefinitions.CreateTyrantDragon());
-        // HR Evolution Chain (2H Sword): Matter Dissolver -> Titan's Blade -> Ifrit -> Ascalon
+        // Evolution Chain (2H Sword): Matter Dissolver -> Titan's Blade -> Ifrit -> Ascalon
         Register("matter_dissolver",      () => TwoHandedSwordDefinitions.CreateMatterDissolver());
         Register("titans_blade",          () => TwoHandedSwordDefinitions.CreateTitansBlade());
         Register("ifrit",                 () => TwoHandedSwordDefinitions.CreateIfrit());
         Register("ascalon",               () => TwoHandedSwordDefinitions.CreateAscalon());
         Register("verdant_lord",          () => TwoHandedSwordDefinitions.CreateVerdantLord());
-        // Hollow Fragment / Infinity Moment Legendaries (2H Sword)
+        // Endgame Legendaries (2H Sword)
         Register("saintblade_durandal",   () => TwoHandedSwordDefinitions.CreateSaintbladeDurandal());
         Register("stigmablade_arondight", () => TwoHandedSwordDefinitions.CreateStigmabladeArondight());
         Register("demonblade_gram",       () => TwoHandedSwordDefinitions.CreateDemonbladeGram());
-        // Alicization Lycoris Divine Beast drops (2H Sword)
+        // Divine Beast drops (2H Sword)
         Register("demonblade_crimson_stream", () => TwoHandedSwordDefinitions.CreateDemonbladeCrimsonStream());
 
         // ── Katanas ──────────────────────────────────────────────────
@@ -119,18 +119,18 @@ public static class ItemRegistry
         Register("adamantite_katana",   () => KatanaDefinitions.CreateAdamantiteKatana());
         Register("celestial_katana",    () => KatanaDefinitions.CreateCelestialKatana());
         Register("karakurenai",         () => KatanaDefinitions.CreateKarakurenai());
-        // HR Evolution Chain (Katana): Matamon -> Shishi-Otoshi -> Shichishito -> Masamune
+        // Evolution Chain (Katana): Matamon -> Shishi-Otoshi -> Shichishito -> Masamune
         Register("matamon",             () => KatanaDefinitions.CreateMatamon());
         Register("shishi_otoshi",       () => KatanaDefinitions.CreateShishiOtoshi());
         Register("shichishito",         () => KatanaDefinitions.CreateShichishito());
         Register("masamune",            () => KatanaDefinitions.CreateMasamune());
         Register("soul_eater",          () => KatanaDefinitions.CreateSoulEater());
         Register("kagenui",             () => KatanaDefinitions.CreateKagenui());
-        // Hollow Fragment / Infinity Moment Legendaries (Katana)
+        // Endgame Legendaries (Katana)
         Register("jato_onikirimaru",    () => KatanaDefinitions.CreateJatoOnikirimaru());
         Register("shinto_ama_no_murakumo", () => KatanaDefinitions.CreateShintoAmaNoMurakumo());
         Register("yato_masamune",       () => KatanaDefinitions.CreateYatoMasamune());
-        // Alicization Lycoris Divine Beast drops (Katana)
+        // Divine Beast drops (Katana)
         Register("midnight_sun",        () => KatanaDefinitions.CreateMidnightSun());
 
         // ── Axes ─────────────────────────────────────────────────────
@@ -140,14 +140,14 @@ public static class ItemRegistry
         Register("adamantite_axe",      () => AxeDefinitions.CreateAdamantiteAxe());
         Register("celestial_axe",       () => AxeDefinitions.CreateCelestialAxe());
         Register("pale_edge",           () => AxeDefinitions.CreatePaleEdge());
-        // HR Evolution Chain (Axe): Bardiche -> Archaic Murder -> Nidhogg's Fang -> Ouroboros
+        // Evolution Chain (Axe): Bardiche -> Archaic Murder -> Nidhogg's Fang -> Ouroboros
         Register("bardiche",             () => AxeDefinitions.CreateBardiche());
         Register("archaic_murder",       () => AxeDefinitions.CreateArchaicMurder());
         Register("nidhoggs_fang",        () => AxeDefinitions.CreateNidhoggsFang());
         Register("ouroboros",            () => AxeDefinitions.CreateOuroboros());
         Register("samurai_axe",          () => AxeDefinitions.CreateSamuraiAxe());
         Register("ochigaitou",           () => AxeDefinitions.CreateOchigaitou());
-        // Hollow Fragment / Infinity Moment Legendaries (Axe)
+        // Endgame Legendaries (Axe)
         Register("ragnaroks_bane_headsman", () => AxeDefinitions.CreateRagnaroksBaneHeadsman());
 
         // ── Maces ────────────────────────────────────────────────────
@@ -157,17 +157,17 @@ public static class ItemRegistry
         Register("adamantite_mace",      () => MaceDefinitions.CreateAdamantiteMace());
         Register("celestial_mace",       () => MaceDefinitions.CreateCelestialMace());
         Register("minotaur_warhammer",   () => MaceDefinitions.CreateMinotaurWarhammer());
-        // HR Evolution Chain (Mace): Lunatic Press -> Nemesis -> Yggdrasil -> Mjolnir
+        // Evolution Chain (Mace): Lunatic Press -> Nemesis -> Yggdrasil -> Mjolnir
         Register("lunatic_press",        () => MaceDefinitions.CreateLunaticPress());
         Register("nemesis",              () => MaceDefinitions.CreateNemesis());
         Register("yggdrasil",            () => MaceDefinitions.CreateYggdrasil());
         Register("mjolnir",              () => MaceDefinitions.CreateMjolnir());
         Register("mace_of_lord",         () => MaceDefinitions.CreateMaceOfLord());
-        // Hollow Fragment / Infinity Moment Legendaries (Mace)
+        // Endgame Legendaries (Mace)
         Register("mace_of_asclepius",    () => MaceDefinitions.CreateMaceOfAsclepius());
         Register("infinite_ouroboros",   () => MaceDefinitions.CreateInfiniteOuroboros());
         Register("starmace_elysium",     () => MaceDefinitions.CreateStarmaceElysium());
-        // Alicization Lycoris Divine Beast drops (Mace)
+        // Divine Beast drops (Mace)
         Register("cactus_bludgeon",      () => MaceDefinitions.CreateCactusBludgeon());
 
         // ── Spears ───────────────────────────────────────────────────
@@ -178,12 +178,12 @@ public static class ItemRegistry
         Register("celestial_spear",      () => SpearDefinitions.CreateCelestialSpear());
         Register("guilty_thorn",         () => SpearDefinitions.CreateGuiltyThorn());
         Register("anubis_spear",         () => SpearDefinitions.CreateAnubisSpear());
-        // HR Evolution Chain (Spear): Heart Piercer -> Trishula -> Vijaya -> Caladbolg
+        // Evolution Chain (Spear): Heart Piercer -> Trishula -> Vijaya -> Caladbolg
         Register("heart_piercer",        () => SpearDefinitions.CreateHeartPiercer());
         Register("trishula",             () => SpearDefinitions.CreateTrishula());
         Register("vijaya",               () => SpearDefinitions.CreateVijaya());
         Register("caladbolg",            () => SpearDefinitions.CreateCaladbolg());
-        // Hollow Fragment / Infinity Moment Legendaries (Spear)
+        // Endgame Legendaries (Spear)
         Register("demonspear_gae_bolg",  () => SpearDefinitions.CreateDemonspearGaeBolg());
         Register("saintspear_rhongomyniad", () => SpearDefinitions.CreateSaintspearRhongomyniad());
         Register("godspear_gungnir",     () => SpearDefinitions.CreateGodspearGungnir());
@@ -197,7 +197,7 @@ public static class ItemRegistry
         Register("tias_longbow",         () => BowDefinitions.CreateTiasLongbow());
         // Divine Objects (Bow)
         Register("conflagrant_flame_bow", () => BowDefinitions.CreateConflagrantFlameBow());
-        // Alicization Lycoris Divine Beast drops (Bow)
+        // Divine Beast drops (Bow)
         Register("starfall",             () => BowDefinitions.CreateStarfall());
 
         // ── Scimitars (curved blades) ────────────────────────────────
@@ -206,7 +206,7 @@ public static class ItemRegistry
         Register("mythril_scimitar",     () => ScimitarDefinitions.CreateMythrilScimitar());
         Register("adamantite_scimitar",  () => ScimitarDefinitions.CreateAdamantiteScimitar());
         Register("celestial_scimitar",   () => ScimitarDefinitions.CreateCelestialScimitar());
-        // HR Evolution Chain (Scimitar): Moonstruck Saber -> Diablo Esperanza -> Iblis -> Satanachia
+        // Evolution Chain (Scimitar): Moonstruck Saber -> Diablo Esperanza -> Iblis -> Satanachia
         Register("moonstruck_saber",     () => ScimitarDefinitions.CreateMoonstruckSaber());
         Register("diablo_esperanza",     () => ScimitarDefinitions.CreateDiabloEsperanza());
         Register("iblis",                () => ScimitarDefinitions.CreateIblis());
@@ -226,7 +226,7 @@ public static class ItemRegistry
         Register("adamantite_scythe",    () => ScytheDefinitions.CreateAdamantiteScythe());
         Register("celestial_scythe",     () => ScytheDefinitions.CreateCelestialScythe());
 
-        // ── IF weapons — series ladder: Integral(F14 E) → Nox(F25 E) → Rosso(F61 L) → Yasha(F87 L) → Gaou(F90+ L).
+        // ── Series weapons — ladder: Integral(F14 E) → Nox(F25 E) → Rosso(F61 L) → Yasha(F87 L) → Gaou(F90+ L).
         // Field-boss wiring + guaranteed drops in FieldBossFactory; Anneal line (F1-10) registered inline above.
 
         // Integral Series (F14 Epic) — 4 weapons + 1 shield
@@ -258,8 +258,8 @@ public static class ItemRegistry
         Register("ohs_gaou_reginleifr",      () => OneHandedSwordDefinitions.CreateGaouReginleifr());
         Register("kat_gaou_oratorio",        () => KatanaDefinitions.CreateGaouOratorio());
 
-        // ── Hollow Fragment Endgame Expansion (39 weapons) ─────────
-        // Implement System gaps (8): F80-F99 canon slots.
+        // ── Endgame quest, field-boss, Hollow Area, Avatar and Lisbeth weapons ──
+        // Quest and field-boss rewards (8): F80-F99.
         Register("sci_arcaneblade_soul_binder",    () => ScimitarDefinitions.CreateArcanebladeSoulBinder());
         Register("sci_fellblade_ruinous_doom",     () => ScimitarDefinitions.CreateFellbladeRuinousDoom());
         Register("sci_deathglutton_epetamu",       () => ScimitarDefinitions.CreateDeathgluttonEpetamu());
@@ -306,7 +306,7 @@ public static class ItemRegistry
         Register("axe_ingurgitator_belzericht",    () => AxeDefinitions.CreateIngurgitatorBelzericht());
         Register("scy_eldark_radius_sigma",        () => ScytheDefinitions.CreateEldarkRadiusSigma());
 
-        // ── Infinity Moment expansion — 8 LAB + 12 Shop weapons ────
+        // ── LAB weapons ─────────────────────────────────────────────
         // LAB (non-enhanceable) floor-boss drops F85/F92-F96/F98/F99.
         Register("bow_zephyros",          () => BowDefinitions.CreateZephyros());
         Register("bow_artemis",           () => BowDefinitions.CreateArtemis());
@@ -317,15 +317,15 @@ public static class ItemRegistry
         Register("axe_northern_light",    () => AxeDefinitions.CreateNorthernLight());
         Register("spr_lunatic_roof",      () => SpearDefinitions.CreateLunaticRoof());
 
-        // ── MD + FD expansion — 65+ weapons via FloorBandedRegisteredLoot / FloorBossGuaranteedDrops / FieldBossFactory. FD class-lock is flavor only.
+        // ── Weapons placed via FloorBandedRegisteredLoot / FloorBossGuaranteedDrops / FieldBossFactory. Companion class locks are flavour only.
 
-        // MD Alicization gap weapons (Legendary, 4 entries — Black Iron is a pair)
+        // Underworld weapons (Legendary, 4 entries — Black Iron is a pair)
         Register("ohs_unfolding_truth_fragrant_olive", () => OneHandedSwordDefinitions.CreateUnfoldingTruthFragrantOlive());
         Register("ohs_red_rose_sword",    () => OneHandedSwordDefinitions.CreateRedRoseSword());
         Register("ohs_black_iron_dual_sword_a", () => OneHandedSwordDefinitions.CreateBlackIronDualSwordA());
         Register("ohs_black_iron_dual_sword_b", () => OneHandedSwordDefinitions.CreateBlackIronDualSwordB());
 
-        // MD Originals (16 weapons, mixed rarities)
+        // Uniques (16 weapons, mixed rarities)
         Register("ohs_sword_of_diva",     () => OneHandedSwordDefinitions.CreateSwordOfDiva());
         Register("dag_purple_star_baselard", () => DaggerDefinitions.CreatePurpleStarBaselard());
         Register("rap_espada_of_sword_dance", () => RapierDefinitions.CreateEspadaOfSwordDance());
@@ -343,7 +343,7 @@ public static class ItemRegistry
         Register("rap_chivalrous_rapier", () => RapierDefinitions.CreateChivalrousRapier());
         Register("bow_cheer_of_love",     () => BowDefinitions.CreateCheerOfLoveBow());
 
-        // FD Character Core Canon (~18 weapons, mostly Legendary)
+        // Companion signature weapons (mostly Legendary)
         Register("ohs_elucidator_rouge",  () => OneHandedSwordDefinitions.CreateElucidatorRouge());
         Register("ohs_chaos_raider_dual", () => OneHandedSwordDefinitions.CreateChaosRaiderDual());
         Register("kat_murasama_g4_dual",  () => KatanaDefinitions.CreateMurasamaG4Dual());
@@ -363,7 +363,7 @@ public static class ItemRegistry
         Register("ohs_silvery_ruler",     () => OneHandedSwordDefinitions.CreateSilveryRuler());
         Register("rap_macafitel",         () => RapierDefinitions.CreateMacafitel());
 
-        // FD Elemental Variants (27 weapons, Rare/Epic band)
+        // Elemental Variants (27 weapons, Rare/Epic band)
         Register("ohs_flare_pulsar",           () => OneHandedSwordDefinitions.CreateFlarePulsar());
         Register("ohs_lightning_divider_dual", () => OneHandedSwordDefinitions.CreateLightningDividerDual());
         Register("rap_ray_grace",              () => RapierDefinitions.CreateRayGrace());
@@ -392,9 +392,9 @@ public static class ItemRegistry
         Register("ohs_excalibur_oberon",       () => OneHandedSwordDefinitions.CreateExcaliburOberon());
         Register("ohs_bloodthirst",            () => OneHandedSwordDefinitions.CreateBloodthirst());
 
-        // ── Cross-Game Sweep (AL/LS/LR) — 55 weapons + 2 Corrupted. FloorBandedRegisteredLoot; Starlight Banner via Dorothy F78; Corrupted via stones only.
+        // ── Raid, relic, top-tier and mythological weapons via FloorBandedRegisteredLoot; Starlight Banner via Dorothy F78; Corrupted via stones only.
 
-        // Group 1 — Alicization Lycoris Normal Raid (Epic F70-85)
+        // Group 1 — Raid drops (Epic F70-85)
         Register("axe_skyrend",                    () => AxeDefinitions.CreateSkyrend());
         Register("rap_timestream",                 () => RapierDefinitions.CreateTimestream());
         Register("dag_veinshredder",               () => DaggerDefinitions.CreateVeinshredder());
@@ -403,7 +403,7 @@ public static class ItemRegistry
         Register("ohs_superior_blade",             () => OneHandedSwordDefinitions.CreateSuperiorBlade());
         Register("ths_sacred_inferno",             () => TwoHandedSwordDefinitions.CreateSacredInferno());
 
-        // Group 2 — Alicization Lycoris Extreme Raid (Legendary F85-95)
+        // Group 2 — Extreme Raid drops (Legendary F85-95)
         Register("ohs_blade_of_the_lightwolf",     () => OneHandedSwordDefinitions.CreateBladeOfTheLightwolf());
         Register("rap_graceful_needle",            () => RapierDefinitions.CreateGracefulNeedle());
         Register("dag_whitespark",                 () => DaggerDefinitions.CreateWhitespark());
@@ -412,7 +412,7 @@ public static class ItemRegistry
         Register("spr_arctic_pillar",              () => SpearDefinitions.CreateArcticPillar());
         Register("mce_starshatter",                () => MaceDefinitions.CreateStarshatter());
 
-        // Group 3 — Alicization Lycoris Relic Boss Drops (Legendary F80-95)
+        // Group 3 — Relic Boss Drops (Legendary F80-95)
         Register("ohs_scorching_blade",            () => OneHandedSwordDefinitions.CreateScorchingBlade());
         Register("mce_beasthowl",                  () => MaceDefinitions.CreateBeasthowl());
         Register("ohs_double_edged_blade",         () => OneHandedSwordDefinitions.CreateDoubleEdgedBlade());
@@ -423,7 +423,7 @@ public static class ItemRegistry
         Register("spr_frostpeak",                  () => SpearDefinitions.CreateFrostpeak());
         Register("axe_snowsunder",                 () => AxeDefinitions.CreateSnowsunder());
 
-        // Group 4 — Alicization Lycoris DLC (Legendary F85-99)
+        // Group 4 — Late Legendaries (F85-99)
         Register("bow_loveblight_bow",             () => BowDefinitions.CreateLoveblightBow());
         Register("ths_purgatorial_greatsword",     () => TwoHandedSwordDefinitions.CreatePurgatorialGreatsword());
         Register("sci_savage_sandstorm",           () => ScimitarDefinitions.CreateSavageSandstorm());
@@ -431,7 +431,7 @@ public static class ItemRegistry
         Register("ths_lifestream_greatsword",      () => TwoHandedSwordDefinitions.CreateLifestreamGreatsword());
         Register("bow_glitzwood_bow",              () => BowDefinitions.CreateGlitzwoodBow());
 
-        // Group 5 — SAO Lost Song Top-Tier per Type (Legendary F80-95)
+        // Group 5 — Top-Tier per Type (Legendary F80-95)
         Register("ohs_blazing_sword",              () => OneHandedSwordDefinitions.CreateBlazingSword());
         Register("rap_glaring_light",              () => RapierDefinitions.CreateGlaringLight());
         Register("dag_fragarach",                  () => DaggerDefinitions.CreateFragarach());
@@ -442,7 +442,7 @@ public static class ItemRegistry
         Register("bow_silvan_bow",                 () => BowDefinitions.CreateSilvanBow());
         Register("clw_iron_fist_oguma",            () => ClawsDefinitions.CreateIronFistOguma());
 
-        // Group 6 — SAO Lost Song Canon Mythological (Legendary F75-99)
+        // Group 6 — Mythological (Legendary F75-99)
         Register("kat_futsu_no_mitama",            () => KatanaDefinitions.CreateFutsuNoMitama());
         Register("axe_nadr",                       () => AxeDefinitions.CreateNadr());
         Register("spr_divine_laevateinn",          () => SpearDefinitions.CreateDivineLaevateinn());
@@ -454,16 +454,16 @@ public static class ItemRegistry
         Register("dag_giardino",                   () => DaggerDefinitions.CreateGiardino());
         Register("shd_ancile",                     () => ShieldDefinitions.CreateAncile());
 
-        // Group 7 — SAO Lost Song Easter Eggs (Epic F50-70)
+        // Group 7 — Photon blades (Epic F50-70)
         Register("ohs_kagetsu_4",                  () => OneHandedSwordDefinitions.CreateKagetsu4());
         Register("ohs_laser_sword_hg",             () => OneHandedSwordDefinitions.CreateLaserSwordHG());
 
-        // Group 8 — SAO Last Recollection Game-Original
+        // Group 8 — Dorothy's scythes and Eydis's katana
         Register("scy_azuretear_scythe",           () => ScytheDefinitions.CreateAzuretearScythe());
         Register("scy_starlight_banner",           () => ScytheDefinitions.CreateStarlightBanner());
         Register("kat_darkness_rending_blade",     () => KatanaDefinitions.CreateDarknessRendingBlade());
 
-        // Group 9 — SAO Last Recollection DLC skins
+        // Group 9 — Light-motif blades
         Register("ohs_rainbow_blade_ex_eterna",    () => OneHandedSwordDefinitions.CreateRainbowBladeExEterna());
         Register("ohs_aetherial_glow",             () => OneHandedSwordDefinitions.CreateAetherialGlow());
 
@@ -475,7 +475,7 @@ public static class ItemRegistry
         Register("night_corruption_stone",         () => CorruptionStoneDefinitions.CreateNightCorruptionStone());
         Register("shadow_corruption_stone",        () => CorruptionStoneDefinitions.CreateShadowCorruptionStone());
 
-        // IM Shop weapons — rotate into F50+ tier shops + floor-banded drops.
+        // Shop weapons — rotate into F50+ tier shops + floor-banded drops.
         Register("rap_edelweiss",         () => RapierDefinitions.CreateEdelweiss());
         Register("rap_noctis_strasse",    () => RapierDefinitions.CreateNoctisStrasse());
         Register("ths_fasislawine",       () => TwoHandedSwordDefinitions.CreateFasislawine());
@@ -489,7 +489,7 @@ public static class ItemRegistry
         Register("dag_flyheight_fang",    () => DaggerDefinitions.CreateFlyheightFang());
         Register("dag_rue_feuille",       () => DaggerDefinitions.CreateRueFeuille());
 
-        // ── IM Enhancement Ores (System 3) ───────────────────────────
+        // ── Enhancement Ores ─────────────────────────────────────────
         Register("ore_crimson_flame",  () => EnhancementOreDefinitions.CreateCrimsonFlame());
         Register("ore_adamant",        () => EnhancementOreDefinitions.CreateAdamant());
         Register("ore_crust",          () => EnhancementOreDefinitions.CreateCrust());
@@ -519,7 +519,7 @@ public static class ItemRegistry
         // ── Shields ──────────────────────────────────────────────────
         Register("wooden_shield", () => ShieldDefinitions.CreateWoodenShield());
         Register("iron_shield",   () => ShieldDefinitions.CreateIronShield());
-        // IF named-series shields
+        // Named-series shields
         Register("shd_fermat",        () => ShieldDefinitions.CreateFermat());
         Register("shd_nox_fermat",    () => ShieldDefinitions.CreateNoxFermat());
         Register("shd_rosso_aegis",   () => ShieldDefinitions.CreateRossoAegis());
@@ -601,7 +601,7 @@ public static class ItemRegistry
         Register("ale", () => FoodDefinitions.CreateAle());
         Register("grape_juice", () => FoodDefinitions.CreateGrapeJuice());
 
-        // Crystals (SAO-iconic instant consumables)
+        // Crystals (instant-effect consumables)
         Register("corridor_crystal", () => CrystalDefinitions.CreateCorridorCrystal());
         Register("anti_crystal", () => CrystalDefinitions.CreateAntiCrystal());
         Register("healing_crystal", () => CrystalDefinitions.CreateHealingCrystal());
@@ -611,7 +611,7 @@ public static class ItemRegistry
         Register("mirage_sphere", () => CrystalDefinitions.CreateMirageSphere());
         Register("pneuma_flower", () => CrystalDefinitions.CreatePneumaFlower());
         Register("divine_stone_of_returning_soul", () => CrystalDefinitions.CreateDivineStone());
-        // Teleport crystals for key canon cities
+        // Teleport crystals for the key cities
         Register("teleport_crystal_tolbana", () => CrystalDefinitions.CreateTeleportCrystal("Tolbana"));
         Register("teleport_crystal_urbus", () => CrystalDefinitions.CreateTeleportCrystal("Urbus"));
         Register("teleport_crystal_zumfut", () => CrystalDefinitions.CreateTeleportCrystal("Zumfut"));
@@ -634,7 +634,7 @@ public static class ItemRegistry
         Register("wolf_pelt", () => MobDropDefinitions.CreateWolfPelt());
         Register("dragon_scale", () => MobDropDefinitions.CreateDragonScale());
 
-        // ── Evolution Catalysts (HR chains) ───────────────
+        // ── Evolution Catalysts ───────────────────────────
         // One material per weapon-type evolution chain.
         Register("demonic_sigil",    () => EvolutionMaterialDefinitions.CreateDemonicSigil());
         Register("geometric_shard",  () => EvolutionMaterialDefinitions.CreateGeometricShard());
@@ -671,7 +671,7 @@ public static class ItemRegistry
         Register("fish",               () => IngredientDefinitions.CreateFish());
         Register("ragout_rabbit_meat", () => IngredientDefinitions.CreateRagoutRabbitMeat());
 
-        // ── Canon monster materials ──────────────────────────────────
+        // ── Monster materials ────────────────────────────────────────
         Register("nepent_ovule",       () => IngredientDefinitions.CreateNepentOvule());
         Register("boar_hide",          () => IngredientDefinitions.CreateBoarHide());
         Register("boar_tusk",          () => IngredientDefinitions.CreateBoarTusk());
@@ -724,16 +724,14 @@ public static class ItemRegistry
         Register("slicing_stone_greater", () => EvolutionMaterialDefinitions.CreateGreaterSlicingStone());
         Register("slicing_stone_perfect", () => EvolutionMaterialDefinitions.CreatePerfectSlicingStone());
 
-        // High-tier enhance + Reforge reuse the existing crystallite_ingot (Frost
-        // Dragon F48 drop, registered above). No new ingot DefIds added — the existing
-        // crystallite_ingot fills the Epic/Legendary mat slot.
+        // High-tier enhance and Reforge use crystallite_ingot (Frost Dragon F48 drop,
+        // registered above) as their Epic/Legendary material.
     }
 
     private static void Register(string id, Func<BaseItem> factory) => _registry[id] = factory;
 
-    // Every registered DefinitionId. An id is an implementation detail that happens to be readable,
-    // so it leaks into prose written by someone reading the code; enumerating them is what lets a
-    // checker prove the Player Guide names items the way the player sees them.
+    // Every registered DefinitionId. Read by the verification tools, which check that the Player
+    // Guide names items by display name rather than by id.
     public static IReadOnlyCollection<string> DefinitionIds => _registry.Keys;
 
     // Recreate an item from its DefinitionId. Returns null if the ID is unknown.

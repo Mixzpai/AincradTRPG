@@ -4,12 +4,12 @@ namespace SAOTRPG.UI.Helpers;
 //
 // Cell writes go straight into the driver's output buffer rather than through
 // AddRune/AddStr. Those re-parse the grapheme cluster, call MakePrintable and
-// GetColumns, and allocate ~900 bytes per cell; at map scale (~12k cells/frame)
-// that dominates frame time and drives constant gen-0 collection. Assigning a
-// prebuilt Cell is allocation-free and measured ~40x faster, while applying the
-// same Clip test the driver performs internally.
+// GetColumns, and allocate per cell; at map scale that dominates frame time and
+// drives constant gen-0 collection. Assigning a prebuilt Cell is allocation-free,
+// while applying the same Clip test the driver performs internally.
 //
-// Upgrade-isolation point — renderer/backend migrations only touch this file.
+// The only file that touches the driver's cell buffer, so a renderer or backend change
+// is confined here.
 public static class Gfx
 {
     // Create a color attribute from foreground + background colors, with an optional
@@ -154,11 +154,9 @@ public static class Gfx
     // changes and gaps. Read-only. GameWindow.DrawComplete calls it after every view has painted
     // and before the driver flushes.
     //
-    // Until Terminal.Gui 2.4.5.2 this pass FILLED each dirty row end to end, because the driver
-    // spent a console write on every clean cell inside a dirty row. The patched driver sends the
-    // frame in one write with one cursor move per gap, so only changed cells go out (docs/PERF.md
-    // section 2). Do not reinstate the fill: the window border dirties every row, so it resends
-    // the whole screen, measured 4-6x slower than sparse on a walking frame.
+    // The driver sends the frame in one write with one cursor move per gap, so only changed cells
+    // go out. Dirty rows must not be filled end to end: the window border dirties every row, so a
+    // fill would resend the whole screen.
     public static void CountTransmitted()
     {
         var buffer = AppHost.App.Driver?.GetOutputBuffer();
@@ -280,8 +278,8 @@ public static class Gfx
                 int sx = origin.X + vx;
                 Cell cell = src[rowBase + vx];
 
-                // A dirty row is re-emitted in full on Refresh, so replaying an
-                // unchanged snapshot would rewrite the whole viewport every idle frame.
+                // Replaying an unchanged snapshot as dirty would rewrite the whole
+                // viewport every idle frame.
                 ref Cell existing = ref contents[sy, sx];
                 if (existing.Attribute == cell.Attribute
                     && string.Equals(existing.Grapheme, cell.Grapheme, StringComparison.Ordinal))
@@ -304,8 +302,9 @@ public static class Gfx
 
     // Per-frame writer for bulk painting. Resolves the buffer, clip and screen origin
     // once instead of per cell — PutCell's ViewportToScreen call alone is significant
-    // across a full-viewport tile loop.
-    public class Batch
+    // across a full-viewport tile loop. A struct, so a paint allocates nothing: hold it in a
+    // local or a field and pass it by ref, since a copy starts its glyph cache over.
+    public struct Batch
     {
         private readonly Terminal.Gui.Drivers.IOutputBuffer? _buffer;
         private readonly Cell[,]? _contents;
@@ -388,10 +387,10 @@ public static class Gfx
         Cell cell = CellFor(ch);
         cell.Attribute = attr;
 
-        // Only touch the cell if it actually changes. Marking a row dirty makes the
-        // driver re-emit that whole row to the terminal on the next Refresh, which
-        // costs far more than this comparison — leaving unchanged rows clean is what
-        // keeps idle frames from rewriting the entire screen.
+        // Only touch the cell if it actually changes. A dirty cell is sent to the
+        // terminal on the next Refresh, which costs far more than this comparison —
+        // leaving unchanged cells clean is what keeps idle frames from rewriting the
+        // entire screen.
         ref Cell existing = ref contents[screen.Y, screen.X];
         if (existing.Attribute == cell.Attribute
             && string.Equals(existing.Grapheme, cell.Grapheme, StringComparison.Ordinal))

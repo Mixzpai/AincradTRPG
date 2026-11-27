@@ -4,17 +4,15 @@ using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Generation;
 
-// The labyrinth is the one map the climb enters on EVERY floor, and it used to generate the same
-// way on all 99 of them: the same BSP partition at the same 80x60, ~25 fat rooms, 41-44% open,
-// zero dead ends, on floor 3 and on floor 83 alike. Only the room positions moved. So the era now
-// picks a LAYOUT as well as a palette, and the palette is a second axis so two eras sharing a
-// layout are still told apart by what they are made of.
+// The labyrinth is the one map the climb enters on every floor, so each era picks a layout as
+// well as a palette, and the palette is a second axis so two eras sharing a layout are still
+// told apart by what they are made of.
 //
 // Every layout ends at the same contract, which the rest of the game depends on:
-//   rooms[0]  is the SOUTHERNMOST room and carries LabyrinthEntrance — PopulateFloor spawns the
+//   rooms[0]  is the southernmost room and carries LabyrinthEntrance — PopulateFloor spawns the
 //             player on its centre, so that centre must be walkable.
-//   rooms[^1] is the NORTHERNMOST and carries StairsUp — PopulateFloor posts the floor boss on the
-//             farthest REACHABLE StairsUp, so an unreachable one means no boss AND no way up.
+//   rooms[^1] is the northernmost and carries StairsUp — PopulateFloor posts the floor boss on the
+//             farthest reachable StairsUp, so an unreachable one means no boss and no way up.
 //   every open cell is reachable from the entrance, by construction rather than by luck.
 public static partial class MapGenerator
 {
@@ -22,10 +20,10 @@ public static partial class MapGenerator
     private const int LabHeight = 60;
     private const int MinLeaf   = 10;
 
-    // How the era CARVES its labyrinth.
+    // How the era carves its labyrinth.
     private enum LabLayout
     {
-        Halls,    // wide BSP chambers joined by L-corridors — the original, kept as the control
+        Halls,    // wide BSP chambers joined by L-corridors
         Fissure,  // a finer BSP partition with thin rooms, plus pools of the era's hazard
         Grove,    // BSP chambers broken up from the inside by scattered blockers
         Cavern,   // cellular-automata chambers, tunnelled together
@@ -42,27 +40,22 @@ public static partial class MapGenerator
         TileType  Hazard,   // what Fissure/Grove scatter, and what Cavern/Warren leave standing
         TileType  Accent);  // the walkable floor accent worn along this era's walls
 
-    // EVERY biome is routed, and the default arm THROWS rather than falling back to Halls. A
-    // fallback would send an unrouted biome silently back to the one shape this file exists to
-    // break up, and it would look like a design choice rather than an omission. The throw is not
-    // the guard, though — a cast integer is the only value that can reach it at runtime, and a
-    // newly added BiomeType member would compile fine. SeedProbe walks Enum.GetValues<BiomeType>()
-    // and asserts every member plans, which is the half that catches an omission before it ships.
+    // Every biome is routed, and the default arm throws rather than falling back to Halls: a
+    // silent fallback would read as a design choice rather than an omission. A newly added
+    // BiomeType member still compiles, so it must be routed here by hand.
     private static LabPlan PlanFor(BiomeType biome) => biome switch
     {
-        // The two eras that keep the original generator. Clutter 0 and a Floor accent make the
-        // added steps no-ops, so their floors are byte-identical to the pre-routing build and
-        // serve as the control.
+        // Plain BSP halls: clutter 0 and a Floor accent make the dressing steps no-ops.
         BiomeType.Grassland => new(LabLayout.Halls,   MinLeaf, 0,  0.00, TileType.Floor, TileType.Floor),
         BiomeType.Urban     => new(LabLayout.Halls,   MinLeaf, 0,  0.00, TileType.Floor, TileType.Floor),
 
-        // Hazard pools. Lava BLOCKS the connectivity audit, so a volcanic pool is a real detour;
+        // Hazard pools. Lava blocks the connectivity audit, so a volcanic pool is a real detour;
         // cracked ice does not, so an ice fissure is the same walk with a slip risk on it.
         BiomeType.Volcanic  => new(LabLayout.Fissure, 7,       0,  0.22, TileType.Lava,       TileType.Ash),
         BiomeType.Ice       => new(LabLayout.Fissure, 7,       0,  0.30, TileType.CrackedIce, TileType.Snow),
 
-        // Overgrowth. Dense enough to break a chamber into pockets, which is where the dead ends
-        // a BSP labyrinth has never had come from.
+        // Overgrowth. Dense enough to break a chamber into pockets, which gives the layout the
+        // dead ends a plain BSP labyrinth lacks.
         BiomeType.Forest    => new(LabLayout.Grove,   MinLeaf, 0,  0.26, TileType.Tree, TileType.GrassSparse),
         BiomeType.Swamp     => new(LabLayout.Grove,   MinLeaf, 0,  0.20, TileType.Rock, TileType.Reeds),
 
@@ -82,14 +75,7 @@ public static partial class MapGenerator
     };
 
     // The two tiles this floor's labyrinth is made of beyond the shared Wall/Floor skeleton, or
-    // Floor for an era that adds neither. PUBLIC so an offline check can assert they actually
-    // REACH THE MAP rather than reading the table that declares them.
-    //
-    // That is not a hypothetical audit. The first build of this file deleted every obstacle in the
-    // game: SealUnreachable walled over anything the flood could not reach, and an obstacle is
-    // precisely what a flood cannot reach — Lava 0, Tree 0, Rock 0, on every era that placed one.
-    // Neither the map's shape nor its connectivity changed when it happened, because a wall where
-    // a tree should be is only wrong to look at.
+    // Floor for an era that adds neither. Public for the verification probes.
     public static (TileType Hazard, TileType Accent) LabyrinthPalette(int floor)
     {
         var plan = PlanFor(BiomeSystem.GetBiome(floor));
@@ -99,7 +85,7 @@ public static partial class MapGenerator
     // Returns (map, rooms) with rooms[0]=entrance, rooms[^1]=boss room.
     public static (GameMap Map, List<Room> Rooms) GenerateLabyrinth(int floor)
     {
-        // Derived from the run seed and the floor, NOT drawn inline from the run stream: a floor's
+        // Derived from the run seed and the floor, not drawn inline from the run stream: a floor's
         // labyrinth must be the same one every time the player steps back into it, and it must
         // reproduce for a given seed regardless of how many turns preceded entry.
         var rng = RunRng.StreamFor("labyrinth", floor);
@@ -130,19 +116,18 @@ public static partial class MapGenerator
         var bossRoom = rooms[^1];
         map.Tiles[bossRoom.CenterX, bossRoom.CenterY].Type = TileType.StairsUp;
 
-        // A RING OF WALL AROUND THE STAIRS SEALS THEM; IT DOES NOT GUARD THEM. Walling all eight
-        // neighbours left the way up with no approach at all, SealUnreachable then erased it as an
-        // unreachable walkable cell, and EVERY labyrinth in the game came out with no floor boss
-        // and no way up. Wall the CORNERS only: the alcove still reads as a chamber, and the four
-        // approaches stay open instead of the stairs depending on a carve that may not oblige.
+        // Wall the corners only. A full ring of wall seals the stairs: with no approach,
+        // SealUnreachable erases them as an unreachable walkable cell, leaving no floor boss and
+        // no way up. Corners alone still read as a chamber, and the four approaches stay open
+        // instead of depending on a carve that may not oblige.
         for (int ry = bossRoom.CenterY - 1; ry <= bossRoom.CenterY + 1; ry++)
         for (int rx = bossRoom.CenterX - 1; rx <= bossRoom.CenterX + 1; rx++)
         {
             if (rx == bossRoom.CenterX || ry == bossRoom.CenterY || !map.InInterior(rx, ry)) continue;
-            // NEVER OVER ANOTHER ROOM'S CENTRE. An organic layout places anchor rooms on whatever
-            // is open, so two centres can land a diagonal apart — and PopulateFloor spawns the
-            // player, the vendor and the boss ON centres, so walling one strands whatever it was
-            // going to hold. JoinRoomCentres runs BEFORE this and cannot see it happen.
+            // Never over another room's centre. An organic layout places anchor rooms on whatever
+            // is open, so two centres can land a diagonal apart, and PopulateFloor spawns the
+            // player, the vendor and the boss on centres, so walling one strands whatever it was
+            // going to hold.
             bool isCentre = false;
             for (int i = 0; i < rooms.Count && !isCentre; i++)
                 isCentre = rooms[i].CenterX == rx && rooms[i].CenterY == ry;
@@ -150,7 +135,7 @@ public static partial class MapGenerator
             map.Tiles[rx, ry].Type = TileType.Wall;
         }
 
-        // AND TWO OF THEM MUST BE OPEN, NOT ONE. The floor boss stands ON the stairs, so the first
+        // Two approaches must be open, not one. The floor boss stands on the stairs, so the first
         // walkable neighbour is spent the moment it steps aside; a single-cell alcove then leaves
         // the player nowhere to stand while the tile is occupied. A tight carve does not always
         // supply a second, so carve one — south first, which is the side the entrance lies on.
@@ -174,14 +159,13 @@ public static partial class MapGenerator
             approaches++;
         }
 
-        // Every room centre must be walkable AND reachable from the entrance, because the player
-        // spawns on one and the boss stands on another. The carvers guarantee it; this is the net
-        // that keeps the guarantee true for a carver that stops honouring it later.
+        // Every room centre must be walkable and reachable from the entrance, because the player
+        // spawns on one and the boss stands on another. The carvers guarantee it; this repair
+        // keeps the guarantee true for a carver that does not.
         //
-        // IT RUNS AFTER THE ALCOVE, NOT BEFORE. Walling the boss chamber's corners can remove the
-        // only four-way connectors a nearby pocket had, and SealUnreachable then walls the pocket
-        // — room centre included. Running the repair first meant it could not see the damage the
-        // very next lines were about to do: F13 seed 31337 stranded room 16 of 19 that way.
+        // Runs after the alcove: walling the boss chamber's corners can remove the only four-way
+        // connectors a nearby pocket had, and SealUnreachable would then wall the pocket, room
+        // centre included. A repair run earlier could not see that damage.
         JoinRoomCentres(map, rooms);
         DressWalls(map, rng, plan, entrance, bossRoom);
 
@@ -190,17 +174,16 @@ public static partial class MapGenerator
         // player can see the glyph of and never reach.
         int sealedCells = SealUnreachable(map, entrance.CenterX, entrance.CenterY);
 
-        // THE WAY UP IS CHECKED, NOT ASSUMED. Every other flaw on this map costs the player a
+        // The way up is checked, not assumed. Every other flaw on this map costs the player a
         // detour; this one ends the run, because the floor boss stands on the stairs and both the
         // boss and the exit are gone together. An era whose hazard happens to fill the approach
-        // would reproduce the sealed-stairs bug in a form no single fix above can rule out, so the
-        // guarantee is re-established here from whatever state the carve and the seal left.
+        // can seal the stairs in a way no step above rules out, so the guarantee is
+        // re-established here from whatever state the carve and the seal left.
         //
-        // TWO REACHABLE approaches, and reachable is the load-bearing word: carving a neighbour
+        // Two reachable approaches, and reachable is the load-bearing word: carving a neighbour
         // open is not enough, because a neighbour carved into solid rock is a stranded nook that
-        // SealUnreachable walls straight back up. Measured over 8 seeds x 14 floors, that left 7
-        // of 112 labyrinths with one approach -- each of which reads to the player as a boss whose
-        // corpse blocks the only tile they can stand on.
+        // SealUnreachable walls straight back up. A single approach reads to the player as a boss
+        // whose corpse blocks the only tile they can stand on.
         {
             map.Tiles[bossRoom.CenterX, bossRoom.CenterY].Type = TileType.StairsUp;
             int repaired = 0;
@@ -230,9 +213,9 @@ public static partial class MapGenerator
 
                 map.Tiles[target.X, target.Y].Type = TileType.Floor;
                 CarveCorridorL(map, entrance.CenterX, entrance.CenterY, target.X, target.Y);
-                // BOTH ENDS ARE RE-STAMPED, because the tunnel starts ON the entrance cell and
-                // paves what it walks: the first cut of this net traded a missing way up for a
-                // missing way out, which is the same soft-lock facing the other direction.
+                // Both ends are re-stamped, because the tunnel starts on the entrance cell and
+                // paves what it walks; otherwise a missing way up would be traded for a missing
+                // way out, the same soft-lock facing the other direction.
                 map.Tiles[entrance.CenterX, entrance.CenterY].Type = TileType.LabyrinthEntrance;
                 map.Tiles[bossRoom.CenterX, bossRoom.CenterY].Type = TileType.StairsUp;
                 repaired++;
@@ -280,11 +263,11 @@ public static partial class MapGenerator
 
     // ── BSP layouts: Halls, Fissure, Grove ───────────────────────────
     //
-    // One routine for all three. Halls is the original at MinLeaf with no clutter; Fissure runs
-    // the same partition finer and sizes its rooms down, so the map is corridor rather than
+    // One routine for all three. Halls is the plain partition at MinLeaf with no clutter; Fissure
+    // runs the same partition finer and sizes its rooms down, so the map is corridor rather than
     // chamber; Grove keeps Halls' proportions and fills the chambers in instead.
     //
-    // The clutter goes down BEFORE the corridors, so the corridor chain carves back through it.
+    // The clutter goes down before the corridors, so the corridor chain carves back through it.
     // That is what makes the result connected without a repair step: every room centre is on the
     // chain, and the chain is Floor.
     private static List<Room> CarveBsp(GameMap map, Random rng, LabPlan plan, int floor)
@@ -299,7 +282,7 @@ public static partial class MapGenerator
             int rw, rh;
             if (thin)
             {
-                // The LOWER half of the leaf rather than the upper: a leaf this small would
+                // The lower half of the leaf rather than the upper: a leaf this small would
                 // otherwise still produce a chamber, and the point of a fissure is that it does not.
                 rw = rng.Next(3, Math.Max(4, lw / 2));
                 rh = rng.Next(3, Math.Max(4, lh / 2));
@@ -323,18 +306,17 @@ public static partial class MapGenerator
                                 rooms[i + 1].CenterX, rooms[i + 1].CenterY);
 
         // A fissure's own rooms are 3-5 cells across, and PopulateFloor treats a room as somewhere
-        // several mobs AND a vendor fit: it fills rooms first and the vendor takes what is left, so
-        // rooms that small placed a vendor on 0 of 8 seeds. There are also twice as many of them,
-        // which would have doubled the mob budget on 26 floors. The anchor lattice is what the
-        // organic layouts already hand back, and using it here decouples "what was carved" from
-        // "where the run is populated".
+        // several mobs and a vendor fit: it fills rooms first and the vendor takes what is left, so
+        // rooms that small leave the vendor no space. There are also twice as many of them, which
+        // would double the mob budget. The anchor lattice is what the organic layouts hand back,
+        // and using it here decouples "what was carved" from "where the run is populated".
         return thin ? AnchorRooms(map, floor) : rooms;
     }
 
     // The first open cell of a room, scanned from just inside its top-left corner. A Halls room is
-    // a solid rectangle so this IS that corner and the original placement is unchanged; an anchor
-    // room is mostly rock and its corner almost never open, which left a warren with no campfires
-    // at all — and a labyrinth with no light source is a dark floor the player cannot read.
+    // a solid rectangle so this is that corner; an anchor room is mostly rock and its corner
+    // rarely open, and without the scan a warren would get no campfires at all — a labyrinth with
+    // no light source is a dark floor the player cannot read.
     private static (int x, int y) FirstFloorIn(GameMap map, Room room)
     {
         for (int y = room.Y + 1; y < room.Y + room.Height; y++)
@@ -343,10 +325,10 @@ public static partial class MapGenerator
         return (-1, -1);
     }
 
-    // Fissure scatters POOLS and Grove scatters GRAINS, and that difference is why they read as
+    // Fissure scatters pools and Grove scatters grains, and that difference is why they read as
     // different places: a pool is a detour you walk around, a grain field is a room you pick your
-    // way through. Both keep two cells clear of every room centre, which the corridor carve would
-    // clear anyway but which also protects the centre if the carve order ever changes.
+    // way through. Grains keep two cells clear of every room centre, which the corridor carve
+    // would clear anyway but which protects the centre independently of the carve order.
     private static void Clutter(GameMap map, Random rng, List<Room> rooms, LabPlan plan)
     {
         bool pools = plan.Layout == LabLayout.Fissure;
@@ -354,16 +336,14 @@ public static partial class MapGenerator
         {
             if (pools)
             {
-                // ONE pool per room, on a roll, rather than a count derived from the room's area.
-                // A fissure room is 3-5 cells across, so `area * clutter / 12` truncated to zero
-                // on every room in the game and the layout placed no hazard at all. An integer
-                // division that switches a feature off is invisible in the map and in the log.
+                // One pool per room, on a roll, rather than a count derived from the room's area:
+                // a fissure room is 3-5 cells across, so an area-based integer count truncates to
+                // zero and the layout would place no hazard at all.
                 //
-                // No centre guard here either, and that was the second silent zero: a room this
-                // small is entirely within two cells of its own centre, so "keep two cells clear
-                // of every centre" rejected the whole room and left ONE hazard tile on the map.
-                // The corridor chain runs centre to centre and is carved after this, so it is the
-                // route's protection; the pool is what is left around it.
+                // No centre guard here: a room this small is entirely within two cells of its own
+                // centre, so the guard would reject the whole room. The corridor chain runs centre
+                // to centre and is carved after this, so it is the route's protection; the pool is
+                // what is left around it.
                 if (rng.NextDouble() >= plan.Clutter) continue;
                 int px = room.X + rng.Next(room.Width);
                 int py = room.Y + rng.Next(room.Height);
@@ -383,7 +363,7 @@ public static partial class MapGenerator
         }
     }
 
-    // Drops `tile` on open cells that sit in the MIDDLE of open ground — every one of the eight
+    // Drops `tile` on open cells that sit in the middle of open ground — every one of the eight
     // neighbours open — one in `oneIn` of them. That predicate is the whole safety argument: a
     // cell with eight open neighbours can be closed without disconnecting anything, because its
     // neighbours remain connected around it. Used for cavern boulders (Rock, which blocks) and
@@ -411,14 +391,14 @@ public static partial class MapGenerator
 
     // ── Cavern ───────────────────────────────────────────────────────
     //
-    // Cellular automata, following the two things Map/Generation/Passes/BaseTerrainPass.CarveCaves
-    // measured the hard way:
+    // Cellular automata, under the same two constraints as
+    // Map/Generation/Passes/BaseTerrainPass.CarveCaves:
     //
-    //   * The smoothing rule counts the CENTRE cell. "5 of 8 neighbours" looks equivalent and is
-    //     an erosion rule: at 45% seed rock it falls to 4% in four passes.
-    //   * "Keep the largest region" sits on a percolation cliff — the largest region collapses
-    //     from a third of the map to a twentieth over one point of fill. Take the largest as a
-    //     trunk and TUNNEL to the rest instead, so the result is one component by construction.
+    //   * The smoothing rule counts the centre cell. "5 of 8 neighbours" looks equivalent and is
+    //     an erosion rule that wears the rock away within a few passes.
+    //   * "Keep the largest region" sits on a percolation cliff: the largest region's share of
+    //     the map drops sharply over one point of fill. Take the largest as a trunk and tunnel to
+    //     the rest instead, so the result is one component by construction.
     private const int CavernPasses     = 4;
     private const int CavernMinChamber = 30;
 
@@ -497,9 +477,8 @@ public static partial class MapGenerator
             if (rock[y * w + x] == 0 && joined[label[y * w + x]])
                 map.Tiles[x, y].Type = TileType.Floor;
 
-        // Boulders standing in the open chambers. The first version looked for a WALL cell with
-        // open ground on all eight sides, which is precisely the shape four passes of majority
-        // smoothing exist to remove — it found none, ever, on any seed.
+        // Boulders standing in the open chambers, dropped on open cells: majority smoothing
+        // removes any wall cell with open ground on all eight sides, so there are none to promote.
         Sprinkle(map, rng, plan.Hazard, 10);
 
         SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
@@ -507,7 +486,7 @@ public static partial class MapGenerator
         return AnchorRooms(map, floor);
     }
 
-    // ONE breadth-first sweep outward from the trunk, through rock and open alike, gives every
+    // One breadth-first sweep outward from the trunk, through rock and open alike, gives every
     // other chamber its shortest route home at once: BFS visits in non-decreasing distance, so the
     // first cell of a chamber it reaches is that chamber's nearest connection point, and the
     // predecessor chain back from it is the route.
@@ -670,8 +649,8 @@ public static partial class MapGenerator
     // An organic layout has no rectangles to hand back, and PopulateFloor needs some: it spawns
     // the player on rooms[0], picks a vendor room, and scatters mobs room by room. So the rooms
     // are sampled off a fixed lattice, each snapped to the nearest open cell. The pitch is chosen
-    // to land near the ~25 rooms a BSP labyrinth produces, so the mob budget does not move when
-    // the layout does.
+    // to land near the room count a BSP labyrinth produces, so the mob budget does not depend on
+    // the layout.
     private const int AnchorPitch    = 14;
     private const int AnchorRadius   = 6;
     private const int AnchorRoomSize = 9;
@@ -704,8 +683,8 @@ public static partial class MapGenerator
         }
 
         // Three is PopulateFloor's own threshold for placing a vendor, and below it there is not
-        // enough map left to spawn a run on. Disclosed rather than papered over: the carve that
-        // produced it is the thing to fix.
+        // enough map left to spawn a run on. Logged rather than papered over, because the fault
+        // lies in the carve that produced it.
         if (rooms.Count < 3)
             SAOTRPG.Systems.Diagnostics.DebugLogger.LogGame("MAPGEN",
                 $"Labyrinth floor={floor} WARN only {rooms.Count} anchor room(s) — the carve left "
@@ -723,10 +702,10 @@ public static partial class MapGenerator
         if (map.InBounds(sx, sy) && map.Tiles[sx, sy].Type == TileType.Wall)
             map.Tiles[sx, sy].Type = TileType.Floor;
 
-        // THE TWO ENDS ARE PRESERVED ACROSS THE CARVE. CarveCorridorL starts ON the source cell
-        // and paves what it walks, so tunnelling from the entrance overwrote LabyrinthEntrance
-        // with Floor and 26 of 132 labyrinths lost their way back to the overworld. The
-        // destination is the same hazard from the other side: rooms[^1]'s centre carries StairsUp.
+        // The two ends are preserved across the carve. CarveCorridorL starts on the source cell
+        // and paves what it walks, so tunnelling from the entrance would overwrite
+        // LabyrinthEntrance with Floor and lose the way back to the overworld. The destination is
+        // the same hazard from the other side: rooms[^1]'s centre carries StairsUp.
         var startType = map.Tiles[sx, sy].Type;
         for (int i = 1; i < rooms.Count; i++)
         {
@@ -747,7 +726,7 @@ public static partial class MapGenerator
     // The era's accent, worn along the walls. Wall-adjacent rather than scattered because a rim
     // reads as a material at a glance where a sprinkle reads as noise, and because PopulateFloor
     // only spawns on Floor/Path/Door and the grass family — keeping the accent off the open middle
-    // leaves the mob budget where it was.
+    // keeps it from shrinking the ground mobs spawn on.
     private const int AccentPercent = 22;
 
     private static void DressWalls(GameMap map, Random rng, LabPlan plan, Room entrance, Room boss)
@@ -771,15 +750,12 @@ public static partial class MapGenerator
     // that has to pick a side should pick the one it will be approached from.
     private static readonly (int X, int Y)[] Orthogonals = { (0, 1), (1, 0), (-1, 0), (0, -1) };
 
-    // Every WALKABLE cell that cannot be walked to from the entrance becomes rock. Returns how
-    // many cells that was, which is the number to watch: a large one means the hazard density cut
-    // the map up rather than decorated it.
+    // Every walkable cell that cannot be walked to from the entrance becomes rock. Returns how
+    // many cells that was: a large count means the hazard density cut the map up rather than
+    // decorated it.
     //
-    // The blocking test is what makes this correct, and leaving it out deleted every obstacle in
-    // the game: a lava pool, a tree and a boulder are blocking, so the flood never reaches them,
-    // so a "seal everything unreached" rule turned all of them into Wall. Measured on the first
-    // build — Lava 0, Tree 0, Rock 0 across every era that placed them, and the map still looked
-    // plausible because a wall where a tree should be is only wrong to look at.
+    // Blocking cells are skipped: a lava pool, a tree and a boulder are blocking, so the flood
+    // never reaches them, and sealing everything unreached would turn every obstacle into Wall.
     private static int SealUnreachable(GameMap map, int sx, int sy)
     {
         int w = map.Width, h = map.Height;
@@ -796,7 +772,7 @@ public static partial class MapGenerator
         return sealedCells;
     }
 
-    // Four-way flood through the connectivity audit's OWN blocking predicate, so "reachable" here
+    // Four-way flood through the connectivity audit's own blocking predicate, so "reachable" here
     // and "reachable" when PopulateFloor looks for a way up cannot drift apart.
     private static bool[] FloodOpen(GameMap map, int sx, int sy)
     {

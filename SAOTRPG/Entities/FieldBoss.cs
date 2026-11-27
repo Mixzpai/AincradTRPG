@@ -1,6 +1,6 @@
 namespace SAOTRPG.Entities;
 
-// Named wilderness elite with 100% guaranteed canon drop. Never respawns in-run; may be event-gated (Nicholas=Christmas).
+// Named wilderness elite with a 100% guaranteed signature drop. Never respawns in-run; may be event-gated (Nicholas=Christmas).
 public class FieldBoss : Boss
 {
     public string FieldBossId { get; set; } = "";

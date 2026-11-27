@@ -6,17 +6,14 @@ namespace SAOTRPG.UI.Rendering;
 // Ambient-tile animation overlay. FOV-gated, capped at TileAnimator.MaxConcurrent per frame.
 // Campfire + enchant-shrine variants suppress during combat (TileAnimator.CombatActive).
 //
-// THE OVERLAY MODULATES BRIGHTNESS AND NEVER THE GLYPH. Every one of the registry's seven entries
-// sits on a tile that appears in TileDefinitions.MapLegend, and six of them animate through a rune
-// another tile type owns: the enchant shrine drew the gas vent's '¤', the lever drew lava's '-',
-// the fountain drew deep water's '≈' (a Swimming-L25 wall), the gas vent drew ordinary ground on
-// all four of its frames, and the chest sparkled into ChestOpened's '◇'. The bounty board blanked
-// itself outright. A landmark's identity glyph is worth more than the ambience, so the pulse now
-// rides the cell's own rendered colour, read back from the composed tile layer.
+// The overlay modulates brightness and never the glyph. Every registry entry sits on a tile in
+// TileDefinitions.MapLegend, and most registry frame glyphs are runes another tile type owns (the
+// gas vent's '¤', lava's '-', deep water's '≈'). A landmark's identity glyph is worth more than the
+// ambience, so the pulse rides the cell's own rendered colour, read back from the composed tile layer.
 //
-// PATH-D-PORT: the visual contract is "this tile breathes" — same glyph, same hue, lightness
-// swinging by AmbientPulse about what the tile layer resolved. The registry still supplies the
-// rhythm (Frames.Length x IntervalMs is one cycle) and the priority ordering.
+// The picture depends on "this tile breathes" — same glyph, same hue, lightness swinging by
+// AmbientPulse about what the tile layer resolved. The registry supplies the rhythm
+// (Frames.Length x IntervalMs is one cycle) and the priority ordering.
 public partial class MapView
 {
     // Fixed scratch sized for MaxConcurrent*4 candidates; partial-sort top-N online so
@@ -25,10 +22,9 @@ public partial class MapView
     private const int AmbientCapacity = 16;
     private readonly AmbientCandidate[] _ambientScratch = new AmbientCandidate[AmbientCapacity];
 
-    // Peak-to-trough swing of the breath, as a fraction of the cell's own colour. +-12% of a
-    // gamma-encoded channel is about +-4 dL* on the bright landmark palette these tiles use —
-    // several times the ~1.0 dL* threshold of vision and about the same amplitude as the
-    // per-cell palette dither, so it reads as a pulse rather than as a flash.
+    // Peak-to-trough swing of the breath, as a fraction of the cell's own colour: a few times the
+    // threshold of vision on the bright landmark palette these tiles use and about the amplitude
+    // of the per-cell palette dither, so it reads as a pulse rather than as a flash.
     private const float AmbientPulse = 0.12f;
 
     // Below this the repaint would be indistinguishable from the layer already on screen, so the
@@ -49,10 +45,9 @@ public partial class MapView
     }
 
 
-    // MEASUREMENT SEAM, same family as MapView.DrainFramesDrawn: what the last painted frame's
-    // ambient pass actually wrote, so a check can compare it against its own read of the tile
-    // layer rather than against a value this file handed it. Fixed-size, never allocates, and
-    // bounded by the density cap the pass already works under.
+    // Read by the verification probes, like MapView.DrainFramesDrawn: what the last painted
+    // frame's ambient pass actually wrote, to compare against an independent read of the tile
+    // layer. Fixed-size, never allocates, and bounded by the density cap the pass already works under.
     private static readonly (int Vx, int Vy, char Ch)[] s_ambientLog =
         new (int, int, char)[TileAnimator.MaxConcurrent];
     private static int s_ambientLogCount;
@@ -61,7 +56,7 @@ public partial class MapView
     public static int LastAmbientPulseCount => s_ambientLogCount;
     public static (int Vx, int Vy, char Ch) LastAmbientPulse(int i) => s_ambientLog[i];
 
-    // Cumulative across the run, so a check can assert the pass reached its subject at all.
+    // Cumulative across the run, for the verification probes; reading resets it.
     public static int DrainAmbientPulses()
     {
         int n = s_ambientPulsesTotal;
@@ -101,7 +96,7 @@ public partial class MapView
             {
                 _ambientScratch[count] = newCand;
                 count++;
-                worstIdx = -1; // recompute next time we hit capacity
+                worstIdx = -1; // recomputed when capacity is next reached
             }
             else
             {

@@ -18,8 +18,8 @@ public partial class MapView
     // Deterministic-ish shake RNG; decorative only.
     private static readonly Random _shakeRng = new();
 
-    // The two tiers, named so the Player Guide's table can be checked against them rather than
-    // transcribing the numbers — the prose had drifted to describing tier 1 as the only tier.
+    // The two tiers, public so the Player Guide's table can be checked against them rather than
+    // transcribing the numbers.
     public const int Tier1Ms = 100, Tier1FrameMs = 33, Tier1Cells = 1;
     public const int Tier2Ms = 120, Tier2FrameMs = 40, Tier2Cells = 2;
 

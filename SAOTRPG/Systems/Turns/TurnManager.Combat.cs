@@ -37,7 +37,7 @@ public partial class TurnManager
     public event Action<int, int, int, int, int>? MultiHitAggregateRequested;
 
     // Mirror of DamageDealt for multi-hit skills — fires side-effect flashes
-    // (scorch, hit-flash, border) WITHOUT the popup enqueue (cascade owns popups).
+    // (scorch, hit-flash, border) without the popup enqueue (cascade owns popups).
     public event Action<int, int, int, bool, bool>? MultiHitDamageDealt;
 
     // Formats the "You hit X for Y" line per the active DamageBreakdownMode.
@@ -60,7 +60,7 @@ public partial class TurnManager
     }
 
     // Builds a damage-type tag string based on weapon type + SpecialEffect.
-    // Returns empty when DamageBreakdownMode == Off OR the weapon is bare
+    // Returns empty when DamageBreakdownMode == Off or the weapon is bare
     // physical with no clear subtype (generic "hit").
     internal static string BuildDamageTypeTag(Weapon? weapon)
     {
@@ -148,7 +148,7 @@ public partial class TurnManager
     }
 
     // Inline insertion: before the final "damage"/"dmg" word so the tag reads
-    // "…for 8 [SLASH] dmg" per the research spec.
+    // "…for 8 [SLASH] dmg".
     private static string InlineInsert(string line, string tag)
     {
         int idx = line.LastIndexOf(" dmg", StringComparison.Ordinal);
@@ -209,7 +209,7 @@ public partial class TurnManager
     }
 
     // Additive defensive keys (BlockChance, ParryChance, EvadeRegen, HPRegen, SPRegen)
-    // sum across every equipped slot. On-hit procs (Bleed/Stun/SlowOnHit) stay weapon-only by canon.
+    // sum across every equipped slot. On-hit procs (Bleed/Stun/SlowOnHit) stay weapon-only.
     private static readonly EquipmentSlot[] _allEquippedSlots =
     {
         EquipmentSlot.Weapon, EquipmentSlot.OffHand, EquipmentSlot.Head, EquipmentSlot.Chest,
@@ -227,12 +227,9 @@ public partial class TurnManager
         return total;
     }
 
-    // THE PLAYER'S CRIT CHANCE, DECIDED IN ONE PLACE. The basic attack, the off-hand swing and
-    // every sword-skill hit each rolled `_player.CriticalRate + weather` independently, so two
-    // authored sources reached none of them: the CritRate+N tag on 48 weapons, and the crit
-    // component of GetProficiencyPerks. Both were parsed, displayed on gear-compare and named in
-    // the Guide while contributing nothing to any roll. Weather can be negative, so the sum is
-    // floored at 0 exactly as each of the three sites used to floor it.
+    // The player's crit chance, decided in one place. The basic attack, the off-hand swing and
+    // every sword-skill hit all roll against it, so the CritRate+N tag and the crit component of
+    // GetProficiencyPerks reach every roll. Weather can be negative, so the sum is floored at 0.
     public int PlayerCritChance()
     {
         var wpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
@@ -249,14 +246,9 @@ public partial class TurnManager
         if (monster is Mob mob && mob.LootTag == "dragon") return true;
         string n = monster.Name;
         if (string.IsNullOrEmpty(n)) return false;
-        // This used to build a lowercase COPY of the name to search, once per hit. It now folds
-        // each character in place instead.
-        //
-        // OrdinalIgnoreCase is the obvious replacement and it is NOT the same predicate: a BMP-wide
-        // sweep of 1.3 million substitutions found exactly one disagreement, U+212A KELVIN SIGN,
-        // which ToLowerInvariant maps to 'k' while ToUpperInvariant leaves alone. No monster is
-        // named with it -- but "no name has one today" is not the same claim as "this is the same
-        // predicate", and only the sweep could tell them apart.
+        // Folds each character in place rather than building a lowercase copy of the name on
+        // every hit. OrdinalIgnoreCase is not the same predicate: U+212A KELVIN SIGN lowercases
+        // to 'k' under ToLowerInvariant, while ToUpperInvariant leaves it alone.
         return ContainsLowerInvariant(n, "dragon")
             || ContainsLowerInvariant(n, "wyrm")
             || ContainsLowerInvariant(n, "wyvern")
@@ -281,7 +273,7 @@ public partial class TurnManager
     }
 
     // Ethereal, and Cardinal-Marked on a Phase turn. Both promise the player's blow can pass
-    // straight through, and only against MELEE: a bow shot routes through HandleCombat too, so
+    // straight through, and only against melee: a bow shot routes through HandleCombat too, so
     // the weapon and the reach are both tested. The two do not stack -- the higher chance wins.
     //
     // Rolled from the run stream rather than derived: a derived miss would repeat for the same
@@ -342,8 +334,8 @@ public partial class TurnManager
         }
         var (baseDmg, playerCrit) = _player.AttackMonster(monster, PlayerCritChance());
 
-        // FD Pair Resonance: canonical MH+OH pair → +10% total dmg (per hit), +5% crit
-        // re-roll on FIRST hit only (per-encounter, not per-hit, to avoid compound).
+        // Pair Resonance: a DualWieldPairs MH+OH pair → +10% total dmg (per hit), +5% crit
+        // re-roll on first hit only (per-encounter, not per-hit, to avoid compound).
         var offHandWeapon = _player.Inventory.GetEquipped(EquipmentSlot.OffHand) as Weapon;
         bool pairResonance = wpn != null && offHandWeapon != null
             && DualWieldPairs.IsCanonicalPair(wpn.DefinitionId, offHandWeapon.DefinitionId);
@@ -363,7 +355,7 @@ public partial class TurnManager
         if (pairResonance)
             damage = damage * 110 / 100;
 
-        // Unique-skill passive dmg mods. Dual-Blades OH sword is NOT a shield —
+        // Unique-skill passive dmg mods. Dual-Blades OH sword is not a shield —
         // Holy Sword's shield bonus only applies for true shields.
         var offHandItem = _player.Inventory.GetEquipped(Inventory.Core.EquipmentSlot.OffHand);
         bool hasShield = offHandItem != null && offHandItem is not Weapon;
@@ -395,9 +387,8 @@ public partial class TurnManager
         int piercePct = wpn?.FirstEffect<EquipmentSpecialEffect.PiercingShot>()?.Percent ?? 0;
         if (piercePct > 0 && wpnType == "Bow")
             damage += Math.Max(0, monster.BaseDefense) * piercePct / 100;
-        // TrueStrike+N — on proc, bypass any mitigation: raw+profBonus,
-        // crit-quality clean hit. Current engine has no monster evade on
-        // player swings, so we honor intent by ensuring no-floor damage.
+        // TrueStrike+N — on proc, the hit deals at least raw + profBonus + comboBonus,
+        // whatever reductions applied above.
         int trueStrikeChance = wpn?.FirstEffect<EquipmentSpecialEffect.TrueStrike>()?.ChancePercent ?? 0;
         bool trueStrikeProc = trueStrikeChance > 0
             && RunRng.Next(100) < trueStrikeChance;
@@ -489,7 +480,7 @@ public partial class TurnManager
         }
         DegradeEquipment(EquipmentSlot.Weapon);
 
-        // Dual Blades / FD Paired OH swing at 60% dmg. Paired weapons bypass
+        // Dual Blades / paired OH swing at 60% dmg. Paired weapons bypass
         // DualBlades unlock. Pair Resonance +10% applies to OH too.
         if (!monster.IsDefeated
             && _player.Inventory.GetEquipped(EquipmentSlot.OffHand) is Weapon offhand
@@ -497,15 +488,14 @@ public partial class TurnManager
         {
             int offhandDmg = Math.Max(1, offhand.BaseDamage * 60 / 100 + profBonus / 2);
             if (pairResonance) offhandDmg = offhandDmg * 110 / 100;
-            // OH rolls crit independently. CriticalHitDamage adds ONCE to the OH
+            // OH rolls crit independently. CriticalHitDamage adds once to the OH
             // damage component (no double-stacking with MH crit).
             bool offhandCrit = RunRng.Next(100) < PlayerCritChance();
             if (offhandCrit) offhandDmg += _player.CriticalHitDamage;
             // The reward has to be carried out. TakeDamage hands it back exactly once, on the
-            // killing blow, and this call used to discard it -- so an off-hand swing that
-            // finished the mob left `reward` null with IsDefeated true, and the tail of this
-            // method then ran NEITHER branch: no XP, no Col, no loot, no bestiary record, no
-            // milestone. The mob simply vanished.
+            // killing blow; discarding it would leave `reward` null with IsDefeated true, and the
+            // tail of this method would then run neither branch: no XP, Col, loot, bestiary
+            // record or milestone.
             var offhandReward = monster.TakeDamage(offhandDmg);
             if (offhandReward != null) reward = offhandReward;
             string ohCritTag = offhandCrit ? " CRITICAL!" : "";
@@ -519,9 +509,7 @@ public partial class TurnManager
 
         // Speed follow-up. The faster combatant presses the advantage: outpace the defender and
         // the exchange carries a chance of one extra strike at SpeedContest.FollowUpDamagePercent
-        // of the blow that earned it. This is what Speed DOES -- it fed 81 content sites and no
-        // mechanic at all until this call site existed, so every +SPD weapon, ore, potion, talent,
-        // guild perk and Running milestone was a number the player could read and never spend.
+        // of the blow that earned it. This is the mechanic every +SPD source feeds.
         //
         // The defender's own Speed is read, not just the attacker's, so a Swift or Ethereal mob is
         // genuinely harder to flurry down -- and floor 100's clone, built with BaseSpeed equal to
@@ -653,7 +641,7 @@ public partial class TurnManager
 
     private void HandleMonsterKill(Monster monster, Monster.DefeatReward reward, string wpnType, int hpBefore)
     {
-        // Bestiary read BEFORE RecordKill so TimesKilled==0 identifies a
+        // Bestiary read before RecordKill so TimesKilled==0 identifies a
         // species first-kill. Post-record fire routes to the toast queue.
         bool speciesFirst = Bestiary.Get(monster.Name)?.TimesKilled == 0;
         Bestiary.RecordKill(monster.Name);
@@ -805,12 +793,12 @@ public partial class TurnManager
                 {
                     _map.AddItem(fieldBoss.X, fieldBoss.Y, drop);
                     _log.LogLoot($"  {fieldBoss.Name} drops: {drop.Name}!");
-                    // Field-boss Divine couriers (F40/F85/F95) also trip the cap + banner.
+                    // A Divine field-boss drop gets the same banner as a floor-boss one.
                     if (drop is Items.Equipment.Weapon fbWpn && drop.Rarity == "Divine")
                         NotifyDivineObtained(fbWpn);
                 }
             }
-            // IF series field bosses drop matching series shield alongside primary.
+            // Series field bosses drop the matching series shield alongside the primary.
             if (!string.IsNullOrEmpty(fieldBoss.FieldBossId)
                 && LootGenerator.FieldBossSecondaryDrops.TryGetValue(fieldBoss.FieldBossId, out var secondaryId))
             {
@@ -821,8 +809,8 @@ public partial class TurnManager
                     _log.LogLoot($"  {fieldBoss.Name} also drops: {secondary.Name}!");
                 }
             }
-            // HF Last-Attack Bonus — F70+ field boss, matching weapon type:
-            // 2% base / 10% on canon HNM. OHS has no canon Avatar.
+            // Last-Attack Bonus — F70+ field boss, matching weapon type: 2% base, 10% on the
+            // bosses in CanonHnmBosses. One-Handed Sword has no Avatar weapon.
             if (CurrentFloor >= 70
                 && LootGenerator.AvatarWeaponByWeaponType.TryGetValue(wpnType, out var avatarDefId))
             {
@@ -845,8 +833,8 @@ public partial class TurnManager
 
             RollBossOreDrops(fieldBoss.X, fieldBoss.Y, fieldBoss.Name);
 
-            // F95+ field boss: 10% chance to drop a Corruption Stone (HF
-            // workaround — post-F100 boss unavailable, stones route corruption).
+            // F95+ field boss: 10% chance to drop a Corruption Stone, the source of corruption
+            // since no boss exists past floor 100.
             if (CurrentFloor >= 95 && RunRng.Next(100) < 10)
             {
                 string stoneId = RunRng.Next(2) == 0
@@ -872,8 +860,7 @@ public partial class TurnManager
             Story.StorySystem.TryFire(Story.StoryTrigger.BossDefeat,
                 new Story.StoryContext(CurrentFloor, KillCount, _player, boss));
 
-            // Guaranteed drop (Divine + P4 AL Divine Beast on non-canon bosses). DropItem formats Divine
-            // with ◈; ResolveFloorBossDropDefId substitutes a Legendary fallback if cap fired.
+            // Guaranteed floor-boss drop, if this floor has one. DropItem formats a Divine with ◈.
             var resolvedDropId = LootGenerator.ResolveFloorBossDropDefId(CurrentFloor);
             if (resolvedDropId != null)
             {
@@ -881,13 +868,13 @@ public partial class TurnManager
                 if (drop != null)
                 {
                     DropItem(boss.X, boss.Y, drop, boss.Name);
-                    // Fire DivineObtained event + set cap when a Divine actually dropped.
+                    // Fire DivineObtained when a Divine dropped.
                     if (drop is Items.Equipment.Weapon divineWpn && drop.Rarity == "Divine")
                         NotifyDivineObtained(divineWpn);
                 }
             }
 
-            // IM Last-Attack Bonus — F85/F92-F96/F98/F99 guaranteed non-enhanceable
+            // Last-Attack Bonus — F85/F92-F96/F98/F99 guaranteed non-enhanceable
             // Legendary on player's killing blow; stacks with FloorBossGuaranteedDrops.
             if (LootGenerator.FloorBossLastAttackDrops.TryGetValue(CurrentFloor, out var labDropId))
             {
@@ -899,7 +886,7 @@ public partial class TurnManager
                 }
             }
 
-            // Divine Fragment — F75-F99 canon boss, ~5% drop (Divine Awakening Lv2 material).
+            // Divine Fragment — F75-F99 floor boss, 5% drop (Divine Awakening Lv2 material).
             if (CurrentFloor >= 75 && CurrentFloor < 100 && RunRng.Next(100) < 5)
             {
                 var frag = Items.ItemRegistry.Create("divine_fragment");
@@ -911,7 +898,7 @@ public partial class TurnManager
             }
 
             // F100 Primordial Shard — guaranteed one-per-run (Divine Awakening Lv3 material).
-            // Bypasses FloorBossGuaranteedDrops to avoid the Divine-cap substitution path.
+            // Dropped directly, alongside any FloorBossGuaranteedDrops entry.
             if (CurrentFloor >= 100)
             {
                 var shard = Items.ItemRegistry.Create("primordial_shard");
@@ -925,7 +912,7 @@ public partial class TurnManager
             // F50+ boss clear → next ShopTierSystem tier. Additive only.
             int tiersGained = ShopTierSystem.RegisterFloorBossClear(CurrentFloor, _log);
             if (tiersGained > 0) ToastQueue.EnqueueShopTier(tiersGained);
-            // Per-floor flag so PG drop reveal stays accurate when the player skips
+            // Per-floor flag so the Player Guide's drop reveal stays accurate when the player skips
             // floors via teleport / Anti-Crystal lifts.
             DefeatedFloorBosses.Add(CurrentFloor);
             FloorBossCleared?.Invoke(boss.Name);
@@ -1003,8 +990,7 @@ public partial class TurnManager
     }
 
     // Swing-arc duration per weapon, so weight is legible in the animation rather than only in
-    // the numbers: a scythe or greatsword (AttackSpeed 0) hangs, claws (AttackSpeed 3) snap. The
-    // old flat 66 ms sits in the middle of this range, so the average swing feels unchanged.
+    // the numbers: a scythe or greatsword (AttackSpeed 0) hangs, claws (AttackSpeed 3) snap.
     private const int SwingBaseMs = 100, SwingPerSpeedMs = 15, SwingMinMs = 45;
     private static int GetSwingDurationMs(Weapon? wpn)
     {
@@ -1081,11 +1067,7 @@ public partial class TurnManager
 
         int hpBefore = _player.CurrentHealth;
         HandleCombat(monster, hpBefore);
-        AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-        if (_player.IsDefeated) return;
-        ProcessEntityTurns();
-        PassiveRegen();
+        if (!SpendMoves(AttackMoves())) return;
         TurnCompleted?.Invoke();
     }
 }

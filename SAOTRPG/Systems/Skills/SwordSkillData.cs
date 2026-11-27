@@ -1,7 +1,6 @@
 namespace SAOTRPG.Systems.Skills;
 
 // Sword Skills: hit count, dmg mult, cooldown, post-motion window, unlock threshold.
-// Canon names from SAO LN/anime/games.
 
 public enum SkillType { Power, Rush, AoE, Combo, Counter, Projectile }
 
@@ -410,7 +409,7 @@ public static class SwordSkillDatabase
             1, 6.0, 10, 2, 500, SkillType.Power,
             "Channel all strength into a single devastating straight punch."),
 
-        // SCIMITAR — curved slashes, bleed affinity (invented; no canon curved-blade OSS names).
+        // SCIMITAR — curved slashes, bleed affinity.
         // Sits between Dagger and One-Handed Sword: quicker than OHS, less raw power than Axe,
         // and the only line where bleed is the through-thread rather than an occasional proc.
         new("sci_crescent", "Crescent", "Scimitar",
@@ -454,7 +453,7 @@ public static class SwordSkillDatabase
             "Seven curved slashes drawn so fast the arcs hang in the air.",
             1, 0.50, "Bleed"),
 
-        // CLAWS — dual-fist flurry, the fastest ordinary weapon (invented; no canon claw OSS).
+        // CLAWS — dual-fist flurry, the fastest ordinary weapon.
         // Highest hit counts outside the Dual Blades unique skill, lowest per-hit multipliers,
         // and the shortest cooldowns in the game.
         new("clw_rending_swipe", "Rending Swipe", "Claws",
@@ -496,7 +495,7 @@ public static class SwordSkillDatabase
             12, 4.6, 7, 2, 500, SkillType.Combo,
             "Twelve hits in a single breath — the fastest combo any weapon can throw."),
 
-        // SCYTHE — long-reach reaper, slow and heavy (invented; no canon scythe OSS names).
+        // SCYTHE — long-reach reaper, slow and heavy.
         // Every skill is Range 2 to match the weapon's reach, with Axe-class multipliers and the
         // longest cooldowns of any ordinary weapon.
         new("scy_reap", "Reap", "Scythe",

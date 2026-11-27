@@ -9,8 +9,8 @@ namespace SAOTRPG.UI.Rendering;
 // Modal targeting overlay: arrows move reticle within a Chebyshev radius (max range),
 // Tab cycles between visible monsters in range, Enter/Space confirms (fires at the
 // reticle if a valid target sits there), Esc cancels (no turn consumed).
-// Used for Bow basic-attack and any sword skill with Range>1; melee (Range=1) bumps
-// remain unchanged. Pattern forks MapView.LookMode.cs.
+// Used for Bow basic-attack and any sword skill with Range>1; melee (Range=1) attacks
+// stay bump-to-attack. Structured like MapView.LookMode.cs.
 public partial class MapView
 {
     // Sidebar gating mirrors LookMode — reticle works fine without it on narrow terms.
@@ -20,8 +20,8 @@ public partial class MapView
     // What the confirm key does once the reticle lands on a target.
     private enum RangedFireKind
     {
-        BowBasic,    // Q12: same dmg formula as melee. Routes via TurnManager.ExecuteBowShot.
-        SwordSkill,  // Q14: Range>1 sword skill. Routes via SkillTargetOverride + ExecuteSwordSkill.
+        BowBasic,    // Same dmg formula as melee. Routes via TurnManager.ExecuteBowShot.
+        SwordSkill,  // Range>1 sword skill. Routes via SkillTargetOverride + ExecuteSwordSkill.
     }
 
     private bool _rangedFireActive;
@@ -148,7 +148,7 @@ public partial class MapView
         int tx = _rangedReticleX, ty = _rangedReticleY;
         var kind = _rangedKind;
         int slot = _rangedSkillSlot;
-        // Close the overlay BEFORE firing — the resulting turn loop redraws the world.
+        // Close the overlay before firing — the resulting turn loop redraws the world.
         ExitRangedFireMode();
 
         if (kind == RangedFireKind.BowBasic)
@@ -240,7 +240,7 @@ public partial class MapView
             }
         }
 
-        // Reticle glyph: '+' is wide-distinct on the SAO ASCII palette.
+        // Reticle glyph: '+' stands out against the map's glyph set.
         int rvx = MapToVx(_rangedReticleX), rvy = MapToVy(_rangedReticleY);
         if (rvx >= 0 && rvy >= 0 && rvx < vpWidth && rvy < vpHeight)
         {

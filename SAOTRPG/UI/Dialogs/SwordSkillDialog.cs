@@ -108,7 +108,7 @@ public static class SwordSkillDialog
         // Assign to next available slot on Enter.
         // Enter is Command.Accept; Activated answers Command.Activate (Space). An unhandled
         // Accept bubbles to the dialog's default button — Close — so the advertised
-        // "Enter: assign to slot" used to shut the dialog instead. Claiming it stops the bubble.
+        // "Enter: assign to slot" would shut the dialog. Claiming it stops the bubble.
         void AssignSelected() => AppHost.App.Invoke(() =>
             TryAssignSkill(tm, allSkills, listView.SelectedItem ?? 0, kills, -1,
                 names, slotLabel, detailLabel, wtype));
@@ -204,7 +204,7 @@ public static class SwordSkillDialog
     };
 
     // Slot tags sit in a fixed column ahead of the skill name, so the tag and the blank that
-    // stands in for "not equipped" are both padded to the widest BOUND key. F1 is two characters
+    // stands in for "not equipped" are both padded to the widest bound key. F1 is two characters
     // and a rebind to Shift+M is seven; a tag that grew would shift every name in the list.
     private static int SlotTagWidth() =>
         SlotActions.Max(a => KeyHints.Key(a).Length) + 3;

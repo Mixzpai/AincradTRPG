@@ -22,7 +22,7 @@ public static class ModifierSelectScreen
 
     private static EventHandler<Key>? _escHandler;
 
-    // Unhook before transitioning AWAY. The handler re-enters DifficultyScreen, so leaving it
+    // Unhook before transitioning away. The handler re-enters DifficultyScreen, so leaving it
     // attached means a later Esc — in character creation or mid-run — tears down the screen and
     // rebuilds the difficulty picker.
     public static void UnhookEscHandler(Window mainWindow)
@@ -50,8 +50,8 @@ public static class ModifierSelectScreen
         };
 
         // ── Two cards, centred on the axis ───────────────────────────
-        // This screen used to be the only one anchored to a left margin, so entering it shunted
-        // the whole interface leftward. It now shares the axis with its siblings.
+        // Shares the screen axis with its sibling screens, so entering it does not shift the
+        // interface sideways.
         var checkboxes = new Dictionary<RunModifier, CheckBox>();
         var defsByCheckbox = new Dictionary<CheckBox, ModifierDef>();
 
@@ -197,15 +197,15 @@ public static class ModifierSelectScreen
         views.Add(clearBtn);
         views.Add(cancelBtn);
 
-        // Four pairs rather than three: Tab is how this screen is navigated, so omitting it
-        // leaves the player with no stated way to move between modifiers.
+        // Tab is listed because it is how this screen is navigated; without it the player has no
+        // stated way to move between modifiers.
         var hintPairs = new[] { ("tab", "next"), ("space", "toggle"), ("enter", "apply"), ("esc", "cancel") };
         views.AddRange(ScreenHeader.KeyHints(cardsLeft, footerY + 1, hintPairs));
 
         mainWindow.Add(views.ToArray());
 
         // Stored rather than inline so it can be detached — an anonymous lambda has no
-        // reference to unsubscribe with, which is how this outlived the screen.
+        // reference to unsubscribe with, and would outlive the screen.
         _escHandler = (s, e) =>
         {
             if (e.KeyCode == KeyCode.Esc) { onApplied(); e.Handled = true; }

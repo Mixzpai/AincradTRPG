@@ -3,7 +3,7 @@ using SAOTRPG.Systems.World;
 
 namespace SAOTRPG.Map.Spawning;
 
-// Named wilderness field bosses with canon drops. Softer than labyrinth bosses (2.0-3.0x mob HP, 1.3-1.6x ATK).
+// Named wilderness field bosses with guaranteed drops. Softer than labyrinth bosses (2.0-3.0x mob HP, 1.3-1.6x ATK).
 public static class FieldBossFactory
 {
     private record FieldBossEntry(
@@ -38,7 +38,7 @@ public static class FieldBossFactory
             "Jingling bells echo through the dead pines. A hulking red-coated giant waits beneath the fir tree.",
             IsSeasonal: true, SeasonalEventId: "christmas"),
 
-        // ── Divine Object couriers — guaranteed-drop canon bosses, stronger HP/ATK scaling.
+        // ── Divine Object couriers — guaranteed-drop bosses, stronger HP/ATK scaling.
 
         // F40 — Deusolbert Synthesis Seven's Divine Object (Conflagrant Flame Bow).
         new("phoenix_of_smolder_peak_f40", "Phoenix of the Smolder Peak", "Guardian of the Flame Bow",
@@ -54,41 +54,41 @@ public static class FieldBossFactory
             95, 4.5f, 1.8f, 'W', Color.BrightCyan, "time_piercing_sword",
             "A warden in ancient armor stands beneath a clock that has stopped. Time feels heavier here."),
 
-        // ── HF canon NM/HNM — NM=Named Monster, HNM=Hollow NM (promoted to field-boss tier).
+        // ── NM/HNM — NM=Named Monster, HNM=Hollow NM (promoted to field-boss tier).
 
-        // F77 NM Goblin Leader drops Mace of Asclepius (HF canon).
+        // F77 NM Goblin Leader drops Mace of Asclepius.
         new("goblin_leader_f77",    "Goblin Leader",    "Warchief of the Kobold Host", 77, 3.0f, 1.5f, 'G', Color.Green,        "mace_of_asclepius",
             "A hulking kobold in iron plate looms over its horde. Its mace drips with old blood."),
 
-        // F83 NM Arboreal Fear drops Demonspear: Gae Bolg (HF canon).
+        // F83 NM Arboreal Fear drops Demonspear: Gae Bolg.
         new("arboreal_fear_f83",    "Arboreal Fear",    "Horror of the Hanging Grove",  83, 3.5f, 1.6f, 'T', Color.BrightMagenta,"demonspear_gae_bolg",
             "The forest watches with too many eyes. A twisted dryad steps from the bark, spear in hand."),
 
-        // F85 HNM Abased Beast (promoted) drops Godblade: Dragonslayer (HF canon).
+        // F85 HNM Abased Beast (promoted) drops Godblade: Dragonslayer.
         new("abased_beast_f85",     "Abased Beast",     "Fallen Wyrm of the Crimson Cliff", 85, 4.0f, 1.7f, 'B', Color.BrightRed,"godblade_dragonslayer",
             "A draconic beast drags its broken wings across the stone. Still, it hungers."),
 
-        // F87 NM Night Stalker drops Saintblade: Durandal (HF canon).
+        // F87 NM Night Stalker drops Saintblade: Durandal.
         new("night_stalker_f87",    "Night Stalker",    "Predator of the Moonless Halls", 87, 4.0f, 1.7f, 'N', Color.DarkGray,   "saintblade_durandal",
             "A silent predator stalks the corridor. Light dims where it passes."),
 
-        // F94 HNM Ark Knight (promoted) drops Ragnarok's Bane: Headsman (HF canon).
+        // F94 HNM Ark Knight (promoted) drops Ragnarok's Bane: Headsman.
         new("ark_knight_f94",       "Ark Knight",       "Executioner of the Final Ark",    94, 4.8f, 1.8f, 'K', Color.White,      "ragnaroks_bane_headsman",
             "A headsman in ceremonial armor stands ready. His axe has seen a thousand endings."),
 
-        // F95 NM Gaia Breaker drops Stigmablade: Arondight (HF canon).
+        // F95 NM Gaia Breaker drops Stigmablade: Arondight.
         new("gaia_breaker_f95",     "Gaia Breaker",     "Titan of the Cracked Earth",      95, 4.5f, 1.8f, 'G', Color.Yellow,     "stigmablade_arondight",
             "The ground shudders. A stone colossus rises, its fists the size of your torso."),
 
-        // F96 HNM Eternal Dragon (promoted) drops Demonblade: Gram (HF canon).
+        // F96 HNM Eternal Dragon (promoted) drops Demonblade: Gram.
         new("eternal_dragon_f96",   "Eternal Dragon",   "The Wyrm That Refuses to Die",    96, 5.0f, 1.9f, 'D', Color.BrightMagenta,"demonblade_gram",
             "A scarred wyrm coiled on ancient bones. Gram was forged for this."),
 
-        // F98 NM Blaze Armor (Hollow Area relocated to F98) drops Yato: Masamune (HF canon).
+        // F98 NM Blaze Armor drops Yato: Masamune.
         new("blaze_armor_f98",      "Blaze Armor",      "Living Armor of the Hollow Forge",98, 5.2f, 2.0f, 'A', Color.BrightRed,  "yato_masamune",
             "Empty armor glowing with inner flame. The soul inside remembers every sword it has wielded."),
 
-        // ── HF Implement System (5): F80-F99 Implement slots dropped by roaming HNM.
+        // ── Implement System: F80-F99 Implement weapons dropped by roaming HNM.
 
         // F80 — drops Arcaneblade: Soul Binder.
         new("soul_binder_f80",      "Soul Binder",      "Wraith of the Gathered Hymns",    80, 3.8f, 1.65f, 'S', Color.BrightMagenta,"sci_arcaneblade_soul_binder",
@@ -106,13 +106,13 @@ public static class FieldBossFactory
         new("banishing_ray_f93",    "Banishing Ray",    "Sentinel of the White Horizon",   93, 4.3f, 1.75f, 'B', Color.BrightYellow,"rap_glimmerblade_banishing_ray",
             "A rapier-duellist in searing white mail. Its thrust seems to erase what it pierces."),
 
-        // ── IF-series field bosses: each guarantees a signature weapon; matching shield via LootGenerator.FieldBossSecondaryDrops.
+        // ── Element-series field bosses: each guarantees a signature weapon; matching shield via LootGenerator.FieldBossSecondaryDrops.
 
-        // F14 — Integral Series (IF endgame tier 1). Canon shield Fermat; weapons: Arc Angel, Radgrid, Gusion, After Glow.
+        // F14 — Integral Series. Shield Fermat; weapons: Arc Angel, Radgrid, Gusion, After Glow.
         new("starlight_sentinel_f14", "Starlight Sentinel", "Guardian of the Integral Dawn", 14, 3.0f, 1.5f, 'S', Color.BrightYellow, "bow_integral_arc_angel",
             "A luminous figure paces the ridge, a bow of starlight drawn across its back."),
 
-        // F25 — Nox Series (Underground Labyrinth B5F origin, IF canon).
+        // F25 — Nox Series.
         new("labyrinth_warden_f25",  "Labyrinth Warden",  "Keeper of the Underground Vault",  25, 3.2f, 1.55f, 'L', Color.BrightMagenta, "ohs_nox_radgrid",
             "A hooded warden strides out of the dark, a heavy blade resting across both shoulders."),
 
@@ -120,7 +120,7 @@ public static class FieldBossFactory
         new("crimson_forneus_f61",   "Crimson Forneus",   "Demon of the Scarlet Depths",      61, 4.0f, 1.7f, 'F', Color.BrightRed, "ohs_rosso_forneus",
             "The air reddens. A demon-knight in crimson plate levels a heavy sword and advances."),
 
-        // F87 — Yasha Series (moved from F85 to avoid Silent Edge + Abased Beast collision).
+        // F87 — Yasha Series (not F85, which already hosts Silent Edge and Abased Beast).
         new("yasha_night_demon_f87", "Yasha the Night Demon", "Demon-Warrior of the Moonless Path", 87, 4.2f, 1.75f, 'Y', Color.BrightMagenta, "ohs_yasha_astaroth",
             "A horned silhouette waits at the corridor's end. Its blade drinks the moonlight."),
 
@@ -128,45 +128,45 @@ public static class FieldBossFactory
         new("gaou_ox_king_f90",      "Gaou the Ox-King",  "Demon-King of the Horned Vanguard", 90, 4.5f, 1.85f, 'G', Color.BrightYellow, "ohs_gaou_reginleifr",
             "A towering ox-headed king stamps the stone. The ground splits beneath its hooves."),
 
-        // ── FD Character Core canon (7) — dedicated boss drops for wielder lore. Admin's Regent bumped F95→F97 (F95 crowding).
+        // ── Character weapons (7) — dedicated boss drops, each tied to the weapon's wielder.
 
-        // F60 — Klein canon. Spirit Sword Kagutsuchi wielder.
+        // F60 — Spirit Sword Kagutsuchi (Klein's).
         new("kagutsuchi_samurai_f60", "Kagutsuchi the Fire Samurai", "Ember-Wielder of the Sixtieth Summit",
             60, 2.8f, 1.5f, 'K', Color.BrightRed, "kat_spirit_kagutsuchi",
             "A samurai in smouldering armour paces the ridgeline. Embers trail from his blade's edge."),
 
-        // F70 — Klein canon. Spirit Sword Susanoo wielder.
+        // F70 — Spirit Sword Susanoo (Klein's).
         new("susanoo_stormblade_f70", "Susanoo the Storm Blade", "Thunder-Wielder of the Seventieth Vault",
             70, 3.2f, 1.6f, 'S', Color.BrightCyan, "kat_spirit_susanoo",
             "The air bristles. A storm-cloaked figure levels a katana crackling with gathered thunder."),
 
-        // F80 — Heathcliff canon. Flame Lord greatsword wielder.
+        // F80 — Flame Lord greatsword (Heathcliff's).
         new("pyre_lord_heathcliff_f80", "Pyre Lord of Heathcliff", "Red-Hand of the Eightieth Flame",
             80, 3.8f, 1.7f, 'P', Color.BrightRed, "ths_flame_lord",
             "A red-caped knight strides through the heat-shimmer, greatsword ablaze across his shoulders."),
 
-        // F85 — Yuuki canon. Macafitel rapier wielder.
+        // F85 — Macafitel rapier (Yuuki's).
         new("yuukis_echo_f85",       "Yuuki's Echo",     "Absolute-Sword Revenant of the Eighty-Fifth",
             85, 4.0f, 1.75f, 'Y', Color.BrightMagenta, "rap_macafitel",
             "A violet-haired shade lifts a rapier in salute. The air hums with a thousand remembered strikes."),
 
-        // F95 — Kirito canon Red Rose Sword (paired with Night Sky); additive alongside Warden of Stopped Hours + Gaia Breaker.
+        // F95 — Red Rose Sword (Kirito's, paired with Night Sky); shares F95 with Warden of Stopped Hours and Gaia Breaker.
         new("warden_blooming_rose_f95", "Warden of the Blooming Rose", "Petal-Wreathed Sentinel of the Ninety-Fifth",
             95, 4.3f, 1.8f, 'W', Color.BrightMagenta, "ohs_red_rose_sword",
             "A knight crowned in red petals stands watch at a trellised arch. The roses drip a slow, dark bloom."),
 
-        // F97 — Administrator canon Silvery Ruler wielder. Bumped from F95 (crowding) to previously-empty F97.
+        // F97 — Silvery Ruler (Administrator's).
         new("administrators_regent_f97", "Administrator's Regent", "Pontifex Echo of the Ninety-Seventh Cathedral",
             97, 4.2f, 1.8f, 'R', Color.White, "ohs_silvery_ruler",
             "A silver-robed figure descends a broken staircase, longsword flickering with cathedral light."),
 
-        // F98 — Kirito canon Elucidator Rouge; co-resides with Blaze Armor HNM (canon HF precedent).
+        // F98 — Elucidator Rouge (Kirito's); shares F98 with Blaze Armor.
         new("ashen_kirito_simulacrum_f98", "Ashen Kirito Simulacrum", "Red-Edge Echo of the Ninety-Eighth",
             98, 4.5f, 1.85f, 'K', Color.BrightRed, "ohs_elucidator_rouge",
             "A black-clad echo of the Black Swordsman steps out of the ash. His off-hand edge burns crimson."),
 
-        // F55 — LN vol 2 canon: crystal-cavern dragon whose ingot Lisbeth forges into
-        // Dark Repulser. Field-boss drop hook; pairs with the Lisbeth NPC handover.
+        // F55 — crystal-cavern dragon whose ingot Lisbeth forges into Dark Repulser.
+        // Field-boss drop hook; pairs with the Lisbeth NPC handover.
         new("crystal_wyrm_of_lisbeths_forge_f55", "Crystal Wyrm of Lisbeth's Forge", "Azure Dragon of the Crystallite Hollow",
             55, 3.2f, 1.6f, 'W', Color.BrightCyan, "dark_repulser",
             "A pale-blue wyrm coils inside a cavern of crystal spurs. Its scales chime when it breathes."),

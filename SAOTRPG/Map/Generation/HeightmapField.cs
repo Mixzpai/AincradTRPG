@@ -3,7 +3,7 @@ using SAOTRPG.ThirdParty;
 
 namespace SAOTRPG.Map.Generation;
 
-// OpenSimplex2 + FBm + domain warp heightmap. 500×250 × 4 bytes = ~500 KB peak per floor.
+// OpenSimplex2 + FBm + domain warp heightmap, 4 bytes a cell.
 // Eagerly materialized at pass time, stored on GameMap for UI debug overlay consumption.
 public sealed class HeightmapField
 {
@@ -15,22 +15,21 @@ public sealed class HeightmapField
     private readonly FastNoiseLite _macro;
     private readonly int _w, _h;
 
-    // LANDFORMS AT THE FLOOR'S OWN SCALE. The detail field's features are ~50 tiles across
-    // whatever the floor's size, so a 1000-tile floor was uniform crumpled noise: no hill, valley
-    // or basin larger than a screen, and nothing for water to collect in. This layer puts about
-    // three across the floor, and lakes and rivers follow it. Never finer than half the detail
-    // field's frequency, so a small floor gets one broad rise rather than a second detail layer.
+    // Landforms at the floor's own scale. The detail field's features are ~50 tiles across
+    // whatever the floor's size, so alone it would make a large floor uniform crumpled noise with
+    // no hill, valley or basin larger than a screen and nothing for water to collect in. This
+    // layer puts about three across the floor, and lakes and rivers follow it. Never finer than
+    // half the detail field's frequency, so a small floor gets one broad rise rather than a second
+    // detail layer.
     private const float MacroWavelengths = 3f;
     private const float MacroMaxFrequency = 0.01f;
     // The detail still reads on top of the landform. Two uncorrelated fields mixed with weights
     // a and b keep sigma*sqrt(a^2 + b^2) of the spread, so the sum is divided by that: the height
-    // distribution, and every biome threshold read off it, stays as wide as before (rule 279).
+    // distribution, and every biome threshold read off it, stays as wide as one field's.
     private const float MacroWeight = 0.9f, DetailWeight = 0.5f;
     private static readonly float MacroSpreadFix = 1f / MathF.Sqrt(MacroWeight * MacroWeight + DetailWeight * DetailWeight);
 
-    // The values every biome used while these were hardcoded. A biome that sets neither is
-    // bit-identical to before this knob existed, which is what keeps the blast radius to the
-    // biomes that actually ask for a different shape.
+    // Used by a biome that sets neither knob.
     public const int DefaultOctaves = 4;
     public const float DefaultWarpAmp = 30f;
 
@@ -40,9 +39,7 @@ public sealed class HeightmapField
     private const int MinOctaves = 1, MaxOctaves = 8;
     private const float MinWarpAmp = 0f, MaxWarpAmp = 120f;
 
-    // `ridgeStrength` 0 means pure FBm and takes a branch that skips the ridged field entirely,
-    // so a biome with ridging off is bit-identical to before ridging existed — which is what keeps
-    // the blast radius of this knob to the four biomes that actually ask for it.
+    // `ridgeStrength` 0 means pure FBm and takes a branch that skips the ridged field entirely.
     public HeightmapField(int seed, int w, int h, float ridgeStrength = 0f,
                           int octaves = DefaultOctaves, float warpAmp = DefaultWarpAmp)
     {
@@ -70,11 +67,11 @@ public sealed class HeightmapField
         _ridgeStrength = ridgeStrength;
         if (_ridgeStrength > 0f)
         {
-            // Ridged multifractal over the SAME warped coordinates and the same octave/frequency
+            // Ridged multifractal over the same warped coordinates and the same octave/frequency
             // settings, so ridges follow the landscape the base field describes. The seed is shared
             // with the base field, which is presentational rather than load-bearing: the ridge
             // transform (1 - |n|) maps +n and -n to the same value and so destroys the sign
-            // correlation anyway. Measured both ways — the difference is under a percent.
+            // correlation anyway.
             _ridge = new FastNoiseLite(seed);
             _ridge.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
             _ridge.SetFractalType(FastNoiseLite.FractalType.Ridged);
@@ -84,12 +81,10 @@ public sealed class HeightmapField
             _ridge.SetFrequency(0.02f);
 
             // Blending two fields of equal variance that are effectively uncorrelated leaves
-            // variance sigma^2*((1-s)^2 + s^2) — a trough at s=0.5 that costs ~29% of the spread.
-            // MEASURED before this existed: both endpoints are healthy (base stdev 0.168, pure
-            // ridged 0.166) while the mixes collapsed to 0.117-0.136, and the top and bottom
-            // terrain bands all but disappeared. So mid-strength ridging FLATTENED the map, which
-            // is the opposite of the feature. Undoing the known factor about the midpoint restores
-            // the spread at every strength and is exact at both ends (s=0 and s=1 give 1.0).
+            // variance sigma^2*((1-s)^2 + s^2) — a trough at s=0.5 that costs ~29% of the spread,
+            // so without correction mid-strength ridging would flatten the map and thin out the top
+            // and bottom terrain bands. Undoing the known factor about the midpoint restores the
+            // spread at every strength and is exact at both ends (s=0 and s=1 give 1.0).
             _ridgeSpreadFix = 1f / MathF.Sqrt((1f - _ridgeStrength) * (1f - _ridgeStrength)
                                               + _ridgeStrength * _ridgeStrength);
         }
@@ -119,11 +114,11 @@ public sealed class HeightmapField
         return v;
     }
 
-    // Parallel across columns. GetHeight is a PURE function of (x, y) — FastNoiseLite writes its
+    // Parallel across columns. GetHeight is a pure function of (x, y) — FastNoiseLite writes its
     // fields only in Set* configuration methods, so all three noise objects are read-only here — and
-    // each cell writes its own slot. Output is therefore bit-identical to the serial version
+    // each cell writes its own slot. Output is therefore bit-identical to the serial path
     // regardless of scheduling, which is the property that makes this safe to parallelise at all:
-    // there is no shared RNG whose draw order could shift. Verified by floor signature.
+    // there is no shared RNG whose draw order could shift.
     // Small maps stay serial; the high floors are 100x100 and the fork would cost more than the work.
     private const int ParallelCellThreshold = 65536;
 
@@ -147,8 +142,8 @@ public sealed class HeightmapField
 
     public static float[,] Build(WorldContext ctx)
     {
-        // StableHash: HashCode.Combine randomises per process, which made the terrain itself
-        // different on every launch for the same seed.
+        // StableHash, not HashCode.Combine: that randomises per process, so the terrain would
+        // differ on every launch for the same seed.
         int noiseSeed = SAOTRPG.Systems.RunState.RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber, "heightmap");
         var field = new HeightmapField(noiseSeed, ctx.Width, ctx.Height, RidgeStrength(ctx),
                                        Octaves(ctx), WarpAmp(ctx));
@@ -156,7 +151,7 @@ public sealed class HeightmapField
     }
 
     // Ridging is off unless the biome asks for it. A strength outside [0..1] is a broken config,
-    // not a stronger effect: it is clamped AND logged rather than silently accepted, because the
+    // not a stronger effect: it is clamped and logged rather than silently accepted, because the
     // lerp would otherwise extrapolate past pure-ridged terrain and skew every height threshold.
     private static float RidgeStrength(WorldContext ctx)
     {
@@ -170,7 +165,7 @@ public sealed class HeightmapField
     }
 
     // Same contract as RidgeStrength: an out-of-range config value is a broken file, not a
-    // stronger effect, so it is clamped AND logged rather than silently accepted.
+    // stronger effect, so it is clamped and logged rather than silently accepted.
     private static int Octaves(WorldContext ctx)
     {
         int o = ctx.Config.HeightmapOctaves;

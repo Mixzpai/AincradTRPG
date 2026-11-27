@@ -7,8 +7,8 @@ namespace SAOTRPG.Inventory.Equipment;
 public class EquipmentSlotResolver : IEquipmentSlotResolver
 {
     // The default table is identical for every resolver, so it is built once and each instance
-    // copies it. Building it per instance re-ran ~60 ToLowerInvariant allocations and the
-    // dictionary growth ladder; the copy constructor pre-sizes and skips both.
+    // copies it; the copy constructor pre-sizes, so construction skips the per-key lowercasing
+    // and the dictionary's growth.
     private static readonly Dictionary<string, EquipmentSlot> _defaultMappings = BuildDefaultMappings();
 
     private readonly Dictionary<string, EquipmentSlot> _slotMappings =
@@ -18,18 +18,11 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
     {
     }
 
-    // SPECIFIC BEFORE BROAD, and the order is the whole method.
-    //
-    // This used to try EquipmentType first and treat the sub-type properties as a fallback. Every
-    // Armor carries EquipmentType "Armor" and every Accessory carries "Accessory", and BOTH are
-    // registered as broad mappings ("armor" → Chest, "accessory" → Bracelet) — so the direct
-    // lookup never missed and the sub-type branches below were unreachable by construction.
-    //
-    // Measured on the shipped registry: all 395 equipment items landed in FOUR of the eleven
-    // declared slots (Weapon 364, Chest 22, Bracelet 6, Tool 3). Head, Legs, Feet, RightRing,
-    // LeftRing, Necklace and OffHand were unreachable, so a helmet and a chestplate fought for one
-    // slot, every ring and necklace fought for another — and every SHIELD resolved to Chest, which
-    // means the OffHand slot was always empty and TryShieldBlock could never fire.
+    // Specific before broad, and the order is the whole method. Every Armor carries
+    // EquipmentType "Armor" and every Accessory carries "Accessory", and both are registered as
+    // broad mappings ("armor" → Chest, "accessory" → Bracelet), so a broad-first lookup would
+    // never miss: helmets, rings, necklaces and shields would all land in Chest or Bracelet, and
+    // OffHand (which TryShieldBlock reads) would stay empty.
     public EquipmentSlot? ResolveSlot(EquipmentBase equipment)
     {
         // Sub-type first: "Helmet" → Head, "Shield" → OffHand, "Ring" → RightRing.
@@ -54,8 +47,8 @@ public class EquipmentSlotResolver : IEquipmentSlotResolver
         return null;
     }
 
-    // What slot a type NAME maps to, independent of any item. Exists so a checker can ask the
-    // resolver its own table rather than keeping a second copy that can drift from it.
+    // What slot a type name maps to, independent of any item. Lets the verification tools read
+    // the resolver's own table rather than keep a second copy of it.
     public EquipmentSlot? ResolveSlotForType(string? equipmentType) =>
         !string.IsNullOrWhiteSpace(equipmentType)
         && _slotMappings.TryGetValue(equipmentType, out var slot) ? slot : null;

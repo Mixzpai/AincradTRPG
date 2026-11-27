@@ -36,8 +36,8 @@ public static class TileAnimator
         [TileType.EnchantShrine] = new Animation(
             new[] { '¤', '*' }, IntervalMs: 700, new Color(255, 220, 80), PriorityTorch),
 
-        // Mechanical fan — rotating blade. Slowest step that still reads as rotation; the
-        // original 200ms was the fastest loop in the game and registered as a strobe.
+        // Mechanical fan — rotating blade. Slowest step that still reads as rotation; a faster
+        // loop reads as a strobe.
         [TileType.Lever] = new Animation(
             new[] { '|', '/', '-', '\\' }, IntervalMs: 400, new Color(180, 180, 180), PriorityFan),
 
@@ -75,7 +75,7 @@ public static class TileAnimator
     // Combat-suppression flag. MapView sets this each frame from TurnManager.LastCombatTurn.
     public static bool CombatActive { get; set; }
 
-    // Global on/off. Future Options toggle can set this; default on.
+    // Global on/off; default on.
     public static bool Enabled { get; set; } = true;
 
     // Max concurrent animated tiles within FOV (density cap).

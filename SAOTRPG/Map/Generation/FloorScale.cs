@@ -24,8 +24,8 @@ public static class FloorScale
     // F100 Ruby Palace — bespoke compact throne dims; bypasses the pipeline.
     private static (int Width, int Height) GetCastleDimensions() => (50, 35);
 
-    // ── Feature scaling: F1 ref area for legacy formulas. Width-squared dropoff
-    // means floors thin out smoothly as the disk shrinks.
+    // ── Feature scaling: counts below are tuned to a fixed reference area and scale by
+    // area ratio. Width-squared dropoff means floors thin out smoothly as the disk shrinks.
     private const int LegacyRefW = 500, LegacyRefH = 250;
     private const double ReferenceArea = LegacyRefW * (double)LegacyRefH;
 
@@ -38,7 +38,7 @@ public static class FloorScale
     public static int Scale(int baseCount, int floor) =>
         Math.Max(1, (int)(baseCount * AreaRatio(floor) + 0.5));
 
-    // ── Feature counts, tuned to F1 ref area; auto-scales with disk shrink.
+    // ── Feature counts, tuned to the reference area; auto-scales with disk shrink.
     public static int TreeClusters(int floor, Random rng) => Scale(55, floor) + rng.Next(0, 8);
     public static int RockClusters(int floor, Random rng) => Scale(12, floor) + rng.Next(0, 4);
     public static int LakeCount(int floor, Random rng) => Math.Max(0, Scale(6, floor) - 1) + rng.Next(0, 2);

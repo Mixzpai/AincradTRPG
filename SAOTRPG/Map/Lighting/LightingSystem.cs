@@ -4,14 +4,11 @@ using SAOTRPG.Systems.Diagnostics;
 namespace SAOTRPG.Map.Lighting;
 
 // Per-tile RGB light. Shadowcaster-driven FOV per emissive tile (+ player torch), smoothstep
-// falloff, combined by SCREEN blending rather than by adding and clamping. Owned by GameMap;
+// falloff, combined by screen blending rather than by adding and clamping. Owned by GameMap;
 // recomputed on UpdateVisibility, and cached between turns by LightingSystem.Cache.cs.
-//
-// The header used to say "linear falloff, summed per channel, clamped to [0,255]" — which is a
-// description of the two behaviours the body's own comments now explain were defects.
 public sealed partial class LightingSystem
 {
-    // Accumulated light at a tile, stored as float RGB to allow clean summation.
+    // Accumulated light at a tile, stored as float RGB so combining lights does not round per step.
     public struct LightRgb
     {
         public float R, G, B;
@@ -21,69 +18,48 @@ public sealed partial class LightingSystem
     public int Width { get; }
     public int Height { get; }
 
-    // NOTHING IN THIS FILE MAY READ A WALL CLOCK, and the reason is the call site rather than
-    // taste. The field is written by Update, and Update is reached from GameMap.UpdateVisibility
-    // and nowhere else — only when a TURN passes — so a wall-clock term in here is SAMPLED AT
-    // TURN BOUNDARIES whatever rate it claims. This carried a torch "flickering at 4 Hz", a ±1
-    // radius pulse on the same clock and a shrine breathing on a 3-second sine; driven, a still
-    // player painted 46 frames across 2.3 s and ten 250 ms flicker phases while the field was
-    // evaluated ZERO times. None of it could reach anyone who had stopped walking, which is
-    // exactly when a player is looking at the screen.
-    //
-    // Making it live is unaffordable, not merely costly: the frame would have to repaint at the
-    // animation's rate for as long as ANY light is on screen — always, the player carries one —
-    // and a drawn frame costs a flat ~25-30 ms flush at 316x91 whatever changed in it. Four
-    // forced frames a second is ~10% of wall clock, permanently, to move the 1.7% of the viewport
-    // a point light actually touches. MapView agrees from the other side: its only light-related
-    // invalidator is the TURN STAMP, so light moving without the turn would go stale on the
-    // frame-blit path in silence.
-    //
-    // Removing the terms also removed real churn, and made the field deterministic for a given
-    // seed. Measured at 316x91 on a midnight floor, Debug: up to 456 of 28,756 viewport cells
-    // moved between two evaluations of the SAME turn (262 past the renderer's own 8/255
-    // quantization), and thirty still turns re-resolved 2,540-2,912 tile-layer cells. Both are
-    // now 0. TileVerifyProbe --light is the standing check, in both directions.
+    // Nothing in this file may read a wall clock. The field is written by Update, which is
+    // reached from GameMap.UpdateVisibility and nowhere else, only when a turn passes, so a
+    // wall-clock term here would be sampled at turn boundaries whatever rate it claims, and
+    // frozen for a player who has stopped walking. Making such a term live would force the frame
+    // to repaint at the animation's rate for as long as any light is on screen (always: the
+    // player carries one), and MapView's only light-related invalidator is the turn stamp, so
+    // light moving without the turn would go stale on the frame-blit path. A turn-driven field is
+    // also deterministic for a given seed.
     //
     // ── Headroom: a light may drive a cell past its own colour ────────────────────────────
-    // LightFull is the light value at which ApplyLighting renders a tile at EXACTLY its authored
+    // LightFull is the light value at which ApplyLighting renders a tile at exactly its authored
     // colour (fg = base x light / LightFull). Everything in this block exists so that a value
-    // ABOVE it is reachable: without headroom there is no such thing as bright, only less dark,
+    // above it is reachable: without headroom there is no such thing as bright, only less dark,
     // and standing in torchlight produces the same pixels as standing in full ambient noon.
     //
-    // Two halves, and neither works alone. The COMBINE's ceiling moves to LightCeiling, so
-    // overlapping lights approach 510 rather than 255; a lone source is untouched, because
-    // Screen(0, b) = b at any ceiling, and that is what leaves open daylight byte-identical.
-    // And a SOURCE emits above full, because the combine cannot exceed its own inputs by much
-    // when one of them is already near the ceiling — raising the ceiling alone moves a campfire's
-    // own cell by 3%. That is Brogue's shape: its light colours are declared at 150-180 on a
-    // scale where 100 is full, and paintLight accumulates them with a bare +=.
+    // Two halves, and neither works alone. The combine's ceiling is LightCeiling, so overlapping
+    // lights approach 510 rather than 255; a lone source is untouched, because Screen(0, b) = b
+    // at any ceiling, which leaves open daylight unchanged. And a source emits above full,
+    // because the combine cannot exceed its own inputs by much when one of them is already near
+    // the ceiling.
     //
-    // WHAT WAS NOT TAKEN FROM BROGUE: adjustedLightValue, its sqrt knee above 150%. That exists
-    // because paintLight has NO ceiling at all, so a room with several lamps runs away. This
-    // combine is already a soft knee and cannot pass LightCeiling, so a second knee on an
-    // already-bounded quantity would only spend the headroom the first one leaves.
+    // There is no second soft knee above full: the combine is already a soft knee and cannot
+    // pass LightCeiling, so a second knee on an already-bounded quantity would only spend the
+    // headroom the first one leaves.
     public const float LightFull = 255f;
 
-    // MUST STAY ABOVE SourceOverdrive x the brightest emission, and that is not a style rule:
-    // Screen(a, b) = a + b - ab/C has slope (1 - b/C) in a, so an input past the ceiling makes
-    // the combine DECREASE as more light arrives. That is a gradient inversion, not a clamp.
-    // Asserted from MaxSourceEmission by TileVerifyProbe --overdrive rather than left as prose.
+    // Must stay above SourceOverdrive x the brightest emission: Screen(a, b) = a + b - ab/C has
+    // slope (1 - b/C) in a, so an input past the ceiling makes the combine decrease as more light
+    // arrives. That is a gradient inversion, not a clamp.
     public const float LightCeiling = LightFull * 2f;
 
     // How far past full a source emits at full strength. 1.6 puts a midnight torch's own cell at
-    // 1.40x the tile's authored colour and a campfire's at 1.61x, while leaving noon at 1.10x
-    // ambient, under the 1.25x SeedProbe holds the daylight torch to.
+    // about 1.4x the tile's authored colour and a campfire's at about 1.6x, while a noon torch
+    // stays near ambient (about 1.1x).
     private const float SourceOverdrive = 1.6f;
 
-    // Mid-point of the four warm whites the old flicker alternated between; they spanned 15 per
-    // channel, under two of the renderer's colour steps.
+    // Warm-white torch colour.
     private const float TorchBaseR = 220f, TorchBaseG = 200f, TorchBaseB = 160f;
 
-    // MEASUREMENT SEAM, in the same family as SourcesLastUpdate: the largest channel any source
-    // can put into the grid, overdrive included. DERIVED from the emission table and the torch
-    // rather than hand-written, so a new emissive type or a brighter torch is covered without
-    // anyone editing a list — the check that reads it is asserting a property of the combine, and
-    // a hand-copied maximum would let that property lapse in silence.
+    // The largest channel any source can put into the grid, overdrive included. Derived from the
+    // emission table and the torch, so a new emissive type or a brighter torch is covered without
+    // editing a list. Read by the verification probes.
     public static float MaxSourceEmission { get; } = ComputeMaxSourceEmission();
 
     private static float ComputeMaxSourceEmission()
@@ -99,33 +75,28 @@ public sealed partial class LightingSystem
         return m * SourceOverdrive;
     }
 
-    // Ambient via DayNightCycle.Ambient. The player casts NO light of their own: the carried
+    // Ambient via DayNightCycle.Ambient. The player casts no light of their own: the carried
     // light is whatever an equipped item declares (EquipmentBase.LightRadius), and a player
     // carrying none walks in whatever the sky gives them. The flame still shrinks with
     // TorchInfluence as the sun climbs, which is what stops it being a searchlight at noon.
     //
-    // THE SKY IS NOT OVERDRIVEN, deliberately. Ambient tops out at (180, 175, 150), so open
-    // daylight renders every tile at 0.71x its authored colour and always has; lifting that
-    // would move every cell of every floor and re-open the banding, vignette and sight-edge
-    // profiles that are all measured against it. The headroom belongs to whatever is meant to
-    // read as a light SOURCE.
+    // The sky is not overdriven: ambient tops out at (180, 175, 150), so open daylight renders
+    // every tile at 0.71x its authored colour, and the banding, vignette and sight-edge tuning
+    // all assume that. The headroom belongs to whatever is meant to read as a light source.
     private static LightRgb TorchColor()
     {
-        // Scaled by how dark it is. Flat, this added ~220 per channel at every hour, so at noon
-        // the player stood at the centre of a thirteen-tile disc clipped at 255 — brighter than
-        // the daylight around it, and washing out every sun shadow within reach of the one
-        // viewer who could see them.
+        // Scaled by how dark it is, so at noon the flame is no brighter than the daylight around
+        // it and does not wash out the sun shadows around the player.
         float k = DayNightCycle.TorchInfluence * SourceOverdrive;
         return LightRgb.Of(TorchBaseR * k, TorchBaseG * k, TorchBaseB * k);
     }
 
     // Shrinks with the flame. A dim torch that still reached twelve tiles would read as a hole
     // in the daylight rather than as a flame; this also cuts the midday shadowcast.
-    // `full` is the equipped item's own radius. Reach does NOT breathe: a ring of cells flips
-    // between lit and unlit when it moves, which was the largest single contributor to the
-    // churn above.
-    // The daylight floor is a THIRD of the item's reach rather than a flat 4, so a bigger
-    // lantern stays bigger at noon; a flat floor made every tier identical in daylight.
+    // `full` is the equipped item's own radius. Reach does not animate: a ring of cells flips
+    // between lit and unlit whenever it moves.
+    // The daylight floor is a third of the item's reach rather than a flat value, so a bigger
+    // lantern stays bigger at noon; a flat floor would make every tier identical in daylight.
     private static int TorchRadius(int full)
     {
         int floorReach = Math.Max(2, full / 3);
@@ -133,14 +104,14 @@ public sealed partial class LightingSystem
             (int)MathF.Round(floorReach + (full - floorReach) * DayNightCycle.TorchInfluence));
     }
 
-    // Row-major (y*Width + x). Was [x, y], which strided by Height in all three hot loops:
-    // the ambient refill, AddSource's merge, and the map tile loop's per-cell read. Row-major
-    // makes each of them a contiguous walk and lets the refill go through Span.Fill.
+    // Row-major (y*Width + x), so the three hot loops (the ambient refill, AddSource's merge,
+    // and the map tile loop's per-cell read) are contiguous walks and the refill can go through
+    // Span.Fill.
     //
-    // PATH-D-PORT: an RGB light field at ONE VALUE PER LOGICAL TILE, multiplied onto cells in
-    // ApplyLighting. A pixel renderer would naturally interpolate between tile centres, which is a
-    // different look, not a free upgrade — the hard tile edges are what make light read as
-    // roguelike illumination. Keep the layout row-major to match every other per-cell grid.
+    // The picture depends on one RGB value per logical tile, multiplied onto cells in
+    // ApplyLighting. Interpolating between tile centres would be a different look: the hard tile
+    // edges are what make light read as roguelike illumination. The layout stays row-major to
+    // match every other per-cell grid.
     private readonly LightRgb[] _light;
 
     // Emissive coords come from GameMap.EmissiveSourcesNear, which hands back lava already
@@ -157,25 +128,18 @@ public sealed partial class LightingSystem
         _light.AsSpan().Fill(LightRgb.Of(ar, ag, ab));
     }
 
-    // A PROBE SEAM FOR THE ONE FAILURE THIS LAYER CANNOT SHOW YOU: a cell the renderer draws but
-    // the fill never reached keeps whatever was in the grid, which looks like light rather than
-    // like a bug. Narrowing the lit region is exactly the change that could cause it, so the
-    // check pokes a sentinel into every cell it cares about, runs a turn, and looks for
-    // survivors.
-    //
-    // Deliberately NOT a general setter: it writes one fixed value and nothing else, so it cannot
-    // be used to fake a light level — the same reasoning as SourcesLastUpdate being read-only.
+    // Used by the verification probes to mark a cell unwritten, since a cell the fill never
+    // reached keeps whatever was in the grid and looks like light. Not a general setter: it
+    // writes one fixed value and nothing else, so it cannot be used to fake a light level.
     private const float UnwrittenSentinel = -12345f;
 
     public void MarkUnwrittenForVerification(int x, int y) =>
         _light[y * Width + x] = LightRgb.Of(UnwrittenSentinel, UnwrittenSentinel, UnwrittenSentinel);
 
-    // ANY NEGATIVE VALUE, NOT THE SENTINEL'S OWN. Testing for the poked value back cannot see the
-    // failure it exists to find: AddSource screens a source onto whatever is in the cell, and
-    // Screen(-12345, b) lands between -12345 and -2061 for every emission this game can produce —
-    // still absurd, but no longer the sentinel, so a cell the fill missed INSIDE A LIGHT POOL read
-    // as written. That is the only place the defect is visible, since an unfilled cell nothing
-    // lights just keeps an older ambient. Nothing else in the field is ever negative: ambient is
+    // Any negative value, not the sentinel's own: AddSource screens a source onto whatever is in
+    // the cell, and Screen(-12345, b) lands between -12345 and -2061 for every emission this game
+    // can produce, so an unfilled cell inside a light pool holds some other negative value rather
+    // than the sentinel itself. Nothing else in the field is ever negative: ambient is
     // non-negative, the sweep kernel is a partition of unity so `arriving` is at most 1, the
     // per-channel loss is at most the ambient it is subtracted from, and Screen of two
     // non-negatives is non-negative.
@@ -184,17 +148,13 @@ public sealed partial class LightingSystem
     // Fast path for render loops that have already done a bounds check.
     public LightRgb GetLightUnchecked(int x, int y) => _light[y * Width + x];
 
-    // How many point lights the last Update actually added — the torch plus every emissive tile
-    // that survived the reach gates. A measurement seam, not state: a floor is lit PER TILE and
-    // lava is a tile, so this is the number that decides what a turn costs, and a check that
-    // recomputes the gate for itself instead of reading this cannot notice the gate widening.
+    // How many point lights the last Update added: the torch plus every emissive source that
+    // survived the reach gates. GameMap.UpdateVisibility reads it to tell whether any placed
+    // light is in reach; the verification probes read it too.
     public int SourcesLastUpdate { get; private set; }
 
-    // HOW MANY TIMES THE FIELD WAS EVALUATED. A measurement seam, and the only way to answer the
-    // question this layer cannot answer from outside: the light grid is written by Update alone,
-    // and Update is reached only from GameMap.UpdateVisibility — i.e. from a TURN. A frame does
-    // not evaluate it, so anything in here that reads a wall clock is sampled at turn boundaries
-    // and is frozen for a player who is standing still.
+    // How many times the field was evaluated since the last drain. Read by the verification
+    // probes.
     public static int UpdatesRun { get; private set; }
 
     public static int DrainUpdatesRun()
@@ -207,64 +167,38 @@ public sealed partial class LightingSystem
     // ROI radius matches active FOV so all visible tiles are lit (FOV 4× the viewport).
     private static int LightingRoiRadius => DayNightCycle.FovRadius + 10;
 
-    // HOW MANY STEPS OF UPWIND HISTORY A SHADOW NEEDS BEFORE IT IS INDISTINGUISHABLE FROM ONE
-    // SWEPT FROM INFINITY.
+    // How many steps of upwind history a shadow needs before it is indistinguishable from one
+    // swept from infinity: the smallest m for which `ambient x strength x decay^m` falls under
+    // the renderer's colour quantizer half step, across every sky state (the factors' worst cases
+    // never co-occur: a slow decay only arrives with a weak shadow under a dim sky, because both
+    // ramp through twilight).
     //
-    // THE BAR IS THE RENDERER'S OWN COLOUR QUANTIZER, so this number is not free-standing: it is
-    // the smallest m for which `ambient x strength x decay^m` falls under that quantizer's half
-    // step, evaluated across every sky state rather than bounded by combining each factor's worst
-    // case (those never co-occur — a slow decay only ever arrives with a weak shadow under a dim
-    // sky, because both ramp through twilight).
-    //
-    // IT ONLY EVER WIDENS Y, SO ONLY THE Y-AXIS REQUIREMENT CAN BE ITS JUSTIFICATION — and that
-    // is what the value 76 got wrong. The sweep steps along the sky body's MAJOR axis, so a state
-    // charges the axis its own bearing runs along and no other. Evaluated per axis over all 58
-    // sky states: X (near-horizontal bearings) needs 76, worst at the first moon bearing after
-    // sunset — a still-bright sky, ambient 129, under a weak but very long shadow (strength
-    // 0.128, decay 0.963). Y (near-vertical bearings) needs 45, worst at moon bearing 4. A
-    // near-vertical sun is high, and a high light decays fast.
-    //
-    // So 76 was the X number spent on the Y reach, and it bought nothing: driven end to end,
-    // pinning this at 0 leaves the worst convergence error at a DRAWN cell exactly where 76 left
-    // it — 0.1228 of 255 on F7 Forest and 0.0079 on F62 Volcanic, against a half step of 1 —
-    // because the worst case is horizontal and the X extent is the full ROI either way.
-    //
-    // 45 is the measured Y requirement, and it is deliberately met by the swept region ALONE
-    // (reach - drawn = 61 rows at FovRadius 176) rather than by leaning on CachePad's further 72.
-    // SeedProbe recomputes the requirement from DayNightCycle's own dials and asserts this covers
-    // it, so a slower decay, a deeper shadow or a brighter sky fails loudly instead of shimmering.
-    //
-    // IF LightQuantizeStep MOVES, THIS MOVES — and so does the X figure above. Measured:
-    //
-    //   half step   X needs   Y needs
-    //         4.0        41        26
-    //         2.0        57        34
-    //         1.0        76        45      <- LightQuantizeStep 2, shipped
-    //         0.5        94        55
+    // It only widens Y, so only the Y-axis requirement justifies it. The sweep steps along the
+    // sky body's major axis, so a state charges only the axis its own bearing runs along, and a
+    // near-vertical bearing belongs to a high body, whose shadow decays fast; the X extent is the
+    // full ROI either way. 45 rows is the history the Y axis needs at LightQuantizeStep 2, met by
+    // the swept region alone rather than by leaning on CachePad. It must be re-derived if
+    // LightQuantizeStep or DayNightCycle's shadow dials move.
     private const int ShadowHistorySteps = 45;
 
-    // HOW FAR ABOVE OR BELOW THE PLAYER THE GROUND HAS TO BE LIT AT ALL.
+    // How far above or below the player the ground has to be lit at all.
     //
-    // Same argument as EmissiveRowReach below, one level up: light is only READ for cells the
+    // Same argument as EmissiveRowReach below, one level up: light is only read for cells the
     // tile loop draws, the camera is player-centred and unclamped, and the viewport is wide and
-    // SHORT — so the rows worth filling are half a viewport height plus enough history for the
+    // short, so the rows worth filling are half a viewport height plus enough history for the
     // shadows arriving at them to be right. The horizontal extent stays the full ROI because
-    // viewport WIDTH is not derivable from anything the lighting can see.
+    // viewport width is not derivable from anything the lighting can see.
     //
     // Two things this must clear: the drawn rows (FovRadius / FovMultiplier is h/2 + 2), and the
-    // rows a light SOURCE may write into, which is EmissiveRowReach + MaxSourceRadius — filling
-    // less than that would leave a source screening onto ambient nobody refreshed.
+    // rows a light source may write into, which is EmissiveRowReach + MaxSourceRadius; filling
+    // less than that would leave a source screening onto ambient nobody refreshed. The history
+    // term covers the sources at every viewport size; the second arm binds only if
+    // ShadowHistorySteps falls below 24.
     //
-    // DO NOT CREDIT THE SECOND ARM WITH DOING THAT: it is drawn + 40 against a history term of
-    // drawn + 61, so the Max never picks it at any viewport size, and the outer Min would defeat
-    // it where the ROI binds anyway. It is belt-and-braces that goes live only if
-    // ShadowHistorySteps ever falls below 24. The history term is what covers the sources today.
-    //
-    // AND THERE IS NO SUCH FLOOR IN X, measured: FillAmbientRegion stops at px + ROI while the
-    // loop above admits a source at dx = ROI exactly, so that source writes up to 16 columns past
-    // the fill. Nothing draws them — a visible cell is inside FovRadius, which is ROI - 10 — so
-    // this is left alone rather than paid for over columns nobody reads. TileVerifyProbe --light
-    // section 5 is where it is pinned, because it is also what makes IsUnwritten testable.
+    // There is no such floor in X: FillAmbientRegion stops at px + ROI while the loop above
+    // admits a source at dx = ROI exactly, so that source writes up to 32 columns past the fill.
+    // Nothing draws them (a visible cell is inside FovRadius, which is ROI - 10), so those
+    // columns are left unfilled.
     private static int ShadingRowReach
     {
         get
@@ -276,29 +210,35 @@ public sealed partial class LightingSystem
         }
     }
 
-    // MEASUREMENT SEAM, in the same family as SourcesLastUpdate: how many rows above and below
-    // the player the sweep fills, and how many of them the renderer will draw. A check that
-    // recomputed either for itself could not notice the reach being narrowed, which is the whole
-    // failure this pair exists to catch. Read-only and derived — there is nothing here to set.
+    // How many rows above and below the player the sweep fills, and how many of them the
+    // renderer draws. Read by the verification probes.
     public static int ShadowRowReach => ShadingRowReach;
     public static int DrawnRowReach => DayNightCycle.FovRadius / DayNightCycle.FovMultiplier;
 
-    // HOW FAR ABOVE OR BELOW THE PLAYER A LIGHT SOURCE CAN STILL MATTER.
+    // How far above or below the player a light source can still matter.
     //
-    // The ROI above is a SQUARE of ~186, but a source only changes cells within its own radius,
-    // and a cell is only read if the renderer draws it — and the drawn region is a wide, SHORT
+    // The ROI above is a square, but a source only changes cells within its own radius, and a
+    // cell is only read if the renderer draws it, and the drawn region is a wide, short
     // viewport. `Camera.CenterOn` does not clamp, so a drawn cell is always within half a
     // viewport height of the player; MapView derives FovRadius from exactly that height as
     // (h/2 + 2) * FovMultiplier, so the row reach falls out here with nothing new having to be
     // published from the view.
     //
-    // It matters because a floor is lit PER TILE and lava is a tile: a Volcanic floor carries 220
-    // of them, and a square ROI made a single turn run ~193 shadowcasts. The horizontal reach
-    // stays the full ROI because viewport WIDTH is not derivable from anything the lighting can
-    // see, and the generous 8-cell pad is there so a wider FovMultiplier or an odd viewport
-    // height cannot quietly clip a light off the top of the screen.
+    // It matters because a floor is lit per tile and lava is a tile, so a square ROI would run a
+    // shadowcast for every lava group across it. The horizontal reach stays the full ROI because
+    // viewport width is not derivable from anything the lighting can see, and the 8-cell pad is
+    // there so a wider FovMultiplier or an odd viewport height cannot quietly clip a light off
+    // the top of the screen.
     private static int EmissiveRowReach =>
         DayNightCycle.FovRadius / DayNightCycle.FovMultiplier + MaxSourceRadius + 8;
+
+    // Bumped when an Update's inputs differ from the last one's, so an unchanged stamp means an
+    // unchanged field: sight past the night radius reads the field and keys its reuse on this.
+    public int FieldStamp { get; private set; }
+    private (GameMap?, SkyShade, float, int, bool, bool, int, int, int, int) _stampKey;
+
+    // The region the last Update wrote, half-open; outside it the grid holds an earlier turn.
+    public (int X0, int Y0, int X1, int Y1) LitRegion { get; private set; }
 
     // `carriedLightRadius` is the widest radius the player's equipped gear declares. Zero is
     // the ordinary case for a player with no light: no source is added at all, and the only
@@ -307,6 +247,11 @@ public sealed partial class LightingSystem
     {
         using var _ = Profiler.Begin("Lighting.Update");
         UpdatesRun++;
+        var key = (map, DayNightCycle.ShadeAt(DayNightCycle.CurrentTurn), DayNightCycle.QuantizedSunLevel,
+                   map.SightVersion, map.HasSky, ShadingEnabled,
+                   DayNightCycle.FovRadius, playerX, playerY, carriedLightRadius);
+        if (key != _stampKey) { _stampKey = key; FieldStamp++; }
+        LitRegion = Roi(playerX, playerY);
         FillAmbientRegion(map, playerX, playerY);
         int sources = 0;
         if (carriedLightRadius > 0)
@@ -332,25 +277,25 @@ public sealed partial class LightingSystem
             if (dy > rowReach || dy < -rowReach) continue;   // too far up or down to reach a drawn cell
             if (dx * dx + dy * dy > roiSq) continue; // skip distant lights
             int radius = emission.Value.Radius;
-            // Whether a source gets a soft edge is decided from its BASE radius, which is why
+            // Whether a source gets a soft edge is decided from its base radius, which is why
             // this is read before the grouping below widens it. A landmark's edge softness must
             // not depend on how many tiles happened to land in its group.
             bool bigEnoughToSoften = radius >= PenumbraMinRadius;
             // A grouped lava source stands for several tiles, so it reaches further — but at the
-            // SAME brightness. A wider fire, not a brighter one: scaling the colour by the count
-            // is what produced the blown-out white field this grouping exists to remove.
+            // same brightness. A wider fire, not a brighter one: scaling the colour by the count
+            // would bring back the blown-out white field this grouping exists to prevent.
             if (count > 1)
                 radius = Math.Min(MaxSourceRadius, radius + Math.Min(3, (count - 1) / 2));
             // Dimmed by daylight like the torch, but on a higher floor: a campfire or a lava pool
-            // is something the player navigates BY, so it keeps a readable glow at noon where a
+            // is something the player navigates by, so it keeps a readable glow at noon where a
             // carried flame does not.
             float k = DayNightCycle.EmissiveInfluence * SourceOverdrive;
             var c = emission.Value.Color;
-            // A GROUPED source does not get a softened edge, and that is not a cost dodge.
-            // The penumbra exists where ONE light defines a boundary — a torch behind a corner,
-            // a campfire alone in a room. A lava group is several overlapping lights in the open,
-            // whose edges already blend into each other under the screen combine, so softening
-            // them buys an indistinguishable picture for a real share of the turn.
+            // A grouped source does not get a softened edge. The penumbra matters where one
+            // light defines a boundary — a torch behind a corner, a campfire alone in a room. A
+            // lava group is several overlapping lights in the open, whose edges already blend
+            // into each other under the screen combine, so softening them would cost a share of
+            // the turn for an indistinguishable picture.
             AddSource(map, sx, sy, radius, LightRgb.Of(c.R * k, c.G * k, c.B * k),
                       softenEdges: count == 1 && bigEnoughToSoften, isStatic: true);
             sources++;
@@ -361,57 +306,61 @@ public sealed partial class LightingSystem
 
     // Only fill ambient in a region around the player — not the entire map.
     //
-    // Flat, this is the sky and nothing else: one colour per cell, so a tile under a canopy came
-    // out as bright as the clearing beside it. LightingSystem.Shading.cs adds the direction — a
-    // sun bearing that lays graded shadows away from anything blocking sight, plus contact
-    // shading in corners — and it writes into the same grid, so every consumer downstream reads
-    // one lighting model rather than two.
+    // The flat fill is the sky alone, one colour per cell. LightingSystem.Shading.cs adds the
+    // direction — a sun bearing that lays graded shadows away from anything blocking sight, plus
+    // contact shading in corners — and writes into the same grid, so every consumer downstream
+    // reads one lighting model rather than two.
     private void FillAmbientRegion(GameMap map, int px, int py)
     {
         using var _ = Profiler.Begin("Lighting.FillAmbient");
-        var (ar, ag, ab) = DayNightCycle.Ambient;
-        var ambient = LightRgb.Of(ar, ag, ab);
-        int rows = ShadingRowReach;
-        int x0 = Math.Max(0, px - LightingRoiRadius);
-        int x1 = Math.Min(Width, px + LightingRoiRadius);
-        int y0 = Math.Max(0, py - rows);
-        int y1 = Math.Min(Height, py + rows);
+        var (x0, y0, x1, y1) = Roi(px, py);
         if (x1 <= x0 || y1 <= y0) return;
 
         if (ShadingEnabled)
         {
             // Through the cache rather than straight to the sweep: the field is a pure function
             // of the map and the sky, so most turns can restore it instead of recomputing it.
-            FillFromCache(map, ambient, x0, y0, x1, y1);
+            FillFromCache(map, px, py, x0, y0, x1, y1);
             return;
         }
 
         // The flat fill overwrites what the cache describes, and a later hit re-bases only the
         // source boxes — so the cache cannot survive this path.
         DropCache();
+        var (ar, ag, ab) = DayNightCycle.Ambient;
+        var ambient = LightRgb.Of(ar, ag, ab);
         var light = _light.AsSpan();
         for (int y = y0; y < y1; y++)
             light.Slice(y * Width + x0, x1 - x0).Fill(ambient);
     }
 
-    // Scratch per-source — diagonals visited by two quadrants don't double-light.
-    // Sized to (2*MaxSourceRadius+1)^2 with local-coord mapping (worldX - originX).
+    // The region lit around a player standing at (px, py), clipped to the map.
+    private (int X0, int Y0, int X1, int Y1) Roi(int px, int py)
+    {
+        int rows = ShadingRowReach;
+        return (Math.Max(0, px - LightingRoiRadius), Math.Max(0, py - rows),
+                Math.Min(Width, px + LightingRoiRadius), Math.Min(Height, py + rows));
+    }
+
+    // Scratch per-source — diagonals visited by two quadrants don't double-light. A source's
+    // radius counts rows; a cell is Aspect times taller than wide, so it reaches Aspect x radius
+    // columns and the pool renders round, as sight does (see Shadowcaster). The box is
+    // (2 x MaxSourceReachX + 1) columns by (2 x MaxSourceRadius + 1) rows, local = world - origin.
     private float[]? _scratchR, _scratchG, _scratchB;
     private const int MaxSourceRadius = 16;
-    private const int ScratchStride = MaxSourceRadius * 2 + 1;
-    private const int ScratchLen = ScratchStride * ScratchStride;
+    private const int Aspect = (int)Generation.FloorMask.CellAspectRatio;
+    private const int MaxSourceReachX = Aspect * MaxSourceRadius;
+    private const int ScratchStride = MaxSourceReachX * 2 + 1;
+    private const int ScratchRows = MaxSourceRadius * 2 + 1;
+    private const int ScratchLen = ScratchStride * ScratchRows;
 
-    // The per-cell reveal for one source, as a STRUCT sink so the shadowcaster inlines it. It was
-    // a delegate — one indirect call per revealed cell, the same shape that was the largest
-    // single cost of the player's own FOV until GameMap's sink became a struct.
+    // The per-cell reveal for one source, as a struct sink so the shadowcaster inlines it rather
+    // than making an indirect call per revealed cell.
     //
-    // THE SHADOWCASTER REVEALS MORE THAN THE SOURCE LIGHTS. Its reach is an aspect-corrected
-    // ellipse, twice as wide as it is tall, while a source's falloff is a plain circle of its
-    // radius — so about a quarter of what it reveals (26% of 2.6M reveals, measured over four
-    // walks) lies past the circle and contributes nothing. Every one of those cells used to pay a
-    // sqrt to find out. `d2 >= r*r` says the same thing before any arithmetic, and it is exact:
-    // for every radius up to MaxSourceRadius, every d2 >= r*r gave a falloff <= 0 on the old sqrt
-    // path (19,320 pairs checked), so nothing that contributed is skipped.
+    // The falloff is computed in columns, so it is the shadowcaster's own aspect-corrected
+    // ellipse: d2 = dx^2 + (Aspect dy)^2 against (Aspect r)^2 admits exactly the cells the cast
+    // reveals bar its rim, where the falloff is 0. A circle in cells would draw as an oval twice
+    // as tall as wide on a 2:1 cell and leave the cast's outer quarter unlit.
     private struct SourceSink : Shadowcaster.IFovSink
     {
         public int Sx, Sy, RadiusSq;
@@ -421,18 +370,18 @@ public sealed partial class LightingSystem
         public void Reveal(int x, int y)
         {
             int dx = x - Sx, dy = y - Sy;
-            int d2 = dx * dx + dy * dy;
+            int d2 = dx * dx + Aspect * Aspect * dy * dy;
             if (d2 >= RadiusSq) return;
             float falloff = 1f - SqrtLut[d2] * InvRadius;
             if (falloff <= 0f) return;
-            // Smoothstep rather than the raw linear ramp. Linear falloff ends in a hard rim — the
-            // torch pool stopped at a visible circular edge one step wide — because the value is
-            // still falling at full rate when it reaches zero. This flattens both ends: a steadier
+            // Smoothstep rather than the raw linear ramp. Linear falloff ends in a hard rim — a
+            // visible circular edge one step wide — because the value is still falling at full
+            // rate when it reaches zero. This flattens both ends: a steadier
             // core, and an edge that fades into the ambient instead of meeting it.
             falloff = falloff * falloff * (3f - 2f * falloff);
-            // d2 < RadiusSq <= MaxSourceRadius^2 keeps |dx| and |dy| under MaxSourceRadius, so the
-            // local index is inside the scratch box by construction.
-            int idx = (dy + MaxSourceRadius) * ScratchStride + (dx + MaxSourceRadius);
+            // d2 < RadiusSq <= MaxSourceReachX^2 keeps |dx| under MaxSourceReachX and |dy| under
+            // MaxSourceRadius, so the local index is inside the scratch box by construction.
+            int idx = (dy + MaxSourceRadius) * ScratchStride + (dx + MaxSourceReachX);
             float cr = ColorR * falloff, cg = ColorG * falloff, cb = ColorB * falloff;
             if (cr > R[idx]) R[idx] = cr;
             if (cg > G[idx]) G[idx] = cg;
@@ -440,15 +389,11 @@ public sealed partial class LightingSystem
         }
     }
 
-    // A REGION BUFFER GROWS GEOMETRICALLY, NEVER TO EXACTLY WHAT THIS FRAME NEEDS. The padded
+    // A region buffer grows geometrically, never to exactly what this frame needs. The padded
     // region un-clips one row or one column at a time as the player walks away from a map edge,
-    // so `new T[need]` reallocated a multi-megabyte LOH array every few steps for the first
-    // several hundred steps of a floor: 293 MB over a 1,650-step traversal, mean 187 KB per step.
-    // Doubling settles each buffer after a handful of growths. Only [0, need) is ever indexed, so
-    // slack at the end is inert.
-    //
-    // It is invisible to a stationary or short-oscillation test — those never leave the region
-    // already allocated and read a couple of hundred bytes a step.
+    // so sizing to the exact need would reallocate a multi-megabyte LOH array every few steps for
+    // the first several hundred steps of a floor. Doubling settles each buffer after a handful
+    // of growths. Only [0, need) is ever indexed, so slack at the end is inert.
     private static T[] EnsureCapacity<T>(T[]? buf, int need)
     {
         if (buf != null && buf.Length >= need) return buf;
@@ -467,10 +412,10 @@ public sealed partial class LightingSystem
             return;
         }
         CastIntoScratch(map, sx, sy, radius, color, softenEdges);
-        int originX = sx - MaxSourceRadius, originY = sy - MaxSourceRadius;
+        int originX = sx - MaxSourceReachX, originY = sy - MaxSourceRadius;
 
         // Additively merge scratch into grid, then clear scratch (local→world coord remap).
-        int x0 = Math.Max(0, sx - radius), x1 = Math.Min(Width, sx + radius + 1);
+        int x0 = Math.Max(0, sx - Aspect * radius), x1 = Math.Min(Width, sx + Aspect * radius + 1);
         int y0 = Math.Max(0, sy - radius), y1 = Math.Min(Height, sy + radius + 1);
         // The cache re-bases exactly this box next turn; the penumbra only ever writes inside it.
         NoteSourceBox(x0, y0, x1, y1);
@@ -494,27 +439,27 @@ public sealed partial class LightingSystem
     private void CastIntoScratch(GameMap map, int sx, int sy, int radius, LightRgb color,
                                  bool softenEdges)
     {
-        // Lazy-allocate ROI-sized scratch (cap at MaxSourceRadius). Reused across calls.
+        // Lazy-allocate the scratch box (MaxSourceReachX by MaxSourceRadius). Reused across calls.
         if (_scratchR == null)
         {
             _scratchR = new float[ScratchLen];
             _scratchG = new float[ScratchLen];
             _scratchB = new float[ScratchLen];
         }
-        // Scratch takes MAX per tile — overlapping quadrant boundaries don't double-add.
+        // Scratch takes the max per tile — overlapping quadrant boundaries don't double-add.
         // A non-positive radius reveals the origin alone and lights it at full strength, which
         // is what the 1-and-0 pair below preserves.
         var sink = new SourceSink
         {
             Sx = sx, Sy = sy,
-            RadiusSq = radius > 0 ? radius * radius : 1,
-            InvRadius = radius > 0 ? 1f / radius : 0f,
+            RadiusSq = radius > 0 ? Aspect * radius * Aspect * radius : 1,
+            InvRadius = radius > 0 ? 1f / (Aspect * radius) : 0f,
             ColorR = color.R, ColorG = color.G, ColorB = color.B,
             R = _scratchR, G = _scratchG!, B = _scratchB!,
         };
         Shadowcaster.Compute(sx, sy, radius, map.OpacityTable, Width, Height, ref sink);
         if (softenEdges)
-            SoftenSourceEdges(map, radius, sx - MaxSourceRadius, sy - MaxSourceRadius);
+            SoftenSourceEdges(map, radius, sx - MaxSourceReachX, sy - MaxSourceRadius);
     }
 
     // ── Static lights ─────────────────────────────────────────────────────────────────────────
@@ -522,7 +467,7 @@ public sealed partial class LightingSystem
     // radius, colour, softening and the map's opacity. It is cast once and replayed until one of
     // those changes; SightVersion moves on every opacity change, a lamp's colour on every
     // quantized sun step. The torch moves with the player and is never cached.
-    // Seam: off replays the uncached path, for the equality check and the A/B bench.
+    // Off replays the uncached path. Toggled, and the counters read, by the verification probes.
     public static bool CacheStaticLights { get; set; } = true;
     public static int StaticLightHits { get; private set; }
     public static int StaticLightCasts { get; private set; }
@@ -554,14 +499,14 @@ public sealed partial class LightingSystem
         e ??= _staticLights[key] = new StaticLight();
         e.Version = map.SightVersion; e.Radius = radius; e.Soft = soft;
         e.R = color.R; e.G = color.G; e.B = color.B;
-        e.X0 = Math.Max(0, sx - radius); e.Y0 = Math.Max(0, sy - radius);
-        e.W = Math.Min(Width, sx + radius + 1) - e.X0;
+        e.X0 = Math.Max(0, sx - Aspect * radius); e.Y0 = Math.Max(0, sy - radius);
+        e.W = Math.Min(Width, sx + Aspect * radius + 1) - e.X0;
         e.H = Math.Min(Height, sy + radius + 1) - e.Y0;
         int n = e.W * e.H;
         if (e.LR.Length < n) { e.LR = new float[n]; e.LG = new float[n]; e.LB = new float[n]; }
 
         CastIntoScratch(map, sx, sy, radius, color, soft);
-        int originX = sx - MaxSourceRadius, originY = sy - MaxSourceRadius;
+        int originX = sx - MaxSourceReachX, originY = sy - MaxSourceRadius;
         for (int y = 0; y < e.H; y++)
         {
             int src = (e.Y0 + y - originY) * ScratchStride + (e.X0 - originX);
@@ -598,21 +543,19 @@ public sealed partial class LightingSystem
 
     // ── The penumbra on a point light ─────────────────────────────────────────────────────────
     // The shadowcaster answers one question per cell — lit or not — so the edge of a torch pool
-    // behind a wall corner was a hard binary line. That is the same blockiness the sun's sweep
-    // was built to remove, and at night it is the ONLY edge on screen, because the torch is all
-    // there is to see by.
+    // behind a wall corner would be a hard binary line, and at night it is the only edge on
+    // screen, because the torch is all there is to see by.
     //
-    // Softened by dilating the shadowed side: a dark cell takes a share of the brightest
-    // ORTHOGONAL neighbour, twice, so the boundary becomes a two-step gradient instead of a
-    // step. Two rules keep it honest. Only transparent cells give or receive, so light rounds a
-    // corner — which is what a penumbra is — and can never cross a wall one tile thick. And it
-    // only ever RAISES a value, so the lit side keeps its full brightness; an averaging blur
-    // would have dimmed the pool to buy the soft edge.
-    // Only sources big enough to throw a boundary anyone can SEE. A floor carries 100-260
-    // emissive tiles and most of them are lava at radius 5, each one its own point light: their
-    // rims are already near zero under the smoothstep falloff and they overlap each other, so
-    // softening them buys nothing and costs the pass two hundred times over. What reads as a
-    // hard edge is the torch you see by and a campfire alone in a dark room.
+    // Softened by dilating the shadowed side: on each pass a dark cell takes a share of the
+    // brightest orthogonal neighbour, so the boundary becomes a gradient instead of a step. Two
+    // rules keep it honest. Only transparent cells give or receive, so light rounds a corner —
+    // which is what a penumbra is — and can never cross a wall one tile thick. And it only ever
+    // raises a value, so the lit side keeps its full brightness; an averaging blur would dim the
+    // pool to buy the soft edge.
+    // Only sources big enough to throw a boundary anyone can see. Most emissive tiles are lava
+    // at radius 5: their rims are already near zero under the smoothstep falloff and they overlap
+    // each other, so softening them buys nothing and would run the pass once per tile. What
+    // reads as a hard edge is the torch you see by and a campfire alone in a dark room.
     private const int PenumbraMinRadius = 6;
 
     private const float PenumbraShare = 0.55f;
@@ -630,45 +573,46 @@ public sealed partial class LightingSystem
         _softB ??= new float[ScratchLen];
         _softOpen ??= new bool[ScratchLen];
 
-        // Work over the source's own box rather than the whole 33x33 scratch, and keep one cell
-        // of slack at each edge so the four neighbour reads are in range by construction.
-        int lo = Math.Max(1, MaxSourceRadius - radius);
-        int hi = Math.Min(ScratchStride - 2, MaxSourceRadius + radius);
-        if (hi <= lo) return;
+        // Work over the source's own box rather than the whole scratch, and keep one cell of
+        // slack at each edge so the four neighbour reads are in range by construction.
+        int loX = Math.Max(1, MaxSourceReachX - Aspect * radius);
+        int hiX = Math.Min(ScratchStride - 2, MaxSourceReachX + Aspect * radius);
+        int loY = Math.Max(1, MaxSourceRadius - radius);
+        int hiY = Math.Min(ScratchRows - 2, MaxSourceRadius + radius);
+        if (hiX <= loX || hiY <= loY) return;
 
-        // THE RING AROUND THE BOX IS MARKED CLOSED, and that is load-bearing rather than tidy:
-        // the passes below only write inside the box, so a neighbour just outside it still holds
-        // whatever the PREVIOUS source left there. Closed cells are never read, which turns a
-        // stale-halo bug into a boundary condition.
+        // The ring around the box is marked closed: the passes below only write inside the box,
+        // so a neighbour just outside it still holds whatever the previous source left there,
+        // and closed cells are never read.
         var op = map.OpacityTable;
         var open = _softOpen;
-        for (int ly = lo - 1; ly <= hi + 1; ly++)
+        for (int ly = loY - 1; ly <= hiY + 1; ly++)
         {
             int wy = ly + originY;
-            bool rowInside = ly >= lo && ly <= hi && (uint)wy < (uint)Height;
+            bool rowInside = ly >= loY && ly <= hiY && (uint)wy < (uint)Height;
             int rowBase = ly * ScratchStride;
             int mapRow = wy * Width;
-            for (int lx = lo - 1; lx <= hi + 1; lx++)
+            for (int lx = loX - 1; lx <= hiX + 1; lx++)
             {
                 int wx = lx + originX;
-                open[rowBase + lx] = rowInside && lx >= lo && lx <= hi
+                open[rowBase + lx] = rowInside && lx >= loX && lx <= hiX
                                      && (uint)wx < (uint)Width && !op[mapRow + wx];
             }
         }
 
         // Ping-pong between the two buffer sets instead of copying rows back. Every cell of the
-        // box is written on every pass, so the destination needs no clearing, and an EVEN number
+        // box is written on every pass, so the destination needs no clearing, and an even number
         // of passes leaves the result in the scratch the merge below reads. Four passes make the
-        // edge a four-step ramp (0.55, 0.30, 0.17, 0.09 of the lit side) rather than two.
+        // edge a four-step ramp (0.55, 0.30, 0.17, 0.09 of the lit side).
         float[] sr = _scratchR!, sg = _scratchG!, sb = _scratchB!;
         float[] dr = _softR, dg = _softG, db = _softB;
 
         for (int pass = 0; pass < PenumbraPasses; pass++)
         {
-            for (int ly = lo; ly <= hi; ly++)
+            for (int ly = loY; ly <= hiY; ly++)
             {
                 int rowBase = ly * ScratchStride;
-                for (int lx = lo; lx <= hi; lx++)
+                for (int lx = loX; lx <= hiX; lx++)
                 {
                     int i = rowBase + lx;
                     float vR = sr[i], vG = sg[i], vB = sb[i];
@@ -699,42 +643,42 @@ public sealed partial class LightingSystem
         _softR = dr; _softG = dg; _softB = db;
     }
 
-    // ADD-AND-CLAMP THREW AWAY EVERY OVERLAP, AND ON LAVA THAT WAS MOST OF THE PICTURE. Summing
-    // sources and clamping at 255 means the second light reaching a cell already at 200 is worth
-    // 55 and the third is worth nothing — so around a cluster of lava, fifty-odd cells sat at
-    // EXACTLY 255 with no falloff between them and the map read as a white hole.
+    // Screen blending rather than add-and-clamp. Summing sources and clamping at 255 means the
+    // second light reaching a cell already at 200 is worth 55 and the third is worth nothing, so
+    // a cluster of overlapping lights flattens to the ceiling with no falloff between them.
     //
     // Screen blending is the combine that belongs in a space with a ceiling: each light darkens
     // what is left of the headroom rather than spending it, so the result approaches the ceiling
     // without ever reaching it and the gradient survives however many lights overlap. It is also
     // commutative and order-independent, which the source loop needs since nothing sorts it.
     //
-    // The ceiling is LightCeiling, not LightFull, and that is the whole of the field-side
-    // headroom change. A lone source lands exactly where it always did, since Screen(0, b) = b
-    // at any ceiling; only cells that two lights both reach move.
+    // The ceiling is LightCeiling, not LightFull, which is the field-side half of the headroom.
+    // A lone source lands where it would under any ceiling, since Screen(0, b) = b; only cells
+    // that two lights both reach use the extra room.
     private static float Screen(float a, float b) =>
         LightCeiling - (LightCeiling - a) * (LightCeiling - b) * (1f / LightCeiling);
 
-    // sqrt LUT for integer d². SourceSink returns before the lookup for any d2 at or past the
-    // source's own r*r, so the largest index ever taken is MaxSourceRadius^2 - 1 and the size is
-    // DERIVED rather than guessed. The old table held 400 entries with a Math.Sqrt fallback for
-    // the rest; the fallback was measured firing 0 times in 2.6M reveals, because the largest
-    // source in the game is the radius-15 lantern and the shadowcaster's cones bound |dx| and
-    // |dy| by the radius, so its farthest revealed cell is d2 = 369 (a radius-16 source would
-    // reach 425 and fall back). There is no fallback now: an index past the end would throw,
-    // which is the loud form of a source wider than the table.
-    private const int SqrtLutSize = MaxSourceRadius * MaxSourceRadius;
+    // sqrt LUT for integer d² in columns. SourceSink returns before the lookup for any d2 at or
+    // past the source's own (Aspect r)^2, so the largest index ever taken is MaxSourceReachX^2 - 1
+    // and the size is derived rather than guessed. There is no fallback: an index past the end
+    // would throw, which is the loud form of a source wider than the table.
+    private const int SqrtLutSize = MaxSourceReachX * MaxSourceReachX;
     private static readonly float[] SqrtLut = BuildSqrtLut();
     private static float[] BuildSqrtLut()
     {
+        // Aspect is an integer cast of the cell aspect; a fractional one would skew every pool.
+        if (Aspect != Generation.FloorMask.CellAspectRatio)
+            throw new InvalidOperationException(
+                $"LightingSystem.Aspect {Aspect} != CellAspectRatio {Generation.FloorMask.CellAspectRatio}: "
+                + "point lights measure distance in whole columns per row");
         var t = new float[SqrtLutSize];
         for (int i = 0; i < SqrtLutSize; i++) t[i] = (float)Math.Sqrt(i);
         return t;
     }
 
-    // Emissive tiles: RGB tint + Euclidean shadowcasted radius. Generous overlap with torch for warm/cool blends.
+    // Emissive tiles: RGB tint + shadowcast radius in rows (Aspect x that in columns). Generous overlap with torch for warm/cool blends.
     // The only emissive table: GameMap's emissive index is derived from it.
-    internal static (LightRgb Color, int Radius)? GetEmission(TileType type) => type switch
+    public static (LightRgb Color, int Radius)? GetEmission(TileType type) => type switch
     {
         TileType.Campfire      => (LightRgb.Of(255, 180,  80), 8),   // warm orange
         TileType.Lava          => (LightRgb.Of(255, 100,  30), 5),   // hot red-orange

@@ -13,13 +13,11 @@ public static class NavigationHelper
     // handler therefore runs a second screen transition on top of the intended one.
     //
     // Consuming Esc is not optional for a menu screen: Terminal.Gui binds it to Command.Quit at
-    // the application level (Application.cs), so a screen that ignores Esc exits the game. Only
-    // TitleScreen leaves it unhandled, deliberately, and says so in its hint.
+    // the application level, so a screen that ignores Esc exits the game. Only TitleScreen
+    // leaves it unhandled, deliberately, and says so in its hint.
     //
-    // Every transition used to name the other screens individually, which is quadratic and had
-    // already been got wrong twice — DifficultyScreen never unhooked CharacterCreationScreen, and
-    // ModifierSelectScreen never unhooked DifficultyScreen. Route all of them through here so a
-    // new screen only has to be added in one place.
+    // Every transition routes through here rather than naming the other screens individually,
+    // so a new screen only has to be added in one place.
     //
     // Handlers attached to a screen's own subviews need no teardown: RemoveAll detaches the
     // subview from the tree and the handler dies with it. Only the long-lived window leaks.
@@ -37,12 +35,11 @@ public static class NavigationHelper
     // anonymous lambda on that is unremovable by construction — so the handler is stored and the
     // previous one detached before a new one goes on.
     //
-    // Without this the handlers accumulated: TitleScreen.Show is re-entered from six places and
-    // OptionsScreen.Show from two, each adding another subscription that RemoveAll cannot clear
-    // (it removes subviews, never handlers on the window). After N visits a single W press ran
-    // AdvanceFocus N times, so focus jumped N rows per keystroke and got worse the longer the
-    // session ran. In-game movement was never affected: Terminal.Gui gives the focused view the
-    // key first (View.Keyboard.cs, `Focused?.NewKeyDownEvent`), and MapView consumes it.
+    // TitleScreen.Show and OptionsScreen.Show are re-entered from several places, and RemoveAll
+    // removes subviews, never handlers on the window. Without the stored handler each visit
+    // would add another subscription, and a single W press would run AdvanceFocus once per
+    // visit. In-game movement is unaffected: Terminal.Gui gives the focused view the key first
+    // (`Focused?.NewKeyDownEvent`), and MapView consumes it.
     //
     // One slot is enough because only one screen is live at a time.
     private static EventHandler<Key>? _navHandler;
@@ -93,13 +90,13 @@ public static class NavigationHelper
     // Makes an OptionSelector's arrow keys move the selection, which is what every screen using
     // one assumes and what the hint footers advertise.
     //
-    // Terminal.Gui 2.4.5 does not do this on its own. SelectorBase binds the arrows to
+    // Terminal.Gui does not do this on its own. SelectorBase binds the arrows to
     // Command.Down/Up, but MoveNext/MovePrevious return early unless the rows carry
     // TabBehavior.NoStop, and the default is TabStop — so the keys are inert and bubble away
     // unhandled. Switching the rows to NoStop is not sufficient either: the arrows then move
     // focus only, while Value still changes on Space alone.
     //
-    // That split is the dangerous part rather than the dead keys. Space activates the HIGHLIGHTED
+    // That split is the dangerous part rather than the dead keys. Space activates the highlighted
     // row, and a selector opens with the highlight on row 0 whatever Value is — so on a list whose
     // default is not the first entry, Space as a first keystroke silently reselects row 0.
     //
@@ -155,7 +152,7 @@ public static class NavigationHelper
     //
     // A TextField treats W and S as text. Binding them as navigation does not merely swallow the
     // keystroke: it moves focus off the field, so every character after the first w or s misses
-    // the field as well — typing "Kirwa" left "kir" behind and the caret on another control.
+    // the field as well — typing "Kirwa" would leave "Kir" behind and the caret on another control.
     public static void WireUpDownArrowsOnly(View control, View up, View down) =>
         WireVertical(control, up, down, wasd: false);
 

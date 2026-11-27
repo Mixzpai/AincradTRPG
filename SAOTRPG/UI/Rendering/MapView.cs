@@ -83,7 +83,7 @@ public partial class MapView : View
     }
 
     // The last cell is kept beside the queue: Queue has no last-element accessor, and LINQ's
-    // Last() walked each one through a boxed enumerator for every monster on every turn.
+    // Last() would walk each one through a boxed enumerator for every monster on every turn.
     private sealed class MobTrail
     {
         public readonly Queue<(int X, int Y)> Cells = new();
@@ -117,7 +117,7 @@ public partial class MapView : View
         public float OriginX;
         public float OriginY;
         public float Angle;       // radians
-        public float Speed;       // tiles/ms (≈0.008–0.012)
+        public float Speed;       // tiles/ms (≈0.0006–0.0019)
         public float SpawnRadius; // initial offset from kill point
         public bool IsHero;       // true → ◆/◊ glyph; false → braille
         public byte Seed;         // per-shard rng seed for braille mask churn
@@ -147,12 +147,12 @@ public partial class MapView : View
 
     private DeathBurst BuildDeathBurst(int x, int y, MobTier tier)
     {
-        // Tier scaling: total ms, flash ms, base shard count, radius.
-        (float total, float flash, int baseCount, float radius) = tier switch
+        // Tier scaling: total ms, flash ms, base shard count.
+        (float total, float flash, int baseCount) = tier switch
         {
-            MobTier.FloorBoss => (2000f, 200f, 140, 5.5f),
-            MobTier.Elite     => ( 800f, 100f,  70, 3.0f),
-            _                 => ( 500f,  80f,  40, 2.0f),
+            MobTier.FloorBoss => (2000f, 200f, 140),
+            MobTier.Elite     => ( 800f, 100f,  70),
+            _                 => ( 500f,  80f,  40),
         };
 
         // Density scaling: respects user preference. ScaleCount mirrors ParticleQueue.
@@ -165,7 +165,7 @@ public partial class MapView : View
 
         var rng = new Random(unchecked(x * 73856093 ^ y * 19349663 ^ (int)SAOTRPG.UI.Effects.FrameClock.ElapsedMs));
         var shards = new DeathShard[n];
-        // Hero ◆/◊ count: 1-2 standard, 2-3 elite, 3-4 boss.
+        // Hero ◆/◊ count: 2 standard, 3 elite, 4 boss.
         int heroCount = tier switch { MobTier.FloorBoss => 4, MobTier.Elite => 3, _ => 2 };
         for (int i = 0; i < n; i++)
         {
@@ -300,6 +300,9 @@ public partial class MapView : View
     public event Action<int, int>? PlayerMoveRequested;
     public event Action? LookRequested;
     public event Action? WaitRequested;
+    public event Action? WaitMenuRequested;
+    // Asked before any key is dispatched; true swallows it. GameScreen stops a running activity.
+    public Func<bool>? KeyIntercept;
     public event Action? InventoryRequested;
     public event Action? PickupRequested;
     public event Action? AutoExploreRequested;
@@ -468,8 +471,6 @@ public partial class MapView : View
         _bossesSeen.Clear();
         _bossEntranceRemainingMs = 0;
         SAOTRPG.UI.Effects.ParticleQueue.Clear();
-        // Reset per-mob DoT-popup gate so popup suppression doesn't leak across floors.
-        ResetDotTracking();
         // Clear any in-flight Divine drop banner so it doesn't bleed into the next floor.
         DivineObtainBanner.Clear();
         // Nothing in the tile layer survives a map swap, and the door set it reads was just

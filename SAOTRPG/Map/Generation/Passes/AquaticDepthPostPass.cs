@@ -49,9 +49,9 @@ public sealed class AquaticDepthPostPass : IGenerationPass
 
         // Multi-source BFS: all land tiles seed at distance 0; water tiles get positive distance to
         // nearest shore. A flat int grid and a flat int queue rather than int[w, h] plus a
-        // Queue<(int, int)> — on a 1000x1000 Aquatic floor the queue held three quarters of a
-        // million tuples and every probe went through a 2D indexer. The frontier is monotonic, so
-        // each cell is enqueued exactly once and w*h slots is an exact bound.
+        // Queue<(int, int)>: a large Aquatic floor enqueues most of its cells, and a 2D indexer
+        // per probe adds up. The frontier is monotonic, so each cell is enqueued exactly once and
+        // w*h slots is an exact bound.
         var dist = new int[w * h];
         var q = new int[w * h];
         int head = 0, tail = 0;
@@ -86,15 +86,13 @@ public sealed class AquaticDepthPostPass : IGenerationPass
             q[tail++] = ni;
         }
 
-        // BANDS SCALE WITH THE FLOOR, like the lake radius that feeds them. A fixed 2 / 5 was
-        // sized for the old radius-4-6 puddles, where almost nothing reached distance 6 and a
-        // floor ended up with essentially no deep water. Once lakes scale, every tile past 5 from
-        // shore becomes WaterDeep — which is a Swimming L25 gate, so an early Aquatic floor would
-        // wall off most of its own water from the player who is standing on it. Proportional
-        // bands keep the beach-shallow-deep gradient intact at any floor size, and keep the deep
-        // core a minority of each lake rather than the whole of it.
+        // Bands scale with the floor, like the lake radius that feeds them. With fixed bands a
+        // large lake would be WaterDeep almost everywhere past the shore — a Swimming L25 gate, so
+        // an early Aquatic floor would wall off most of its own water from the player standing on
+        // it. Proportional bands keep the beach-shallow-deep gradient intact at any floor size,
+        // and keep the deep core a minority of each lake rather than the whole of it.
         //
-        // Same reasoning the river stamper already follows: rivers place only shallow water,
+        // Same reasoning the river stamper follows: rivers place only shallow water,
         // because life skills start at L1 and WaterDeep is the audit-blocking one.
         int lakeUnit = Math.Max(6, Math.Min(w, h) / 40);
         int beachBand = Math.Max(2, lakeUnit / 3);

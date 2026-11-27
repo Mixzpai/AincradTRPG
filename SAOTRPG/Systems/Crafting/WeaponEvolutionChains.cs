@@ -79,24 +79,21 @@ public static class WeaponEvolutionChains
         => defId != null && Chains.TryGetValue(defId, out var step) ? step : null;
 
     // Slicing Stone alt-path map.
-    // STUB-DEFERRED: Slicing Stone alt-evolution UI feature deferred per DEFERRED.md.
-    // Data table preserved for future revival. No active readers — query methods
-    //
-    // Player presents Slicing Stone (tier-matched) instead of canon catalyst → routes to alt DefId.
+    // Player presents a tier-matched Slicing Stone instead of the chain catalyst → routes to alt DefId.
     // Tier match: Lesser→T1weapon, Greater→T2weapon, Perfect→T3weapon. T4 apex has no alt branch.
-    // Stone qty consumed: 1 (single-stone evolve, undercuts canon 3/8/20 by design).
+    // Stone qty consumed: 1 (single-stone evolve, undercuts the 3/8/20 catalyst cost by design).
     public record AltStep(string AltNextDefId, string StoneDefId);
 
-    // Keyed by current weapon DefId. Alt target is a DIFFERENT DefId from canon NextDefId.
-    // Targets reuse existing weapons that thematically fit the alt branch — no new DefIds required at this stage.
+    // Keyed by current weapon DefId. Alt target is a different DefId from the chain's NextDefId.
+    // Targets are existing weapons that thematically fit the alt branch.
     public static readonly Dictionary<string, AltStep> AltChains = new()
     {
-        // 1H Sword chain alt — Final Espada → Anneal Blade line (canon-called-out, Tier-Forge alt)
+        // 1H Sword chain alt — Final Espada → Anneal Blade line
         ["final_espada"]    = new("anneal_blade",            "slicing_stone_lesser"),
         ["asmodeus"]        = new("tough_anneal_blade",      "slicing_stone_greater"),
         ["final_avalanche"] = new("pitch_black_anneal_blade", "slicing_stone_perfect"),
 
-        // Rapier chain alt — Prima Sabre → Lambent Light line (Asuna canon)
+        // Rapier chain alt — Prima Sabre → Lambent Light line (Asuna's rapier)
         ["prima_sabre"]     = new("chivalric_rapier",        "slicing_stone_lesser"),
         ["pentagramme"]     = new("wind_fleuret",            "slicing_stone_greater"),
         ["charadrios"]      = new("lambent_light",           "slicing_stone_perfect"),
@@ -136,13 +133,13 @@ public static class WeaponEvolutionChains
         ["trishula"]      = new("guilty_thorn",              "slicing_stone_greater"),
         ["vijaya"]        = new("anubis_spear",              "slicing_stone_perfect"),
 
-        // Anneal Blade alt-path entry — canon F1-10 line gets Slicing Stone branching upward
+        // Anneal Blade alt-path entry — the F1-10 line branches upward with Slicing Stones
         ["anneal_blade"]              = new("queens_knightsword", "slicing_stone_greater"),
         ["tough_anneal_blade"]        = new("azure_sky_blade",    "slicing_stone_perfect"),
     };
 
-    // The alt branch a weapon can take instead of its canon evolution, or null when it has none.
-    // A weapon at T4 has no canon NextDefId and no alt entry either, so both paths end together.
+    // The alt branch a weapon can take instead of its chain evolution, or null when it has none.
+    // A weapon at T4 has no NextDefId and no alt entry either, so both paths end together.
     public static AltStep? GetAlt(string? defId)
         => defId != null && AltChains.TryGetValue(defId, out var alt) ? alt : null;
 

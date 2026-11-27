@@ -12,7 +12,7 @@ using SAOTRPG.Systems.RunState;
 namespace SAOTRPG.UI.Dialogs;
 
 // Anvil dialog: Repair, Enhance (+1..+10), Evolve chain weapons, Refine sockets.
-// Enhancement costs Col+mats, success rate drops after +4 (SAO canon); evolution swaps to next-tier.
+// Enhancement costs Col+mats, success rate drops after +4; evolution swaps to next-tier.
 public static class CraftingDialog
 {
     private const int DialogWidth = 72, DialogHeight = 26;
@@ -26,7 +26,7 @@ public static class CraftingDialog
     private static int MaterialsNeeded(int currentLevel) =>
         1 + currentLevel / 3;
 
-    // Success rate: high at low levels, drops after +4 (SAO canon).
+    // Success rate: high at low levels, drops after +4.
     private static int SuccessRate(int currentLevel) => currentLevel switch
     {
         0 => 95,  // +0 -> +1
@@ -182,7 +182,7 @@ public static class CraftingDialog
 
         var (chosenSlot, chosenItem) = candidates[choice];
 
-        // LAB floor-boss weapons sealed — canon IM tradeoff for higher flat stats.
+        // Last-Attack Bonus floor-boss weapons are sealed: the tradeoff for higher flat stats.
         if (chosenItem is Weapon weaponCheck && !weaponCheck.IsEnhanceable)
         {
             resultLabel.Text = $"{weaponCheck.EnhancedName} cannot be enhanced.\n" +
@@ -211,7 +211,7 @@ public static class CraftingDialog
         }
 
         // Weapons: ore picker up front — ore identity biases this level's stat.
-        // Armor/accessories skip picker, use legacy flat Defense/Attack path.
+        // Armor/accessories skip picker, use the flat Defense/Attack path.
         string? chosenOreDefId = null;
         if (chosenItem is Weapon)
         {
@@ -248,7 +248,7 @@ public static class CraftingDialog
         }
         else
         {
-            // +7 and above: 30% risk of losing a level (SAO canon). Pops last ore for -1 inverse.
+            // +7 and above: 30% risk of losing a level. Pops last ore for -1 inverse.
             if (chosenItem.EnhancementLevel >= 7 && RunRng.Next(100) < 30)
             {
                 ApplyEnhancementDelta(player, chosenItem, -1, null);
@@ -369,7 +369,7 @@ public static class CraftingDialog
         SAOTRPG.Systems.Progression.MilestoneSystem.OnRefinementApplied(player, weapon);
     }
 
-    // Ore DurabilityBonus via prototype. Only Adamant Ore is non-zero today (+10/level).
+    // Ore DurabilityBonus via prototype. Only Adamant Ore is non-zero (+10/level).
     private static int GetOreDurabilityBonus(string oreDefId)
     {
         if (ItemRegistry.Create(oreDefId) is EnhancementOre ore)
@@ -411,7 +411,7 @@ public static class CraftingDialog
         string? peakName = step.PeakExtraMatId != null ? MaterialDisplayName(step.PeakExtraMatId) : null;
         int havePeak = step.PeakExtraMatId != null ? player.Inventory.CountByDefinitionId(step.PeakExtraMatId) : 0;
 
-        // Preview the resulting weapon (without committing it) so we can show its name.
+        // Preview the resulting weapon (without committing it) so its name can be shown.
         var previewNext = ItemRegistry.Create(step.NextDefId);
         string nextName = previewNext?.Name ?? step.NextDefId;
 
@@ -420,9 +420,9 @@ public static class CraftingDialog
         if (step.PeakExtraMatId != null && peakName != null)
             costLine += $"\n + 1x {peakName} ({havePeak} owned)";
 
-        // The Slicing Stone branch: one tier-matched stone instead of the canon catalyst pile,
-        // routing to a different weapon. Offered only when this weapon has an alt entry, so a
-        // chain without one keeps the original two-button prompt exactly.
+        // The Slicing Stone branch: one tier-matched stone instead of the standard catalyst pile,
+        // routing to a different weapon. Offered only when this weapon has an alt entry; a
+        // chain without one shows the two-button prompt.
         var alt = WeaponEvolutionChains.GetAlt(weapon.DefinitionId);
         string? altName = null, stoneName = null;
         int haveStone = 0;
@@ -486,9 +486,8 @@ public static class CraftingDialog
     }
 
     // Build the target weapon, pay the cost, fold the old +N bonuses in and swap it on. Shared by
-    // the canon and Slicing Stone branches, which differ only in what they cost and what they
-    // produce — duplicating this was the alternative, and enhancement preservation is the part
-    // that must not drift between the two.
+    // the standard and Slicing Stone branches, which differ only in what they cost and what they
+    // produce, so enhancement preservation cannot drift between the two.
     private static void CommitEvolution(Player player, Weapon weapon, string targetDefId,
                                         Label resultLabel, Label header,
                                         Action payCost, string costSummary)

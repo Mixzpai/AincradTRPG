@@ -7,18 +7,18 @@ namespace SAOTRPG.UI.Helpers;
 // fade-scaled schemes) are applied directly with View.SetScheme and never registered.
 //
 // ── Palette design ──────────────────────────────────────────────────────────────
-// Colours are named by ROLE, not by hue, and every scheme below is assembled from the
+// Colours are named by role, not by hue, and every scheme below is assembled from the
 // role constants. Two rules keep it coherent:
 //
 //   1. Exactly one saturated accent (Accent). Everything else is a value ramp between
 //      Muted and Emphasis. Two saturated hues never sit adjacent — status colours are
 //      desaturated so they read as meaning rather than as alarm.
-//   2. Hierarchy lives in VALUE (brightness), with hue only reinforcing it. Strip the
+//   2. Hierarchy lives in value (brightness), with hue only reinforcing it. Strip the
 //      colour out and the screens must still be readable.
 //
 // Base is the page and everything sits on it — menus, dialogs and the map share one ground.
-// Surface lifts a focused row or an input field off it, and those work because they are FILLED
-// CONTROLS: the lift and the text belong to the same scheme. A lifted PAGE does not work the same
+// Surface lifts a focused row or an input field off it, and those work because they are filled
+// controls: the lift and the text belong to the same scheme. A lifted page does not work the same
 // way, because a page is mostly other views' content and each of those carries its own background
 // (see BuildDialog). Grouping at page level is drawn — a Card's border, a dialog's frame.
 public static class ColorSchemes
@@ -32,8 +32,8 @@ public static class ColorSchemes
 
     private static Color Base    => Theme.Base;
     private static Color Surface => Theme.Surface;
-    // Reserved. Nothing fills with this today — see BuildDialog for why a filled surface layer
-    // cannot work until every content scheme has an Overlay variant.
+    // Reserved: nothing fills with it, because a filled surface layer needs an Overlay variant of
+    // every content scheme (see BuildDialog).
     private static Color Overlay => Theme.Overlay;
 
     private static Color Muted => Theme.Muted;
@@ -48,7 +48,7 @@ public static class ColorSchemes
 
     // Switches theme and republishes every scheme under its existing name.
     //
-    // SchemeManager.AddScheme UPDATES an entry that already exists, and a view bound with
+    // SchemeManager.AddScheme updates an entry that already exists, and a view bound with
     // SchemeName resolves through the manager when it draws — so re-registering repaints
     // everything bound that way without touching a single view. Views bound with SetScheme hold
     // the Scheme object instead and keep the old one until they are rebuilt, which is why the
@@ -101,10 +101,9 @@ public static class ColorSchemes
     //
     // The diamonds are the polygon-shatter motif the combat visuals already use, so the
     // menus speak the same language as the game. CheckStateNone is not merely a restyle:
-    // its default U+2B1B is an EMOJI-presentation glyph that measures two columns wide
-    // (Terminal.Gui's own GetColumns confirms), which would tear the character grid the
-    // first time a three-state checkbox appeared. Nothing sets AllowNone today, so this
-    // is pre-emptive.
+    // its default U+2B1B is an emoji-presentation glyph that Terminal.Gui's GetColumns
+    // measures as two columns wide, which would tear the character grid wherever a
+    // three-state checkbox (AllowNone) appeared.
     public static void ApplyGlyphs()
     {
         Glyphs.Selected           = new System.Text.Rune('◆');
@@ -203,16 +202,15 @@ public static class ColorSchemes
 
     // ── Dialog palettes ───────────────────────────────────────────────
 
-    // Dialogs share the page's black ground, and get their lift from their BORDER rather than
+    // Dialogs share the page's black ground, and get their lift from their border rather than
     // from a fill — the same way a Card does on the menus.
     //
-    // They were filled with Overlay for one session. That does not work while the twelve content
-    // schemes hardcode Base: a dialog is mostly its content, so every label and button inside it
-    // painted a black rectangle onto the lifted fill, which reads as a block around each piece of
-    // text. A filled surface layer needs an Overlay variant of every content scheme before it can
-    // be used, and picking the right one at each call site is a mistake waiting to happen.
+    // A fill does not work while the content schemes hardcode Base: a dialog is mostly its
+    // content, so every label and button inside it would paint a black rectangle onto the
+    // lifted fill, which reads as a block around each piece of text. A filled surface layer
+    // needs an Overlay variant of every content scheme before it can be used.
     //
-    // Editable is set explicitly: Terminal.Gui derives it from Normal by dimming the FOREGROUND
+    // Editable is set explicitly: Terminal.Gui derives it from Normal by dimming the foreground
     // into a background, which on a black page produces a field with no visible extent at all.
     private static Scheme _dialog = BuildDialog();
 
@@ -243,9 +241,9 @@ public static class ColorSchemes
 
     // ── Selection palettes ────────────────────────────────────────────
 
-    // Tier / radio list. Focus is accent-on-surface rather than the old full inversion
-    // (black on saturated yellow): a 54-column inverted slab is the loudest thing that
-    // can appear on a screen, and it destroys any per-token colour inside the row.
+    // Tier / radio list. Focus is accent-on-surface rather than a full inversion: a wide
+    // inverted slab is the loudest thing that can appear on a screen, and it destroys any
+    // per-token colour inside the row.
     private static Scheme _tierRadio = BuildTierRadio();
 
     private static Scheme BuildTierRadio() => new()

@@ -36,7 +36,8 @@ namespace SAOTRPG.Entities
         public int Agility { get; set; }
         public int Intelligence { get; set; }
 
-        // HPRegen / SkillCooldown StatType targets. Mobs ignore (no consumer).
+        // HPRegen / SkillCooldown StatType targets: the player's regen tick and sword-skill
+        // cooldowns read them; mobs have neither.
         public int BaseHpRegenPerTick { get; set; }
         public int SkillCooldownReduction { get; set; }
 

@@ -1,17 +1,22 @@
 namespace SAOTRPG.UI.Helpers;
 
 // How the game screen's sidebar splits its height between its three cards: MAP (the minimap and
-// the rows under it), STATUS (the stats panel and the status icons) and LOG. Pure, so a probe can
-// check every height without a terminal.
+// the rows under it), STATUS (the stats panel and the status icons) and LOG. Pure, so every
+// height can be evaluated without a terminal.
 //
-// Spare height goes to the minimap first, up to MinimapMax, then to the log. On a short screen
-// the stats panel gives rows back down to its minimum, then the log down to LogFloorLines, before
-// the minimap drops below MinimapMin. Every card stays on screen down to the documented 120x30.
+// Spare height goes to the minimap first, up to seven overmap rows, then to the log, which
+// hands LogShareToMinimap of its rows back to the minimap. On a short screen the stats panel gives
+// rows back down to its minimum, then the log down to LogFloorLines, before the minimap drops
+// below MinimapMin. Every card stays on screen down to the 120x30 minimum terminal.
 public static class SidebarLayout
 {
     public const int CardChrome = 2;          // a card's top and bottom border
-    public const int MinimapMin = 4, MinimapMax = 18;
+    public const int MinimapMin = 3, MinimapMax = 7;
     public const int LogMinLines = 6, LogFloorLines = 2;
+
+    // The share of the log's rows that goes to the minimap once it has its seven: a tall screen
+    // gets a taller overmap rather than a wall of log.
+    public const float LogShareToMinimap = 0.15f;
 
     public readonly record struct Heights(int MapCard, int Minimap, int StatusCard, int Stats, int LogCard);
 
@@ -35,6 +40,11 @@ public static class SidebarLayout
         int minimap = Math.Clamp(Spare(), 1, MinimapMax);
         int mapCard = mapFixed + minimap, statusCard = statusFixed + stats;
         logCard = Math.Max(CardChrome + 1, height - mapCard - statusCard);
+        if (minimap == MinimapMax)
+        {
+            int give = Math.Min((int)(logCard * LogShareToMinimap), logCard - (CardChrome + LogMinLines));
+            if (give > 0) { minimap += give; mapCard += give; logCard -= give; }
+        }
         return new Heights(mapCard, minimap, statusCard, stats, logCard);
     }
 }

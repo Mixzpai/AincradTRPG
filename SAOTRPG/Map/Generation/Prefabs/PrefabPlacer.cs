@@ -6,12 +6,10 @@ namespace SAOTRPG.Map.Generation.Prefabs;
 // random order; for each, enumerates rotation/mirror variants until one fits.
 public static class PrefabPlacer
 {
-    // "Illfang the Kobold Lord" -> "illfang_the_kobold_lord" -- the tag a canon boss arena must
-    // carry to be recognised as that floor's arena. Public because the content probe has to
-    // DERIVE the expected tag from the game's own transform: a hand-typed copy would agree with
-    // itself while disagreeing with the placer, which is exactly how f55_xrphan spent its life
-    // tagged `xrphan_the_white_wyrm` against an actual slug of `x_rphan_the_white_wyrm` and was
-    // never once stamped.
+    // "Illfang the Kobold Lord" -> "illfang_the_kobold_lord" -- the tag a named boss arena must
+    // carry to be recognised as that floor's arena. Public so the verification probes derive the
+    // expected tag from this transform rather than from a hand-typed copy that could disagree
+    // with the placer.
     public static string SlugifyBossName(string name)
     {
         var sb = new System.Text.StringBuilder(name.Length);
@@ -86,15 +84,14 @@ public static class PrefabPlacer
 
     // Open-ground placement — the third route, and the only one most of the library can use.
     //
-    // TryPlaceInRoom requires a prefab to fit room.W-2 x room.H-2, and the largest room interior a
-    // floor produces is 23x6 (rooms are wide and shallow). TryPlaceEncompass only ever sees
-    // boss-tagged prefabs. So anything taller than 6 that is not a boss arena had NO ROUTE AT ALL:
-    // every shrine, every vault, every treasure room, every merchant camp and all eleven biome
-    // signature pieces were authored, parsed, validated and never once stamped.
+    // TryPlaceInRoom requires a prefab to fit room.W-2 x room.H-2, and rooms are wide and shallow.
+    // TryPlaceEncompass only ever sees boss-tagged prefabs. So anything taller than a room
+    // interior that is not a boss arena — shrines, vaults, treasure rooms, merchant camps, the
+    // biome signature pieces — has no other route.
     //
     // `anchors` is pre-scanned by the caller and consumed destructively, so the map is walked once
-    // per floor rather than once per prefab — same shape as the ore-vein seeding fix, where random
-    // darts at a sparse target were the real wall.
+    // per floor rather than once per prefab, and placement never depends on random darts hitting
+    // a sparse target.
     public static bool TryPlaceFloating(
         GameMap map,
         PrefabDefinition def,
@@ -137,7 +134,7 @@ public static class PrefabPlacer
     }
 
     // Candidate stamp sites, sampled on a stride: a landmark is a large footprint, so anchors a
-    // few tiles apart are redundant and a full-resolution list is megabytes for nothing. Shared
+    // few tiles apart are redundant and a full-resolution list would be megabytes for nothing. Shared
     // rather than per-caller so the two prefab passes cannot drift apart on what counts as a site.
     // The 8-tile inset keeps a centred footprint off the map edge before the disk mask is asked.
     public static List<(int X, int Y)> CollectOpenGroundAnchors(WorldContext ctx, int stride)
@@ -154,7 +151,7 @@ public static class PrefabPlacer
         return anchors;
     }
 
-    // A NECESSARY condition for `def` to stamp centred on this anchor, and cheap enough to run
+    // A necessary condition for `def` to stamp centred on this anchor, and cheap enough to run
     // over every anchor on the floor. Every rotation of a WxH prefab covers at least the
     // min(W,H)-sided square the placer would centre there, so an anchor that fails this can never
     // host the prefab in any orientation -- and on a cave floor it fails within two or three cells,
@@ -172,7 +169,7 @@ public static class PrefabPlacer
     }
 
     // Base terrain only, plus a one-tile skirt so a stamp never butts straight onto a wall or a
-    // lake edge. An ALLOWLIST on purpose: an unknown tile is simply never built on, where a
+    // lake edge. An allowlist on purpose: an unknown tile is simply never built on, where a
     // denylist would quietly stamp over the next feature anybody adds.
     public static bool IsClearGround(TileType t) =>
         t is TileType.Grass or TileType.GrassTall or TileType.GrassSparse or TileType.Flowers
@@ -228,16 +225,14 @@ public static class PrefabPlacer
         return false;
     }
 
-    // The centre is a PREFERENCE for an encompass prefab, not a constraint. These are 17x14 to
-    // 25x21 arenas on floors hundreds of tiles across, so hard-centring bought nothing and cost
-    // the spawn room whenever it sat near the middle -- F25 measured 0.05% reachable from spawn
-    // until the connectivity audit drilled out, and every one of the 19 encompass prefabs is a
-    // boss arena with the same exposure.
+    // The centre is a preference for an encompass prefab, not a constraint. These are arenas a
+    // couple of dozen tiles across on floors hundreds of tiles across, so hard-centring buys
+    // nothing and would seal off the spawn room whenever it sat near the middle.
     //
     // Rings outward from the centre, in a fixed order and drawing no rng: a floor is a pure
     // function of (seed, floor) and a random nudge here would break that. Fails rather than
-    // stamping over a room, which drops the caller into its existing canon -> generic ->
-    // room-anchored fallback chain.
+    // stamping over a room, which drops the caller into its named -> generic -> room-anchored
+    // fallback chain.
     private static bool TryFindEncompassOrigin(
         GameMap map, ParsedPrefab v, WorldContext? ctx, out int ox, out int oy)
     {
@@ -290,7 +285,7 @@ public static class PrefabPlacer
     }
 
     // Stamps a resolved variant. KFEAT overrides default glyph→TileType; ' ' leaves tile untouched;
-    // '@' stamps Floor; reserved slot glyphs (1-7, a-d) stamp Floor AND push spawn request.
+    // '@' stamps Floor; reserved slot glyphs (1-7, a-d) stamp Floor and push a spawn request.
     public static void Stamp(
         GameMap map,
         ParsedPrefab variant,

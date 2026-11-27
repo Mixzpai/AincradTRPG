@@ -45,9 +45,9 @@ public static class BowDefinitions
     public static Weapon CreateTiasLongbow() => Make("tias_longbow", "Tia's Longbow", 900, "Rare", 90, 25, 32, 2, 4,
         B().Add(StatType.Attack, 22).Add(StatType.Dexterity, 12));
 
-    // ── IM Last-Attack Bonus bows — guaranteed on floor-boss killing blow. Non-enhanceable; higher base vs Legendary.
+    // ── Last-Attack Bonus bows — guaranteed on floor-boss killing blow. Non-enhanceable; higher base vs Legendary.
 
-    // IM F85 floor-boss LAB reward. Wind-sheared hunting bow.
+    // F85 floor-boss LAB reward. Wind-sheared hunting bow.
     public static Weapon CreateZephyros()
     {
         var w = Make("bow_zephyros", "Zephyros", 24000, "Legendary", 240, 82, 170, 1, 4,
@@ -57,7 +57,7 @@ public static class BowDefinitions
         return w;
     }
 
-    // IM F99 LAB reward (paired with Night Sky Divine drop). Piercing moon-touched huntress bow.
+    // F99 LAB reward (paired with Night Sky Divine drop). Piercing moon-touched huntress bow.
     public static Weapon CreateArtemis()
     {
         var w = Make("bow_artemis", "Artemis", 32000, "Legendary", 260, 92, 188, 1, 5,
@@ -73,11 +73,11 @@ public static class BowDefinitions
     public static Weapon CreateConflagrantFlameBow() => Make("conflagrant_flame_bow", "Conflagrant Flame Bow", 42000, "Divine", 999, 82, 155, 2, 4,
         B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Strength, 18), "Burn+30");
 
-    // F11 Felos Ember Drake drop (AL Divine Beast tier). Cosmic-range crit bow.
+    // F11 Felos Ember Drake drop (Divine Beast tier). Cosmic-range crit bow.
     public static Weapon CreateStarfall() => Make("starfall", "Starfall", 8500, "Legendary", 170, 18, 85, 1, 4,
         B().Add(StatType.Attack, 42).Add(StatType.Dexterity, 20).Add(StatType.Agility, 10), "CritRate+20");
 
-    // ── Integral Factor Series (Bow entries) ────────────────────────
+    // ── Series weapons (Bow entries) ────────────────────────────────
 
     // F14 Integral Series bow. Arc Angel — pale-feathered holy-shot bow.
     public static Weapon CreateIntegralArcAngel() => Make("bow_integral_arc_angel", "Integral Arc Angel", 4600, "Epic", 155, 14, 78, 1, 3,
@@ -93,42 +93,42 @@ public static class BowDefinitions
 
     // ── Hollow Area Uniques (Bow) — Rare/Epic drops ──────────────
 
-    // HF F55 Hollow Area. Shroudbow — Star Stitcher; stitches constellations into the air as it fires.
+    // F55 Hollow Area. Shroudbow — Star Stitcher; stitches constellations into the air as it fires.
     public static Weapon CreateShroudbowStarStitcher() => Make("bow_shroudbow_star_stitcher", "Shroudbow: Star Stitcher", 7400, "Epic", 170, 50, 92, 1, 4,
         B().Add(StatType.Attack, 46).Add(StatType.Dexterity, 22).Add(StatType.Agility, 12), "CritRate+15");
 
-    // ── Memory Defrag Originals (Bow entries) ──────────────────────────
+    // ── Uniques (Bow entries) ──────────────────────────────────────────
 
-    // MD Epic. Tide-spread longbow, diffused freezing barrage.
+    // Epic. Tide-spread longbow, diffused freezing barrage.
     public static Weapon CreateAquaSpread() => Make("bow_aqua_spread", "Aqua Spread", 5600, "Epic", 160, 50, 118, 1, 4,
         B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 22).Add(StatType.Agility, 10), "FrostDamage+20");
 
-    // MD Rare. Supportive bow of the heart-crowd; crit-boost on encourage shots.
+    // Rare. Supportive bow of the heart-crowd; crit-boost on encourage shots.
     public static Weapon CreateCheerOfLoveBow() => Make("bow_cheer_of_love", "Cheer of Love Bow", 2600, "Rare", 115, 30, 65, 1, 3,
         B().Add(StatType.Attack, 30).Add(StatType.Dexterity, 14).Add(StatType.Agility, 6), "CritRate+10");
 
-    // ── Alicization Lycoris Relic Boss Drops (Bow) — Legendary F80-95 ─
+    // ── Relic Boss Drops (Bow) — Legendary F80-95 ────────────────────
 
     // Cinder Bow — ember-fletched longbow, burning arrow motif.
     public static Weapon CreateCinderBow() => Make("bow_cinder_bow", "Cinder Bow", 18500, "Legendary", 218, 82, 150, 1, 4,
         B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 26).Add(StatType.Agility, 14), "Burn+25");
 
-    // ── Alicization Lycoris DLC (Bow) — Legendary F85-99 ───────────
+    // ── Late Legendaries (Bow) — F85-99 ────────────────────────────
 
-    // Loveblight Bow — DLC cursed-compassion bow, deep bleed.
+    // Loveblight Bow — cursed-compassion bow, deep bleed.
     public static Weapon CreateLoveblightBow() => Make("bow_loveblight_bow", "Loveblight Bow", 20000, "Legendary", 225, 86, 158, 1, 4,
         B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 28).Add(StatType.Agility, 16), "Bleed+30");
 
-    // Glitzwood Bow — DLC lacquered-wood crit-bow.
+    // Glitzwood Bow — lacquered-wood crit-bow.
     public static Weapon CreateGlitzwoodBow() => Make("bow_glitzwood_bow", "Glitzwood Bow", 20500, "Legendary", 225, 87, 160, 1, 4,
         B().Add(StatType.Attack, 80).Add(StatType.Dexterity, 28).Add(StatType.Agility, 16), "CritRate+25");
 
-    // ── SAO Lost Song Top-Tier (Bow) — Legendary F80-95 ──────────
-    // Silvan Bow — canonical LS apex bow, forest-hunter crit.
+    // ── Top-Tier (Bow) — Legendary F80-95 ────────────────────────
+    // Silvan Bow — apex bow, forest-hunter crit.
     public static Weapon CreateSilvanBow() => Make("bow_silvan_bow", "Silvan Bow", 19200, "Legendary", 220, 83, 155, 1, 4,
         B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 26).Add(StatType.Agility, 14), "CritRate+20");
 
-    // ── SAO Lost Song Mythological (Bow) — Legendary F75-99 ──────────
+    // ── Mythological (Bow) — Legendary F75-99 ────────────────────────
 
     // Holy L'arc Qui ne Faut — holy piercing bow of infallible aim.
     public static Weapon CreateHolyLarcQuiNeFaut() => Make("bow_holy_larc_qui_ne_faut", "Holy L'arc Qui ne Faut", 20000, "Legendary", 225, 85, 160, 1, 4,

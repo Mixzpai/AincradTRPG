@@ -5,7 +5,7 @@ public static class SummaryFormatter
 {
     // Columns between the two box edges. Every row of the card — borders, blanks, stat rows and
     // the proficiency block in ProficiencyHelper — has to agree on this or the card renders with
-    // ragged edges. It previously did: rows shipped at 38, 39, 40 and 41 columns in the same box.
+    // ragged edges.
     public const int BoxInner = 36;
 
     private const int LabelWidth = 17;
@@ -29,9 +29,8 @@ public static class SummaryFormatter
     // Formats a stat row with a string value (difficulty, pace, top weapon, rating…).
     //
     // The value is right-aligned in a narrow column so short values line up with the numeric
-    // rows, then the row is padded — or clipped — to the box width. It used to be interpolated
-    // with a fixed trailing run of spaces, so any value longer than the 5-column field pushed
-    // the right edge out: "Normal" widened the row by one column, "Katana (12 kills)" by twelve.
+    // rows, then the row is padded — or clipped — to the box width, so a value longer than the
+    // 5-column field cannot push the right edge out.
     public static string StatRow(string label, string value)
     {
         string cell = $"  {label + ":",-LabelWidth}{value,ValueWidth}";

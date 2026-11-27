@@ -43,7 +43,7 @@ public static class BarBuilder
                     };
             }
             else
-                bar[i] = '·';  // Empty — middle dot for cleaner look
+                bar[i] = '·';  // Empty — middle dot
         }
 
         return "[" + new string(bar) + "]";

@@ -36,8 +36,8 @@ public partial class TurnManager
     {
         using var _ = Profiler.Begin("Turn.EntityAI");
         _entityTurnBuffer.Clear();
-        // AddRange on a List source copies through ICollection.CopyTo -- one Array.Copy instead
-        // of a few hundred bounds-and-version-checked Adds, once per turn.
+        // AddRange on a List source copies through ICollection.CopyTo: one Array.Copy rather
+        // than a bounds-and-version-checked Add per entity.
         _entityTurnBuffer.AddRange(_map.Entities);
         bool aggroLoggedThisTurn = false, fleeLoggedThisTurn = false;
 
@@ -46,9 +46,8 @@ public partial class TurnManager
             if (entity == _player || entity.IsDefeated) continue;
 
             // NPCs wander slowly — 25% chance to take a random step each turn.
-            // Allies are not excluded here: Ally derives from Entity, not NPC, so it can never
-            // reach this branch. An `is not Ally` guard used to sit here reading as deliberate
-            // defence and was dead by construction.
+            // Allies need no exclusion here: Ally derives from Entity, not NPC, so it can never
+            // reach this branch.
             if (entity is NPC npc)
             {
                 if (RunRng.Next(4) == 0) WanderNpc(npc);
@@ -72,24 +71,33 @@ public partial class TurnManager
                 && ((monster.Id + TurnCount) & 1) == 0)
                 continue;
 
-            // Invisibility+N SpecialEffect: treat active invis like stealth for aggro.
-            bool concealedFromAggro = _stealthActive || _invisibilityTurnsLeft > 0;
-            // Lunacy+N: confused mobs wander instead of pathing/attacking.
-            bool confused = _confusedMobs.Count != 0 && _confusedMobs.ContainsKey(monster.Id);
-            (int dx, int dy)? action = confused
-                ? PickConfusedStep(monster)
-                : SimpleAI.DecideAction(monster, _player, _map, concealedFromAggro);
-            if (action == null)
-                ProcessMonsterAttack(monster);
-            // Out of reach, a wound-up blow whiffs — before any Charge/Leap can carry it back in.
-            else if (_telegraphedAttacks.Count != 0 && _telegraphedAttacks.Remove(monster.Id))
+            // Gain the turn's speed, then act while any points are left. An attack costs
+            // 100, a step the terrain's cost, so a fast monster sometimes acts twice in a turn.
+            monster.Moves += monster.MoveSpeed;
+            while (monster.Moves > 0 && !monster.IsDefeated)
             {
-                _log.LogCombat($"{monster.Name}'s heavy attack whiffs — you moved away!");
-                CombatTextEvent?.Invoke(monster.X, monster.Y, "MISS!", Color.BrightCyan);
+                int fromX = monster.X, fromY = monster.Y;
+                // Invisibility+N SpecialEffect: treat active invis like stealth for aggro.
+                bool concealedFromAggro = _stealthActive || _invisibilityTurnsLeft > 0;
+                // Lunacy+N: confused mobs wander instead of pathing/attacking.
+                bool confused = _confusedMobs.Count != 0 && _confusedMobs.ContainsKey(monster.Id);
+                (int dx, int dy)? action = confused
+                    ? PickConfusedStep(monster)
+                    : SimpleAI.DecideAction(monster, _player, _map, concealedFromAggro);
+                if (action == null)
+                    ProcessMonsterAttack(monster);
+                // Out of reach, a wound-up blow whiffs — before any Charge/Leap can carry it back in.
+                else if (_telegraphedAttacks.Count != 0 && _telegraphedAttacks.Remove(monster.Id))
+                {
+                    _log.LogCombat($"{monster.Name}'s heavy attack whiffs — you moved away!");
+                    CombatTextEvent?.Invoke(monster.X, monster.Y, "MISS!", Color.BrightCyan);
+                }
+                else if (confused || !TryGapCloser(monster, action.Value))
+                    ProcessMonsterMovement(monster, action.Value, ref aggroLoggedThisTurn, ref fleeLoggedThisTurn);
+                if (_player.IsDefeated) return;
+                monster.Moves -= monster.X != fromX || monster.Y != fromY
+                    ? MonsterStepCost(monster, fromX, fromY) : NormalSpeed;
             }
-            else if (confused || !TryGapCloser(monster, action.Value))
-                ProcessMonsterMovement(monster, action.Value, ref aggroLoggedThisTurn, ref fleeLoggedThisTurn);
-            if (_player.IsDefeated) return;
         }
     }
 
@@ -235,7 +243,7 @@ public partial class TurnManager
         // Boss special ability check -- may use a phase ability instead of normal attack.
         if (monster is Boss boss2 && TryBossAbility(boss2, chasing: false))
         {
-            if (_player.IsDefeated) { LastKillerName = monster.Name; RaisePlayerDied("monster"); }
+            if (_player.IsDefeated) { LastKillerName = monster.Name; RaisePlayerDied(KillCause(monster)); }
             return;
         }
 
@@ -250,7 +258,7 @@ public partial class TurnManager
                 CombatTextEvent?.Invoke(monster.X, monster.Y, "MISS!", Color.BrightCyan);
                 return;
             }
-            int heavyHit = Math.Max(1, telegDmg - (_player.Defense + _shrineBuff + SatietyDefBonus + FatigueDefPenalty) / 3);
+            int heavyHit = Math.Max(1, telegDmg - IncomingDefense);
             _log.LogCombat($"*** {monster.Name} unleashes a devastating blow for {heavyHit} damage! ***");
             _player.TakeDamage(heavyHit);
             DamageDealt?.Invoke(_player.X, _player.Y, heavyHit, true, false);
@@ -261,7 +269,7 @@ public partial class TurnManager
             {
                 LastKillerName = monster.Name;
                 _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
-                RaisePlayerDied("monster");
+                RaisePlayerDied(KillCause(monster));
             }
             return;
         }
@@ -283,15 +291,15 @@ public partial class TurnManager
             _log.LogCombat($"{monster.Name} attacks from a distance!");
 
         int rawDamage = CalcMonsterDamage(monster);
-        int reduced = Math.Max(0, rawDamage - (_player.Defense + _shrineBuff + SatietyDefBonus + FatigueDefPenalty) / 3);
+        int reduced = Math.Max(0, rawDamage - IncomingDefense);
         int finalDamage = Math.Max(1, reduced);
 
         bool monsterCrit = RunRng.Next(100) < Math.Max(0, monster.CriticalRate + WeatherSystem.GetCritModifier());
         // CritImmune+N — at ≥100 cancels the crit outright; lower values roll.
         // MH + OH shield contribute, picking the max (cap-like, non-stacking).
-        // Read under the crit branch: the lookup walks both slots' effects and its result is
-        // consumed nowhere else, so on the ~90% of attacks that do not crit it was pure waste.
-        // The nested `&&` already short-circuited the RunRng draw, so no roll or draw moves.
+        // Read under the crit branch: the lookup walks both slots' effects and only a crit needs
+        // it. The RunRng draw sits behind the short-circuiting `&&`, so it is taken only on a
+        // crit against partial immunity.
         if (monsterCrit)
         {
             int critImmune = MaxWeaponShield<EquipmentSpecialEffect.CritImmune>(c => c.ChancePercent);
@@ -305,14 +313,14 @@ public partial class TurnManager
         if (monsterCrit)
         {
             rawDamage += monster.CriticalHitDamage;
-            reduced = Math.Max(0, rawDamage - (_player.Defense + _shrineBuff + SatietyDefBonus + FatigueDefPenalty) / 3);
+            reduced = Math.Max(0, rawDamage - IncomingDefense);
             finalDamage = Math.Max(1, reduced);
         }
 
-        // Counter stance — guaranteed riposte for 150% weapon damage
+        // Counter stance: the attack is cancelled and answered with a guaranteed riposte.
         if (_counterStance)
         {
-            int riposteDmg = Math.Max(1, (int)(_player.Attack * 1.5));
+            int riposteDmg = Math.Max(1, (int)(_player.Attack * _riposteMultiplier));
             var riposteReward = monster.TakeDamage(riposteDmg);
             _log.LogCombat($"RIPOSTE! You counter {monster.Name}'s attack for {riposteDmg} damage!");
             CombatTextEvent?.Invoke(monster.X, monster.Y, "RIPOSTE!", Color.BrightYellow);
@@ -370,12 +378,9 @@ public partial class TurnManager
         // BlockChance is additive across all equipped slots (armor pieces too).
         int blockFx = SumAllSlots<EquipmentSpecialEffect.BlockChanceBonus>(b => b.Percent);
 
-        // Holy Sword — Heathcliff's stance. The Guide states "a permanent block bonus, active only
-        // while you hold a one-handed sword and a real shield", and UniqueSkill declares
-        // "+15% block". Nothing implemented it: IsHolySwordActive was the ONLY one of the five
-        // Is*Active predicates with no caller, which is also why DamageBonusPercent's hasShield
-        // parameter had no consumer. `shield` is `OffHand as Armor`, so a second sword is already
-        // excluded — exactly the "real shield, not a second sword" the Guide describes.
+        // Holy Sword — Heathcliff's stance: +15% block, active only while holding a one-handed
+        // sword and a real shield. `shield` is `OffHand as Armor`, so a second sword is already
+        // excluded.
         int holySwordBlock = Skills.UniqueSkillSystem.IsHolySwordActive(
             mainWpn?.WeaponType ?? "", shield != null) ? 15 : 0;
 
@@ -519,14 +524,14 @@ public partial class TurnManager
         {
             LastKillerName = monster.Name;
             _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
-            RaisePlayerDied("monster");
+            RaisePlayerDied(KillCause(monster));
         }
     }
 
     private void ApplyMobStatusEffects(Monster monster)
     {
         // Uninterruptible+N — weapon grants N% chance to shrug off any
-        // incoming status application from the monster hit we just took.
+        // incoming status application from the monster hit just taken.
         var uninterruptWpn = _player.Inventory.GetEquipped(EquipmentSlot.Weapon) as Weapon;
         int uninterruptChance = uninterruptWpn?.FirstEffect<EquipmentSpecialEffect.Uninterruptible>()?.ChancePercent ?? 0;
         if (uninterruptChance > 0 && RunRng.Next(100) < uninterruptChance)
@@ -574,7 +579,7 @@ public partial class TurnManager
         {
             if (!TryBossAbility(boss, chasing: true)) return false;
             _lastCombatTurn = TurnCount;
-            if (_player.IsDefeated) { LastKillerName = monster.Name; RaisePlayerDied("monster"); }
+            if (_player.IsDefeated) { LastKillerName = monster.Name; RaisePlayerDied(KillCause(monster)); }
             return true;
         }
 
@@ -599,7 +604,7 @@ public partial class TurnManager
         // Rush adjacent to player and deal 1.5x damage
         _lastCombatTurn = TurnCount;
         int chargeDmg = Math.Max(1, (int)(CalcMonsterDamage(monster) * 1.5));
-        int chargeHit = Math.Max(1, chargeDmg - (_player.Defense + _shrineBuff + SatietyDefBonus + FatigueDefPenalty) / 3);
+        int chargeHit = Math.Max(1, chargeDmg - IncomingDefense);
         _log.LogCombat($"{monster.Name} charges at you with devastating force!");
         CombatTextEvent?.Invoke(monster.X, monster.Y, "CHARGE!", Color.BrightRed);
         _player.TakeDamage(chargeHit);
@@ -610,7 +615,7 @@ public partial class TurnManager
         {
             LastKillerName = monster.Name;
             _log.LogSystem(FlavorText.DeathFlavors[RunRng.Next(FlavorText.DeathFlavors.Length)]);
-            RaisePlayerDied("monster");
+            RaisePlayerDied(KillCause(monster));
         }
         return true;
     }

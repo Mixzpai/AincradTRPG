@@ -11,10 +11,11 @@ public partial class MapView
     {
         // Any keypress is potential state-change -> invalidate frame cache before dispatch.
         DirtyFrame();
+        if (KeyIntercept?.Invoke() == true) { keyEvent.Handled = true; return true; }
         if (HandleLookModeKey(keyEvent)) return true;
         // Reticle modal swallows keys before any movement/dialog dispatch.
         if (HandleRangedFireKey(keyEvent)) return true;
-        // Dev instrumentation, deliberately not rebindable.
+        // Debug instrumentation, deliberately not rebindable.
         if (HandleDebugKey(keyEvent)) return true;
 
         // Esc is reserved. Terminal.Gui binds it to Command.Quit at the application level, and a
@@ -28,7 +29,7 @@ public partial class MapView
         GameAction action = Keybinds.Resolve(InputContext.Map, keyEvent);
         if (action == GameAction.None)
         {
-            // Tab is bound on the Application (rule 289); unbound here it would take focus off the map.
+            // Tab is bound on the Application; unbound here it would take focus off the map.
             if (keyEvent.KeyCode == KeyCode.Tab || keyEvent.KeyCode == (KeyCode.Tab | KeyCode.ShiftMask))
             {
                 keyEvent.Handled = true;
@@ -60,6 +61,7 @@ public partial class MapView
             case GameAction.OpenSwordSkills:  return FireEvent(SwordSkillMenuRequested, keyEvent);
             case GameAction.RangedFire:       return FireEvent(RangedFireKeyPressed,    keyEvent);
             case GameAction.Wait:             return FireEvent(WaitRequested,           keyEvent);
+            case GameAction.WaitMenu:         return FireEvent(WaitMenuRequested,       keyEvent);
             case GameAction.QuickSave:        return FireEvent(SaveRequested,           keyEvent);
             case GameAction.OpenWorldMap:     return FireEvent(WorldMapRequested,       keyEvent);
             case GameAction.OpenMessageLog:   return FireEvent(MessageLogRequested,     keyEvent);
@@ -81,8 +83,7 @@ public partial class MapView
                 keyEvent.Handled = true;
                 return true;
 
-            // Routes to the same dialog focused on the Collectables tab, so muscle memory from
-            // the old Legendary Collectables panel survives the merge.
+            // Opens the same dialog focused on its Collectables tab.
             case GameAction.OpenCollectables:
                 ClearDamagePopups();
                 MilestonesDialog.Show(_player, initialCategory: "Collectables");

@@ -1,7 +1,7 @@
 namespace SAOTRPG.Map.Generation.Passes;
 
-// Boundary mountain ring. Town floors (F1/F48) preserve the legacy jagged-walker
-// border; non-town floors stamp a 2-tile mountain ring along the disk edge.
+// Boundary mountain ring: stamps a 2-tile mountain ring along the disk edge. Every pipeline
+// floor has a circle mask; floor 100 never enters the pipeline.
 public sealed class BorderPass : IGenerationPass
 {
     public string Name => "Border";
@@ -9,26 +9,17 @@ public sealed class BorderPass : IGenerationPass
     public void Execute(WorldContext ctx)
     {
         if (ctx.CircleMask is null)
-        {
-            // Towns + F100 — unchanged: legacy jagged 4-edge walker.
-            MapGenerator.BuildJaggedMountainBorder(ctx.Map, ctx.Rng);
-            return;
-        }
+            throw new InvalidOperationException($"BorderPass on floor {ctx.FloorNumber} has no circle mask");
 
-        // Non-town: stamp Mountain on every out-of-disk cell that touches an in-disk
+        // Stamp Mountain on every out-of-disk cell that touches an in-disk
         // neighbor, plus the 2-tile ring just outside. Re-stamps over BaseTerrainPass's
         // Mountain default to densify the boundary visual.
         //
-        // WRITING MOUNTAIN OVER MOUNTAIN IS A NO-OP, so a cell already carrying it can be skipped
-        // before the neighbour scan runs at all. It removes ~215,000 twenty-five-cell scans per
-        // 1000x1000 floor, and the guard is exact by construction: it only ever skips a write that
-        // would not have changed the tile.
-        //
-        // MEASURED, and worth knowing: the skip fires on EVERY out-of-disk cell — 0 write
-        // candidates across 24 floors x 4 seeds — because BaseTerrainPass stamps the same Mountain
-        // default over a strict superset of this ring, so this branch has no reachable write at
-        // all. Deleting the pass outright is therefore available and is the dev's call; the guard
-        // above stays correct either way, and does not depend on that pass ordering holding.
+        // Writing Mountain over Mountain is a no-op, so a cell already carrying it is skipped
+        // before the neighbour scan runs at all. The guard is exact by construction: it only ever
+        // skips a write that would not have changed the tile. BaseTerrainPass stamps the same
+        // Mountain default over a superset of this ring, but the guard does not depend on that
+        // pass ordering holding.
         //
         // y-outer here, unlike the terrain passes: this branch draws no rng, so the visit order is
         // free, and row-major matches GameMap's own tile layout.
@@ -40,10 +31,7 @@ public sealed class BorderPass : IGenerationPass
         {
             if (mask[x, y]) continue;
             if (map.Tiles[x, y].Type == TileType.Mountain) continue;
-            // RANGE 1 IS CONTAINED IN RANGE 2 — the old `NeighborInside(1) || NeighborInside(2)`
-            // re-probed the same nine cells inside the twenty-five, on every out-of-disk cell of
-            // the map (~215,000 on a 1000x1000 floor). Strictly redundant, so the result is
-            // identical.
+            // Range 1 is contained in range 2, so a single range-2 scan covers both rings.
             if (NeighborInside(mask, x, y, 2)) map.Tiles[x, y].Type = TileType.Mountain;
         }
     }

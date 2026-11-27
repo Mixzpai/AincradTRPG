@@ -30,8 +30,8 @@ public enum TriggerType
     Conditional,
 }
 
-// One canonical milestone entry. Id is the persistent unlock key (LifetimeStats.UnlockedMilestones).
-// SubCategory currently only used by Collectables (bucket name); other categories leave it null.
+// One milestone entry. Id is the persistent unlock key (LifetimeStats.UnlockedMilestones).
+// SubCategory is used only by Collectables (bucket name); other categories leave it null.
 public record Milestone(
     string Id,
     string Name,
@@ -48,12 +48,11 @@ public record Milestone(
     string? VsTag,
     bool SpoilerHidden);
 
-// Read-only catalog of all milestones. Combines base 56 (achievements + titles + life-skill
-// milestones) with canon imports, 184 Legendary collection entries, trigger-source-derived,
-// and gap-filler entries. Total ~330.
+// Read-only catalog of all milestones: achievements, titles, life-skill milestones, story
+// achievements, Legendary collection entries, trigger-source-derived and gap-filler entries.
 public static class MilestoneRegistry
 {
-    public static readonly IReadOnlyList<Milestone> All = new Milestone[]
+    private static readonly Milestone[] s_all = new Milestone[]
     {
         // ── Achievements (Combat) ───────────────────────────────────────
         new("first_kill", "First Blood", "Defeat your first monster",
@@ -251,7 +250,7 @@ public static class MilestoneRegistry
         new("life_mining_25", "Mining — Adept", "+1 bonus ore roll (20%)",
             "Life Skills", null, TriggerType.LifeSkillLevel, "Mining", 25,
             RewardType.AutoPassive, 0, null, 0, null, false),
-        new("life_mining_50", "Mining — Expert", "Mithril +1 Adamant Trace; Iron costs -1 strike",
+        new("life_mining_50", "Mining — Expert", "Mithril +1 Mithril Trace; Iron costs -1 strike",
             "Life Skills", null, TriggerType.LifeSkillLevel, "Mining", 50,
             RewardType.AutoPassive, 0, null, 0, null, false),
         new("life_mining_99", "Mining — Master", "+20% Divine vein drops; durability damage halved",
@@ -259,8 +258,8 @@ public static class MilestoneRegistry
             RewardType.AutoPassive, 0, null, 0, null, false),
 
         // ────────────────────────────────────────────────────────────────
-        //   SAO Infinity Moment-era canon achievements (post-F75 bosses).
-        //   IM-26 reuses existing floor_100 (Apex of Aincrad) — not duplicated.
+        //   Post-F75 boss and front-line achievements (ids if_*).
+        //   The F100 clear is floor_100 (Apex of Aincrad) above, not duplicated here.
         // ────────────────────────────────────────────────────────────────
         new("if_beater", "Beater",
             "Cleared the F1 prologue and accepted the burden of the front line.",
@@ -355,7 +354,7 @@ public static class MilestoneRegistry
             RewardType.Col, 2500, null, 0, null, false),
 
         // ────────────────────────────────────────────────────────────────
-        //   SAO Re:Hollow Fragment-era canon achievements.
+        //   Hollow Area achievements (ids hf_*).
         // ────────────────────────────────────────────────────────────────
         new("hf_seatrees", "Slayer of the Sea of Trees",
             "Defeat the Hollow Area boss of Selvendys Forest.",
@@ -521,7 +520,7 @@ public static class MilestoneRegistry
             "Karma", null, TriggerType.Conditional, "town_guard_killed", 1,
             RewardType.DisplayOnly, 0, null, 0, null, false),
 
-        // Quest completions — major canon storylines.
+        // Quest completions — major storylines.
         new("quest_mothers_rosario", "Mother's Rosario",
             "Completed Yuuki's final quest.",
             "Story", null, TriggerType.QuestCompleted, "mothers_rosario", 1,
@@ -610,7 +609,7 @@ public static class MilestoneRegistry
             RewardType.Col, 500, null, 0, null, false),
 
         // ────────────────────────────────────────────────────────────────
-        //   Canon callbacks.
+        //   Story callbacks (Category "Canon").
         // ────────────────────────────────────────────────────────────────
         new("canon_beater", "The Beater",
             "Cleared Floor 1 alone, with no party members.",
@@ -643,9 +642,9 @@ public static class MilestoneRegistry
             RewardType.EquippableTitle, 0, StatType.Intelligence, 6, null, true),
 
         // ────────────────────────────────────────────────────────────────
-        //   Collectables — 184 Legendary entries (DisplayOnly).
-        //   SubCategory = canon bucket (LN / AL / IF / HF / LR / MD / FD / Myth / Non-Canon).
-        //   SpoilerHidden flagged for canon-spoiler weapons.
+        //   Collectables — Legendary entries (DisplayOnly).
+        //   SubCategory = the entry's collection bucket string.
+        //   SpoilerHidden flagged for story-spoiler weapons.
         // ────────────────────────────────────────────────────────────────
 
         // ── One-Handed Sword (37) ───────────────────────────────────────
@@ -1320,6 +1319,12 @@ public static class MilestoneRegistry
             "Collectables", null, TriggerType.CollectableCount, null, 184,
             RewardType.EquippableTitle, 0, StatType.Intelligence, 5, null, false),
     };
+
+    public static readonly IReadOnlyList<Milestone> All = s_all;
+
+    // The same catalog for a loop: walking `All` through the interface boxes an enumerator, and
+    // the evaluators walk it on every event.
+    public static ReadOnlySpan<Milestone> Span => s_all;
 
     public static readonly IReadOnlyDictionary<string, Milestone> ById =
         All.ToDictionary(m => m.Id);

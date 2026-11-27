@@ -37,10 +37,9 @@ public static class GenerationPipeline
     private static void BuildCircleMask(WorldContext ctx)
     {
         if (ctx.FloorNumber == 100) return;
-        // RunRng.StableHash rather than seed ^ floor: XOR collides in general, though not here
-        // (Build also takes Width/Height, which shrink with floor independently of the seed).
-        // It must NOT be HashCode.Combine — that randomises per process, which made the floor's
-        // own shape differ on every launch of the game for the same seed.
+        // RunRng.StableHash rather than seed ^ floor, which collides in general. Never
+        // HashCode.Combine: it randomises per process, so the floor's shape would differ on every
+        // launch of the game for the same seed.
         ctx.CircleMask = FloorMask.Build(ctx.Width, ctx.Height,
             RunRng.StableHash(ctx.GlobalSeed, ctx.FloorNumber));
         ctx.Map.CircleMask = ctx.CircleMask;

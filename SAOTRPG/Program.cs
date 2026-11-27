@@ -37,10 +37,8 @@ namespace SAOTRPG
             if (args.Contains("--verify-tiles")) DebugMode.EnableVerifyTiles();
             if (args.Contains("--verify-light")) DebugMode.EnableVerifyLight();
 
-            // --perf implies --quickstart: a perf run wants the map, and driving four screens by
-            // hand is the slow part of taking a measurement. Order matters — the explicit opt-out
-            // is applied last so `--perf --no-quickstart` reaches the title screen, which is the
-            // only way to measure the title screen's own unexplained ~105ms frame.
+            // --perf implies --quickstart, since a perf run wants the map. The explicit opt-out is
+            // applied last so `--perf --no-quickstart` reaches the title screen.
             if (args.Contains("--perf") || args.Contains("--quickstart")) DebugMode.EnableQuickStart();
             if (args.Contains("--no-quickstart")) DebugMode.DisableQuickStart();
 
@@ -77,6 +75,7 @@ namespace SAOTRPG
 
             if (DebugMode.QuickStart) QuickStart.Launch(mainWindow, DebugMode.QuickStartSeed);
             else TitleScreen.Show(mainWindow);
+            SAOTRPG.UI.Dialogs.DialogPrewarm.Start();
             app.Run(mainWindow);
             mainWindow.Dispose();
             AppHost.Stop();

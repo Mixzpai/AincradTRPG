@@ -10,7 +10,7 @@ namespace SAOTRPG.Systems.Crafting;
 
 // Vein depletion drop tables.
 // Drop chance = base + LifeSkill MiningOreDropBonusPercent + Pickaxe.OreQualityBonus.
-// L25+ rolls one BONUS ore (20% chance). L50 grants guaranteed +1 mithril_trace on
+// L25+ rolls one bonus ore (20% chance). L50 grants guaranteed +1 mithril_trace on
 // Mithril veins. L99 adds +20% to Divine vein primary drop.
 public static class MiningOreTables
 {
@@ -19,17 +19,16 @@ public static class MiningOreTables
     private const int MithrilPrimaryBaseChance = 60;  // mithril_ingot
     private const int DivinePrimaryBaseChance  = 30;  // divine_fragment
 
-    // Secondary (flavor) drop chances — canon mats, low base.
+    // Secondary (flavor) drop chances, low base.
     private const int IronOreBonusChance       = 35;  // iron_ore on top of ingot
     private const int MithrilTraceBonusChance  = 50;  // mithril_trace on top of ingot
     private const int PrimordialShardChance    = 4;   // ultra-rare on Divine deplete
 
-    // The vein TYPE decides the metal; the BIOME decides which Enhancement Ore the surrounding
-    // rock carries with it. Keyed by BiomeGenConfig.OreTableId, which every biome JSON declared
-    // and nothing read. Each of the seven canon ores is claimed exactly once, matched to the
-    // biome its bias suits: fire→Attack, water→Speed, frozen stone→Defense, baked earth→Vitality.
-    // "default" is deliberately absent — the four biomes using it add no roll at all, so their
-    // drops AND their rng draw count are exactly what they were.
+    // The vein type decides the metal; the biome decides which Enhancement Ore the surrounding
+    // rock carries with it. Keyed by BiomeGenConfig.OreTableId. Each of the seven ores is claimed
+    // exactly once, matched to the biome its bias suits: fire→Attack, water→Speed, frozen
+    // stone→Defense, baked earth→Vitality. "default" is deliberately absent — a biome using it
+    // adds no roll and no RNG draw.
     private static readonly Dictionary<string, string> OreTableToEnhancementOre =
         new(StringComparer.OrdinalIgnoreCase)
         {
@@ -48,7 +47,7 @@ public static class MiningOreTables
     private const int BiomeOreMithrilChance = 14;
     private const int BiomeOreDivineChance  = 22;
 
-    // An unknown ore table id is a config typo, not a silent "no ore" — logged ONCE per distinct
+    // An unknown ore table id is a config typo, not a silent "no ore" — logged once per distinct
     // id, because this runs on every vein depletion and a per-strike log would drown the file.
     private static readonly HashSet<string> _unknownTablesLogged = new(StringComparer.OrdinalIgnoreCase);
 
@@ -71,7 +70,7 @@ public static class MiningOreTables
                 AddRoll(drops, "mithril_ingot", MithrilPrimaryBaseChance + dropBonus);
                 AddRoll(drops, "mithril_trace", MithrilTraceBonusChance + dropBonus);
                 // L50 milestone: guaranteed extra mithril_trace.
-                if (player.LifeSkills?.MiningMithrilAdamantBonus == true)
+                if (player.LifeSkills?.MiningMithrilTraceBonus == true)
                     AddItemById(drops, "mithril_trace");
                 break;
             case TileType.OreVeinDivine:
@@ -96,9 +95,8 @@ public static class MiningOreTables
             if (extra != null) AddItemById(drops, extra);
         }
 
-        // Appended LAST on purpose: every roll above keeps the exact draw order it had, so a
-        // "default" biome is bit-identical to before this existed and the others differ only by a
-        // single trailing draw.
+        // Rolled last on purpose: every roll above keeps the same draw order whatever the biome,
+        // and a non-default biome adds only a single trailing draw.
         string? biomeOre = BiomeEnhancementOre();
         if (biomeOre != null)
         {

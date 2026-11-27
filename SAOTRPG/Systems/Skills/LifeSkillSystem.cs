@@ -152,7 +152,7 @@ public class LifeSkillSystem
         return 1.0f;
     }
 
-    // Null-safe helper — safe from boot paths (character creation, test harnesses).
+    // Null-safe helper — safe from boot paths (character creation, before a player exists).
     public static float BargainingDiscount(Player? player)
         => player?.LifeSkills.BargainingBuyMultiplier() ?? 1.0f;
 
@@ -216,8 +216,8 @@ public class LifeSkillSystem
     public bool MiningIronStrikeDiscount =>
         Skills[LifeSkillType.Mining].Level >= 50;
 
-    // L50: Mithril vein guaranteed +1 Adamant Trace on depletion (content layer reads this).
-    public bool MiningMithrilAdamantBonus =>
+    // L50: a depleted Mithril vein gives one extra Mithril Trace (read by MiningOreTables).
+    public bool MiningMithrilTraceBonus =>
         Skills[LifeSkillType.Mining].Level >= 50;
 
     public static string Label(LifeSkillType skill) => skill switch
@@ -260,7 +260,7 @@ public class LifeSkillSystem
         (LifeSkillType.Swimming,   99) => "Master swimmer",
         (LifeSkillType.Mining,     10) => "+5% ore drop chance",
         (LifeSkillType.Mining,     25) => "+1 bonus ore roll (20%)",
-        (LifeSkillType.Mining,     50) => "Mithril +1 Adamant Trace; Iron costs -1 strike",
+        (LifeSkillType.Mining,     50) => "Mithril +1 Mithril Trace; Iron costs -1 strike",
         (LifeSkillType.Mining,     99) => "+20% Divine vein drops; durability damage halved",
         _                           => "",
     };

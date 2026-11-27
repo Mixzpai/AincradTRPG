@@ -70,10 +70,8 @@ public partial class TurnManager
     // Remaining turns of bleed damage.
     public int BleedTurnsLeft => _bleedTurnsLeft;
 
-    // The parenthetical is BUILT FROM THE PENALTIES, never written out. The hand-written version
-    // announced a speed penalty at both steps that no mechanic charged. Speed drives the
-    // follow-up strike now, but fatigue still charges attack and defence only: it is the
-    // exertion clock, and the two numbers it takes are the two the warning names.
+    // The parenthetical is built from the penalties, never written out, so the warning names
+    // exactly what fatigue charges: attack and defence.
     private string FatiguePenaltyText()
     {
         var parts = new List<string>(2);
@@ -112,58 +110,26 @@ public partial class TurnManager
         if (_slowTurnsLeft <= 0) _log.LogCombat("You are no longer slowed.");
     }
 
-    // EVERY TIMED DURATION IN THE GAME, ticked once per turn.
+    // Every timed duration and the world clock (hunger, biome damage, starvation) tick from
+    // TickPerTurnTimers, which PassTurn calls once per turn beside TickPoison/TickBleed/TickSlow,
+    // so every turn-consuming path reaches it exactly once.
     //
-    // These used to live in AdvanceTurn — and the ordinary successful move does TurnCount++
-    // directly and never calls it, so on a populated floor only the turns that happened to be
-    // attacks ticked anything. Measured: 13 of 46 turns, i.e. a declared 20-turn skill cooldown
-    // really lasted about 70, invisibility outlasted its own duration roughly threefold, and a
-    // confused mob stayed confused for as long as the player kept walking.
+    // Every attrition interval is multiplied by AttritionTurnScale, which sets the overall pace
+    // of hunger, biome damage and starvation identically for every playstyle.
     //
-    // Called beside TickPoison/TickBleed/TickSlow, which is the one hook every turn-consuming
-    // path already reaches. AdvanceTurn's callers reach it too, so nothing double-ticks.
-    //
-    // DELIBERATELY NOT MOVED, and the distinction is durations versus attrition: hunger drain,
-    // biome damage, starvation and TickExhaustion stay where they are. Each of those is a RATE
-    // rather than a declared duration, so rehoming them would change how demanding the game is
-    // rather than make a stated number true. (TickExhaustion is the mirror case — its single call
-    // site is the walking path, so fatigue currently builds only while walking.) That is a balance
-    // decision for the dev.
-    // THE WORLD CLOCK: hunger, biome damage and starvation.
-    //
-    // These lived in AdvanceTurn, which the ordinary move never calls — so the modulo test was
-    // only SAMPLED on the ~28% of turns that were attacks, mining or stuns. That did not merely
-    // slow attrition down, it made it ERRATIC: whether a hunger tick landed depended on an attack
-    // turn happening to coincide with a multiple of the interval. Two players walking the same
-    // floor could starve at very different rates for reasons neither could see.
-    //
-    // Every interval is scaled by AttritionTurnScale so the AVERAGE rate is preserved. The
-    // sampling fraction was measured at 13 AdvanceTurns per 46 turns (ProgressProbe s14), i.e.
-    // one attrition evaluation per ~3.5 turns; 4 is that rounded to a whole multiplier, which
-    // leaves the game about 13% gentler on average than the old behaviour and, more importantly,
-    // identical for every playstyle.
-    //
-    // TickExhaustion is deliberately NOT here. Fatigue is an EXERTION clock, and "walking tires
-    // you, standing still does not" is at least arguable as a design; a hunger clock that runs
-    // faster because you chose to fight is not. Moving it stays the dev's call.
+    // TickExhaustion is not here: fatigue is an exertion clock, and its single call site is the
+    // walking path, so it builds only while walking.
     private const int AttritionTurnScale = 4;
 
-    // HOW MUCH HUNGRIER THE NIGHT IS, as a multiple of the base drain interval rather than as a
-    // turn count of its own — so it stays a stated FRACTION of the base rate if that rate is ever
+    // How much hungrier the night is, as a multiple of the base drain interval rather than as a
+    // turn count of its own — so it stays a fixed fraction of the base rate if that rate is
     // re-tuned, instead of silently becoming a different difficulty.
     //
-    // FOUR means one extra point per four ordinary drains: +25% while the sun is down. Sized
-    // against what the player can buy rather than against a feel: the Night phase is ~1,180 turns
-    // of the 4,000-turn cycle, so the surcharge costs about 25 satiety over a whole night — one
-    // ordinary ration (Bread restores 20, Grilled Meat 30). Across a full day it is +7%.
-    //
-    // THE ROADMAP ASKED FOR ONE POINT PER TEN TURNS, WHICH IS A FAR BIGGER CHANGE THAN IT LOOKS.
-    // The base rate is one per twelve, so that is +120% during the night and +35% over a day, and
-    // it would drain 118 points across one night against a bar that holds 100. Satiety is already
-    // the fastest clock in the game — 1,200 turns from full to starving against a 4,000-turn day,
-    // so an unfed player starves roughly three times per cycle before any night term exists. A
-    // surcharge that large does not make the night feel hungrier; it makes food the only thing
-    // the player is doing. The gentler number is the shipped one, and the dial is this constant.
+    // Four means one extra point per four ordinary drains: +25% while the sun is down. The Night
+    // phase is about 7 hours of the day, so the surcharge costs about 25 satiety over a whole
+    // night — one ordinary ration (Bread restores 20, Grilled Meat 30). Across a full day it is
+    // +7%. Satiety is already the fastest clock in the game, so a much larger surcharge would
+    // make food the only thing the player is doing.
     private const int NightHungerIntervalScale = 4;
 
     private void TickAttrition()
@@ -193,8 +159,7 @@ public partial class TurnManager
             if (_player.IsDefeated) { LastKillerName = $"the {BiomeSystem.DisplayName}"; RaisePlayerDied("biome"); }
         }
 
-        // Starvation carried no interval of its own — it was one HP per AdvanceTurn, which the
-        // sampling made roughly one per 3.5 turns. Keyed to the same scale so it stays there.
+        // Starvation has no interval of its own: one HP every AttritionTurnScale turns.
         if (Satiety <= 0 && !_player.IsDefeated)
         {
             if (TurnCount % AttritionTurnScale == 0) _player.TakeDamage(1);
@@ -246,40 +211,34 @@ public partial class TurnManager
         TickAttrition();
     }
 
-    // ── A CARRIED LIGHT BURNS DOWN ─────────────────────────────────────────────────────────
-    // Fuel, not wear. DegradeEquipment models a weapon chipping on impact and deliberately leaves
-    // the broken item equipped "until repaired"; a light that has burned out is SPENT, so it is
-    // destroyed and the next one lit automatically. That is also why combat never touches it —
-    // the Tool slot appears in none of DegradeEquipment's call sites.
+    // ── A carried light burns down ─────────────────────────────────────────────────────────
+    // Fuel, not wear. DegradeEquipment models a weapon chipping on impact and leaves the broken
+    // item equipped "until repaired"; a light that has burned out is spent, so it is destroyed
+    // and the next one lit automatically. Combat never touches it — the Tool slot appears in
+    // none of DegradeEquipment's call sites.
     //
-    // WHICH HOOK. This rides TickPerTurnTimers, the universal per-turn hook every turn path
-    // shares — not AdvanceTurn, which an ordinary move never reaches, and not the
-    // AttritionTurnScale family. That scale exists solely to preserve a measured legacy average
-    // from the era when attrition was only SAMPLED on AdvanceTurn turns; a rate introduced with
-    // the hook already correct has no such history, so inheriting the multiplier would quadruple
-    // the stated lifetime for no reason.
+    // This rides TickPerTurnTimers, the per-turn hook every turn path shares, and is not scaled
+    // by AttritionTurnScale: LightBurnTurns is the real interval.
     //
-    // A LIGHT BURNS WHENEVER IT IS EQUIPPED, at every hour. DayNightCycle.TorchInfluence floors at
-    // 0.08 rather than reaching zero, so a carried flame is never doing literally nothing; and
-    // burning only after dark would make the rate depend on something the player cannot see, which
-    // is the erratic-attrition shape again. It also preserves the one real decision the item
-    // creates: the Tool slot holds a pickaxe OR a light, so unequipping at dawn to mine is what
-    // makes a torch last the night it is rated for.
+    // A light burns whenever it is equipped, at every hour. DayNightCycle.TorchInfluence floors at
+    // 0.08 rather than reaching zero, so a carried flame is never doing nothing, and burning only
+    // after dark would make the rate depend on something the player cannot see. The Tool slot
+    // holds a pickaxe or a light, so unequipping at dawn to mine is what makes a torch last the
+    // night it is rated for.
     //
-    // RATE, derived rather than chosen. A day is DayNightCycle.CycleLength = 4000 turns and the
-    // sun is up for exactly half of it, so a night is 2000 turns; the 60-durability starter is
-    // rated to cover one. 2000 / 60 = 33.3, so one durability per 33 turns — Wooden Torch 1,980
-    // turns (0.50 day), Iron Lantern 4,620 (1.16), Crystal Lantern 9,900 (2.48).
-    // Public so the Player Guide's lifetime table can be checked against it rather than
-    // transcribing the turn counts, which is how every rotted table in this corpus started.
-    public const int LightBurnTurns = 33;
+    // Rate: a day is DayNightCycle.CycleLength = 86,400 turns (seconds) and the sun is up for
+    // half of it, so a night is 43,200; the 60-durability starter is rated to cover one.
+    // 43,200 / 60 = 720 — Wooden Torch 43,200 turns (0.50 day), Iron Lantern 100,800 (1.17),
+    // Crystal Lantern 216,000 (2.50).
+    // Public so the Player Guide's lifetime table is derived from it rather than transcribed.
+    public const int LightBurnTurns = 720;
 
     // Warning thresholds as a share of the light's own capacity, so a Crystal Lantern warns with
     // proportionally as much left as a Wooden Torch does rather than at a flat count that would
     // mean five times less to it.
     public const int LightLowFuelPercent = 25, LightCriticalFuelPercent = 10;
 
-    // Turns spent with a light equipped. Deliberately per-run and NOT persisted, on the same
+    // Turns spent with a light equipped. Per-run and not persisted, on the same
     // reasoning as _miningStrikeCount: it holds at most LightBurnTurns-1 turns of progress, so
     // which side of the interval a loaded run resumes on cannot matter.
     //
@@ -291,7 +250,7 @@ public partial class TurnManager
     private void TickLightSource()
     {
         // Putting the light away resets the count, so a torch shelved at dawn does not resume
-        // mid-interval. Swapping one lit torch for ANOTHER deliberately does not reset it: the
+        // mid-interval. Swapping one lit torch for another deliberately does not reset it: the
         // count is turns-spent-burning, and clearing it on every equip would let a player rotate
         // a handful of torches just under the interval and burn nothing at all.
         var lit = _player.Inventory.GetActiveLightSource();
@@ -328,7 +287,7 @@ public partial class TurnManager
             _log.LogCombat($"Your {light.Name} is guttering — it will go out soon. ({light.ItemDurability}/{capacity})");
     }
 
-    // ORDER IS LOAD-BEARING. DestroyEquipped clears the slot WITHOUT returning the item to the
+    // Order matters. DestroyEquipped clears the slot without returning the item to the
     // backpack; going through Equip first would instead call Unequip, which puts the dead torch
     // back in the bag as a permanent zero-durability passenger. Destroy, then light the next one.
     private void ExtinguishAndRelight(EquipmentSlot slot, Items.Equipment.EquipmentBase spent)
@@ -367,10 +326,11 @@ public partial class TurnManager
     {
         TurnCount++;
 
-        if (TurnCount > 0 && TurnCount % FlavorText.MilestoneInterval == 0)
+        // Quiet while waiting or asleep: an eight-hour sleep would print eight of them.
+        if (TurnCount % FlavorText.MilestoneInterval == 0 && CurrentActivity == null)
         {
             string msg = FlavorText.MilestoneMessages[RunRng.Next(FlavorText.MilestoneMessages.Length)];
-            _log.LogSystem(string.Format(msg, TurnCount));
+            _log.LogSystem(string.Format(msg, SAOTRPG.Systems.World.GameClock.Clipped(TurnCount)));
         }
 
     }
@@ -385,19 +345,18 @@ public partial class TurnManager
         if (TurnCount % interval != 0) return;
 
         // SpecialEffect regen stacks on top of native regen.
-        // HPRegen + SPRegen sum across ALL equipped slots (armor pieces stack).
+        // HPRegen + SPRegen sum across all equipped slots (armor pieces stack).
         int hpBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.HPRegen>(h => h.Amount);
         int spBonus = SumAllSlots<Items.Equipment.EquipmentSpecialEffect.SPRegen>(s => s.Amount);
 
-        // Active food regen buff folds into the same tick. The countdown itself lives in
-        // TickPerTurnTimers — this only READS the rate. It used to decrement here, once per regen
-        // INTERVAL rather than once per turn, so a buff whose parameter, field and tray row all
-        // say "turns" actually lasted RegenInterval times longer than its own number.
+        // Active food regen buff folds into the same tick. The countdown lives in
+        // TickPerTurnTimers, once per turn; this only reads the rate.
         int foodBonus = _foodRegenTurnsLeft > 0 ? _foodRegenRate : 0;
 
         if (_player.CurrentHealth < _player.MaxHealth)
         {
-            int regenAmount = 1 + _player.Vitality / 3 + WeatherSystem.GetRegenBonus() + hpBonus + foodBonus;
+            int regenAmount = 1 + _player.Vitality / 3 + WeatherSystem.GetRegenBonus() + hpBonus + foodBonus
+                              + _player.BaseHpRegenPerTick;
             _player.CurrentHealth = Math.Min(_player.CurrentHealth + regenAmount, _player.MaxHealth);
             // Healing tick sparkle — subtle +/· pair at player tile.
             ParticleQueue.Emit(ParticleEvent.HealingTick, _player.X, _player.Y);
@@ -409,8 +368,8 @@ public partial class TurnManager
         if (spBonus > 0) _player.SkillPoints += spBonus;
     }
 
-    // Invisibility+N tick — one turn decrement per AdvanceTurn; logs on expiry.
-    // Called from AdvanceTurn so cadence is independent of regen interval.
+    // Invisibility+N tick — one decrement per turn; logs on expiry.
+    // Called from TickPerTurnTimers, so the cadence is independent of the regen interval.
     private void TickInvisibility()
     {
         if (_invisibilityTurnsLeft <= 0) return;
@@ -452,15 +411,14 @@ public partial class TurnManager
     }
 
     // The durability the combat log warns at. Public so the Player Guide's account of the
-    // warning ladder can be checked against it rather than transcribing the number.
+    // warning ladder reads it rather than transcribing the number.
     public const int DurabilityWarnAt = 5;
 
     private void DegradeEquipment(EquipmentSlot slot)
     {
         var item = _player.Inventory.GetEquipped(slot);
         if (item == null || item.ItemDurability <= 0) return;
-        // Divine Objects are unbreakable — canon Priority / Sacred Object flavor.
-        // Their durability never ticks down.
+        // Divine Objects are unbreakable: their durability never ticks down.
         if (item.Rarity == "Divine") return;
         item.ItemDurability--;
         if (item.ItemDurability <= 0)

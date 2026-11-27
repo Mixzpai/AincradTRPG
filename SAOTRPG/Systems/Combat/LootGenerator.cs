@@ -14,7 +14,7 @@ public static class LootGenerator
     private const int RarityUncommonCeiling = 85;
     private const int RarityRareCeiling = 96;
 
-    // 0-11 = weapon types, 12-15 = armor/shield, 16 = accessory fallback.
+    // 0-11 = weapon types, 12-15 = armor, 16 = shield, 17 = accessory fallback.
     // Rolls 0-16 are the explicit cases in CreateRandomEquipment and the last falls to the
     // accessory branch. Adding a case means bumping this, or the new case is dead.
     private const int EquipmentTypeCount = 18;
@@ -41,8 +41,8 @@ public static class LootGenerator
     // ItemRegistry.Create so Anvil Evolve flow can find/consume them.
     public static readonly Dictionary<string, string> ChainMaterialByName = new()
     {
-        // Refinement ingots and the three orphan mob drops. MobLootTable is keyed by DISPLAY
-        // NAME and TurnManager.Loot builds a bare MobDrop unless the name maps through here —
+        // Refinement ingots and mob-drop materials. MobLootTable is keyed by display
+        // name and TurnManager.Loot builds a bare MobDrop unless the name maps through here —
         // and Refinement.Socket / CountMaterialByDefId both key on DefinitionId, so an ingot
         // dropped without one lands in the backpack and can never be socketed.
         ["Sharpening Ingot"]    = "sharpening_ingot",
@@ -73,23 +73,23 @@ public static class LootGenerator
     // ◈ log format; Legendary uses [Legendary]. Field-boss divines live in FieldBossFactory.
     public static readonly Dictionary<int, string> FloorBossGuaranteedDrops = new()
     {
-        // Alicization Lycoris Divine Beast drops
-        [11] = "starfall",                    // F11 Felos the Ember Drake (invented)
-        [17] = "savage_squall",               // F17 Gelidus the Frozen Colossus (invented)
-        [24] = "phantasmagoria",              // F24 Grimhollow the Phantom (invented)
-        [30] = "void_eater",                  // F30 Primos the World Serpent (invented)
-        [38] = "cactus_bludgeon",             // F38 Obsidian the Black Knight (invented)
-        [40] = "demonblade_crimson_stream",   // F40 Dracoflame the Elder Wyrm (invented)
-        [43] = "midnight_rain",               // F43 Undine the Water Maiden (invented)
-        [49] = "midnight_sun",                // F49 Shadowstep Assassin (invented)
+        // Divine Beast drops
+        [11] = "starfall",                    // F11 Felos the Ember Drake
+        [17] = "savage_squall",               // F17 Gelidus the Frozen Colossus
+        [24] = "phantasmagoria",              // F24 Grimhollow the Phantom
+        [30] = "void_eater",                  // F30 Primos the World Serpent
+        [38] = "cactus_bludgeon",             // F38 Obsidian the Black Knight
+        [40] = "demonblade_crimson_stream",   // F40 Dracoflame the Elder Wyrm
+        [43] = "midnight_rain",               // F43 Undine the Water Maiden
+        [49] = "midnight_sun",                // F49 Shadowstep Assassin
 
-        // Divine Objects (canon Integrity Knight weapons)
-        [20] = "blue_rose_sword",             // Absolut the Winter Monarch — ice theme, Eugeo canon
-        [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito canon
+        // Divine Objects (Integrity Knight weapons)
+        [20] = "blue_rose_sword",             // Absolut the Winter Monarch — ice theme, Eugeo's sword
+        [99] = "night_sky_sword",             // Heathcliff's Shadow — pre-F100 endgame, Kirito's sword
 
-        // Divine placement — 10 orphan Divines wired to F75-F98 bosses.
+        // Divines held by the F75-F98 floor bosses.
         // No per-run cap; every guaranteed Divine slot drops Divine.
-        [75] = "masamune",                    // Skull Reaper — canon endgame katana apex
+        [75] = "masamune",                    // Skull Reaper — endgame katana apex
         [82] = "hexagramme",                  // Legacy of Grand — hex-pattern arcane rapier
         [84] = "caladbolg",                   // Queen of Ant — Caladbolg Irish mythic spear
         [86] = "tyrfing",                     // King of Skeleton — Tyrfing cursed sword
@@ -101,11 +101,11 @@ public static class LootGenerator
         [98] = "black_lily_sword",            // Incarnation of the Radius — Sheyta severing strike
     };
 
-    // IM Last-Attack Bonus: player last-hit → 100% drop alongside FloorBossGuaranteedDrops.
-    // Non-enhanceable Legendaries (canon IM tradeoff). LN-canon Elucidator at F50 is exempt.
+    // Last-Attack Bonus: player last-hit → 100% drop alongside FloorBossGuaranteedDrops.
+    // Non-enhanceable Legendaries; Elucidator at F50 is exempt.
     public static readonly Dictionary<int, string> FloorBossLastAttackDrops = new()
     {
-        // LN canon — Kirito takes Elucidator from F50 boss "Tier of Sin" (LN vol 4).
+        // Kirito's Elucidator, from the F50 floor boss.
         [50] = "elucidator",
         [85] = "bow_zephyros",
         [92] = "ths_sacred_cross",
@@ -117,8 +117,8 @@ public static class LootGenerator
         [99] = "bow_artemis",           // additional drop alongside Night Sky Sword
     };
 
-    // HF Avatar Weapons: F70+ field boss + matching weapon → 2% (10% for CanonHnmBosses).
-    // OHS has no canon Avatar, so OHS kills don't trigger.
+    // Avatar Weapons: F70+ field boss + matching weapon → 2% (10% for CanonHnmBosses).
+    // One-Handed Sword has no Avatar weapon, so OHS kills don't trigger.
     public static readonly Dictionary<string, string> AvatarWeaponByWeaponType = new()
     {
         ["Rapier"]            = "rap_ishvalca_avatar",
@@ -131,7 +131,7 @@ public static class LootGenerator
         ["Mace"]              = "mce_ijelfur_avatar",
     };
 
-    // Canon Hollow Named Monster (HNM) field bosses — 10% Last-Attack drop
+    // Hollow Named Monster (HNM) field bosses — 10% Last-Attack drop
     // rate, vs the 2% base rate. Keyed by FieldBoss.FieldBossId.
     public static readonly HashSet<string> CanonHnmBosses = new()
     {
@@ -145,75 +145,72 @@ public static class LootGenerator
     // for series dropping both weapon + matching shield. Keyed by FieldBossId.
     public static readonly Dictionary<string, string> FieldBossSecondaryDrops = new()
     {
-        // IF Integral Series — F14, canon shield Fermat.
+        // Integral Series — F14, shield Fermat.
         ["starlight_sentinel_f14"] = "shd_fermat",
-        // IF Nox Series — F25, canon shield Nox Fermat.
+        // Nox Series — F25, shield Nox Fermat.
         ["labyrinth_warden_f25"]   = "shd_nox_fermat",
-        // IF Rosso Series — F61, [INVENTED] Rosso Aegis.
+        // Rosso Series — F61, shield Rosso Aegis.
         ["crimson_forneus_f61"]    = "shd_rosso_aegis",
-        // IF Yasha Series — F87, [INVENTED] Yasha Kavacha.
+        // Yasha Series — F87, shield Yasha Kavacha.
         ["yasha_night_demon_f87"]  = "shd_yasha_kavacha",
-        // IF Gaou Series — F90, [INVENTED] Gaou Tatari.
+        // Gaou Series — F90, shield Gaou Tatari.
         ["gaou_ox_king_f90"]       = "shd_gaou_tatari",
     };
 
     // Floor-banded registered loot pool. RollChestItem ~5% picks a DefId whose
     // (minFloor, maxFloor) band contains CurrentFloor.
     //
-    // A floor's entries are its POOL BREADTH, not how much it drops: one chest roll picks one
+    // A floor's entries are its pool breadth, not how much it drops: one chest roll picks one
     // DefId from the whole in-band pool, so widening a band changes the variety a floor can show
-    // and not the amount of loot it gives. The hand-maintained per-floor table that used to sit
-    // here read as a drop count and had drifted on every figure it stated, so it is gone; the
-    // three claims that are actually design constraints are pinned by Tools/ContentProbe instead,
-    // where they cannot rot:
+    // and not the amount of loot it gives. Constraints on the table:
     //   F1 carries exactly 2 (mate_chopper + lambent_light), F100 carries none, and no floor's
-    //   Legendary pool exceeds the 23 budget.
+    //   Legendary pool exceeds a budget of 23.
     public static readonly (int MinFloor, int MaxFloor, string DefId)[] FloorBandedRegisteredLoot =
     {
-        // Anneal line — Sachi/Kirito-era starter OHS (IF canon, F1-10). Uncommon/Rare, not Legendary.
+        // Anneal line — Sachi/Kirito-era starter one-handed swords (F1-10). Uncommon/Rare, not Legendary.
         (1,  10, "anneal_blade"),                 // Common-Uncommon; also stocked at Agil
         (4,  10, "tough_anneal_blade"),           // Rare upgrade
         (8,  12, "pitch_black_anneal_blade"),     // Rare black-steel variant
 
         // ── F1 anchors (Legendary, F1=2 hard requirement) ────────────────
-        (1,  5,  "mate_chopper"),                 // IF canon F1-area starter dagger
-        (1,  8,  "lambent_light"),                // LN Asuna early-tease
+        (1,  5,  "mate_chopper"),                 // F1-area starter dagger
+        (1,  8,  "lambent_light"),                // Asuna's rapier, an early tease
 
-        // IF Integral Series secondaries (primary = Arc Angel via F14 boss). Epic.
+        // Integral Series secondaries (primary = Arc Angel via F14 boss). Epic.
         (12, 22, "ohs_integral_radgrid"),
         (12, 22, "rap_integral_gusion"),
         (12, 22, "ths_integral_after_glow"),
 
-        // IF Nox Series secondaries (primary = Nox Radgrid via F25 boss). Epic.
+        // Nox Series secondaries (primary = Nox Radgrid via F25 boss). Epic.
         (22, 34, "dag_nox_nocturne"),
         (22, 34, "rap_nox_gusion"),
         (22, 34, "bow_nox_arc_angel"),
         (22, 34, "ths_nox_after_glow"),
 
-        // IF Rosso Series secondaries (primary = Rosso Forneus via F61 boss). F58-64 band.
+        // Rosso Series secondaries (primary = Rosso Forneus via F61 boss). F58-64 band.
         (58, 64, "bow_rosso_albatross"),
         (58, 64, "spr_rosso_sigrun"),
         (58, 64, "rap_rosso_rhapsody"),
         (58, 64, "axe_rosso_dominion"),
 
-        // IF Yasha Series secondaries (primary = Yasha Astaroth via F87 boss). Tightened F85-90.
+        // Yasha Series secondaries (primary = Yasha Astaroth via F87 boss). F85-90 band.
         (85, 90, "kat_yasha_oratorio"),
         (85, 90, "dag_yasha_envy"),
 
-        // IF Gaou Series secondaries (primary = Gaou Reginleifr via F90 boss). Tightened F88-94.
+        // Gaou Series secondaries (primary = Gaou Reginleifr via F90 boss). F88-94 band.
         (88, 94, "kat_gaou_oratorio"),
 
-        // ── F56-F60 chest band: liberator (LN canon) ─────────────────────
+        // ── F56-F60 chest band: liberator ────────────────────────────────
         (56, 60, "liberator"),
 
-        // ── Hollow Fragment Hollow Area Uniques — 3 Rare/Epic + 2 Legendary ──
+        // ── Hollow Area Uniques — 3 Rare/Epic + 2 Legendary ──
         (30, 40, "ohs_traitorblade_argute_brand"), // Rare F35
         (50, 60, "bow_shroudbow_star_stitcher"),   // Epic F55
         (65, 75, "scy_reaper_scythe"),             // Epic F70
-        (80, 86, "ohs_velocious_brain"),           // Legendary F82 HF Hollow Area
-        (92, 98, "ths_saintblade_ragnarok"),       // Legendary F95 HF apex
+        (80, 86, "ohs_velocious_brain"),           // Legendary F82 Hollow Area
+        (92, 98, "ths_saintblade_ragnarok"),       // Legendary F95 apex
 
-        // IM Shop weapons — fallback drop paths (also in F50+ shop tiers).
+        // Shop weapons — fallback drop paths (also in F50+ shop tiers).
         (76, 85, "rap_edelweiss"),                  // Epic band
         (86, 99, "rap_noctis_strasse"),             // Legendary band
         (76, 85, "ths_fasislawine"),                // Epic band
@@ -227,50 +224,50 @@ public static class LootGenerator
         (76, 85, "dag_flyheight_fang"),             // Epic band
         (86, 99, "dag_rue_feuille"),                // Legendary band
 
-        // MD Originals: Rare F25-50, Epic F50-75. Legendary lifted earlier.
-        (28, 50, "ohs_cobalt_tristan"),             // MD Rare
-        (28, 50, "ohs_atlantis_sword"),             // MD Rare
-        (28, 50, "rap_venus_heart"),                // MD Rare
-        (28, 50, "rap_bloody_rapier"),              // MD Rare
-        (28, 50, "rap_holy_flower_rapier"),         // MD Rare
-        (28, 50, "rap_mithril_rapier"),             // MD Rare
-        (28, 50, "bow_cheer_of_love"),              // MD Rare
-        (50, 75, "dag_purple_star_baselard"),       // MD Epic
-        (50, 75, "spr_neo_atlantis"),               // MD Epic
-        (50, 75, "ohs_eternal_promise"),            // MD Epic
-        (50, 75, "bow_aqua_spread"),                // MD Epic
-        (50, 75, "rap_chivalrous_rapier"),          // MD Epic
-        // MD Legendaries — pulled mid-game
-        (70, 76, "ohs_sword_of_diva"),              // MD Legendary (lift early)
-        (60, 66, "rap_espada_of_sword_dance"),      // MD Legendary (mid-game)
-        (62, 68, "ths_sword_of_causality"),         // MD Legendary (lift far)
-        (66, 72, "kat_shining_nemesisz"),           // MD Legendary
+        // Rare F28-50, Epic F50-75.
+        (28, 50, "ohs_cobalt_tristan"),             // Rare
+        (28, 50, "ohs_atlantis_sword"),             // Rare
+        (28, 50, "rap_venus_heart"),                // Rare
+        (28, 50, "rap_bloody_rapier"),              // Rare
+        (28, 50, "rap_holy_flower_rapier"),         // Rare
+        (28, 50, "rap_mithril_rapier"),             // Rare
+        (28, 50, "bow_cheer_of_love"),              // Rare
+        (50, 75, "dag_purple_star_baselard"),       // Epic
+        (50, 75, "spr_neo_atlantis"),               // Epic
+        (50, 75, "ohs_eternal_promise"),            // Epic
+        (50, 75, "bow_aqua_spread"),                // Epic
+        (50, 75, "rap_chivalrous_rapier"),          // Epic
+        // Legendaries, mid-game
+        (70, 76, "ohs_sword_of_diva"),              // Legendary
+        (60, 66, "rap_espada_of_sword_dance"),      // Legendary
+        (62, 68, "ths_sword_of_causality"),         // Legendary
+        (66, 72, "kat_shining_nemesisz"),           // Legendary
 
-        // MD/AL Underworld pair — Kirito early Underworld arc.
+        // Underworld pair — Kirito's early Underworld blades.
         // ohs_unfolding_truth_fragrant_olive — placed via F65 NPC quest (Selka).
         (78, 84, "ohs_black_iron_dual_sword_a"),    // Underworld Kirito pair A
         (78, 84, "ohs_black_iron_dual_sword_b"),    // Underworld Kirito pair B
         // ohs_red_rose_sword — F95 field boss (Warden of Blooming Rose).
 
-        // FD Character Core Canon — chest-band rare drops. Locks elsewhere:
+        // Character signature weapons — chest-band rare drops. Placed elsewhere:
         // elucidator_rouge→F98, flame_lord→F80, silvery_ruler→F97, macafitel→F85, kagutsuchi→F60, susanoo→F70.
-        (76, 82, "ohs_chaos_raider_dual"),          // Kirito dual (pulled from 86-92)
-        (90, 96, "kat_murasama_g4_dual"),           // Kirito FD (lift to top tail F90-96)
-        (70, 76, "axe_naz"),                        // Agil FD (pulled from 86-92)
-        (74, 80, "ohs_golden_osmanthus"),           // Alice FD (lift early)
-        (75, 81, "mce_grida_replicant"),            // Lisbeth FD mid-game
-        (66, 72, "dag_obsidian_dagger"),            // Yui FD (lift early)
-        (78, 84, "dag_thunder_gods_rift_blade"),    // Argo FD
-        (70, 76, "ohs_tanquiem"),                   // Oberon FD (lift early)
+        (76, 82, "ohs_chaos_raider_dual"),          // Kirito dual
+        (90, 96, "kat_murasama_g4_dual"),           // Kirito
+        (70, 76, "axe_naz"),                        // Agil
+        (74, 80, "ohs_golden_osmanthus"),           // Alice
+        (75, 81, "mce_grida_replicant"),            // Lisbeth, mid-game
+        (66, 72, "dag_obsidian_dagger"),            // Yui
+        (78, 84, "dag_thunder_gods_rift_blade"),    // Argo
+        (70, 76, "ohs_tanquiem"),                   // Oberon
 
-        // FD Character Canon — Epic/Rare quest/flavor placements.
+        // Character weapons — Epic/Rare quest/flavor placements.
         (40, 55, "mce_plain_mace"),                 // Lisbeth Rare craft/shop
         (45, 60, "dag_virt_katze"),                 // Argo quest-reward band
         // axe_ground_gorge — placed via F55 NPC quest (Agil's Apprentice).
         (50, 65, "kat_sweep_saber"),                // Leafa field-boss band
 
-        // FD Elemental Variants — 27 staggered F15-F90 (Rare/Epic).
-        // Rare tier (10 items): 2 sub-bands across F15-F60.
+        // Elemental variants, staggered F15-F90 (Rare/Epic).
+        // Rare tier: 2 sub-bands across F15-F60.
         (15, 35, "ohs_sword_of_the_gentle_breeze"), // Alice wind Rare
         (15, 35, "ohs_purple_bellflower_sword"),    // Alice dark Rare
         (15, 35, "ohs_arc_order"),                  // Heathcliff water Rare
@@ -281,7 +278,7 @@ public static class LootGenerator
         (35, 60, "kat_icicle_blade"),               // Leafa water Rare
         (35, 60, "dag_defeza"),                     // Silica water Rare
         (35, 60, "dag_hermit_fang"),                // Argo wind Rare
-        // Epic tier (17 items): 5 sub-bands across F30-F90.
+        // Epic tier: 5 sub-bands across F30-F90.
         (30, 50, "ohs_flare_pulsar"),               // Kirito fire Epic
         (30, 50, "ohs_lightning_divider_dual"),     // Kirito thunder Epic
         (30, 50, "ohs_red_peony_sword"),            // Alice fire Epic
@@ -300,10 +297,10 @@ public static class LootGenerator
         (70, 90, "mce_blazing_torch"),              // Lisbeth fire Epic
         (70, 90, "mce_elemental_hammer"),           // Lisbeth light Epic
 
-        // Cross-Game Sweep (AL / Lost Song / Last Recollection): F50-99.
-        // Starlight Banner + Corrupted variants excluded (quest-reward + stone-transform).
+        // Groups 1-9: named weapons, mostly F50-99.
+        // Starlight Banner + Corrupted variants are not here (quest reward + stone transform).
 
-        // Group 1 — AL Normal Raid (Epic F55-75).
+        // Group 1 — Epic F55-75.
         (55, 75, "axe_skyrend"),
         (55, 75, "rap_timestream"),
         (55, 75, "dag_veinshredder"),
@@ -312,78 +309,77 @@ public static class LootGenerator
         (55, 75, "ohs_superior_blade"),
         (55, 75, "ths_sacred_inferno"),
 
-        // Group 2 — AL Extreme Raid (Legendary core; staircased inward).
-        (77, 83, "ohs_blade_of_the_lightwolf"),     // non-canon AL Lycoris
-        (91, 97, "rap_graceful_needle"),            // non-canon (lift to tail F91-97)
-        (60, 67, "dag_whitespark"),                 // non-canon (pulled to mid)
-        (82, 88, "ths_demonslayer"),                // non-canon AL Lycoris
-        (66, 73, "ths_blazewyrm_greatsword"),       // non-canon (lift to mid)
-        (78, 84, "spr_arctic_pillar"),              // non-canon
-        (62, 69, "mce_starshatter"),                // non-canon (lift to mid)
+        // Group 2 — Legendary core, bands staggered F60-97.
+        (77, 83, "ohs_blade_of_the_lightwolf"),
+        (91, 97, "rap_graceful_needle"),
+        (60, 67, "dag_whitespark"),
+        (82, 88, "ths_demonslayer"),
+        (66, 73, "ths_blazewyrm_greatsword"),
+        (78, 84, "spr_arctic_pillar"),
+        (62, 69, "mce_starshatter"),
 
-        // Group 3 — AL Relic Boss Drops (lifted early).
-        (69, 75, "ohs_scorching_blade"),            // non-canon (lift early)
-        (70, 76, "mce_beasthowl"),                  // non-canon
-        (71, 77, "ohs_double_edged_blade"),         // non-canon
-        (80, 86, "mce_whirlpool_hammer"),           // non-canon
-        (73, 79, "bow_cinder_bow"),                 // non-canon (lift)
-        (84, 90, "ohs_dragoncrest"),                // non-canon (pull peak inward)
-        (88, 94, "axe_deathbringer"),               // non-canon
-        (84, 90, "spr_frostpeak"),                  // non-canon (pull inward)
-        (66, 72, "axe_snowsunder"),                 // non-canon (lift far)
+        // Group 3 — F66-94.
+        (69, 75, "ohs_scorching_blade"),
+        (70, 76, "mce_beasthowl"),
+        (71, 77, "ohs_double_edged_blade"),
+        (80, 86, "mce_whirlpool_hammer"),
+        (73, 79, "bow_cinder_bow"),
+        (84, 90, "ohs_dragoncrest"),
+        (88, 94, "axe_deathbringer"),
+        (84, 90, "spr_frostpeak"),
+        (66, 72, "axe_snowsunder"),
 
-        // Group 4 — AL DLC.
-        (80, 86, "bow_loveblight_bow"),             // non-canon
-        (91, 97, "ths_purgatorial_greatsword"),     // non-canon AL DLC (lift to tail)
-        (63, 70, "sci_savage_sandstorm"),           // non-canon (pulled to mid)
-        (79, 85, "ohs_illustrious_sword"),          // non-canon AL DLC
-        (92, 98, "ths_lifestream_greatsword"),      // non-canon (lift to tail)
-        (84, 90, "bow_glitzwood_bow"),              // non-canon
+        // Group 4 — F63-98.
+        (80, 86, "bow_loveblight_bow"),
+        (91, 97, "ths_purgatorial_greatsword"),
+        (63, 70, "sci_savage_sandstorm"),
+        (79, 85, "ohs_illustrious_sword"),
+        (92, 98, "ths_lifestream_greatsword"),
+        (84, 90, "bow_glitzwood_bow"),
 
-        // Group 5 — Lost Song Top-Tier per Type (lifted mid-game).
-        (66, 72, "ohs_blazing_sword"),              // LS Salamander mid-game
-        (77, 83, "rap_glaring_light"),              // LR/LS
-        (76, 82, "dag_fragarach"),                  // LR myth Celtic
-        (65, 72, "kat_demon_blade_muramasa"),       // LS Salamander katana (lift)
-        (44, 50, "axe_lang"),                       // LR/LS — F49-50 chest fill
-        (72, 78, "spr_brave_song"),                 // LR/LS (lift)
-        (69, 75, "bow_silvan_bow"),                 // LR/LS Sylph (lift)
-        (77, 83, "clw_iron_fist_oguma"),            // LR/LS Salamander
+        // Group 5 — top tier per weapon type, mid-game.
+        (66, 72, "ohs_blazing_sword"),              // Salamander, mid-game
+        (77, 83, "rap_glaring_light"),
+        (76, 82, "dag_fragarach"),                  // Celtic myth
+        (65, 72, "kat_demon_blade_muramasa"),       // Salamander katana
+        (44, 50, "axe_lang"),                       // F49-50 chest fill
+        (72, 78, "spr_brave_song"),
+        (69, 75, "bow_silvan_bow"),                 // Sylph
+        (77, 83, "clw_iron_fist_oguma"),            // Salamander
 
-        // Group 6 — LR/LS Mythological. 7 LR-myth pulled to F12-F42 wasteland fill.
-        (12, 18, "axe_nadr"),                       // LR myth — fill F12-18
-        (18, 25, "kat_futsu_no_mitama"),            // LS shinto-spirit — fill F18-25
-        (22, 29, "bow_artemis_fult"),               // LR myth — fill F22-29
-        (25, 32, "dag_giardino"),                   // LR myth — fill F25-32
-        (40, 49, "mce_caduceus"),                   // LR/LS — F49 chest fill (width 10)
-        (30, 37, "clw_paopei"),                     // LR myth — fill F30-37
-        (35, 42, "spr_elders_trident"),             // LR myth — fill F35-42
-        // LR-myth at high floors (tail-weighted to F95-99 for late-game support).
-        (93, 99, "spr_divine_laevateinn"),          // LR myth Surtr's flame (lift to apex tail)
-        (93, 99, "bow_holy_larc_qui_ne_faut"),      // LR myth (LS canon, apex tail)
-        (93, 99, "ths_object_eraser"),              // LR myth (apex armor-pierce)
-        (84, 90, "shd_ancile"),                     // LR myth shield
+        // Group 6 — mythological weapons; the first seven fill sparse F12-F49 pools.
+        (12, 18, "axe_nadr"),                       // fills F12-18
+        (18, 25, "kat_futsu_no_mitama"),            // Shinto spirit blade — fills F18-25
+        (22, 29, "bow_artemis_fult"),               // fills F22-29
+        (25, 32, "dag_giardino"),                   // fills F25-32
+        (40, 49, "mce_caduceus"),                   // F49 chest fill (width 10)
+        (30, 37, "clw_paopei"),                     // fills F30-37
+        (35, 42, "spr_elders_trident"),             // fills F35-42
+        // High floors, tail-weighted to F93-99 for late-game support.
+        (93, 99, "spr_divine_laevateinn"),          // Surtr's flame, apex tail
+        (93, 99, "bow_holy_larc_qui_ne_faut"),      // apex tail
+        (93, 99, "ths_object_eraser"),              // apex armor-pierce
+        (84, 90, "shd_ancile"),                     // mythological shield
 
-        // Group 7 — Lost Song Easter Eggs (Epic F50-70).
+        // Group 7 — Epic F50-70.
         (50, 70, "ohs_kagetsu_4"),
         (50, 70, "ohs_laser_sword_hg"),
 
-        // Group 8 — Last Recollection Game-Original (Epic + Legendary).
+        // Group 8 — Epic + Legendary.
         (50, 65, "scy_azuretear_scythe"),            // Dorothy's base scythe
-        (84, 90, "kat_darkness_rending_blade"),      // Eydis LR
+        (84, 90, "kat_darkness_rending_blade"),      // Eydis
 
-        // Group 9 — Last Recollection DLC.
-        (93, 99, "ohs_rainbow_blade_ex_eterna"),     // Rainbow Blade DLC apex (lift to tail)
+        // Group 9 — F60-99.
+        (93, 99, "ohs_rainbow_blade_ex_eterna"),     // Rainbow Blade, apex tail
         (60, 80, "ohs_aetherial_glow"),              // Aetherial Glow Epic
 
-        // ── LN late-game additions ───────────────────────────────────────
-        (88, 94, "radiant_light"),                   // LN postgame Asuna
+        // ── Late game ────────────────────────────────────────────────────
+        (88, 94, "radiant_light"),                   // Asuna, postgame
 
         // ── Celestial mid-tier chest half ────────────────────────────────
         // The Celestial family is twelve weapons split by acquisition route: the six that
-        // CanonCitationData cites as "shop tier" are stocked in ShopTierSystem, and these six are
-        // cited as chest drops. Bands are the ones those citations declare. Appended rather than
-        // grouped by floor so every out-of-band floor keeps its existing pool exactly.
+        // CanonCitationData lists as "shop tier" are stocked in ShopTierSystem, and these six are
+        // chest drops, banded as CanonCitationData declares.
         (62, 68, "celestial_mace"),
         (65, 72, "celestial_axe"),
         (65, 71, "celestial_scimitar"),
@@ -393,9 +389,8 @@ public static class LootGenerator
 
         // ── Armour sets ──────────────────────────────────────────────────
         // EquipmentSets keys membership on DefinitionId, and procedural armour carries none, so a
-        // set can only ever be assembled from these registered pieces. Before this they were in no
-        // acquisition path at all and every set was unearnable while EquipmentDialog advertised
-        // its progress. Bands follow each tier's RequiredLevel (10 / 25 / 50 / 75), wide enough
+        // set can only ever be assembled from these registered pieces, and this table is their
+        // acquisition path. Bands follow each tier's RequiredLevel (10 / 25 / 50 / 75), wide enough
         // that four pieces are collectable inside one tier's stretch of floors. Celestial stops at
         // F99 because F100 must carry an empty pool.
         (10, 28, "steel_chestplate"),
@@ -419,8 +414,8 @@ public static class LootGenerator
         (76, 99, "celestial_boots"),
 
         // ── Named baseline-tier weapons ──────────────────────────────────
-        // Hand-authored one-offs that sat above the shop ladder and below the canon
-        // Legendaries, and that no table produced. Bands follow each one's RequiredLevel.
+        // Hand-authored one-offs above the shop ladder and below the Legendaries.
+        // Bands follow each one's RequiredLevel.
         (3,  12, "stout_brave"),
         (5,  15, "sword_of_eventide"),
         (8,  18, "blue_boar"),
@@ -435,15 +430,14 @@ public static class LootGenerator
         (30, 60, "mithril_pickaxe"),
 
         // ── Utility crystals above shop tier ─────────────────────────────
-        // Every one has a live effect in TurnManager.HandleCrystal, and none could be got.
-        // Anti-Crystal and Mirage Sphere are deliberately absent: HandleCrystal prints a
-        // sentence for each and sets no state, so selling them would ship a promise. Recorded
-        // in ContentProbe knownSourceless with the teleport crystals.
+        // Every one has a live effect in TurnManager.HandleCrystal. Anti-Crystal and Mirage
+        // Sphere are deliberately absent: HandleCrystal prints a sentence for each and sets no
+        // state.
         (14, 40, "corridor_crystal"),
         (60, 95, "pneuma_flower"),
 
         // ── Refinement ingots, Rare and up ───────────────────────────────
-        // The Common four drop from mobs (MobLootTable below); these are the chest half.
+        // The Common four drop from mobs (MobLootTable above); these are the chest half.
         // Refinement.Socket takes a def id, so an ingot that arrives without one cannot be
         // spent — everything here resolves through ItemRegistry and carries its DefinitionId.
         (20, 45, "keen_ingot"),
@@ -456,7 +450,7 @@ public static class LootGenerator
         (78, 99, "astral_ingot"),
     };
 
-    // IM Enhancement Ore themed drops: Mob LootTag → ore DefId at OreDropChancePercent.
+    // Enhancement Ore themed drops: Mob LootTag → ore DefId at OreDropChancePercent.
     // No-match = no drop via this path (rare-boss drops use separate path).
     public static readonly Dictionary<string, string> OreByLootTag = new()
     {
@@ -479,14 +473,14 @@ public static class LootGenerator
     // Rare boss path — 20% chance per field/floor boss to drop a random ore.
     public const int BossOreDropChancePercent = 20;
 
-    // Pick a random ore DefId for boss drops (uniform across the 7 ores).
+    // Pick a random ore DefId for boss drops (uniform across all ores).
     public static string PickRandomOreDefId()
     {
         var ids = EnhancementOreDefinitions.AllOreDefIds;
         return ids[RunRng.Next(ids.Length)];
     }
 
-    // Resolve floor-boss drop. The per-run Divine cap was removed; every guaranteed
+    // Resolve floor-boss drop. There is no per-run Divine cap; every guaranteed
     // drop passes through unchanged (Divine slots stay Divine).
     public static string? ResolveFloorBossDropDefId(int floor)
     {
@@ -495,11 +489,9 @@ public static class LootGenerator
     }
 
     // Pick a floor-banded registered loot DefId, or null if no band covers floor.
-    // Used by RollChestItem to wire IF canon weapons into chests.
-    // Two passes over the table rather than materialising the in-band pool into a list: count the
-    // matches, draw once against that count, then walk to the k-th match. Same table order, so
-    // the k-th match is the same entry, and it is still exactly one RunRng draw — the pool list
-    // was pure allocation.
+    // Used by RollChestItem to put registered weapons into chests.
+    // Two passes over the table so no in-band pool list is allocated: count the matches, draw
+    // once against that count, then walk to the k-th match in table order. Exactly one RunRng draw.
     public static string? PickFloorBandedRegisteredDefId(int floor)
     {
         var table = FloorBandedRegisteredLoot;
@@ -517,8 +509,8 @@ public static class LootGenerator
         return null; // unreachable: pick < count and count matches were just counted
     }
 
-    // Canon-named mob → (DefId, dropChance 0-1) overrides. Rolled BEFORE generic
-    // LootTag so iconic drops fire at canon rates. Multiple entries = multi-roll.
+    // Named mob → (DefId, dropChance 0-1) overrides. Rolled before the generic
+    // LootTag so signature drops fire at their own rates. Multiple entries = multi-roll.
     public static readonly Dictionary<string, (string DefId, float Chance)[]> NamedMobDrops = new()
     {
         ["Frenzy Boar"]            = new[] { ("boar_meat", 0.7f), ("boar_hide", 0.5f), ("boar_tusk", 0.2f) },
@@ -572,9 +564,8 @@ public static class LootGenerator
     };
 
     // ── Accessory pool for random drops ────────────────────────────────
-    // The one accessory pool. Vendor kept a hand-copied duplicate of this list, so an accessory
-    // added here reached chests and never reached a shop — the two drifted the moment three
-    // bracelets were added. Public so there is one list to add to.
+    // The one accessory pool, shared by chest drops and Vendor stock. Public so there is one
+    // list to add to.
     public static readonly Func<Accessory>[] AccessoryPool =
     {
         AccessoryDefinitions.CreateRingOfStrength,
@@ -593,7 +584,7 @@ public static class LootGenerator
     // No prefix here may name an armour-set material. Set membership is by DefinitionId and
     // procedural armour has none, so a drop reading "Mythril Chestplate" would be a different item
     // from the set piece of that exact name — indistinguishable to the player, and it would not
-    // count. "Banded" replaces Mythril for that reason; ContentProbe pins the whole cross-product.
+    // count toward the set.
     private static readonly string[] ArmorPrefixes = { "Leather", "Iron", "Studded", "Chainmail", "Plated", "Worn", "Banded", "Hardened" };
     private static readonly string[] ShieldNouns = { "Shield", "Buckler", "Kite Shield", "Tower Shield" };
 
@@ -645,11 +636,9 @@ public static class LootGenerator
 
     // Random equipment scaled to floor. All 12 weapon types; null on fallback.
     // `rng` lets a caller that must reproduce on its own terms supply its stream. Floor
-    // generation does: a prefab vendor's stock is part of the floor, so drawing it from the
-    // ambient run stream made the FLOOR depend on how much play preceded it. Measured before this
-    // parameter existed: 14 of the 59 floors F2-F60 carry a generation-time vendor and all 14
-    // stocked differently once 5,000 run-stream draws had gone by, against a seed guarantee the
-    // Player Guide states. Null keeps the run stream, which is right for loot rolled during play.
+    // generation does: a prefab vendor's stock is part of the floor, and drawing it from the
+    // ambient run stream would make the floor depend on how much play preceded it, breaking the
+    // seed guarantee. Null keeps the run stream, which is right for loot rolled during play.
     public static BaseItem? CreateRandomEquipment(int currentFloor, Random? rng = null)
     {
         string rarity = PickRarity(rng);
@@ -675,9 +664,8 @@ public static class LootGenerator
             12 => MakeArmor("Chest", "Chestplate", currentFloor, rarity, scale, 1.0, 6, rng),
             13 => MakeArmor("Helmet", "Helmet",    currentFloor, rarity, scale, 0.8, 3, rng),
             14 => MakeArmor("Boots", "Boots",      currentFloor, rarity, scale, 0.7, 2, rng),
-            // Legs sit between chest and helmet on both coverage and weight. Without this case the
-            // slot could only ever be filled by the four registered leg pieces, so a player who
-            // found none wore nothing there for a whole run.
+            // Legs sit between chest and helmet on both coverage and weight. This is the
+            // procedural source for the Legs slot; the registered leg pieces are the only other.
             15 => MakeArmor("Legs", "Greaves",     currentFloor, rarity, scale, 0.9, 4, rng),
             16 => new Armor
             {

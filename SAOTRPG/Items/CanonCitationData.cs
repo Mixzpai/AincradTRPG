@@ -1,7 +1,7 @@
 namespace SAOTRPG.Items;
 
-// Static citation database for ALL Legendary weapons. Keyed by DefinitionId.
-// 184/185 coverage (stone-craft corrupted variants excluded).
+// Source and floor anchor for each Legendary weapon, keyed by DefinitionId.
+// Stone-crafted corrupted variants have no entry.
 public static class CanonCitationData
 {
     public readonly record struct Citation(string Source, string FloorAnchor, string Detail);
@@ -403,14 +403,14 @@ public static class CanonCitationData
             "LR mythic claws — Chinese paopei treasure motif."),
     };
 
-    // Look up a citation by definition id. Returns null when no canon entry exists —
-    // caller falls back to "Invented for AincradTRPG" or "No canon citation available".
+    // Look up a citation by definition id. Returns null when no entry exists; the caller
+    // supplies its own fallback text.
     public static Citation? Lookup(string? defId)
     {
         if (string.IsNullOrEmpty(defId)) return null;
         return _entries.TryGetValue(defId, out var c) ? c : null;
     }
 
-    // Total registered citation count — used for documentation / coverage queries.
+    // Number of registered citations.
     public static int Count => _entries.Count;
 }

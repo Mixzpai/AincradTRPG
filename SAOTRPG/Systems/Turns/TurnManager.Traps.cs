@@ -51,7 +51,7 @@ public partial class TurnManager
     {
         _log.LogCombat("A pulse of force floods the chamber — something is pulling!");
         int dragged = 0;
-        // ToList: MoveEntity mutates the map's monster bookkeeping while we walk it.
+        // ToList: MoveEntity mutates the map's monster bookkeeping during the walk.
         foreach (var m in _map.Monsters.ToList())
         {
             if (m.IsDefeated) continue;

@@ -9,7 +9,7 @@ namespace SAOTRPG.Items.Equipment;
 // apart from the warn-once set.
 public static class EquipmentSpecialEffectRegistry
 {
-    // Tracks unknown keys per session so warnings don't spam every parse.
+    // Tracks unknown keys so each one warns once rather than on every parse.
     private static readonly HashSet<string> _warnedKeys = new();
 
     // Parsed view of an equipment's SpecialEffect string. Empty list when null/unset.
@@ -20,7 +20,7 @@ public static class EquipmentSpecialEffectRegistry
         var fx = eq.SpecialEffect;
         if (string.IsNullOrEmpty(fx)) return list;
 
-        // Tokenizer — letter-key + signed int pairs (e.g. "C5B10" → Crit+5, Block+10).
+        // Tokenizer — letter-key + signed int pairs (e.g. "Bleed+25,CritRate+20" → Bleed 25, CritRate 20).
         int i = 0;
         while (i < fx.Length)
         {

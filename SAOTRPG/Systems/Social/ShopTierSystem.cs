@@ -11,7 +11,7 @@ public static class ShopTierSystem
     public static int HighestFloorBossCleared { get; set; }
 
     // Floor → DefIds unlocked when HighestFloorBossCleared >= floor. F≤50 = baseline.
-    // IM shop weapons inline-tagged below at their canon band floors.
+    // Named shop weapons are tagged inline below with their rarity.
     private static readonly Dictionary<int, string[]> TierUnlocks = new()
     {
         [51] = new[] { "mythril_katana" },
@@ -39,27 +39,27 @@ public static class ShopTierSystem
         [73] = new[] { "adamantite_scythe" },
         [74] = new[] { "queens_knightsword" },
         [75] = new[] { "azure_sky_blade" },
-        [76] = new[] { "rap_edelweiss" },              // IM Epic
+        [76] = new[] { "rap_edelweiss" },              // Epic
         [77] = new[] { "sword_breaker" },
-        [78] = new[] { "ths_fasislawine" },            // IM Epic
+        [78] = new[] { "ths_fasislawine" },            // Epic
         [79] = new[] { "crimson_longsword" },
-        [80] = new[] { "sci_poisoned_syringe" },       // IM Epic
+        [80] = new[] { "sci_poisoned_syringe" },       // Epic
         [81] = new[] { "asmodeus" },
-        [82] = new[] { "spr_foa_stoss" },              // IM Epic
+        [82] = new[] { "spr_foa_stoss" },              // Epic
         [83] = new[] { "pale_edge" },
-        [84] = new[] { "dag_flyheight_fang" },         // IM Epic
+        [84] = new[] { "dag_flyheight_fang" },         // Epic
         [85] = new[] { "guilty_thorn" },
-        [86] = new[] { "rap_noctis_strasse" },         // IM Legendary
+        [86] = new[] { "rap_noctis_strasse" },         // Legendary
         [87] = new[] { "karakurenai" },
-        [88] = new[] { "ths_wice_ritter" },            // IM Legendary
+        [88] = new[] { "ths_wice_ritter" },            // Legendary
         [89] = new[] { "celestial_blade" },
-        [90] = new[] { "axe_schwarzs_blitz" },         // IM Legendary
+        [90] = new[] { "axe_schwarzs_blitz" },         // Legendary
         [91] = new[] { "celestial_katana" },
-        [92] = new[] { "kat_muramasa" },               // IM Legendary
+        [92] = new[] { "kat_muramasa" },               // Legendary
         [93] = new[] { "celestial_rapier" },
-        [94] = new[] { "sci_silver_wing", "spr_wave_schneider" }, // IM Legendary
+        [94] = new[] { "sci_silver_wing", "spr_wave_schneider" }, // Legendary
         [95] = new[] { "celestial_spear" },
-        [96] = new[] { "dag_rue_feuille" },            // IM Legendary
+        [96] = new[] { "dag_rue_feuille" },            // Legendary
         [97] = new[] { "celestial_greatsword" },
         [98] = new[] { "celestial_bow" },
         [99] = new[] { "anubis_spear" },

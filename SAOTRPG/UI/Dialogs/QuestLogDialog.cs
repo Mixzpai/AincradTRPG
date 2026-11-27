@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using SAOTRPG.Entities;
 using SAOTRPG.UI.Helpers;
 using SAOTRPG.Systems.Social;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -18,8 +19,8 @@ public static class QuestLogDialog
         bool showCompleted = false;
 
         // ── Tab buttons ──────────────────────────────────────────────
-        var activeTab = new Button { Text = " Active ", X = 2, Y = 0, NoPadding = true, SchemeName = ColorSchemes.GoldName, ShadowStyle = null };
-        var completedTab = new Button { Text = " Completed ", X = 14, Y = 0, NoPadding = true, SchemeName = ColorSchemes.DimName, ShadowStyle = null };
+        var activeTab = new PlainButton { Text = " Active ", X = 2, Y = 0, NoPadding = true, SchemeName = ColorSchemes.GoldName, ShadowStyle = null };
+        var completedTab = new PlainButton { Text = " Completed ", X = 14, Y = 0, NoPadding = true, SchemeName = ColorSchemes.DimName, ShadowStyle = null };
         var countLabel = new Label
         {
             Text = $"{QuestSystem.ActiveQuests.Count}/{QuestSystem.MaxActiveQuests} active",
@@ -51,7 +52,7 @@ public static class QuestLogDialog
             Text = "", X = 41, Y = 4,
             Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.TitleName,
         };
-        // Word-wrapped over Height=6 so long HF quest descriptions don't clip
+        // Word-wrapped over Height=6 so long quest descriptions don't clip
         // mid-sentence. CanFocus=false so Tab cycling stays on the listView.
         var detailDesc = new Label
         {
@@ -81,7 +82,7 @@ public static class QuestLogDialog
             Width = Dim.Fill(2), Height = 1, SchemeName = ColorSchemes.BodyName,
         };
 
-        // Terminal.Gui Label with Width=1 only renders the FIRST char of Text. Build
+        // Terminal.Gui Label with Width=1 only renders the first char of Text. Build
         // a multi-line newline-joined string so each row gets its own '│' glyph.
         var separator = new Label
         {

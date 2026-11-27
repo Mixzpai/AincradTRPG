@@ -42,27 +42,23 @@ public static class MilestonesDialog
 // 10 category tabs across the top; each tab filters MilestoneRegistry.All by Category
 // and renders a sorted list (unlocked first, locked dimmed below). Equippable rows
 // support Equip/Unequip via E/U keys when focused. Collectables tab adds a bucket
-// dropdown filter (LN/AL/IF/HF/LR/MD/FD/Myth/Non-Canon).
+// filter row (LN/AL/IF/HF/LR/MD/FD/Myth/Non-Canon).
 internal static class MilestoneTabbedView
 {
-    // Canonical 10-tab order. Match strings to Milestone.Category exactly.
+    // Fixed 10-tab order. Match strings to Milestone.Category exactly.
     private static readonly string[] TabOrder =
     {
         "Combat", "Floor", "Life Skills", "Story", "Canon",
         "Discovery", "Equipment", "Karma", "Death", "Collectables",
     };
 
-    // Bucket order: lore source / canon era. Matches the ordering players
-    // remember from the prior Collectables panel.
+    // Bucket order: grouped by lore source.
     private static readonly string[] BucketOrder =
         { "All", "LN", "AL", "IF", "HF", "LR", "MD", "FD", "Myth", "Non-Canon" };
 
     // Expansions for the bucket codes. The row has to stay coded — ten buttons of full names do
-    // not fit the 96-column minimum — so the codes are decoded once, on the tally line, for the
-    // bucket actually being filtered. Without this "MD" / "FD" / "LR" are unguessable and the
-    // legend existed nowhere on the dialog.
-    // Kept short on purpose: the tally line's own worst case is measured against the minimum
-    // dialog width, and these are the only part of it this file controls.
+    // not fit the 96-column minimum — so the bucket being filtered is spelled out once, in the
+    // dialog title (see RefreshBucketRow).
     private static readonly Dictionary<string, string> BucketLabels = new()
     {
         ["All"] = "All buckets",
@@ -86,7 +82,7 @@ internal static class MilestoneTabbedView
     //   y=-5..-3 detail panel + equip hint
     //
     // bottomReserve is how many rows the caller keeps below the list. Monument stacks its kill
-    // log into that region, so a fixed Fill(6) drew the list's last five rows underneath it.
+    // log into that region, so the list has to stop above it.
     public static void Build(View parent, Player player, string? initialCategory,
                              int bottomReserve = 6, string? extraKeys = null)
     {
@@ -178,9 +174,8 @@ internal static class MilestoneTabbedView
         // ── Discovery tab progress bars (IF Implement / HF Mission) ────
         // Visible only when the Discovery tab is active. Sits in the same
         // y=6/y=7 strip the Collectables bucket row uses; the two are mutually
-        // exclusive because they live on different tabs.
-        // PATH-D-PORT: pure Label text — block-character bars (█/░) draw via
-        // standard Scheme paint; no custom AddRune calls.
+        // exclusive because they live on different tabs. Plain Label text: the
+        // block-character bars (█/░) need no custom painting.
         var ifProgress = new Label
         {
             Text = "", X = 1, Y = 6, Width = Dim.Fill(2),
@@ -207,7 +202,7 @@ internal static class MilestoneTabbedView
             // and digit for the rest of the session.
             KeystrokeNavigator = null,
         };
-        // PATH-D-PORT: ListView uses ObservableCollection<string> source; replace each refresh.
+        // The ListView's ObservableCollection<string> source is replaced on each refresh.
         parent.Add(listView);
         state.ListView = listView;
 
@@ -244,8 +239,8 @@ internal static class MilestoneTabbedView
         // ── List interactions ─────────────────────────────────────────
         listView.ValueChanged += (s, e) => RefreshDetail(state);
 
-        // PATH-D-PORT: KeyDown handler on ListView for Equip/Unequip hotkeys (E / U).
-        // Tab/Shift+Tab cycles tabs; 1-9/0 jumps directly to a tab.
+        // KeyDown handler on ListView for Equip/Unequip hotkeys (E / U).
+        // Tab/Shift+Tab cycling and the 1-9/0 tab jumps are handled on the parent below.
         listView.KeyDown += (s, e) =>
         {
             if (Keybinds.IsPressed(GameAction.MilestoneEquipTitle, e))
@@ -260,9 +255,9 @@ internal static class MilestoneTabbedView
             }
         };
 
-        // Dialog-level key dispatch — Tab cycles tabs, digits jump, and the bucket filter
-        // gets the key it never had. The bucket buttons are only reachable by Tab, which this
-        // dialog claims for itself, so without this the nine source filters had no route at all.
+        // Dialog-level key dispatch — Tab cycles tabs, digits jump, and the bucket key cycles
+        // the filter. The bucket buttons are only reachable by Tab, which this dialog claims for
+        // itself, so the bucket key is the source filters' only route.
         parent.KeyDown += (s, e) =>
         {
             if (Keybinds.IsPressed(GameAction.MilestoneCycleBucket, e))
@@ -284,8 +279,8 @@ internal static class MilestoneTabbedView
         RefreshList(state);
 
         // Focus the list, not the tab strip. HandleHotKey claims Tab for category cycling, so
-        // Tab never advances focus here — measured, 0 of 30 presses reached a list — and the
-        // arrow keys only get there after walking all ten tab buttons. Landing on the list is
+        // Tab never advances focus here, and the arrow keys only get there after walking all
+        // ten tab buttons. Landing on the list is
         // what makes the equip keys and the digit jumps reachable at all.
         //
         // Deferred to first layout: the caller still has to add its close footer, and the
@@ -299,10 +294,9 @@ internal static class MilestoneTabbedView
         };
     }
 
-    // The keys this dialog answers appear nowhere else on it — there is no hint footer, and
-    // Tab / the digits / the equip keys were all undocumented on screen.
+    // The dialog's key legend: nothing else on it names Tab, the digits or the equip keys.
     // Compact so it still fits the 96-column minimum dialog. The bucket key is listed only on
-    // the tab where it does anything; advertising a dead key is the defect this arc keeps finding.
+    // the tab where it does anything, so the legend never advertises a dead key.
     private static string KeyLegend(TabState state)
     {
         string equip = Keybinds.Get(GameAction.MilestoneEquipTitle).Primary.ToString();
@@ -336,9 +330,9 @@ internal static class MilestoneTabbedView
         public Label HfProgressBar = null!;
         public List<Milestone> CurrentRows = new();
         // LifetimeStats.IsMilestoneUnlocked re-reads and re-deserializes lifetime_stats.json on
-        // every call, and a refresh asks it once per row plus once per registry entry for the
-        // tally — 337 file reads per tab switch, measured at 68-92 ms. Snapshotted per refresh;
-        // nothing can unlock a milestone while this modal owns the loop.
+        // every call, and a refresh asks once per row plus once per registry entry for the
+        // tally, so the set is snapshotted per refresh; nothing can unlock a milestone while
+        // this modal owns the loop.
         public HashSet<string> Unlocked = new(StringComparer.Ordinal);
         public View TitleHost = null!;
         public string BaseTitle = "";
@@ -368,8 +362,8 @@ internal static class MilestoneTabbedView
             var b = state.TabButtons[i];
             // Trigger CreateMenuButton's own focus marker logic by setting IsDefault.
             b.IsDefault = isActive;
-            // Manually rewrite text so the inactive ones lose the ► ◄ markers.
-            // PATH-D-PORT: button text rewrite mimics CreateMenuButton's HasFocusChanged hook.
+            // Manually rewrite text so the inactive ones lose the ► ◄ markers; this mirrors
+            // CreateMenuButton's HasFocusChanged hook.
             string core = TabOrder[i];
             b.Text = isActive ? $"► {core} ◄" : $"  {core}  ";
         }
@@ -409,8 +403,7 @@ internal static class MilestoneTabbedView
 
     // Update the IF/HF Discovery-tab progress bars. Visible only on Discovery.
     // Pulls per-run counters from MilestoneSystem.ActiveTurnManager when a run
-    // is loaded; falls back to "--" when called from a non-run context (e.g.
-    // Monument viewed before the run-state hook lands).
+    // is loaded; shows "--" when called with no run loaded.
     private static void RefreshDiscoveryProgress(TabState state)
     {
         bool show = state.Current == "Discovery";
@@ -498,11 +491,9 @@ internal static class MilestoneTabbedView
             activeTitle = act.Name;
         }
 
-        // MEASURED against the 96-column minimum dialog, where this label gets width - 3 = 91.
-        // With "Active title:" the longest real form was 92 — one column over, clipped, before
-        // anything was added to it (the registry's longest equippable title is "Last-Attack Beta
-        // Tester" at 23 chars). "Title:" brings the worst case to 85. It is also why the bucket
-        // name is NOT on this line: it goes in the dialog title, which has ~64 columns spare.
+        // Sized for the 96-column minimum dialog, where this label gets width - 3 = 91 columns:
+        // the short "Title:" prefix keeps the longest equippable title inside it. The bucket
+        // name is not on this line for the same reason; it goes in the dialog title.
         state.TallyLabel.Text =
             $"{state.Current}: {unlocked}/{total}   |   Total {globalUnlocked}/{globalTotal} ({pct}%)   |   Title: {activeTitle}";
     }

@@ -18,13 +18,9 @@ public static class BiomeGenConfigLoader
         Converters = { new JsonStringEnumConverter() },
     };
 
-    // Variants BiomeSystem declares that could NOT be loaded, as "<biome>_<variant>: reason".
-    //
-    // A declared variant with no readable file falls back to the base biome, which is exactly the
-    // silent degradation this codebase keeps finding: the floor would still generate, still look
-    // like a Forest, and nothing on screen would say it was meant to be a jungle. The fallback is
-    // logged AND published here so the content probe can turn it into a build-gate failure rather
-    // than leaving it to somebody noticing that two floors look alike.
+    // Variants BiomeSystem declares that could not be loaded, as "<biome>_<variant>: reason".
+    // Such a variant falls back to the base biome, which on screen looks like a floor that declared
+    // no variant, so the fallback is logged and published here. Read by the verification probes.
     public static IReadOnlyList<string> UnresolvedVariants
     {
         get { LoadAll(); return _unresolvedVariants; }
@@ -46,7 +42,7 @@ public static class BiomeGenConfigLoader
                          ?? BiomeGenConfig.CreateDefault(biome);
         }
 
-        // Variant files are loaded from the DECLARATION, not from whatever happens to be on disk:
+        // Variant files are loaded from the declaration, not from whatever happens to be on disk:
         // an unreferenced <biome>_<variant>.json is dead content, and a declared one with no file
         // is a defect. Only the second is worth failing on, and only the declaration can see it.
         var vmap = new Dictionary<(BiomeType, string), BiomeGenConfig>();
@@ -91,9 +87,7 @@ public static class BiomeGenConfigLoader
         biome.ToString().ToLowerInvariant() + "_" + variant.ToLowerInvariant();
 
     // F9 hot-reload: drops the cache so the next Get() re-reads the JSONs. It also drops the
-    // per-floor entry text, because F9 is the CONTENT reload and that file is content — without it
-    // Content/Biomes edits would hot-reload while Content/FloorEntries.json needed a restart, which
-    // is the kind of split an author discovers by wondering why their edit did nothing.
+    // per-floor entry text, so Content/FloorEntries.json reloads along with Content/Biomes.
     public static void Invalidate() { _cached = null; _variants = null; FloorEntries.Invalidate(); }
 
     public static BiomeGenConfig Get(BiomeType biome)

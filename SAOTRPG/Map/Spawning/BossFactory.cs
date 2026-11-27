@@ -2,26 +2,26 @@ using SAOTRPG.Entities;
 
 namespace SAOTRPG.Map.Spawning;
 
-// Floor boss factory. Canon sources (LN/Progressive/HF/IF) + era-themed originals. F100 = player clone.
+// Floor boss factory: one named boss per floor, grouped into themed eras. F100 = player clone.
 public static class BossFactory
 {
-    // 100-floor roster (index = floor-1); sources: SAO Wiki, Progressive LNs, HF, IF, CBR.
+    // 100-floor roster (index = floor-1).
     public static int RosterCount => BossRoster.Length;
     private static readonly (string Name, string Title)[] BossRoster =
     {
         // ── Verdant Era (Floors 1-5) — nature, beasts, kobolds ──────
-        ("Illfang the Kobold Lord",       "Tyrant of the First Floor"),        // F1  — canon
-        ("Asterius the Taurus King",      "Sovereign of the Labyrinth"),       // F2  — canon
-        ("Nerius the Evil Treant",        "The Rotting Ancient"),              // F3  — canon
-        ("Wythege the Hippocampus",       "Serpent of the Drowned Cavern"),    // F4  — canon
-        ("Fuscus the Vacant Colossus",    "The Hollow Giant"),                 // F5  — IF canon
+        ("Illfang the Kobold Lord",       "Tyrant of the First Floor"),        // F1
+        ("Asterius the Taurus King",      "Sovereign of the Labyrinth"),       // F2
+        ("Nerius the Evil Treant",        "The Rotting Ancient"),              // F3
+        ("Wythege the Hippocampus",       "Serpent of the Drowned Cavern"),    // F4
+        ("Fuscus the Vacant Colossus",    "The Hollow Giant"),                 // F5
 
         // ── Stone Era (Floors 6-10) — golems, constructs, puzzles ───
-        ("The Irrational Cube",           "Enigma of the Sixth Floor"),        // F6  — Progressive canon
-        ("The Storm Magnus Duo",          "Twin Sentinels of the Stone Keep"), // F7  — Progressive canon
-        ("Wadjet the Flaming Serpent",    "Inferno of the Eighth Floor"),      // F8  — invented, stone/fire
-        ("Cagnazzo the Toad Demon",       "Tyrant of the Drowned Vault"),      // F9  — Progressive canon
-        ("Kagachi the Samurai Lord",      "Blade of the Rising Moon"),         // F10 — Integral Factor canon
+        ("The Irrational Cube",           "Enigma of the Sixth Floor"),        // F6
+        ("The Storm Magnus Duo",          "Twin Sentinels of the Stone Keep"), // F7
+        ("Wadjet the Flaming Serpent",    "Inferno of the Eighth Floor"),      // F8  — stone/fire
+        ("Cagnazzo the Toad Demon",       "Tyrant of the Drowned Vault"),      // F9
+        ("Kagachi the Samurai Lord",      "Blade of the Rising Moon"),         // F10
 
         // ── Crimson Era (Floors 11-15) — fire, demons, molten ───────
         ("Felos the Ember Drake",         "Wings of Living Flame"),            // F11
@@ -39,14 +39,14 @@ public static class BossFactory
 
         // ── Twilight Era (Floors 21-25) — shadow, undead, dark ──────
         ("Morgath the Lich King",         "Deathless Lord of Floor 21"),       // F21
-        ("The Witch of the West",         "Mistress of the Black Marsh"),      // F22 — canon ref
+        ("The Witch of the West",         "Mistress of the Black Marsh"),      // F22
         ("Skullvane the Bone Dragon",     "The Rattling Sky"),                 // F23
         ("Grimhollow the Phantom",        "The Shape That Haunts"),            // F24
-        ("The Two-Headed Giant",          "Terror of the Twin Peaks"),         // F25 — canon
+        ("The Two-Headed Giant",          "Terror of the Twin Peaks"),         // F25
 
         // ── Verdant II (Floors 26-30) — jungle, beast, primal ───────
         ("Venomfang the Basilisk",        "Gaze of Petrification"),            // F26
-        ("The Four-Armed Giant",          "Colossus of the Jungle Ruins"),     // F27 — canon
+        ("The Four-Armed Giant",          "Colossus of the Jungle Ruins"),     // F27
         ("Thornqueen Selvaria",           "Empress of the Briar Maze"),        // F28
         ("Raptoros the Apex Hunter",      "The Unseen Strike"),                // F29
         ("Primos the World Serpent",      "Coil That Encircles the Floor"),    // F30
@@ -56,7 +56,7 @@ public static class BossFactory
         ("Ironhyde the Siege Golem",      "Breaker of Gates"),                 // F32
         ("Ballistor the War Machine",     "Construct of Endless Arrows"),      // F33
         ("Warden Keloth",                 "Jailer of the Deep Dungeon"),       // F34
-        ("Nicholas The Renegade",         "The Fallen Christmas Knight"),      // F35 — canon
+        ("Nicholas The Renegade",         "The Fallen Christmas Knight"),      // F35
 
         // ── Crimson II (Floors 36-40) — volcanic, dragon, magma ─────
         ("Pyroclast the Lava Titan",      "Born of the Caldera"),              // F36
@@ -73,25 +73,25 @@ public static class BossFactory
         ("Tidecaller Nereus",             "Herald of the Endless Flood"),      // F45
 
         // ── Twilight II (Floors 46-50) — nightmare, psychic ─────────
-        ("The Ant Queen",                 "Matriarch of the Hive Floor"),      // F46 — canon
+        ("The Ant Queen",                 "Matriarch of the Hive Floor"),      // F46
         ("Mindflayer Zethos",             "The Thought Devourer"),             // F47
         ("Nightweaver Morrigan",          "Spinner of Bad Dreams"),            // F48
         ("Shadowstep Assassin",           "The Boss You Never See Coming"),    // F49
-        ("The Six-Armed Buddha",          "Metallic Enlightenment"),           // F50 — canon
+        ("The Six-Armed Buddha",          "Metallic Enlightenment"),           // F50
 
         // ── Verdant III (Floors 51-55) — ancient forest, mythic ─────
         ("Yggdrath the World Tree",       "The Rooted Colossus"),              // F51
         ("Fenrir the Dread Wolf",         "The Unchained Beast"),              // F52
         ("Sylphiel the Storm Dryad",      "Wrath of the Ancient Wood"),        // F53
         ("Titanoak the Living Fortress",  "Where the Forest Fights Back"),     // F54
-        ("X'rphan the White Wyrm",        "The Pale Dragon of Floor 55"),      // F55 — canon
+        ("X'rphan the White Wyrm",        "The Pale Dragon of Floor 55"),      // F55
 
         // ── Stone III (Floors 56-60) — mountain, giant, earth ───────
-        ("Geocrawler",                    "The Burrowing Menace"),             // F56 — canon
+        ("Geocrawler",                    "The Burrowing Menace"),             // F56
         ("Atlas the Mountainbreaker",     "He Who Carries the Ceiling"),       // F57
         ("Gravelthorn the Earth Elemental","Heart of the Mountain"),           // F58
         ("Stonewyrm Basileus",            "Petrified Dragon King"),            // F59
-        ("The Armoured Stone Warrior",    "Golem of the Granite Throne"),      // F60 — canon
+        ("The Armoured Stone Warrior",    "Golem of the Granite Throne"),      // F60
 
         // ── Crimson III (Floors 61-65) — hellfire, demon lord ────────
         ("Belzeroth the Pit Fiend",       "Duke of the Infernal Court"),       // F61
@@ -111,29 +111,29 @@ public static class BossFactory
         ("Stormbringer Raijin",           "The Thunder God's Wrath"),          // F71
         ("Bloodfang the Vampire Lord",    "Eternal Night's Master"),           // F72
         ("Deathweaver Arachne",           "Mother of All Spiders"),            // F73
-        ("The Gleam Eyes",                "The Blue Demon of Floor 74"),       // F74 — canon
-        ("The Skull Reaper",              "Death's Scythe"),                   // F75 — canon
+        ("The Gleam Eyes",                "The Blue Demon of Floor 74"),       // F74
+        ("The Skull Reaper",              "Death's Scythe"),                   // F75
 
-        // ── Endgame (Floors 76-80) — Hollow Fragment canon ──────────
-        ("The Ghastlygaze",               "The All-Seeing Abomination"),       // F76 — Hollow Fragment canon
-        ("The Crystalize Claw",           "Prismatic Scorpion of Floor 77"),   // F77 — Hollow Fragment canon
-        ("The Horn of Madness",           "Berserker of the Endless Maze"),    // F78 — Hollow Fragment canon
-        ("The Tempest of Trihead",        "Three-Headed Storm Hydra"),         // F79 — Hollow Fragment canon
-        ("The Guilty Scythe",             "Reaper of the Eightieth Floor"),    // F80 — Hollow Fragment canon
+        // ── Endgame (Floors 76-80) ──────────
+        ("The Ghastlygaze",               "The All-Seeing Abomination"),       // F76
+        ("The Crystalize Claw",           "Prismatic Scorpion of Floor 77"),   // F77
+        ("The Horn of Madness",           "Berserker of the Endless Maze"),    // F78
+        ("The Tempest of Trihead",        "Three-Headed Storm Hydra"),         // F79
+        ("The Guilty Scythe",             "Reaper of the Eightieth Floor"),    // F80
 
-        // ── Endgame (Floors 81-85) — Hollow Fragment canon ───────────
-        ("The Knight of Darkness",        "Black Paladin of the Void Keep"),   // F81 — Hollow Fragment canon
-        ("The Legacy of Grand",           "The Ancient Construct Guardian"),   // F82 — Hollow Fragment canon
-        ("The Horn of Furious",           "Flame-Aura Minotaur Lord"),         // F83 — Hollow Fragment canon
-        ("The Queen of Ant",              "Matriarch of the Insect Deeps"),    // F84 — Hollow Fragment canon
-        ("The Maelstrom of Trihead",      "Upgraded Storm Hydra"),             // F85 — Hollow Fragment canon
+        // ── Endgame (Floors 81-85) ───────────
+        ("The Knight of Darkness",        "Black Paladin of the Void Keep"),   // F81
+        ("The Legacy of Grand",           "The Ancient Construct Guardian"),   // F82
+        ("The Horn of Furious",           "Flame-Aura Minotaur Lord"),         // F83
+        ("The Queen of Ant",              "Matriarch of the Insect Deeps"),    // F84
+        ("The Maelstrom of Trihead",      "Upgraded Storm Hydra"),             // F85
 
-        // ── Endgame (Floors 86-90) — Hollow Fragment canon ───────────
-        ("The King of Skeleton",          "Lich-Lord of the Bone Throne"),     // F86 — Hollow Fragment canon
-        ("The Radiance Eater",            "The Light-Devouring Beast"),        // F87 — Hollow Fragment canon
-        ("The Rebellious Eyes",           "Hundred-Eyed Aberration"),          // F88 — Hollow Fragment canon
-        ("The Murderer Fang",             "Alpha of the Bleeding Pack"),       // F89 — Hollow Fragment canon
-        ("Colossus of Aincrad",           "The Living Floor"),                 // F90 — invented
+        // ── Endgame (Floors 86-90) ───────────
+        ("The King of Skeleton",          "Lich-Lord of the Bone Throne"),     // F86
+        ("The Radiance Eater",            "The Light-Devouring Beast"),        // F87
+        ("The Rebellious Eyes",           "Hundred-Eyed Aberration"),          // F88
+        ("The Murderer Fang",             "Alpha of the Bleeding Pack"),       // F89
+        ("Colossus of Aincrad",           "The Living Floor"),                 // F90
 
         // ── Endgame (Floors 91-95) — impossible tier ─────────────────
         ("Seraphiel the Fallen",          "Angel of the Burning Sword"),       // F91
@@ -145,12 +145,12 @@ public static class BossFactory
         // ── The Ruby Palace (Floors 96-100) ──────────────────────────
         ("Herald of the Ruby Palace",     "The Last Gatekeeper"),              // F96
         ("Cardinal the System Error",     "When the Game Fights Back"),        // F97
-        ("Incarnation of the Radius",     "An Impossible Geometry"),           // F98 — canon
+        ("Incarnation of the Radius",     "An Impossible Geometry"),           // F98
         ("Heathcliff's Shadow",           "Echo of the Creator"),              // F99
         ("???",                           "The Final Trial"),                  // F100 — player clone
     };
 
-    // Boss name by floor (1-indexed). Used by PrefabPlacementPass for canon-boss-arena tag lookup.
+    // Boss name by floor (1-indexed). Used by PrefabPlacementPass for named boss-arena tag lookup.
     public static string GetBossName(int floor)
     {
         if (floor < 1) floor = 1;

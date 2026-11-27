@@ -13,7 +13,7 @@ public class StatusTrayWidget : View
 {
     private readonly TurnManager _tm;
     private readonly Player _player;
-    // Session-local verbose toggle — Shift+S flips. Not persisted across sessions.
+    // Verbose toggle — Shift+S flips; persisted through UserSettings.StatusTrayVerbose.
     public bool VerboseMode { get; set; }
 
     private enum TrayClass { Debuff, Buff, Cooldown }
@@ -45,12 +45,8 @@ public class StatusTrayWidget : View
         SchemeName = ColorSchemes.BodyName;
     }
 
-    // EVERY LETTER THIS TRAY CAN SHOW, and the one place they are declared.
-    //
-    // The Player Guide's "Status Icon Tray" topic carried a hand-written key that had drifted
-    // badly: it described X as Blind (the code shows Exhausted), C as Crit-Up (Shrine Blessing),
-    // D as Dodge-Up (Level Surge), and listed a Z for Freeze that this tray has never emitted.
-    // Three letters told the player the wrong thing. The Guide generates its key from here now.
+    // Every letter this tray can show, and the one place they are declared. The Player Guide's
+    // "Status Icon Tray" topic generates its key from here.
     //
     // H and X each cover two severities (Hungry/Starving, Fatigued/Exhausted) and are listed once
     // with both named, because the letter is what the player has to look up.
@@ -73,8 +69,7 @@ public class StatusTrayWidget : View
         ('K', "Counter stance — the next incoming attack is parried"),
     };
 
-    // Shift+S in play. Written through to UserSettings so the preference survives the session —
-    // the tray used to reset to compact on every launch however often it was toggled.
+    // Shift+S in play. Written through to UserSettings so the preference survives the session.
     public void ToggleVerbose()
     {
         VerboseMode = !VerboseMode;
@@ -83,16 +78,14 @@ public class StatusTrayWidget : View
         SetNeedsDraw();
     }
 
-    // Pulls from all 7 sources, deduped by letter (first-wins).
-    // Order: Debuffs (severity) → Buffs (soonest-expiring) → Cooldowns last.
     // The tray letter (B, S, P, L …) is what carries the meaning; colour reinforces it. Routed
     // through the theme's semantic roles so a theme switch reaches the tray, and so the four
     // hues separate by luminance under Colourblind Safe.
     private static ColorTheme T => ColorSchemes.Theme;
 
     // What the tray shows now, and what it last drew. A redraw is not free when nothing changed:
-    // Terminal.Gui's clip bookkeeping for one dirty view measured ~20 KB a draw, and the HUD
-    // refreshes every turn and every tween frame.
+    // Terminal.Gui's clip bookkeeping allocates for every dirty view, and the HUD refreshes
+    // every turn and every tween frame.
     private readonly List<TrayEntry> _entries = new(), _shown = new();
     private bool _shownVerbose;
 
@@ -114,6 +107,8 @@ public class StatusTrayWidget : View
         SetNeedsDraw();
     }
 
+    // Pulls from all 7 sources, deduped by letter (first-wins).
+    // Order: Debuffs (severity) → Buffs (soonest-expiring) → Cooldowns last.
     private void CollectEntries(List<TrayEntry> entries)
     {
         entries.Clear();
@@ -191,8 +186,8 @@ public class StatusTrayWidget : View
             entries.Add(new('K', T.Info, 1, 0,
                 TrayClass.Buff, 105, "Counter Stance"));
 
-        // ── 7) Quickbar cooldown placeholder (infrastructure, dormant) ──
-        // No-op: Q slot reserved for future cooldown system.
+        // ── 7) Cooldowns ──
+        // No source produces a TrayClass.Cooldown entry; the class only fixes the sort order.
 
         // Sort: Debuffs (by severity asc) → Buffs (by duration asc, 0 last) → Cooldowns.
         entries.Sort((a, b) =>
@@ -224,14 +219,14 @@ public class StatusTrayWidget : View
         return $"{e.Letter}{compactStacks}{compactDur}";
     }
 
-    // Children repaint every cell they own, and the framework clear would otherwise blank
-    // this widget during the window where it skips painting beneath a dialog.
+    // The draw pass paints every cell this widget owns, and the framework clear would otherwise
+    // blank it during the window where it skips painting beneath a dialog.
     protected override bool OnClearingViewport() => true;
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
         using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Draw.StatusTray");
-        // A modal above us has already painted this pass; drawing now would erase it.
+        // A modal above this view has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
 
         var vp = Viewport;
@@ -269,13 +264,13 @@ public class StatusTrayWidget : View
                 if (curRow == row1 && vp.Height > 1) { curRow = row2; col = 0; }
                 else break; // out of rows — drop remaining
             }
-            DrawText(batch, col, curRow, token, e.Color);
+            DrawText(ref batch, col, curRow, token, e.Color);
             col += tokenLen;
         }
         return true;
     }
 
-    private static void DrawText(Gfx.Batch batch, int x, int y, string text, Color fg)
+    private static void DrawText(ref Gfx.Batch batch, int x, int y, string text, Color fg)
     {
         var attr = Gfx.Attr(fg, Color.Black);
         for (int i = 0; i < text.Length; i++) batch.Put(x + i, y, text[i], attr);

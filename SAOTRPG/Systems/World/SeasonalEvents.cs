@@ -1,7 +1,6 @@
 namespace SAOTRPG.Systems.World;
 
-// Date → seasonal event: field boss spawns (Nicholas/Christmas canon LN Vol 2).
-// Other events stubbed — see DEFERRED.md.
+// Date → seasonal event. Gates seasonal field boss spawns (Nicholas at Christmas).
 public enum SeasonalEvent
 {
     None,

@@ -69,7 +69,7 @@ namespace SAOTRPG.Entities
         public int SkillDamage => BaseSkillDamage + (Intelligence * 2) + Inventory.GetTotalEquipmentBonus(StatType.SkillDamage);
 
         // Gear stats live only in the equipment cache (broken pieces skipped, set bonuses folded in).
-        // Attributes read and write the EFFECTIVE value; the setter stores it net of gear, so `+=`
+        // Attributes read and write the effective value; the setter stores it net of gear, so `+=`
         // moves only the base and a saved effective value round-trips once gear is back on.
         private int Gear(StatType stat) => Inventory?.GetTotalEquipmentBonus(stat) ?? 0;
         public new int Strength { get => base.Strength + Gear(StatType.Strength); set => base.Strength = value - Gear(StatType.Strength); }
@@ -104,9 +104,8 @@ namespace SAOTRPG.Entities
             player.CurrentHealth = player.MaxHealth;
             player.Inventory.AddItem(OneHandedSwordDefinitions.CreateIronSword());
             player.Inventory.AddItem(PotionDefinitions.CreateHealthPotion());
-            // Equipped, not merely carried. The player casts no light of their own, so a run that
-            // began with the torch sitting in the backpack would open on a dark screen and read as
-            // a rendering fault rather than as a mechanic.
+            // Equipped, not merely carried: the player casts no light of their own, so a torch left
+            // in the backpack would open the run on a dark screen.
             var torch = Items.Definitions.TorchDefinitions.CreateWoodenTorch();
             player.Inventory.AddItem(torch);
             player.Inventory.Equip(torch, player);
@@ -154,7 +153,7 @@ namespace SAOTRPG.Entities
             player.Endurance = save.Endurance; player.Dexterity = save.Dexterity;
             player.Agility = save.Agility; player.Intelligence = save.Intelligence;
 
-            // Life Skills: hydrate Level + CurrentXp; missing entries keep default L1/0 (legacy saves load cleanly).
+            // Life Skills: hydrate Level + CurrentXp; missing entries keep default L1/0.
             if (save.LifeSkills != null)
             {
                 foreach (var kvp in save.LifeSkills)
@@ -168,8 +167,8 @@ namespace SAOTRPG.Entities
                 }
             }
 
-            // Active title id rehydrated; base stats already contain the baked-in
-            // bonus from prior session, so storing the id only avoids double-apply.
+            // Active title id rehydrated; the saved base stats already contain the title's
+            // bonus, so restoring only the id avoids a double apply.
             // The unlock set itself lives in LifetimeStats.UnlockedMilestones.
             if (!string.IsNullOrEmpty(save.ActiveTitleId)
                 && SAOTRPG.Systems.Persistence.LifetimeStats.IsMilestoneUnlocked(save.ActiveTitleId))
@@ -177,7 +176,7 @@ namespace SAOTRPG.Entities
                 player.ActiveTitleId = save.ActiveTitleId;
             }
 
-            // Karma+Guild hydration; "AincradLiberationSquad" migrates to AincradLiberationForce.
+            // Karma+Guild hydration; a saved "AincradLiberationSquad" is read as AincradLiberationForce.
             player.Karma = Math.Clamp(save.Karma, SAOTRPG.Systems.Social.KarmaSystem.Min, SAOTRPG.Systems.Social.KarmaSystem.Max);
             string guildName = save.ActiveGuildId ?? "None";
             if (guildName == "AincradLiberationSquad") guildName = "AincradLiberationForce";
@@ -187,10 +186,10 @@ namespace SAOTRPG.Entities
                 player.ActiveGuildId = Systems.Story.Faction.None;
             player.FoundedGuildName = save.FoundedGuildName;
             player.FoundedGuildPerk = save.FoundedGuildPerk;
-            // Guild perk already baked in at prior-session Join-time; no re-apply (mirrors Title hydration).
+            // The guild perk is already in the saved base stats from Join; no re-apply (as with the title).
 
-            // Quickbar — hydrate 10-slot DefinitionId array. Legacy saves
-            // with empty list stay at defaults (all null = empty).
+            // Quickbar — hydrate 10-slot DefinitionId array. Slots past the end of the
+            // saved list stay at defaults (null = empty).
             if (save.QuickbarSlotDefIds != null)
             {
                 for (int qi = 0; qi < SAOTRPG.Systems.RunState.QuickbarState.SlotCount

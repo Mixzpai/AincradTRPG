@@ -3,7 +3,7 @@ using SAOTRPG.Entities;
 namespace SAOTRPG.Systems.Persistence;
 
 // Writes a human-readable death recap .txt file to %LocalAppData%/AincradTRPG/deaths/.
-// Silent on I/O failure — never crashes the game.
+// An I/O failure is logged and returns null rather than crashing the death screen.
 public static class DeathRecapWriter
 {
     private static readonly string DeathDir =
@@ -48,8 +48,9 @@ public static class DeathRecapWriter
             File.WriteAllText(filePath, content);
             return filePath;
         }
-        catch
+        catch (Exception ex)
         {
+            SAOTRPG.Systems.Diagnostics.DebugLogger.LogError("DeathRecapWriter.WriteRecap", ex);
             return null;
         }
     }

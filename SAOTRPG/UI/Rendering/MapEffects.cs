@@ -19,11 +19,9 @@ public static class MapEffects
         // `type` is redundant with map.Tiles[x,y].Type; kept for caller stability.
         // Cached code already bakes in the land-type check.
         _ = type;
-        // BOTH USED TO DRAW ',', which is the Grass and Snow glyph — so the marker that exists to
-        // say "there is water here" and the one that says "there is LAVA here" were ordinary
-        // ground to anyone whose theme collapses colour, and identical to each other. They sit on
-        // walkable land either way, so this is not a walkability lie; it is worse in one respect,
-        // because the lava edge is the one a player most needs to read at a glance.
+        // Each edge has its own glyph, distinct from the ground's (',' is Grass and Snow), so the
+        // water and lava markers read without colour and never as each other — the lava edge is
+        // the one a player most needs to read at a glance.
         return map.GetTransitionCode(x, y) switch
         {
             GameMap.TransitionWater => (WaterEdge, Color.Blue),
@@ -32,8 +30,8 @@ public static class MapEffects
         };
     }
 
-    // The land-side edge markers. Named so the switch above and the check below cannot drift —
-    // a hand-copied array is what let an earlier sabotage change a drawn glyph unnoticed.
+    // The land-side edge markers. Named so the switch above and the exported array below cannot
+    // drift apart.
     private const char WaterEdge = ';', LavaEdge = '^';
     public static readonly char[] TransitionGlyphs = { WaterEdge, LavaEdge };
 
@@ -44,10 +42,9 @@ public static class MapEffects
         bool landE = HasLand(map, x + 1, y), landW = HasLand(map, x - 1, y);
         int landCount = (landN ? 1 : 0) + (landS ? 1 : 0) + (landE ? 1 : 0) + (landW ? 1 : 0);
         if (landCount == 0) return null;
-        // A shoreline sits ON a water cell, and deep water is a Swimming L25 wall. It used to
-        // draw '░' and '▒', which are Ice (walkable) and CrackedWall — so a shore read as ground
-        // you could stand on. These four are the shore's own, and giving E/W their own halves
-        // also makes the edge directional on all four sides instead of two.
+        // A shoreline sits on a water cell, and deep water is a wall until Swimming L25, so the
+        // shore draws glyphs of its own rather than a walkable tile's ('░' is Ice, '▒' CrackedWall).
+        // Each side has its own half block, so the edge is directional on all four sides.
         char glyph = landN && !landS ? ShoreNorth
                    : landS && !landN ? ShoreSouth
                    : landE && !landW ? ShoreEast
@@ -62,11 +59,10 @@ public static class MapEffects
     // Water glyph cycles slowly for ambience. Phase offset by position so adjacent tiles don't
     // all change in sync. Step matches the TileAnimator water overlay so the two layers agree.
     // Pinned by --freeze-anim like every other wall-clock visual.
-    // THREE DISJOINT FAMILIES. ResolveWater overrides the static tile glyph for BOTH water
-    // depths, and it used to hand them the same set — so shallow water (free from Swimming L1)
-    // and deep water (L25, a wall until then) were identical on the primary surface, separated
-    // only by hue, which Amber Mono collapses. Lava drew '~' and '-' as well, so a lethal tile
-    // read as crossable water. Tildes are shallow, heavy tildes are deep, dashes are lava.
+    // Three disjoint families: tildes are shallow water (free from Swimming L1), heavy tildes are
+    // deep water (a wall until L25), dashes are lava. ResolveWater overrides the static glyph for
+    // both water depths, so the families must differ by rune, not only by hue, which a theme such
+    // as Amber Mono collapses.
     private static readonly char[] WaterGlyphs = { '~', '∼', '~', '∼' };
     private static readonly char[] DeepWaterGlyphs = { '≈', '≋', '≈', '≋' };
     private const int WaterStepMs = 800;
@@ -78,12 +74,10 @@ public static class MapEffects
         return set[phase];
     }
 
-    // Exposed so a check can assert the three families stay disjoint rather than trusting the
-    // literals above to be read by eye.
-    // The shoreline's glyphs, exposed for the same reason the water sets are: this is a
-    // RENDER-TIME OVERRIDE, so sampling TileDefinitions cannot see it. NAMED CONSTANTS, and the
-    // switch above reads these — a hand-copied duplicate of the literals is what let a sabotage
-    // change the drawn glyph while the checked array stayed put.
+    // The shoreline's glyphs. This is a render-time override, so sampling TileDefinitions cannot
+    // see it; the switch above reads these named constants, so the exported array cannot drift
+    // from what is drawn. These and the water sets below are exposed so the verification probes
+    // can assert the glyph families stay disjoint.
     private const char ShoreNorth = '▄', ShoreSouth = '▀', ShoreEast = '▐',
                        ShoreWest = '▌', ShoreCorner = '▞';
     public static readonly char[] ShorelineGlyphs =
@@ -92,15 +86,13 @@ public static class MapEffects
     public static IReadOnlyList<char> ShallowWaterGlyphSet => WaterGlyphs;
     public static IReadOnlyList<char> DeepWaterGlyphSet => DeepWaterGlyphs;
 
-    // A LILY PAD IS NOT A ROCK. This drew '●', which is Rock's own glyph — so one cell in ten of
-    // every pond read as a boulder sitting in the water, and under a theme that collapses hue
-    // there was nothing left to tell them apart. '○' is authored by no tile type, sits in the
-    // same Geometric Shapes block as the '●'/'◆'/'◇' the table already uses (so it measures the
-    // same one column), and reads as a flat pad rather than a solid mass.
+    // A lily pad must not read as a rock ('●' is Rock's glyph). '○' is authored by no tile type,
+    // sits in the same Geometric Shapes block as the '●'/'◆'/'◇' the table already uses (so it is
+    // one column wide), and reads as a flat pad rather than a solid mass.
     private const char LilyPad = '○';
 
-    // Shallow water only, and its own declared family: this is a RENDER-TIME OVERRIDE, so nothing
-    // sampling TileDefinitions can see it. Named, and the check reads the name.
+    // Shallow water only, and its own declared family: this is a render-time override, so nothing
+    // sampling TileDefinitions can see it. Exported for the verification probes.
     public static readonly char[] WaterOverlayGlyphs = { LilyPad };
 
     public static (char Glyph, Color Color)? GetWaterLilyPad(int x, int y)
@@ -109,24 +101,15 @@ public static class MapEffects
         return hash % 10 == 0 ? (LilyPad, Color.Green) : null;
     }
 
-    // ── The room tint, applied as a TRANSFORM of the cell's own colour ───────────────────────
-    // The tint used to be a straight substitution gated on the foreground being exactly
-    // Color.Gray. Swept across all five eras and 11,520 positions, the Floor palette produces
-    // that colour ZERO times - every entry is an authored `new Color(...)` - so the tint half of
-    // per-room theming never once reached the screen, and the only half that did was a glyph
-    // override painting Ash's ':' and Path's '∙' onto dungeon floors.
+    // ── The room tint, applied as a transform of the cell's own colour ───────────────────────
+    // Takes the tint's chromaticity at the cell's own lightness: the room reads in its own hue,
+    // the cell's palette dither (the anti-banding spread) survives intact, and no lightness in the
+    // renderer moves. Substituting the tint outright would throw the dither away.
     //
-    // Substituting the tint outright would also throw away the cell's palette dither, which is
-    // the anti-banding work the spread cap exists to protect. Taking the tint's CHROMATICITY at
-    // the cell's OWN lightness keeps both: the room reads in its own hue, the dither survives
-    // intact, and no lightness measurement anywhere in the renderer moves. TileVerifyProbe
-    // --clarity asserts that invariant directly.
+    // The picture depends on one room, one hue, unchanged brightness. It is a pure function of
+    // (cell colour, room colour), both already sampled into TileKey, so it adds no new per-cell input.
     //
-    // PATH-D-PORT: the visual contract is "one room, one hue, unchanged brightness". It is a pure
-    // function of (cell colour, room colour), both already sampled into TileKey, so it adds no
-    // new per-cell input.
-    //
-    // MEMOISED because the conversion is six transcendentals and this runs per resolved cell. The
+    // Memoised because the conversion is six transcendentals and this runs per resolved cell. The
     // live domain is tiny - one era's Floor palette against four tints - so a direct-mapped table
     // of 32 answers holds all of it and costs one array read.
     private const int TintCacheSize = 32;
@@ -150,10 +133,8 @@ public static class MapEffects
         && map.IsVisible(monsterX, monsterY);
 
     // Per-room tint for dungeon floors, keyed to an 8x8 region of the map so one room shares one
-    // hue. TINT ONLY — it used to override the GLYPH as well, handing Floor cells ':' (which is
-    // Ash) and '∙' (which is Path, one cell in four of it). A room that renders as a different
-    // terrain is a worse trade than a room that renders in a different colour, because the map's
-    // meaning is carried by its runes and its hue is whatever the active theme leaves of it.
+    // hue. Tint only, never the glyph: Floor drawn as ':' or '∙' would read as Ash or Path, and
+    // the map's meaning is carried by its runes while its hue is whatever the active theme leaves.
     public static Color? GetRoomTheme(int x, int y, TileType type)
     {
         if (type != TileType.Floor) return null;

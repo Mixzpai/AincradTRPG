@@ -11,7 +11,7 @@ public class SaveData
 
     // Persisted master seed so a load regenerates the same world — the save stores the seed,
     // not the map. -1 only ever means "never written"; SaveManager passes the value through
-    // unchecked, because a save produced by this build always carries a real seed.
+    // unchecked, because every save written carries a real seed.
     public int GlobalSeed { get; set; } = -1;
 
     // Player identity
@@ -51,6 +51,8 @@ public class SaveData
 
     // Turn manager state
     public int TurnCount { get; set; }
+    // Move points left in the current turn (TurnManager.PlayerMoves).
+    public int PlayerMoves { get; set; } = 100;
     public int KillCount { get; set; }
     public int TotalColEarned { get; set; }
     public int CurrentFloor { get; set; }
@@ -63,7 +65,7 @@ public class SaveData
     public Dictionary<string, int> WeaponKills { get; set; } = [];
 
     // Per-weapon fork picks at L25/50/75/100. int[] length-4: 0=unpicked,
-    // 1|2=chosen option. Empty/null on legacy saves.
+    // 1|2=chosen option. Empty when no weapon has a fork.
     public Dictionary<string, int[]> WeaponProficiencyForks { get; set; } = [];
 
     // Level-up talents offered but not yet taken. Each entry keeps the perk ids it offered so
@@ -89,18 +91,17 @@ public class SaveData
     public int SlowTurnsLeft { get; set; }
     public int ShrineBuffTurns { get; set; }
     public int LevelUpBuffTurns { get; set; }
-    // The MAGNITUDE half of each timed effect above. Saving only the duration left a loaded run
-    // counting down a blessing worth nothing and a poison dealing nothing, while the status tray
-    // advertised both — TakeDamage(0) every tick, and a HEMORRHAGE burst of (0+0)*2.
+    // The magnitude half of each timed effect above. Both halves are saved, or a loaded run
+    // would count down a blessing worth nothing and a poison dealing nothing.
     public int ShrineBuffAmount { get; set; }
     public int LevelUpBuffAmount { get; set; }
     public int PoisonDamagePerTick { get; set; }
     public int BleedDamagePerTick { get; set; }
     public int InvisibilityTurnsLeft { get; set; }
     // Active timed potion buffs. Persisted so a save/load cannot launder a buff into a permanent
-    // stat, which is exactly what the pre-FB-730 behaviour did on every use.
+    // stat.
     public List<TimedBuffSave> TimedBuffs { get; set; } = new();
-    // Active food regen buff. 0 = inactive (legacy default safe).
+    // Active food regen buff. 0 = inactive.
     public int FoodRegenRate { get; set; }
     public int FoodRegenTurnsLeft { get; set; }
 
@@ -144,7 +145,7 @@ public class SaveData
     // Active Run Modifiers — set at run start, fixed per run
     public List<string> ActiveRunModifiers { get; set; } = [];
 
-    // IM Shop Tiering — highest boss-cleared floor. 0 = base stock only.
+    // Shop tiering — highest boss-cleared floor. 0 = base stock only.
     public int HighestFloorBossCleared { get; set; }
 
     // Life Skills — Level + CurrentXp by enum name. Missing = L1/0.
@@ -166,20 +167,19 @@ public class SaveData
     public Dictionary<string, int> VendorInvestments { get; set; } = new();
 
     // 10 consumable-quickbar slots (keys 1-0), DefinitionId per index.
-    // Null entries = empty. Legacy saves deserialize as nulls and auto-fill
-    // from the first pickup thereafter.
+    // Null entries = empty; an empty slot auto-fills from a later pickup.
     public List<string?> QuickbarSlotDefIds { get; set; } = new();
 
     // Per-prefab-name placement counts as of the current floor's start. Enforces MAX_PER_GAME directive.
-    // Missing on legacy v2 saves → S.T.J yields empty dict (no migration needed).
+    // Missing → System.Text.Json yields an empty dict.
     public Dictionary<string, int> PrefabUseCounts { get; set; } = new();
 
-    // Current-floor mining vein strike counters. Null on legacy saves
-    // (loader treats as empty → re-seeds via DefaultStrikesForTile on first strike).
+    // Current-floor mining vein strike counters. Null is treated as empty
+    // (re-seeds via DefaultStrikesForTile on first strike).
     public List<VeinStrikeEntry>? VeinStrikes { get; set; }
 
-    // Per-floor boss-clear flags so PG drop reveal doesn't leak floors the player
-    // skipped via teleport. Null on legacy = empty set.
+    // Per-floor boss-clear flags so the Player Guide's drop reveal doesn't leak floors the
+    // player skipped via teleport. Null = empty set.
     public HashSet<int>? DefeatedFloorBosses { get; set; }
 }
 
@@ -210,19 +210,19 @@ public class ItemSaveData
     // Enhancement level for equipment (+0 to +10). Persisted so enhanced
     // definition items don't lose their upgrades on reload.
     public int EnhancementLevel { get; set; }
-    // 3 slots of socketed Ingot DefIds. Null array = no refinement data (legacy);
-    // only saved when a slot is non-null to keep legacy saves clean.
+    // 3 slots of socketed Ingot DefIds. Null array = no refinement data;
+    // only saved when a slot is non-null.
     public List<string?>? RefinementSlots { get; set; }
 
-    // IM Enhancement Ore history (parallel to EnhancementLevel; entry i = ore
-    // for level i+1). Null on legacy → auto-fill N × Crimson Flame.
+    // Enhancement Ore history (parallel to EnhancementLevel; entry i = ore
+    // for level i+1). Null → auto-fill N × Crimson Flame.
     public List<string>? EnhancementOreHistory { get; set; }
 
-    // FD Paired flag. Nullable → legacy saves fall back to weapon-definition value;
+    // Dual-wield paired flag. Null falls back to the weapon-definition value;
     // runtime mutators (Corruption Stone transforms) round-trip via the saved flag.
     public bool? IsDualWieldPaired { get; set; }
 
-    // Divine Awakening level (◈1-◈3). Null on legacy/unawakened saves,
+    // Divine Awakening level (◈1-◈3). Null when unawakened,
     // written only when > 0. Deserialize re-folds the ATK bonus via ComputeBonusAttack.
     public int? AwakeningLevel { get; set; }
 

@@ -18,27 +18,13 @@ public partial class MapView
         var toast = ToastQueue.Peek();
         if (toast == null) return;
 
-        // Split incoming message into lines (caller may have inserted '\n' for coalesce).
-        string raw = toast.Message ?? "";
-        string[] lines = raw.Split('\n');
-
         // Width budget: clamp absolute max to viewport, then size to longest line + padding.
         int maxBoxWidth = Math.Min(AbsMaxBoxWidth, Math.Max(MinBoxWidth, w - 4));
-        int longestLen = 0;
-        for (int i = 0; i < lines.Length; i++)
-            if (lines[i].Length > longestLen) longestLen = lines[i].Length;
-        int boxWidth = Math.Min(maxBoxWidth, Math.Max(MinBoxWidth, longestLen + 4));
-
-        // Per-line ellipsis when forced to truncate at boxWidth (word-cut tolerated).
-        int innerWidth = boxWidth - 4;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            if (lines[i].Length > innerWidth)
-            {
-                int keep = Math.Max(0, innerWidth - 1);
-                lines[i] = lines[i][..keep] + "…";
-            }
-        }
+        string raw = toast.Message ?? "";
+        if (!ReferenceEquals(raw, _toastLinesSource) || maxBoxWidth != _toastLinesMaxWidth)
+            LayOutToast(raw, maxBoxWidth);
+        string[] lines = _toastLines;
+        int boxWidth = _toastBoxWidth;
 
         int boxHeight = lines.Length + VerticalPad;
         int y0 = Math.Max(1, (int)(h * 0.3));
@@ -107,6 +93,38 @@ public partial class MapView
                 AddRune(new System.Text.Rune(line[i]));
             }
         }
+    }
+
+    // The toast's lines, split and truncated once per message and width rather than every frame.
+    // A coalesced toast gets a new message string, which lays it out again.
+    private string? _toastLinesSource;
+    private int _toastLinesMaxWidth = -1, _toastBoxWidth;
+    private string[] _toastLines = Array.Empty<string>();
+
+    private void LayOutToast(string raw, int maxBoxWidth)
+    {
+        // Split into lines (a coalesced toast carries '\n' between messages).
+        string[] lines = raw.Split('\n');
+        int longestLen = 0;
+        for (int i = 0; i < lines.Length; i++)
+            if (lines[i].Length > longestLen) longestLen = lines[i].Length;
+        int boxWidth = Math.Min(maxBoxWidth, Math.Max(MinBoxWidth, longestLen + 4));
+
+        // Per-line ellipsis when forced to truncate at boxWidth (word-cut tolerated).
+        int innerWidth = boxWidth - 4;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (lines[i].Length > innerWidth)
+            {
+                int keep = Math.Max(0, innerWidth - 1);
+                lines[i] = lines[i][..keep] + "…";
+            }
+        }
+
+        _toastLinesSource = raw;
+        _toastLinesMaxWidth = maxBoxWidth;
+        _toastBoxWidth = boxWidth;
+        _toastLines = lines;
     }
 
     private static Color ScaleColor(Color c, float alpha)

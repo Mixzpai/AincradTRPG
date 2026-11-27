@@ -21,7 +21,7 @@ public static class VendorInvestmentSystem
     // Cumulative deposits by vendor key. Roundtripped via SaveData.
     public static Dictionary<string, int> Investments { get; } = new();
 
-    // Key = ShopName (fallback "{Name}#{Id}"). Vendor has no stable Id yet.
+    // Key = ShopName (fallback "{Name}#{Id}"). Vendor has no stable Id.
     public static string KeyFor(Vendor vendor) =>
         !string.IsNullOrEmpty(vendor.ShopName) ? vendor.ShopName
             : $"{vendor.Name ?? "vendor"}#{vendor.Id}";

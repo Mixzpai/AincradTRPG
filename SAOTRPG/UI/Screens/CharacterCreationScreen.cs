@@ -13,7 +13,7 @@ public static class CharacterCreationScreen
 
     private const int StartingSkillPoints = 10;
 
-    // A stat row is ONE focusable control, not a name plus a value plus a pair of stepper
+    // A stat row is one focusable control, not a name plus a value plus a pair of stepper
     // buttons: it carries the stat, an allocation meter, the running total and what a point
     // buys, and it is adjusted in place with Left/Right. Six focus stops instead of twelve, and
     // the thing that highlights is the row the player is actually changing.
@@ -34,11 +34,10 @@ public static class CharacterCreationScreen
     private const int SectionWidth = StatRowWidth;
 
     // Vertical rhythm. The form is one top-anchored stack, so on a short terminal it does not
-    // collide with anything — it simply runs off the bottom, which is how the hint row ended up
-    // 2 rows past the last row of a 120x30 window.
+    // collide with anything — it runs off the bottom instead.
     //
     // The only give it has is three blank rows in its tail: after the preview text, before the
-    // footer and before the hint. They are surrendered one at a time from the BOTTOM UP, so the
+    // footer and before the hint. They are surrendered one at a time from the bottom up, so the
     // separation that matters most is the last to go, and nothing moves at all once the terminal
     // is tall enough.
     private const int StatsTop = 14;
@@ -47,8 +46,6 @@ public static class CharacterCreationScreen
     private static int Squeeze(int interiorHeight) =>
         interiorHeight <= 0 ? 0 : Math.Clamp(FormBottom - (interiorHeight - 1), 0, TailGaps);
 
-    // A tail row, given how many surrenderable gaps sit below it. Resolved against the host at
-    // layout time rather than at build time, so the screen survives a terminal resize.
     // Blank means "roll one". A number is taken as-is so a seed printed on the death card can be
     // typed straight back in; anything else is hashed, which lets a player seed a run with a word.
     private static int? ParseSeed(string? text)
@@ -56,10 +53,12 @@ public static class CharacterCreationScreen
         text = text?.Trim() ?? "";
         if (text.Length == 0) return null;
         // StableHash, not GetHashCode: string hashing is randomised per process, so seeding a
-        // run with a word gave a different world every launch.
+        // run with a word would give a different world every launch.
         return int.TryParse(text, out int n) ? n : SAOTRPG.Systems.RunState.RunRng.StableHash(text);
     }
 
+    // A tail row, given how many surrenderable gaps sit below it. Resolved against the host at
+    // layout time rather than at build time, so the screen survives a terminal resize.
     private static Pos TailRow(int designRow, int gapsBelow, View host) =>
         Pos.Func(
             v => designRow - Math.Clamp(Squeeze(v?.Viewport.Height ?? 0) - gapsBelow, 0, TailGaps - gapsBelow),
@@ -85,7 +84,7 @@ public static class CharacterCreationScreen
     private static readonly int FooterTop  = PreviewTop + 6;
     private static readonly int FormBottom = FooterTop + 2;
 
-    // Unhook before transitioning AWAY so Esc→DifficultyScreen doesn't leak into GameScreen.
+    // Unhook before transitioning away so Esc→DifficultyScreen doesn't leak into GameScreen.
     public static void UnhookEscHandler(Window mainWindow)
     {
         if (_escHandler != null) { mainWindow.KeyDown -= _escHandler; _escHandler = null; }
@@ -108,10 +107,9 @@ public static class CharacterCreationScreen
         // ── Identity section (centered) ── Label(14) right-aligned, 3-gap, TextField.
         // inputCol anchors to label right + gap → no overlap at any width.
         //
-        // leftCol is measured from the screen axis, not Pos.Center(): a Pos.Center() offset
-        // resolves against the width of whichever view it is applied to, so the stat rows —
-        // whose label, value, buttons and effect text are all different widths — each landed
-        // on a different origin and the row drifted apart.
+        // leftCol is taken from the screen axis, not Pos.Center(): a Pos.Center() offset
+        // resolves against the width of whichever view it is applied to, so views of different
+        // widths would each land on a different origin and the form would drift apart.
         int labelW = 14, gap = 3, inputW = 22;
         Pos leftCol = ScreenHeader.Axis - (labelW + gap + inputW) / 2;
 
@@ -300,7 +298,7 @@ public static class CharacterCreationScreen
 
         // ── Assemble ─────────────────────────────────────────────────
         // Add order IS tab order, so the stat rows go in between the gender picker and the footer
-        // rather than in their build loop — added there, Tab reached them after the Back button.
+        // rather than in their build loop — added there, Tab would reach them after the Back button.
         mainWindow.Add(header, headerRule,
             firstLabel, firstField, firstHint,
             lastLabel, lastField, lastHint,
@@ -319,12 +317,12 @@ public static class CharacterCreationScreen
     // How far one keypress moves a stat. Left/Right is the primary gesture; +/- is what most
     // people reach for on an allocation screen, so both are bound.
     //
-    // The +/- test is on the RUNE, not on KeyCode. A printable key carries its character in the
+    // The +/- test is on the rune, not on KeyCode. A printable key carries its character in the
     // low bits of KeyCode, but '+' is Shift+'=' on a US layout and a driver may report either the
-    // produced character or the physical key with the Shift bit set — measured against the shipped
-    // assembly, Key('+').WithShift is 0x1000002B, so a bare KeyCode compare misses it while AsRune
-    // still reads '+'. Accepting '=' and '_' covers the physical-key reading, and both are
-    // reasonable keys to press here regardless. AsRune is empty while Alt or Ctrl is held, so
+    // produced character or the physical key with the Shift bit set — Key('+').WithShift is
+    // 0x1000002B, so a bare KeyCode compare misses it while AsRune still reads '+'. Accepting '='
+    // and '_' covers the physical-key reading, and both are reasonable keys to press here
+    // regardless. AsRune is empty while Alt or Ctrl is held, so
     // chords never land on a stat.
     private static int StatDelta(Key key)
     {

@@ -13,7 +13,7 @@ public static class PauseMenuDialog
 {
     private const int DialogWidth = 44, DialogHeight = 14;
 
-    // `saveFlash` is GameScreen's shared frame counter — we pulse it on save for F5-like feedback.
+    // `saveFlash` is GameScreen's shared frame counter, pulsed on save for F5-like feedback.
     public static void Show(Window mainWindow, Player player, TurnManager turnManager,
         int saveSlot, GameLogView gameLog, int[] saveFlash)
     {

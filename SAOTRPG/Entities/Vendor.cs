@@ -23,9 +23,8 @@ namespace SAOTRPG.Entities
         {
             ShopStock.Clear();
 
-            // A light is stocked on EVERY floor and never gated. The player emits none of their
-            // own, so a floor whose vendor had no torch could strand a run in the dark with no way
-            // to buy back out of it — and torches burn down, so this is a consumable in practice.
+            // A light is stocked on every floor and never gated: the player emits none of their
+            // own and torches burn down, so a floor without one could strand a run in the dark.
             ShopStock.Add(TorchDefinitions.CreateWoodenTorch());
             if (floor >= 10) ShopStock.Add(TorchDefinitions.CreateIronLantern());
             if (floor >= 40) ShopStock.Add(TorchDefinitions.CreateCrystalLantern());
@@ -76,10 +75,8 @@ namespace SAOTRPG.Entities
             }
 
             // The baseline ladder, which the Player Guide tells the player to buy here:
-            // "Upgrade at vendors as you cross the listed floor thresholds." Before this the
-            // shop sold only PROCEDURAL gear, so every hand-authored starter and mid-tier
-            // weapon was unobtainable and a player who came looking for a Steel Rapier found
-            // a randomly generated one at best.
+            // "Upgrade at vendors as you cross the listed floor thresholds." This is the shop
+            // route for the hand-authored starter and mid-tier gear; the rest is procedural.
             foreach (var (minFloor, defId) in BaselineStock)
             {
                 if (floor < minFloor) continue;
@@ -87,8 +84,8 @@ namespace SAOTRPG.Entities
                 if (baseItem != null) ShopStock.Add(baseItem);
             }
 
-            // Utility crystals. Canon buys these in town, and every one of them has a live
-            // effect in TurnManager.HandleCrystal.
+            // Utility crystals, bought in town; every one has a live effect in
+            // TurnManager.HandleCrystal.
             foreach (var (minFloor, defId) in CrystalStock)
             {
                 if (floor < minFloor) continue;
@@ -118,7 +115,7 @@ namespace SAOTRPG.Entities
 
         // Baseline weapons and armour by the floor they unlock at, matching the Guide's
         // Iron Lv1 / Steel Lv10 / Mythril Lv25 ladder. Adamantite and Celestial weapons are
-        // NOT here: ShopTierSystem already gates those behind an F50+ boss clear, and listing
+        // not here: ShopTierSystem already gates those behind an F50+ boss clear, and listing
         // them twice would let a player buy a tier the clear is supposed to unlock.
         private static readonly (int MinFloor, string DefId)[] BaselineStock =
         {
@@ -138,11 +135,9 @@ namespace SAOTRPG.Entities
             (25, "mythril_sword"),
         };
 
-        // Utility crystals sold in town. The ten TOWN TELEPORT crystals are deliberately absent:
-        // HandleCrystal's Teleport case moves the player to the centre of the CURRENT floor, so
-        // a "Teleport Crystal (Tolbana)" bought on F1 and used on F60 would announce Tolbana and
-        // move you nowhere near it. Selling them would ship that promise. Modelling a real
-        // destination is a design decision, not a table entry.
+        // Utility crystals sold in town. The town teleport crystals are deliberately absent:
+        // HandleCrystal's Teleport case moves the player to the centre of the current floor, so
+        // a "Teleport Crystal (Tolbana)" would announce Tolbana and move the player nowhere near it.
         private static readonly (int MinFloor, string DefId)[] CrystalStock =
         {
             (3,  "healing_crystal"),

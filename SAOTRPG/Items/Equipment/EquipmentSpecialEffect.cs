@@ -24,7 +24,7 @@ public abstract record EquipmentSpecialEffect
     // one place an extra swing is decided.
     public sealed record ExtraAutoAttack(int ChancePercent) : EquipmentSpecialEffect { public override string Key => "ExtraAutoAttack"; }
 
-    // ── On-hit status applies (weapon-only — flavor canon: armor with on-hit-effect would be off-flavor)
+    // ── On-hit status applies (weapon-only; armour never applies an on-hit effect)
     public sealed record BleedOnHit(int ChancePercent)  : EquipmentSpecialEffect { public override string Key => "Bleed"; }
     public sealed record StunOnHit(int ChancePercent)   : EquipmentSpecialEffect { public override string Key => "Stun"; }
     public sealed record PoisonOnHit(int ChancePercent) : EquipmentSpecialEffect { public override string Key => "Poison"; }
@@ -35,9 +35,7 @@ public abstract record EquipmentSpecialEffect
     // ── Crit-triggered modifiers (weapon-only)
     public sealed record CritHeal(int Percent)          : EquipmentSpecialEffect { public override string Key => "CritHeal"; }
     public sealed record Invisibility(int Turns)        : EquipmentSpecialEffect { public override string Key => "Invisibility"; }
-    // Read by TurnManager.PlayerCritChance, which is the only place a player crit is decided.
-    // 48 weapons carry this tag; before that seam existed each of the three roll sites computed
-    // its own chance from the bare stat and none of them saw it.
+    // Read by TurnManager.PlayerCritChance, which is the only place a player crit chance is decided.
     public sealed record CritRateBonus(int Percent)     : EquipmentSpecialEffect { public override string Key => "CritRate"; }
 
     // ── Defensive (additive across weapon + shield slots)
@@ -55,7 +53,7 @@ public abstract record EquipmentSpecialEffect
     public sealed record PostMotionReduction(int Turns) : EquipmentSpecialEffect { public override string Key => "PostMotion"; }
     public sealed record SPRegen(int Amount)            : EquipmentSpecialEffect { public override string Key => "SPRegen"; }
 
-    // ── Pre-existing-but-unconsumed (parsed, no-op consumer — flagged at registry build time)
+    // ── Parsed, but no game system consumes it
     public sealed record DarknessRending(int Percent)   : EquipmentSpecialEffect { public override string Key => "DarknessRending"; }
 
     // Constructs the typed record for a known key. Returns null for unrecognised keys

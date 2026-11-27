@@ -2,21 +2,15 @@ using System.Text.RegularExpressions;
 
 namespace SAOTRPG.Systems.Input;
 
-// Player-facing prose names a key by TOKEN, never by letter.
+// Player-facing prose names a key by token, never by letter.
 //
-// Every key on the map is rebindable, so a written-out letter is a claim that survives only until
-// someone opens the rebind screen. The tutorial is the worst place for that to rot: it is the
-// first thing a new player reads and the surface most likely to be read straight after a rebind.
-// A token is resolved where the line is SHOWN rather than where it is authored, so a rebind made
-// mid-run is reflected the next time the line appears.
+// Every key on the map is rebindable, so a written-out letter goes stale as soon as the player
+// rebinds it. A token is resolved where the line is shown rather than where it is authored, so a
+// rebind made mid-run is reflected the next time the line appears.
 //
 // Only real GameActions belong in a token. Esc, Enter and Tab are Terminal.Gui's contract and are
-// deliberately not bindable (see the comment on GameAction), as are a dialog's own positional
-// keys; writing those out is accurate, and tokenising them would advertise a rebindability they
-// do not have.
-//
-// Tools/ContentProbe scans player-facing string literals for bare key names that resolve to a
-// real GameAction, so a newly hardcoded key fails the gate instead of rotting quietly.
+// not bindable (see the comment on GameAction), nor are a dialog's own positional keys; writing
+// those out is accurate, and tokenising them would advertise a rebindability they do not have.
 public static class KeyHints
 {
     public const string MoveKeysToken = "{{MOVEKEYS}}";
@@ -43,9 +37,9 @@ public static class KeyHints
         return primary.IsBound ? primary.ToString() : "unbound";
     }
 
-    // The movement keys as a player would say them. BOTH slots, because the game has always taken
-    // WASD *and* the cursor keys and naming only one misdescribes half the bindings. The cursor
-    // set gets its English name; any other alternate is listed, so a rebind stays readable.
+    // The movement keys as a player would say them. Both slots, because the game takes WASD and
+    // the cursor keys and naming only one misdescribes half the bindings. The cursor set gets its
+    // English name; any other alternate is listed, so a rebind stays readable.
     public static string MoveKeys()
     {
         string primary = Group(Cardinals, alternate: false);
@@ -56,7 +50,7 @@ public static class KeyHints
 
     public static string DiagonalKeys() => Group(Diagonals, alternate: false);
 
-    // Replaces every token in a line. An unresolvable {{KEY:…}} is left VISIBLE rather than
+    // Replaces every token in a line. An unresolvable {{KEY:…}} is left visible rather than
     // blanked: a wrong action name is an authoring bug and should look like one.
     public static string Resolve(string text)
     {

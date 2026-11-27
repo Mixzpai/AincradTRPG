@@ -37,7 +37,7 @@ public static class AxeDefinitions
     public static Weapon CreatePaleEdge() => Make("pale_edge", "Pale Edge", 400, "Rare", 65, 15, 22,
         B().Add(StatType.Attack, 14).Add(StatType.Strength, 6).Add(StatType.Agility, 4));
 
-    // ── HR Axe Chain: Bardiche → Archaic Murder → Nidhogg's Fang → Ouroboros.
+    // ── Axe Evolution Chain: Bardiche → Archaic Murder → Nidhogg's Fang → Ouroboros.
 
     // Bardiche, crescent-polearm-axe, reliable through heavy armor. T1 of the Ouroboros chain.
     public static Weapon CreateBardiche() => Make("bardiche", "Bardiche", 2100, "Rare", 120, 15, 68,
@@ -63,29 +63,29 @@ public static class AxeDefinitions
     public static Weapon CreateOchigaitou() => Make("ochigaitou", "Ochigaitou", 9500, "Epic", 210, 42, 105,
         B().Add(StatType.Attack, 52).Add(StatType.Strength, 22).Add(StatType.Vitality, 8), "KnockbackChance+30");
 
-    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+    // ── Field-boss Legendaries ─────────────────────────────────────
 
-    // Hollow Fragment F94 implement. Executioner's axe; massive damage vs low-HP foes (flavor).
+    // F94 field-boss drop. Executioner's axe; massive damage vs low-HP foes (flavor).
     public static Weapon CreateRagnaroksBaneHeadsman() => Make("ragnaroks_bane_headsman", "Ragnarok's Bane: Headsman", 27000, "Legendary", 260, 90, 178,
         B().Add(StatType.Attack, 100).Add(StatType.Strength, 40).Add(StatType.Vitality, 15), "ExecuteThreshold+40");
 
-    // ── Integral Factor Series (Axe entries) ────────────────────────
+    // ── Series weapons (Axe entries) ────────────────────────────────
 
     // F61 Rosso Series 2H axe. Dominion — red-order greataxe, archangel rank.
     public static Weapon CreateRossoDominion() => Make("axe_rosso_dominion", "Rosso Dominion", 14500, "Legendary", 225, 55, 150,
         B().Add(StatType.Attack, 74).Add(StatType.Strength, 24).Add(StatType.Vitality, 12), "KnockbackChance+30");
 
-    // ── Hollow Fragment Implement System (2H Axe) ─────────────────
+    // ── Quest and field-boss rewards (2H Axe) ─────────────────────
 
-    // HF F85 implement. Crusher — Bond Cyclone; +50 ATK / -50 DEF trade (flavor). Quest NPC reward.
+    // F85 quest NPC reward. Crusher — Bond Cyclone; +50 ATK / -50 DEF trade (flavor).
     public static Weapon CreateCrusherBondCyclone() => Make("axe_crusher_bond_cyclone", "Crusher: Bond Cyclone", 19000, "Legendary", 220, 82, 160,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 28).Add(StatType.Vitality, 10), "RagingCyclone+50");
 
-    // HF F86 implement. Fellaxe — demon's scythe; damage scales with lost HP (flavor).
+    // F86 field-boss drop. Fellaxe — demon's scythe; damage scales with lost HP (flavor).
     public static Weapon CreateFellaxeDemonsScythe() => Make("axe_fellaxe_demons_scythe", "Fellaxe: Demon's Scythe", 20000, "Legendary", 230, 84, 165,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 30).Add(StatType.Vitality, 12), "HPScalingDamage+25");
 
-    // ── Hollow Fragment Avatar Weapons (Axe) ─────────────────────
+    // ── Avatar Weapons (Axe) ─────────────────────────────────────
 
     public static Weapon CreateLordBursterAvatar() => Make("axe_lord_burster_avatar", "Lord Burster Avatar", 22000, "Legendary", 240, 84, 168,
         B().Add(StatType.Attack, 82).Add(StatType.Strength, 28).Add(StatType.Vitality, 14), "ExecuteThreshold+30");
@@ -98,15 +98,15 @@ public static class AxeDefinitions
     public static Weapon CreateIngurgitatorBelzericht() => Make("axe_ingurgitator_belzericht", "Ingurgitator: Belzericht", 32000, "Legendary", 265, 91, 182,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 30).Add(StatType.Vitality, 18), "HPDrain+10");
 
-    // ── Infinity Moment shop 2H axe ─────────────────────────────────
+    // ── Shop 2H axe ─────────────────────────────────────────────────
 
-    // IM Legendary-band shop weapon. Lightning-etched black-steel axe.
+    // Legendary-band shop weapon. Lightning-etched black-steel axe.
     public static Weapon CreateSchwarzsBlitz() => Make("axe_schwarzs_blitz", "Schwarzs Blitz", 19000, "Legendary", 225, 77, 160,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 26).Add(StatType.Vitality, 14), "Stun+15");
 
-    // ── Infinity Moment LAB 2H axe (non-enhanceable) ────────────────
+    // ── LAB 2H axe (non-enhanceable) ────────────────────────────────
 
-    // IM F96 floor-boss LAB reward. Auroral glacial axe — frost bite.
+    // F96 floor-boss LAB reward. Auroral glacial axe — frost bite.
     public static Weapon CreateNorthernLight()
     {
         var w = Make("axe_northern_light", "Northern Light", 26500, "Legendary", 250, 86, 180,
@@ -116,17 +116,17 @@ public static class AxeDefinitions
         return w;
     }
 
-    // ── Fractured Daydream — Character Core Canon (2H Axe) ─────────────
+    // ── Companion signature weapons (2H Axe) ───────────────────────────
 
-    // Agil canon — Ground Gorge. F55+ quest NPC reward.
+    // Agil's Ground Gorge. F55+ quest NPC reward.
     public static Weapon CreateGroundGorge() => Make("axe_ground_gorge", "Ground Gorge", 14500, "Legendary", 215, 55, 138,
         B().Add(StatType.Attack, 72).Add(StatType.Strength, 26).Add(StatType.Vitality, 12), "KnockbackChance+30");
 
-    // Agil canon — Naz. F85+ rare drop. High-impact greataxe.
+    // Agil's Naz. F85+ rare drop. High-impact greataxe.
     public static Weapon CreateNaz() => Make("axe_naz", "Naz", 24000, "Legendary", 245, 85, 168,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 30).Add(StatType.Vitality, 14), "ExecuteThreshold+25");
 
-    // ── Fractured Daydream — Elemental Variants (2H Axe) ───────────────
+    // ── Elemental Variants (2H Axe) ────────────────────────────────────
 
     // Agil fire variant. Ignite Bardiche — burning cleaver-pole.
     public static Weapon CreateIgniteBardiche() => Make("axe_ignite_bardiche", "Ignite Bardiche", 5600, "Epic", 165, 55, 118,
@@ -140,13 +140,13 @@ public static class AxeDefinitions
     public static Weapon CreateSturmWelt() => Make("axe_sturm_welt", "Sturm Welt", 5500, "Epic", 165, 55, 116,
         B().Add(StatType.Attack, 54).Add(StatType.Strength, 18).Add(StatType.Vitality, 8), "Slow+15");
 
-    // ── Alicization Lycoris Normal Raid (Axe) — Epic F70-85 ──────────
+    // ── Raid drops (Axe) — Epic F70-85 ───────────────────────────────
 
-    // Skyrend — cleaving long-hafted greataxe, canonical AL raid drop.
+    // Skyrend — cleaving long-hafted greataxe, raid drop.
     public static Weapon CreateSkyrend() => Make("axe_skyrend", "Skyrend", 7200, "Epic", 175, 72, 132,
         B().Add(StatType.Attack, 62).Add(StatType.Strength, 22).Add(StatType.Vitality, 10), "Cleave+20");
 
-    // ── Alicization Lycoris Relic Boss Drops (Axe) — Legendary F80-95 ─
+    // ── Relic Boss Drops (Axe) — Legendary F80-95 ────────────────────
 
     // Deathbringer — executioner's greataxe, low-HP threshold trigger.
     public static Weapon CreateDeathbringer() => Make("axe_deathbringer", "Deathbringer", 19500, "Legendary", 225, 85, 158,
@@ -156,11 +156,11 @@ public static class AxeDefinitions
     public static Weapon CreateSnowsunder() => Make("axe_snowsunder", "Snowsunder", 18200, "Legendary", 215, 82, 150,
         B().Add(StatType.Attack, 76).Add(StatType.Strength, 24).Add(StatType.Vitality, 10), "Freeze+20");
 
-    // ── LS Top-Tier (Axe), Legendary F80-95 — Lang is highest-Attack LS greataxe, raw-stat no-effect.
+    // ── Top-Tier (Axe), Legendary F80-95 — Lang is the highest-Attack greataxe, raw stats, no effect.
     public static Weapon CreateLang() => Make("axe_lang", "Lang", 20800, "Legendary", 235, 88, 175,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 30).Add(StatType.Vitality, 12));
 
-    // ── SAO Lost Song Mythological (Axe) — Legendary F75-99 ──────────
+    // ── Mythological (Axe) — Legendary F75-99 ────────────────────────
     // Nadr — dwarven-smith named axe, crit affinity.
     public static Weapon CreateNadr() => Make("axe_nadr", "Nadr", 19000, "Legendary", 220, 82, 155,
         B().Add(StatType.Attack, 78).Add(StatType.Strength, 26).Add(StatType.Vitality, 10), "CritRate+15");

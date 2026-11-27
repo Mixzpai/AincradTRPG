@@ -3,13 +3,13 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.GameLog;
 
-// The message log window, laid out as CDDA lays out its own: a grey frame, an 11-column
+// The message log window: a grey frame, an 11-column
 // light-blue column saying how long ago each message came, the newest line at the bottom, every
 // line in its type's bright colour, a scrollbar in the left border, and a filter that takes a
 // "type:" prefix. Its keys are the Log context's; Esc closes it as it closes every dialog.
 public class MessageLogView : View
 {
-    private const int TimeWidth = 11;              // "  1    turn"
+    private const int TimeWidth = 11;              // "  5 minutes"
     private const int TextX = 1 + TimeWidth + 1;   // border, time, one column of padding
 
     private readonly ColoredLogView _log;
@@ -24,7 +24,7 @@ public class MessageLogView : View
         CanFocus = true;
     }
 
-    // For the probe.
+    // Read by the verification probes.
     public string Filter => _filter;
     public bool Editing => _editing;
     public int Offset => _offset;
@@ -41,22 +41,17 @@ public class MessageLogView : View
         return visibleRow >= 0 && visibleRow < MaxLines && i < _rows.Count ? _rows[i] : null;
     }
 
-    // "type:text" keeps one type when the prefix names one exactly; any other prefix is dropped,
-    // as CDDA drops it. The text matches anywhere, ignoring case, " x N" included.
+    // "type:text" keeps one type when the prefix names one exactly; any other prefix is dropped.
+    // The text matches anywhere, ignoring case, " x N" included.
     public static (LogTone? Type, string Text) ParseFilter(string filter)
     {
         int colon = filter.IndexOf(':');
         return colon < 0 ? (null, filter) : (LogTones.Parse(filter[..colon]), filter[(colon + 1)..]);
     }
 
-    // CDDA's to_string_clipped, right-aligned in 11 columns, counted in turns, this game's clock.
-    public static string Elapsed(int turns)
-    {
-        turns = Math.Max(0, turns);
-        string s = $"{turns,3}{(turns == 1 ? "turn" : "turns"),8}";
-        if (s.Length > TimeWidth) s = $"{turns} turns".PadLeft(TimeWidth);
-        return s.Length > TimeWidth ? s[^TimeWidth..] : s;
-    }
+    // How long ago, as GameClock.ClippedRight words it, right-aligned in 11 columns.
+    // A turn is one second.
+    public static string Elapsed(int turns) => SAOTRPG.Systems.World.GameClock.ClippedRight(turns);
 
     private string TimeOf(int visibleRow) => Elapsed(_log.Now - Row(visibleRow)!.Value.Owner.Turn);
 
@@ -70,7 +65,7 @@ public class MessageLogView : View
         return visibleRow == 0 || TimeOf(visibleRow - 1) != time ? "┌" : "│";
     }
 
-    // CDDA's do_filter: rewrap what the filter keeps and go to the newest line.
+    // Rewraps what the filter keeps and goes to the newest line.
     private void Rebuild()
     {
         _rows.Clear();
@@ -107,14 +102,14 @@ public class MessageLogView : View
                 case GameAction.MessageLogClose:       AppHost.App.RequestStop(); break;
             }
         }
-        // Every other key is swallowed: unhandled, Enter would close the dialog (rule 56) and Tab
-        // would move focus off the only view in it (rule 289).
+        // Every other key is swallowed: unhandled, Enter would close the dialog and Tab would move
+        // focus off the only view in it.
         key.Handled = true;
         SetNeedsDraw();
         return true;
     }
 
-    // Live, as CDDA's filter popup is: Enter keeps the filter, Esc puts the old one back.
+    // The filter applies live as it is typed: Enter keeps it, Esc puts the old one back.
     private void EditKey(Key key)
     {
         if (key.KeyCode == KeyCode.Enter) _editing = false;
@@ -140,7 +135,7 @@ public class MessageLogView : View
         var bg = ColorSchemes.Theme.Base;
         var batch = Gfx.Begin(this);
         var border = Gfx.Attr(LogTones.Border(), bg);
-        Box(batch, 0, 0, w, h, border);
+        Box(ref batch, 0, 0, w, h, border);
 
         var time = Gfx.Attr(LogTones.Time(), bg);
         var bracket = Gfx.Attr(LogTones.Bracket(), bg);
@@ -157,17 +152,17 @@ public class MessageLogView : View
             }
             batch.Put(TimeWidth + 1, y, ' ', time);
             var attr = Gfx.Attr(row is { } rr ? LogTones.ColorOf(rr.Owner.Tone) : bg, bg);
-            Put(batch, TextX, y, row?.Text ?? "", w - 1 - TextX, attr);
+            Put(ref batch, TextX, y, row?.Text ?? "", w - 1 - TextX, attr);
         }
 
-        Scrollbar(batch, bg);
-        if (_editing) FilterBox(batch, w, h, bg, border);
-        else BottomHint(batch, w, h, bg, border);
+        Scrollbar(ref batch, bg);
+        if (_editing) FilterBox(ref batch, w, h, bg, border);
+        else BottomHint(ref batch, w, h, bg, border);
         return true;
     }
 
-    // CDDA's scrollbar, on the left border, only when the lines overflow.
-    private void Scrollbar(Gfx.Batch batch, Color bg)
+    // The scrollbar, on the left border, only when the lines overflow.
+    private void Scrollbar(ref Gfx.Batch batch, Color bg)
     {
         int lines = MaxLines;
         if (_rows.Count <= lines) return;
@@ -188,19 +183,19 @@ public class MessageLogView : View
     }
 
     // The bottom border names the filter keys, or shows the filter while one is set.
-    private void BottomHint(Gfx.Batch batch, int w, int h, Color bg, Attribute border)
+    private void BottomHint(ref Gfx.Batch batch, int w, int h, Color bg, Attribute border)
     {
         string hint = _filter.Length == 0
             ? $"< Press {KeyName(GameAction.MessageLogFilter)} to filter, {KeyName(GameAction.MessageLogResetFilter)} to reset >"
             : $"< {_filter} >";
-        Put(batch, 1, h - 1, hint, Math.Min(hint.Length, w - 2), border);
+        Put(ref batch, 1, h - 1, hint, Math.Min(hint.Length, w - 2), border);
         if (_filter.Length > 0)
-            Put(batch, 3, h - 1, _filter, Math.Clamp(_filter.Length, 0, w - 4), Gfx.Attr(LogTones.Bright(), bg));
+            Put(ref batch, 3, h - 1, _filter, Math.Clamp(_filter.Length, 0, w - 4), Gfx.Attr(LogTones.Bright(), bg));
     }
 
-    // CDDA's filter popup: a box over the bottom of the log, its help in cyan, the input on its
+    // The filter popup: a box over the bottom of the log, its help in cyan, the input on its
     // bottom border.
-    private void FilterBox(Gfx.Batch batch, int w, int h, Color bg, Attribute border)
+    private void FilterBox(ref Gfx.Batch batch, int w, int h, Color bg, Attribute border)
     {
         var help = new List<List<(string Text, Color Fg)>>();
         foreach (string line in WrapWords(
@@ -219,24 +214,24 @@ public class MessageLogView : View
         help.Add(types);
 
         int boxH = Math.Min(h, help.Count + 2), top = h - boxH;
-        Box(batch, 0, top, w, boxH, border);
+        Box(ref batch, 0, top, w, boxH, border);
         for (int i = 0; i < boxH - 2; i++)
         {
             int x = 1, y = top + 1 + i;
             foreach (var (text, fg) in help[i])
             {
-                Put(batch, x, y, text, w - 1 - x, Gfx.Attr(fg, bg));
+                Put(ref batch, x, y, text, w - 1 - x, Gfx.Attr(fg, bg));
                 x = Math.Min(w - 1, x + text.Length);
             }
-            Put(batch, x, y, "", w - 1 - x, Gfx.Attr(bg, bg));
+            Put(ref batch, x, y, "", w - 1 - x, Gfx.Attr(bg, bg));
         }
 
-        Put(batch, 1, h - 1, "< ", 2, border);
-        Put(batch, w - 3, h - 1, " >", 2, border);
+        Put(ref batch, 1, h - 1, "< ", 2, border);
+        Put(ref batch, w - 3, h - 1, " >", 2, border);
         int room = Math.Max(1, w - 6);
         string shown = _filter.Length >= room ? _filter[^(room - 1)..] : _filter;
         var input = Gfx.Attr(LogTones.Bright(), bg);
-        Put(batch, 3, h - 1, shown, room, input);
+        Put(ref batch, 3, h - 1, shown, room, input);
         batch.Put(3 + shown.Length, h - 1, ' ', Gfx.Attr(bg, LogTones.Bright()));   // the cursor
     }
 
@@ -256,7 +251,7 @@ public class MessageLogView : View
         return lines;
     }
 
-    private static void Box(Gfx.Batch batch, int x0, int y0, int w, int h, Attribute attr)
+    private static void Box(ref Gfx.Batch batch, int x0, int y0, int w, int h, Attribute attr)
     {
         for (int x = x0; x < x0 + w; x++)
         {
@@ -272,7 +267,7 @@ public class MessageLogView : View
     }
 
     // Writes text from x, padded with blanks to exactly `width` cells.
-    private static void Put(Gfx.Batch batch, int x, int y, string text, int width, Attribute attr)
+    private static void Put(ref Gfx.Batch batch, int x, int y, string text, int width, Attribute attr)
     {
         for (int c = 0; c < width; c++)
         {

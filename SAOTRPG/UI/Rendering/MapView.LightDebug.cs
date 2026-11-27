@@ -17,26 +17,26 @@ public enum LightDebugMode
     Luma,
     // Final per-cell light painted as its own RGB, so the cool tint of shade is visible.
     Rgb,
-    // The rendered BACKGROUND, magnified. This is the surface banding shows on and the one mode
-    // that shows what actually ships rather than what the model computed.
+    // The rendered background, magnified. This is the surface banding shows on and the one mode
+    // that shows the drawn result rather than the computed field.
     Band,
     // The view-edge feather depth alone, 0-9. Two cells wide, so the frontier ring and the tier
     // behind it should read as two distinct shades; one flat ring means a tier stopped firing.
     Feather,
-    // The indirect-light gather alone: how much direct light is landing NEAR each cell, before
+    // The indirect-light gather alone: how much direct light is landing near each cell, before
     // any of it is spent. It is the one term with no visible signature of its own — it only ever
     // makes an existing shadow shallower — so without a mode of its own there is no way to tell
     // a gather that is working from one that is pinned.
     Indirect,
 }
 
-// Shift+F8 debug: paints one lighting TERM over the whole viewport plus a readout strip, so the
-// sun model can be judged by eye instead of only from offline measurement. Dev instrumentation —
-// deliberately NOT world-transformed by the active colour theme, because the point is to show the
-// raw field the code computed rather than what a theme would make of it.
+// Shift+F8 debug: paints one lighting term over the whole viewport plus a readout strip, so the
+// sun model can be judged by eye. Deliberately not world-transformed by the active colour theme,
+// because the point is to show the raw field the code computed rather than what a theme would
+// make of it.
 //
-// PATH-D-PORT: diagnostic only, no player-visible contract. A port needs the same three reads
-// available per logical tile: swept shadow, contact term, final light triple.
+// Diagnostic only, with no player-visible contract. It reads three values per logical tile:
+// swept shadow, contact term, final light triple.
 public partial class MapView
 {
     // Off by default and read once per frame when off, exactly as HeightmapDebugEnabled is.
@@ -67,18 +67,18 @@ public partial class MapView
 
     // ── Band mode ──────────────────────────────────────────────────────────────────────────────
     // A lit cell's background is light x BgGlowScale, so it lives in a 0-51 range and is nearly
-    // black at its true value — which is why the quantizer that shapes it was never looked at.
-    // Magnifying by 1/BgGlowScale fills the display range without changing a single step boundary,
-    // so what shows here is exactly the staircase that ships, at a contrast a person can judge.
+    // black at its true value. Magnifying by 1/BgGlowScale fills the display range without
+    // changing a single step boundary, so what shows here is exactly the drawn staircase, at a
+    // contrast a person can judge.
     private const float BandMagnify = 1f / BgGlowScale;
 
-    // ApplyLighting steers the glow toward the TERRAIN colour, so a Band mode that skipped it
-    // would stop showing what ships — which is the one thing this mode is for.
+    // ApplyLighting steers the glow toward the terrain colour, so Band mode has to as well to show
+    // the drawn result.
     private Color BandGroundColor(int mx, int my) => ResolveTerrain(_map.GetTile(mx, my), mx, my).fg;
 
-    // Measured over the last painted Band frame. WORST is the EXCESS a rendered step carries over
-    // the light field's own step between the same two cells — a real shadow edge is a legitimate
-    // jump and must not be counted as a band.
+    // Computed over the last painted Band frame. The worst figure is the excess a rendered step
+    // carries over the light field's own step between the same two cells — a real shadow edge is
+    // a legitimate jump and must not be counted as a band.
     private int _bandLevels;
     private double _bandWorst;
 
@@ -113,9 +113,9 @@ public partial class MapView
                 int mx = VxToMap(vx), my = VyToMap(vy);
                 if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) { havePrev = false; continue; }
                 var l = lighting.GetLightUnchecked(mx, my);
-                // The SHAPED glow, exactly as ApplyLighting builds it — vignette band and
-                // view-edge feather folded in before the quantizer. Measuring the raw field
-                // instead would report a staircase nobody is looking at.
+                // The shaped glow, exactly as ApplyLighting builds it — vignette band and
+                // view-edge feather folded in before the quantizer — because the raw field's
+                // staircase is not the one drawn.
                 float g = BgGlowScale
                           * GlowScale(VignetteBand(mx, my), ViewEdgeOcclusion(mx, my)) * (1f / 255f);
                 float fr = l.R * g, fg2 = l.G * g, fb = l.B * g;
@@ -168,8 +168,8 @@ public partial class MapView
         if (mode == LightDebugMode.Off) return;
         if (w < 4 || h < 3) return;
 
-        // Before the layout: the readout reports these figures, so measuring after it would show
-        // the previous frame's.
+        // Before the layout: the readout reports these figures, so computing them after it would
+        // show the previous frame's.
         if (mode == LightDebugMode.Band) MeasureBanding(w, h);
 
         // Laid out first: the readout claims rows off the bottom and the field has to know how
@@ -255,7 +255,7 @@ public partial class MapView
                 }
                 case LightDebugMode.Feather:
                 {
-                    // The DEPTH, not the scale it maps to: an interior cell is dark, the far tier
+                    // The depth, not the scale it maps to: an interior cell is dark, the far tier
                     // mid, an adjacent contact bright. A frontier with only one bright ring and no
                     // mid ring behind it means the Chebyshev-2 tier is not firing.
                     byte depth = ViewEdgeOcclusion(mx, my);
@@ -280,7 +280,7 @@ public partial class MapView
     }
 
     // ── Readout ────────────────────────────────────────────────────────────────────────────
-    // The strip claims rows off the BOTTOM of the map viewport on purpose: every other region of
+    // The strip claims rows off the bottom of the map viewport on purpose: every other region of
     // the screen belongs to something the readout would collide with, and the rows it costs are
     // rows the overlay has already replaced with a debug field.
 
@@ -327,11 +327,10 @@ public partial class MapView
         _map.Lighting.TryGetShadingTerms(_map, _player.X, _player.Y, out _, out _, out float pGi);
         t.Add(($"gi {pGi:0.00} -{LightingSystem.IndirectLift * pGi:P0}", LightReadoutFg));
 
-        // WHAT IS CASTING NEARBY, AND HOW TALL IT COUNTS FOR. A caster's height decides how far
+        // What is casting nearby, and how tall it counts for. A caster's height decides how far
         // its shadow reaches, and there is otherwise no way to look at the map and tell a boulder
-        // that is throwing half a shadow from a wall that is throwing all of one — the glyphs
-        // differ but the shadow they explain is the thing being judged. Reports the nearest
-        // sight-blocker to the player, which is what the dev will have walked up to.
+        // that is throwing half a shadow from a wall that is throwing all of one. Reports the
+        // nearest sight-blocker to the player.
         t.Add((NearestCasterToken(), LightReadoutFg));
         t.Add(($"lgt {(int)pl.R},{(int)pl.G},{(int)pl.B}", LightReadoutFg));
         if (mode == LightDebugMode.Feather)
@@ -342,7 +341,7 @@ public partial class MapView
         if (mode == LightDebugMode.Band)
         {
             // What is in force and what it is costing, side by side — the four quantizers between
-            // the light field and a drawn cell, then the worst EXCESS step a rendered pair carries
+            // the light field and a drawn cell, then the worst excess step a rendered pair carries
             // over the light field's own between the same two cells.
             t.Add(($"q{LightQuantizeStep} vig{VignetteBands} fade{MemoryFadeSteps}", LightReadoutFg));
             // The glow's own shaping at the player's cell — the band, the view-edge feather and
@@ -395,11 +394,9 @@ public partial class MapView
         }
     }
 
-    // Eight-point compass for the shadow vector. Screen coords, so -y is north.
-
     // The nearest sight-blocking tile to the player and the height it casts at, for the readout.
     // Searched outward by ring so the first hit really is the nearest; the radius is small
-    // because this is an "what am I standing next to" question, not a survey.
+    // because this answers "what is the player standing next to", not a survey.
     private string NearestCasterToken()
     {
         for (int r = 1; r <= 4; r++)
@@ -415,6 +412,7 @@ public partial class MapView
         return "cast none near";
     }
 
+    // Eight-point compass for the shadow vector. Screen coords, so -y is north.
     private static string Compass(float dx, float dy)
     {
         string ns = dy < -0.383f ? "N" : dy > 0.383f ? "S" : "";

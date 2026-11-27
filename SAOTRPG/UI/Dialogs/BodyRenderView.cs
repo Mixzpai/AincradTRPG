@@ -2,16 +2,11 @@ using SAOTRPG.Systems.Input;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Read-only body renderer for PlayerGuideDialog. Replaces TextView so each
-// token can hold its own Attribute — Terminal.Gui v2 TextView shares one
-// Scheme across all content. Owns scroll position + focused See-also
-// bullet cursor. Tokenizes the wrapped body once on SetContent.
-//
-// PATH-D-PORT: documented justified custom View subclass. Required because
-// TG v2 TextView cannot per-token-color content (single Scheme), and
-// the See-also link focus-highlight + inline [[link]] cyan tokens both need
-// per-span Attribute swaps. Path D port reimplements as a custom rune-paint
-// pass over the same Span/Line tokenization (no TG dependency below).
+// Read-only body renderer for PlayerGuideDialog. A custom View rather than TextView because
+// TextView applies one Scheme to all its content, and the inline [[link]] tokens and the
+// focused See-also highlight need per-span attributes. Owns scroll position + focused See-also
+// bullet cursor. Tokenizes the wrapped body once on SetContent; the Span/Line tokenization has
+// no Terminal.Gui dependency, and only OnDrawingContent paints.
 internal sealed class BodyRenderView : View
 {
     private sealed class Span
@@ -223,10 +218,7 @@ internal sealed class BodyRenderView : View
     }
 
     // ── Drawing ──────────────────────────────────────────────────────────
-    // PATH-D-PORT: TG-coupled paint surface. Iterates the Span/Line list and
-    // pushes per-span Attribute + AddStr to the TG Driver. Path D port replaces
-    // the Driver calls with the new backend's glyph-blitter while keeping the
-    // span loop intact — span tokenization above is renderer-agnostic.
+    // Paints the Span/Line list, setting each span's own attribute before writing it.
     protected override bool OnDrawingContent(DrawContext? context)
     {
         int height = Frame.Height;
@@ -245,13 +237,11 @@ internal sealed class BodyRenderView : View
             {
                 if (col >= width) break;
                 Color fg = isFocused ? FgFocusLine : span.Fg;
-                // PATH-D-PORT: direct TG Driver attribute + glyph push.
                 SetAttribute(new Attribute(fg, Color.Black));
                 Move(col, row);
                 int writable = Math.Min(span.Text.Length, width - col);
-                // Zero-length span: skip it, don't abandon the line. The empty-text span
-                // EmitInlineWithLinks emits is the sole span on a blank line today, but a
-                // break here would silently truncate everything after any empty span.
+                // Zero-length span: skip it, don't abandon the line. A break here would
+                // truncate everything after an empty span.
                 if (writable <= 0) continue;
                 if (writable < span.Text.Length)
                     AddStr(span.Text.Substring(0, writable));
@@ -307,7 +297,7 @@ internal sealed class BodyRenderView : View
             // Mirrors CursorUp: walk down the bullets, unhighlight at the last one,
             // then scroll. Link-cursor mode is entered deliberately (Right arrow from
             // the sidebar), so an unfocused Down scrolls rather than jumping to the
-            // See-also block — otherwise the body below the cursor was unreachable.
+            // See-also block, which keeps the body below the cursor reachable.
             case KeyCode.CursorDown:
                 if (_seeAlsoIdxs.Count > 0 && _focused >= 0 && _focused < _seeAlsoIdxs.Count - 1)
                 {
@@ -335,8 +325,8 @@ internal sealed class BodyRenderView : View
                 return true;
 
             case KeyCode.PageDown:
-                // Same bottom as End — clamping to _lines.Count - 1 let PageDown run
-                // past the last full page and leave a near-empty view.
+                // Same bottom as End, so PageDown cannot run past the last full page and
+                // leave a near-empty view.
                 _scrollY = Math.Min(Math.Max(0, _lines.Count - Frame.Height),
                                     _scrollY + Math.Max(1, Frame.Height - 2));
                 SetNeedsDraw();

@@ -5,13 +5,13 @@ using SAOTRPG.UI.Effects;
 
 namespace SAOTRPG.UI.Rendering;
 
-// Particle render layer. Renders BELOW damage popups/projectiles but ABOVE base tiles
+// Particle render layer. Renders below damage popups/projectiles but above base tiles
 // — later passes overwrite conflicting cells, giving popups/projectiles z-order priority.
 public partial class MapView
 {
     // Throttle for awakening emission. Banner fires for ~3s but the emit window is
-    // its first half (per DivineObtainBanner.ShouldEmitParticlesThisFrame); we want
-    // one burst per emit window, not one per frame.
+    // its first half (DivineObtainBanner.ShouldEmitParticlesThisFrame), and that
+    // window gets one burst, not one per frame.
     private int _lastAwakeningLevelEmitted;
 
     private void RenderParticles(int w, int h, int dtMs)
@@ -40,8 +40,9 @@ public partial class MapView
         }
         ParticleQueue.Tick(dtMs);
 
-        foreach (var p in ParticleQueue.Active)
+        foreach (var p in ParticleQueue.Pool)
         {
+            if (!p.Active) continue;
             int mx = (int)Math.Round(p.X);
             int my = (int)Math.Round(p.Y);
             if (!_map.InBounds(mx, my) || !_map.IsVisible(mx, my)) continue;
@@ -61,21 +62,20 @@ public partial class MapView
         RenderMonsterDeathBursts(w, h, dtMs);
     }
 
-    // Two-phase canon-aligned monster death burst:
+    // Two-phase monster death burst:
     //   Phase 1 (0..flashMs)   — fracture flash: blue-white core + dense braille around silhouette
     //   Phase 2 (flashMs..end) — spread/fade: shards burst outward, density falls with radius
     //
-    // PATH-D-PORT: the signature kill effect, and the one place sub-cell resolution is used —
-    // braille dot masks paint 2x4 subpixels inside one terminal cell, so a renderer with real
-    // pixels should draw the shatter directly rather than porting the dot encoding. Two contracts
-    // must survive whatever replaces it: SAO shatters into LIGHT, never blood (the palette is
-    // blue-white -> cyan -> dark grey), and shard positions are POLAR, derived from
-    // elapsed-since-flash x speed, so the burst reads as an outward spray rather than a fade.
+    // The signature kill effect, and the one place sub-cell resolution is used: braille dot
+    // masks paint 2x4 subpixels inside one terminal cell. The picture depends on two things: a
+    // monster shatters into light, never blood (the palette is blue-white -> cyan -> dark grey),
+    // and shard positions are polar, derived from elapsed-since-flash x speed, so the burst reads
+    // as an outward spray rather than a fade.
     private void RenderMonsterDeathBursts(int w, int h, int dtMs)
     {
         if (_deathBursts.Count == 0) return;
 
-        // Canon palette anchors. Core ≈ #E6F5FF (blue-white), then BrightCyan, then dim cyan, then DarkGray.
+        // Palette anchors. Core ≈ #E6F5FF (blue-white), then BrightCyan, then dim cyan, then DarkGray.
         Color coreColor   = new Color(230, 245, 255);
         Color brightCyan  = Color.BrightCyan;
         Color cyan        = Color.Cyan;

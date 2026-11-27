@@ -15,28 +15,17 @@ namespace SAOTRPG.Systems.Turns;
 // stairs discovery, sound cues.
 public partial class TurnManager
 {
-    // Resting is RestTurns turns long and heals RestHealPerTurn each, which is also why the
-    // roadmap's "wait 3+ turns beside a campfire" needed no counter: one rest action already IS
-    // three turns, so the condition is satisfied by the shortest thing the player can do.
-    private const int RestTurns = 3;
-    private const int RestHealPerTurn = 3;
-
-    // Resting next to a lit fire, doubled. NOT a power increase — rest is already unlimited and
-    // repeatable anywhere out of contact, so this changes how many rests a recovery costs rather
-    // than whether one is available. For scale, STEPPING ON the fire heals 15 + 5/floor at once
-    // and burns the tile to Ash; camping beside it pays 18 over three turns and leaves it lit.
-    // That is the trade the two halves are meant to pose: spend the fire now, or keep it.
-    private const int CampfireRestHealPerTurn = 6;
-
+    // Sleep: lie down and sleep until healed, for at least an hour and at most eight, and
+    // wake rested. Healing is the ordinary per-turn regen; a fire beside the bed doubles it. The UI
+    // runs the activity (ContinueActivity) and a key press, a hostile or a wound wakes the player.
     public void ProcessRest()
     {
         if (_player.IsDefeated) return;
         // Stunned: the move path's stun branch logs it, ticks it and spends the turn.
         if (_stunTurnsLeft > 0) { ProcessPlayerMove(0, 0); return; }
 
-        // Resting is the ONLY way to clear fatigue (_restCounter is zeroed below), so refusing it
-        // at full health left an exhausted player stuck with -4 ATK and -1 DEF and no way out
-        // short of taking a hit first. Full health only blocks a rest that would do nothing at all.
+        // Sleep is the only way to clear fatigue, so full health alone does not refuse it; only a
+        // sleep that would do nothing is refused.
         bool healingNeeded = _player.CurrentHealth < _player.MaxHealth;
         bool fatigueToClear = _restCounter >= FatigueThreshold;
         if (!healingNeeded && !fatigueToClear)
@@ -53,38 +42,32 @@ public partial class TurnManager
         }
 
         bool besideFire = IsBesideCampfire();
-        int perTurn = besideFire ? CampfireRestHealPerTurn : RestHealPerTurn;
         _log.Log(besideFire
-            ? "You settle down beside the fire and rest..."
-            : "You sit down and rest...");
-        int totalHealed = 0;
-        for (int i = 0; i < RestTurns; i++)
+            ? "You settle down beside the fire to sleep..."
+            : "You lie down to sleep...");
+        StartActivity(new Activity
         {
-            if (_player.IsDefeated) break;
-            int heal = Math.Min(perTurn, _player.MaxHealth - _player.CurrentHealth);
-            if (heal > 0) { _player.CurrentHealth += heal; totalHealed += heal; }
-            TurnCount++;
-            TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-            if (_player.IsDefeated) return;
-            ProcessEntityTurns();
-            if (_player.IsDefeated) return;
-        }
-        _restCounter = 0;
-        _fatiguedWarned = false;
-        _exhaustedWarned = false;
-        // Sleep XP: one grant per rest action (not per heal tick), and the SAME grant whether or
-        // not there is a fire. A campfire is not consumed unless it is stepped on, so a bonus
-        // here would be an unlimited XP farm beside an unlimited fire — which is the exact
-        // defect HandleCampfire's consume-on-use fixed, reintroduced from the other side.
-        GrantRestSleepXp();
-        _log.LogSystem(besideFire
-            ? $"The fire's warmth speeds your recovery. (+{totalHealed} HP)"
-            : $"You feel refreshed. (+{totalHealed} HP)");
-        UpdateVisibility();
-        TurnCompleted?.Invoke();
+            Verb = "sleeping", Sleeping = true, BesideFire = besideFire,
+            TurnsLeft = MaxSleepTurns, HealthAtStart = _player.CurrentHealth,
+        });
     }
 
-    // Is there a LIT fire within one tile? Chebyshev 1, matching the enemy-proximity test above,
+    // A full sleep clears fatigue; one cut short clears the share of an hour it lasted.
+    private void WakeUp(Activity a)
+    {
+        _restCounter = a.TurnsDone >= MinSleepTurns ? 0
+            : _restCounter - (int)((long)_restCounter * a.TurnsDone / MinSleepTurns);
+        if (_restCounter < FatigueThreshold) { _fatiguedWarned = false; _exhaustedWarned = false; }
+        // Sleep XP: one grant per sleep, fire or not. A campfire is not consumed unless stepped
+        // on, so a bonus here would be an unlimited XP farm beside an unlimited fire.
+        GrantRestSleepXp();
+        int healed = Math.Max(0, _player.CurrentHealth - a.HealthAtStart);
+        _log.LogSystem(a.BesideFire
+            ? $"The fire's warmth sped your recovery. (+{healed} HP)"
+            : $"You feel refreshed. (+{healed} HP)");
+    }
+
+    // Is there a lit fire within one tile? Chebyshev 1, matching the enemy-proximity test above,
     // so "adjacent" means the same thing to both halves of the rest rules.
     //
     // TileType.Campfire only. Ash is a spent fire and warms nothing, which is what makes stepping
@@ -116,17 +99,15 @@ public partial class TurnManager
         var t2 = _map.GetTile(x2, y2);
         if (t1.BlocksMovement || t2.BlocksMovement || t1.Occupant != null || t2.Occupant != null)
         { _log.Log("Can't sprint — path blocked!"); return; }
+        // Running: each step at half its cost, so two tiles on flat ground take one turn.
+        int runCost = (StepCost(_player.X, _player.Y, x1, y1) + StepCost(x1, y1, x2, y2)) / RunDivisor;
 
-        // A SPRINT CROSSES TWO TILES AND USED TO TOUCH NEITHER. MoveEntity jumped straight to the
-        // destination and the method went on to the turn bookkeeping, so no trap fired and no tile
-        // interaction ran — and Lava, DangerZone and every Trap* are absent from
-        // Tile.BlocksMovement, which is what the gate above tests. Shift+direction was therefore a
-        // hazard-immunity key, and a way to stand on the stairs without being offered them.
-        //
-        // Walk the two steps instead: the tile passed THROUGH gets its trap check, the tile landed
-        // ON gets the trap check and the interaction, and a trap that interrupts stops the run
-        // where it caught the player. Tiles are re-read rather than reused from the gate above,
-        // because a trap reveals itself and can change what it is standing on.
+        // A sprint crosses two tiles, and Lava, DangerZone and every Trap* are absent from
+        // Tile.BlocksMovement, which is all the gate above tests. So both steps are walked: the
+        // tile passed through gets its trap check, the tile landed on gets the trap check and the
+        // interaction, and a trap that interrupts stops the run where it caught the player. Tiles
+        // are re-read rather than reused from the gate above, because a trap reveals itself and
+        // can change what it is standing on.
         _map.MoveEntity(_player, x1, y1);
         if (HandleTrapEffects(_map.GetTile(x1, y1), x1, y1)) return;
         if (_player.IsDefeated) return;
@@ -143,14 +124,7 @@ public partial class TurnManager
 
         // Running skill XP per sprint action (covers 2 tiles).
         GrantSprintRunningXp();
-        TurnCount++;
-        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-        if (_player.IsDefeated) return;
-        ProcessEntityTurns();
-        if (_player.IsDefeated) return;
-        // Sprinting is two tiles of movement and used to skip passive regen entirely, so a player
-        // who sprinted everywhere healed less than one who walked the same ground.
-        PassiveRegen();
+        if (!SpendMoves(runCost)) return;
         UpdateVisibility();
         TurnCompleted?.Invoke();
     }
@@ -160,13 +134,10 @@ public partial class TurnManager
         if (_player.IsDefeated) return;
         if (_stunTurnsLeft > 0) { ProcessPlayerMove(0, 0); return; }
         _counterStance = true;
+        _riposteMultiplier = DefaultRiposteMultiplier;
         _log.LogCombat("You raise your guard — ready to counter the next attack!");
-        AdvanceTurn();
-        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-        if (_player.IsDefeated) return;
-        ProcessEntityTurns();
+        if (!SpendMoves(NormalSpeed)) return;
         _counterStance = false; // expires after one round
-        PassiveRegen();
         TurnCompleted?.Invoke();
     }
 
@@ -187,11 +158,8 @@ public partial class TurnManager
         if (_stunTurnsLeft > 0)
         {
             _log.LogCombat("You are stunned and cannot act!");
-            AdvanceTurn();
-            TickStun(); TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-            if (_player.IsDefeated) return;
-            ProcessEntityTurns();
-            PassiveRegen();
+            TickStun();
+            if (!Pause()) return;
             TurnCompleted?.Invoke();
             return;
         }
@@ -204,28 +172,18 @@ public partial class TurnManager
             if (_idleTurns >= FlavorText.IdleThreshold && _idleTurns % FlavorText.IdleRepeatInterval == 0)
                 _log.Log(FlavorText.IdleFlavors[RunRng.Next(FlavorText.IdleFlavors.Length)]);
 
-            // WAITING CONSUMED NO TURN AT ALL, and it took driving the real thing to see it.
-            // Wait is bound to ProcessPlayerMove(0, 0), so the target tile is the player's OWN
+            // Wait is bound to ProcessPlayerMove(0, 0), so the target tile is the player's own
             // tile — and GameMap.MoveEntity stamps every entity into its tile's Occupant, the
-            // player included. The occupant branch further down therefore caught every wait and
-            // handed it to HandleOccupantInteraction, which has cases for Ally, Monster, Vendor
-            // and NPC and none for Player, so it fell out of the bottom having done nothing.
-            // TurnCount did not move, no timer ticked, no monster acted, and the day did not
-            // advance — measured over ten consecutive waits, TurnCount 1 -> 1.
+            // player included. The occupant branch further down would catch every wait and hand
+            // it to HandleOccupantInteraction, which has no case for Player, so a wait must spend
+            // its turn here.
             //
-            // It LOOKED like it worked, which is why it lasted: the idle counter above still
-            // incremented and still printed its flavour line, so the player got a response.
-            //
-            // No _restCounter++ and no TickExhaustion: fatigue is the EXERTION clock, and
-            // standing still is the one thing that plainly is not exertion.
-            TurnCount++;
-            TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-            if (_player.IsDefeated) return;
-            ProcessEntityTurns();
-            if (_player.IsDefeated) return;
-            PassiveRegen();
+            // No _restCounter++ and no TickExhaustion: fatigue is the exertion clock, and
+            // standing still is not exertion.
+            // Pause: the rest of this turn passes.
+            if (!Pause()) return;
             UpdateVisibility();
-            // WHICH OF THE MOVE PATH'S TAIL CALLS A WAIT ALSO NEEDS, and the rule is whether the
+            // Which of the move path's tail calls a wait also needs: the rule is whether the
             // thing they read can change while the player stands still. Exploration can: the FOV
             // radius grows as the sun rises, so waiting through dawn genuinely reveals map, and an
             // Explore quest could otherwise complete unnoticed until the next step. Sound cues can:
@@ -247,6 +205,7 @@ public partial class TurnManager
         // Swimming gate: level check bypasses water BlocksMovement.
         bool swimmingBypass = false;
         bool swimSlowPenalty = false;
+        int stepCost = _map.InBounds(tx, ty) ? StepCost(_player.X, _player.Y, tx, ty) : NormalSpeed;
         if (tile.RequiresSwimmingLevel > 0)
         {
             int swimLvl = _player.LifeSkills.SwimmingLevel;
@@ -254,9 +213,10 @@ public partial class TurnManager
             if (swimLvl >= req)
             {
                 swimmingBypass = true;
-                // Slow below L10 (shallow) / L50 (deep); each slow step = extra tick.
+                // Water costs wading and swimming move points; L10 (shallow) and L50 (deep) halve it.
                 if (tile.Type == TileType.Water && swimLvl < 10) swimSlowPenalty = true;
                 else if (tile.Type == TileType.WaterDeep && swimLvl < 50) swimSlowPenalty = true;
+                if (!swimSlowPenalty) stepCost /= 2;
             }
         }
 
@@ -316,9 +276,8 @@ public partial class TurnManager
         {
             _log.Log("You slip on the icy surface!");
             // Slip = lose the rest of this turn (no further processing).
-            TurnCount++; TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-            if (_player.IsDefeated) return;
-            ProcessEntityTurns(); PassiveRegen(); UpdateVisibility();
+            if (!Pause()) return;
+            UpdateVisibility();
             TurnCompleted?.Invoke();
             return;
         }
@@ -352,7 +311,7 @@ public partial class TurnManager
             // spawn tile — so without this a floor could be entered from the square the player
             // arrives on, skipping it entirely. Floor 1 places no overworld floor boss, so the gate
             // is deliberately inert there and the tutorial floor stays open.
-            // SAFETY: this makes the boss's reachability load-bearing. Tools/SeedProbe asserts it.
+            // This makes the boss's reachability a hard requirement on every generated floor.
             if (_inLabyrinth) { ExitLabyrinth(); return; }
             TutorialSystem.ShowTip(_log, "first_labyrinth");
             if (FloorBossAlive())
@@ -385,22 +344,13 @@ public partial class TurnManager
             if (_map.HasItemsAt(_player.X, _player.Y)) PickupItems();
         }
 
-        TurnCount++;
         _restCounter++;
         TickExhaustion();
         if (PlayerLowHp && TurnCount % 5 == 0)
             _log.LogCombat(FlavorText.LowHpEncouragements[RunRng.Next(FlavorText.LowHpEncouragements.Length)]);
-        TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-        if (_player.IsDefeated) return;
-        ProcessEntityTurns();
-        // Swim slow penalty: extra tick + entity round (mobs get free turn).
-        if (swimSlowPenalty && !_player.IsDefeated)
-        {
-            TurnCount++;
-            TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-            if (!_player.IsDefeated) ProcessEntityTurns();
-        }
-        PassiveRegen();
+        // Crouching: a step at twice its cost.
+        if (_stealthActive) stepCost *= CrouchMultiplier;
+        if (!SpendMoves(stepCost)) return;
         UpdateVisibility();
         RevealNearbyTraps();
         QuestSystem.OnExplorationUpdate(_map.GetExplorationPercent(), _log);
@@ -507,10 +457,10 @@ public partial class TurnManager
         return true;
     }
 
-    // Shared Divine-Object quest handler (Azariya F50, Selka F65, Dorothy F78, HF NPCs).
+    // Shared Divine-Object quest handler (Azariya F50, Selka F65, Dorothy F78, HfMission NPCs).
     // First-talk offers floor-kill quest; complete grants Divine; TurnedIn prevents re-grant.
-    // subCategory tags the quest for milestone counters; defaults None for callers that
-    // don't feed IF/HF trackers.
+    // subCategory tags the quest for milestone counters; defaults None for callers that feed
+    // neither the IfImplement nor the HfMission counters.
     private bool HandleDivineQuest(Entities.NPC npc, string questId, string questTitle,
         string openingLine, int killCount, string divineDefId, string handOverLine,
         string inProgressLine, string postCompleteLine, int rewardCol, int rewardXp,
@@ -573,7 +523,7 @@ public partial class TurnManager
                     _map.AddItem(_player.X, _player.Y, divine);
                     _log.LogLoot($"  ◈ {divine.Name} — Divine Object. (Inventory full — dropped at your feet.)");
                 }
-                // Fire DivineObtained event + set one-per-run cap when a Divine was granted.
+                // Fire DivineObtained when a Divine was granted.
                 if (divine is Items.Equipment.Weapon divineWpn && divine.Rarity == "Divine")
                     NotifyDivineObtained(divineWpn);
             }
@@ -603,7 +553,7 @@ public partial class TurnManager
             rewardXp:         400);
     }
 
-    // Dorothy — F78 Starlight Banner (8th Divine). SAO Last Recollection canon.
+    // Dorothy — F78 Starlight Banner (8th Divine).
     private bool HandleDorothy(Entities.NPC npc)
     {
         if (npc.Name != "Dorothy") return false;
@@ -647,7 +597,7 @@ public partial class TurnManager
         var baseQ = QuestSystem.GetQuest("divine_fragrant_olive");
         if (baseQ == null || baseQ.Status != QuestStatus.TurnedIn) return false;
 
-        // Guard 2 (gotcha #4): chained "Sword's Awakening" must be null or TurnedIn. If InProgress/Complete,
+        // Guard 2: chained "Sword's Awakening" must be null or TurnedIn. If InProgress/Complete,
         // HandleSelka owns the dispatch so the player can turn it in.
         var chainQ = QuestSystem.GetQuest("selka_unfolding_truth");
         if (chainQ != null && chainQ.Status != QuestStatus.TurnedIn) return false;
@@ -664,7 +614,7 @@ public partial class TurnManager
         return true;
     }
 
-    // Returns true if any weapon in inventory OR equipped slots is Divine rarity.
+    // Returns true if any weapon in inventory or equipped slots is Divine rarity.
     // Equip removes from Items into equipped-slot map — must scan both.
     private static bool HasDivineWeapon(Inventory.Core.Inventory inv)
     {
@@ -676,7 +626,7 @@ public partial class TurnManager
     }
 
     // Selka — F65 Fragrant Olive + chained "Unfolding Truth" (30 kills F65+).
-    // GetQuest reads completed list so legacy TurnedIn saves still trigger the chain.
+    // GetQuest also reads the completed list, so a TurnedIn base quest still triggers the chain.
     private bool HandleSelka(Entities.NPC npc)
     {
         if (npc.Name != "Selka the Novice") return false;
@@ -712,8 +662,8 @@ public partial class TurnManager
             rewardXp:         600);
     }
 
-    // ── Hollow Fragment Hollow Mission questgivers (9 HNM weapons) ────
-    // HF Legendary weapons gated behind NPC quests. See HollowWeaponQuest.
+    // ── Hollow Mission questgivers (9 Hollow weapons) ────
+    // Legendary weapons gated behind NPC quests.
     private record HollowWeaponQuest(string QuestId, string Title, string Opening,
         int KillCount, string RewardDefId, string HandOver, string InProgress,
         string PostComplete, int Col, int Xp,
@@ -776,7 +726,7 @@ public partial class TurnManager
             "The line still bleeds.", "Odin's spear rests with you now.",
             800, 600, QuestSubCategory.HfMission),
 
-        // ── HF Endgame Implement System questgivers (F84, F85, F92, F99) ──
+        // ── Endgame Implement questgivers (F84, F85, F92, F99) ──
         ["Spiralist Vey"] = new("hf_spiralblade_rendering_fail", "The Spiral That Fails",
             "Ten break the pattern. The rapier answers only the spiral that fails.",
             10, "rap_spiralblade_rendering_fail",
@@ -802,8 +752,7 @@ public partial class TurnManager
             "The pact is not yet written.", "The hollow-blade answers no other now.",
             900, 700, QuestSubCategory.IfImplement),
 
-        // FD F55 Agil's Apprentice — moves axe_ground_gorge off floor-banded pool
-        // onto a dedicated canon source.
+        // F55 Agil's Apprentice — the dedicated quest source of axe_ground_gorge.
         ["Agil's Apprentice"] = new("fd_agils_apprentice_ground_gorge", "The Apprentice's Ground Gorge",
             "Fifteen felled on this floor, and Agil says I can let the axe go. Show me fifteen.",
             15, "axe_ground_gorge",
@@ -812,8 +761,8 @@ public partial class TurnManager
             "May its bite never dull.",
             500, 400),
 
-        // LN F40 Yulier — KoB-era Asuna friend; canon Lambent Light gift.
-        // Asuna's signature rapier returns to its KoB-era floor.
+        // F40 Yulier — Asuna's friend from the Knights of the Blood era; gives Lambent Light,
+        // Asuna's signature rapier.
         ["Yulier"] = new("ln_yulier_lambent_light", "The Lightning Flash's Memory",
             "Asuna gave me her old rapier before the Knights took her. Ten on this floor and Lambent Light is yours — she would have wanted a wielder, not a relic.",
             10, "lambent_light",
@@ -822,8 +771,8 @@ public partial class TurnManager
             "Carry her flash. There is nothing else of her left to give.",
             450, 350),
 
-        // LN MR-arc F76 Jun — Sleeping Knights' tribute; Mother's Rosario handover.
-        // Yuuki memorial floor F76.
+        // F76 Jun — the Sleeping Knights' tribute; hands over Mother's Rosario on Yuuki's
+        // memorial floor.
         ["Jun"] = new("ln_jun_mothers_rosario", "The Sleeping Knights' Tribute",
             "Yuuki left her sword to whoever would carry her family's name forward. Fifteen on this floor — prove you have the heart for Mother's Rosario.",
             15, "mothers_rosario",
@@ -832,7 +781,7 @@ public partial class TurnManager
             "The Sleeping Knights walk with you now. Yuuki rests easier.",
             700, 550),
 
-        // ── IF Element Research questgivers (F5 Karluin ruins) ────
+        // ── Element Research questgivers (F5 Karluin ruins) ────
         ["Archivist Fuscan"] = new("if_research_karluin_dust", "Karluin Dust Survey",
             "The catacomb dust holds the Cathedral's old elements. Bring me proof of ten cleared chambers.",
             10, "ore_crust",
@@ -862,7 +811,7 @@ public partial class TurnManager
             "The Colossus is on the page. Karluin remembers.",
             260, 110, QuestSubCategory.IfImplement),
 
-        // ── IF Element Research questgivers (F10 wetlands / Kagachi domain) ────
+        // ── Element Research questgivers (F10 wetlands / Kagachi domain) ────
         ["Shrine Maiden Suzaha"] = new("if_research_kagachi_tides", "The Tides of Kagachi",
             "The samurai-lord's marsh rises and falls with element-flow. Twelve quiet kills give us a clean reading.",
             12, "ore_flowing_water",
@@ -885,7 +834,7 @@ public partial class TurnManager
             "The marsh glow is filed. Walk on.",
             220, 90, QuestSubCategory.IfImplement),
 
-        // ── IF Element Research questgivers (F14 dense forest, IF Integral Series anchor) ────
+        // ── Element Research questgivers (F14 dense forest, Integral Series anchor) ────
         ["Druid-Researcher Lael"] = new("if_research_integral_canopy", "Integral Canopy Survey",
             "The canopy holds the first IF element-binding. Twelve deep-wood kills and the binding renews.",
             12, "ore_wind_flower",
@@ -908,7 +857,7 @@ public partial class TurnManager
             "The grove roots are filed. Walk lightly.",
             250, 105, QuestSubCategory.IfImplement),
 
-        // ── IF Element Research questgivers (F25 twilight forest, IF Nox Series anchor) ────
+        // ── Element Research questgivers (F25 twilight forest, Nox Series anchor) ────
         ["Twilight-Sage Orune"] = new("if_research_nox_giant_shadow", "Shadow of the Two-Headed Giant",
             "The giant's shadow carries Nox-element residue. Twelve fall in the shadow and the residue fixes.",
             12, "",
@@ -938,7 +887,7 @@ public partial class TurnManager
             "Dread is recorded. The ridge breathes.",
             260, 110, QuestSubCategory.IfImplement),
 
-        // ── IF Element Research questgivers (F61-65 infernal era, IF Rosso Series anchor) ────
+        // ── Element Research questgivers (F61-65 infernal era, Rosso Series anchor) ────
         ["Pyromancer-Archivist Tassel"] = new("if_research_rosso_forneus_ash", "Ash of Crimson Forneus",
             "The fog-lake holds Forneus's ash. Twelve kills clear the haze enough to take a sample.",
             12, "ore_crimson_flame",
@@ -1003,7 +952,7 @@ public partial class TurnManager
             "The audit is closed. The caldera rests.",
             320, 140, QuestSubCategory.IfImplement),
 
-        // ── IF Element Research questgivers (F84-90 demigod era, Yasha / Gaou anchors) ────
+        // ── Element Research questgivers (F84-90 demigod era, Yasha / Gaou anchors) ────
         ["Yasha-Anchorite Lien"] = new("if_research_yasha_spiral", "Yasha Spiral Audit",
             "The spiral on this floor is Yasha's index point. Ten failed spirals, and the index closes.",
             10, "ore_ash_white",
@@ -1082,7 +1031,7 @@ public partial class TurnManager
             "The audit closes. Void is bound.",
             440, 195, QuestSubCategory.IfImplement),
 
-        // ── IF Element Research questgivers (additional F61-65 infernal coverage) ────
+        // ── Element Research questgivers (more F61-65 infernal floors) ────
         ["Ash-Cantor Velin"] = new("if_research_infernal_chant_close", "Infernal Chant Close",
             "Ten of the infernal-walkers must fall to close the chant for the season.",
             10, "ore_crimson_flame",
@@ -1105,7 +1054,7 @@ public partial class TurnManager
             "The anvil is steady. The forge remembers.",
             320, 140, QuestSubCategory.IfImplement),
 
-        // ── IF Element Research questgivers (additional early-floor coverage) ────
+        // ── Element Research questgivers (more early floors) ────
         ["Ruins-Cipher Aelis"] = new("if_research_karluin_cipher_close", "Karluin Cipher Close",
             "Eight of the cathedral's bound must fall before the cipher closes for the night.",
             8, "",
@@ -1128,7 +1077,7 @@ public partial class TurnManager
             "The audit is sealed. Walk on.",
             280, 120, QuestSubCategory.IfImplement),
 
-        // ── HF Hollow Mission gap-fillers (F77 hill zone, Crystalize Claw band) ────
+        // ── Hollow Mission questgivers (F77 hill zone, Crystalize Claw band) ────
         ["Hollow-Knight Aron"] = new("hf_mission_crystalize_claw_audit", "The Crystalize Claw Audit",
             "Twelve fall on the hills before the Claw stops feeding. Make twelve quiet.",
             12, "",
@@ -1151,7 +1100,7 @@ public partial class TurnManager
             "The veil is broken. Walk on.",
             300, 130, QuestSubCategory.HfMission),
 
-        // ── HF Hollow Mission gap-fillers (F82 nightmare swamp) ────
+        // ── Hollow Mission questgivers (F82 nightmare swamp) ────
         ["Crypt-Knight Vorr"] = new("hf_mission_swamp_undead_purge", "Swamp Undead Purge",
             "Fifteen of the swamp's risen must fall before I can carry the lantern further.",
             15, "ore_adamant",
@@ -1167,7 +1116,7 @@ public partial class TurnManager
             "The fen is quiet. Walk on.",
             350, 155, QuestSubCategory.HfMission),
 
-        // ── HF Hollow Mission gap-fillers (F86 corrupted abyss, King of Skeleton band) ────
+        // ── Hollow Mission questgivers (F86 corrupted abyss, King of Skeleton band) ────
         ["Bone-Champion Karth"] = new("hf_mission_skeleton_lesser_court", "Lesser Court of Skeletons",
             "Twelve of the lesser court must fall before the King will hold court.",
             12, "ore_adamant",
@@ -1183,7 +1132,7 @@ public partial class TurnManager
             "The path is open. Walk it.",
             400, 170, QuestSubCategory.HfMission),
 
-        // ── HF Hollow Mission gap-fillers (F87 corrupted abyss, Radiance Eater band) ────
+        // ── Hollow Mission questgivers (F87 corrupted abyss, Radiance Eater band) ────
         ["Radiance-Hunter Jarn"] = new("hf_mission_radiance_eater_audit", "Radiance Eater Audit",
             "Twelve of the lesser eaters must fall before the audit closes on the great one.",
             12, "ore_ash_white",
@@ -1199,7 +1148,7 @@ public partial class TurnManager
             "The mark holds. Walk on.",
             410, 175, QuestSubCategory.HfMission),
 
-        // ── HF Hollow Mission gap-fillers (F89 corrupted abyss, Murderer Fang band) ────
+        // ── Hollow Mission questgivers (F89 corrupted abyss, Murderer Fang band) ────
         ["Fang-Hunter Eden"] = new("hf_mission_murderer_fang_audit", "Murderer Fang Audit",
             "Twelve fall before the Fang's circle quiets. The audit is the only path past.",
             12, "ore_ash_white",
@@ -1215,7 +1164,7 @@ public partial class TurnManager
             "The breach is yours. Walk it.",
             420, 180, QuestSubCategory.HfMission),
 
-        // ── HF Hollow Mission gap-fillers (F93-94 crystal void) ────
+        // ── Hollow Mission questgivers (F93-94 crystal void) ────
         ["Crystal-Warden Aelis"] = new("hf_mission_crystal_warden_trial", "Crystal Warden's Trial",
             "Fifteen fall in the crystal cavern. Reflections multiply only true work.",
             15, "ore_ash_white",
@@ -1252,7 +1201,7 @@ public partial class TurnManager
             "The chamber is quiet. Walk on.",
             450, 195, QuestSubCategory.HfMission),
 
-        // ── HF Hollow Mission gap-fillers (F96-97 ruby palace approach, divine ascension) ────
+        // ── Hollow Mission questgivers (F96-97 ruby palace approach, divine ascension) ────
         ["Heathcliff-Loyalist Ashe"] = new("hf_mission_ruby_approach_purge", "Ruby Approach Purge",
             "Fifteen kills clear the path before the throne. The Commander would have wanted no less.",
             15, "ore_ash_white",
@@ -1283,7 +1232,7 @@ public partial class TurnManager
             490, 215, QuestSubCategory.HfMission),
     };
 
-    // Generic dispatcher for all Hollow Fragment quest NPCs.
+    // Generic dispatcher for every quest NPC in _hollowWeaponQuests.
     private bool HandleHollowWeaponNpc(Entities.NPC npc)
     {
         if (npc.Name == null) return false;
@@ -1448,13 +1397,13 @@ public partial class TurnManager
 
     // Lisbeth at Lindarth (F48) — Rarity 6 craft dialog in place of generic flow.
     // Gated on floor 48 so Town-of-Beginnings Lisbeth (F1) stays normal.
-    // F55-boss-cleared one-time Dark Repulser handover (LN canon Lisbeth gift).
+    // One-time Dark Repulser handover once the F55 boss is cleared.
     private bool HandleLisbethLindarth(Entities.NPC npc)
     {
         if (npc.Name != "Lisbeth") return false;
         if (CurrentFloor != 48) return false;
 
-        // LN canon: Lisbeth crafts Dark Repulser after F55 dragon-ore quest. Gate on F55 boss
+        // Lisbeth forges Dark Repulser from the F55 dragon's ore. Gate on F55 boss
         // clear (HighestFloorBossCleared >= 55). One-time per save via TurnedIn quest flag.
         const string DrQuestId = "lisbeth_dark_repulser_gift";
         if (ShopTierSystem.HighestFloorBossCleared >= 55
@@ -1513,12 +1462,9 @@ public partial class TurnManager
         if (occupant is Monster monster && !monster.IsDefeated)
         {
             int hpBefore = _player.CurrentHealth;
+            int attackCost = AttackMoves();
             HandleCombat(monster, hpBefore);
-            AdvanceTurn();
-            TickPoison(); TickBleed(); TickSlow(); TickPerTurnTimers();
-            if (_player.IsDefeated) return;
-            ProcessEntityTurns();
-            PassiveRegen();
+            if (!SpendMoves(attackCost)) return;
             TurnCompleted?.Invoke();
             return;
         }
@@ -1540,15 +1486,14 @@ public partial class TurnManager
             return;
         }
 
-        // Ally derives from Entity, not NPC, so it cannot reach this branch — the `is not Ally`
-        // that used to be here was dead by construction and misdescribed the hierarchy.
+        // Ally derives from Entity, not NPC, so it cannot reach this branch.
         if (occupant is NPC npc)
         {
             TutorialSystem.ShowTip(_log, "first_npc_talk");
 
             bool handledByRan = HandleRanTheBrawler(npc);
             bool handledByAzariya = HandleSisterAzariya(npc);
-            // Awakening hook runs BEFORE HandleSelka; short-circuit OR falls through
+            // Awakening hook runs before HandleSelka; short-circuit OR falls through
             // to HandleSelka (preserving base + chain dialogue) when awakening conditions fail.
             bool handledBySelka = HandleSelkaAwakening(npc) || HandleSelka(npc);
             bool handledByDorothy = HandleDorothy(npc);
@@ -1582,9 +1527,9 @@ public partial class TurnManager
             {
                 var quest = QuestSystem.GenerateQuest(CurrentFloor, npc.Name);
 
-                // IF Implement quests are tagged on canon floor bands (Integral / Nox /
-                // Rosso / Yasha / Gaou anchors); HF Missions are tagged from the broader
-                // Hollow Fragment domain (F76+). IF wins on overlap.
+                // IfImplement quests are tagged on the element-series floor bands (Integral /
+                // Nox / Rosso / Yasha / Gaou anchors); HfMission quests on any floor from F76.
+                // IfImplement wins on overlap.
                 int floor = CurrentFloor;
                 if (floor == 14 || floor == 25
                     || (floor >= 61 && floor <= 65)
@@ -1641,7 +1586,7 @@ public partial class TurnManager
         }
     }
 
-    // Recruitble NPCs: named SAO characters that can join the party.
+    // Recruitable NPCs: named SAO characters that can join the party.
     private static readonly Dictionary<string, (char Sym, Color Col, string Wpn, string Title)> RecruitableNpcs = new()
     {
         { "Klein",          ('K', Color.BrightRed,     "Katana",            "Samurai") },
@@ -1651,12 +1596,10 @@ public partial class TurnManager
         { "Lisbeth",        ('L', Color.BrightMagenta, "Mace",              "Blacksmith") },
     };
 
-    // PATH-D-PORT: recruit-confirm dialog routes through this event so game logic
-    // never calls a TG widget directly. UI subscriber renders the prompt with the
-    // current backend (TG MessageBox today; Path D port replaces the subscriber)
-    // and calls Respond(accepted) synchronously with the user's choice. Synchronous
-    // modal semantics are preserved — the subscriber blocks inside its own modal,
-    // then invokes Respond before returning.
+    // The recruit-confirm dialog routes through this event so game logic never calls a UI
+    // widget directly. The UI subscriber renders the prompt and calls Respond(accepted)
+    // synchronously with the player's choice: it blocks inside its own modal, then invokes
+    // Respond before returning.
     public event Action<RecruitDialogContext>? RecruitDialogRequested;
 
     // No subscriber means no prompt, so the absence is logged as an error rather than letting
@@ -1744,9 +1687,9 @@ public partial class TurnManager
         Monster? closest = null;
         int closestDist = int.MaxValue;
         // Cheapest test first. All three predicates are pure and the winner is only assigned when
-        // every one holds, so the chosen monster is unchanged -- but the visibility probe reads a
-        // million-entry grid, and the cooldown above only throttles AFTER a cue actually fires, so
-        // on a floor with nothing to hear this scan ran on every turn for every entity.
+        // every one holds, so the order cannot change the choice. The visibility lookup reads a
+        // whole-floor grid, and the cooldown above only throttles after a cue fires, so on a floor
+        // with nothing to hear this scan runs on every turn for every entity.
         foreach (var entity in _map.Entities)
         {
             if (entity == _player || entity.IsDefeated || entity is not Monster monster) continue;
@@ -1769,15 +1712,15 @@ public partial class TurnManager
     }
 
     // The floor boss only. FieldBoss derives from Boss and lands in GameMap.Bosses too, but
-    // wilderness named elites are OPTIONAL content -- gating the way up on them would demand
+    // wilderness named elites are optional content -- gating the way up on them would demand
     // clearing every one before a floor could be left.
     private bool FloorBossAlive() =>
         _map.Bosses.Any(b => b is not FieldBoss && !b.IsDefeated);
 }
 
-// PATH-D-PORT: payload for RecruitDialogRequested. UI subscriber synthesizes a
-// modal accept/decline prompt and calls Respond(true) on accept, Respond(false)
-// (or simply returns without calling) on decline. Respond is invoked synchronously.
+// Payload for RecruitDialogRequested. The UI subscriber shows a modal accept/decline prompt
+// and calls Respond(true) on accept, Respond(false) (or returns without calling) on decline.
+// Respond is invoked synchronously.
 public sealed record RecruitDialogContext(
     string NpcName,
     string Title,

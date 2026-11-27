@@ -2,8 +2,8 @@ using SAOTRPG.UI.Helpers;
 
 namespace SAOTRPG.UI.Rendering;
 
-// Dungeon-map coord conversion + low-level draw helpers. DrawGlyph/DrawTextAtView route via Gfx.PutCell
-// so a future Terminal.Gui upgrade only touches Gfx.cs, not every overlay.
+// Dungeon-map coord conversion + low-level draw helpers. DrawGlyph/DrawTextAtView route via Gfx,
+// the only code that touches the driver's cell buffer.
 public partial class MapView
 {
     // ── Coordinate conversion ──────────────────────────────────────────
@@ -22,11 +22,10 @@ public partial class MapView
     private int VyToMap(int vy) => vy + EffOffsetY;
 
     // ── Drawing primitives ─────────────────────────────────────────────
-    // The overlay passes were written against the framework's SetAttribute/Move/AddRune
-    // trio, which commits every cell unconditionally and marks its row for retransmit.
-    // Overlays repaint identical content most frames, so that kept whole rows dirty
-    // forever and defeated change detection. Shadowing the trio here reroutes every
-    // existing call through Gfx (which skips unchanged cells) with no call-site edits.
+    // Shadows the framework's SetAttribute/Move/AddRune trio, which commits every cell
+    // unconditionally and marks its row for retransmit. Overlays repaint identical content most
+    // frames, so that would keep whole rows dirty and defeat change detection; these route every
+    // call through Gfx, which skips unchanged cells.
     // Pen position mirrors the framework's: AddRune advances one column.
     private Attribute _penAttr;
     private int _penX, _penY;
@@ -35,11 +34,12 @@ public partial class MapView
     // through it so they skip PutCell's per-cell origin resolve and clip-region walk, which
     // takes a lock. Null outside a paint (and on the frame-cache blit path, which draws no
     // overlays), where the PutCell fallback applies.
-    private Gfx.Batch? _frameBatch;
+    private Gfx.Batch _frameBatch;
+    private bool _frameBatchLive;
 
     private void PutCellFast(int vx, int vy, char ch, Attribute attr)
     {
-        if (_frameBatch is { } batch) batch.Put(vx, vy, ch, attr);
+        if (_frameBatchLive) _frameBatch.Put(vx, vy, ch, attr);
         else Gfx.PutCell(this, vx, vy, ch, attr);
     }
 

@@ -34,7 +34,7 @@ public static class DaggerDefinitions
     public static Weapon CreateCelestialDagger() => Make("celestial_dagger", "Celestial Dagger", 5000, "Legendary", 170, 75, 85,
         B().Add(StatType.Attack, 55).Add(StatType.Agility, 20).Add(StatType.Dexterity, 15));
 
-    // --- Named / SAO Legendary Weapons ---
+    // --- Named / Legendary Weapons ---
 
     public static Weapon CreateAssassinDagger() => Make("assassin_dagger", "Assassin Dagger", 500, "Rare", 70, 20, 22,
         B().Add(StatType.Attack, 15).Add(StatType.Agility, 8).Add(StatType.Dexterity, 6), "BackstabDmg+50");
@@ -45,7 +45,7 @@ public static class DaggerDefinitions
     public static Weapon CreateMateChopper() => Make("mate_chopper", "Mate Chopper", 6000, "Legendary", 150, 35, 55,
         B().Add(StatType.Attack, 35).Add(StatType.Agility, 15), "Bleed+20");
 
-    // ── HR Dagger Chain: Heated Razor → Valkyrie → Misericorde → Iron Maiden.
+    // ── Dagger Evolution Chain: Heated Razor → Valkyrie → Misericorde → Iron Maiden.
 
     // Heated Razor, a forge-tempered slip-knife. T1 of the Iron Maiden chain.
     public static Weapon CreateHeatedRazor() => Make("heated_razor", "Heated Razor", 1500, "Rare", 120, 15, 55,
@@ -71,11 +71,11 @@ public static class DaggerDefinitions
     public static Weapon CreateStoutBrave() => Make("stout_brave", "Stout Brave", 400, "Uncommon", 90, 2, 14,
         B().Add(StatType.Attack, 8).Add(StatType.Agility, 4), "CritRate+10");
 
-    // F24 Grimhollow Phantom drop (AL Divine Beast tier). Illusion-dagger, caps crit chance.
+    // F24 Grimhollow Phantom drop (Divine Beast tier). Illusion-dagger, caps crit chance.
     public static Weapon CreatePhantasmagoria() => Make("phantasmagoria", "Phantasmagoria", 10500, "Legendary", 180, 28, 92,
         B().Add(StatType.Attack, 48).Add(StatType.Agility, 20).Add(StatType.Dexterity, 18), "CritRate+25");
 
-    // ── Integral Factor Series (Dagger entries) ─────────────────────
+    // ── Series weapons (Dagger entries) ─────────────────────────────
 
     // F25 Nox Series dagger. Nocturne — midnight-song slip-blade from the Underground Labyrinth.
     public static Weapon CreateNoxNocturne() => Make("dag_nox_nocturne", "Nox Nocturne", 6800, "Epic", 155, 25, 75,
@@ -85,7 +85,7 @@ public static class DaggerDefinitions
     public static Weapon CreateYashaEnvy() => Make("dag_yasha_envy", "Yasha Envy", 17500, "Legendary", 225, 78, 140,
         B().Add(StatType.Attack, 70).Add(StatType.Agility, 24).Add(StatType.Dexterity, 18), "Poison+20");
 
-    // ── Hollow Fragment Avatar Weapons (Dagger) ───────────────────
+    // ── Avatar Weapons (Dagger) ───────────────────────────────────
 
     public static Weapon CreateGenocideAvatar() => Make("dag_genocide_avatar", "Genocide Avatar", 19000, "Legendary", 215, 80, 152,
         B().Add(StatType.Attack, 74).Add(StatType.Agility, 25).Add(StatType.Dexterity, 20), "Bleed+30");
@@ -95,19 +95,19 @@ public static class DaggerDefinitions
     public static Weapon CreateNotesEndTrinity() => Make("dag_notes_end_trinity", "Notes' End Trinity", 28000, "Legendary", 245, 85, 165,
         B().Add(StatType.Attack, 80).Add(StatType.Agility, 28).Add(StatType.Dexterity, 22), "CritRate+25");
 
-    // ── Infinity Moment shop daggers ─────────────────────────────────
+    // ── Shop daggers ─────────────────────────────────────────────────
 
-    // IM Epic-band shop weapon. Assassin's flight-steel dagger, backstab focus.
+    // Epic-band shop weapon. Assassin's flight-steel dagger, backstab focus.
     public static Weapon CreateFlyheightFang() => Make("dag_flyheight_fang", "Flyheight Fang", 4800, "Epic", 155, 36, 120,
         B().Add(StatType.Attack, 52).Add(StatType.Agility, 20).Add(StatType.Dexterity, 10), "BackstabDmg+30");
 
-    // IM Legendary-band shop weapon. Leaf-thin rue blade, precision crit.
+    // Legendary-band shop weapon. Leaf-thin rue blade, precision crit.
     public static Weapon CreateRueFeuille() => Make("dag_rue_feuille", "Rue Feuille", 18500, "Legendary", 220, 76, 155,
         B().Add(StatType.Attack, 72).Add(StatType.Agility, 25).Add(StatType.Dexterity, 22), "CritRate+20");
 
-    // ── Infinity Moment LAB dagger (non-enhanceable) ────────────────
+    // ── LAB dagger (non-enhanceable) ────────────────────────────────
 
-    // IM F95 floor-boss LAB reward. Shimmering illusion-dagger — post-hit fade.
+    // F95 floor-boss LAB reward. Shimmering illusion-dagger — post-hit fade.
     public static Weapon CreateMirageKnife()
     {
         var w = Make("dag_mirage_knife", "Mirage Knife", 24000, "Legendary", 235, 82, 165,
@@ -117,27 +117,27 @@ public static class DaggerDefinitions
         return w;
     }
 
-    // ── Memory Defrag Originals (Dagger entries) ───────────────────────
+    // ── Uniques (Dagger entries) ───────────────────────────────────────
 
-    // MD Epic. Assassin-flavor baselard, violet hilt.
+    // Epic. Assassin-flavor baselard, violet hilt.
     public static Weapon CreatePurpleStarBaselard() => Make("dag_purple_star_baselard", "Purple Star Baselard", 5600, "Epic", 155, 45, 105,
         B().Add(StatType.Attack, 48).Add(StatType.Agility, 18).Add(StatType.Dexterity, 12), "BackstabDmg+25");
 
-    // ── Fractured Daydream — Character Core Canon (Dagger) ─────────────
+    // ── Companion signature weapons (Dagger) ───────────────────────────
 
-    // Yui canon — volcanic-glass dagger. F70+ rare drop.
+    // Yui's volcanic-glass dagger. F70+ rare drop.
     public static Weapon CreateObsidianDagger() => Make("dag_obsidian_dagger", "Obsidian Dagger", 18500, "Legendary", 220, 70, 148,
         B().Add(StatType.Attack, 72).Add(StatType.Agility, 24).Add(StatType.Dexterity, 18), "CritRate+20");
 
-    // Argo canon — virt(uoso) cat-strike dagger. F45+ quest reward band.
+    // Argo's virt(uoso) cat-strike dagger. F45+ quest reward band.
     public static Weapon CreateVirtKatze() => Make("dag_virt_katze", "Virt Katze", 4800, "Epic", 150, 45, 105,
         B().Add(StatType.Attack, 46).Add(StatType.Agility, 18).Add(StatType.Dexterity, 14), "BackstabDmg+25");
 
-    // Argo canon — Thunder God's Rift Blade. F80+ Legendary.
+    // Argo's Thunder God's Rift Blade. F80+ Legendary.
     public static Weapon CreateThunderGodsRiftBlade() => Make("dag_thunder_gods_rift_blade", "Thunder God's Rift Blade", 21500, "Legendary", 235, 80, 158,
         B().Add(StatType.Attack, 78).Add(StatType.Agility, 26).Add(StatType.Dexterity, 18), "Stun+15");
 
-    // ── Fractured Daydream — Elemental Variants (Dagger) ───────────────
+    // ── Elemental Variants (Dagger) ────────────────────────────────────
 
     // Silica water variant. Defeza — aqua-guard tanto.
     public static Weapon CreateDefeza() => Make("dag_defeza", "Defeza", 3100, "Rare", 120, 45, 70,
@@ -147,25 +147,25 @@ public static class DaggerDefinitions
     public static Weapon CreateHermitFang() => Make("dag_hermit_fang", "Hermit Fang", 3200, "Rare", 120, 45, 72,
         B().Add(StatType.Attack, 34).Add(StatType.Agility, 14).Add(StatType.Dexterity, 10), "Slow+15");
 
-    // ── Alicization Lycoris Normal Raid (Dagger) — Epic F70-85 ────────
+    // ── Raid drops (Dagger) — Epic F70-85 ─────────────────────────────
 
     // Veinshredder — serrated vein-parting dagger, heavy bleed.
     public static Weapon CreateVeinshredder() => Make("dag_veinshredder", "Veinshredder", 6800, "Epic", 165, 70, 120,
         B().Add(StatType.Attack, 58).Add(StatType.Agility, 18).Add(StatType.Dexterity, 14), "Bleed+25");
 
-    // ── Alicization Lycoris Extreme Raid (Dagger) — Legendary F85-95 ──
+    // ── Extreme Raid drops (Dagger) — Legendary F85-95 ────────────────
 
     // Whitespark — silver-edged dagger, crit-focused.
     public static Weapon CreateWhitespark() => Make("dag_whitespark", "Whitespark", 18800, "Legendary", 215, 85, 150,
         B().Add(StatType.Attack, 74).Add(StatType.Agility, 26).Add(StatType.Dexterity, 18), "CritRate+25");
 
-    // ── SAO Lost Song Top-Tier (Dagger) — Legendary F80-95 ──────────
+    // ── Top-Tier (Dagger) — Legendary F80-95 ────────────────────────
 
     // Fragarach — Celtic true-strike dagger.
     public static Weapon CreateFragarach() => Make("dag_fragarach", "Fragarach", 18500, "Legendary", 215, 82, 148,
         B().Add(StatType.Attack, 72).Add(StatType.Agility, 24).Add(StatType.Dexterity, 18), "TrueStrike+20");
 
-    // ── SAO Lost Song Mythological (Dagger) — Legendary F75-99 ───────
+    // ── Mythological (Dagger) — Legendary F75-99 ─────────────────────
 
     // Giardino — poison-garden Italianate dagger.
     public static Weapon CreateGiardino() => Make("dag_giardino", "Giardino", 19000, "Legendary", 218, 80, 152,

@@ -101,14 +101,12 @@ public static partial class MapGenerator
     }
 
     // Corridor decoration: sconces and cracked floors.
-    // `campfireBudget` caps the wall-sconce campfires. This used to be an uncapped 8%-per-Wall
-    // roll, which ignored the biome config's own MinCampfires/MaxCampfires entirely: grassland
-    // declares a maximum of 2 and floor 1 carried 54. Worse, the density RAN THE WRONG WAY with
-    // depth — a campfire every ~320 walkable tiles on floor 99 against one per ~14,000 on floor 1
-    // — because the roll scales with Wall count while the map shrinks. A campfire is a rest,
-    // cook and sleep-XP point, so that is a difficulty curve running backwards.
+    // `campfireBudget` caps the wall-sconce campfires so the biome config's MinCampfires /
+    // MaxCampfires hold. Uncapped, the 8%-per-Wall roll scales with Wall count while the map
+    // shrinks, so sconce density would rise with depth; a campfire is a rest, cook and sleep-XP
+    // point, so that would run the difficulty curve backwards.
     //
-    // The budget suppresses the WRITE only. Every rng draw still happens in the same order, so no
+    // The budget suppresses the write only. Every rng draw still happens in the same order, so no
     // other feature on the floor moves.
     internal static void DecorateCorridors(GameMap map, int spawnX, int spawnY, Random rng,
         int campfireBudget = int.MaxValue)
@@ -118,11 +116,10 @@ public static partial class MapGenerator
         var tiles = map.Tiles;
 
         // The two sweeps below have to run x-outer, because the rng draw order is part of the
-        // floor. That is the worst possible order for GameMap's row-major tile grid: on a
-        // 1000x1000 floor each probe strides 16 KB through a 16 MB array of 16-byte structs, two
-        // million times. A COLUMN-MAJOR byte snapshot turns every one of them into a contiguous
-        // read out of 1 MB — the same table-over-tile-grid trade the connectivity audit makes.
-        // It is filled row-major, which is the order the tiles are actually stored in.
+        // floor. That is the worst order for GameMap's row-major tile grid, so they read a
+        // column-major byte snapshot instead, which makes every read contiguous — the same
+        // table-over-tile-grid trade the connectivity audit makes. It is filled row-major, which
+        // is the order the tiles are actually stored in.
         // The snapshot is written back to whenever a tile is, so both sweeps see exactly what the
         // live grid would have shown them.
         var snap = new byte[w * h];
@@ -144,8 +141,8 @@ public static partial class MapGenerator
                 if (snap[b1 + y] != Wall) continue;
                 if (nearSpawnX && Math.Abs(y - spawnY) < 8) continue;
                 if (rng.Next(100) >= 8) continue;
-                // Find an adjacent floor/path tile to place the campfire sconce, in the same
-                // left/right/up/down order the (dx,dy) tables gave.
+                // Find an adjacent floor/path tile to place the campfire sconce, in
+                // left/right/up/down order.
                 if (TrySconce(map, snap, tiles, b0 + y, x - 1, y, rng, campfireBudget, ref firesPlaced)) continue;
                 if (TrySconce(map, snap, tiles, b2 + y, x + 1, y, rng, campfireBudget, ref firesPlaced)) continue;
                 if (TrySconce(map, snap, tiles, b1 + y - 1, x, y - 1, rng, campfireBudget, ref firesPlaced)) continue;
@@ -163,8 +160,8 @@ public static partial class MapGenerator
             }
         }
 
-        // Returns true when this direction CLAIMED the roll — i.e. it was a path/floor tile, which
-        // is what ended the original loop with `break` whether or not the coin came up placing.
+        // Returns true when this direction claimed the roll — i.e. it was a path/floor tile, which
+        // ends the search whether or not the coin came up placing.
         static bool TrySconce(GameMap map, byte[] snap, GameMap.TileAccessor tiles, int idx,
             int nx, int ny, Random rng, int budget, ref int firesPlaced)
         {
@@ -182,20 +179,17 @@ public static partial class MapGenerator
         }
     }
 
-    // Place water pools around fountains. The "underground stream" that also lived here was a
-    // dungeon-era decorator: on an overworld disk it carved a straight water line from one edge of
-    // the map to the other on half of all floors, over the Mountain ring and every path. Rivers
-    // come from RiverPass's drainage now.
+    // Place water pools around fountains. Rivers come from RiverPass's drainage.
     internal static void PlaceWaterFeatures(GameMap map, int spawnX, int spawnY, Random rng)
     {
         int w = map.Width, h = map.Height;
         // Pools around fountains.
         //
         // The census runs row-major — the order GameMap stores tiles in — and the fountains are
-        // then visited in the column-major order the original loop found them in. That ordering is
-        // load-bearing: each fountain's pool draws from the stream and may write over ground a
-        // later fountain would otherwise have claimed. Scanning row-major and sorting afterwards
-        // costs one small list and turns a million 16 KB-stride probes into a linear read.
+        // then visited in column-major order. That ordering is load-bearing: each fountain's pool
+        // draws from the stream and may write over ground a later fountain would otherwise have
+        // claimed. Scanning row-major and sorting afterwards costs one small list and keeps the
+        // scan a linear read.
         var fountains = new List<int>();
         for (int y = 0; y < h; y++)
         for (int x = 0; x < w; x++)

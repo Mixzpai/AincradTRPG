@@ -35,7 +35,7 @@ public static class WorldMapDialog
         DialogHelper.AddCloseFooter(dialog);
 
         // The framework assigns focus when the session starts, after this builder returns, so a
-        // SetFocus here would not stick (rule 286).
+        // SetFocus here would not stick.
         bool focused = false;
         dialog.SubViewsLaidOut += (_, _) =>
         {

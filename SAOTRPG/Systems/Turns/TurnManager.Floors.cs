@@ -25,7 +25,7 @@ public partial class TurnManager
             int bonus = 50 + CurrentFloor * 30;
             _player.ColOnHand += bonus;
             TotalColEarned += bonus;
-            _log.LogLoot($"  SPEED CLEAR! Finished in {elapsed} turns (par: {par}). +{bonus} Col!");
+            _log.LogLoot($"  SPEED CLEAR! Finished in {GameClock.Duration(elapsed)} (par: {GameClock.Duration(par)}). +{bonus} Col!");
         }
 
         int floorKills = KillCount - _floorKillsStart;
@@ -36,7 +36,7 @@ public partial class TurnManager
             FloorRealTime);
         _log.LogSystem("[ Floor Recap ]");
         _log.LogSystem($"  Kills: {floorKills} | Items: {_floorItemsFound} | Damage taken: {_floorDamageTaken}");
-        _log.LogSystem($"  Turns: {elapsed} | Explored: {explored}%");
+        _log.LogSystem($"  Time: {GameClock.Duration(elapsed)} | Explored: {explored}%");
 
         if (explored >= 90)
         {
@@ -106,7 +106,7 @@ public partial class TurnManager
 
         _log.Log($"  [{DateTime.Now:h:mm tt}]");
 
-        WeatherSystem.RollWeather(CurrentFloor);
+        WeatherSystem.RollWeather();
         BiomeSystem.SetFloor(CurrentFloor);
         _log.Log($"Biome: {BiomeSystem.DisplayName} -- {BiomeSystem.GetEntryMessage(CurrentFloor)}");
         if (WeatherSystem.Current != WeatherType.Clear)
@@ -215,9 +215,9 @@ public partial class TurnManager
     private void GenerateNewFloor()
     {
         var (newMap, rooms) = MapGenerator.GenerateFloor(CurrentFloor);
-        // Start the NEXT floor now, so the stairs do not stall. The caps ledger has just been
+        // Start the next floor now, so the stairs do not stall. The caps ledger has just been
         // committed by the line above and nothing moves it again until a floor is adopted, so the
-        // floor built here is the one this transition would have built — measured, not assumed.
+        // floor built here is the one this transition would have built.
         FloorPrefetch.Request(CurrentFloor + 1);
         _map = newMap;
         MapGenerator.PopulateFloor(newMap, rooms, _player, CurrentFloor, _diffTier.MobStatPercent, DefeatedFieldBosses);

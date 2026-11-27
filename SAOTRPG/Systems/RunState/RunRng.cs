@@ -3,13 +3,13 @@ namespace SAOTRPG.Systems.RunState;
 // The run's gameplay RNG. Every roll that changes game state draws from here, so a run is
 // reproducible from its seed: the same seed gives the same floors, loot, mobs and fights.
 //
-// COSMETIC RNG MUST NOT DRAW FROM THIS STREAM. Flavour text, death-screen tips, ambient terrain
+// Cosmetic RNG must not draw from this stream. Flavour text, death-screen tips, ambient terrain
 // lines and particle jitter stay on Random.Shared. If they shared this stream, toggling Reduce
 // Motion or resizing the terminal would change how many draws had happened and shift every
 // subsequent gameplay roll — the run would stop being reproducible for reasons the player cannot
 // see. The boundary is the whole point of this type; keep cosmetic callers off it.
 //
-// Reproducibility is defined from the START of a run, not across a save. Loading re-seeds the
+// Reproducibility is defined from the start of a run, not across a save. Loading re-seeds the
 // stream from the run seed rather than restoring a draw position: the checkpoint model already
 // regenerates the floor on load, and persisting a position would mean every draw had to go through
 // one counted path or the position would silently drift.
@@ -29,7 +29,7 @@ public static class RunRng
     }
 
     // A seed for a new run. Time-based, but drawn per call rather than latched at type init —
-    // latching is what made every new run in one process share a world.
+    // latching would make every new run in one process share a world.
     public static int NewSeed() => Environment.TickCount ^ (Guid.NewGuid().GetHashCode() & 0xFFFF);
 
     public static int Next(int maxExclusive) => _rng.Next(maxExclusive);
@@ -51,10 +51,9 @@ public static class RunRng
         new(StableHash(Seed, purpose, salt));
 
     // FNV-1a. Deterministic across processes and machines, which System.HashCode and
-    // string.GetHashCode() are NOT: both randomise their seed per process to make hash-flooding
-    // impractical. Measured, HashCode.Combine(4242, 3) gave three different answers on three
-    // consecutive runs — so anything seeded through it produced a new world every launch.
-    // EVERY seed derivation in the game goes through here. Never reintroduce HashCode.Combine or
+    // string.GetHashCode() are not: both randomise their seed per process to make hash-flooding
+    // impractical, so anything seeded through them gets a new world every launch.
+    // Every seed derivation in the game goes through here. Never use HashCode.Combine or
     // string.GetHashCode() on a path that has to reproduce.
     private const uint FnvOffset = 2166136261;
     private const uint FnvPrime = 16777619;

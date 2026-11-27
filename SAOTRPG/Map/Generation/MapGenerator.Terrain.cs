@@ -56,10 +56,9 @@ public static partial class MapGenerator
         or TileType.Path or TileType.Mountain or TileType.Journal
         or TileType.Lever or TileType.PressurePlate;
 
-    // Tiles a river is stamped across, widening on the cross axis. Both river algorithms were
-    // hardcoded to 2 while every biome JSON carried a riverMinWidth nothing read, so an Aquatic
-    // canal ran the same width as a Ruins trickle. Consumes no rng, so honouring the config moves
-    // water tiles without shifting the stream position for any later pass.
+    // Tiles a river is stamped across, widening on the cross axis, from the biome's riverMinWidth.
+    // Consumes no rng, so the width moves water tiles without shifting the stream position for
+    // any later pass.
     // A live river algorithm with a width below 1 is a contradictory config: clamped, and logged
     // rather than silently generating nothing.
     internal static int RiverWidth(Generation.WorldContext ctx)
@@ -83,16 +82,14 @@ public static partial class MapGenerator
     // the shore follows a contour. Without one: random fill at `seedPct` density. Either way
     // `caPasses` rounds of the 5-of-9 rule smooth the shore, and an interior cell is WaterDeep,
     // which blocks movement below Swimming L25: a reachability input, not only a cosmetic one.
-    //
-    // The basin replaced a noise blob stamped over whatever lay under it, hills included. Clipping
-    // that blob to low ground was tried first and came out lacy; filling the basin is what a lake
-    // is. It draws nothing from the stream, where the blob drew once per cell of its circle.
+    // The basin path draws nothing from the stream; the random fill draws once per cell of its
+    // circle.
     internal static void GenerateLake(GameMap map, int cx, int cy, int radius, Random rng,
                                       int seedPct, int caPasses, float[,]? heights = null)
     {
         int d = radius * 2 + 1;
         // Flat byte grids indexed dx*d + dy, and a ping-pong pair rather than a fresh allocation
-        // per smoothing iteration. A floor-1 map places ~48 lakes and each ran caPasses of these.
+        // per smoothing iteration: a large floor places dozens of lakes, each running caPasses.
         var grid = new byte[d * d];
         var next = new byte[d * d];
         int r2 = radius * radius;
@@ -113,7 +110,7 @@ public static partial class MapGenerator
             }
         }
 
-        // Smooth: N iterations of the 5-neighbor rule (the 3x3 count INCLUDES the centre).
+        // Smooth: N iterations of the 5-neighbor rule (the 3x3 count includes the centre).
         for (int iter = 0; iter < caPasses; iter++)
         {
             // The border ring is never written, and the buffer being reused still holds the
@@ -154,15 +151,15 @@ public static partial class MapGenerator
         }
     }
 
-    // How much of its circle a lake fills, from the biome's seed density. The noise blob this
-    // replaced was steep in it: the 5-of-9 smoothing erased a lake seeded under ~30% and filled
-    // the circle above ~70%. The same ramp keeps each biome's water where its lakes had it, Aquatic
-    // full and Dark dry.
+    // How much of its circle a lake fills, from the biome's seed density. The ramp follows the
+    // random-fill path, where 5-of-9 smoothing erases a lake seeded under ~30% and fills the
+    // circle above ~70%, so each biome keeps the same amount of water either way: Aquatic full
+    // and Dark dry.
     private static double BasinShare(int seedPct) => Math.Clamp((seedPct - 30) / 40.0, 0.0, 1.0);
 
     // And a lake stops at its spill level whatever its share: once the lowest cell left on the
     // shore is this far above the lake's floor, the water would run out rather than climb. Without
-    // it a full share filled the whole circle and Aquatic's lakes were perfect discs (measured).
+    // it a full share would fill the whole circle and make the lake a perfect disc.
     private const float MaxLakeRise = 0.12f;
 
     // Fills the lake's grid from (cx, cy) outward, always taking the lowest cell on the shore next,

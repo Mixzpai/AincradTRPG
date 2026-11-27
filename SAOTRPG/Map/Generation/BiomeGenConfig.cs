@@ -6,7 +6,7 @@ namespace SAOTRPG.Map.Generation;
 // River placement algorithm — chosen per biome, loaded from biome JSON.
 public enum RiverAlgorithm { None, DrunkardWalk, DownslopeTrace }
 
-// Particle hook for ambient biome signals. Read by the RENDER layer (MapView's ambient top-up),
+// Particle hook for ambient biome signals. Read by the render layer (MapView's ambient top-up),
 // not by generation: DensityPermille scales how many of the atmosphere budget this biome keeps
 // on screen, relative to the densest biome.
 public sealed record AmbientOverlayStub(string? ParticleId, int DensityPermille);
@@ -14,15 +14,13 @@ public sealed record AmbientOverlayStub(string? ParticleId, int DensityPermille)
 // Per-biome min/max counts for scattered features. All bounds inclusive; Poisson spacing is
 // PoissonRadius tiles.
 //
-// FOR THE SIX RECONCILED CATEGORIES THESE ARE FLOOR-WIDE TOTALS, NOT A SCATTER ALLOWANCE.
-// Anvil / Campfire / EnchantShrine / LoreStone / Journal / Pillar are counted across the whole
-// finished floor and trimmed back to the maximum by FeatureScatterPass, which runs after the two
-// prefab passes and after every town, corridor and stair-room decorator. Before that they were a
-// budget for one placement route out of six, so the declared numbers described a fraction of what
-// the floor actually carried — grassland asked for at most 2 campfires and grew 18.
+// For Anvil / Campfire / EnchantShrine / LoreStone / Journal / Pillar these are floor-wide totals,
+// not a scatter allowance: FeatureScatterPass counts them across the whole finished floor (after
+// the two prefab passes and every town, corridor and stair-room decorator) and trims back to the
+// maximum, since six placement routes add them.
 //
-// Chests, traps and gas vents are NOT reconciled: they are loot and difficulty rather than
-// clutter, and their bounds still govern the Poisson scatter alone.
+// Chests, traps and gas vents are not reconciled: they are loot and difficulty rather than
+// clutter, and their bounds govern the Poisson scatter alone.
 public sealed record FeatureQuotas(
     int MinAnvils = 0,     int MaxAnvils = 1,
     int MinShrines = 1,    int MaxShrines = 2,
@@ -72,37 +70,33 @@ public sealed record BiomeGenConfig(
     // Macro-terrain shape, applied before any tile is placed. Octaves control how much fine
     // detail rides on the base landform (gain is 0.5, so octave n contributes ~1/2^n of the
     // amplitude); warp amplitude controls how far the sampling grid is bent, which is what makes
-    // coastlines wander rather than follow the noise lattice. Both default to the values every
-    // biome used when they were hardcoded, so an unset biome is bit-identical.
+    // coastlines wander rather than follow the noise lattice. The defaults are the standard
+    // landform a biome gets when it leaves these unset.
     int HeightmapOctaves = 4,
     float HeightmapWarpAmp = 30f,
-    // Cellular-automata cave carving, applied by BaseTerrainPass AFTER the biome's own terrain is
+    // Cellular-automata cave carving, applied by BaseTerrainPass after the biome's own terrain is
     // stamped: the open cells keep the biome's palette and everything else is buried under Wall.
-    // Off by default, so a biome that says nothing about it generates bit-identically to before.
+    // Off by default.
     bool CaveMode = false,
-    // Share of in-disk cells seeded as rock before smoothing, in percent. This is the knob that
-    // decides how much floor survives, and its response is FLAT below ~47 and steep above: 38 and
-    // 45 differ by under a point of wall, while 50 and 52 differ by twenty. Ignored unless
-    // CaveMode; clamped to MinCaveFillPct..MaxCaveFillPct.
+    // Share of in-disk cells seeded as rock before smoothing, in percent. This decides how much
+    // floor survives; the response is flat below ~47 and steep above it. Ignored unless CaveMode;
+    // clamped to MinCaveFillPct..MaxCaveFillPct.
     int CaveFillPct = 45,
     // Smoothing iterations. Each one removes finer detail; below 3 the walls still read as noise
     // rather than as rock. Ignored unless CaveMode.
     int CaveSmoothPasses = 4)
 {
-    // The band BaseTerrainPass will honour, and both ends are measured rather than chosen. Below
-    // 35 the smoothing hands back an open field with rock islands in it; above 52 the open phase
-    // stops spanning the disk and the floor comes back sparse — 22% open at 52 and 7% at 55, on a
-    // 274x274 disk. A value outside is clamped AND logged rather than quietly obeyed.
+    // The band BaseTerrainPass honours. Below 35 the smoothing hands back an open field with rock
+    // islands in it; above 52 the open region stops spanning the disk and the floor comes back
+    // sparse. A value outside the band is clamped and logged.
     public const int MinCaveFillPct = 35;
     public const int MaxCaveFillPct = 52;
     public const int MaxCaveSmoothPasses = 8;
 
     // Parse TintColor ("#RRGGBB" or "#RRGGBBAA") into Color + alpha byte; returns null
     // when unset/malformed. Alpha defaults to 160 (~63%) when only 6 hex digits given.
-    //
-    // PATH-D-PORT: the one place a generation-side type reaches for a Terminal.Gui Color. Nothing
-    // about a biome's tint is renderer-specific, so a port returns a plain (byte R, G, B, A) here
-    // and lets the render layer construct whatever colour type it uses.
+    // The tint is plain RGBA data; this is the only generation-side type that builds a
+    // Terminal.Gui Color from it.
     public Color? GetTintColor(out byte alpha)
     {
         alpha = 0;

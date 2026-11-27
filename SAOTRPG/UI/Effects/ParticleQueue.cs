@@ -66,16 +66,11 @@ public static class ParticleQueue
     }
 
     // Iterator wrapper exposing only active slots (filters per yield, no allocation).
-    public static IEnumerable<Particle> Active
-    {
-        get
-        {
-            for (int i = 0; i < _pool.Length; i++)
-                if (_pool[i].Active) yield return _pool[i];
-        }
-    }
+    // Every slot, live or not; a reader skips the inactive ones. A span rather than an iterator,
+    // which would allocate on every frame that draws particles.
+    public static ReadOnlySpan<Particle> Pool => _pool;
 
-    // O(1) liveness probe — frame cache reads this to decide whether to keep dirty.
+    // O(1) liveness test — frame cache reads this to decide whether to keep dirty.
     public static bool HasAny => _activeCount > 0;
 
     public static void Clear()
@@ -131,35 +126,34 @@ public static class ParticleQueue
         SAOTRPG.UI.Rendering.MapView.MarkFrameDirty();
     }
 
-    // Per-biome ambient particle table: glyph, color, fade-to color, drift velocity, duration.
+    // Per-biome ambient particle table: glyph, color, fade-to color, drift velocity.
     // Keyed by particleId strings that appear in Content/Biomes/*.json ambientOverlay.particleId.
-    private static readonly Dictionary<string, (char Glyph, Color Color, Color FadeTo, float Vx, float Vy, float DurMs)>
+    private static readonly Dictionary<string, (char Glyph, Color Color, Color FadeTo, float Vx, float Vy)>
         _ambientSpecs = new()
     {
-        ["wind_motes"]   = ('·', new Color(200, 200, 200), Color.DarkGray, 0.001f,  0f,       30000f),
-        ["firefly"]      = ('.', Color.BrightYellow,       Color.Yellow,   0f,      -0.0005f, 30000f),
-        ["fog_mote"]     = ('·', new Color(160, 180, 160), Color.DarkGray, 0.0005f, 0f,       30000f),
-        ["sand_drift"]   = ('\'', new Color(220, 200, 120), Color.DarkGray, 0.002f,  0f,       30000f),
-        ["snowflake"]    = ('*', Color.White,              Color.Gray,     0f,      0.001f,   30000f),
-        ["ember"]        = ('*', new Color(255, 120, 40),  Color.Red,      0f,      -0.001f,  30000f),
-        ["rain_mote"]    = ('\'', Color.Cyan,               Color.DarkGray, 0f,      0.002f,   30000f),
-        ["dust_mote"]    = ('·', new Color(180, 160, 120), Color.DarkGray, 0.0003f, 0f,       30000f),
-        ["shadow_wisp"]  = ('·', new Color(100, 80, 120),  Color.Black,    0f,      0f,       30000f),
-        ["lantern_glow"] = ('·', new Color(255, 200, 100), Color.DarkGray, 0f,      0f,       30000f),
-        ["void_spark"]   = ('*', new Color(180, 100, 220), Color.Black,    0.0005f, 0.0005f,  30000f),
+        ["wind_motes"]   = ('·', new Color(200, 200, 200), Color.DarkGray, 0.001f,  0f),
+        ["firefly"]      = ('.', Color.BrightYellow,       Color.Yellow,   0f,      -0.0005f),
+        ["fog_mote"]     = ('·', new Color(160, 180, 160), Color.DarkGray, 0.0005f, 0f),
+        ["sand_drift"]   = ('\'', new Color(220, 200, 120), Color.DarkGray, 0.002f,  0f),
+        ["snowflake"]    = ('*', Color.White,              Color.Gray,     0f,      0.001f),
+        ["ember"]        = ('*', new Color(255, 120, 40),  Color.Red,      0f,      -0.001f),
+        ["rain_mote"]    = ('\'', Color.Cyan,               Color.DarkGray, 0f,      0.002f),
+        ["dust_mote"]    = ('·', new Color(180, 160, 120), Color.DarkGray, 0.0003f, 0f),
+        ["shadow_wisp"]  = ('·', new Color(100, 80, 120),  Color.Black,    0f,      0f),
+        ["lantern_glow"] = ('·', new Color(255, 200, 100), Color.DarkGray, 0f,      0f),
+        ["void_spark"]   = ('*', new Color(180, 100, 220), Color.Black,    0.0005f, 0.0005f),
     };
 
-    // How long one atmosphere particle lives. Deliberately far shorter than the 30 s this used to
-    // be: the layer is topped up around the CAMERA now, so a particle the player has walked away
-    // from has to expire on its own — that is what lets the atmosphere follow the viewport without
-    // anything having to cull by position. Drift velocities are ~1 cell/second, so this is still a
-    // slow, quiet mote rather than a blink.
+    // How long one atmosphere particle lives. The layer is topped up around the camera, so a
+    // particle the player has walked away from has to expire on its own — that is what lets the
+    // atmosphere follow the viewport without anything having to cull by position. Drift velocities
+    // are ~1 cell/second, so this is still a slow, quiet mote rather than a blink.
     public const float AmbientLifetimeMs = 11000f;
 
-    // Spawn ONE atmosphere particle at a tile. Returns false when the budget is full, which is the
+    // Spawn one atmosphere particle at a tile. Returns false when the budget is full, which is the
     // signal for the caller to stop topping up this frame.
     //
-    // The caller supplies the position, and it must come from the COSMETIC rng stream: this is
+    // The caller supplies the position, and it must come from the cosmetic rng stream: this is
     // pure decoration, and drawing it from a gameplay or worldgen stream would let a visual
     // setting move the draw position of everything after it.
     public static bool SpawnAmbient(string particleId, int x, int y)
@@ -204,8 +198,8 @@ public static class ParticleQueue
         {
             case ParticleEvent.SwordSlash: EmitSwordSlash(x, y, dirX ?? 0, dirY ?? 0, dur); break;
             case ParticleEvent.CritShatter: EmitCritShatter(x, y, cMax, dur); break;
-            // MonsterDeath now routed through MapView.EmitMonsterDeathBurst (two-phase braille).
-            // Kept for enum/back-compat; old ring-buffer path retired.
+            // MonsterDeath is drawn by MapView.EmitMonsterDeathBurst (two-phase braille), so it
+            // spawns nothing in this pool.
             case ParticleEvent.MonsterDeath: break;
             case ParticleEvent.SkillCastStart: EmitSkillCast(x, y, dur, tint); break;
             case ParticleEvent.ItemPickup: EmitItemPickup(x, y, dur); break;
@@ -308,7 +302,7 @@ public static class ParticleQueue
         }
     }
 
-    // SAO theme: bleed is WHITE/CYAN ◇, not red blood.
+    // Bleed is white/cyan ◇, never red: the game shows no blood.
     private static void EmitBleedInflict(int x, int y, int maxCount, float dur)
     {
         int n = Math.Min(maxCount, ScaleCount(3));

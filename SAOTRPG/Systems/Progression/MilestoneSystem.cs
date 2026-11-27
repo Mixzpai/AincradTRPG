@@ -67,15 +67,13 @@ public static class MilestoneSystem
         if (monster is Boss) TryUnlock("first_boss", player);
         if (tm.KillStreak >= 5) TryUnlock("perfect_streak_5", player);
 
-        // "Criminal". Its trigger is Conditional, which nothing evaluates, and no caller unlocked
-        // it by id — so the milestone was displayed and could never be earned. Town Guards are
-        // real: PopulateTownOfBeginnings posts a patrol once karma drops to -50 or below.
+        // "Criminal". Its trigger is Conditional, which nothing evaluates, so it is unlocked by id
+        // here. PopulateTownOfBeginnings posts a Town Guard patrol once karma drops to -50 or below.
         if (monster.Name == "Town Guard") TryUnlock("karma_town_guard_kill", player);
 
-        // "Last-Attack Beta Tester" — 25 floor bosses. It was typed KillCountByTag, which counts
-        // mob kills by LOOT TAG, against a key no mob carries, so it could never fire. FieldBoss
-        // is excluded for the same reason FloorBossAlive excludes it: wilderness elites are
-        // optional content. The player landed the killing blow by definition — this runs on kill.
+        // "Last-Attack Beta Tester" — 25 floor bosses, counted in LifetimeStats.FloorBossLastHits.
+        // FieldBoss is excluded for the same reason FloorBossAlive excludes it: wilderness elites
+        // are optional content. The player landed the killing blow by definition — this runs on kill.
         if (monster is Boss and not FieldBoss)
         {
             var lt = LifetimeStats.Load();
@@ -108,7 +106,7 @@ public static class MilestoneSystem
     public static void CheckLifeSkillLevel(Player player, LifeSkillType skill, int newLevel)
     {
         string skillName = skill.ToString();
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.LifeSkillLevel) continue;
             if (m.TriggerArg != skillName) continue;
@@ -122,7 +120,7 @@ public static class MilestoneSystem
     public static void OnBestiaryDiscovered(Player player)
     {
         int discovered = Bestiary.DiscoveredCount();
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.BestiaryCount) continue;
             if (discovered < m.TriggerThreshold) continue;
@@ -141,7 +139,7 @@ public static class MilestoneSystem
             if (!w.IsEnhanceable)                  TryUnlock("eq_sealed_wielder", player);
         }
 
-        // Kirito dual: both Elucidator AND Dark Repulser equipped (any slot order).
+        // Kirito dual: both Elucidator and Dark Repulser equipped (any slot order).
         var mh = player.Inventory.GetEquipped(Inventory.Core.EquipmentSlot.Weapon) as Items.Equipment.Weapon;
         var oh = player.Inventory.GetEquipped(Inventory.Core.EquipmentSlot.OffHand) as Items.Equipment.Weapon;
         string? mhId = mh?.DefinitionId, ohId = oh?.DefinitionId;
@@ -176,7 +174,7 @@ public static class MilestoneSystem
     public static void OnLegendaryCollected(Player player, string defId)
     {
         if (string.IsNullOrEmpty(defId)) return;
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.LegendaryCollected) continue;
             if (m.TriggerArg != defId) continue;
@@ -192,7 +190,7 @@ public static class MilestoneSystem
                 && meta.Trigger == TriggerType.LegendaryCollected)
                 legendaryUnlocks++;
         }
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.CollectableCount) continue;
             if (legendaryUnlocks < m.TriggerThreshold) continue;
@@ -200,7 +198,7 @@ public static class MilestoneSystem
         }
     }
 
-    // ── Active-title slot (mirrors old TitleSystem semantics) ────────
+    // ── Active-title slot ─────────────────────────────────────────────
 
     public static void SetActiveTitle(Player player, string? newMilestoneId)
     {
@@ -230,7 +228,7 @@ public static class MilestoneSystem
         KarmaSystem.Tier oldTier, KarmaSystem.Tier newTier)
     {
         var player = _activePlayer;
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.KarmaThreshold) continue;
             bool crossed = m.TriggerArg switch
@@ -247,8 +245,8 @@ public static class MilestoneSystem
             TryUnlock("karma_atonement", player);
     }
 
-    // "Lisbeth's Best Customer" — 200 successful weapon upgrades. Also typed KillCountByTag
-    // against a key no mob carries. Called from the enhancement success branch only: the
+    // "Lisbeth's Best Customer" — 200 successful weapon upgrades, counted in
+    // LifetimeStats.WeaponUpgrades. Called from the enhancement success branch only: the
     // milestone's own text says "Successfully upgrade", so a failed roll must not count.
     public static void OnWeaponUpgraded(Player? player)
     {
@@ -262,7 +260,7 @@ public static class MilestoneSystem
     {
         var player = _activePlayer;
         string key = faction.ToString();
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.GuildJoined) continue;
             if (m.TriggerArg != key) continue;
@@ -274,7 +272,7 @@ public static class MilestoneSystem
     {
         var player = _activePlayer;
         string key = skill.ToString();
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.UniqueSkillUnlocked) continue;
             if (m.TriggerArg != key) continue;
@@ -291,7 +289,7 @@ public static class MilestoneSystem
         var player = _activePlayer;
         if (quest == null) return;
         string id = quest.Id ?? "";
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.QuestCompleted) continue;
             if (m.TriggerArg == "_first_quest") { TryUnlock(m.Id, player); continue; }
@@ -307,7 +305,7 @@ public static class MilestoneSystem
         }
     }
 
-    // Increment per-run IF Implement counter, refresh lifetime hi-water mark, fire
+    // Increment the per-run IfImplement counter, refresh lifetime hi-water mark, fire
     // progressive toasts at quartile thresholds, and unlock the milestone at 100.
     public static void OnIfImplementQuestCompleted(Player player)
     {
@@ -326,7 +324,7 @@ public static class MilestoneSystem
         if (count >= 100) TryUnlock("hf_element_researcher", player);
     }
 
-    // HF Hollow Mission counterpart: same flow against the 80-mission threshold.
+    // Hollow Mission (HfMission) counterpart: same flow against the 80-mission threshold.
     public static void OnHfMissionCompleted(Player player)
     {
         if (_activeTm == null) return;
@@ -344,7 +342,7 @@ public static class MilestoneSystem
         if (count >= 80) TryUnlock("hf_debug_field_tester", player);
     }
 
-    // Fires a single progress toast at exact 25/50/75% milestones. The 100% unlock
+    // Fires a single progress toast at exactly 25/50/75% of the threshold. The 100% unlock
     // toast is emitted by TryUnlock's standard reward dispatch — don't duplicate.
     private static void EvaluateProgressiveToast(string trackerKey, int count, int threshold)
     {
@@ -365,7 +363,7 @@ public static class MilestoneSystem
         var player = _activePlayer;
         if (ally == null) return;
         string name = ally.Name ?? "";
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.AllyRecruited) continue;
             if (m.TriggerArg != name) continue;
@@ -374,8 +372,8 @@ public static class MilestoneSystem
     }
 
     // Divine awakening milestones use sentinel TriggerArgs: "first" for any Lv1
-    // awakening; "lv3" for the first Lv3 reached. Per-weapon-Divine entries can
-    // be added later as DivineAwakened with TriggerArg = weapon.DefinitionId.
+    // awakening; "lv3" for the first Lv3 reached. Per-weapon entries use
+    // DivineAwakened with TriggerArg = weapon.DefinitionId.
     private static void OnWeaponAwakened(Weapon weapon, int newLevel)
     {
         var player = _activePlayer;
@@ -385,7 +383,7 @@ public static class MilestoneSystem
         string defId = weapon.DefinitionId ?? "";
         if (!string.IsNullOrEmpty(defId))
         {
-            foreach (var m in MilestoneRegistry.All)
+            foreach (var m in MilestoneRegistry.Span)
             {
                 if (m.Trigger != TriggerType.DivineAwakened) continue;
                 if (m.TriggerArg != defId) continue;
@@ -395,7 +393,7 @@ public static class MilestoneSystem
         }
     }
 
-    // Death-category milestones. Cause-derived TriggerArgs match canonical death
+    // Death-category milestones. Cause-derived TriggerArgs match the death
     // tags ("death_poison", "death_bleeding", etc.). Ill-Prepared fires on F1 deaths;
     // Hubris fires when death lands within five turns of the most recent level-up.
     private static void OnPlayerDied(DeathContext ctx)
@@ -404,7 +402,7 @@ public static class MilestoneSystem
         TryUnlock("first_death", player);
 
         string causeKey = $"death_{(ctx.Cause ?? "").ToLowerInvariant()}";
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.FirstEvent) continue;
             if (m.TriggerArg != causeKey) continue;
@@ -413,13 +411,6 @@ public static class MilestoneSystem
 
         if (ctx.FloorAtDeath == 1) TryUnlock("ill_prepared", player);
         if (ctx.TurnAtDeath - _lastLevelUpTurn < 5) TryUnlock("hubris", player);
-
-        // Boss kill detection — KillerName matches the canonical "boss" tag if the
-        // killer was a floor boss. No reliable boss-flag on DeathContext yet, so
-        // KillerName fallback is the broad heuristic until a richer Cause is wired.
-        if (!string.IsNullOrEmpty(ctx.KillerName)
-            && ctx.KillerName.Contains("Boss", StringComparison.OrdinalIgnoreCase))
-            TryUnlock("death_by_boss", player);
     }
 
     // ── Internals ────────────────────────────────────────────────────
@@ -494,7 +485,7 @@ public static class MilestoneSystem
 
     private static void EvaluateKillThresholds(int totalKills, Player player)
     {
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.KillCountTotal) continue;
             if (totalKills < m.TriggerThreshold) continue;
@@ -504,7 +495,7 @@ public static class MilestoneSystem
 
     private static void EvaluateFloorThresholds(int floor, Player player)
     {
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger != TriggerType.FloorReached) continue;
             if (floor < m.TriggerThreshold) continue;
@@ -519,11 +510,11 @@ public static class MilestoneSystem
     }
 
     // Tag/species kill check — uses Bestiary as the species kill source of truth.
-    // The TriggerArg matches if the mob name CONTAINS the arg string (so
+    // The TriggerArg matches if the mob name contains the arg string (so
     // "Kobold" matches "Kobold Sentinel" and "Ruin Kobold Trooper").
     private static void EvaluateKillByTagAndSpecies(Player player, string tag, string speciesName)
     {
-        foreach (var m in MilestoneRegistry.All)
+        foreach (var m in MilestoneRegistry.Span)
         {
             if (m.Trigger == TriggerType.KillCountByTag)
             {

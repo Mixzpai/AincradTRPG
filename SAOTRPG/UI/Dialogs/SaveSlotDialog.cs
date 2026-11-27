@@ -1,6 +1,7 @@
 using SAOTRPG.UI.Helpers;
 using SAOTRPG.Systems.Persistence;
 using SAOTRPG.Systems.RunState;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Dialogs;
 
@@ -35,7 +36,7 @@ public static class SaveSlotDialog
 
             BuildSlotCard(dialog, slot, summaries[i], rowY, out slotLabels[i], out slotDetails[i]);
 
-            slotButtons[i] = new Button
+            slotButtons[i] = new PlainButton
             {
                 Text = " Load ", X = Pos.AnchorEnd(10), Y = rowY,
                 SchemeName = ColorSchemes.ButtonName, Visible = hasData,
@@ -64,7 +65,7 @@ public static class SaveSlotDialog
             };
         }
 
-        var deleteBtn = new Button
+        var deleteBtn = new PlainButton
         {
             Text = " Delete ", X = 1, Y = Pos.AnchorEnd(1), SchemeName = ColorSchemes.ButtonName,
             ShadowStyle = null,
@@ -75,7 +76,7 @@ public static class SaveSlotDialog
             ShowDeletePicker(summaries, slotLabels, slotDetails, slotButtons);
         };
 
-        var closeBtn = new Button
+        var closeBtn = new PlainButton
         {
             Text = " Cancel ", X = Pos.AnchorEnd(12), Y = Pos.AnchorEnd(1),
             IsDefault = true, SchemeName = ColorSchemes.ButtonName,
@@ -121,7 +122,7 @@ public static class SaveSlotDialog
 
             BuildSlotCard(dialog, slot, summaries[i], rowY, out slotLabels[i], out slotDetails[i]);
 
-            slotButtons[i] = new Button
+            slotButtons[i] = new PlainButton
             {
                 Text = hasData ? " Overwrite " : "  Select   ",
                 X = Pos.AnchorEnd(15), Y = rowY, SchemeName = ColorSchemes.ButtonName,
@@ -145,7 +146,7 @@ public static class SaveSlotDialog
             };
         }
 
-        var closeBtn = new Button
+        var closeBtn = new PlainButton
         {
             Text = " Cancel ", X = Pos.AnchorEnd(12), Y = Pos.AnchorEnd(1),
             SchemeName = ColorSchemes.ButtonName,

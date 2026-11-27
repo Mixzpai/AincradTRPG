@@ -52,7 +52,7 @@ public partial class TurnManager
     public int PoisonDamagePerTick => _poisonDamagePerTick;
     public int BleedDamagePerTick => _bleedDamagePerTick;
 
-    // Timed potion buffs. One entry per stat: a second dose REFRESHES rather than stacking, which
+    // Timed potion buffs. One entry per stat: a second dose refreshes rather than stacking, which
     // is what "Increases Defense by 10 for 30 turns" says and is what stops twenty potions from
     // one inventory slot granting +200. Applied straight to the player's base stat and taken back
     // on expiry, so every consumer sees them without a second code path.
@@ -91,9 +91,9 @@ public partial class TurnManager
         _log.Log($"{stat} +{existing.Potency} refreshed to {existing.TurnsLeft} turns.");
     }
 
-    // Rebuild the buff list from a save. The stat deltas are NOT re-applied: the player's
-    // BaseAttack and friends were serialized WITH the buff already folded in, so applying again
-    // would double it every load — the same laundering this whole feature exists to stop.
+    // Rebuild the buff list from a save. The stat deltas are not re-applied: the player's
+    // BaseAttack and friends were serialized with the buff already folded in, so applying again
+    // would double it every load.
     private void RestoreTimedBuffs(List<TimedBuffSave>? saved)
     {
         _timedBuffs.Clear();
@@ -120,18 +120,17 @@ public partial class TurnManager
         }
     }
 
-    // Remaining Barrier+N absorb for this floor. Exposed so the status tray can show it: the
-    // pool is live (refilled per floor from equipped Barrier effects, spent in ProcessMonsterTurn)
-    // and the Player Guide tells the player to build around it, but nothing displayed it.
+    // Remaining Barrier+N absorb for this floor, refilled per floor from equipped Barrier effects
+    // and spent in ApplyMonsterHit. Exposed so the status tray can show it.
     public int BarrierRemaining => _barrierRemaining;
 
     public int Satiety { get; private set; } = 100;
     public const int MaxSatiety = 100;
-    private const int HungerDrainInterval = 3, HungerRegenThreshold = 30;
-    private const int WellFedThreshold = 80, StarvingThreshold = 15;
-    // Magnitudes, not just thresholds. They were literals inside the conditionals below, which
-    // left every "+2 ATK" the Guide prints and every number the combat log announces unbacked by
-    // anything a checker could read. Named here so both are derived from the applied value.
+    // x AttritionTurnScale = one satiety point per 260 turns (4 min 20 s).
+    private const int HungerDrainInterval = 65;
+    public const int HungerRegenThreshold = 30, WellFedThreshold = 80, StarvingThreshold = 15;
+    // Magnitudes, not just thresholds, named so every "+2 ATK" the Guide prints and every number
+    // the combat log announces is derived from the applied value.
     private const int WellFedAtk = 2, WellFedDef = 1, StarvingAtk = -2, StarvingDef = -1;
     private bool _starvingWarned;
     public int SatietyAtkBonus => Satiety >= WellFedThreshold ? WellFedAtk : Satiety <= StarvingThreshold ? StarvingAtk : 0;
@@ -141,15 +140,19 @@ public partial class TurnManager
 
     private int _restCounter;
     private bool _fatiguedWarned, _exhaustedWarned;
-    private const int FatigueThreshold = 150, ExhaustionThreshold = 250;
+    public const int FatigueThreshold = 150, ExhaustionThreshold = 250;
     // Fatigue costs attack, and at the exhausted step defence as well. There is no speed term:
     // Speed buys follow-up strikes rather than turn order, so a fatigue speed penalty would
-    // be a third clock on a stat that already has one. TickExhaustion builds its warning from these two properties
-    // rather than from a hand-written string, so the announcement cannot name a third stat again.
+    // be a third clock on a stat that already has one. TickExhaustion builds its warning from
+    // these two properties rather than from a hand-written string, so it names only these two.
     private const int FatiguedAtk = -2, ExhaustedAtk = -4, ExhaustedDef = -1;
     public int RestCounter => _restCounter;
     public int FatigueAtkPenalty => _restCounter >= ExhaustionThreshold ? ExhaustedAtk : _restCounter >= FatigueThreshold ? FatiguedAtk : 0;
     public int FatigueDefPenalty => _restCounter >= ExhaustionThreshold ? ExhaustedDef : 0;
+
+    // What every incoming hit is reduced by: a third of defence with the shrine, satiety and
+    // fatigue terms.
+    private int IncomingDefense => (_player.Defense + _shrineBuff + SatietyDefBonus + FatigueDefPenalty) / 3;
 
     private string? _bountyTarget;
     private int _bountyKillsNeeded, _bountyKillsCurrent, _bountyRewardCol, _bountyRewardXp;
@@ -164,20 +167,20 @@ public partial class TurnManager
     private readonly HashSet<int> _discoveredLore = new();
     // Field bosses defeated this run — prevents re-spawn on floor re-entry.
     public HashSet<string> DefeatedFieldBosses { get; set; } = new();
-    // Floor-boss kills this run. Per-floor granular so PG drop reveal doesn't leak
+    // Floor-boss kills this run. Per-floor granular so the Player Guide's drop reveal doesn't leak
     // floors the player skipped via teleport.
     public HashSet<int> DefeatedFloorBosses { get; set; } = new();
     public IReadOnlyCollection<int> DiscoveredLore => _discoveredLore;
     private bool _floorFullyExplored;
     private readonly HashSet<int> _aggroAlerted = new(), _dangerWarned = new();
-    // Iaijutsu first-strike gate (Katana proficiency 25 fork). One bonus per mob, per encounter.
+    // Iaijutsu first-strike gate (Katana proficiency L50 fork). One bonus per mob, per encounter.
     private readonly HashSet<int> _iaijutsuStruck = new();
     private bool _stairsDiscovered;
-    // ExtraSearch passive: true after the first trap reveal this floor so we
-    // only log the flavor line once per floor (subsequent reveals are silent).
+    // ExtraSearch passive: true after the first trap reveal this floor, so the
+    // flavor line logs only once per floor (subsequent reveals are silent).
     private bool _extraSearchRevealedThisFloor;
     // Chests Extra Skill: Search has examined on this floor. Opening one of these rolls a
-    // tier better. Positions rather than a Tile flag — see the note in RevealNearbyTraps.
+    // tier better. Positions rather than a Tile flag: only a handful of cells ever carry it.
     private readonly HashSet<(int X, int Y)> _scoutedChests = new();
     private bool _extraSearchScoutedThisFloor;
     private static readonly int[] FloorParTurns = { 200, 220, 250, 280, 320, 360, 400, 450, 500, 550 };
@@ -194,15 +197,18 @@ public partial class TurnManager
     public int LevelUpBuffTurns => _levelUpBuffTurns;
 
     // Active food regen buff. Set when Food with RegenerationRate>0 is consumed;
-    // consumed in PassiveRegen each tick. 0 = inactive (legacy default).
+    // consumed in PassiveRegen each tick. 0 = inactive.
     private int _foodRegenRate, _foodRegenTurnsLeft;
     public int FoodRegenRate => _foodRegenRate;
     public int FoodRegenTurnsLeft => _foodRegenTurnsLeft;
     private void ApplyFoodRegenBuff(int rate, int turns)
     { _foodRegenRate = Math.Max(_foodRegenRate, rate); _foodRegenTurnsLeft = Math.Max(_foodRegenTurnsLeft, turns); }
 
-    // Counterattack stance — player presses V, next incoming attack triggers riposte
+    // Counter stance: the next incoming attack is cancelled and answered with a riposte of
+    // _riposteMultiplier x Attack (the Counter action's default, or the counter skill's own).
     private bool _counterStance;
+    private double _riposteMultiplier = DefaultRiposteMultiplier;
+    private const double DefaultRiposteMultiplier = 1.5;
     public bool IsCounterStance => _counterStance;
 
     private int _poisonTurnsLeft, _poisonDamagePerTick = 2;
@@ -211,7 +217,7 @@ public partial class TurnManager
     // Weapon Barrier+N SpecialEffect: damage pool absorbed before HP hit.
     // Resets to wpn Barrier value on floor change (ReplaceMap / new floor).
     private int _barrierRemaining;
-    // Invisibility+N SpecialEffect: set on crit, ticks down in AdvanceTurn.
+    // Invisibility+N SpecialEffect: set on crit, ticks down in TickPerTurnTimers.
     // Non-zero suppresses monster aggro via SimpleAI's playerStealthed hook.
     private int _invisibilityTurnsLeft;
     public int StunTurnsLeft => _stunTurnsLeft;
@@ -245,7 +251,7 @@ public partial class TurnManager
     }
 
     private int _lastSoundCueTurn = -99;
-    private const int SoundCueCooldown = 15; // reduced log spam -- was 5
+    private const int SoundCueCooldown = 15; // turns between sound cues, to limit log spam
     private DateTime _sessionStart = DateTime.Now;
     private TimeSpan _priorPlayTime;
     public TimeSpan TotalPlayTime => _priorPlayTime + (DateTime.Now - _sessionStart);
@@ -282,6 +288,10 @@ public partial class TurnManager
     public event Action? PlayerDied;
     // Detailed death broadcast — fires alongside PlayerDied with full context.
     public event Action<DeathContext>? PlayerDiedDetailed;
+    // A floor boss reports "boss" (a field boss is an ordinary monster), so death milestones can
+    // tell the two apart.
+    private static string KillCause(Monster killer) => killer is Boss and not FieldBoss ? "boss" : "monster";
+
     private void RaisePlayerDied(string cause)
     {
         PlayerDied?.Invoke();
@@ -306,7 +316,7 @@ public partial class TurnManager
 
     // Fires when the active map swaps (enter/exit labyrinth). UI refreshes map references.
     public event Action? MapSwapped;
-    // Fires once per run when a Divine Object enters inventory (boss drop or quest).
+    // Fires whenever a Divine Object is obtained (boss drop or quest).
     // GameScreen.Events subscribes to trigger DivineObtainBanner + border flash + toast.
     public event Action<Items.Equipment.Weapon>? DivineObtained;
     // Selka awakening dialog request. GameScreen.Events subscribes to open
@@ -401,14 +411,13 @@ public partial class TurnManager
 
     // Talents offered but not yet taken, oldest first.
     //
-    // The entry stores the PERK IDS THAT WERE OFFERED, not just a count. RollChoices is a fresh
+    // The entry stores the perk ids that were offered, not just a count. RollChoices is a fresh
     // shuffle every call, so re-rolling on resume would turn dismissing the prompt into a free
-    // reroll — dismiss until the perk you want appears. Storing the offer makes "the same three
-    // come back" true by construction instead of by a reproducibility argument, and it needs no
-    // run seed. Keyed by the level it was earned at, which is unique per offer.
+    // reroll — dismiss until the perk you want appears. Storing the offer makes the same three
+    // come back without needing the run seed.
     private readonly List<(int Id, int Level, string[] PerkIds)> _pendingTalents = new();
 
-    // Identity is a sequence number, NOT the level. Two offers can share a level — anything that
+    // Identity is a sequence number, not the level. Two offers can share a level — anything that
     // grants a talent outside a level-up, or a level-up that fires twice — and keying by level
     // would then resolve both entries as one and orphan the other.
     private int _nextPendingTalentId = 1;
@@ -568,6 +577,11 @@ public partial class TurnManager
                     ApplyFoodRegenBuff(scaledRate, food.RegenerationDuration);
             }
             if (e.Consumable is DamageItem dmgItem) HandleThrowable(dmgItem);
+
+            // Consume time: the world goes on while the player drinks or eats.
+            int cost = e.Consumable is Food ? FoodMoves : e.Consumable is Potion ? PotionMoves : UseItemMoves;
+            if (SpendMoves(cost)) UpdateVisibility();
+            TurnCompleted?.Invoke();
         };
     }
 
@@ -636,12 +650,10 @@ public partial class TurnManager
                 _map.MoveEntity(_player, _map.Width / 2, _map.Height / 2);
                 _log.LogSystem("A corridor portal opens beneath you. You step through to the entrance.");
                 break;
-            // Anti-Crystal and Mirage Sphere set NO state and nothing reads them: they print a
-            // sentence and end. Both are held unobtainable in ContentProbe's knownSourceless for
-            // that reason rather than being given an invented mechanic — the Anti-Crystal is a
-            // Laughing Coffin tool used ON a victim, so "suppresses your escape" would make a
-            // 2,000 Col purchase self-harm, and the Mirage Sphere's evidence-recording has no
-            // system behind it. Giving either a real effect is a design decision.
+            // Anti-Crystal and Mirage Sphere set no state and nothing reads them: they print a
+            // sentence and end, and no content source grants either. The Anti-Crystal is a
+            // Laughing Coffin tool used on a victim, so suppressing the user's own escape would
+            // make it self-harm, and the Mirage Sphere's evidence-recording has no system behind it.
             case "AntiCrystal":
                 _log.LogSystem("The Anti-Crystal hums. Teleport effects are suppressed in this area.");
                 break;
@@ -670,7 +682,8 @@ public partial class TurnManager
         }
     }
 
-    // Corruption Stone (HF canon workaround: F100 ends game, post-F100 boss unreachable).
+    // Corruption Stone: corrupts a weapon without a boss past floor 100, since clearing F100 ends
+    // the game.
     // Swaps target weapon → Corrupted variant, preserving EnhancementLevel + RefinementSlots.
     private void HandleCorruptionStone(CorruptionStone stone)
     {
@@ -789,6 +802,7 @@ public partial class TurnManager
     {
         var tm = new TurnManager(map, player, log, save.CurrentFloor, save.Difficulty);
         tm.TurnCount = save.TurnCount; tm.KillCount = save.KillCount; tm.TotalColEarned = save.TotalColEarned;
+        tm.PlayerMoves = save.PlayerMoves;
         tm.Satiety = save.Satiety; tm._killStreak = save.KillStreak;
         tm._poisonTurnsLeft = save.PoisonTurnsLeft; tm._bleedTurnsLeft = save.BleedTurnsLeft;
         tm._stunTurnsLeft = save.StunTurnsLeft; tm._slowTurnsLeft = save.SlowTurnsLeft;
@@ -798,7 +812,7 @@ public partial class TurnManager
         tm._bleedDamagePerTick = save.BleedDamagePerTick;
         tm._invisibilityTurnsLeft = save.InvisibilityTurnsLeft;
         tm.RestoreTimedBuffs(save.TimedBuffs);
-        // Restore food regen buff. 0 = inactive on legacy saves.
+        // Restore food regen buff. 0 = inactive.
         tm._foodRegenRate = save.FoodRegenRate; tm._foodRegenTurnsLeft = save.FoodRegenTurnsLeft;
         tm._floorStartTurn = save.TurnCount; tm._floorStartRealTime = DateTime.Now;
         tm._floorKillsStart = save.KillCount; tm._restCounter = save.RestCounter;
@@ -806,7 +820,7 @@ public partial class TurnManager
         tm._bountyKillsCurrent = save.BountyKillsCurrent; tm._bountyRewardCol = save.BountyRewardCol;
         tm._bountyRewardXp = save.BountyRewardXp; tm._bountyComplete = save.BountyComplete;
         foreach (var kvp in save.WeaponKills) tm._weaponKills[kvp.Key] = kvp.Value;
-        // IF Proficiency forks — rehydrate per-weapon pick state.
+        // Proficiency forks — rehydrate per-weapon pick state.
         tm.RehydrateForkChoices(save.WeaponProficiencyForks);
         tm.RehydratePendingTalents(save.PendingTalents);
         if (save.DiscoveredLore != null) foreach (var idx in save.DiscoveredLore) tm._discoveredLore.Add(idx);
@@ -829,7 +843,7 @@ public partial class TurnManager
             Story.StorySystem.Reputation.Clear();
             foreach (var kvp in save.FactionReputation)
             {
-                // Faction rename: legacy saves use "AincradLiberationSquad".
+                // A save may key this faction as "AincradLiberationSquad"; it maps to the Force.
                 string key = kvp.Key == "AincradLiberationSquad"
                     ? "AincradLiberationForce" : kvp.Key;
                 if (Enum.TryParse<Story.Faction>(key, out var f))
@@ -845,16 +859,16 @@ public partial class TurnManager
         Skills.UniqueSkillSystem.TrapsDisarmed = save.TrapsDisarmed;
         if (save.DefeatedFieldBosses != null)
             tm.DefeatedFieldBosses = new HashSet<string>(save.DefeatedFieldBosses);
-        // Per-floor boss-clear flags. Null on legacy = empty set.
+        // Per-floor boss-clear flags. Null = empty set.
         if (save.DefeatedFloorBosses != null)
             tm.DefeatedFloorBosses = new HashSet<int>(save.DefeatedFloorBosses);
         RunModifiers.LoadFromSave(save.ActiveRunModifiers);
-        // Shop Tiering hydrates cross-save progress; legacy saves default to 0
+        // Shop Tiering hydrates cross-save progress; a save without it defaults to 0
         // (no tiered stock until the next F50+ clear).
         ShopTierSystem.SetForLoad(save.HighestFloorBossCleared);
-        // Investments hydrate per-vendor; legacy saves = cleared state.
+        // Investments hydrate per-vendor; a save without them = cleared state.
         VendorInvestmentSystem.SetForLoad(save.VendorInvestments);
-        // Restore current-floor mining vein strikes (legacy = noop).
+        // Restore current-floor mining vein strikes (none saved = no-op).
         SaveManager.RestoreVeinStrikes(save, map);
 
         // Restore party members
@@ -891,7 +905,7 @@ public partial class TurnManager
         using var _ = Profiler.Begin("TurnManager.UpdateVisibility");
         // Sync the global clock before recomputing — ambient light and
         // effective FOV both read from DayNightCycle.
-        SAOTRPG.Map.Lighting.DayNightCycle.CurrentTurn = TurnCount;
+        SAOTRPG.Map.Lighting.DayNightCycle.CurrentTurn = TurnCount + GameClock.SunPhaseOffset;
         SAOTRPG.Map.TileAnimator.CombatActive = TurnCount - _lastCombatTurn <= 5;
         int visRadius = Math.Max(8, SAOTRPG.Map.Lighting.DayNightCycle.VisibilityRadius + BiomeSystem.VisionModifier * SAOTRPG.Map.Lighting.DayNightCycle.FovMultiplier);
         _map.UpdateVisibility(_player.X, _player.Y, visRadius,

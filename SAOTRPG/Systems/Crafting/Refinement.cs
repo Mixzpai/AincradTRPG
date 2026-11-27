@@ -6,7 +6,7 @@ using PlayerInventory = SAOTRPG.Inventory.Core.Inventory;
 
 namespace SAOTRPG.Systems.Crafting;
 
-// IF-canon Refinement. API for CraftingDialog.ShowRefineMenu + damage calc via
+// Refinement. API for CraftingDialog.ShowRefineMenu + damage calc via
 // Equipment.Bonuses. Override-only (occupied = destroy old); Divine cannot refine.
 public static class Refinement
 {
@@ -75,7 +75,7 @@ public static class Refinement
 
     // ── Re-hydration helpers used by SaveManager on load ─────────────────
 
-    // Re-apply slotted ingot bonuses post-load. Call ONCE after EnhancementLevel replay.
+    // Re-apply slotted ingot bonuses post-load. Call once after EnhancementLevel replay.
     internal static void RehydrateBonuses(EquipmentBase eq)
     {
         for (int i = 0; i < EquipmentBase.RefinementSlotCount; i++)

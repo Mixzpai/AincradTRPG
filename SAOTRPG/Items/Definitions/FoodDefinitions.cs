@@ -35,11 +35,11 @@ public static class FoodDefinitions
     public static Food CreateSpicedJerky() => Make("spiced_jerky", "Spiced Jerky", 20, "Common",
         "Meat", 4, 8, "Regenerates 4 HP per turn for 8 turns.");
 
-    // Kirito's cheap staple from the Tolbana bakery. 5 Col a piece, canon.
+    // Kirito's cheap staple from the Tolbana bakery, 5 Col a piece.
     public static Food CreateCreamFilledBread() => Make("cream_filled_bread", "Cream-Filled Bread", 5, "Common",
         "Bread", 3, 10, "Tolbana bakery staple. Regenerates 3 HP per turn for 10 turns.");
 
-    // F22 dairy quest canon — black bread dipped in high-class cream.
+    // F22 dairy quest — black bread dipped in high-class cream.
     public static Food CreateBlackBreadWithCream() => Make("black_bread_cream", "Black Bread with High-Class Cream", 120, "Rare",
         "Bread", 6, 25, "F22 cottage breakfast. Regenerates 6 HP per turn for 25 turns.", maxStacks: 20);
 
@@ -51,11 +51,11 @@ public static class FoodDefinitions
     public static Food CreateAincradSalad() => Make("aincrad_salad", "Aincrad Salad", 25, "Common",
         "Salad", 2, 12, "Fresh greens from the wilds of Aincrad. Regenerates 2 HP for 12 turns.");
 
-    // Asuna's F74 field lunch (anime S1E9).
+    // Asuna's F74 field lunch.
     public static Food CreateAsunasSandwich() => Make("asunas_sandwich", "Asuna's Sandwich", 80, "Uncommon",
         "Sandwich", 5, 15, "Wrapped in cloth with a ribbon. Regenerates 5 HP for 15 turns.", maxStacks: 20);
 
-    // Legendary — S-class ingredient. Asuna's iconic F35 dish (LN V1 Aincrad).
+    // Legendary — S-class ingredient. Asuna's F35 dish.
     public static Food CreateRagoutRabbitStew() => Make("ragout_rabbit_stew", "Ragout Rabbit Stew", 3000, "Legendary",
         "Stew", 20, 40, "S-class dish. Regenerates 20 HP per turn for 40 turns.", maxStacks: 1);
 

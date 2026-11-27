@@ -13,11 +13,10 @@ public static class MobFactory
         string LootTag = "generic", int Range = 1, string? Ability = null,
         bool Swim = false);
 
-    // Floor-tier mob table via FloorToTier(); F1-F5 dedicated canon rosters, later floors share era pools.
-    // Names sourced from SAO canon (Progressive, anime, IF, HF) where possible.
+    // Floor-tier mob table via FloorToTier(); F1-F5 have dedicated rosters, later floors share era pools.
     private static readonly MobTemplate[][] FloorMobs =
     {
-        // Tier 0 — Floor 1: Town of Beginnings wilderness (Progressive Vol 1)
+        // Tier 0 — Floor 1: Town of Beginnings wilderness
         new[]
         {
             new MobTemplate("Frenzy Boar",            'b', Color.BrightRed,     6, LootTag: "beast", Ability: "Charge"),
@@ -29,7 +28,7 @@ public static class MobFactory
             new MobTemplate("Ruin Kobold Sentinel",   's', Color.BrightCyan,    4, LootTag: "kobold"),
             new MobTemplate("Windwasp",               'i', Color.BrightYellow,  8, LootTag: "insect", Ability: "Leap"),
         },
-        // Tier 1 — Floor 2: Urbus foothills (Progressive Vol 2)
+        // Tier 1 — Floor 2: Urbus foothills
         new[]
         {
             new MobTemplate("Lesser Taurus",          't', Color.BrightYellow,  6, LootTag: "beast", Ability: "Charge"),
@@ -38,7 +37,7 @@ public static class MobFactory
             new MobTemplate("Bullbous Bow",           'B', Color.Red,           7, LootTag: "beast", Range: 2),
             new MobTemplate("Plumed Mist Lizard",     'l', Color.Green,         6, Slow: true, LootTag: "reptile"),
         },
-        // Tier 2 — Floor 3: Zumfut / Elf War (Progressive Vol 3)
+        // Tier 2 — Floor 3: Zumfut / Elf War
         new[]
         {
             new MobTemplate("Treant Sapling",         'p', Color.Green,         4, LootTag: "plant"),
@@ -48,7 +47,7 @@ public static class MobFactory
             new MobTemplate("Cave Bat",               'v', Color.DarkGray,      8, LootTag: "insect", Ability: "Leap"),
             new MobTemplate("Toadstool Walker",       'f', Color.BrightMagenta, 4, Poison: true, LootTag: "plant"),
         },
-        // Tier 3 — F4 Rovia flooded (Prog Vol 4). All 5 mobs CanSwim — water isn't a free choke on a flood floor.
+        // Tier 3 — F4 Rovia flooded. All 5 mobs CanSwim — water isn't a free choke on a flood floor.
         new[]
         {
             new MobTemplate("Water Drake",            'd', Color.BrightBlue,    6, LootTag: "dragon", Range: 3, Swim: true),
@@ -57,7 +56,7 @@ public static class MobFactory
             new MobTemplate("Water Wight",            'u', Color.BrightCyan,    7, Slow: true, LootTag: "undead", Swim: true),
             new MobTemplate("Scavenger Toad",         'f', Color.Green,         4, Poison: true, LootTag: "beast", Swim: true),
         },
-        // Tier 4 — Floor 5: Karluin / Pitch-Black Cathedral (Progressive Vol 5)
+        // Tier 4 — Floor 5: Karluin / Pitch-Black Cathedral
         new[]
         {
             new MobTemplate("Cathedral Bat",          'v', Color.DarkGray,      8, LootTag: "insect", Ability: "Leap"),
@@ -111,7 +110,7 @@ public static class MobFactory
             new MobTemplate("Shadow Wraith",          'S', Color.DarkGray,     10, Slow: true, LootTag: "undead", Ability: "Leap"),
             new MobTemplate("Fallen Paladin",         'u', Color.BrightYellow,  8, Stun: true, LootTag: "humanoid"),
         },
-        // Tier 9 — Floors 76-100: Hollow Fragment + divine ascension
+        // Tier 9 — Floors 76-100: Hollow + divine ascension
         new[]
         {
             new MobTemplate("Hollow Mutated Wolf",    'w', Color.BrightMagenta, 10, Bleed: true, LootTag: "hollow", Ability: "Leap"),
@@ -137,6 +136,8 @@ public static class MobFactory
     }
 
     // Get base mob names for a given floor tier (0-indexed). Used by bounty system.
+    public static int TierCount => FloorMobs.Length;
+
     public static string[] GetFloorMobNames(int tier)
     {
         tier = Math.Clamp(tier, 0, FloorMobs.Length - 1);
@@ -189,7 +190,7 @@ public static class MobFactory
     }
 
     // Shared mob builder — mirrors CreateFloorMob scaling but with a known template.
-    // No Elite/Champion variant roll: prefab-placed mobs stay stock so authors control spec.
+    // No Elite/Champion variant roll: prefab-placed mobs stay stock so the prefab author controls what spawns.
     private static Mob InstantiateTemplate(MobTemplate template, int floor, int statScale, Random rng)
     {
         int level = Math.Max(1, floor + rng.Next(-1, 3));
@@ -326,7 +327,7 @@ public static class MobFactory
 
     // ── Affix system — random modifiers for elite/champion mobs ──
     //
-    // An affix is concatenated into the mob's NAME and shown in Look mode, so every one of these
+    // An affix is concatenated into the mob's name and shown in Look mode, so every one of these
     // is advertised to the player. Six carry behaviour that lives outside this file and is matched
     // on the affix name, so these spellings are a contract with TurnManager: the constants below
     // are what both sides use.
@@ -348,16 +349,15 @@ public static class MobFactory
     public static IReadOnlyList<string> AffixPool => AffixPoolArray;
 
     // The two power variants. Constants for the same reason the affixes are: they are
-    // concatenated into the mob's NAME, and anything that has to take that name apart again
+    // concatenated into the mob's name, and anything that has to take that name apart again
     // must use the same spellings.
     public const string VariantElite    = "Elite";
     public const string VariantChampion = "Champion";
 
     // Every prefix that can appear on a generated mob's name, each with its trailing space —
     // affixes first in pool order, then the variants, which is the order they are concatenated
-    // in. Derived rather than hand-listed: a second copy of this lived in TurnManager.Loot and
-    // would have drifted the first time an affix was added, silently breaking the NamedMobDrops
-    // lookup for that mob (rule 258 — do not hand-write a list the source can supply).
+    // in. Derived rather than hand-listed, so TurnManager.Loot's NamedMobDrops lookup cannot
+    // silently drift from the pool when an affix is added.
     public static IReadOnlyList<string> NamePrefixes => NamePrefixesArray;
 
     private static readonly string[] NamePrefixesArray = BuildNamePrefixes();
@@ -387,6 +387,7 @@ public static class MobFactory
             {
                 case "Swift":
                     mob.BaseSpeed += 3;
+                    mob.MoveSpeed += 30;   // speed 130: an extra action every third turn
                     mob.AggroRange += 2;
                     break;
                 case "Armored":
@@ -416,6 +417,7 @@ public static class MobFactory
                 case AffixEthereal:
                     // The incoming-melee miss roll is TurnManager.TryAffixEvade.
                     mob.BaseSpeed += 2;
+                    mob.MoveSpeed += 20;
                     break;
                 case AffixCardinal:
                     // System-glitched. The boon that is live this turn is derived, not stored:

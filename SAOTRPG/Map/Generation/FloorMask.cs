@@ -9,12 +9,10 @@ public static class FloorMask
     // for FOV roundness on screen; the disk itself is true cell-coord circle.
     public const float CellAspectRatio = 2.0f;
 
-    // Fanned out across columns for the same reason HeightmapField.Materialize is: the per-cell
-    // work is one atan2 plus three sines, it reads nothing mutable, and each cell writes its own
-    // slot — so the result is bit-identical whatever the scheduling. This runs BEFORE the first
-    // pass and so appears in no per-pass timer, which is why it went unmeasured; it was the single
-    // largest line item in floor generation.
-    // Small maps stay serial: the fork costs more than the work below this size.
+    // Fanned out across columns, like HeightmapField.Materialize: the per-cell work is one atan2
+    // plus three sines, it reads nothing mutable, and each cell writes its own slot, so the result
+    // is bit-identical whatever the scheduling. Runs before the first pass, outside every per-pass
+    // timer. Small maps stay serial: the fork costs more than the work below this size.
     private const int ParallelCellThreshold = 65536;
 
     // bool[w,h]; true = inside playable disk. ~1MB at 1000x1000, allocated once.
@@ -25,7 +23,7 @@ public static class FloorMask
         float cy = h * 0.5f - 0.5f;
         float r0 = Math.Min(w, h) * 0.5f - 2f;
 
-        // Phases are loop-invariant; they were being recomputed from the seed on every cell.
+        // Phases are loop-invariant, so they are derived from the seed once, not per cell.
         float p1 = floorSeed * 0.001f, p2 = floorSeed * 0.003f, p3 = floorSeed * 0.005f;
 
         if ((long)w * h < ParallelCellThreshold)

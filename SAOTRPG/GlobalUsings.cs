@@ -1,4 +1,4 @@
-// Terminal.Gui 2.4.5 splits its API across sub-namespaces (Views, ViewBase, Drawing, App, Input...).
+// Terminal.Gui splits its API across sub-namespaces (Views, ViewBase, Drawing, App, Input...).
 // Absorbing them here keeps bare type names working across the whole project.
 // The Attribute alias resolves the collision with System.Attribute in favor of Terminal.Gui's.
 global using Terminal.Gui.App;

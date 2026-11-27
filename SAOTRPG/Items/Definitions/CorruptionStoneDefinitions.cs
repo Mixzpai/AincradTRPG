@@ -2,8 +2,8 @@ using SAOTRPG.Items.Consumables;
 
 namespace SAOTRPG.Items.Definitions;
 
-// Canon HF post-F100 drops (Corrupted Elucidator/Dark Repulser); our F100 ends game,
-// so corruption applied via Corruption Stone consumable on base weapon.
+// Corrupted Elucidator / Dark Repulser are obtained by using a Corruption Stone on the base
+// weapon in inventory.
 public static class CorruptionStoneDefinitions
 {
     private static CorruptionStone Make(string id, string name, int value, string rarity,

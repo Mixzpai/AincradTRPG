@@ -4,7 +4,7 @@ namespace SAOTRPG.UI.Helpers;
 //
 // The framework clears a view's viewport before drawing it, and that clear runs
 // FillRect over every cell: a string allocation and grapheme measurement per cell,
-// then SetAttributeAndDirty marking the cell AND its row for retransmit. On a window
+// then SetAttributeAndDirty marking the cell and its row for retransmit. On a window
 // spanning the terminal that means any redraw at all — one menu keypress, one label
 // change — blanks and dirties the whole screen, so the driver re-sends every cell.
 //
@@ -21,24 +21,21 @@ public class GameWindow : Window
 
     private static readonly bool s_sampling = SAOTRPG.Systems.Diagnostics.DebugMode.PerfSampling;
 
-    public GameWindow()
+    // Every view has painted; the driver flush follows. Instrumentation only. An override rather
+    // than a DrawComplete handler: a subscribed event builds its arguments on every frame.
+    protected override void OnDrawComplete(DrawContext? context)
     {
-        DrawComplete += (_, _) =>
-        {
-            // Every view has painted; the driver flush follows. Instrumentation only.
-            if (!s_sampling) return;
-            Gfx.CountTransmitted();
-            ViewDrawCompleteTicks = System.Diagnostics.Stopwatch.GetTimestamp();
-        };
+        if (!s_sampling) return;
+        Gfx.CountTransmitted();
+        ViewDrawCompleteTicks = System.Diagnostics.Stopwatch.GetTimestamp();
     }
 
     protected override bool OnClearingViewport() => true;
 
-    // Terminal.Gui redraws the border whenever ANY subview redraws: BorderView blanks its cells and
-    // the line canvas re-resolves them, ~480 KB of garbage a frame at 316x91. The border changes
-    // only when the window itself is invalidated (a resize, a screen swap, a modal closing:
-    // Runnable and DialogHelper.RunModal both SetNeedsDraw it), so a subview-only pass skips it.
-    // DrawingSelf is the patched Terminal.Gui's (vendor/README.md).
+    // Terminal.Gui redraws the border whenever any subview redraws: BorderView blanks its cells and
+    // the line canvas re-resolves them, allocating heavily every frame. The border changes only
+    // when the window itself is invalidated (a resize, a screen swap, a modal closing: Runnable
+    // and DialogHelper.RunModal both SetNeedsDraw it), so a subview-only pass skips it.
     protected override bool OnDrawingAdornments() => !DrawingSelf;
 
     // Forces one real full-screen clear on the next draw. Call when replacing a

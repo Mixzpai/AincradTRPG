@@ -23,15 +23,23 @@ public static class StatBarHelper
         '█', // █ 8/8
     };
 
-    // Build a stat bar of the given pixel-cell width. fraction = current/max.
-    // Returns the bracketed string (no leading label). Caller applies color.
-    public static string Build(int current, int max, int width)
+    // Writes a stat bar of the given cell width, bracketed, with no label: fraction = current/max.
+    // The caller applies colour.
+    public static void Write(ref LineWriter w, int current, int max, int width)
     {
-        if (width <= 0) return "[]";
-        if (max <= 0) return "[" + new string(' ', width) + "]";
+        w.Append('[');
+        if (width <= 0) { w.Append(']'); return; }
+        if (max <= 0) { w.Append(' ', width); w.Append(']'); return; }
 
         if (UserSettings.Current.UseAsciiStatBars)
-            return BuildAscii(current, max, width);
+        {
+            // ASCII fallback: '#' fill, '-' empty, for terminals without the block code points.
+            int filled = (int)Math.Round(Math.Clamp((double)current / max, 0.0, 1.0) * width);
+            w.Append('#', filled);
+            w.Append('-', width - filled);
+            w.Append(']');
+            return;
+        }
 
         double fraction = Math.Clamp((double)current / max, 0.0, 1.0);
         // 8 sub-units per cell → total eighths across the bar.
@@ -43,23 +51,13 @@ public static class StatBarHelper
         if (current > 0 && fullCells == 0 && remainderEighths == 0)
             remainderEighths = 1;
 
-        var bar = new char[width];
         for (int i = 0; i < width; i++)
         {
-            if (i < fullCells) bar[i] = EighthBlocks[8];
-            else if (i == fullCells && remainderEighths > 0)
-                bar[i] = EighthBlocks[remainderEighths];
-            else bar[i] = ' ';
+            if (i < fullCells) w.Append(EighthBlocks[8]);
+            else if (i == fullCells && remainderEighths > 0) w.Append(EighthBlocks[remainderEighths]);
+            else w.Append(' ');
         }
-        return "[" + new string(bar) + "]";
-    }
-
-    // ASCII fallback — '#' fill + '-' empty. Pure ASCII so terminals lacking
-    // eighth-block / full-block code points still render correctly.
-    private static string BuildAscii(int current, int max, int width)
-    {
-        int filled = (int)Math.Round(Math.Clamp((double)current / max, 0.0, 1.0) * width);
-        return "[" + new string('#', filled) + new string('-', width - filled) + "]";
+        w.Append(']');
     }
 
     // Color zone for stat bars. >=50% green, 25-49% yellow, <25% red.

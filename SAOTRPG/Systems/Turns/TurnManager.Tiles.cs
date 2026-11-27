@@ -65,11 +65,8 @@ public partial class TurnManager
         GrantCampfireSleepXp();
         CookingInteraction?.Invoke();
 
-        // SPEND THE TILE. It never was spent — the fire healed, purged every status and banked
-        // Sleep XP again on every single step, so each of a floor's campfires was an unlimited
-        // heal and an unlimited XP farm. HandleFountain, directly below, has always consumed its
-        // tile; this one was the only restorative that did not, and the Player Guide states the
-        // opposite twice ("each tile works exactly once", "one-shot per tile (consume on use)").
+        // Spend the tile: an unspent fire would heal, purge every status and bank Sleep XP on
+        // every step, an unlimited heal and XP farm. Like every restorative, it works once.
         // Ash rather than Floor: a burnt-out fire leaves something, and it reads as spent.
         _map.SetTileType(tx, ty, TileType.Ash);
     }

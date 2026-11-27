@@ -5,7 +5,7 @@ using SAOTRPG.UI.Helpers;
 namespace SAOTRPG.UI.Dialogs;
 
 // Lore-citation inspect popup. Triggered by 'L' on a selected inventory item —
-// shows canon source, floor anchor, and detail blurb for Legendary weapons.
+// shows the lore source, floor anchor, and detail blurb for Legendary weapons.
 // Falls back to "Invented for AincradTRPG" / generic note when no entry is
 // registered in CanonCitationData.
 public static class CanonInspectPopup

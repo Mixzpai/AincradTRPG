@@ -83,7 +83,7 @@ public partial class TurnManager
         if (dist > 1) return; // must be adjacent
 
         int dmg = (int)(CalcMonsterDamage(boss) * ability.DamageMultiplier);
-        int finalDmg = Math.Max(1, dmg - (_player.Defense + _shrineBuff) / 3);
+        int finalDmg = Math.Max(1, dmg - IncomingDefense);
         _log.LogCombat($"!! {boss.Name} uses {ability.Name}!");
         CombatTextEvent?.Invoke(boss.X, boss.Y, ability.Name, Color.BrightRed);
         _player.TakeDamage(finalDmg);
@@ -102,7 +102,7 @@ public partial class TurnManager
         int dist = Math.Max(Math.Abs(_player.X - boss.X), Math.Abs(_player.Y - boss.Y));
         if (dist <= ability.AoERadius)
         {
-            int finalDmg = Math.Max(1, baseDmg - (_player.Defense + _shrineBuff) / 3);
+            int finalDmg = Math.Max(1, baseDmg - IncomingDefense);
             _log.LogCombat($"  The shockwave hits you for {finalDmg}!");
             _player.TakeDamage(finalDmg);
             DamageDealt?.Invoke(_player.X, _player.Y, finalDmg, true, false);
@@ -181,7 +181,7 @@ public partial class TurnManager
 
         _map.MoveEntity(boss, adj.Value.x, adj.Value.y);
         int dmg = (int)(CalcMonsterDamage(boss) * ability.DamageMultiplier);
-        int finalDmg = Math.Max(1, dmg - (_player.Defense + _shrineBuff) / 3);
+        int finalDmg = Math.Max(1, dmg - IncomingDefense);
         _log.LogCombat($"!! {boss.Name} charges with {ability.Name}!");
         CombatTextEvent?.Invoke(boss.X, boss.Y, "CHARGE!", Color.BrightRed);
         _player.TakeDamage(finalDmg);

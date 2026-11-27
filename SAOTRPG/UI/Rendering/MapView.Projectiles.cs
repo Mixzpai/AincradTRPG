@@ -41,7 +41,7 @@ public partial class MapView
     }
 
     // Stationary 3-frame fade for bleed / poison / burn motes.
-    // SAO-theme bleed uses ◇→·→blank (no red blood).
+    // Bleed uses ◇→·→blank, never red: the game shows no blood.
     public void EnqueueStatusTrail(int x, int y, char[] glyphs, Color color, int frameMs = 500)
     {
         if (glyphs.Length == 0) return;

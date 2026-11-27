@@ -1,6 +1,6 @@
 namespace SAOTRPG.Entities;
 
-// Party ally — simple AI: follows player, attacks nearby enemies, uses SAO Switch.
+// Party ally — simple AI: follows player, attacks nearby enemies, uses Switch.
 public class Ally : Entity
 {
     public override char Symbol { get; protected set; }

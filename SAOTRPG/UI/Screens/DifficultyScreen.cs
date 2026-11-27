@@ -25,7 +25,7 @@ public static class DifficultyScreen
 
     private static EventHandler<Key>? _escHandler;
 
-    // Unhook Esc handler before transitioning AWAY so Esc→TitleScreen doesn't leak into GameScreen.
+    // Unhook Esc handler before transitioning away so Esc→TitleScreen doesn't leak into GameScreen.
     public static void UnhookEscHandler(Window mainWindow)
     {
         if (_escHandler != null) { mainWindow.KeyDown -= _escHandler; _escHandler = null; }
@@ -69,8 +69,8 @@ public static class DifficultyScreen
         };
 
         // Tab skips the tier list entirely. Arrows are this screen's navigation and reach every
-        // tier; Tab is here to get to the Run Modifiers row and the footer, so stopping on the
-        // list only made it land on the selected row and walk forward from there — five of eight
+        // tier; Tab is here to get to the Run Modifiers row and the footer, and stopping on the
+        // list would land on the selected row and walk forward from there — only some of the
         // tiers, in an order that depends on the current selection.
         //
         // Both settings are needed and they are different things: TabStop keeps Tab off the
@@ -132,7 +132,7 @@ public static class DifficultyScreen
         modifierBtn.Enabled = modifiersUnlocked;
         if (!modifiersUnlocked) modifierBtn.SchemeName = ColorSchemes.DimName;
         // Chained off the button's right edge: the label is 9 columns longer when the feature
-        // is locked, and a fixed offset put the chip text on top of it in that state.
+        // is locked, and a fixed offset would put the chip text on top of it in that state.
         var modifierChipLabel = new Label
         {
             Text = FormatModifierChips(),
@@ -198,11 +198,10 @@ public static class DifficultyScreen
             }
         };
 
-        // Enter on the tier list confirms the run, which is what the hint footer has always
-        // promised. It cannot be done from KeyDown: SelectorBase turns Enter into Activate+Accept
-        // INSIDE the selector, so the key is consumed before the screen's own handler ever sees it
-        // — measured, and the KeyDown case that used to live above was dead from the 2.4.5
-        // migration onward. Accepting is where the selector surfaces it.
+        // Enter on the tier list confirms the run, as the hint footer says. It cannot be done from
+        // KeyDown: SelectorBase turns Enter into Activate+Accept inside the selector, so the key is
+        // consumed before the screen's own handler ever sees it. Accepting is where the selector
+        // surfaces it.
         tierRadio.Accepting += (s, e) =>
         {
             e.Handled = true;
@@ -213,8 +212,7 @@ public static class DifficultyScreen
         // the list as exits rather than wrapping.
         NavigationHelper.EnableSelectorArrowNav(tierRadio);
 
-        // Run Modifiers button ↔ tier list / footer row (replaces the old
-        // hardcore checkbox in the nav chain).
+        // Run Modifiers button ↔ tier list / footer row.
         NavigationHelper.WireUpDown(modifierBtn, tierRadio, continueBtn);
 
         // Footer buttons: Up→the row above, Down→tier list, Left/Right between them

@@ -7,7 +7,7 @@ using SAOTRPG.UI.GameLog;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Guild Roster (from StatsDialog): read-only browser for 8 SAO-canon guilds + "Found Your Own".
+// Guild Roster (from StatsDialog): read-only browser for the 8 Aincrad guilds + "Found Your Own".
 // Active guild highlighted; locked guilds show failing req. Actual join = recruiter NPC on HQ floor.
 public static class GuildRosterDialog
 {
@@ -122,8 +122,8 @@ public static class GuildRosterDialog
             AppHost.App.RequestStop();
         };
 
-        // This dialog advertised nothing at all — no hint row, and the buttons below are only
-        // reachable by Tab. Joining is deliberately absent: it happens at a recruiter NPC.
+        // The buttons below are reachable only by Tab, so the hint names it. Joining is
+        // deliberately absent: it happens at a recruiter NPC.
         var hint = new Label
         {
             Text = "Up/Down: browse   Tab: reach the buttons   Esc: close"

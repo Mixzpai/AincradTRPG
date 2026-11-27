@@ -1,9 +1,9 @@
 using SAOTRPG.UI.Helpers;
+using static SAOTRPG.UI.Helpers.CddaColors;
 
 namespace SAOTRPG.UI.GameLog;
 
-// CDDA's message types: what a line means, which is what its colour says. CDDA also has mixed
-// and debug, and three types it uses only for floating combat text; nothing here emits those.
+// Message types: what a line means, which is what its colour says.
 public enum LogTone { Good, Bad, Warning, Info, Neutral }
 
 public static class LogTones
@@ -21,7 +21,7 @@ public static class LogTones
 
     public static string NameOf(LogTone tone) => Key.First(k => k.Tone == tone).Name;
 
-    // A filter prefix names a type exactly, case-sensitive, as CDDA's does.
+    // A filter prefix names a type exactly, case-sensitive.
     public static LogTone? Parse(string name)
     {
         foreach (var (tone, n, _) in Key)
@@ -29,9 +29,8 @@ public static class LogTones
         return null;
     }
 
-    // CDDA's palette (its default colors.json): a type's colour while new, then while slightly
-    // old; older lines are DarkGray. Methods, not a table, so a theme switch is followed
-    // (invariants.py theme/no-cached-roles).
+    // A type's colour while new, then while slightly old; older lines are DarkGray. Methods, not
+    // a table, so a theme switch is followed.
     public static Color ColorOf(LogTone tone, bool old = false) => ColorSchemes.Theme.World(tone switch
     {
         LogTone.Good    => old ? Green : LightGreen,
@@ -49,16 +48,9 @@ public static class LogTones
     public static Color Bright() => ColorSchemes.Theme.World(White);
     public static Color Arrow() => ColorSchemes.Theme.World(LightGreen);
 
-    private static readonly Color LightGreen = new(0, 255, 0), Green = new(0, 110, 0);
-    private static readonly Color LightRed = new(255, 150, 150), Red = new(255, 0, 0);
-    private static readonly Color Yellow = new(255, 255, 0), Brown = new(97, 56, 28);
-    private static readonly Color LightBlue = new(100, 100, 255), Blue = new(51, 51, 255);
-    private static readonly Color White = new(255, 255, 255), Gray = new(150, 150, 150);
-    private static readonly Color DarkGray = new(99, 99, 99), Cyan = new(0, 150, 180);
-
     // Ordered phrase rules, first case-insensitive match wins, then the category's default. The
-    // phrases are the game's own wording, typed the way CDDA types the same events: your hits
-    // and kills good, hits on you bad, misses, dodges, blocks and pickups neutral, speech info.
+    // phrases are the game's own wording: your hits and kills good, hits on you bad, misses,
+    // dodges, blocks and pickups neutral, speech info.
     private static readonly (string Phrase, LogTone Tone)[] Rules =
     {
         // A kill is a gain whatever else the line says; disarming names the trap.
@@ -107,7 +99,7 @@ public static class LogTones
     {
         foreach (var (phrase, tone) in Rules)
             if (text.Contains(phrase, StringComparison.OrdinalIgnoreCase)) return tone;
-        // Speech heard is info in CDDA ("You hear ... saying").
+        // System notices and speech are info; everything else unmatched is neutral.
         return category is LogCategory.System or LogCategory.Dialog ? LogTone.Info : LogTone.Neutral;
     }
 }

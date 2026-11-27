@@ -27,7 +27,7 @@ public static class DebugMode
     // It must therefore be set before any of them is first touched — see Program.Main,
     // which parses every flag ahead of AppHost.Start.
     //
-    // This gates only the measurement. The DirtyLines reset is a render fix, not a
+    // This gates only the instrumentation. The DirtyLines reset is part of rendering, not a
     // diagnostic, and runs unconditionally.
     public static bool PerfSampling { get; private set; }
 
@@ -41,12 +41,13 @@ public static class DebugMode
     public static bool VerifyTiles { get; private set; }
 
     public static void EnableVerifyTiles() => VerifyTiles = true;
+    public static void DisableVerifyTiles() => VerifyTiles = false;   // verification probe only
 
     // Correctness harness for the cached ambient+shadow field. The sweep is skipped whenever
     // nothing it depends on has moved, which is most turns — and a missed dependency leaves
     // shadows silently stale, showing as a lighting field that belongs to an earlier sun or an
     // earlier map. This recomputes the field from scratch every turn, compares it against what
-    // the cache served, logs any mismatch, and keeps the FRESH result so play stays correct
+    // the cache served, logs any mismatch, and keeps the fresh result so play stays correct
     // while verifying. Slower than having no cache at all; correctness only. Launch with
     // --verify-light.
     public static bool VerifyLight { get; private set; }
@@ -57,18 +58,16 @@ public static class DebugMode
     // character creation. Launch with --quickstart; --perf implies it, and --no-quickstart
     // opts back out.
     //
-    // --perf implies it because a perf run almost always wants the MAP, and driving four
-    // screens by hand first is the slow part of taking a measurement. The opt-out exists
-    // because the title screen has its own unexplained ~105ms frame, and skipping the screen
-    // would make that one permanently unmeasurable.
+    // --perf implies it because a perf run almost always wants the map; the opt-out keeps
+    // the pre-map screens reachable under --perf.
     public static bool QuickStart { get; private set; }
 
     public static void EnableQuickStart() => QuickStart = true;
 
     public static void DisableQuickStart() => QuickStart = false;
 
-    // World seed for a quick-start run, from --seed <n>. Null mints a random one, which is the
-    // default the request asked for; pinning it is what makes two benchmark runs comparable.
+    // World seed for a quick-start run, from --seed <n>. Null mints a random one; pinning it
+    // makes two perf runs comparable.
     public static int? QuickStartSeed { get; private set; }
 
     public static void SetQuickStartSeed(int seed) => QuickStartSeed = seed;

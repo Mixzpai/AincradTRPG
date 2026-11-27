@@ -5,8 +5,8 @@ namespace SAOTRPG.UI.Dialogs;
 
 // Rebinding screen: one row per action, grouped by the context the binding applies in.
 //
-// Each action carries two slots, because the game has always accepted WASD *and* the cursor keys
-// for movement. Left/Right picks the slot, Enter arms it, and the next keystroke is captured.
+// Each action carries two slots, because movement accepts both WASD and the cursor keys.
+// Left/Right picks the slot, Enter arms it, and the next keystroke is captured.
 public static class KeybindDialog
 {
     private const int DialogWidth  = 72;
@@ -96,12 +96,12 @@ public static class KeybindDialog
         }
         form.SetContentSize(new System.Drawing.Size(RowWidth, y));
 
-        // The handler belongs on the ROW, not on the dialog. A focused Button turns Enter and Space
+        // The handler belongs on the row, not on the dialog. A focused Button turns Enter and Space
         // into Command.Accept before the dialog's own KeyDown is raised, so an arm step on the
-        // dialog can never run — measured: every other key reaches the dialog, those two do not.
-        // Handling the key here also suppresses the row's Accepting and the dialog's Esc-to-close,
-        // both of which a capture in progress has to own. While a slot is armed EVERY key belongs
-        // to the capture, including the ones the row would otherwise act on.
+        // dialog can never run; every other key does reach the dialog. Handling the key here also
+        // suppresses the row's Accepting and the dialog's Esc-to-close, both of which a capture in
+        // progress has to own. While a slot is armed every key belongs to the capture, including
+        // the ones the row would otherwise act on.
         void OnRowKey(Button row, Key e)
         {
             (ActionBinding binding, bool[] slot) = rowFor[row];

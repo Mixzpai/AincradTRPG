@@ -150,7 +150,7 @@ public static class EvolutionMaterialDefinitions
     };
 
     // Divine Awakening catalysts.
-    // F75+ canon boss ~5% drop. Used for Divine Awakening Lv1→Lv2.
+    // F75+ floor boss ~5% drop. Used for Divine Awakening Lv1→Lv2.
     public static MobDrop CreateDivineFragment() => new()
     {
         DefinitionId = "divine_fragment",
@@ -183,7 +183,7 @@ public static class EvolutionMaterialDefinitions
     };
 
     // Slicing Stones (alt-path evolution catalysts).
-    // Substitute for canon chain catalyst at evolve time → routes to alt-path DefId.
+    // Substitute for the chain's own catalyst at evolve time → routes to alt-path DefId.
     // Lesser ◊ T1→T2alt, Greater ◈ T2→T3alt, Perfect ✦ T3→T4alt.
     public static MobDrop CreateLesserSlicingStone() => new()
     {

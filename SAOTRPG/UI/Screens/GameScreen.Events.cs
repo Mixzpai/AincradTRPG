@@ -61,12 +61,12 @@ public static partial class GameScreen
                 1 => MapView.MobTier.Elite,
                 _ => MapView.MobTier.Standard,
             });
-        // Floor-boss cleared toast — the TurnManager side logs the banner,
-        // we mirror it into the toast channel for the center-screen readout.
+        // Floor-boss cleared toast — the TurnManager side logs the banner;
+        // it is mirrored into the toast channel for the center-screen readout.
         turnManager.FloorBossCleared += (name) =>
             ToastQueue.EnqueueFloorBoss(name);
         // Species first-kill toast. Bestiary is a static — the TurnManager
-        // event fires post-RecordKill so we can read TimesKilled==1.
+        // event fires post-RecordKill, so TimesKilled==1 is already readable.
         turnManager.SpeciesFirstKilled += (name) =>
             ToastQueue.EnqueueBestiaryFirst(name);
         // ◈ Divine weapon obtained — fires exactly once per run. Non-modal
@@ -97,7 +97,7 @@ public static partial class GameScreen
         };
         turnManager.StatusTrailRequested += (x, y, kind) =>
         {
-            // SAO-theme bleed: ◇ shatter glyph in BrightCyan — NO red blood.
+            // SAO-theme bleed: ◇ shatter glyph in BrightCyan — no red blood.
             switch (kind)
             {
                 case "bleed":
@@ -124,7 +124,7 @@ public static partial class GameScreen
     private static void WireSystemEvents(
         Window mainWindow, TurnManager turnManager, Player player,
         GameLogView gameLog, ColoredLogView coloredLog, MapView mapView,
-        MinimapView minimapView, Label mapTitleLabel,
+        OvermapView minimapView, Label mapTitleLabel,
         int[] saveFlash, int saveSlot, Action refreshHud)
     {
         void InvokeDialog(Action action, bool refresh = true) =>
@@ -159,7 +159,7 @@ public static partial class GameScreen
         {
             // A won run is over; an earlier checkpoint left in the slot would let it be won again.
             SaveManager.DeleteSave(saveSlot);
-            // Permanent unlock: Run Modifiers + future post-clear features.
+            // Permanent unlock: Run Modifiers and any other post-clear feature.
             SAOTRPG.Systems.Story.ProfileData.MarkGameCompleted();
             InvokeDialog(() => VictoryScreen.Show(
                 mainWindow, player, turnManager.KillCount, turnManager.TurnCount, turnManager), false);
@@ -295,7 +295,7 @@ public static partial class GameScreen
     }
 
     private static void WireKeybindActions(
-        TurnManager turnManager, MapView mapView, MinimapView minimapView,
+        TurnManager turnManager, MapView mapView, OvermapView minimapView,
         Player player, GameLogView gameLog, ColoredLogView coloredLog,
         Button inventoryBtn, int saveSlot, int[] saveFlash, Action refreshHud)
     {
@@ -322,15 +322,47 @@ public static partial class GameScreen
         mapView.MessageLogRequested += () => { mapView.ClearDamagePopups(); MessageLogDialog.Show(coloredLog); };
         mapView.EquipmentRequested += () => { mapView.ClearDamagePopups(); EquipmentDialog.Show(player); refreshHud(); };
         mapView.PickupRequested += () => { turnManager.PickupItems(); refreshHud(); };
-        mapView.RestRequested += () => { turnManager.ProcessRest(); refreshHud(); };
+        // A long action runs a slice of turns per frame and redraws as it goes, so the clock is
+        // seen moving. A key press stops it.
+        int activityGeneration = s_screenGeneration;
+        void RunActivity()
+        {
+            if (turnManager.CurrentActivity == null) return;
+            AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(16), () =>
+            {
+                if (activityGeneration != s_screenGeneration) return false;
+                bool more = turnManager.ContinueActivity(ActivityTurnsPerFrame);
+                minimapView.SetNeedsDraw();
+                mapView.SetNeedsDraw();
+                return more;
+            });
+        }
+        mapView.KeyIntercept = () =>
+        {
+            if (turnManager.CurrentActivity == null) return false;
+            turnManager.InterruptActivity();
+            refreshHud();
+            return true;
+        };
+        mapView.RestRequested += () => { turnManager.ProcessRest(); refreshHud(); RunActivity(); };
+        mapView.WaitMenuRequested += () =>
+        {
+            mapView.ClearDamagePopups();
+            if (WaitDialog.Show(turnManager.TurnCount) is int turns)
+            {
+                turnManager.BeginWait(turns);
+                RunActivity();
+            }
+            refreshHud();
+        };
         mapView.CounterRequested += () => { turnManager.EnterCounterStance(); refreshHud(); };
         mapView.SprintRequested += (dx, dy) => { turnManager.ProcessSprint(dx, dy); refreshHud(); };
         mapView.StealthMoveRequested += (dx, dy) => { turnManager.ProcessStealthMove(dx, dy); refreshHud(); };
 
         // Sword skill activation. Range>1 skills route through the reticle first;
-        // Range=1 (melee bump-skills) keep the legacy nearest-target path. Eligibility
+        // Range=1 (melee bump-skills) keep the nearest-target path. Eligibility
         // (stun/post-motion/cooldown/weapon) is rechecked inside ExecuteSwordSkill on
-        // confirm, so we only gate reticle entry on the cheap structural facts.
+        // confirm, so reticle entry is gated only on the cheap structural facts.
         mapView.SwordSkillRequested += (slot) =>
         {
             if (slot >= 0 && slot < turnManager.EquippedSkills.Length
@@ -422,9 +454,8 @@ public static partial class GameScreen
             }
         };
 
-        // One stepper at a time. Each request used to register another timeout, so N presses of
-        // the key ran N concurrent explorers — N turns and N full HUD rebuilds per tick, which
-        // collapses the frame rate. A second press now stops the run instead of stacking on it.
+        // One stepper at a time: a second press stops the run instead of registering another
+        // timeout, because concurrent explorers would each take a turn and rebuild the HUD per tick.
         bool[] autoExploring = { false };
         mapView.AutoExploreRequested += () =>
         {
@@ -502,7 +533,7 @@ public static partial class GameScreen
 
         // The HP/XP/SAT labels follow a bar tween. Its tick is raised inside MapView's draw, and a
         // view marked dirty during a draw pass is cleared when the pass ends, so the refresh runs
-        // from the fast ticker below instead (measured: the last tween value was never painted).
+        // from the fast ticker below instead, or the last tween value would never be painted.
         bool[] barsMoved = { false };
         mapView.PlayerBarsTweenTick += () => barsMoved[0] = true;
 
@@ -519,7 +550,7 @@ public static partial class GameScreen
         });
 
         // Fast 50ms ticker for time-bounded effects: particles, popups, toasts, flashes, shake.
-        // Deliberately does NOT cover animated tiles — see HasActiveEffects.
+        // Deliberately does not cover animated tiles — see HasActiveEffects.
         AppHost.App.AddTimeout(TimeSpan.FromMilliseconds(50), () =>
         {
             if (generation != s_screenGeneration) return false;
@@ -531,8 +562,8 @@ public static partial class GameScreen
     }
 
     // Finds the max-HP of whatever entity currently stands on (x,y) so the
-    // popup helper can apply the 2% chip-damage suppression rule. Falls back
-    // to player max HP when no monster occupies the tile (self-damage).
+    // popup helper can apply the 2% chip-damage suppression rule. The player's
+    // own tile gives the player's max HP; 0 when no monster occupies the tile.
     private static int ResolveMaxHpAt(TurnManager tm, Player player, int x, int y)
     {
         if (x == player.X && y == player.Y) return player.MaxHealth;

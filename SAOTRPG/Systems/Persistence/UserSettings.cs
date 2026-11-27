@@ -44,9 +44,8 @@ public class UserSettings
     // Opacity tier. Drives Subtle/Medium/Bold gray ramp.
     public FootstepOpacity FootstepOpacity { get; set; } = FootstepOpacity.Subtle;
 
-    // Backing-compat alias for legacy callers — derived from FootstepStyle.
-    // Setter routes to FootstepStyle (Off when false, Dots when true) so old saves
-    // that wrote {"ShowFootsteps":true} still hydrate sensibly.
+    // Boolean view of FootstepStyle. The setter routes to FootstepStyle (Off when false,
+    // Dots when true), so a settings file carrying {"ShowFootsteps":true} hydrates sensibly.
     [System.Text.Json.Serialization.JsonInclude]
     public bool ShowFootsteps
     {
@@ -86,10 +85,10 @@ public class UserSettings
     // eighth-block unicode (█▉▊▋▌▍▎▏) incorrectly. Default false → unicode.
     public bool UseAsciiStatBars { get; set; } = false;
 
-    // Directional sun shadows and ambient occlusion across the map. Off leaves the flat ambient
-    // fill the game had before: every tile under the open sky lit identically, whatever stands
-    // over it. On costs a little contrast — a glyph in deep shadow is dimmer — so it is a real
-    // legibility choice and not only a taste one, which is why it has a control at all.
+    // Directional sun shadows and ambient occlusion across the map. Off leaves a flat ambient
+    // fill: every tile under the open sky lit identically, whatever stands over it. On costs a
+    // little contrast — a glyph in deep shadow is dimmer — so it is a legibility choice and not
+    // only a taste one, which is why it has a control at all.
     public bool TerrainShading { get; set; } = true;
 
     // Status tray verbose labels (POISON·3 4t instead of P×3:4). Shift+S toggles it in play; this

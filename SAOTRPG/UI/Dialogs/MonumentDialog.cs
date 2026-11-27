@@ -6,9 +6,9 @@ using SAOTRPG.Systems.Progression;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Monument of Swordsmen — canonical NPC view of the unified milestone system.
+// Monument of Swordsmen — the in-world NPC view of the unified milestone system.
 // Top: NPC flavor. Middle: shared 10-tab milestone view (same renderer as MilestonesDialog).
-// Bottom: per-species kill log preserved from the legacy Monument layout.
+// Bottom: per-species kill log.
 public static class MonumentDialog
 {
     public static void Show(Player player)
@@ -31,18 +31,17 @@ public static class MonumentDialog
 
         // ── Shared milestone tab view ────────────────────────────────
         // 11 rows reserved below: the kill-log header, its 6-row strip, and the shared
-        // detail/close block. The default 6 drew the list's last five rows under the strip.
+        // detail/close block, so the milestone list stops above the strip.
         MilestoneTabbedView.Build(dialog, player, initialCategory: null, bottomReserve: 11,
             extraKeys: $"{Keybinds.Get(GameAction.MilestoneFocusKillLog).Primary}: kill log");
 
         // ── Kill log preview at the bottom (unique to Monument) ──────
-        // The legacy Monument's species kill log lives here as a compact 6-row
-        // strip beneath the milestone area. Full per-species detail still lives
-        // on the Bestiary screen.
+        // The species kill log is a compact 6-row strip beneath the milestone
+        // area. Full per-species detail lives on the Bestiary screen.
         ListView killList = AddKillLogStrip(dialog);
 
         // The kill log is the second focusable list on a dialog that claims Tab for category
-        // cycling, so nothing moved focus onto it. Toggles between the two lists.
+        // cycling, so this key is what moves focus onto it. Toggles between the two lists.
         dialog.KeyDown += (s, e) =>
         {
             if (!Keybinds.IsPressed(GameAction.MilestoneFocusKillLog, e)) return;
@@ -87,7 +86,7 @@ public static class MonumentDialog
         }
         else
         {
-            // Sort by kills descending — Monument is canonical kill log surface.
+            // Sort by kills descending — Monument is the main kill log surface.
             var ordered = entries.OrderByDescending(e => e.TimesKilled).Take(64);
             foreach (var e in ordered)
             {
@@ -103,8 +102,8 @@ public static class MonumentDialog
             X = 1, Y = Pos.AnchorEnd(10), Width = Dim.Fill(2), Height = 6,
             SchemeName = ColorSchemes.ListSelectionName,
             CanFocus = true,
-            // Type-ahead off — it consumes a printable rune before KeyDown is raised, which ate
-            // the dialog-level 1-9/0 tab jumps whenever focus sat on this list.
+            // Type-ahead off — it consumes a printable rune before KeyDown is raised, which would
+            // eat the dialog-level 1-9/0 tab jumps whenever focus sat on this list.
             KeystrokeNavigator = null,
         };
         killList.SetSource(new ObservableCollection<string>(lines));

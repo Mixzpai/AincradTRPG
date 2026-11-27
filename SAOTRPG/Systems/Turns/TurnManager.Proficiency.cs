@@ -4,7 +4,7 @@
 // Anchors L1=0,L25=25,L50=100,L75=500,L100=2000,L110=10000; L25/50/75/100 = 1-of-2 fork pick.
 public partial class TurnManager
 {
-    // ── Legacy 15-tier rank ladder (display only) ─────────────────────
+    // ── 15-tier rank ladder (display only) ────────────────────────────
     // Bonus column unused; Kills is the UI rank-flip threshold.
     private static readonly (int Kills, int Bonus, string Rank)[] ProficiencyRanks =
     {
@@ -31,10 +31,8 @@ public partial class TurnManager
 
     // ── Public API ────────────────────────────────────────────────────
 
-    // SEAMS FOR THE PLAYER GUIDE. Every number below was transcribed into two Guide topics and
-    // both had drifted: one stated a +120 damage cap against a real +55, and the two topics
-    // disagreed with each other about which pair of passives each fork offers. Reading them from
-    // here means the table is generated rather than copied.
+    // Read by the Player Guide, so its proficiency tables are generated from these values rather
+    // than copied.
     public static IReadOnlyList<int> ForkLevelList => ForkLevels;
     public static IReadOnlyList<(int Level, int Kills)> LevelAnchors => CurveAnchors;
 
@@ -117,10 +115,8 @@ public partial class TurnManager
         if (lvl >= 90)  crit  += 3;
         if (lvl >= 100) parry += 2;
         var picks = GetForkChoices(weaponType);
-        // picks[1] is the L50 slot, and three weapon types put their OWN fork in it. Reading the
-        // slot without asking which fork filled it handed the generic branch's perks to those
-        // three as well, so a Katana that picked Drawing Stance was quietly collecting Guarded
-        // Stance's parry too. Each family answers for its own picks.
+        // picks[1] is the L50 slot, and three weapon types put their own fork in it, so what the
+        // slot means depends on which fork filled it. Each family answers for its own picks.
         if (HasWeaponSpecificL50Fork(weaponType))
         {
             if (picks[1] == 2 && weaponType == "One-Handed Sword") parry += 3; // Saber Step
@@ -142,7 +138,7 @@ public partial class TurnManager
         new[] { "One-Handed Sword", "Katana", "Bow" };
 
     // The fork level those three replace. Named because GetForkOptions branches on it and the
-    // Player Guide has to state it — and the Guide's transcription said L25 for two of them.
+    // Player Guide states it.
     public const int WeaponSpecificForkLevel = 50;
 
     public static bool HasWeaponSpecificL50Fork(string weaponType) =>

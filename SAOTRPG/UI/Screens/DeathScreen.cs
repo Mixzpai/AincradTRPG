@@ -6,6 +6,7 @@ using SAOTRPG.Systems.Progression;
 using SAOTRPG.Systems.RunState;
 using SAOTRPG.Systems.Turns;
 using SAOTRPG.UI.GameLog;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Screens;
 
@@ -94,8 +95,7 @@ public static class DeathScreen
             var recentLines = logView.GetRecentEntries(RecapCount);
             if (recentLines.Count > 0)
             {
-                // All three edges must span RecapInner columns. They used to be derived
-                // independently and came out at 46, 52 and 49 columns respectively.
+                // All three edges must span RecapInner columns, so all are built from it.
                 const string RecapTitle = "[ Last Moments ]";
                 string border = new string('-', RecapInner);
                 string recap = $"  +{RecapTitle}{border[RecapTitle.Length..]}+\n";
@@ -125,7 +125,7 @@ public static class DeathScreen
 
         // Universal permadeath: offer a Return-to-menu confirmation. "No"
         // keeps the player on the death screen (cosmetic — they're dead).
-        var returnBtn = new Button
+        var returnBtn = new PlainButton
         {
             Text = " Return to Title ", X = Pos.Center(), Y = buttonY,
             IsDefault = true, SchemeName = ColorSchemes.ButtonName,

@@ -37,7 +37,7 @@ public static class TwoHandedSwordDefinitions
     public static Weapon CreateTyrantDragon() => Make("tyrant_dragon", "Tyrant Dragon", 1500, "Epic", 110, 30, 55,
         B().Add(StatType.Attack, 30).Add(StatType.Strength, 14), "PostMotion-1");
 
-    // ── HR 2H Chain: Matter Dissolver → Titan's Blade → Ifrit → Ascalon.
+    // ── 2H Evolution Chain: Matter Dissolver → Titan's Blade → Ifrit → Ascalon.
 
     // Matter Dissolver, greatsword said to thin the air it cleaves. T1 of the Ascalon chain.
     public static Weapon CreateMatterDissolver() => Make("matter_dissolver", "Matter Dissolver", 2200, "Rare", 120, 15, 70,
@@ -55,29 +55,29 @@ public static class TwoHandedSwordDefinitions
     public static Weapon CreateAscalon() => Make("ascalon", "Ascalon", 22000, "Divine", 999, 80, 180,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 30), "SkillDamage+30");
 
-    // F3 Integral Factor field boss drop. Veined green steel.
+    // F3 field boss drop. Veined green steel.
     public static Weapon CreateVerdantLord() => Make("verdant_lord", "Verdant Lord", 2600, "Rare", 140, 7, 42,
         B().Add(StatType.Attack, 22).Add(StatType.Strength, 10).Add(StatType.Vitality, 6), "CritHeal+8");
 
-    // ── Hollow Fragment / Infinity Moment Legendaries ──────────────
+    // ── Field-boss Legendaries ─────────────────────────────────────
 
-    // Hollow Fragment F87 implement. The saint's immortal sword — immune to crits (flavor).
+    // F87 field-boss drop. The saint's immortal sword — immune to crits (flavor).
     public static Weapon CreateSaintbladeDurandal() => Make("saintblade_durandal", "Saintblade: Durandal", 22000, "Legendary", 250, 84, 170,
         B().Add(StatType.Attack, 85).Add(StatType.Strength, 30).Add(StatType.Vitality, 15), "CritImmune+100");
 
-    // Hollow Fragment F95 implement. Lancelot's holy greatsword.
+    // F95 field-boss drop. Lancelot's holy greatsword.
     public static Weapon CreateStigmabladeArondight() => Make("stigmablade_arondight", "Stigmablade: Arondight", 28000, "Legendary", 260, 92, 175,
         B().Add(StatType.Attack, 90).Add(StatType.Strength, 28).Add(StatType.Dexterity, 22).Add(StatType.Agility, 15), "SkillCooldown-2");
 
-    // Hollow Fragment F96 implement. Sigurd's dragon-slaying blade; pierces defense (flavor).
+    // F96 field-boss drop. Sigurd's dragon-slaying blade; pierces defense (flavor).
     public static Weapon CreateDemonbladeGram() => Make("demonblade_gram", "Demonblade: Gram", 30000, "Legendary", 260, 93, 180,
         B().Add(StatType.Attack, 100).Add(StatType.Strength, 35).Add(StatType.Dexterity, 15), "TrueStrike+15");
 
-    // F40 Dracoflame Elder Wyrm drop (AL Divine Beast tier). Blood-stream greatsword, bleed on swing.
+    // F40 Dracoflame Elder Wyrm drop (Divine Beast tier). Blood-stream greatsword, bleed on swing.
     public static Weapon CreateDemonbladeCrimsonStream() => Make("demonblade_crimson_stream", "Demonblade: Crimson Stream", 16500, "Legendary", 220, 45, 142,
         B().Add(StatType.Attack, 72).Add(StatType.Strength, 28).Add(StatType.Dexterity, 10), "Bleed+30");
 
-    // ── Integral Factor Series (2H Sword entries) ───────────────────
+    // ── Series weapons (2H Sword entries) ───────────────────────────
 
     // F14 Integral Series 2H sword. After Glow — sunset-colored zweihander.
     public static Weapon CreateIntegralAfterGlow() => Make("ths_integral_after_glow", "Integral After Glow", 5100, "Epic", 170, 14, 95,
@@ -89,11 +89,11 @@ public static class TwoHandedSwordDefinitions
 
     // ── Hollow Area Uniques (2H Sword) ───────────────────────────
 
-    // HF F95 Hollow Area. Saintblade: Ragnarok — apex holy doom-blade, peak rare drop.
+    // F95 Hollow Area. Saintblade: Ragnarok — apex holy doom-blade, peak rare drop.
     public static Weapon CreateSaintbladeRagnarok() => Make("ths_saintblade_ragnarok", "Saintblade: Ragnarok", 30000, "Legendary", 265, 90, 180,
         B().Add(StatType.Attack, 95).Add(StatType.Strength, 32).Add(StatType.Vitality, 16).Add(StatType.Dexterity, 18), "HolyDamage+25");
 
-    // ── Hollow Fragment Avatar Weapons (2H Sword) ────────────────
+    // ── Avatar Weapons (2H Sword) ────────────────────────────────
 
     public static Weapon CreateAbsoludiaAvatar() => Make("ths_absoludia_avatar", "Absoludia Avatar", 22500, "Legendary", 245, 84, 170,
         B().Add(StatType.Attack, 84).Add(StatType.Strength, 30).Add(StatType.Dexterity, 16), "ArmorPierce+25");
@@ -109,19 +109,19 @@ public static class TwoHandedSwordDefinitions
     public static Weapon CreateAmbitiousJuggernaut() => Make("ths_ambitious_juggernaut", "Ambitious Juggernaut", 34000, "Legendary", 275, 93, 185,
         B().Add(StatType.Attack, 94).Add(StatType.Strength, 33).Add(StatType.Vitality, 20), "Uninterruptible+50");
 
-    // ── Infinity Moment shop 2H swords ──────────────────────────────
+    // ── Shop 2H swords ──────────────────────────────────────────────
 
-    // IM Epic-band shop weapon. Alpine flower-motif greatsword, cleaving arcs.
+    // Epic-band shop weapon. Alpine flower-motif greatsword, cleaving arcs.
     public static Weapon CreateFasislawine() => Make("ths_fasislawine", "Fasislawine", 5200, "Epic", 165, 36, 132,
         B().Add(StatType.Attack, 58).Add(StatType.Strength, 18).Add(StatType.Dexterity, 10), "Cleave+30");
 
-    // IM Legendary-band shop weapon. White-knight cavalry blade, armor-piercing.
+    // Legendary-band shop weapon. White-knight cavalry blade, armor-piercing.
     public static Weapon CreateWiceRitter() => Make("ths_wice_ritter", "Wice Ritter", 19500, "Legendary", 225, 78, 165,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 26).Add(StatType.Dexterity, 14), "ArmorPierce+20");
 
-    // ── Infinity Moment LAB 2H sword (non-enhanceable) ──────────────
+    // ── LAB 2H sword (non-enhanceable) ──────────────────────────────
 
-    // IM F92 floor-boss LAB reward. Cross-hilt cathedral greatsword.
+    // F92 floor-boss LAB reward. Cross-hilt cathedral greatsword.
     public static Weapon CreateSacredCross()
     {
         var w = Make("ths_sacred_cross", "Sacred Cross", 26000, "Legendary", 250, 85, 178,
@@ -131,25 +131,25 @@ public static class TwoHandedSwordDefinitions
         return w;
     }
 
-    // ── Memory Defrag Originals (2H Sword entries) ─────────────────────
+    // ── Uniques (2H Sword entries) ─────────────────────────────────────
 
-    // MD Legendary. Causality-motif greatsword, piercing through luck.
+    // Legendary. Causality-motif greatsword, piercing through luck.
     public static Weapon CreateSwordOfCausality() => Make("ths_sword_of_causality", "Sword of Causality", 23000, "Legendary", 245, 82, 168,
         B().Add(StatType.Attack, 84).Add(StatType.Strength, 28).Add(StatType.Dexterity, 16), "TrueStrike+20");
 
-    // ── Fractured Daydream — Character Core Canon (2H Sword) ───────────
+    // ── Companion signature weapons (2H Sword) ─────────────────────────
 
-    // Heathcliff canon — Flame Lord. F80+ Legendary drop.
+    // Heathcliff's Flame Lord. F80+ Legendary drop.
     public static Weapon CreateFlameLord() => Make("ths_flame_lord", "Flame Lord", 23500, "Legendary", 245, 80, 170,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 30).Add(StatType.Vitality, 14), "Burn+20");
 
-    // ── Alicization Lycoris Normal Raid (2H Sword) — Epic F70-85 ────────
+    // ── Raid drops (2H Sword) — Epic F70-85 ─────────────────────────────
 
     // Sacred Inferno — consecrated flame-edged greatsword.
     public static Weapon CreateSacredInferno() => Make("ths_sacred_inferno", "Sacred Inferno", 7400, "Epic", 185, 72, 130,
         B().Add(StatType.Attack, 65).Add(StatType.Strength, 22).Add(StatType.Vitality, 10), "Burn+20");
 
-    // ── Alicization Lycoris Extreme Raid (2H Sword) — Legendary F85-95 ──
+    // ── Extreme Raid drops (2H Sword) — Legendary F85-95 ────────────────
 
     // Demonslayer — wide-bladed demonic-bane greatsword.
     public static Weapon CreateDemonslayer() => Make("ths_demonslayer", "Demonslayer", 19800, "Legendary", 230, 86, 162,
@@ -159,19 +159,19 @@ public static class TwoHandedSwordDefinitions
     public static Weapon CreateBlazewyrmGreatsword() => Make("ths_blazewyrm_greatsword", "Blazewyrm Greatsword", 19500, "Legendary", 228, 85, 160,
         B().Add(StatType.Attack, 80).Add(StatType.Strength, 26).Add(StatType.Vitality, 10), "Burn+30");
 
-    // ── AL Relic Drops (2H) Legendary F80-95 — covered under Object Eraser below, no additional entries.
+    // ── Relic Drops (2H), Legendary F80-95: Object Eraser below fills this band.
 
-    // ── AL DLC (2H) Legendary F85-99 ─
+    // ── Late Legendaries (2H) — F85-99 ─
 
-    // Purgatorial Greatsword — penitential flame-bound DLC greatsword.
+    // Purgatorial Greatsword — penitential flame-bound greatsword.
     public static Weapon CreatePurgatorialGreatsword() => Make("ths_purgatorial_greatsword", "Purgatorial Greatsword", 20200, "Legendary", 232, 87, 165,
         B().Add(StatType.Attack, 84).Add(StatType.Strength, 26).Add(StatType.Vitality, 14), "HolyDamage+25");
 
-    // Lifestream Greatsword — DLC greatsword, slow-regen lifeflow motif.
+    // Lifestream Greatsword — greatsword, slow-regen lifeflow motif.
     public static Weapon CreateLifestreamGreatsword() => Make("ths_lifestream_greatsword", "Lifestream Greatsword", 21500, "Legendary", 240, 88, 170,
         B().Add(StatType.Attack, 86).Add(StatType.Strength, 26).Add(StatType.Vitality, 18), "HPRegen+5");
 
-    // ── SAO Lost Song Mythological (2H Sword) — Legendary F75-99 ───────
+    // ── Mythological (2H Sword) — Legendary F75-99 ─────────────────────
 
     // Object Eraser — annihilator-class greatsword, ignores armor layers.
     public static Weapon CreateObjectEraser() => Make("ths_object_eraser", "Object Eraser", 22000, "Legendary", 240, 88, 172,

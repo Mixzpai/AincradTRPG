@@ -2,7 +2,7 @@ using SAOTRPG.Items.Materials;
 
 namespace SAOTRPG.Items.Definitions;
 
-// Cooking pantry ingredients (vendor-bought or gathered) + canon mob-drop
+// Cooking pantry ingredients (vendor-bought or gathered) + mob-drop
 // materials. Consumed by CookingSystem recipes and crafting.
 public static class IngredientDefinitions
 {
@@ -41,7 +41,7 @@ public static class IngredientDefinitions
     public static MobDrop CreateFish()          => Make("fish",          "Fish",          10, "Common",   source: "Water tile");
     public static MobDrop CreateRagoutRabbitMeat()=> Make("ragout_rabbit_meat", "Ragout Rabbit Meat", 2500, "Legendary", tier: 5, maxStacks: 3, source: "Ragout Rabbit", drop: 0.02f);
 
-    // ── Canon monster materials — F1-F5 ──────────────────────────────────
+    // ── Monster materials — F1-F5 ────────────────────────────────────────
     public static MobDrop CreateNepentOvule()   => Make("nepent_ovule",  "Little Nepent's Ovule", 50,  "Rare",  tier: 2, maxStacks: 10, source: "Three-Pronged Nepent", drop: 0.15f);
     public static MobDrop CreateBoarHide()      => Make("boar_hide",     "Boar Hide",     12, "Common",   source: "Frenzy Boar", drop: 0.6f);
     public static MobDrop CreateBoarTusk()      => Make("boar_tusk",     "Boar Tusk",     22, "Uncommon", source: "Frenzy Boar", drop: 0.3f);

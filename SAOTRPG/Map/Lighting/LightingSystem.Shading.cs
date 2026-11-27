@@ -8,71 +8,61 @@ namespace SAOTRPG.Map.Lighting;
 
 // The directional half of the lighting model.
 //
-// Ambient is the sky: one colour everywhere, no bearing, so a forest canopy lit the ground
-// exactly as brightly as the clearing beside it and nothing on the map cast a shadow at all
-// except by withholding torchlight. This file adds the two terms that give the world relief —
-// a sky body with a bearing, and a small ambient-occlusion term so a cell hemmed in by walls
-// sits darker than one in the open.
+// Ambient is the sky: one colour everywhere, no bearing, so on its own a forest canopy would
+// light the ground exactly as brightly as the clearing beside it. This file adds the two terms
+// that give the world relief — a sky body with a bearing, and a small ambient-occlusion term so
+// a cell hemmed in by walls sits darker than one in the open.
 //
-// ONE SWEEP SERVES BOTH BODIES. The sun owns the day and a full moon owns the night, and because
+// One sweep serves both bodies. The sun owns the day and a full moon owns the night, and because
 // a full moon traces the same half-circle half a cycle later, DayNightCycle answers direction,
 // decay and depth for whichever is up. The only thing this file branches on is which per-channel
 // loss the shadow spends — moon shade goes cooler than sun shade, over an ambient a tenth as
 // bright.
 //
-// WHY A SWEEP AND NOT A RAY WALK. Sampling backwards along the sun vector from every cell needs
-// an inner loop per cell — on the order of a million opacity probes per turn across the lighting
-// ROI, which is not affordable beside a turn that already costs about 4 ms. The same field falls
-// out of a single ordered pass instead: the shadow ARRIVING at a cell is a weighted blend of the
-// shadow LEAVING the line one step upwind of it. That is O(1) per cell.
+// Why a sweep and not a ray walk: sampling backwards along the sun vector from every cell needs
+// an inner loop per cell, on the order of a million opacity probes per turn across the lighting
+// ROI. The same field falls out of a single ordered pass instead: the shadow arriving at a cell
+// is a weighted blend of the shadow leaving the line one step upwind of it. That is O(1) per
+// cell.
 //
-// THE SWEEP RUNS ALONG THE SKY BODY'S MAJOR AXIS, AND THAT IS THE LOAD-BEARING CHOICE. Sweeping
-// row-major whatever the bearing was tried first and is subtly wrong: the shadow's lateral
-// spread has to come from cells on BOTH sides of it, and a causal pass only has the line it has
-// already finished. When the bearing is near-vertical those two lines straddle the shadow and
-// all is well, but when it is near-horizontal only one side exists — so at eight of the day's
-// twenty-five bearings a shadow fringed upward and was hard-edged underneath. Measured: the
-// downhill side read exactly 0.0% while the uphill side read 9%. Stepping along the major axis
-// instead makes the upwind line perpendicular to the flow at EVERY bearing, so both lateral
-// neighbours are always in hand and the penumbra straddles the shadow by construction.
+// The sweep runs along the sky body's major axis, and that is the load-bearing choice. The
+// shadow's lateral spread has to come from cells on both sides of it, and a causal pass only has
+// the line it has already finished; a row-major pass at a near-horizontal bearing has only one
+// side, so the shadow would fringe on one side and be hard-edged on the other. Stepping along the
+// major axis makes the upwind line perpendicular to the flow at every bearing, so both lateral
+// neighbours are always in hand and the penumbra straddles the shadow by construction. It also
+// leaves no loop-carried dependency: nothing in the inner loop reads a cell it just wrote.
 //
-// It also removes the loop-carried dependency the row-major version had — nothing in the inner
-// loop reads a cell the inner loop just wrote — which is why the correct version is not the
-// slower one.
+// The blur is the penumbra. A purely directional chain is one cell wide with a hard edge.
+// Feeding a fixed share back from the two lateral neighbours spreads the shadow as it travels, so
+// the core stays dark at the caster's foot and the edge softens with distance.
 //
-// THE BLUR IS THE PENUMBRA. A purely directional chain is one cell wide with a hard edge, which
-// is the same blockiness in a diagonal costume. Feeding a fixed share back from the two lateral
-// neighbours spreads the shadow as it travels, so the core stays dark at the caster's foot and
-// the edge softens with distance.
-// PATH-D-PORT: the visual contract is a per-tile SHADOW SCALAR in [0,1] multiplied into the
-// ambient term before any point light is added, plus a per-channel loss that makes shadow cooler
-// than open ground, plus a contact term counting sight-blocking neighbours. A pixel renderer would
-// naturally compute this per pixel and interpolate; that is a different look, not a free upgrade —
-// hard tile edges are what make this read as roguelike illumination rather than as a lit 3D scene.
-// Whatever computes it, the ordering must hold: shadow and contact scale AMBIENT ONLY, point
-// lights add on top, so a torch fills a shadow back in.
+// The picture depends on a per-tile shadow scalar in [0,1] multiplied into the ambient term
+// before any point light is added, plus a per-channel loss that makes shadow cooler than open
+// ground, plus a contact term counting sight-blocking neighbours. Computing this per pixel and
+// interpolating would be a different look: hard tile edges are what make it read as roguelike
+// illumination rather than as a lit 3D scene. The ordering must hold: shadow and contact scale
+// ambient only, point lights add on top, so a torch fills a shadow back in.
 public sealed partial class LightingSystem
 {
     // How far upwind of the lit region the sweep starts, so a caster just outside it still lays
     // its shadow in.
     //
-    // A truncated history is what would make shadows MOVE as the player walks — the sweep's
-    // origin travels with them, so a cell with too few steps behind it changes value every step
-    // and the damage-tracked tile layer rebuilds the viewport for nothing. But do not credit this
-    // constant with preventing that: the lighting ROI is far wider than the viewport, so a cell
-    // the player can actually SEE already carries forty-odd steps before this margin is added.
-    // Sabotage proved the point — cutting it to 2 moved nothing past the renderer's quantizer.
-    // It is belt-and-braces on top of the ROI, and it is the ROI that has to stay generous.
-    // SeedProbe §24 measures the drift directly rather than trusting either.
+    // A truncated history would make shadows move as the player walks — the sweep's origin
+    // travels with them, so a cell with too few steps behind it changes value every step and the
+    // damage-tracked tile layer rebuilds the viewport for nothing. The lighting ROI is far wider
+    // than the viewport, so a cell the player can see already carries plenty of history before
+    // this margin is added: this is a margin on top of the ROI, and it is the ROI that has to
+    // stay generous.
     private const int SweepMargin = 20;
 
     // Deepest ambient occlusion, at a cell walled in on every side of its 5x5. Small on purpose:
     // this is contact shading that reads as depth in a corner, not a second shadow system.
     private const float AoDepth = 0.32f;
 
-    // How far contact shading reaches. It counted the four orthogonal neighbours, so every wall
-    // wore a hard one-cell dark ring and a diagonal wall shaded nothing; the 5x5 below, weighted
-    // by inverse squared distance, fades it over two cells and lets corners shade round.
+    // How far contact shading reaches. The 5x5 below, weighted by inverse squared distance, fades
+    // it over two cells and lets corners shade round; the four orthogonal neighbours alone would
+    // give every wall a hard one-cell dark ring and shade nothing beside a diagonal wall.
     public const int ContactRadius = 2;
     public const float ContactFloor = 1f - AoDepth;
 
@@ -118,75 +108,63 @@ public sealed partial class LightingSystem
         return 1f - AoDepth * ContactNorm * occ;
     }
 
-    // How much the penumbra spreads per step of the sweep, as a VARIANCE in cells squared.
+    // How much the penumbra spreads per step of the sweep, as a variance in cells squared.
     //
-    // IT IS A VARIANCE AND NOT A BLUR SHARE, AND THAT IS THE WHOLE POINT. The four taps below
-    // reconstruct the upwind sample at a FRACTIONAL minor offset by linear interpolation, and
-    // linear interpolation is not free: it adds f(1-f) of variance of its own, zero at drift 0
-    // and 1 and a quarter of a cell squared at drift 0.5. So a fixed blur share made the
-    // penumbra's WIDTH a function of the sun's bearing — hard-edged twice a quarter-day and
-    // softest between, with nothing a player could see a cause for. Naming the total instead and
-    // spending the blur on whatever the interpolation did NOT add holds the width constant at
-    // exactly the same four taps: SeedProbe's light/the-penumbra-keeps-its-width-across-the-day
-    // measures 1.40-1.43 cells over the whole day (1.02x), against 1.04-1.55 (1.50x) with the
-    // share pinned.
+    // A variance, not a blur share. The four taps below reconstruct the upwind sample at a
+    // fractional minor offset by linear interpolation, and linear interpolation adds f(1-f) of
+    // variance of its own: zero at drift 0 and 1, a quarter of a cell squared at drift 0.5. A
+    // fixed blur share would therefore make the penumbra's width a function of the sun's bearing.
+    // Naming the total and spending the blur on whatever the interpolation did not add holds the
+    // width constant across the day with the same four taps.
     //
-    // The value is the old dial's MEAN over a day (0.20 + the mean of f(1-f)), so the shadow
-    // looks as it did on average and only stops breathing. Raising it softens every penumbra;
-    // it must stay above 0.25 or the compensation would need a negative blur share at drift 0.5.
+    // The value is 0.20 plus the day's mean of f(1-f). Raising it softens every penumbra; it
+    // must stay above 0.25 or the compensation would need a negative blur share at drift 0.5.
     private const float PenumbraSpread = 0.3667f;
 
     // Below this the sky contributes nothing worth a sweep — underground, at the two handovers
     // between sun and moon, and on a starless night where nothing directional is up at all.
     private const float MinSkyShadow = 0.002f;
 
-    // A SHADOW IS NOT A DIMMER SWITCH. Losing the sun leaves a cell lit by the sky, which is
+    // A shadow is not a dimmer switch. Losing the sun leaves a cell lit by the sky, which is
     // cool, so shadowed ground shifts blue as well as dark — that is what makes a shadow read as
     // light behaving rather than as the map being turned down. Red loses the most, blue least.
-    // Scaling all three channels equally was tried first and comes out muddy: grey-brown
-    // grassland just becomes darker grey-brown, and the eye reads that as a rendering fault.
+    // Scaling all three channels equally comes out muddy: grey-brown grassland just becomes
+    // darker grey-brown, and the eye reads that as a rendering fault.
     private const float ShadowLossR = 1.00f;
     private const float ShadowLossG = 0.92f;
     private const float ShadowLossB = 0.68f;
 
-    // AND A MOON SHADOW GOES COOLER STILL. Night ambient is already blue-dominant (18, 22, 45),
-    // so a shadow that spent the channels the way the sun's does would come out as a slightly
-    // darker blue and read as the brightness being turned down. Taking nearly all of the red and
-    // barely half of the blue keeps moonlit shade separable from open moonlit ground at a tenth
-    // of the daylight amplitude, which is the only budget the night has.
-    // PATH-D-PORT: the night's shade is a HUE shift as much as a level one. A renderer that
-    // reproduces the depth and drops the per-channel split will draw a night with no relief in it.
+    // A moon shadow goes cooler still. Night ambient is already blue-dominant (18, 22, 45), so a
+    // shadow that spent the channels the way the sun's does would come out as a slightly darker
+    // blue and read as the brightness being turned down. Taking nearly all of the red and barely
+    // half of the blue keeps moonlit shade separable from open moonlit ground at a tenth of the
+    // daylight amplitude, which is the only budget the night has. The night's shade is a hue
+    // shift as much as a level one: the depth without the per-channel split draws a night with no
+    // relief in it.
     private const float MoonShadowLossR = 1.00f;
     private const float MoonShadowLossG = 0.86f;
     private const float MoonShadowLossB = 0.52f;
 
     // ── How tall the thing casting is ─────────────────────────────────────────────────────────
-    // Everything used to cast the same shadow. A boulder threw exactly what a mountainside threw,
-    // because the sweep asked one question — does this cell block sight — and a bool has no room
-    // for a second answer.
+    // A caster emits its own height instead of a flat 1, so a boulder does not throw what a
+    // mountainside throws. Because the shadow fades geometrically that buys length as well as
+    // depth: a shadow is visible until height * decay^m falls under the renderer's colour step,
+    // so halving the height takes ln 2 / ln(1/decay) cells off the end of it — about seven at a
+    // low sun, five at noon. Per-caster decay is not available: the sweep carries one line of
+    // history and a cell's shadow is a blend of several origins, so there is nowhere to keep whose
+    // shadow this was. Emission is the O(1) form.
     //
-    // A caster now EMITS its own height instead of a flat 1, and because the shadow fades
-    // geometrically that buys length as well as depth for free: a shadow is visible until
-    // height * decay^m falls under the renderer's colour step, so halving the height takes
-    // ln 2 / ln(1/decay) cells off the end of it — about seven at a low sun, five at noon.
-    // Per-caster DECAY would be the other way to spend it and is not available: the sweep carries
-    // one line of history and a cell's shadow is a blend of several origins, so there is nowhere
-    // to keep whose shadow this was. Emission is the O(1) form.
+    // The table is covered by the light cache without the cache knowing it exists, the same shape
+    // as folding the moon into SunState. It is a pure function of the tile types, it is rebuilt
+    // exactly when GameMap.SightVersion moves, and that version is already a cache key, so a
+    // field cached under one version can never be served against a table built under another.
     //
-    // THE TABLE IS COVERED BY THE LIGHT CACHE WITHOUT THE CACHE KNOWING IT EXISTS, which is the
-    // same shape as folding the moon into SunState. It is a pure function of the tile types, it
-    // is rebuilt exactly when GameMap.SightVersion moves, and that version is already a cache
-    // key — so a field cached under one version can never be served against a table built under
-    // another. Adding a key would have been the alternative, and a second thing to remember.
-    //
-    // PATH-D-PORT: the contract is that a caster contributes a shadow scaled by its own height in
-    // [0,1] and that the field takes the MAX of what a cell emits and what arrives at it, so a
-    // low caster standing in a high caster's shadow never shortens it.
+    // A caster contributes a shadow scaled by its own height in [0,1], and the field takes the max
+    // of what a cell emits and what arrives at it, so a low caster standing in a high caster's
+    // shadow never shortens it.
     // Anything that does not block sight casts nothing, so this is only ever asked about the six
-    // types GameMap.ComputeOpaque admits. An unlisted one falls to full height, which is exactly
-    // what every caster did before this table existed — so a new sight-blocker behaves as it
-    // always would have until somebody decides otherwise. SeedProbe derives the opaque set from
-    // the map itself and fails if one of them is missing a deliberate entry.
+    // types GameMap.ComputeOpaque admits. An unlisted one falls to full height, so a new
+    // sight-blocker casts a full shadow until it is given an entry.
     public static float CasterHeightOf(TileType t) => t switch
     {
         TileType.Mountain => 1.00f,   // a mountainside: the longest thing on any floor
@@ -209,26 +187,24 @@ public sealed partial class LightingSystem
     private GameMap? _casterHeightMap;
     private readonly List<int> _casterDirty = new();
 
-    // ONE CELL, NOT THE WHOLE FLOOR. Rebuilding the table whenever the sight version moved was
-    // correct and cost 3.6 ms per tile edit in Release on a 945x945 floor — against a turn of 1
-    // to 4 ms, and mining is a repeated action, so it roughly doubled a mining strike. GameMap
-    // patches its own opacity table one cell at a time for exactly this reason; this follows it.
+    // One cell, not the whole floor: a full table rebuild per tile edit is too slow for a
+    // repeated action like mining, so an edit patches one cell, as GameMap does for its own
+    // opacity table.
     //
-    // THE PATCH IS DEFERRED RATHER THAN APPLIED HERE, because GameMap raises this event BEFORE it
-    // updates its opacity table — so at this moment the answer to "does that cell block sight
-    // now" is still the old one, and the cell would be written from stale data.
+    // The patch is deferred rather than applied here, because GameMap raises this event before it
+    // updates its opacity table, so at this moment the answer to "does that cell block sight now"
+    // is still the old one, and the cell would be written from stale data.
     //
     // Dropping the cell without advancing the version is what makes the cap safe: the stamp then
     // trails the map's and the next sweep rebuilds everything.
     //
-    // THE STAMP ONLY ADVANCES WHEN THIS EVENT ACCOUNTS FOR THE WHOLE MOVE. SetTileType bumps the
+    // The stamp only advances when this event accounts for the whole move. SetTileType bumps the
     // sight version by one and then raises this, so a version exactly one past the stamp is this
-    // edit and nothing else. Anything further is a bump that raised no event — OpenDoor at
-    // runtime, InvalidateOpacity and RebuildOpacity in mapgen — whose cell is in no list.
-    // Stamping over it turned the full rebuild it owed into a one-cell patch, so an opened door
-    // kept casting a closed door's shadow whenever a mining strike or a trap flip landed in the
-    // following turn. Leaving the stamp behind is what makes the next sweep rebuild everything.
-    // TileVerifyProbe --light section 6 drives both routes.
+    // edit and nothing else. Anything further is a bump that raised no event (OpenDoor at
+    // runtime, InvalidateOpacity and RebuildOpacity in mapgen) whose cell is in no list; stamping
+    // over it would turn the full rebuild it owes into a one-cell patch, and an opened door would
+    // keep casting a closed door's shadow. Leaving the stamp behind makes the next sweep rebuild
+    // everything.
     private void OnCasterTileChanged(int x, int y, TileType oldType, TileType newType)
     {
         if (_casterHeightMap is not { } m) return;
@@ -239,7 +215,7 @@ public sealed partial class LightingSystem
 
     private byte HeightAt(ReadOnlySpan<bool> op, GameMap map, int i)
     {
-        if (!op[i]) return 0;                     // opacity decides WHETHER, the type decides how much
+        if (!op[i]) return 0;                     // opacity decides whether, the type decides how much
         int y = i / Width;
         return (byte)MathF.Round(CasterHeightOf(map.Tiles[i - y * Width, y].Type) * 255f);
     }
@@ -255,7 +231,7 @@ public sealed partial class LightingSystem
         {
             // A LightingSystem belongs to exactly one GameMap and is constructed by it, so the
             // subscription cannot outlive its publisher and adds no retention of its own. The
-            // swap arm is defence against a future caller, not a case that happens today.
+            // swap arm covers a caller that hands it a different map.
             if (_casterHeightMap != null) _casterHeightMap.TileTypeChanged -= OnCasterTileChanged;
             _casterHeightMap = map;
             map.TileTypeChanged += OnCasterTileChanged;
@@ -291,21 +267,14 @@ public sealed partial class LightingSystem
     }
 
     // -- Indirect light -----------------------------------------------------------------------
-    // A SHADOWED CELL BESIDE A BRIGHTLY LIT ONE WAS EXACTLY AS DARK AS ONE IN THE MIDDLE OF A
-    // WOOD. Measured in the plainest geometry there is - a long wall with a single gap in it,
-    // under a noon sun - the shadow arriving four cells to the side of the bright streak through
-    // the gap and eight cells to the side read 0.8650 and 0.8650: identical to four decimal
-    // places, though one of them is twice as far from any light as the other. The sweep answers
-    // "how much of the sun is blocked here" and nothing else, so light that lands on open ground
-    // stays there.
+    // The sweep answers "how much of the sun is blocked here" and nothing else, so on its own a
+    // shadowed cell beside a brightly lit one would be exactly as dark as one in the middle of a
+    // wood. Real shade is light that arrived by a longer route: a lone tree's shadow on a bright
+    // lawn is pale because the lawn all around it throws light back into it, while the same tree
+    // in the middle of a thicket casts a shadow with nothing to fill it. That is the cue
+    // separating a leaf's shadow from a building's.
     //
-    // Real shade is not the absence of light, it is light that arrived by a longer route: a lone
-    // tree's shadow on a bright lawn is pale because the lawn all around it throws light back
-    // into it, while the same tree in the middle of a thicket casts a shadow with nothing to fill
-    // it. That is the cue separating a leaf's shadow from a building's, and it was missing - both
-    // read at exactly the depth the caster's height dictates.
-    //
-    // WHAT IT IS: one gather of the direct light landing nearby, given back as a REDUCTION of the
+    // What it is: one gather of the direct light landing nearby, given back as a reduction of the
     // shadow rather than as light of its own. That distinction is the whole safety argument.
     // Written as
     //
@@ -313,39 +282,32 @@ public sealed partial class LightingSystem
     //
     // it is exactly zero wherever `arriving` is zero, so open ground still reads the ambient
     // colour byte for byte, and exactly zero where `nearbyLit` is zero, so the middle of a wall
-    // mass keeps the full depth it had. Only a shadow with light around it moves. Adding a bounce
-    // TERM instead would have brightened the whole map, which is a gamma knob wearing a lighting
-    // feature's clothes.
+    // mass keeps its full depth. Only a shadow with light around it moves. An additive bounce term
+    // would brighten the whole map instead.
     //
-    // WHY A GATHER AND NOT A SECOND SWEEP: indirect light has no direction to sweep along. It is
-    // the low-frequency average of what is lit nearby, which is the first-order gather every
-    // grid-based method makes - one Jacobi iteration of a radiosity solve, an irradiance probe, a
-    // propagation volume's first bounce. What is borrowed is the SHAPE; nothing else transfers,
-    // because those work per pixel over a frame and this is per tile over a turn.
+    // Why a gather and not a second sweep: indirect light has no direction to sweep along. It is
+    // the low-frequency average of what is lit nearby, the first-order gather of grid-based
+    // methods (one Jacobi iteration of a radiosity solve), computed per tile over a turn.
     //
-    // AND IT IS O(1) PER CELL, WHICH THE RADIUS DOES NOT CHANGE. A separable running window costs
-    // one add, one subtract and one multiply per cell per axis whatever its width, so the radius
-    // below is chosen for how it LOOKS and buys nothing back by being small. Both passes run
-    // row-major - the vertical one carries a row-length accumulator and streams rows in and out
-    // rather than walking columns - because a column walk over a 500-cell-wide region misses
-    // cache on every read.
+    // It is O(1) per cell whatever the radius: a separable running window costs one add, one
+    // subtract and one multiply per cell per axis whatever its width, so the radius below is
+    // chosen for how it looks. Both passes run row-major — the vertical one carries a row-length
+    // accumulator and streams rows in and out rather than walking columns — because a column walk
+    // over a wide region misses cache on every read.
     //
-    // A CELL THAT BLOCKS SIGHT CONTRIBUTES NOTHING TO THE GATHER, and that is what makes the term
-    // do two jobs for one price. A wall is not a light source, so a neighbourhood that is mostly
-    // wall gathers little and its shade stays deep, while an open clearing gathers nearly
-    // everything and fills its shadows in. That is large-scale occlusion at ~15 cells, against
-    // the contact term's one, and the two do not overlap.
+    // A cell that blocks sight contributes nothing to the gather, so the term does two jobs. A
+    // wall is not a light source, so a neighbourhood that is mostly wall gathers little and its
+    // shade stays deep, while an open clearing gathers nearly everything and fills its shadows
+    // in. That is large-scale occlusion at ~15 cells, against the contact term's one, and the two
+    // do not overlap.
     //
-    // WHAT IT GETS WRONG, said plainly: a running window does not know about walls, so light can
-    // reach across a partition it should not have crossed. A diffusion that respects opacity
-    // would remove it and costs a pass per cell of reach; that is not worth paying to delete an
-    // artefact smaller than the effect itself and of the same sign as the sky bouncing over the
-    // wall in the first place. SeedProbe measures the leak rather than leaving it as prose.
+    // A running window does not know about walls, so light can reach across a partition it should
+    // not cross. A diffusion that respects opacity would cost a pass per cell of reach; the leak is
+    // smaller than the effect itself and of the same sign as the sky bouncing over the wall.
     //
-    // PATH-D-PORT: the contract is one low-frequency gather of `1 - shadow` over cells that do
-    // not block sight, applied MULTIPLICATIVELY to the shadow and never additively to the light.
-    // A renderer with a real GI pass should replace the gather and keep the application - it is
-    // the multiplicative form that guarantees open ground is untouched.
+    // The picture depends on one low-frequency gather of `1 - shadow` over cells that do not
+    // block sight, applied multiplicatively to the shadow and never additively to the light: it
+    // is the multiplicative form that guarantees open ground is untouched.
     //
     // Nothing new enters the light cache's key. The field is a pure function of `_shadow` and the
     // opacity table, and both are covered already - the first through SunState and the ambient
@@ -355,34 +317,16 @@ public sealed partial class LightingSystem
 
     // Deepest share of a shadow its surroundings may give back.
     //
-    // ONE VALUE FOR BOTH SKIES, AND THAT WAS NOT THE FIRST ANSWER. Splitting it looked obviously
-    // right: the night's shadow is only 4.1 of 255 deep at the foot of a lone caster, about two
-    // of the renderer's own colour steps, while the day's is 47 - so the day can spend a fifth of
-    // its depth without anyone noticing and the night plainly cannot. A day-only lift was built
-    // and measured, and it is wrong for a reason that has nothing to do with either number: it
-    // puts the two skies on DIFFERENT LIGHTING MODELS, so every day-against-night comparison
-    // stops being commensurable. SeedProbe found it immediately - the moon's shadow became a
-    // LARGER share of its own sky than the sun's (0.22 against 0.20), not because the night had
-    // changed but because only the day had. One sweep already serves both bodies; one gather does
-    // too, and that is what keeps the night a fainter version of the day rather than a different
-    // renderer.
-    //
-    // Measured with a single lift, on a lone caster in a wholly open field - the geometry that
-    // gathers most, so the worst case for the night:
-    //
-    //              loss at the caster's foot      share of its own sky      shallowest / deepest
-    //   lift 0.00    day 47.0    night 4.1          0.26 / 0.22               1.81 / 6.98 dL*
-    //   lift 0.30    day 36.8    night 3.3          0.20 / 0.17               1.59 / 6.21
-    //
-    // The ratio the night is held to is preserved (0.85 of the day's share, against 0.85 before),
-    // and the night's shade still clears the ~1.0 dL* threshold of vision by 1.6x at its faintest
-    // bearing and 6.2x at its deepest. What the night gives up is the LONE-CASTER case in wholly
-    // open ground; the deep shade it depends on comes from masses of wall and rock, which gather
-    // little and are barely touched. That is the feature working rather than a cost of it.
+    // One value for both skies. The night's shadow is far shallower than the day's, but a
+    // day-only lift would put the two skies on different lighting models, and the moon's shadow
+    // would become a larger share of its own sky than the sun's. One sweep already serves both
+    // bodies; one gather does too, which keeps the night a fainter version of the day rather than
+    // a different renderer. What the night gives up is the lone-caster case in wholly open
+    // ground; the deep shade it depends on comes from masses of wall and rock, which gather little
+    // and are barely touched.
     private const float BounceLift = 0.30f;
 
-    // The dials themselves, so a check can state its expectation in terms of the shipped values
-    // rather than a copy of them. Read-only: these are measurement seams, not setters.
+    // The dials themselves, read-only. Read by the verification probes.
     public static float IndirectLift => BounceLift;
     public static int IndirectRadius => BounceRadius;
 
@@ -390,14 +334,11 @@ public sealed partial class LightingSystem
     // vertical window slides over; and two row-length scratches.
     private float[]? _bounce, _bounceRing, _bounceAcc, _bounceSrc;
 
-    // THE HORIZONTAL PASS IS STREAMED ONE ROW AHEAD OF THE VERTICAL WINDOW, NOT MATERIALISED.
+    // The horizontal pass is streamed one row ahead of the vertical window, not materialised.
     // The window at output row y spans rows [y-R, y+R] and takes row y+1+R in as row y-R leaves,
     // so only 2R+2 gathered rows are ever live. Holding them in a ring keeps the pass out of main
-    // memory: the region-sized intermediate used to be written in full and read back (851 KB
-    // each way at 316x91), and the gathered field was then read a third time by the apply pass.
-    // Now a row is applied the moment its gather completes, while it is still in cache. Every
-    // row is gathered exactly as before and the window's adds and subtracts run in the same
-    // order, so the field is byte-identical.
+    // memory: a row is applied the moment its gather completes, while it is still in cache,
+    // instead of a region-sized intermediate being written in full and read back.
     private const int BounceRingRows = 2 * BounceRadius + 2;
 
     // One row of the horizontal gather — the direct light landing on transparent ground, averaged
@@ -405,14 +346,14 @@ public sealed partial class LightingSystem
     private void GatherRow(ReadOnlySpan<bool> op, int rx0, int ry0, int rw, int y, float[] dst, int dstBase)
     {
         const int R = BounceRadius;
-        // ONE ROW OF SOURCE VALUES, NOT A WHOLE REGION OF THEM: a row is a couple of kilobytes and
+        // One row of source values, not a whole region of them: a row is a couple of kilobytes and
         // stays in cache between being built and being slid over.
         //
-        // BRANCHLESS, for the reason ApplyRow is: whether a cell blocks sight is DATA and not a
+        // Branchless, for the reason ApplyRow is: whether a cell blocks sight is data and not a
         // pattern, so a ternary is an unpredictable branch on every cell of the region. Reading
         // the bool as a byte and multiplying costs one instruction and never mispredicts.
-        // Building the row's source once also halves the loads — the slide used to re-derive
-        // every value from both arrays twice, once entering the window and once leaving it.
+        // Building the row's source once also means the slide does not re-derive each value from
+        // both arrays twice, once entering the window and once leaving it.
         ref bool opRef = ref Unsafe.Add(ref MemoryMarshal.GetReference(op), (ry0 + y) * Width + rx0);
         ref float shRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_shadow!), y * rw);
         ref float srcRef = ref MemoryMarshal.GetArrayDataReference(_bounceSrc!);
@@ -426,7 +367,7 @@ public sealed partial class LightingSystem
         // A sight-blocking cell contributes nothing but still occupies its place in the window,
         // which is what makes a wall-heavy neighbourhood gather less.
         //
-        // THE DIVISOR IS CONSTANT EXCEPT AT THE TWO ENDS, so the interior takes a reciprocal
+        // The divisor is constant except at the two ends, so the interior takes a reciprocal
         // multiply and only the first and last R columns divide at all. A divide is several times
         // a multiply and this runs over every cell of the padded region.
         int lastX = rw - 1;
@@ -484,53 +425,53 @@ public sealed partial class LightingSystem
     // can be blended. Allocated on first use — most bearings never touch it.
     private float[]? _shadowAlt;
 
-    // ── Measurement seam ───────────────────────────────────────────────────────────────────
+    // ── The last sweep's region ────────────────────────────────────────────────────────────
     // Where the last sweep's region sat, so a reader can index _shadow at all: the buffer is
     // region-local and the region travels with the player. Written by the sweep, read only by
     // TryGetShadingTerms below.
     private int _shadowRx0, _shadowRy0, _shadowRw, _shadowRh;
     private bool _shadowSwept;
 
-    // Shadow leaving the previous / current line of the sweep, indexed by the MINOR coordinate.
+    // Shadow leaving the previous / current line of the sweep, indexed by the minor coordinate.
     // Padded by two at each end so the four taps never fall off.
     private float[]? _linePrev, _lineCur;
 
     // True when the flat Span.Fill still applies — the player has turned shading off.
     private static bool ShadingEnabled => UserSettings.Current.TerrainShading;
 
-    // Sky shadows plus ambient occlusion over the region, written into the light grid.
-    private void FillShadedRegion(GameMap map, LightRgb ambient, int x0, int y0, int x1, int y1)
+    // Sky shadows plus ambient occlusion over the region, written into the light grid. The sky is
+    // a parameter and the caller has brought the caster heights up to date, so the light cache's
+    // worker can run this for a sky that has not arrived yet (LightingSystem.Speculation).
+    private void FillShadedRegion(ReadOnlySpan<bool> op, in SkyShade sky, bool hasSky,
+                                  int x0, int y0, int x1, int y1)
     {
         using var _ = Profiler.Begin("Lighting.Shading");
-        var op = map.OpacityTable;
-        using (Profiler.Begin("Lighting.Casters")) EnsureCasterHeights(map, op);
+        var ambient = LightRgb.Of(sky.AmbR, sky.AmbG, sky.AmbB);
         _shadowSwept = false;
 
         // Cloud and fog scatter whatever is up there, and scattered light casts no shadow — so an
         // overcast floor keeps its brightness and loses its relief, by night as much as by day.
         // Render-only: weather cannot reach a roll from here.
-        float strength = map.HasSky
-            ? DayNightCycle.ShadowStrength * WeatherSystem.SunlightScale
-            : 0f;
+        float strength = hasSky ? sky.Strength * sky.SunlightScale : 0f;
         if (strength <= MinSkyShadow)
         {
             FillOccludedRegion(op, ambient, x0, y0, x1, y1);
             return;
         }
 
-        // WHICH BODY IS CASTING is the only thing the sweep needs to know, and it decides one
+        // Which body is casting is the only thing the sweep needs to know, and it decides one
         // thing: how the shadow spends its three channels. Direction, reach and depth are already
         // the sky's own, whichever is up.
-        var loss = DayNightCycle.SunIsUp
+        var loss = sky.SunIsUp
             ? (R: ShadowLossR, G: ShadowLossG, B: ShadowLossB)
             : (R: MoonShadowLossR, G: MoonShadowLossG, B: MoonShadowLossB);
 
-        var (ux, uy) = DayNightCycle.ShadowDirection;
-        float decay = DayNightCycle.ShadowDecay;
+        float ux = sky.Ux, uy = sky.Uy;
+        float decay = sky.Decay;
         int sx = ux >= 0f ? 1 : -1;
         int sy = uy >= 0f ? 1 : -1;
 
-        // Extend only the UPWIND side of each axis — the downwind side needs no history.
+        // Extend only the upwind side of each axis — the downwind side needs no history.
         int rx0 = sx > 0 ? Math.Max(0, x0 - SweepMargin) : x0;
         int rx1 = sx > 0 ? x1 : Math.Min(Width, x1 + SweepMargin);
         int ry0 = sy > 0 ? Math.Max(0, y0 - SweepMargin) : y0;
@@ -541,32 +482,25 @@ public sealed partial class LightingSystem
         EnsureShadowBuffers(rw, rh);
 
         // ── The seam at 45 degrees ────────────────────────────────────────────────────────────
-        // The sweep steps along the sky's MAJOR axis, and which axis that is flips at 45 and 135
+        // The sweep steps along the sky's major axis, and which axis that is flips at 45 and 135
         // degrees. Both sides of the flip are individually correct and the kernel is the same
-        // shape at the boundary — but the two are different RASTERISATIONS of the same diagonal
+        // shape at the boundary, but the two are different rasterisations of the same diagonal
         // (one staircases along x, the other along y), and a map is not mirror-symmetric about
-        // its own diagonal, so they do not agree. The field was therefore DISCONTINUOUS in the
-        // sun's bearing: it snapped twice a day, and no bearing step count could fix it.
-        //
-        // Measured on F7 Forest at a 480-step ladder, where one step is 0.375 degrees: ordinary
-        // steps either side of 45 move 0.63-0.78 dL* and put ZERO cells over a just-noticeable
-        // difference, while the single step across the flip moved 4.15 dL* and 1,034 cells —
-        // 6x its neighbours, and it does not shrink as the ladder is refined (8.24 at 48 steps,
-        // 5.66 at 96, 4.33 at 192, 4.15 at 480). It is a floor, not a step.
+        // its own diagonal, so they do not agree. Swept alone, the field would be discontinuous in
+        // the sun's bearing, snapping twice a day by an amount no bearing step count can shrink.
         //
         // So both rasterisations are swept through the seam and blended. The weight is a pure
         // function of the bearing, reaching exactly 0.5 where the axes trade places, so the field
         // is continuous there by construction rather than by tuning. Away from the seam the
         // weight saturates and only one sweep runs, which is what keeps this cheap: the window is
-        // about +/-6 degrees, so it costs a second sweep on ~7% of bearings and nothing at all on
-        // the rest. It is also why the window has to be NARROW for a second reason — outside it
-        // the weaker axis has a drift above 1, which SweepShadow clamps, and a clamped drift
-        // points the spine the wrong way.
+        // about +/-6 degrees, so it costs a second sweep on a small share of bearings and nothing
+        // on the rest. The window has to be narrow for a second reason: outside it the weaker axis
+        // has a drift above 1, which SweepShadow clamps, and a clamped drift points the spine the
+        // wrong way.
         //
-        // PATH-D-PORT: this exists only because the field comes out of a one-line-history sweep
-        // over a grid. The CONTRACT is that the shadow field is continuous in the sun's bearing —
-        // a renderer that marches a ray, or works per pixel, gets that for free and should drop
-        // the blend rather than reproduce it.
+        // The blend exists only because the field comes out of a one-line-history sweep over a
+        // grid. The contract is that the shadow field is continuous in the sun's bearing; a ray
+        // march or a per-pixel method gets that without a blend.
         var casters = _casterHeight!.AsSpan(0, Width * Height);
         float blend = DiagonalBlend(ux, uy);
         using (Profiler.Begin("Lighting.Sweep"))
@@ -593,7 +527,7 @@ public sealed partial class LightingSystem
 
         _shadowRx0 = rx0; _shadowRy0 = ry0; _shadowRw = rw; _shadowRh = rh;
         _shadowSwept = true;
-        // AFTER the seam blend, never inside a sweep: at a bearing inside the diagonal window the
+        // After the seam blend, never inside a sweep: at a bearing inside the diagonal window the
         // field is two rasterisations mixed, and gathering from one of them would light the map
         // from a sun that is only half there.
         ApplyShading(op, ambient, strength, loss, rx0, ry0, rw, rh, x0, y0, x1, y1);
@@ -635,10 +569,10 @@ public sealed partial class LightingSystem
         _lineCur = EnsureCapacity(_lineCur, line);
     }
 
-    // One ordered pass along the given axis, filling _shadow with what ARRIVES at each cell.
-    // `majorIsX` is passed rather than derived because the diagonal seam above sweeps BOTH
+    // One ordered pass along the given axis, filling _shadow with what arrives at each cell.
+    // `majorIsX` is passed rather than derived because the diagonal seam above sweeps both
     // rasterisations of the same bearing and blends them; deriving it here would make that
-    // impossible and is what left the field discontinuous at 45 degrees.
+    // impossible.
     private void SweepShadow(ReadOnlySpan<byte> casters, float[] shadow, int rx0, int ry0, int rw, int rh,
                              float ux, float uy, int sx, int sy, float decay, bool majorIsX)
     {
@@ -652,13 +586,11 @@ public sealed partial class LightingSystem
         float drift = majorIsX ? MathF.Abs(uy / ux) : MathF.Abs(ux / uy);
         if (drift > 1f) drift = 1f;
 
-        // FOUR TAPS, BECAUSE THE SPINE MOVES BETWEEN THEM. The upwind point sits at a
-        // FRACTIONAL minor offset — `drift` of a cell back along the minor axis — so the two
+        // Four taps, because the spine moves between them. The upwind point sits at a
+        // fractional minor offset — `drift` of a cell back along the minor axis — so the two
         // taps that straddle it are not a fixed pair. Three taps centred on the cell itself
         // straddle the spine only when drift is 0; at drift 1 the spine has slid onto a tap and
-        // the fringe collapses to one side again, which is exactly the defect this sweep exists
-        // to fix, reappearing at the diagonal bearings instead of the horizontal ones (measured:
-        // 0.0% against 8.8% at a 45-degree sun).
+        // the fringe would collapse to one side at the diagonal bearings.
         //
         // So the directional term and each half of the blur are all sampled at the fractional
         // offset — one at the spine, one a cell either side of it — which is four integer taps
@@ -708,13 +640,13 @@ public sealed partial class LightingSystem
                                 + wFar * Unsafe.Add(ref prevBase, p - 2 * sMinor)
                                 + wBack * Unsafe.Add(ref prevBase, p + sMinor)) * decay;
 
-                // A caster is not darkened by its OWN shadow: it emits its height downwind while
+                // A caster is not darkened by its own shadow: it emits its height downwind while
                 // rendering with whatever arrived at it. Cells otherwise inherit what arrived.
-                // The MAX matters — a boulder standing inside a mountain's shadow must not cut
+                // The max matters — a boulder standing inside a mountain's shadow must not cut
                 // that shadow down to a boulder's. Taken branchlessly: whether a cell casts is
                 // data, so a compare-and-branch here mispredicts on a forest. `arriving` is never
                 // negative or NaN (the kernel is non-negative and so is every history value), so
-                // Max returns exactly what the select did.
+                // Max returns exactly what a select on "does this cell cast" would.
                 byte hb = Unsafe.Add(ref castBase, mapIdx);
                 float emit = hb * (1f / 255f);
                 Unsafe.Add(ref curBase, p) = MathF.Max(emit, arriving);
@@ -753,7 +685,7 @@ public sealed partial class LightingSystem
         int wx0 = Math.Max(1, x0), wx1 = Math.Min(Width - 1, x1);
         int wy0 = Math.Max(1, y0), wy1 = Math.Min(Height - 1, y1);
         // A region with no interior — a map one or two cells across — is filled flat at the end.
-        // The gather still runs over it, so the measurement seam holds THIS region's field rather
+        // The gather still runs over it, so TryGetShadingTerms reads this region's field rather
         // than whatever an earlier one left in the buffer.
         bool interior = wx1 > wx0 && wy1 > wy0;
 
@@ -779,12 +711,10 @@ public sealed partial class LightingSystem
             for (int x = 0; x < rw; x++) Unsafe.Add(ref accRef, x) += Unsafe.Add(ref ringRef, rb + x);
         }
 
-        // ONE TRAVERSAL PER ROW, NOT THREE. Writing the row, then adding the row entering the
-        // window, then subtracting the row leaving it, as three separate x-loops walks the region
-        // three times and re-reads the accumulator each time. Fused, the accumulator is touched
-        // once per cell and the two ring rows are plain forward streams. Measured by direct
-        // profiler attribution rather than by differencing two runs: 1.62 -> 1.25 ms per cache
-        // rebuild, which is where most of the remaining saving on this pass was.
+        // One traversal per row, not three. Writing the row, then adding the row entering the
+        // window, then subtracting the row leaving it, as three separate x-loops would walk the
+        // region three times and re-read the accumulator each time. Fused, the accumulator is
+        // touched once per cell and the two ring rows are plain forward streams.
         for (int y = 0; y < rh; y++)
         {
             int lo = y - R; if (lo < 0) lo = 0;
@@ -929,16 +859,16 @@ public sealed partial class LightingSystem
         else FillFlat(ambient, x0, y0, x1, y1);
     }
 
-    // Read-only measurement seam for the in-game lighting debug overlay, in the same family as
-    // SourcesLastUpdate: the two terms this file folds into the light grid, BEFORE they are
-    // folded, so the overlay shows what the sweep computed rather than what survived the mix.
-    // `shadow` is what ARRIVES at the cell in [0,1] and is only meaningful when this returns
+    // Read-only view for the in-game lighting debug overlay and the verification probes: the two
+    // terms this file folds into the light grid, before they are folded, so the overlay shows
+    // what the sweep computed rather than what survived the mix.
+    // `shadow` is what arrives at the cell in [0,1] and is only meaningful when this returns
     // true — there is no sweep underground, on a starless night, or under weather flat enough to
     // scatter the sky away. `contact` is the ambient-occlusion multiplier and always applies.
     public bool TryGetShadingTerms(GameMap map, int x, int y, out float shadow, out float contact)
         => TryGetShadingTerms(map, x, y, out shadow, out contact, out _);
 
-    // `bounce` is the gathered share of direct light landing near the cell, in [0,1], BEFORE it
+    // `bounce` is the gathered share of direct light landing near the cell, in [0,1], before it
     // is spent — so a reader sees what was gathered rather than what survived the multiply, the
     // same way `shadow` is reported before the per-channel loss is applied to it.
     public bool TryGetShadingTerms(GameMap map, int x, int y, out float shadow, out float contact,

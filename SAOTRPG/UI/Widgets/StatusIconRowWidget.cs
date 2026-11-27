@@ -10,6 +10,7 @@ namespace SAOTRPG.UI.Widgets;
 public class StatusIconRowWidget : View
 {
     private readonly TurnManager _tm;
+    private readonly List<StatusIconMap.StatusIcon> _icons = new();
     private const int MinSidebarWidth = 12;
     private const int CompactBelowWidth = 24;
 
@@ -20,19 +21,14 @@ public class StatusIconRowWidget : View
         SchemeName = ColorSchemes.BodyName;
     }
 
-    // Children repaint every cell they own, and the framework clear would otherwise blank
-    // this widget during the window where it skips painting beneath a dialog.
+    // The draw pass paints every cell this widget owns, and the framework clear would otherwise
+    // blank it during the window where it skips painting beneath a dialog.
     protected override bool OnClearingViewport() => true;
 
-    // How many icons fit, leaving room for the "+N" overflow marker when they do not all fit.
+    // How many icons fit, leaving room for the "+N" overflow marker when they do not all fit, so
+    // a narrow sidebar never hides statuses without saying so.
     //
-    // The draw loop used to `break` on the first icon too wide for the row, so a narrow sidebar
-    // simply stopped drawing and said nothing — and the tray got much longer once timed buffs
-    // took a row per stat and fatigue added its own. A player could be poisoned, bleeding and
-    // exhausted with only the first two visible.
-    //
-    // Pure and internal so it can be checked directly: the failure mode is arithmetic, and
-    // driving a real widget to observe it would need a live driver.
+    // Public and pure; read by the verification probes.
     public static int VisibleCount(IReadOnlyList<StatusIconMap.StatusIcon> icons,
                                      int width, bool compact)
     {
@@ -65,7 +61,7 @@ public class StatusIconRowWidget : View
     protected override bool OnDrawingContent(DrawContext? context)
     {
         using var prof = SAOTRPG.Systems.Diagnostics.Profiler.Begin("Draw.StatusIcons");
-        // A modal above us has already painted this pass; drawing now would erase it.
+        // A modal above this view has already painted this pass; drawing now would erase it.
         if (AppHost.IsBeneathTopSession(this)) return true;
 
         var vp = Viewport;
@@ -82,13 +78,13 @@ public class StatusIconRowWidget : View
         for (int row = 0; row < vp.Height; row++)
             for (int c = 0; c < vp.Width; c++) batch.Put(c, row, ' ', blank);
 
-        var icons = StatusIconMap.Collect(_tm);
+        var icons = StatusIconMap.Collect(_tm, _icons);
         if (icons.Count == 0) return true;
 
         bool compact = vp.Width < CompactBelowWidth;
         int col = 0;
 
-        // OVERFLOW IS DISCLOSED, NOT SWALLOWED — see VisibleCount.
+        // Overflow is disclosed, not swallowed — see VisibleCount.
         int drawable = VisibleCount(icons, vp.Width, compact);
 
         for (int idx = 0; idx < drawable; idx++)

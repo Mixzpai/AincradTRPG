@@ -34,7 +34,7 @@ public static class RapierDefinitions
     public static Weapon CreateCelestialRapier() => Make("celestial_rapier", "Celestial Rapier", 5800, "Legendary", 190, 75, 110,
         B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 20).Add(StatType.Speed, 18));
 
-    // --- Named / SAO Legendary Weapons ---
+    // --- Named / Legendary Weapons ---
 
     public static Weapon CreateChivalricRapier() => Make("chivalric_rapier", "Chivalric Rapier", 180, "Uncommon", 55, 8, 12,
         B().Add(StatType.Attack, 10).Add(StatType.Dexterity, 5));
@@ -48,7 +48,7 @@ public static class RapierDefinitions
     public static Weapon CreateLambentLight() => Make("lambent_light", "Lambent Light", 8000, "Legendary", 180, 40, 70,
         B().Add(StatType.Attack, 42).Add(StatType.Speed, 20).Add(StatType.Dexterity, 15), "CritRate+20");
 
-    // ── HR Rapier Chain: Prima Sabre → Pentagramme → Charadrios → Hexagramme.
+    // ── Rapier Evolution Chain: Prima Sabre → Pentagramme → Charadrios → Hexagramme.
 
     // Prima Sabre, duellist's first true blade — geometry in steel. T1 of the Hexagramme chain.
     public static Weapon CreatePrimaSabre() => Make("prima_sabre", "Prima Sabre", 1700, "Rare", 120, 15, 55,
@@ -80,11 +80,11 @@ public static class RapierDefinitions
     public static Weapon CreateHeavenPiercingBlade() => Make("heaven_piercing_blade", "Heaven-Piercing Blade", 42000, "Divine", 999, 82, 165,
         B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 30).Add(StatType.Speed, 22).Add(StatType.Agility, 12), "PiercingBeam+30", range: 2);
 
-    // F43 Undine Water Maiden drop (AL Divine Beast tier). Rainfall rapier, freeze-on-hit.
+    // F43 Undine Water Maiden drop (Divine Beast tier). Rainfall rapier, freeze-on-hit.
     public static Weapon CreateMidnightRain() => Make("midnight_rain", "Midnight Rain", 14500, "Legendary", 200, 42, 118,
         B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 25).Add(StatType.Speed, 18).Add(StatType.Agility, 10), "Freeze+15");
 
-    // ── Integral Factor Series (Rapier entries) ─────────────────────
+    // ── Series weapons (Rapier entries) ─────────────────────────────
 
     // F14 Integral Series rapier. Gusion, demon-duke thruster of the dawn series.
     public static Weapon CreateIntegralGusion() => Make("rap_integral_gusion", "Integral Gusion", 4700, "Epic", 155, 14, 75,
@@ -98,18 +98,18 @@ public static class RapierDefinitions
     public static Weapon CreateRossoRhapsody() => Make("rap_rosso_rhapsody", "Rosso Rhapsody", 13800, "Legendary", 215, 55, 138,
         B().Add(StatType.Attack, 66).Add(StatType.Dexterity, 26).Add(StatType.Speed, 20), "CritRate+20");
 
-    // ── Hollow Fragment Implement System (Rapier) ─────────────────
+    // ── Quest and field-boss rewards (Rapier) ─────────────────────
 
-    // HF F84 implement. Spiralblade — extra auto-attack chance (flavor).
+    // F84 quest reward. Spiralblade — extra auto-attack chance (flavor).
     public static Weapon CreateSpiralbladeRenderingFail() => Make("rap_spiralblade_rendering_fail", "Spiralblade: Rendering Fail", 17500, "Legendary", 210, 80, 150,
         B().Add(StatType.Attack, 75).Add(StatType.Dexterity, 24).Add(StatType.Speed, 20), "ExtraAutoAttack+20");
 
-    // HF F93 implement. Glimmerblade — Banishing Ray; skill charge reduction (flavor).
+    // F93 field-boss drop. Glimmerblade — Banishing Ray; skill charge reduction (flavor).
     public static Weapon CreateGlimmerbladeBanishingRay() => Make("rap_glimmerblade_banishing_ray", "Glimmerblade: Banishing Ray", 24000, "Legendary", 240, 88, 170,
         B().Add(StatType.Attack, 85).Add(StatType.Dexterity, 28).Add(StatType.Speed, 22).Add(StatType.Agility, 15), "SkillChargeReduction+20");
 
-    // ── Hollow Fragment Avatar Weapons (Rapier) ───────────────────
-    // Last-Attack Bonus drops from F70+ field bosses. See LootGenerator canon HNM list.
+    // ── Avatar Weapons (Rapier) ───────────────────────────────────
+    // Last-Attack Bonus drops from F70+ field bosses. See LootGenerator's field-boss list.
 
     public static Weapon CreateIshvalcaAvatar() => Make("rap_ishvalca_avatar", "Ishvalca Avatar", 20000, "Legendary", 225, 82, 158,
         B().Add(StatType.Attack, 78).Add(StatType.Dexterity, 26).Add(StatType.Speed, 22).Add(StatType.Agility, 14), "ParryChance+15");
@@ -122,49 +122,49 @@ public static class RapierDefinitions
     public static Weapon CreateGlimmerspineSilverBullet() => Make("rap_glimmerspine_silver_bullet", "Glimmerspine: Silver Bullet", 30000, "Legendary", 255, 88, 175,
         B().Add(StatType.Attack, 84).Add(StatType.Dexterity, 30).Add(StatType.Speed, 24), "TrueStrike+15");
 
-    // ── Infinity Moment shop rapiers ────────────────────────────────
+    // ── Shop rapiers ────────────────────────────────────────────────
 
-    // IM Epic-band shop weapon. Alpine flower foil, precise critical threading.
+    // Epic-band shop weapon. Alpine flower foil, precise critical threading.
     public static Weapon CreateEdelweiss() => Make("rap_edelweiss", "Edelweiss", 4600, "Epic", 150, 36, 122,
         B().Add(StatType.Attack, 52).Add(StatType.Dexterity, 20).Add(StatType.Speed, 12), "CritRate+15");
 
-    // IM Legendary-band shop weapon. Night-street duelist estoc, hemorrhage edge.
+    // Legendary-band shop weapon. Night-street duelist estoc, hemorrhage edge.
     public static Weapon CreateNoctisStrasse() => Make("rap_noctis_strasse", "Noctis Strasse", 18800, "Legendary", 220, 76, 158,
         B().Add(StatType.Attack, 74).Add(StatType.Dexterity, 24).Add(StatType.Speed, 20), "Bleed+20");
 
-    // ── Memory Defrag Originals (Rapier entries) ───────────────────────
+    // ── Uniques (Rapier entries) ───────────────────────────────────────
 
-    // MD Legendary. Dance-motif rapier, chained-thrust combo amplifier.
+    // Legendary. Dance-motif rapier, chained-thrust combo amplifier.
     public static Weapon CreateEspadaOfSwordDance() => Make("rap_espada_of_sword_dance", "Espada of Sword Dance", 22000, "Legendary", 235, 80, 160,
         B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 26).Add(StatType.Speed, 22), "ComboBonus+40");
 
-    // MD Rare. Heart-bound rapier, crimson lacquer.
+    // Rare. Heart-bound rapier, crimson lacquer.
     public static Weapon CreateVenusHeart() => Make("rap_venus_heart", "Venus Heart", 2700, "Rare", 120, 30, 68,
         B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 12).Add(StatType.Speed, 8), "CritRate+15");
 
-    // MD Rare. Crimson duelling rapier, bloodletting edge.
+    // Rare. Crimson duelling rapier, bloodletting edge.
     public static Weapon CreateBloodyRapier() => Make("rap_bloody_rapier", "Bloody Rapier", 2600, "Rare", 115, 28, 66,
         B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 12).Add(StatType.Speed, 6), "Bleed+15");
 
-    // MD Rare. Lily-etched holy-order rapier, consecrated steel.
+    // Rare. Lily-etched holy-order rapier, consecrated steel.
     public static Weapon CreateHolyFlowerRapier() => Make("rap_holy_flower_rapier", "Holy Flower Rapier", 2700, "Rare", 120, 30, 67,
         B().Add(StatType.Attack, 32).Add(StatType.Dexterity, 12).Add(StatType.Speed, 6), "HolyDamage+10");
 
-    // MD Rare. Classic mithril-light foil. DefId `rap_mithril_rapier` differs from generic `mythril_rapier` (Mithril vs Mythril canon).
+    // Rare. Classic mithril-light foil. DefId `rap_mithril_rapier` differs from generic `mythril_rapier` (Mithril vs Mythril).
     public static Weapon CreateMithrilRapier() => Make("rap_mithril_rapier", "Mithril Rapier", 2500, "Rare", 115, 28, 65,
         B().Add(StatType.Attack, 30).Add(StatType.Dexterity, 14).Add(StatType.Speed, 6), "CritRate+8");
 
-    // MD Epic. Knight-order parrying rapier, chivalric steel.
+    // Epic. Knight-order parrying rapier, chivalric steel.
     public static Weapon CreateChivalrousRapier() => Make("rap_chivalrous_rapier", "Chivalrous Rapier", 5800, "Epic", 160, 50, 122,
         B().Add(StatType.Attack, 54).Add(StatType.Dexterity, 20).Add(StatType.Speed, 10), "ParryChance+15");
 
-    // ── Fractured Daydream — Character Core Canon (Rapier) ─────────────
+    // ── Companion signature weapons (Rapier) ───────────────────────────
 
-    // Yuuki canon — Absolute Sword's signature. F85+ Legendary.
+    // Yuuki's signature as the Absolute Sword. F85+ Legendary.
     public static Weapon CreateMacafitel() => Make("rap_macafitel", "Macafitel", 23000, "Legendary", 240, 85, 165,
         B().Add(StatType.Attack, 82).Add(StatType.Dexterity, 28).Add(StatType.Speed, 22).Add(StatType.Agility, 15), "ComboBonus+35");
 
-    // ── Fractured Daydream — Elemental Variants (Rapier) ───────────────
+    // ── Elemental Variants (Rapier) ────────────────────────────────────
 
     // Asuna water variant. Ray Grace — tide-blessed rapier.
     public static Weapon CreateRayGrace() => Make("rap_ray_grace", "Ray Grace", 3200, "Rare", 125, 45, 75,
@@ -182,21 +182,21 @@ public static class RapierDefinitions
     public static Weapon CreateShadowGrace() => Make("rap_shadow_grace", "Shadow Grace", 3300, "Rare", 125, 48, 78,
         B().Add(StatType.Attack, 36).Add(StatType.Dexterity, 14).Add(StatType.Speed, 8), "Bleed+15");
 
-    // ── Alicization Lycoris Normal Raid (Rapier) — Epic F70-85 ────────
+    // ── Raid drops (Rapier) — Epic F70-85 ─────────────────────────────
 
     // Timestream — clockwork-pattern rapier, parry-biased.
     public static Weapon CreateTimestream() => Make("rap_timestream", "Timestream", 7000, "Epic", 170, 72, 125,
         B().Add(StatType.Attack, 60).Add(StatType.Dexterity, 18).Add(StatType.Speed, 14), "ParryChance+15");
 
-    // ── Alicization Lycoris Extreme Raid (Rapier) — Legendary F85-95 ──
+    // ── Extreme Raid drops (Rapier) — Legendary F85-95 ────────────────
 
     // Graceful Needle — slim-profile rapier, backstab-specialist.
     public static Weapon CreateGracefulNeedle() => Make("rap_graceful_needle", "Graceful Needle", 19200, "Legendary", 218, 85, 155,
         B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 26).Add(StatType.Speed, 18), "BackstabDmg+35");
 
-    // ── SAO Lost Song Top-Tier (Rapier) — Legendary F80-95 ──────────
+    // ── Top-Tier (Rapier) — Legendary F80-95 ────────────────────────
 
-    // Glaring Light — apex LS rapier, radiant jab.
+    // Glaring Light — apex rapier, radiant jab.
     public static Weapon CreateGlaringLight() => Make("rap_glaring_light", "Glaring Light", 18800, "Legendary", 218, 83, 152,
         B().Add(StatType.Attack, 76).Add(StatType.Dexterity, 24).Add(StatType.Speed, 16), "HolyDamage+20");
 }

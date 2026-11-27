@@ -2,11 +2,11 @@ using SAOTRPG.UI.Helpers;
 using SAOTRPG.Systems.Combat;
 using SAOTRPG.Systems.Turns;
 using SAOTRPG.Systems.World;
+using SAOTRPG.UI.Widgets;
 
 namespace SAOTRPG.UI.Dialogs;
 
-// Dramatic floor transition screen — replaces the plain MessageBox.Query
-// with a centered overlay showing the floor number and recap stats.
+// Floor transition screen: a centered overlay showing the floor number and recap stats.
 public static class FloorTransitionOverlay
 {
     // Dialog width — sized to fit recap stat lines comfortably.
@@ -199,17 +199,17 @@ public static class FloorTransitionOverlay
         };
 
         // ── Buttons ───────────────────────────────────────────────
-        var ascendBtn = new Button
+        var ascendBtn = new PlainButton
         {
             Text = " Ascend ",
             X = Pos.Center() - 9, Y = Pos.AnchorEnd(2),
+            IsDefault = true,
             SchemeName = ColorSchemes.ButtonName, ShadowStyle = null
         };
-        var cancelBtn = new Button
+        var cancelBtn = new PlainButton
         {
             Text = " Stay ",
             X = Pos.Right(ascendBtn) + 1, Y = Pos.AnchorEnd(2),
-            IsDefault = true,
             SchemeName = ColorSchemes.ButtonName, ShadowStyle = null
         };
 
